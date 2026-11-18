@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -279,7 +279,7 @@ func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboardstest.FakeDashboardService{}
 	dashSvc.On("SearchDashboards", mock.Anything, mock.Anything).Return(model.HitList{}, nil)
 
 	repo := annotationsimpl.ProvideService(

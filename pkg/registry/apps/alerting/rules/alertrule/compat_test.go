@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +20,7 @@ func nsMapperForTest() request.NamespaceMapper {
 
 func TestConvertVersionToK8sResource(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithOrgID(1)).GenerateRef()
 	rule.Record = nil // ensure alerting type
 
@@ -49,7 +50,7 @@ func TestConvertVersionToK8sResource(t *testing.T) {
 
 func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
 	alerting.Record = nil
 	recording := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
@@ -67,7 +68,7 @@ func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
 
 func TestConvertDeletedToK8sResources(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
 	alerting.Record = nil
 	alerting.UID = ""             // tombstone leaves UID empty
@@ -84,7 +85,7 @@ func TestConvertDeletedToK8sResources(t *testing.T) {
 }
 
 func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
-	rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1)).GenerateRef()
+	rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(1)).GenerateRef()
 	rule.Record = nil
 	query := rule.Data[0]
 	refIDs := []string{"H", "G", "F", "E", "D", "C", "B", "A"}
@@ -108,7 +109,7 @@ func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
 
 func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	const def = "alert: HighErrors\nexpr: errors > 0\n"
 
 	t.Run("original definition survives a k8s round-trip", func(t *testing.T) {

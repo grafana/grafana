@@ -11,7 +11,8 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-//go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
+//go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client_test.go --with-expecter
+//go:generate mockery --name Client --structname MockClient --outpkg githubtest --output ./githubtest/ --filename mock_client.go --with-expecter
 type Client interface {
 	// Webhooks
 	repository.WebhookClient

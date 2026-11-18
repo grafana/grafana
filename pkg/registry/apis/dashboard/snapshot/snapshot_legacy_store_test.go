@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
@@ -65,7 +67,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	const deleteKey = "abc123"
 
 	makeStore := func(t *testing.T, externalDeleteURL string) *SnapshotLegacyStore {
-		mockService := dashboardsnapshots.NewMockService(t)
+		mockService := dashboardsnapshotstest.NewMockService(t)
 		mockService.On("GetDashboardSnapshot", mock.Anything, mock.Anything).
 			Return(&dashboardsnapshots.DashboardSnapshot{
 				Key:               "snap-1",
@@ -200,7 +202,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 // Snapshots are org-scoped but the store looks them up by global key. A caller in
 // one org must not be able to delete a snapshot owned by another org.
 func TestSnapshotLegacyStore_Delete_CrossOrg(t *testing.T) {
-	mockService := dashboardsnapshots.NewMockService(t)
+	mockService := dashboardsnapshotstest.NewMockService(t)
 	mockService.On("GetDashboardSnapshot", mock.Anything, mock.Anything).
 		Return(&dashboardsnapshots.DashboardSnapshot{
 			Key:       "snap-1",
@@ -237,7 +239,7 @@ func TestSnapshotLegacyStore_List_Name(t *testing.T) {
 		{name: "deleted key", missing: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			service := dashboardsnapshots.NewMockService(t)
+			service := dashboardsnapshotstest.NewMockService(t)
 			query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}
 			if tc.missing {
 				service.On("GetDashboardSnapshot", mock.Anything, query).Return(nil, dashboardsnapshots.ErrBaseNotFound)
@@ -261,7 +263,7 @@ func TestSnapshotLegacyStore_List_DeleteKey(t *testing.T) {
 	const deleteKey = "abc123"
 
 	makeStore := func(t *testing.T) *SnapshotLegacyStore {
-		mockService := dashboardsnapshots.NewMockService(t)
+		mockService := dashboardsnapshotstest.NewMockService(t)
 		mockService.On("GetDashboardSnapshot", mock.Anything, &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: deleteKey}).
 			Return(&dashboardsnapshots.DashboardSnapshot{
 				Key:       "snap-1",

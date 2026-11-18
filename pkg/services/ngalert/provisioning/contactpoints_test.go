@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,9 +33,11 @@ import (
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -41,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,7 +56,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -331,7 +336,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 		sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
 
-		svc := &fakeReceiverService{}
+		svc := &provisioningtest.FakeReceiverService{}
 		sut.receiverService = svc
 
 		newCp := createTestContactPoint()
@@ -356,7 +361,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 		require.Lenf(t, svc.Calls, 1, "service was supposed to be called once")
 		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
-		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
 		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
 		revision := svc.Calls[0].Args[2].(*legacy_storage.ConfigRevision)
 		assert.EqualValues(t, v1.RouteToModel(parsed.AlertmanagerConfig.Route), revision.Config.AlertmanagerConfig.Route)
@@ -383,7 +388,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				cfg := createEncryptedConfig(t, secretsService)
 				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
-				sut.receiverService = &fakeReceiverService{}
+				sut.receiverService = &provisioningtest.FakeReceiverService{}
 
 				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
@@ -397,14 +402,14 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 				var calls []string
 				store.UpdateFn = func(ctx context.Context, _ *models.SaveAlertmanagerConfigurationCmd) error {
-					assertInTransaction(t, ctx)
+					provisioningtest.AssertInTransaction(t, ctx)
 					calls = append(calls, "save")
 					return tc.saveErr
 				}
 				sut.resourcePermissions = contactPointPermissionSpy{
 					FakeReceiverPermissionsService: fakes.NewFakeReceiverPermissionsService(),
 					copy: func(ctx context.Context, actor identity.Requester) {
-						assertInTransaction(t, ctx)
+						provisioningtest.AssertInTransaction(t, ctx)
 						require.Same(t, adminUser, actor)
 						calls = append(calls, "copy")
 					},
@@ -433,7 +438,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				cfg := createEncryptedConfig(t, secretsService)
 				store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 				sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
-				sut.receiverService = &fakeReceiverService{}
+				sut.receiverService = &provisioningtest.FakeReceiverService{}
 
 				cp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestContactPoint(), models.ProvenanceAPI)
 				require.NoError(t, err)
@@ -460,7 +465,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				}
 
 				// A fresh secrets service forces data-key reads instead of hiding invalid sessions through cache hits.
-				sut.encryptionService = manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+				sut.encryptionService = managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 				sut.xact = sqlStore
 				err = sqlStore.InTransaction(t.Context(), func(ctx context.Context) error {
 					return sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
@@ -625,7 +630,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 	t.Run("email contact point create succeeds when validator passes", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.emailValidator = notifier.NewFakeEmailValidator(t, nil)
+		sut.emailValidator = notifiertest.NewFakeEmailValidator(t, nil)
 
 		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.NoError(t, err)
@@ -633,7 +638,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 
 	t.Run("email contact point create fails when validator rejects email", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
-		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		sut.emailValidator = notifiertest.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
 
 		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.Error(t, err)
@@ -644,7 +649,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		created, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, createTestEmailContactPoint(), models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		sut.emailValidator = notifier.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
+		sut.emailValidator = notifiertest.NewFakeEmailValidator(t, fmt.Errorf("not an org member"))
 		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
 		require.Error(t, err)
 	})
@@ -653,7 +658,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -713,7 +718,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	// User with basic read/write permissions but without protected field update permission
 	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -900,7 +905,7 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 	configs := notifytest.AllKnownV1ConfigsForTesting
 	keys := slices.Sorted(maps.Keys(configs))
 	for _, integrationType := range keys {
-		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(integrationType))()
+		integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
 		if f, ok := overrides[integrationType]; ok {
 			f(integration.Settings)
 		}
@@ -1003,7 +1008,7 @@ func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
 func TestIntegrationAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
-		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		sut := createContactPointServiceSut(t, secretsService)
 		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
 		sut.authz = authz
@@ -1015,7 +1020,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 	receiverB := "receiverB"
 	receiverC := "receiverC"
 	sut, authz := sutWithAuthz()
-	gen := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(email.Type), models.IntegrationMuts.WithName(receiverA))
+	gen := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(email.Type), modelstest.IntegrationMuts.WithName(receiverA))
 	g1, g2, g3 := gen(), gen(), gen()
 	integration1 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g1, models.ProvenanceAPI)
 	integration2 := GrafanaIntegrationConfigToEmbeddedContactPoint(&g2, models.ProvenanceAPI)
@@ -1207,7 +1212,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 ) *ContactPointService {
 	t.Helper()
 	// Encrypt secure settings.
-	xact := newNopTransactionManager()
+	xact := provisioningtest.NewNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
@@ -1215,7 +1220,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 		receiverAuthz,
 		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		provisioningStore,
-		&fakeAlertRuleNotificationStore{},
+		&provisioningtest.FakeAlertRuleNotificationStore{},
 		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		secretService,
 		xact,
@@ -1237,7 +1242,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 		xact,
 		receiverService,
 		log.NewNopLogger(),
-		&fakeAlertRuleNotificationStore{},
+		&provisioningtest.FakeAlertRuleNotificationStore{},
 		fakes.NewFakeReceiverPermissionsService(),
 		nil,
 		&notifier.NoopOrgEmailValidator{},
@@ -1304,7 +1309,7 @@ func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
 func createEncryptedConfig(t *testing.T,
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) string {
-	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
+	c, err := notifier.Load([]byte(provisioningtest.DefaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
 	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())

@@ -10,6 +10,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +29,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
@@ -180,7 +183,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Successfully releases resources and cleanup hooks",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -198,8 +201,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 				client := &mockDynamicClient{
 					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
 						return &unstructured.Unstructured{}, nil
@@ -236,7 +239,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Successfully removes resources and cleanup hooks",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -254,8 +257,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 				client := &mockDynamicClient{
 					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 						return nil
@@ -293,7 +296,7 @@ func TestFinalizer_process(t *testing.T) {
 			name:   "Issue getting the namespace clients",
 			lister: nil,
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
 
 				clientFactory.
 					On("Clients", mock.Anything, "default").
@@ -315,7 +318,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Issue listing items",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -325,8 +328,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 
 				clientFactory.
 					On("Clients", mock.Anything, "default").
@@ -348,7 +351,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Issue getting client for resource",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -366,8 +369,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 
 				clientFactory.
 					On("Clients", mock.Anything, "default").
@@ -397,7 +400,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Error deleting items",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -415,8 +418,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 				client := &mockDynamicClient{
 					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
 						return assert.AnError
@@ -454,7 +457,7 @@ func TestFinalizer_process(t *testing.T) {
 		{
 			name: "Error releasing items",
 			lister: func() resources.ResourceLister {
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
@@ -472,8 +475,8 @@ func TestFinalizer_process(t *testing.T) {
 				return resourceLister
 			}(),
 			clientFactory: func() resources.ClientFactory {
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 				client := &mockDynamicClient{
 					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
 						return nil, assert.AnError
@@ -529,7 +532,7 @@ func TestFinalizer_process(t *testing.T) {
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			// The cleanup finalizer builds the repository via the factory; return
 			// the case's repo so its webhook client drives the deletion hook.
-			factory := repository.NewMockFactory(t)
+			factory := repositorytest.NewMockFactory(t)
 			factory.On("Build", mock.Anything, mock.Anything).Return(tc.repo, nil).Maybe()
 			f := &finalizer{
 				lister:        tc.lister,
@@ -702,11 +705,11 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 		},
 	}
 
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	client := &mockDynamicClient{
@@ -750,11 +753,11 @@ func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
 		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "nested-folder", Title: "Nested folder", Path: "shared/nested", Folder: "shared-folder"},
 		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "managed-dashboard", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
 	}}
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	var deleted []string
@@ -806,11 +809,11 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 		},
 	}
 
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	client := &mockDynamicClient{
@@ -859,11 +862,11 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 			},
 		}
 
-		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister := resourcestest.NewMockResourceLister(t)
 		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-		clientFactory := resources.NewMockClientFactory(t)
-		clients := resources.NewMockResourceClients(t)
+		clientFactory := resourcestest.NewMockClientFactory(t)
+		clients := resourcestest.NewMockResourceClients(t)
 		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 		folderClient := &mockDynamicClient{
@@ -908,11 +911,11 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 			},
 		}
 
-		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister := resourcestest.NewMockResourceLister(t)
 		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-		clientFactory := resources.NewMockClientFactory(t)
-		clients := resources.NewMockResourceClients(t)
+		clientFactory := resourcestest.NewMockClientFactory(t)
+		clients := resourcestest.NewMockResourceClients(t)
 		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 		folderClient := &mockDynamicClient{
@@ -968,11 +971,11 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 			})
 		}
 
-		resourceLister := resources.NewMockResourceLister(t)
+		resourceLister := resourcestest.NewMockResourceLister(t)
 		resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-		clientFactory := resources.NewMockClientFactory(t)
-		clients := resources.NewMockResourceClients(t)
+		clientFactory := resourcestest.NewMockClientFactory(t)
+		clients := resourcestest.NewMockResourceClients(t)
 		clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 		client := &mockDynamicClient{
@@ -1072,13 +1075,13 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 					})
 				}
 
-				resourceLister := resources.NewMockResourceLister(t)
+				resourceLister := resourcestest.NewMockResourceLister(t)
 				resourceLister.
 					On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).
 					Return(&items, nil)
 
-				clientFactory := resources.NewMockClientFactory(t)
-				clients := resources.NewMockResourceClients(t)
+				clientFactory := resourcestest.NewMockClientFactory(t)
+				clients := resourcestest.NewMockResourceClients(t)
 
 				client := &mockDynamicClient{
 					deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
@@ -1157,11 +1160,11 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 		},
 	}
 
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	var calls atomic.Int32
@@ -1205,11 +1208,11 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 		},
 	}
 
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	var calls atomic.Int32
@@ -1252,11 +1255,11 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 		},
 	}
 
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	var calls atomic.Int32
@@ -1328,7 +1331,7 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 // finalizer can't build the repository (e.g. expired credentials), process fails
 // so deletion is blocked — forcing it is done by removing the cleanup finalizer.
 func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
-	factory := repository.NewMockFactory(t)
+	factory := repositorytest.NewMockFactory(t)
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, assert.AnError)
 
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
@@ -1353,7 +1356,7 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) {
 	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
 
-	factory := repository.NewMockFactory(t)
+	factory := repositorytest.NewMockFactory(t)
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nonWebhookRepo{cfg: cfg}, nil)
 
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
@@ -1394,7 +1397,7 @@ func TestProcess_CleanFinalizer_RecordsErrorCause(t *testing.T) {
 					return tc.deleteErr
 				},
 			}
-			factory := repository.NewMockFactory(t)
+			factory := repositorytest.NewMockFactory(t)
 			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(repo, nil)
 
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
@@ -1420,11 +1423,11 @@ func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t
 	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
 		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
 	}}
-	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister := resourcestest.NewMockResourceLister(t)
 	resourceLister.On("List", mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&items, nil)
 
-	clientFactory := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
 
 	client := &mockDynamicClient{

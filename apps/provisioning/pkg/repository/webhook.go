@@ -52,7 +52,7 @@ type WebhookConfig interface {
 	SetSecret(secret string)
 }
 
-//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
+//go:generate mockery --name WebhookClient --structname MockWebhookClient --outpkg repositorytest --output ./repositorytest/ --filename mock_webhook_client.go --with-expecter
 type WebhookClient interface {
 	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
 	GetWebhook(ctx context.Context, id WebhookID) (WebhookConfig, error)

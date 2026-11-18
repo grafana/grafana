@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -117,12 +120,12 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "settings with custom options, add option-specific routes",
 			existingConfig: configGen([]string{"receiver1", "receiver2", "receiver3", "receiver4", "receiver5"}, []string{"maintenance", "active"}),
 			storeSettings: []models.ContactPointRouting{
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute))),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), models.CPRMuts.WithGroupWait(new(2*time.Minute))),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver3"), models.CPRMuts.WithRepeatInterval(new(3*time.Minute))),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver4"), models.CPRMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel, "custom")),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver5"), models.CPRMuts.WithMuteTimeIntervals("maintenance")),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver5"), models.CPRMuts.WithActiveTimeIntervals("active")),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute))),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), modelstest.CPRMuts.WithGroupWait(new(2*time.Minute))),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver3"), modelstest.CPRMuts.WithRepeatInterval(new(3*time.Minute))),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver4"), modelstest.CPRMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel, "custom")),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver5"), modelstest.CPRMuts.WithMuteTimeIntervals("maintenance")),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver5"), modelstest.CPRMuts.WithActiveTimeIntervals("active")),
 				{
 					Receiver:            "receiver1",
 					GroupBy:             []string{model.AlertNameLabel, models.FolderTitleLabel, "custom"},
@@ -182,7 +185,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "settings with custom options and nil groupBy, groupBy should inherit from parent",
 			existingConfig: configGen([]string{"receiver1"}, nil),
 			storeSettings: []models.ContactPointRouting{
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy()),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy()),
 			},
 			expRoute: withChildRoutes(defaultRoute(), &definition.Route{
 				Receiver:       "default",
@@ -201,8 +204,8 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "settings with nil groupBy should have different fingerprint than default groupBy",
 			existingConfig: configGen([]string{"receiver1"}, nil),
 			storeSettings: []models.ContactPointRouting{
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy()),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy(models.DefaultNotificationSettingsGroupBy...)),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy()),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy(models.DefaultNotificationSettingsGroupBy...)),
 			},
 			expRoute: withChildRoutes(defaultRoute(), &definition.Route{
 				Receiver:       "default",
@@ -226,9 +229,9 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "settings with incomplete required groupBy labels will be completed and should have the same fingerprint",
 			existingConfig: configGen([]string{"receiver1"}, nil),
 			storeSettings: []models.ContactPointRouting{
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy(models.FolderTitleLabel)),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy(model.AlertNameLabel)),
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithGroupInterval(new(1*time.Minute)), models.CPRMuts.WithGroupBy(models.DefaultNotificationSettingsGroupBy...)),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy(models.FolderTitleLabel)),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy(model.AlertNameLabel)),
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithGroupInterval(new(1*time.Minute)), modelstest.CPRMuts.WithGroupBy(models.DefaultNotificationSettingsGroupBy...)),
 			},
 			expRoute: withChildRoutes(defaultRoute(), &definition.Route{
 				Receiver:       "default",
@@ -248,8 +251,8 @@ func TestAddAutogenConfig(t *testing.T) {
 			existingConfig: configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
 			storeSettings: []models.ContactPointRouting{
 				models.NewDefaultContactPointRouting("receiverA"), // Doesn't exist.
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithMuteTimeIntervals("maintenance")), // Doesn't exist.
-				models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), models.CPRMuts.WithGroupWait(new(-2*time.Minute))),   // Negative.
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithMuteTimeIntervals("maintenance")), // Doesn't exist.
+				modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), modelstest.CPRMuts.WithGroupWait(new(-2*time.Minute))),   // Negative.
 			},
 			skipInvalid: true,
 			expRoute: withChildRoutes(defaultRoute(), &definition.Route{
@@ -272,14 +275,14 @@ func TestAddAutogenConfig(t *testing.T) {
 		{
 			name:             "when skipInvalid=false, invalid settings throws error",
 			existingConfig:   configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
-			storeSettings:    []models.ContactPointRouting{models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), models.CPRMuts.WithMuteTimeIntervals("maintenance"))},
+			storeSettings:    []models.ContactPointRouting{modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver1"), modelstest.CPRMuts.WithMuteTimeIntervals("maintenance"))},
 			skipInvalid:      false,
 			expErrorContains: "maintenance",
 		},
 		{
 			name:             "when skipInvalid=false, invalid settings throws error",
 			existingConfig:   configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
-			storeSettings:    []models.ContactPointRouting{models.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), models.CPRMuts.WithGroupWait(new(-2*time.Minute)))},
+			storeSettings:    []models.ContactPointRouting{modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver2"), modelstest.CPRMuts.WithGroupWait(new(-2*time.Minute)))},
 			skipInvalid:      false,
 			expErrorContains: "group wait",
 		},
@@ -288,13 +291,13 @@ func TestAddAutogenConfig(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			orgId := int64(1)
-			store := &fakeConfigStore{
-				notificationSettings: make(map[int64]map[models.AlertRuleKey]models.ContactPointRouting),
+			store := &notifiertest.FakeConfigStore{
+				NotificationSettings: make(map[int64]map[models.AlertRuleKey]models.ContactPointRouting),
 			}
-			store.notificationSettings[orgId] = make(map[models.AlertRuleKey]models.ContactPointRouting)
+			store.NotificationSettings[orgId] = make(map[models.AlertRuleKey]models.ContactPointRouting)
 
 			for _, setting := range tt.storeSettings {
-				store.notificationSettings[orgId][models.AlertRuleKey{OrgID: orgId, UID: util.GenerateShortUID()}] = setting
+				store.NotificationSettings[orgId][models.AlertRuleKey{OrgID: orgId, UID: util.GenerateShortUID()}] = setting
 			}
 			onInvalid := ErrorOnInvalidReceivers
 			if tt.skipInvalid {

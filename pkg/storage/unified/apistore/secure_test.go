@@ -9,6 +9,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue/securevaluetest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -23,7 +25,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -53,7 +54,7 @@ func TestSecureLifecycle(t *testing.T) {
 	}
 
 	t.Run("create secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("NameForA", nil).Once()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
@@ -91,7 +92,7 @@ func TestSecureLifecycle(t *testing.T) {
 
 		info := &objectForStorage{}
 		expectError := fmt.Errorf("expected error")
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("", expectError).Maybe()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
@@ -109,7 +110,7 @@ func TestSecureLifecycle(t *testing.T) {
 		})
 
 		info := &objectForStorage{}
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 		err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 		require.ErrorContains(t, err, "unable to save secure value reference with legacy datasource prefix")
@@ -123,7 +124,7 @@ func TestSecureLifecycle(t *testing.T) {
 			})
 
 			info := &objectForStorage{}
-			secureStore := secret.NewMockInlineSecureValueSupport(t)
+			secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
@@ -135,7 +136,7 @@ func TestSecureLifecycle(t *testing.T) {
 			})
 
 			info := &objectForStorage{}
-			secureStore := secret.NewMockInlineSecureValueSupport(t)
+			secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of name, create, or remove is allowed")
@@ -147,7 +148,7 @@ func TestSecureLifecycle(t *testing.T) {
 			})
 
 			info := &objectForStorage{}
-			secureStore := secret.NewMockInlineSecureValueSupport(t)
+			secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 			err := prepareSecureValues(context.Background(), secureStore, obj, nil, utils.ToObjectReference(obj), info)
 			require.ErrorContains(t, err, "only one of create, or remove is allowed")
@@ -156,7 +157,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("change name manually", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		previous := resourceWithSecureValues(common.InlineSecureValues{
@@ -185,7 +186,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("update without secrets", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		previousObject := resourceWithSecureValues(common.InlineSecureValues{
@@ -207,7 +208,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		previous := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 			"b": common.InlineSecureValue{Name: "NameForB"},
@@ -254,7 +255,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
 		})
@@ -271,7 +272,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("remove invalid secure values while creating others", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("NameForA", nil).Once()
 
@@ -293,7 +294,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("delete resource", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		obj := resourceWithSecureValues(common.InlineSecureValues{
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
@@ -317,7 +318,7 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": common.InlineSecureValue{Name: "NameForA"},
 		})
 		expectError := fmt.Errorf("expected error")
-		secureStore = secret.NewMockInlineSecureValueSupport(t)
+		secureStore = securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, owner, "NameForA").
 			Return(expectError).Once()
 		err = handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj))
@@ -326,7 +327,7 @@ func TestSecureLifecycle(t *testing.T) {
 	})
 
 	t.Run("invalid states", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, resourceWithSecureValues(common.InlineSecureValues{
@@ -390,7 +391,7 @@ func TestSecureLifecycle(t *testing.T) {
 		var raw bytes.Buffer
 		require.NoError(t, unstructured.UnstructuredJSONScheme.Encode(prev, &raw))
 
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return("inline-1", nil).Once()
 		secureStore.On("CreateInline", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -459,7 +460,7 @@ func TestCleanupSecretsAfterFailedPreparation(t *testing.T) {
 	rejectErr := apierrors.NewBadRequest("rejected")
 
 	t.Run("cleanupSafe error deletes the created secrets", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "NameForA").Return(nil).Once()
 		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
 		require.Equal(t, rejectErr, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), true, rejectErr))
@@ -467,14 +468,14 @@ func TestCleanupSecretsAfterFailedPreparation(t *testing.T) {
 	})
 
 	t.Run("ambiguous error keeps the secrets", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t) // no Delete expected
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t) // no Delete expected
 		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
 		require.Equal(t, rejectErr, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), false, rejectErr))
 		secureStore.AssertExpectations(t)
 	})
 
 	t.Run("success keeps the secrets", func(t *testing.T) {
-		secureStore := secret.NewMockInlineSecureValueSupport(t) // no Delete expected
+		secureStore := securevaluetest.NewMockInlineSecureValueSupport(t) // no Delete expected
 		s := &Storage{opts: StorageOptions{SecureValues: secureStore}}
 		require.NoError(t, s.cleanupSecretsAfterFailedPreparation(context.Background(), newV(), true, nil))
 		secureStore.AssertExpectations(t)
@@ -507,7 +508,7 @@ func TestHandleManagedResourceRoutingNotRouted(t *testing.T) {
 // succeeds (creating an inline secret) but afterCreatePermissionCreator rejects an invalid
 // grafana.app/grant-permissions value before anything is written. The created secret must be deleted.
 func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
-	secureStore := secret.NewMockInlineSecureValueSupport(t)
+	secureStore := securevaluetest.NewMockInlineSecureValueSupport(t)
 	secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 		Return("NameForA", nil).Once()
 	secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "NameForA").

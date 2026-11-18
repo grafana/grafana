@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git/gittest"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -38,7 +38,7 @@ func TestNewRepository_ServerURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gitRepo := git.NewMockGitRepository(t)
+			gitRepo := gittest.NewMockGitRepository(t)
 			gitRepo.EXPECT().URL().Return(tt.repoURL).Maybe()
 
 			repo, err := NewRepository(context.Background(), &provisioning.Repository{}, gitRepo, ProvideFactory(), common.RawSecureValue(""))

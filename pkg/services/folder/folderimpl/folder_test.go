@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -214,7 +214,7 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 	user := &user.SignedInUser{OrgID: orgID, UserID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
 
-	fakeK8s := new(client.MockK8sHandler)
+	fakeK8s := new(clienttest.MockK8sHandler)
 	store := folder.NewFakeStore()
 	store.ExpectedFolder = &folder.Folder{
 		UID:   "resolved-uid",

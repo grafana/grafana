@@ -1,43 +1,46 @@
-package models
+package models_test
 
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
+
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/alerting/models"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 func TestSilenceGetRuleUID(t *testing.T) {
 	testCases := []struct {
 		name            string
-		silence         Silence
+		silence         models.Silence
 		expectedRuleUID *string
 	}{
 		{
 			name:            "silence with no rule UID",
-			silence:         SilenceGen()(),
+			silence:         modelstest.SilenceGen()(),
 			expectedRuleUID: nil,
 		},
 		{
 			name:            "silence with rule UID",
-			silence:         SilenceGen(SilenceMuts.WithMatcher(models.RuleUIDLabel, "someuid", labels.MatchEqual))(),
+			silence:         modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "someuid", labels.MatchEqual))(),
 			expectedRuleUID: new("someuid"),
 		},
 		{
 			name:            "silence with rule UID Matcher but MatchNotEqual",
-			silence:         SilenceGen(SilenceMuts.WithMatcher(models.RuleUIDLabel, "someuid", labels.MatchNotEqual))(),
+			silence:         modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "someuid", labels.MatchNotEqual))(),
 			expectedRuleUID: nil,
 		},
 		{
 			name:            "silence with rule UID Matcher but MatchRegexp",
-			silence:         SilenceGen(SilenceMuts.WithMatcher(models.RuleUIDLabel, "someuid", labels.MatchRegexp))(),
+			silence:         modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "someuid", labels.MatchRegexp))(),
 			expectedRuleUID: nil,
 		},
 		{
 			name:            "silence with rule UID Matcher but MatchNotRegexp",
-			silence:         SilenceGen(SilenceMuts.WithMatcher(models.RuleUIDLabel, "someuid", labels.MatchNotRegexp))(),
+			silence:         modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "someuid", labels.MatchNotRegexp))(),
 			expectedRuleUID: nil,
 		},
 	}
@@ -50,24 +53,24 @@ func TestSilenceGetRuleUID(t *testing.T) {
 
 func TestSilencePermissionSet(t *testing.T) {
 	t.Run("Clone", func(t *testing.T) {
-		perms := SilencePermissionSet{
-			SilencePermissionRead:  true,
-			SilencePermissionWrite: false,
+		perms := models.SilencePermissionSet{
+			models.SilencePermissionRead:  true,
+			models.SilencePermissionWrite: false,
 		}
 		clone := perms.Clone()
 		assert.Equal(t, perms, clone)
-		clone[SilencePermissionRead] = false
+		clone[models.SilencePermissionRead] = false
 		assert.NotEqual(t, perms, clone)
 	})
 
 	t.Run("AllSet + SilencePermissions", func(t *testing.T) {
-		readPerms := SilencePermissionSet{
-			SilencePermissionRead: true,
+		readPerms := models.SilencePermissionSet{
+			models.SilencePermissionRead: true,
 		}
 		assert.False(t, readPerms.AllSet())
 
-		allPerms := SilencePermissionSet{}
-		for _, perm := range SilencePermissions() {
+		allPerms := models.SilencePermissionSet{}
+		for _, perm := range models.SilencePermissions() {
 			allPerms[perm] = true
 		}
 		assert.True(t, allPerms.AllSet())
@@ -76,57 +79,57 @@ func TestSilencePermissionSet(t *testing.T) {
 	t.Run("Has", func(t *testing.T) {
 		testCases := []struct {
 			name          string
-			permissionSet SilencePermissionSet
-			expectedHas   map[SilencePermission]bool
+			permissionSet models.SilencePermissionSet
+			expectedHas   map[models.SilencePermission]bool
 		}{
 			{
 				name: "all false",
-				permissionSet: SilencePermissionSet{
-					SilencePermissionRead:   false,
-					SilencePermissionWrite:  false,
-					SilencePermissionCreate: false,
+				permissionSet: models.SilencePermissionSet{
+					models.SilencePermissionRead:   false,
+					models.SilencePermissionWrite:  false,
+					models.SilencePermissionCreate: false,
 				},
-				expectedHas: map[SilencePermission]bool{
-					SilencePermissionRead:   false,
-					SilencePermissionWrite:  false,
-					SilencePermissionCreate: false,
+				expectedHas: map[models.SilencePermission]bool{
+					models.SilencePermissionRead:   false,
+					models.SilencePermissionWrite:  false,
+					models.SilencePermissionCreate: false,
 				},
 			},
 			{
 				name: "all true",
-				permissionSet: SilencePermissionSet{
-					SilencePermissionRead:   true,
-					SilencePermissionWrite:  true,
-					SilencePermissionCreate: true,
+				permissionSet: models.SilencePermissionSet{
+					models.SilencePermissionRead:   true,
+					models.SilencePermissionWrite:  true,
+					models.SilencePermissionCreate: true,
 				},
-				expectedHas: map[SilencePermission]bool{
-					SilencePermissionRead:   true,
-					SilencePermissionWrite:  true,
-					SilencePermissionCreate: true,
+				expectedHas: map[models.SilencePermission]bool{
+					models.SilencePermissionRead:   true,
+					models.SilencePermissionWrite:  true,
+					models.SilencePermissionCreate: true,
 				},
 			},
 			{
 				name: "mixed",
-				permissionSet: SilencePermissionSet{
-					SilencePermissionRead:   true,
-					SilencePermissionWrite:  false,
-					SilencePermissionCreate: true,
+				permissionSet: models.SilencePermissionSet{
+					models.SilencePermissionRead:   true,
+					models.SilencePermissionWrite:  false,
+					models.SilencePermissionCreate: true,
 				},
-				expectedHas: map[SilencePermission]bool{
-					SilencePermissionRead:   true,
-					SilencePermissionWrite:  false,
-					SilencePermissionCreate: true,
+				expectedHas: map[models.SilencePermission]bool{
+					models.SilencePermissionRead:   true,
+					models.SilencePermissionWrite:  false,
+					models.SilencePermissionCreate: true,
 				},
 			},
 			{
 				name: "not set = false",
-				permissionSet: SilencePermissionSet{
-					SilencePermissionRead: true,
+				permissionSet: models.SilencePermissionSet{
+					models.SilencePermissionRead: true,
 				},
-				expectedHas: map[SilencePermission]bool{
-					SilencePermissionRead:   true,
-					SilencePermissionWrite:  false,
-					SilencePermissionCreate: false,
+				expectedHas: map[models.SilencePermission]bool{
+					models.SilencePermissionRead:   true,
+					models.SilencePermissionWrite:  false,
+					models.SilencePermissionCreate: false,
 				},
 			},
 		}

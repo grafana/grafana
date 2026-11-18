@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -376,10 +377,10 @@ func objectMeta(name string) metav1.ObjectMeta {
 // explicit notification settings type.
 func alertRuleBody(t *testing.T) map[string]any {
 	t.Helper()
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 	return toMap(t, &v1beta1.AlertRule{
 		ObjectMeta: objectMeta(rule.UID),
@@ -411,10 +412,10 @@ func withoutNotificationSettingsType(t *testing.T, obj map[string]any) map[strin
 
 func recordingRuleBody(t *testing.T) map[string]any {
 	t.Helper()
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 	return toMap(t, &v1beta1.RecordingRule{
 		ObjectMeta: objectMeta(rule.UID),

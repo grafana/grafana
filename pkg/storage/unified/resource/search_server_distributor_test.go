@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
+
 	gokitlog "github.com/go-kit/log"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/kv/consul"
@@ -210,7 +212,7 @@ func newDistributorForwardingTestServer(t *testing.T, client ResourceClient) *di
 // authenticator reject the call with "missing required token".
 func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	var gotMD metadata.MD
-	mockClient := NewMockResourceClient(t)
+	mockClient := resourcetest.NewMockResourceClient(t)
 	mockClient.EXPECT().VectorSearch(mock.Anything, mock.Anything).RunAndReturn(
 		func(ctx context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
 			gotMD, _ = metadata.FromOutgoingContext(ctx)
@@ -257,7 +259,7 @@ func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
-			mockClient := NewMockResourceClient(t)
+			mockClient := resourcetest.NewMockResourceClient(t)
 			mockClient.EXPECT().HybridSearch(mock.Anything, test.request).RunAndReturn(
 				func(ctx context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 					namespace, err := userutils.ExtractOrgID(ctx)

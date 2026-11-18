@@ -14,6 +14,10 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git/gittest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -30,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,7 +47,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -808,7 +811,7 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {
-	versioned := repository.NewMockVersioned(t)
+	versioned := repositorytest.NewMockVersioned(t)
 	obj := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{
 			Sync: provisioning.SyncStatus{
@@ -902,8 +905,8 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 
 // mockJobsQueueStore implements both jobs.Queue and jobs.Store for testing
 type mockJobsQueueStore struct {
-	*jobs.MockQueue
-	*jobs.MockStore
+	*jobstest.MockQueue
+	*jobstest.MockStore
 }
 
 func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing.T) {
@@ -1229,8 +1232,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create mocks
-			mockQueue := jobs.NewMockQueue(t)
-			mockStore := jobs.NewMockStore(t)
+			mockQueue := jobstest.NewMockQueue(t)
+			mockStore := jobstest.NewMockStore(t)
 			mockJobs := &mockJobsQueueStore{
 				MockQueue: mockQueue,
 				MockStore: mockStore,
@@ -1258,7 +1261,7 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 
 type intervalRepository struct {
 	repository.Repository
-	*repository.MockVersioned
+	*repositorytest.MockVersioned
 }
 
 var _ repository.Versioned = (*intervalRepository)(nil)
@@ -1288,11 +1291,11 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 	require.NoError(t, indexer.Add(obj))
 	getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 	patcher := &capturePatcher{}
-	baseRepo := repository.NewMockRepository(t)
+	baseRepo := repositorytest.NewMockRepository(t)
 	baseRepo.On("Config").Return(obj)
 	baseRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true, Code: http.StatusOK}, nil)
-	repo := &intervalRepository{baseRepo, repository.NewMockVersioned(t)}
-	factory := repository.NewMockFactory(t)
+	repo := &intervalRepository{baseRepo, repositorytest.NewMockVersioned(t)}
+	factory := repositorytest.NewMockFactory(t)
 	factory.On("Build", mock.Anything, mock.Anything).Return(repo, nil)
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.On("RecordHealthCheck", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
@@ -1303,7 +1306,7 @@ func newIntervalController(t *testing.T, state provisioning.JobState) (*Reposito
 		healthChecker:     NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
 		statusPatcher:     patcher,
 		repoFactory:       factory,
-		jobs:              &mockJobsQueueStore{MockQueue: jobs.NewMockQueue(t), MockStore: jobs.NewMockStore(t)},
+		jobs:              &mockJobsQueueStore{MockQueue: jobstest.NewMockQueue(t), MockStore: jobstest.NewMockStore(t)},
 		logger:            logging.DefaultLogger,
 		tracer:            tracing.InitializeTracerForTest(),
 		incrementalPolicy: repository.NewIncrementalSyncPolicy(1000),
@@ -1448,7 +1451,7 @@ func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
 func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) {
 	for _, state := range []provisioning.JobState{provisioning.JobStatePending, provisioning.JobStateWorking} {
 		t.Run(string(state), func(t *testing.T) {
-			store := jobs.NewMockStore(t)
+			store := jobstest.NewMockStore(t)
 			store.On("Get", mock.Anything, "default", "missing-job").
 				Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, "missing-job")).Twice()
 			rc := &RepositoryController{jobs: &mockJobsQueueStore{MockStore: store}}
@@ -1577,9 +1580,9 @@ func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 			if tt.specChanged {
 				obj.Generation++
 			}
-			var repo repository.Repository = repository.NewMockRepository(t)
+			var repo repository.Repository = repositorytest.NewMockRepository(t)
 			if !tt.unversioned {
-				repo = &intervalRepository{repo, repository.NewMockVersioned(t)}
+				repo = &intervalRepository{repo, repositorytest.NewMockVersioned(t)}
 			}
 			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
 			health := provisioning.HealthStatus{Healthy: true}
@@ -1618,7 +1621,7 @@ func TestRepositoryController_determineSyncStrategy_SkippedInterval(t *testing.T
 					Health:             provisioning.HealthStatus{Healthy: tt.healthy},
 				},
 			}
-			repo := &intervalRepository{repository.NewMockRepository(t), repository.NewMockVersioned(t)}
+			repo := &intervalRepository{repositorytest.NewMockRepository(t), repositorytest.NewMockVersioned(t)}
 			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
 			shouldResync := tt.interval && tt.enabled
 			health := obj.Status.Health
@@ -1929,13 +1932,13 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 				shouldUpdate: true,
 			}
 
-			repoFactory := repository.NewMockFactory(t)
+			repoFactory := repositorytest.NewMockFactory(t)
 			repoFactory.On("Build", mock.Anything, mock.Anything).
 				Return(mockRepo, nil).Maybe()
 
 			mockJobs := &mockJobsQueueStore{
-				MockQueue: jobs.NewMockQueue(t),
-				MockStore: jobs.NewMockStore(t),
+				MockQueue: jobstest.NewMockQueue(t),
+				MockStore: jobstest.NewMockStore(t),
 			}
 
 			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -2055,18 +2058,18 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			tester := repository.NewTester()
 			healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(repo).Maybe()
 			mockRepo.On("Test", mock.Anything).
 				Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
-			repoFactory := repository.NewMockFactory(t)
+			repoFactory := repositorytest.NewMockFactory(t)
 			repoFactory.On("Build", mock.Anything, mock.Anything).
 				Return(mockRepo, nil).Maybe()
 
 			mockJobs := &mockJobsQueueStore{
-				MockQueue: jobs.NewMockQueue(t),
-				MockStore: jobs.NewMockStore(t),
+				MockQueue: jobstest.NewMockQueue(t),
+				MockStore: jobstest.NewMockStore(t),
 			}
 
 			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -2154,7 +2157,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
@@ -2223,7 +2226,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	// ServiceUnavailable -- so it exercises the "surface on status, return nil"
 	// branch.
 	buildErr := errors.New("create repository from configuration: boom")
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
@@ -2311,7 +2314,7 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 			mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			mockFactory := repository.NewMockFactory(t)
+			mockFactory := repositorytest.NewMockFactory(t)
 			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildErr)
 			finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
@@ -2362,7 +2365,7 @@ func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrSecretDecryptFailed)
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
@@ -2411,7 +2414,7 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 
 	patcher := &capturePatcher{}
@@ -2505,7 +2508,7 @@ func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T
 			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
 			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 			repoGetter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
-			extra := repository.NewMockExtra(t)
+			extra := repositorytest.NewMockExtra(t)
 			extra.EXPECT().Type().Return(repo.Spec.Type)
 			extra.EXPECT().Build(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *provisioning.Repository) {
 				deadline, ok := ctx.Deadline()
@@ -2611,10 +2614,10 @@ func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
 			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
 			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 			getter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
-			gitRepo := git.NewMockGitRepository(t)
+			gitRepo := gittest.NewMockGitRepository(t)
 			gitRepo.EXPECT().GetCurrentBranch().Return("").Once()
 			gitRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.branchErr).Once()
-			factory := repository.NewMockFactory(t)
+			factory := repositorytest.NewMockFactory(t)
 			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(gitRepo, nil).Once()
 			patcher := &capturePatcher{err: tt.patchErr}
 			reg := prometheus.NewPedanticRegistry()
@@ -2738,7 +2741,7 @@ func TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure(t
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 
 	reg := prometheus.NewPedanticRegistry()
@@ -2911,7 +2914,7 @@ func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) 
 	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
 
 	patcher := &capturePatcher{}
@@ -2993,7 +2996,7 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
-			repoFactory := repository.NewMockFactory(t)
+			repoFactory := repositorytest.NewMockFactory(t)
 
 			rc := &RepositoryController{
 				repos:         repoGetter,
@@ -3045,14 +3048,14 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
 
-	mockConfigRepo := repository.NewMockConfigRepository(t)
+	mockConfigRepo := repositorytest.NewMockConfigRepository(t)
 	mockConfigRepo.EXPECT().Config().Return(repo)
 	mockConfigRepo.EXPECT().Test(mock.Anything).Return(
 		&provisioning.TestResults{Success: true, Code: http.StatusOK},
 		nil,
 	)
 
-	mockFactory := repository.NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConfigRepo, nil)
 
 	patcher := &capturePatcher{}
@@ -3253,10 +3256,10 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		Token:     "fresh-token",
 		ExpiresAt: time.Now().Add(2 * time.Hour),
 	}
-	mockConn := connection.NewMockConnection(t)
+	mockConn := connectiontest.NewMockConnection(t)
 	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
 
-	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory := connectiontest.NewMockFactory(t)
 	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
 
 	// Client mock: Connections(namespace).Get returns the Connection object
@@ -3274,11 +3277,11 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	}
 
 	// The repo factory and health checker are reached.
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(repo).Maybe()
 	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
@@ -3346,10 +3349,10 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 
 	// Access lost: the connection can no longer mint a repository token.
 	authErr := fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication)
-	mockConn := connection.NewMockConnection(t)
+	mockConn := connectiontest.NewMockConnection(t)
 	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(nil, authErr).Once()
 
-	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory := connectiontest.NewMockFactory(t)
 	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
 
 	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
@@ -3468,10 +3471,10 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				Token:     "fresh-token",
 				ExpiresAt: time.Now().Add(2 * time.Hour),
 			}
-			mockConn := connection.NewMockConnection(t)
+			mockConn := connectiontest.NewMockConnection(t)
 			mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
 
-			mockConnFactory := connection.NewMockFactory(t)
+			mockConnFactory := connectiontest.NewMockFactory(t)
 			mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
 
 			connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
@@ -3485,12 +3488,12 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 				},
 			}
 
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(repo).Maybe()
 			mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 			// The first build fails because the token secret is missing, triggering regeneration.
-			repoExtra := repository.NewMockExtra(t)
+			repoExtra := repositorytest.NewMockExtra(t)
 			repoExtra.EXPECT().Type().Return(repo.Spec.Type)
 			repoExtra.On("Build", mock.Anything, mock.Anything).
 				Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
@@ -3954,12 +3957,12 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
 	stub := &hookRepoStub{cfg: repo}
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -4046,12 +4049,12 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 	// cooldown guard failed to suppress rotation, EditWebhook would actually be
 	// reached and onUpdateCalls would be non-zero.
 	stub := &hookRepoStub{cfg: repo, hookErrSet: true}
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -4127,12 +4130,12 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 	// error), so the health Test still reports success (repository accessible) but
 	// GetWebhook fails during rotation — classified as a system-caused failure.
 	stub := &hookRepoStub{cfg: repo}
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	reg := prometheus.NewPedanticRegistry()
@@ -4272,12 +4275,12 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -4561,7 +4564,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 
 // newQuotaController wires a controller whose namespace holds the given repositories
 // against a limit of maxRepositories.
-func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provisioning.Repository) (*RepositoryController, *capturePatcher, *hookRepoStub, *repository.MockFactory) {
+func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provisioning.Repository) (*RepositoryController, *capturePatcher, *hookRepoStub, *repositorytest.MockFactory) {
 	t.Helper()
 
 	indexer := cache.NewIndexer(
@@ -4577,7 +4580,7 @@ func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provision
 	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 	stub := &hookRepoStub{cfg: repos[0], hookErrSet: true, hookErr: nil}
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
@@ -4589,8 +4592,8 @@ func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provision
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
 		jobs: &mockJobsQueueStore{
-			MockQueue: jobs.NewMockQueue(t),
-			MockStore: jobs.NewMockStore(t),
+			MockQueue: jobstest.NewMockQueue(t),
+			MockStore: jobstest.NewMockStore(t),
 		},
 		logger: logging.DefaultLogger.With("logger", loggerName),
 		tracer: tracing.InitializeTracerForTest(),
@@ -4783,12 +4786,12 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
 	stub := &hookRepoStub{cfg: repo, hookErrSet: true, hookErr: nil} // webhook creation succeeds
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
@@ -5172,12 +5175,12 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	healthChecker := NewRepositoryHealthChecker(statusPatcher, tester, healthMetrics)
 
 	stub := &hookRepoStub{cfg: repo}
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
 
 	mockJobs := &mockJobsQueueStore{
-		MockQueue: jobs.NewMockQueue(t),
-		MockStore: jobs.NewMockStore(t),
+		MockQueue: jobstest.NewMockQueue(t),
+		MockStore: jobstest.NewMockStore(t),
 	}
 
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)

@@ -19,6 +19,7 @@ import (
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
@@ -670,10 +671,10 @@ func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.Type
 }
 
 func newPerKindAlertRule(perKindTitle string, paused bool, labels map[string]string, dsUID string, panelID int64) *v0alpha1.AlertRule {
-	base := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithNamespaceUID(perKindSearchFolder),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	base := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithNamespaceUID(perKindSearchFolder),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 
 	rule := &v0alpha1.AlertRule{
@@ -701,11 +702,11 @@ func newPerKindAlertRule(perKindTitle string, paused bool, labels map[string]str
 
 func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], perKindTitle, dsUID, metric string) *v0alpha1.RecordingRule {
 	t.Helper()
-	base := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithNamespaceUID(perKindSearchFolder),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	base := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithNamespaceUID(perKindSearchFolder),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 
 	rule := &v0alpha1.RecordingRule{

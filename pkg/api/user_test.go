@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -87,7 +88,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
-		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+		secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 		legacyAuthInfoStore, err := authinfoimpl.ProvideLegacyStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		authInfoStore := authinfoimpl.ProvideStore(legacyAuthInfoStore, sc.cfg, nil, tracing.InitializeTracerForTest())

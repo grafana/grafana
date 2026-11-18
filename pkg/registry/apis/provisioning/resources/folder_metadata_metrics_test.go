@@ -13,6 +13,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 func TestFolderReadOutcome(t *testing.T) {
@@ -38,8 +39,8 @@ func TestFolderReadOutcome(t *testing.T) {
 }
 
 func TestFolderMetadataMetrics_recordRead(t *testing.T) {
-	newReader := func(repoType provisioning.RepositoryType) *repository.MockReaderWriter {
-		r := repository.NewMockReaderWriter(t)
+	newReader := func(repoType provisioning.RepositoryType) *repositorytest.MockReaderWriter {
+		r := repositorytest.NewMockReaderWriter(t)
 		r.On("Config").Return(&provisioning.Repository{
 			Spec: provisioning.RepositorySpec{Type: repoType},
 		}).Maybe()
@@ -62,7 +63,7 @@ func TestFolderMetadataMetrics_recordRead(t *testing.T) {
 
 	t.Run("nil metrics records nothing and never touches the repository", func(t *testing.T) {
 		var m *FolderMetadataMetrics
-		r := repository.NewMockReaderWriter(t) // no Config expectation: must not be called
+		r := repositorytest.NewMockReaderWriter(t) // no Config expectation: must not be called
 		assert.NotPanics(t, func() {
 			m.recordRead(r, time.Now(), nil)
 		})

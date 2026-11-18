@@ -21,8 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -42,9 +43,9 @@ func createMockRequester(orgID, userID int64) identity.Requester {
 
 func TestDashboardVersionService(t *testing.T) {
 	t.Run("Get dashboard versions", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
@@ -128,9 +129,9 @@ func TestDashboardVersionService(t *testing.T) {
 	})
 
 	t.Run("Get dashboard versions, with annonymous update", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
@@ -181,9 +182,9 @@ func TestDashboardVersionService(t *testing.T) {
 	})
 
 	t.Run("should dashboard not found error when k8s returns not found", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
@@ -200,9 +201,9 @@ func TestDashboardVersionService(t *testing.T) {
 
 func TestListDashboardVersions(t *testing.T) {
 	t.Run("List all versions for a given Dashboard ID through k8s", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 
@@ -239,9 +240,9 @@ func TestListDashboardVersions(t *testing.T) {
 	})
 
 	t.Run("List returns continue token when first fetch satisfies limit with more pages", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 
@@ -291,9 +292,9 @@ func TestListDashboardVersions(t *testing.T) {
 	})
 
 	t.Run("List returns correct continue token across multiple pages", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 
@@ -360,9 +361,9 @@ func TestListDashboardVersions(t *testing.T) {
 	})
 
 	t.Run("List returns continue token from last fetch when more pages exist", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 
@@ -432,9 +433,9 @@ func TestListDashboardVersions(t *testing.T) {
 	})
 
 	t.Run("should return dashboard not found error when k8s client says not found", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 		dashboardVersionService.features = featuremgmt.WithFeatures()
 		dashboardService.On("GetDashboardUIDByID", mock.Anything,
@@ -547,9 +548,9 @@ func TestListDashboardVersions(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				dashboardService := dashboards.NewFakeDashboardService(t)
+				dashboardService := dashboardstest.NewFakeDashboardService(t)
 				dashboardVersionService := Service{dashSvc: dashboardService, features: featuremgmt.WithFeatures()}
-				mockCli := new(client.MockK8sHandler)
+				mockCli := new(clienttest.MockK8sHandler)
 				dashboardVersionService.k8sclient = mockCli
 
 				dashboardService.On("GetDashboardUIDByID", mock.Anything,
@@ -582,12 +583,12 @@ func TestListDashboardVersions(t *testing.T) {
 
 func TestRestoreVersion(t *testing.T) {
 	t.Run("should always use k8s restoration", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardVersionService := Service{
 			dashSvc: dashboardService,
 			log:     log.New("dashboard-version"),
 		}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 
 		// Mock version data
@@ -650,14 +651,14 @@ func TestRestoreVersion(t *testing.T) {
 	})
 
 	t.Run("should return error when dashboard not found", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		features := featuremgmt.WithFeatures()
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
 			log:      log.New("dashboard-version"),
 		}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 
 		// Mock k8s client to return not found error
@@ -681,14 +682,14 @@ func TestRestoreVersion(t *testing.T) {
 	})
 
 	t.Run("should return error when version not found", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		features := featuremgmt.WithFeatures()
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
 			log:      log.New("dashboard-version"),
 		}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 
 		// This test uses k8s features, so we don't need GetDashboard mock
@@ -726,14 +727,14 @@ func TestRestoreVersion(t *testing.T) {
 	})
 
 	t.Run("should skip restoration when dashboard data is identical", func(t *testing.T) {
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		features := featuremgmt.WithFeatures()
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
 			log:      log.New("dashboard-version"),
 		}
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		dashboardVersionService.k8sclient = mockCli
 
 		// Mock identical dashboard data

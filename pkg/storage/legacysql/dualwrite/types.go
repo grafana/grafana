@@ -34,7 +34,7 @@ type StorageStatus struct {
 
 // Service is a service for managing the dual write storage
 //
-//go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
+//go:generate mockery --name Service --structname MockService --outpkg dualwritetest --output ./dualwritetest/ --filename service_mock.go --with-expecter
 type Service interface {
 	// Create a managed k8s storage instance
 	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)

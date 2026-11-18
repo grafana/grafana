@@ -44,15 +44,19 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest/multiorgtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -117,7 +121,7 @@ func TestNewAlertmanager(t *testing.T) {
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			cfg := AlertmanagerConfig{
@@ -189,7 +193,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	var err error
 	c.AlertmanagerConfig.Receivers, err = encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	require.NoError(t, err)
@@ -327,7 +331,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	var gotCnt int
@@ -601,7 +605,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 // managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -842,7 +846,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -911,7 +915,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1010,7 +1014,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1072,7 +1076,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)
@@ -1241,7 +1245,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -1271,7 +1275,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should have no silences at first.
@@ -1280,7 +1284,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Equal(t, 0, len(silences))
 
 	// Creating a silence should succeed.
-	gen := ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId())
+	gen := modelstest.SilenceGen(modelstest.SilenceMuts.WithEmptyId())
 	testSilence := notifier.SilenceToPostableSilence(gen())
 	id, err := am.CreateSilence(ctx, testSilence)
 	require.NoError(t, err)
@@ -1353,7 +1357,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -1428,7 +1432,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// We should start with the default config.
@@ -1463,7 +1467,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
 	// Valid template
@@ -1520,10 +1524,10 @@ func TestIntegrationRemoteAlertmanagerTestIntegration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	_, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 
-	integration := ngmodels.IntegrationGen(ngmodels.IntegrationMuts.WithValidConfig("webhook"))()
+	integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig("webhook"))()
 	integration.Settings["url"] = "grafana://noop" // TODO remove later if https://github.com/grafana/alerting/pull/465 merged
 	testAlert := alertingModels.TestReceiversConfigAlertParams{
 		Annotations: model.LabelSet{
@@ -1580,7 +1584,7 @@ receivers:
 func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, features featuremgmt.FeatureToggles,
 	secretsService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (*notifier.MultiOrgAlertmanager, *Alertmanager) {
-	cfgStore := notifier.NewFakeNotificationStore(t, notificationSettings)
+	cfgStore := notifiertest.NewFakeNotificationStore(t, notificationSettings)
 	testCrypto := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 
@@ -1595,14 +1599,14 @@ func newRemoteMOA(t *testing.T, cfg AlertmanagerConfig, notificationSettings map
 	)
 	require.NoError(t, err)
 
-	return notifier.NewTestMultiOrgAlertmanager(t,
-		notifier.WithFeatureToggles(am.features),
-		notifier.WithSecretService(secretsService),
-		notifier.WithConfigStore(cfgStore),
-		notifier.WithAlertmanagers(map[int64]notifier.Alertmanager{
+	return multiorgtest.NewTestMultiOrgAlertmanager(t,
+		multiorgtest.WithFeatureToggles(am.features),
+		multiorgtest.WithSecretService(secretsService),
+		multiorgtest.WithConfigStore(cfgStore),
+		multiorgtest.WithAlertmanagers(map[int64]notifier.Alertmanager{
 			1: am,
 		}),
-		notifier.WithSkipLoad(),
+		multiorgtest.WithSkipLoad(),
 	), am
 }
 

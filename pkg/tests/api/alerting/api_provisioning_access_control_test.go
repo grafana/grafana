@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -233,10 +234,10 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	}
 
 	generateContactPoint := func(name string) definitions.EmbeddedContactPoint {
-		integration := ngmodels.IntegrationGen(
-			ngmodels.IntegrationMuts.WithValidConfig("email"),
-			ngmodels.IntegrationMuts.WithUID(""),
-			ngmodels.IntegrationMuts.WithName(name),
+		integration := modelstest.IntegrationGen(
+			modelstest.IntegrationMuts.WithValidConfig("email"),
+			modelstest.IntegrationMuts.WithUID(""),
+			modelstest.IntegrationMuts.WithName(name),
 		)()
 		return provisioning.GrafanaIntegrationConfigToEmbeddedContactPoint(&integration, ngmodels.ProvenanceAPI)
 	}

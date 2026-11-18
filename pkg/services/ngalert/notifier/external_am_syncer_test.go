@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -35,6 +37,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -240,13 +243,13 @@ func buildSyncTestMOA(
 	operatorUID string,
 	orgIDs []int64,
 	proxy *fakeDatasourceProxy,
-) (*MultiOrgAlertmanager, *fakeConfigStore) {
+) (*MultiOrgAlertmanager, *notifiertest.FakeConfigStore) {
 	t.Helper()
 
-	cs := NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
+	cs := notifiertest.NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
 	kvStore := ngfakes.NewFakeKVStore(t)
 	provStore := ngfakes.NewFakeProvisioningStore()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 
@@ -262,7 +265,7 @@ func buildSyncTestMOA(
 	moa, err := NewMultiOrgAlertmanager(
 		cfg,
 		cs,
-		NewFakeOrgStore(t, orgIDs),
+		notifiertest.NewFakeOrgStore(t, orgIDs),
 		kvStore,
 		provStore,
 		secretsService.GetDecryptedValue,
@@ -300,7 +303,7 @@ func buildSyncTestMOA(
 // assertNoExtraConfigSaved asserts that the saved Alertmanager configuration for
 // orgID has no ExtraConfigs — i.e. the sync did not write one (either because it
 // was skipped or because it failed).
-func assertNoExtraConfigSaved(t *testing.T, cs *fakeConfigStore, orgID int64) {
+func assertNoExtraConfigSaved(t *testing.T, cs *notifiertest.FakeConfigStore, orgID int64) {
 	t.Helper()
 	saved, err := cs.GetLatestAlertmanagerConfiguration(context.Background(), orgID)
 	require.NoError(t, err)
@@ -653,7 +656,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// bootstrap default. Bootstrap counts as one history entry; the first sync
 	// adds a second.
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 2)
+	require.Len(t, cs.HistoricConfigs[1], 2)
 	require.NotZero(t, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1")), "hash gauge should be set after a successful sync")
 
 	// Second tick on identical Mimir output: stored-config hash matches the
@@ -661,7 +664,7 @@ func TestSyncExternalAMs_DedupOnIdenticalResponse(t *testing.T) {
 	// new history row is written. Counts as success — we don't track skipped
 	// separately, matching the regular apply loop.
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 2, "no-op sync should not write a new history row")
+	require.Len(t, cs.HistoricConfigs[1], 2, "no-op sync should not write a new history row")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")), "both ticks count as success")
 	assert.Equal(t, 2, proxy.callCount("mimir-uid"), "dedup compares hashes after fetching, it doesn't skip the fetch itself")
@@ -791,14 +794,14 @@ func TestSyncExternalAMs_SavesWhenResponseChanges(t *testing.T) {
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 2, "first sync writes one history row on top of bootstrap")
+	require.Len(t, cs.HistoricConfigs[1], 2, "first sync writes one history row on top of bootstrap")
 	firstHash := testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1"))
 	require.NotZero(t, firstHash)
 
 	proxy.setResponse("mimir-uid", http.StatusOK, mimirConfigBody(t, "route:\n  receiver: mimir-changed\nreceivers:\n  - name: mimir-changed"))
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
-	require.Len(t, cs.historicConfigs[1], 3, "different response bytes should trigger a new save")
+	require.Len(t, cs.HistoricConfigs[1], 3, "different response bytes should trigger a new save")
 
 	assert.Equal(t, float64(2), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncTotal.WithLabelValues("1")))
 	assert.NotEqual(t, firstHash, testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncHash.WithLabelValues("1")), "hash gauge should change when config changes")
@@ -826,12 +829,12 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 		AlertmanagerConfig: amConfig,
 	}, false, false, false)
 	require.NoError(t, err)
-	rowsBefore := len(cs.historicConfigs[1])
+	rowsBefore := len(cs.HistoricConfigs[1])
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// No new history row — the save was rejected.
-	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "identifier collision must not write history")
+	assert.Equal(t, rowsBefore, len(cs.HistoricConfigs[1]), "identifier collision must not write history")
 
 	// Failure metric tagged with the dedicated reason so operators can alert on it
 	// separately from generic save errors.
@@ -853,12 +856,12 @@ func TestSyncExternalAMs_NoUpstreamConfigClassifiedOnMetric(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	rowsBefore := len(cs.historicConfigs[1])
+	rowsBefore := len(cs.HistoricConfigs[1])
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
 	// No new history row — the syncer didn't attempt to persist anything.
-	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "empty upstream config must not write history")
+	assert.Equal(t, rowsBefore, len(cs.HistoricConfigs[1]), "empty upstream config must not write history")
 
 	// Failure metric tagged with the dedicated reason so operators can alert
 	// on a degenerate-but-valid upstream state distinctly from real save errors.
@@ -883,11 +886,11 @@ func TestSyncExternalAMs_Mimir404ClassifiedAsNoUpstreamConfig(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	rowsBefore := len(cs.historicConfigs[1])
+	rowsBefore := len(cs.HistoricConfigs[1])
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "404 upstream must not write history")
+	assert.Equal(t, rowsBefore, len(cs.HistoricConfigs[1]), "404 upstream must not write history")
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 }
@@ -914,11 +917,11 @@ func TestSyncExternalAMs_ProxyLocal404ClassifiedAsFetchFailure(t *testing.T) {
 	adminCfg.setUID(1, "mimir-uid")
 
 	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1}, proxy)
-	rowsBefore := len(cs.historicConfigs[1])
+	rowsBefore := len(cs.HistoricConfigs[1])
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	assert.Equal(t, rowsBefore, len(cs.historicConfigs[1]), "proxy-local 404 must not write history")
+	assert.Equal(t, rowsBefore, len(cs.HistoricConfigs[1]), "proxy-local 404 must not write history")
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
 	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "no_upstream_config")))
 }

@@ -40,8 +40,8 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secrettest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -177,7 +177,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	loader, err := router.NewCloudRoutesLoader(cfg, router.PluginDependencies{
 		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
-		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
+		SecureValues:       secrettest.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)

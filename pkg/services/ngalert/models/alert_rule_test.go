@@ -1,4 +1,4 @@
-package models
+package models_test
 
 import (
 	"encoding/base64"
@@ -12,6 +12,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -27,14 +30,14 @@ import (
 
 func TestGroupCursorEncodeDecode(t *testing.T) {
 	t.Run("encodes and decodes fullpath cursor", func(t *testing.T) {
-		in := GroupCursor{
+		in := models.GroupCursor{
 			FolderFullpath: "parent/child",
 			NamespaceUID:   "namespace-1",
 			RuleGroup:      "group-a",
 		}
 
-		token := EncodeGroupCursor(in)
-		out, err := DecodeGroupCursor(token)
+		token := models.EncodeGroupCursor(in)
+		out, err := models.DecodeGroupCursor(token)
 		require.NoError(t, err)
 		require.Equal(t, in, out)
 	})
@@ -52,7 +55,7 @@ func TestGroupCursorEncodeDecode(t *testing.T) {
 		require.NoError(t, err)
 		token := base64.URLEncoding.EncodeToString(payload)
 
-		decoded, err := DecodeGroupCursor(token)
+		decoded, err := models.DecodeGroupCursor(token)
 		require.NoError(t, err)
 		require.Equal(t, "", decoded.FolderFullpath)
 		require.Equal(t, legacy.NamespaceUID, decoded.NamespaceUID)
@@ -63,35 +66,35 @@ func TestGroupCursorEncodeDecode(t *testing.T) {
 func TestSortAlertRulesByGroupKeyAndIndex(t *testing.T) {
 	tc := []struct {
 		name     string
-		input    []*AlertRule
-		expected []*AlertRule
+		input    []*models.AlertRule
+		expected []*models.AlertRule
 	}{{
 		name: "alert rules are ordered by organization",
-		input: []*AlertRule{
+		input: []*models.AlertRule{
 			{OrgID: 2, NamespaceUID: "test2"},
 			{OrgID: 1, NamespaceUID: "test1"},
 		},
-		expected: []*AlertRule{
+		expected: []*models.AlertRule{
 			{OrgID: 1, NamespaceUID: "test1"},
 			{OrgID: 2, NamespaceUID: "test2"},
 		},
 	}, {
 		name: "alert rules in same organization are ordered by namespace",
-		input: []*AlertRule{
+		input: []*models.AlertRule{
 			{OrgID: 1, NamespaceUID: "test2"},
 			{OrgID: 1, NamespaceUID: "test1"},
 		},
-		expected: []*AlertRule{
+		expected: []*models.AlertRule{
 			{OrgID: 1, NamespaceUID: "test1"},
 			{OrgID: 1, NamespaceUID: "test2"},
 		},
 	}, {
 		name: "alert rules with same group key are ordered by index",
-		input: []*AlertRule{
+		input: []*models.AlertRule{
 			{OrgID: 1, NamespaceUID: "test", RuleGroupIndex: 2},
 			{OrgID: 1, NamespaceUID: "test", RuleGroupIndex: 1},
 		},
-		expected: []*AlertRule{
+		expected: []*models.AlertRule{
 			{OrgID: 1, NamespaceUID: "test", RuleGroupIndex: 1},
 			{OrgID: 1, NamespaceUID: "test", RuleGroupIndex: 2},
 		},
@@ -99,23 +102,23 @@ func TestSortAlertRulesByGroupKeyAndIndex(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			AlertRulesBy(AlertRulesByGroupKeyAndIndex).Sort(tt.input)
+			models.AlertRulesBy(models.AlertRulesByGroupKeyAndIndex).Sort(tt.input)
 			assert.EqualValues(t, tt.expected, tt.input)
 		})
 	}
 }
 
 func TestNoDataStateFromString(t *testing.T) {
-	allKnownNoDataStates := [...]NoDataState{
-		Alerting,
-		NoData,
-		OK,
+	allKnownNoDataStates := [...]models.NoDataState{
+		models.Alerting,
+		models.NoData,
+		models.OK,
 	}
 
 	t.Run("should parse known values", func(t *testing.T) {
 		for _, state := range allKnownNoDataStates {
 			stateStr := string(state)
-			actual, err := NoDataStateFromString(stateStr)
+			actual, err := models.NoDataStateFromString(stateStr)
 			require.NoErrorf(t, err, "failed to parse a known state [%s]", stateStr)
 			require.Equal(t, state, actual)
 		}
@@ -124,31 +127,31 @@ func TestNoDataStateFromString(t *testing.T) {
 	t.Run("should fail to parse in different case", func(t *testing.T) {
 		for _, state := range allKnownNoDataStates {
 			stateStr := strings.ToLower(string(state))
-			actual, err := NoDataStateFromString(stateStr)
+			actual, err := models.NoDataStateFromString(stateStr)
 			require.Errorf(t, err, "expected error for input value [%s]", stateStr)
-			require.Equal(t, NoDataState(""), actual)
+			require.Equal(t, models.NoDataState(""), actual)
 		}
 	})
 
 	t.Run("should fail to parse unknown values", func(t *testing.T) {
 		input := util.GenerateShortUID()
-		actual, err := NoDataStateFromString(input)
+		actual, err := models.NoDataStateFromString(input)
 		require.Errorf(t, err, "expected error for input value [%s]", input)
-		require.Equal(t, NoDataState(""), actual)
+		require.Equal(t, models.NoDataState(""), actual)
 	})
 }
 
 func TestErrStateFromString(t *testing.T) {
-	allKnownErrStates := [...]ExecutionErrorState{
-		AlertingErrState,
-		ErrorErrState,
-		OkErrState,
+	allKnownErrStates := [...]models.ExecutionErrorState{
+		models.AlertingErrState,
+		models.ErrorErrState,
+		models.OkErrState,
 	}
 
 	t.Run("should parse known values", func(t *testing.T) {
 		for _, state := range allKnownErrStates {
 			stateStr := string(state)
-			actual, err := ErrStateFromString(stateStr)
+			actual, err := models.ErrStateFromString(stateStr)
 			require.NoErrorf(t, err, "failed to parse a known state [%s]", stateStr)
 			require.Equal(t, state, actual)
 		}
@@ -157,17 +160,17 @@ func TestErrStateFromString(t *testing.T) {
 	t.Run("should fail to parse in different case", func(t *testing.T) {
 		for _, state := range allKnownErrStates {
 			stateStr := strings.ToLower(string(state))
-			actual, err := ErrStateFromString(stateStr)
+			actual, err := models.ErrStateFromString(stateStr)
 			require.Errorf(t, err, "expected error for input value [%s]", stateStr)
-			require.Equal(t, ExecutionErrorState(""), actual)
+			require.Equal(t, models.ExecutionErrorState(""), actual)
 		}
 	})
 
 	t.Run("should fail to parse unknown values", func(t *testing.T) {
 		input := util.GenerateShortUID()
-		actual, err := ErrStateFromString(input)
+		actual, err := models.ErrStateFromString(input)
 		require.Errorf(t, err, "expected error for input value [%s]", input)
-		require.Equal(t, ExecutionErrorState(""), actual)
+		require.Equal(t, models.ExecutionErrorState(""), actual)
 	})
 }
 
@@ -189,47 +192,47 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 		},
 		{
 			name:                 "dashboardUID is not present",
-			annotations:          map[string]string{PanelIDAnnotation: "1234567890"},
-			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
+			annotations:          map[string]string{models.PanelIDAnnotation: "1234567890"},
+			expectedError:        models.ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", models.DashboardUIDAnnotation, models.PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "dashboardUID is present but empty",
-			annotations:          map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
-			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
+			annotations:          map[string]string{models.DashboardUIDAnnotation: "", models.PanelIDAnnotation: "1234567890"},
+			expectedError:        models.ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", models.DashboardUIDAnnotation, models.PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "panelID is not present",
-			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
-			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
+			annotations:          map[string]string{models.DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError:        models.ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", models.DashboardUIDAnnotation, models.PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "panelID is present but empty",
-			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
-			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
+			annotations:          map[string]string{models.DashboardUIDAnnotation: "cKy7f6Hk", models.PanelIDAnnotation: ""},
+			expectedError:        models.ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", models.DashboardUIDAnnotation, models.PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
-			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
-			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  PanelIDAnnotation,
+			annotations:          map[string]string{models.DashboardUIDAnnotation: "cKy7f6Hk", models.PanelIDAnnotation: "fgh"},
+			expectedError:        models.ErrAlertRuleFailedValidation,
+			expectedErrContains:  models.PanelIDAnnotation,
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "dashboardUID and panelID are present and correct",
-			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "65"},
+			annotations:          map[string]string{models.DashboardUIDAnnotation: "cKy7f6Hk", models.PanelIDAnnotation: "65"},
 			expectedError:        nil,
 			expectedDashboardUID: "cKy7f6Hk",
 			expectedPanelID:      65,
@@ -238,9 +241,9 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			rule := RuleGen.With(
-				RuleMuts.WithDashboardAndPanel(nil, nil),
-				RuleMuts.WithAnnotations(tc.annotations),
+			rule := modelstest.RuleGen.With(
+				modelstest.RuleMuts.WithDashboardAndPanel(nil, nil),
+				modelstest.RuleMuts.WithAnnotations(tc.annotations),
 			).Generate()
 			err := rule.SetDashboardAndPanelFromAnnotations()
 
@@ -258,65 +261,65 @@ func TestPatchPartialAlertRule(t *testing.T) {
 	t.Run("patches", func(t *testing.T) {
 		testCases := []struct {
 			name    string
-			mutator func(r *AlertRuleWithOptionals)
+			mutator func(r *models.AlertRuleWithOptionals)
 		}{
 			{
 				name: "title is empty",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.Title = ""
 				},
 			},
 			{
 				name: "condition and data are empty",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.Condition = ""
 					r.Data = nil
 				},
 			},
 			{
 				name: "ExecErrState is empty",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.ExecErrState = ""
 				},
 			},
 			{
 				name: "NoDataState is empty",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.NoDataState = ""
 				},
 			},
 			{
 				name: "For is -1",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.For = -1
 				},
 			},
 			{
 				name: "IsPaused did not come in request",
-				mutator: func(r *AlertRuleWithOptionals) {
+				mutator: func(r *models.AlertRuleWithOptionals) {
 					r.IsPaused = true
 				},
 			},
 			{
 				name: "No metadata",
-				mutator: func(r *AlertRuleWithOptionals) {
-					r.Metadata = AlertRuleMetadata{}
+				mutator: func(r *models.AlertRuleWithOptionals) {
+					r.Metadata = models.AlertRuleMetadata{}
 					r.HasEditorSettings = false
 				},
 			},
 		}
 
-		gen := RuleGen.With(
-			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
-			RuleMuts.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		gen := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
+			modelstest.RuleMuts.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		)
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				var existing *AlertRuleWithOptionals
+				var existing *models.AlertRuleWithOptionals
 				for range 10 {
 					rule := gen.Generate()
-					existing = &AlertRuleWithOptionals{AlertRule: rule}
+					existing = &models.AlertRuleWithOptionals{AlertRule: rule}
 					cloned := *existing
 					testCase.mutator(&cloned)
 					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
@@ -329,7 +332,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				testCase.mutator(&patch)
 
 				require.NotEqual(t, *existing, patch)
-				PatchPartialAlertRule(&existing.AlertRule, &patch)
+				models.PatchPartialAlertRule(&existing.AlertRule, &patch)
 				require.Equal(t, *existing, patch)
 			})
 		}
@@ -338,75 +341,75 @@ func TestPatchPartialAlertRule(t *testing.T) {
 	t.Run("does not patch", func(t *testing.T) {
 		testCases := []struct {
 			name    string
-			mutator func(r *AlertRule)
+			mutator func(r *models.AlertRule)
 		}{
 			{
 				name: "ID",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.ID = 0
 				},
 			},
 			{
 				name: "OrgID",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.OrgID = 0
 				},
 			},
 			{
 				name: "Updated",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Updated = time.Time{}
 				},
 			},
 			{
 				name: "Version",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Version = 0
 				},
 			},
 			{
 				name: "UID",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.UID = ""
 				},
 			},
 			{
 				name: "DashboardUID",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.DashboardUID = nil
 				},
 			},
 			{
 				name: "PanelID",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.PanelID = nil
 				},
 			},
 			{
 				name: "Annotations",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Annotations = nil
 				},
 			},
 			{
 				name: "Labels",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Labels = nil
 				},
 			},
 		}
 
-		gen := RuleGen.With(
-			RuleMuts.WithUniqueID(),
-			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
+		gen := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueID(),
+			modelstest.RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
 		)
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				var existing *AlertRule
+				var existing *models.AlertRule
 				for {
 					existing = gen.GenerateRef()
-					cloned := CopyRule(existing)
+					cloned := modelstest.CopyRule(existing)
 					// make sure the generated rule does not match the mutated one
 					testCase.mutator(cloned)
 					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
@@ -415,9 +418,9 @@ func TestPatchPartialAlertRule(t *testing.T) {
 						break
 					}
 				}
-				patch := AlertRuleWithOptionals{AlertRule: *existing}
+				patch := models.AlertRuleWithOptionals{AlertRule: *existing}
 				testCase.mutator(&patch.AlertRule)
-				PatchPartialAlertRule(existing, &patch)
+				models.PatchPartialAlertRule(existing, &patch)
 				require.NotEqual(t, *existing, &patch.AlertRule)
 			})
 		}
@@ -427,15 +430,15 @@ func TestPatchPartialAlertRule(t *testing.T) {
 // nolint:gocyclo
 func TestDiff(t *testing.T) {
 	t.Run("should return nil if there is no diff", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := CopyRule(rule1)
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.CopyRule(rule1)
 		result := rule1.Diff(rule2)
 		require.Emptyf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
 	})
 
 	t.Run("should respect fields to ignore", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := CopyRule(rule1)
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.CopyRule(rule1)
 		rule2.ID = rule1.ID/2 + 1
 		rule2.Version = rule1.Version/2 + 1
 		rule2.Updated = rule1.Updated.Add(1 * time.Second)
@@ -444,9 +447,9 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should find diff in simple fields", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := RuleGen.With(
-			RuleGen.WithMissingSeriesEvalsToResolve(*rule1.MissingSeriesEvalsToResolve + 1),
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithMissingSeriesEvalsToResolve(*rule1.MissingSeriesEvalsToResolve + 1),
 		).GenerateRef()
 
 		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings", "Metadata") // these fields will be tested separately
@@ -604,9 +607,9 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should not see difference between nil and empty Annotations", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
+		rule1 := modelstest.RuleGen.GenerateRef()
 		rule1.Annotations = make(map[string]string)
-		rule2 := CopyRule(rule1)
+		rule2 := modelstest.CopyRule(rule1)
 		rule2.Annotations = nil
 
 		diff := rule1.Diff(rule2)
@@ -614,8 +617,8 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Annotations", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := CopyRule(rule1)
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.CopyRule(rule1)
 
 		rule1.Annotations = map[string]string{
 			"key1": "value1",
@@ -651,9 +654,9 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should not see difference between nil and empty Labels", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
+		rule1 := modelstest.RuleGen.GenerateRef()
 		rule1.Annotations = make(map[string]string)
-		rule2 := CopyRule(rule1)
+		rule2 := modelstest.CopyRule(rule1)
 		rule2.Annotations = nil
 
 		diff := rule1.Diff(rule2)
@@ -661,8 +664,8 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Labels", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := CopyRule(rule1)
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.CopyRule(rule1)
 
 		rule1.Labels = map[string]string{
 			"key1": "value1",
@@ -698,31 +701,26 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Data", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
-		rule2 := CopyRule(rule1)
+		rule1 := modelstest.RuleGen.GenerateRef()
+		rule2 := modelstest.CopyRule(rule1)
 
-		query1 := AlertQuery{
+		query1 := models.AlertQuery{
 			RefID:     "A",
 			QueryType: util.GenerateShortUID(),
-			RelativeTimeRange: RelativeTimeRange{
-				From: Duration(5 * time.Hour),
+			RelativeTimeRange: models.RelativeTimeRange{
+				From: models.Duration(5 * time.Hour),
 				To:   0,
 			},
 			DatasourceUID: util.GenerateShortUID(),
 			Model:         json.RawMessage(`{ "test": "data"}`),
-			modelProps: map[string]any{
-				"test": 1,
-			},
 		}
+		query1 = models.WithModelPropsForTest(query1, map[string]any{"test": 1})
 
-		rule1.Data = []AlertQuery{query1}
+		rule1.Data = []models.AlertQuery{query1}
 
 		t.Run("should ignore modelProps", func(t *testing.T) {
-			query2 := query1
-			query2.modelProps = map[string]any{
-				"some": "other value",
-			}
-			rule2.Data = []AlertQuery{query2}
+			query2 := models.WithModelPropsForTest(query1, map[string]any{"some": "other value"})
+			rule2.Data = []models.AlertQuery{query2}
 
 			diff := rule1.Diff(rule2)
 
@@ -737,7 +735,7 @@ func TestDiff(t *testing.T) {
 			query2 := query1
 			query2.QueryType = "test"
 			query2.RefID = "test"
-			rule2.Data = []AlertQuery{query2}
+			rule2.Data = []models.AlertQuery{query2}
 
 			diff := rule1.Diff(rule2)
 
@@ -757,14 +755,14 @@ func TestDiff(t *testing.T) {
 			newQuery := query1
 			old.Model = json.RawMessage(`{"field1": "$A \u003c 1"}`)
 			newQuery.Model = json.RawMessage(`{"field1": "$A < 1"}`)
-			rule1.Data = []AlertQuery{old}
-			rule2.Data = []AlertQuery{newQuery}
+			rule1.Data = []models.AlertQuery{old}
+			rule2.Data = []models.AlertQuery{newQuery}
 
 			diff := rule1.Diff(rule2)
 			assert.Nil(t, diff)
 
 			// reset rule1
-			rule1.Data = []AlertQuery{query1}
+			rule1.Data = []models.AlertQuery{query1}
 		})
 
 		t.Run("should detect new changes in array if too many fields changed", func(t *testing.T) {
@@ -774,7 +772,7 @@ func TestDiff(t *testing.T) {
 			query2.DatasourceUID = "test"
 			query2.Model = json.RawMessage(`{ "test": "da2ta"}`)
 
-			rule2.Data = []AlertQuery{query2}
+			rule2.Data = []models.AlertQuery{query2}
 
 			diff := rule1.Diff(rule2)
 
@@ -795,9 +793,9 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in NotificationSettings", func(t *testing.T) {
-		rule1 := RuleGen.GenerateRef()
+		rule1 := modelstest.RuleGen.GenerateRef()
 
-		baseNotificationSettings := NotificationSettingsGen(NSMuts.WithGroupBy("test1", "test2"))()
+		baseNotificationSettings := modelstest.NotificationSettingsGen(modelstest.NSMuts.WithGroupBy("test1", "test2"))()
 		baseSettings := baseNotificationSettings.ContactPointRouting
 		rule1.NotificationSettings = &baseNotificationSettings
 
@@ -809,12 +807,12 @@ func TestDiff(t *testing.T) {
 
 		testCases := []struct {
 			name                 string
-			notificationSettings NotificationSettings
+			notificationSettings models.NotificationSettings
 			diffs                cmputil.DiffReport
 		}{
 			{
 				name:                 "should detect changes in Receiver",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithReceiver(baseSettings.Receiver+"-modified")),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithReceiver(baseSettings.Receiver+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.Receiver",
@@ -825,7 +823,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupWait",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.GroupWait",
@@ -836,7 +834,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupInterval",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.GroupInterval",
@@ -847,7 +845,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in RepeatInterval",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.RepeatInterval",
@@ -858,7 +856,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupBy",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.GroupBy[0]",
@@ -874,7 +872,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in MuteTimeIntervals",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.MuteTimeIntervals[0]",
@@ -890,7 +888,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in ActiveTimeIntervals",
-				notificationSettings: CopyNotificationSettings(baseNotificationSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				notificationSettings: modelstest.CopyNotificationSettings(baseNotificationSettings, modelstest.NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings.ContactPointRouting.ActiveTimeIntervals[0]",
@@ -908,7 +906,7 @@ func TestDiff(t *testing.T) {
 
 		for _, tt := range testCases {
 			t.Run(tt.name, func(t *testing.T) {
-				rule2 := CopyRule(rule1)
+				rule2 := modelstest.CopyRule(rule1)
 				rule2.NotificationSettings = &tt.notificationSettings
 				diffs := rule1.Diff(rule2)
 
@@ -923,12 +921,12 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Metadata.EditorSettings", func(t *testing.T) {
-		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+		rule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithMetadata(models.AlertRuleMetadata{EditorSettings: models.EditorSettings{
 			SimplifiedQueryAndExpressionsSection: false,
 			SimplifiedNotificationsSection:       false,
 		}})).GenerateRef()
 
-		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{EditorSettings: EditorSettings{
+		rule2 := modelstest.CopyRule(rule1, modelstest.RuleGen.WithMetadata(models.AlertRuleMetadata{EditorSettings: models.EditorSettings{
 			SimplifiedQueryAndExpressionsSection: true,
 			SimplifiedNotificationsSection:       true,
 		}}))
@@ -941,11 +939,11 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Metadata.PrometheusStyleRule", func(t *testing.T) {
-		rule1 := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+		rule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithMetadata(models.AlertRuleMetadata{PrometheusStyleRule: &models.PrometheusStyleRule{
 			OriginalRuleDefinition: "data",
 		}})).GenerateRef()
 
-		rule2 := CopyRule(rule1, RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+		rule2 := modelstest.CopyRule(rule1, modelstest.RuleGen.WithMetadata(models.AlertRuleMetadata{PrometheusStyleRule: &models.PrometheusStyleRule{
 			OriginalRuleDefinition: "updated data",
 		}}))
 
@@ -957,7 +955,7 @@ func TestDiff(t *testing.T) {
 }
 
 func TestSortByGroupIndex(t *testing.T) {
-	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
+	ensureNotSorted := func(t *testing.T, rules []*models.AlertRule, less func(i, j int) bool) {
 		for range 5 {
 			rand.Shuffle(len(rules), func(i, j int) {
 				rules[i], rules[j] = rules[j], rules[i]
@@ -970,27 +968,27 @@ func TestSortByGroupIndex(t *testing.T) {
 	}
 
 	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
-		rules := RuleGen.With(
-			RuleMuts.WithUniqueGroupIndex(),
+		rules := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueGroupIndex(),
 		).GenerateManyRef(5, 20)
 		ensureNotSorted(t, rules, func(i, j int) bool {
 			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
 		})
-		RulesGroup(rules).SortByGroupIndex()
+		models.RulesGroup(rules).SortByGroupIndex()
 		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
 			return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
 		}))
 	})
 
 	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
-		rules := RuleGen.With(
-			RuleMuts.WithUniqueID(),
-			RuleMuts.WithGroupIndex(rand.Int()),
+		rules := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueID(),
+			modelstest.RuleMuts.WithGroupIndex(rand.Int()),
 		).GenerateManyRef(5, 20)
 		ensureNotSorted(t, rules, func(i, j int) bool {
 			return rules[i].ID < rules[j].ID
 		})
-		RulesGroup(rules).SortByGroupIndex()
+		models.RulesGroup(rules).SortByGroupIndex()
 		require.True(t, sort.SliceIsSorted(rules, func(i, j int) bool {
 			return rules[i].ID < rules[j].ID
 		}))
@@ -999,12 +997,12 @@ func TestSortByGroupIndex(t *testing.T) {
 
 func TestTimeRangeYAML(t *testing.T) {
 	yamlRaw := "from: 600\nto: 0\n"
-	var rtr RelativeTimeRange
+	var rtr models.RelativeTimeRange
 	err := yaml.Unmarshal([]byte(yamlRaw), &rtr)
 	require.NoError(t, err)
 	// nanoseconds
-	require.Equal(t, Duration(600000000000), rtr.From)
-	require.Equal(t, Duration(0), rtr.To)
+	require.Equal(t, models.Duration(600000000000), rtr.From)
+	require.Equal(t, models.Duration(0), rtr.To)
 
 	serialized, err := yaml.Marshal(rtr)
 	require.NoError(t, err)
@@ -1013,8 +1011,8 @@ func TestTimeRangeYAML(t *testing.T) {
 
 func TestAlertRuleGetKey(t *testing.T) {
 	t.Run("should return correct key", func(t *testing.T) {
-		rule := RuleGen.GenerateRef()
-		expected := AlertRuleKey{
+		rule := modelstest.RuleGen.GenerateRef()
+		expected := models.AlertRuleKey{
 			OrgID: rule.OrgID,
 			UID:   rule.UID,
 		}
@@ -1024,10 +1022,10 @@ func TestAlertRuleGetKey(t *testing.T) {
 
 func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 	t.Run("should return correct key", func(t *testing.T) {
-		rule := RuleGen.With(
-			RuleMuts.WithUniqueGroupIndex(),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueGroupIndex(),
 		).GenerateRef()
-		expected := AlertRuleKeyWithGroup{
+		expected := models.AlertRuleKeyWithGroup{
 			AlertRuleKey: rule.GetKey(),
 			RuleGroup:    rule.RuleGroup,
 		}
@@ -1037,14 +1035,14 @@ func TestAlertRuleGetKeyWithGroup(t *testing.T) {
 
 func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 	t.Run("should return the default 2 if MissingSeriesEvalsToResolve is nil", func(t *testing.T) {
-		rule := RuleGen.GenerateRef()
+		rule := modelstest.RuleGen.GenerateRef()
 		rule.MissingSeriesEvalsToResolve = nil
 		require.Equal(t, int64(2), rule.GetMissingSeriesEvalsToResolve())
 	})
 
 	t.Run("should return the correct value", func(t *testing.T) {
-		rule := RuleGen.With(
-			RuleMuts.WithMissingSeriesEvalsToResolve(3),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithMissingSeriesEvalsToResolve(3),
 		).GenerateRef()
 		require.Equal(t, int64(3), rule.GetMissingSeriesEvalsToResolve())
 	})
@@ -1053,14 +1051,14 @@ func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 func TestAlertRuleCopy(t *testing.T) {
 	t.Run("should return a copy of the rule", func(t *testing.T) {
 		for range 100 {
-			rule := RuleGen.GenerateRef()
+			rule := modelstest.RuleGen.GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
 		}
 	})
 
 	t.Run("should create a copy of the prometheus rule definition from the metadata", func(t *testing.T) {
-		rule := RuleGen.With(RuleGen.WithMetadata(AlertRuleMetadata{PrometheusStyleRule: &PrometheusStyleRule{
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithMetadata(models.AlertRuleMetadata{PrometheusStyleRule: &models.PrometheusStyleRule{
 			OriginalRuleDefinition: "data",
 		}})).GenerateRef()
 		copied := rule.Copy()
@@ -1068,7 +1066,7 @@ func TestAlertRuleCopy(t *testing.T) {
 	})
 	t.Run("should return an exact copy of recording rule", func(t *testing.T) {
 		for range 100 {
-			rule := RuleGen.With(RuleGen.WithAllRecordingRules()).GenerateRef()
+			rule := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules()).GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
 		}
@@ -1085,7 +1083,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"K8sStatus":      {},
 	}
 
-	tpe := reflect.TypeFor[AlertRule]()
+	tpe := reflect.TypeFor[models.AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
 	for field := range tpe.Fields() {
 		if _, ok := ignoredFields[field.Name]; ok {
@@ -1095,7 +1093,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 	}
 
 	for range 1000 {
-		rule := RuleGen.Generate()
+		rule := modelstest.RuleGen.Generate()
 		v := reflect.ValueOf(rule)
 
 		for j := 0; j < tpe.NumField(); j++ {
@@ -1129,7 +1127,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"K8sStatus":                   {},
 	}
 
-	tpe := reflect.TypeFor[AlertRule]()
+	tpe := reflect.TypeFor[models.AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
 	for field := range tpe.Fields() {
 		if _, ok := ignoredFields[field.Name]; ok {
@@ -1139,7 +1137,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 	}
 
 	for range 1000 {
-		rule := RuleGen.With(RuleGen.WithAllRecordingRules()).Generate()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules()).Generate()
 		v := reflect.ValueOf(rule)
 
 		for j := 0; j < tpe.NumField(); j++ {
@@ -1178,15 +1176,15 @@ func TestValidateAlertRule(t *testing.T) {
 			{
 				name:          "should reject negative keep firing for",
 				keepFiringFor: -1 * time.Minute,
-				expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", ErrAlertRuleFailedValidation),
+				expectedErr:   fmt.Errorf("%w: field `keep_firing_for` cannot be negative", models.ErrAlertRuleFailedValidation),
 			},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				rule := RuleGen.With(
-					RuleGen.WithKeepFiringFor(tc.keepFiringFor),
-					RuleGen.WithIntervalSeconds(10),
+				rule := modelstest.RuleGen.With(
+					modelstest.RuleGen.WithKeepFiringFor(tc.keepFiringFor),
+					modelstest.RuleGen.WithIntervalSeconds(10),
 				).GenerateRef()
 
 				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
@@ -1234,8 +1232,8 @@ func TestValidateAlertRule(t *testing.T) {
 					BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
 				}
 
-				rule := RuleGen.With(
-					RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
+				rule := modelstest.RuleGen.With(
+					modelstest.RuleMuts.WithIntervalSeconds(baseIntervalSeconds * 2),
 				).Generate()
 				rule.MissingSeriesEvalsToResolve = tc.missingSeriesEvalsToResolve
 
@@ -1243,7 +1241,7 @@ func TestValidateAlertRule(t *testing.T) {
 
 				if tc.expectedErrorContains != "" {
 					require.Error(t, err)
-					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+					require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 					require.Contains(t, err.Error(), tc.expectedErrorContains)
 				} else {
 					require.NoError(t, err)
@@ -1276,20 +1274,20 @@ func TestValidateAlertRule(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				rule := RuleGen.With(
-					RuleMuts.WithIntervalSeconds(10),
+				rule := modelstest.RuleGen.With(
+					modelstest.RuleMuts.WithIntervalSeconds(10),
 				).Generate()
 				if tc.execErrState != "" {
-					rule.ExecErrState = ExecutionErrorState(tc.execErrState)
+					rule.ExecErrState = models.ExecutionErrorState(tc.execErrState)
 				}
 				if tc.noDataState != "" {
-					rule.NoDataState = NoDataState(tc.noDataState)
+					rule.NoDataState = models.NoDataState(tc.noDataState)
 				}
 
 				err := rule.ValidateAlertRule(setting.UnifiedAlertingSettings{BaseInterval: 10 * time.Second})
 				if tc.error {
 					require.Error(t, err)
-					require.ErrorIs(t, err, ErrAlertRuleFailedValidation)
+					require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 				} else {
 					require.NoError(t, err)
 				}
@@ -1301,15 +1299,15 @@ func TestValidateAlertRule(t *testing.T) {
 func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 	tests := []struct {
 		name             string
-		rule             AlertRule
+		rule             models.AlertRule
 		expectedResult   string
 		expectedErrorMsg string
 	}{
 		{
 			name: "rule with prometheus definition",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
-					PrometheusStyleRule: &PrometheusStyleRule{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
+					PrometheusStyleRule: &models.PrometheusStyleRule{
 						OriginalRuleDefinition: "groups:\n- name: example\n  rules:\n  - alert: HighRequestLatency\n    expr: request_latency_seconds{job=\"myjob\"} > 0.5\n    for: 10m\n    labels:\n      severity: page\n    annotations:\n      summary: High request latency",
 					},
 				},
@@ -1319,9 +1317,9 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 		},
 		{
 			name: "rule with empty prometheus definition",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
-					PrometheusStyleRule: &PrometheusStyleRule{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
+					PrometheusStyleRule: &models.PrometheusStyleRule{
 						OriginalRuleDefinition: "",
 					},
 				},
@@ -1331,8 +1329,8 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 		},
 		{
 			name: "rule with nil prometheus style rule",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
 					PrometheusStyleRule: nil,
 				},
 			},
@@ -1341,7 +1339,7 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 		},
 		{
 			name:             "rule with empty metadata",
-			rule:             AlertRule{},
+			rule:             models.AlertRule{},
 			expectedResult:   "",
 			expectedErrorMsg: "prometheus rule definition is missing",
 		},
@@ -1368,14 +1366,14 @@ func TestAlertRule_PrometheusRuleDefinition(t *testing.T) {
 func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 	tests := []struct {
 		name     string
-		rule     AlertRule
+		rule     models.AlertRule
 		expected bool
 	}{
 		{
 			name: "rule with prometheus definition",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
-					PrometheusStyleRule: &PrometheusStyleRule{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
+					PrometheusStyleRule: &models.PrometheusStyleRule{
 						OriginalRuleDefinition: "some rule definition",
 					},
 				},
@@ -1384,21 +1382,21 @@ func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 		},
 		{
 			name: "rule with converted prometheus rule label",
-			rule: AlertRule{
+			rule: models.AlertRule{
 				Labels: map[string]string{
-					ConvertedPrometheusRuleLabel: "true",
+					models.ConvertedPrometheusRuleLabel: "true",
 				},
 			},
 			expected: true,
 		},
 		{
 			name: "rule with both prometheus definition and converted label",
-			rule: AlertRule{
+			rule: models.AlertRule{
 				Labels: map[string]string{
-					ConvertedPrometheusRuleLabel: "true",
+					models.ConvertedPrometheusRuleLabel: "true",
 				},
-				Metadata: AlertRuleMetadata{
-					PrometheusStyleRule: &PrometheusStyleRule{
+				Metadata: models.AlertRuleMetadata{
+					PrometheusStyleRule: &models.PrometheusStyleRule{
 						OriginalRuleDefinition: "some rule definition",
 					},
 				},
@@ -1407,9 +1405,9 @@ func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 		},
 		{
 			name: "rule with empty prometheus definition",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
-					PrometheusStyleRule: &PrometheusStyleRule{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
+					PrometheusStyleRule: &models.PrometheusStyleRule{
 						OriginalRuleDefinition: "",
 					},
 				},
@@ -1418,8 +1416,8 @@ func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 		},
 		{
 			name: "rule with nil prometheus style rule",
-			rule: AlertRule{
-				Metadata: AlertRuleMetadata{
+			rule: models.AlertRule{
+				Metadata: models.AlertRuleMetadata{
 					PrometheusStyleRule: nil,
 				},
 			},
@@ -1427,7 +1425,7 @@ func TestAlertRule_ImportedPrometheusRule(t *testing.T) {
 		},
 		{
 			name:     "rule with empty metadata",
-			rule:     AlertRule{},
+			rule:     models.AlertRule{},
 			expected: false,
 		},
 	}
@@ -1459,22 +1457,22 @@ func TestWithoutPrivateLabels(t *testing.T) {
 		{
 			name: "removes only specific private labels",
 			input: map[string]string{
-				ConvertedPrometheusRuleLabel:        "removed",
-				AutogeneratedRouteLabel:             "removed",
-				AutogeneratedRouteReceiverNameLabel: "removed",
-				AutogeneratedRouteSettingsHashLabel: "removed",
-				DashboardUIDAnnotation:              "kept",
-				PanelIDAnnotation:                   "kept",
-				"__custom_label__":                  "kept", // User-defined labels with __ are kept
-				"normal_label":                      "kept",
-				"another_label":                     "kept",
+				models.ConvertedPrometheusRuleLabel:        "removed",
+				models.AutogeneratedRouteLabel:             "removed",
+				models.AutogeneratedRouteReceiverNameLabel: "removed",
+				models.AutogeneratedRouteSettingsHashLabel: "removed",
+				models.DashboardUIDAnnotation:              "kept",
+				models.PanelIDAnnotation:                   "kept",
+				"__custom_label__":                         "kept", // User-defined labels with __ are kept
+				"normal_label":                             "kept",
+				"another_label":                            "kept",
 			},
 			expected: map[string]string{
-				"__custom_label__":     "kept",
-				"normal_label":         "kept",
-				"another_label":        "kept",
-				DashboardUIDAnnotation: "kept",
-				PanelIDAnnotation:      "kept",
+				"__custom_label__":            "kept",
+				"normal_label":                "kept",
+				"another_label":               "kept",
+				models.DashboardUIDAnnotation: "kept",
+				models.PanelIDAnnotation:      "kept",
 			},
 		},
 	}
@@ -1483,7 +1481,7 @@ func TestWithoutPrivateLabels(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			inputCopy := maps.Clone(tt.input)
 
-			result := WithoutPrivateLabels(tt.input)
+			result := models.WithoutPrivateLabels(tt.input)
 
 			require.Equal(t, tt.expected, result)
 			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
@@ -1492,7 +1490,7 @@ func TestWithoutPrivateLabels(t *testing.T) {
 }
 
 func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
-	const sloOrigin = PluginGrafanaSLOOrigin
+	const sloOrigin = models.PluginGrafanaSLOOrigin
 	const otherOrigin = "plugin/grafana-other-app"
 
 	tests := []struct {
@@ -1507,39 +1505,39 @@ func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
 		},
 		{
 			name:           "origin only",
-			labels:         map[string]string{PluginGrafanaOriginLabel: otherOrigin},
+			labels:         map[string]string{models.PluginGrafanaOriginLabel: otherOrigin},
 			expectedOrigin: otherOrigin,
 		},
 		{
 			name: "origin with generic uid label",
 			labels: map[string]string{
-				PluginGrafanaOriginLabel:    otherOrigin,
-				PluginGrafanaOriginUIDLabel: "generic-uid",
+				models.PluginGrafanaOriginLabel:    otherOrigin,
+				models.PluginGrafanaOriginUIDLabel: "generic-uid",
 			},
 			expectedOrigin: otherOrigin + "|generic-uid",
 		},
 		{
 			name: "SLO origin with slo uuid fallback",
 			labels: map[string]string{
-				PluginGrafanaOriginLabel:  sloOrigin,
-				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+				models.PluginGrafanaOriginLabel:  sloOrigin,
+				models.PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
 			},
 			expectedOrigin: sloOrigin + "|slo-uuid-123",
 		},
 		{
 			name: "SLO origin with both labels — generic takes precedence",
 			labels: map[string]string{
-				PluginGrafanaOriginLabel:    sloOrigin,
-				PluginGrafanaOriginUIDLabel: "generic-uid",
-				PluginGrafanaSLOUUIDLabel:   "slo-uuid-123",
+				models.PluginGrafanaOriginLabel:    sloOrigin,
+				models.PluginGrafanaOriginUIDLabel: "generic-uid",
+				models.PluginGrafanaSLOUUIDLabel:   "slo-uuid-123",
 			},
 			expectedOrigin: sloOrigin + "|generic-uid",
 		},
 		{
 			name: "non-SLO origin with slo uuid label — fallback not triggered",
 			labels: map[string]string{
-				PluginGrafanaOriginLabel:  otherOrigin,
-				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+				models.PluginGrafanaOriginLabel:  otherOrigin,
+				models.PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
 			},
 			expectedOrigin: otherOrigin,
 		},
@@ -1547,7 +1545,7 @@ func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rule := RuleGen.With(RuleMuts.WithLabels(tt.labels)).Generate()
+			rule := modelstest.RuleGen.With(modelstest.RuleMuts.WithLabels(tt.labels)).Generate()
 			condition := rule.GetEvalCondition()
 
 			if tt.expectedOrigin == "" {

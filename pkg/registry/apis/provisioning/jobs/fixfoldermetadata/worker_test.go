@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -22,8 +26,8 @@ var testFolderGVK = resources.FolderKind
 // performs at run time. Expectations are optional so it can be shared by tests that
 // never reach the client-resolution path (e.g. IsSupported).
 func newFolderClientFactory(t *testing.T) resources.ClientFactory {
-	cf := resources.NewMockClientFactory(t)
-	clients := resources.NewMockResourceClients(t)
+	cf := resourcestest.NewMockClientFactory(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	cf.On("Clients", mock.Anything, mock.Anything).Return(clients, nil).Maybe()
 	clients.On("Folder", mock.Anything).Return(nil, testFolderGVK, nil).Maybe()
 	return cf
@@ -55,7 +59,7 @@ func TestWorker_IsSupported(t *testing.T) {
 
 // mockStageableRepo implements repository.Repository and repository.StageableRepository
 type mockStageableRepo struct {
-	*repository.MockStageableRepository
+	*repositorytest.MockStageableRepository
 }
 
 func (m *mockStageableRepo) Config() *provisioning.Repository {
@@ -69,7 +73,7 @@ func (m *mockStageableRepo) Test(ctx context.Context) (*provisioning.TestResults
 // mockStageableRepoWithURLs combines StageableRepository and RepositoryWithURLs
 type mockStageableRepoWithURLs struct {
 	mockStageableRepo
-	*repository.MockRepositoryWithURLs
+	*repositorytest.MockRepositoryWithURLs
 }
 
 func (m *mockStageableRepoWithURLs) Config() *provisioning.Repository {
@@ -118,9 +122,9 @@ func TestWorker_CommitMessageFromJobSpec(t *testing.T) {
 	ctx := context.Background()
 	w := NewWorker(newFolderClientFactory(t))
 
-	mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-	mockStaged := repository.NewMockStagedRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+	mockStaged := repositorytest.NewMockStagedRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	job := makeTestJob("feature-branch")
 	job.Spec.Message = "custom folder metadata message"
@@ -147,9 +151,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("feature-branch")
 
@@ -191,9 +195,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -223,9 +227,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -261,9 +265,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 		createErr := fmt.Errorf("disk full")
@@ -298,9 +302,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := provisioning.Job{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "default"},
@@ -333,9 +337,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -357,7 +361,7 @@ func TestWorker_Process(t *testing.T) {
 
 		// mockNonRWRepo is not stageable, so WrapWithStageAndPushIfPossible calls fn with the original repo.
 		// The original repo does not implement ReaderWriter, so the cast fails.
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -373,11 +377,11 @@ func TestWorker_Process(t *testing.T) {
 		w := NewWorker(newFolderClientFactory(t))
 
 		mockRepo := &mockStageableRepoWithURLs{
-			mockStageableRepo:      mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)},
-			MockRepositoryWithURLs: repository.NewMockRepositoryWithURLs(t),
+			mockStageableRepo:      mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)},
+			MockRepositoryWithURLs: repositorytest.NewMockRepositoryWithURLs(t),
 		}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		customRef := "feature-branch"
 		job := makeTestJob(customRef)
@@ -411,9 +415,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -443,9 +447,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -481,9 +485,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -515,9 +519,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 
@@ -553,9 +557,9 @@ func TestWorker_Process(t *testing.T) {
 		ctx := context.Background()
 		w := NewWorker(newFolderClientFactory(t))
 
-		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
-		mockStaged := repository.NewMockStagedRepository(t)
-		mockProgress := jobs.NewMockJobProgressRecorder(t)
+		mockRepo := &mockStageableRepo{MockStageableRepository: repositorytest.NewMockStageableRepository(t)}
+		mockStaged := repositorytest.NewMockStagedRepository(t)
+		mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 		job := makeTestJob("")
 

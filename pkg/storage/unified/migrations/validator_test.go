@@ -17,13 +17,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 func TestFolderTreeValidatorBuildUnifiedFolderParentMap(t *testing.T) {
 	ctx := t.Context()
-	client := resource.NewMockResourceClient(t)
+	client := resourcetest.NewMockResourceClient(t)
 	validator := newTestFolderTreeValidator(client)
 
 	client.On("Search", mock.Anything, folderSearchRequest()).
@@ -37,7 +38,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMap(t *testing.T) {
 func TestFolderTreeValidatorBuildUnifiedFolderParentMapPaginates(t *testing.T) {
 	setFolderSearchPageSize(t, 2)
 
-	client := resource.NewMockResourceClient(t)
+	client := resourcetest.NewMockResourceClient(t)
 	validator := newTestFolderTreeValidator(client)
 
 	client.On("Search", mock.Anything, folderSearchRequest()).
@@ -65,7 +66,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsUnsupportedFormats
 		42,
 	} {
 		t.Run(format.String(), func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			validator := newTestFolderTreeValidator(client)
 			response := folderFieldValuesPage([]testFolder{{"root", ""}})
 			response.ResultFormat = format
@@ -81,7 +82,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsUnsupportedFormats
 func TestFolderTreeValidatorBuildUnifiedFolderParentMapStopsOnEmptyPage(t *testing.T) {
 	setFolderSearchPageSize(t, 2)
 
-	client := resource.NewMockResourceClient(t)
+	client := resourcetest.NewMockResourceClient(t)
 	validator := newTestFolderTreeValidator(client)
 
 	// The last folder filled the previous page, so the next page comes back empty.
@@ -99,7 +100,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 	t.Run("search call fails", func(t *testing.T) {
 		setFolderSearchPageSize(t, 2)
 
-		client := resource.NewMockResourceClient(t)
+		client := resourcetest.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
 		client.On("Search", mock.Anything, folderSearchRequest()).
@@ -115,7 +116,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 	t.Run("search returns a status error", func(t *testing.T) {
 		setFolderSearchPageSize(t, 2)
 
-		client := resource.NewMockResourceClient(t)
+		client := resourcetest.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
 		client.On("Search", mock.Anything, folderSearchRequest()).
@@ -130,7 +131,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapLaterPageFails(t *testing
 	})
 
 	t.Run("unsupported result format", func(t *testing.T) {
-		client := resource.NewMockResourceClient(t)
+		client := resourcetest.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
 		client.On("Search", mock.Anything, folderSearchRequest()).
@@ -145,7 +146,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsNonAdvancingPage(t
 	t.Run("page has no cursor", func(t *testing.T) {
 		setFolderSearchPageSize(t, 2)
 
-		client := resource.NewMockResourceClient(t)
+		client := resourcetest.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
 		page := folderFieldValuesPage([]testFolder{{"root", ""}, {"child-a", "root"}})
@@ -161,7 +162,7 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsNonAdvancingPage(t
 	t.Run("page repeats the cursor", func(t *testing.T) {
 		setFolderSearchPageSize(t, 2)
 
-		client := resource.NewMockResourceClient(t)
+		client := resourcetest.NewMockResourceClient(t)
 		validator := newTestFolderTreeValidator(client)
 
 		// A server that ignores the cursor would otherwise be paged forever.

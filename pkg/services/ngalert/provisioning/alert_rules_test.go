@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -731,7 +734,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 	t.Run("quota met causes create to be rejected", func(t *testing.T) {
 		ruleService := createAlertRuleService(t, nil)
-		checker := &MockQuotaChecker{}
+		checker := &provisioningtest.MockQuotaChecker{}
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
 
@@ -742,7 +745,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 	t.Run("quota met causes group write to be rejected", func(t *testing.T) {
 		ruleService := createAlertRuleService(t, nil)
-		checker := &MockQuotaChecker{}
+		checker := &provisioningtest.MockQuotaChecker{}
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
 
@@ -897,13 +900,13 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -1240,13 +1243,13 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 func TestUpdateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -1258,7 +1261,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	}
 
 	t.Run("when user can write all rules", func(t *testing.T) {
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.RuleGroup = rule.RuleGroup + "_new"
 		rule.Title = rule.Title + "_new"
 		service, ruleStore, _, ac := initServiceWithData(t)
@@ -1280,7 +1283,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		require.Len(t, updates, 1)
 	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.Title = rule.Title + "_new"
 
 		t.Run("it should authorize the change to whole group", func(t *testing.T) {
@@ -1343,7 +1346,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			// permissions. The response of the service should still be successful.
 			service, ruleStore, _, ac := initServiceWithData(t)
 
-			rule := models.CopyRule(rules[0])
+			rule := modelstest.CopyRule(rules[0])
 
 			_, err := service.ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: *rule}})
 			require.NoError(t, err)
@@ -1421,7 +1424,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		service, _, _, ac := initServiceWithData(t)
 		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) { return true, nil }
 
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.Title = rule.Title + "_new"
 		rule.IntervalSeconds = groupIntervalSeconds + 60
 
@@ -1484,7 +1487,7 @@ func TestUpdateAlertRulePauseState(t *testing.T) {
 			rule.ID = 1
 			rule.UID = "pause-repro"
 			rule.IsPaused = tc.initialPaused
-			ruleStore.Rules[orgID] = []*models.AlertRule{models.CopyRule(&rule)}
+			ruleStore.Rules[orgID] = []*models.AlertRule{modelstest.CopyRule(&rule)}
 
 			rule.IsPaused = !tc.initialPaused
 			updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
@@ -1508,13 +1511,13 @@ func TestUpdateAlertRulePauseState(t *testing.T) {
 func TestDeleteAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -1543,7 +1546,7 @@ func TestDeleteAlertRule(t *testing.T) {
 		require.Len(t, deletes, 1)
 	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.Title = rule.Title + "_new"
 
 		t.Run("it should authorize the change to whole group", func(t *testing.T) {
@@ -1742,13 +1745,13 @@ func TestDeleteAlertRule(t *testing.T) {
 func TestGetAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(3)
 	rule := rules[0]
 	expectedProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -1805,9 +1808,9 @@ func TestGetAlertRule(t *testing.T) {
 func TestGetRuleGroup(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	intervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(intervalSeconds)).GenerateManyRef(3)
 	derefRules := make([]models.AlertRule, 0, len(rules))
 	for _, rule := range rules {
@@ -1815,7 +1818,7 @@ func TestGetRuleGroup(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -1960,9 +1963,9 @@ func TestGetRuleGroup(t *testing.T) {
 func TestGetAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey1 := models.GenerateGroupKey(orgID)
-	groupKey2 := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey1 := modelstest.GenerateGroupKey(orgID)
+	groupKey2 := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
 	models.RulesGroup(rules1).SortByGroupIndex()
 	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
@@ -1970,7 +1973,7 @@ func TestGetAlertRules(t *testing.T) {
 	allRules := append(rules1, rules2...)
 	expectedProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: allRules,
@@ -2060,13 +2063,13 @@ func TestGetAlertRules(t *testing.T) {
 func TestReplaceGroup(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -2085,7 +2088,7 @@ func TestReplaceGroup(t *testing.T) {
 			Provenance: groupProvenance,
 		}
 		for _, rule := range rules {
-			r := models.CopyRule(rule)
+			r := modelstest.CopyRule(rule)
 			r.Title = r.Title + "_new"
 			group.Rules = append(group.Rules, *r)
 		}
@@ -2116,7 +2119,7 @@ func TestReplaceGroup(t *testing.T) {
 			Provenance: groupProvenance,
 		}
 		for _, rule := range rules {
-			r := models.CopyRule(rule)
+			r := modelstest.CopyRule(rule)
 			r.Title = r.Title + "_new"
 			group.Rules = append(group.Rules, *r)
 		}
@@ -2225,7 +2228,7 @@ func TestReplaceGroup(t *testing.T) {
 
 		// Create a NoGroup rule and attempt to change its group name
 		groupSeed := createNoGroupRuleGroup("nogroup-multi", orgID, "my-namespace")
-		store.Rules[orgID] = []*models.AlertRule{models.CopyRule(&groupSeed.Rules[0])}
+		store.Rules[orgID] = []*models.AlertRule{modelstest.CopyRule(&groupSeed.Rules[0])}
 		// change the group name away from the sentinel value
 		groupSeed.Title = "some-other-group" // not the sentinel group name
 
@@ -2265,13 +2268,13 @@ func TestReplaceGroup(t *testing.T) {
 func TestDeleteRuleGroup(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID: rules,
@@ -2377,7 +2380,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 		RuleGroup:    "group1",
 	}
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	// Create rules for each group
 	rules1 := gen.With(gen.WithGroupKey(groupKey1)).GenerateManyRef(2)
 	rules2 := gen.With(gen.WithGroupKey(groupKey2)).GenerateManyRef(3)
@@ -2387,7 +2390,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 	org1Rules := slices.Concat(rules1, rules2, rules3)
 	org2Rules := rules4
 
-	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 		service, ruleStore, provenanceStore, ac := initService(t)
 		ruleStore.Rules = map[int64][]*models.AlertRule{
 			orgID1: org1Rules,
@@ -2582,7 +2585,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 			return true, nil
 		}
-		checker := &MockQuotaChecker{}
+		checker := &provisioningtest.MockQuotaChecker{}
 		checker.EXPECT().LimitExceeded()
 		service.quotas = checker
 
@@ -2655,7 +2658,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		Provenance:     provenanceStore,
 	}
 	// store := fakes.NewRuleStore(t)
-	quotas := MockQuotaChecker{}
+	quotas := provisioningtest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 
 	if folderService == nil {
@@ -2673,8 +2676,8 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
 		folderService:          folderService,
-		authz:                  &fakeRuleAccessControlService{},
-		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
+		authz:                  &provisioningtest.FakeRuleAccessControlService{},
+		nsValidatorProvider:    &provisioningtest.NotificationSettingsValidatorProviderFake{},
 	}
 }
 
@@ -2769,16 +2772,16 @@ func createDummyGroup(title string, orgID int64) models.AlertRuleGroup {
 	}
 }
 
-func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
+func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *provisioningtest.FakeRuleAccessControlService) {
 	t.Helper()
 
-	ac := &fakeRuleAccessControlService{}
+	ac := &provisioningtest.FakeRuleAccessControlService{}
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
-	quotas := MockQuotaChecker{}
+	quotas := provisioningtest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 
 	service := &AlertRuleService{
@@ -2786,12 +2789,12 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
 		quotas:                 &quotas,
-		xact:                   newNopTransactionManager(),
+		xact:                   provisioningtest.NewNopTransactionManager(),
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
 		authz:                  ac,
-		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
+		nsValidatorProvider:    &provisioningtest.NotificationSettingsValidatorProviderFake{},
 	}
 
 	return service, ruleStore, provenanceStore, ac

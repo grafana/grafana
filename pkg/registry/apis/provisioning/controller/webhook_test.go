@@ -11,6 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -33,8 +34,8 @@ func (c *fakeWebhookConfig) SetURL(url string)         { c.url = url }
 func (c *fakeWebhookConfig) SetEvents(events []string) { c.events = events }
 func (c *fakeWebhookConfig) SetSecret(secret string)   { c.secret = secret }
 
-func newMockWebhookRepository(t *testing.T, config *provisioning.Repository, webhookURL string, client *repository.MockWebhookClient) *repository.MockWebhookRepository {
-	repo := repository.NewMockWebhookRepository(t)
+func newMockWebhookRepository(t *testing.T, config *provisioning.Repository, webhookURL string, client *repositorytest.MockWebhookClient) *repositorytest.MockWebhookRepository {
+	repo := repositorytest.NewMockWebhookRepository(t)
 	repo.EXPECT().Config().Return(config).Maybe()
 	repo.EXPECT().WebhookURL().Return(webhookURL).Maybe()
 	repo.EXPECT().SubscribedEvents().Return(subscribedEvents).Maybe()
@@ -45,7 +46,7 @@ func newMockWebhookRepository(t *testing.T, config *provisioning.Repository, web
 func TestWebhookOnCreate(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *repository.MockWebhookClient)
+		setupMock     func(m *repositorytest.MockWebhookClient)
 		config        *provisioning.Repository
 		webhookURL    string
 		expectedHook  *provisioning.WebhookStatus
@@ -54,7 +55,7 @@ func TestWebhookOnCreate(t *testing.T) {
 	}{
 		{
 			name: "successfully create webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, "https://example.com/webhook", subscribedEvents, mock.Anything).
 					Return(&fakeWebhookConfig{
 						id:  "123",
@@ -78,7 +79,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		},
 		{
 			name:      "no webhook URL",
-			setupMock: func(m *repository.MockWebhookClient) {},
+			setupMock: func(m *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
@@ -92,7 +93,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		},
 		{
 			name: "error creating webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed to create webhook"))
 			},
@@ -110,7 +111,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		},
 		{
 			name: "repo not found remaps to permission denied",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, repository.ErrFileNotFound)
 			},
@@ -128,7 +129,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		},
 		{
 			name:      "no webhook when repository has no workflows",
-			setupMock: func(_ *repository.MockWebhookClient) {},
+			setupMock: func(_ *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{},
@@ -143,7 +144,7 @@ func TestWebhookOnCreate(t *testing.T) {
 		},
 		{
 			name:      "no webhook when webhookDisabled is true",
-			setupMock: func(_ *repository.MockWebhookClient) {},
+			setupMock: func(_ *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -161,7 +162,7 @@ func TestWebhookOnCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := repository.NewMockWebhookClient(t)
+			mockClient := repositorytest.NewMockWebhookClient(t)
 			tt.setupMock(mockClient)
 
 			repo := newMockWebhookRepository(t, tt.config, tt.webhookURL, mockClient)
@@ -190,7 +191,7 @@ func TestWebhookOnCreate(t *testing.T) {
 func TestWebhookOnUpdate(t *testing.T) {
 	tests := []struct {
 		name            string
-		setupMock       func(m *repository.MockWebhookClient)
+		setupMock       func(m *repositorytest.MockWebhookClient)
 		config          *provisioning.Repository
 		webhookURL      string
 		expectedHook    *provisioning.WebhookStatus
@@ -200,7 +201,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 	}{
 		{
 			name: "successfully update webhook when webhook exists",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(&fakeWebhookConfig{
 						id:     "123",
@@ -237,7 +238,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "create webhook when it doesn't exist",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil, repository.ErrFileNotFound)
 
@@ -272,7 +273,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name:          "no webhook URL provided",
-			setupMock:     func(m *repository.MockWebhookClient) {},
+			setupMock:     func(m *repositorytest.MockWebhookClient) {},
 			config:        &provisioning.Repository{},
 			webhookURL:    "",
 			expectedHook:  nil,
@@ -280,7 +281,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "error getting webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil, fmt.Errorf("failed to get webhook"))
 			},
@@ -304,7 +305,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "error editing webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(&fakeWebhookConfig{
 						id:     "123",
@@ -335,7 +336,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "repo not found on edit remaps to permission denied",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(&fakeWebhookConfig{
 						id:     "123",
@@ -366,7 +367,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "create webhook when webhook status is nil",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(&fakeWebhookConfig{
 						id:     "456",
@@ -395,7 +396,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "create webhook when webhook ID is zero",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(&fakeWebhookConfig{
 						id:     "789",
@@ -427,7 +428,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "error when creating webhook fails",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().CreateWebhook(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, fmt.Errorf("failed to create webhook"))
 			},
@@ -448,7 +449,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "creates webhook when repo.ErrFileNotFound",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil, repository.ErrFileNotFound)
 
@@ -483,7 +484,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "error on create when not found",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil, repository.ErrFileNotFound)
 
@@ -510,7 +511,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "no update needed when URL and events match",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(&fakeWebhookConfig{
 						id:     "123",
@@ -544,7 +545,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "delete webhook when workflows are removed",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil)
 			},
@@ -569,7 +570,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name:      "no-op when no workflows and no existing webhook",
-			setupMock: func(_ *repository.MockWebhookClient) {},
+			setupMock: func(_ *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{},
@@ -587,7 +588,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name: "delete stale webhook when webhookDisabled is true",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil)
 			},
@@ -613,7 +614,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 		},
 		{
 			name:      "no-op when webhookDisabled is true and no existing webhook",
-			setupMock: func(_ *repository.MockWebhookClient) {},
+			setupMock: func(_ *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -634,7 +635,7 @@ func TestWebhookOnUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := repository.NewMockWebhookClient(t)
+			mockClient := repositorytest.NewMockWebhookClient(t)
 			tt.setupMock(mockClient)
 
 			repo := newMockWebhookRepository(t, tt.config, tt.webhookURL, mockClient)
@@ -669,13 +670,13 @@ func TestWebhookOnUpdate(t *testing.T) {
 func TestWebhookOnDelete(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *repository.MockWebhookClient)
+		setupMock     func(m *repositorytest.MockWebhookClient)
 		config        *provisioning.Repository
 		expectedError error
 	}{
 		{
 			name: "successfully delete webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(nil)
 			},
@@ -691,7 +692,7 @@ func TestWebhookOnDelete(t *testing.T) {
 		},
 		{
 			name: "webhook not found during deletion",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(repository.ErrFileNotFound)
 			},
@@ -708,7 +709,7 @@ func TestWebhookOnDelete(t *testing.T) {
 		},
 		{
 			name: "unauthorized to delete the webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(repository.ErrUnauthorized)
 			},
@@ -728,7 +729,7 @@ func TestWebhookOnDelete(t *testing.T) {
 		},
 		{
 			name: "permission denied to delete the webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(repository.ErrPermissionDenied)
 			},
@@ -748,7 +749,7 @@ func TestWebhookOnDelete(t *testing.T) {
 		},
 		{
 			name:      "webhook not found in status",
-			setupMock: func(_ *repository.MockWebhookClient) {},
+			setupMock: func(_ *repositorytest.MockWebhookClient) {},
 			config: &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
 					Webhook: nil, // Webhook status is nil
@@ -758,7 +759,7 @@ func TestWebhookOnDelete(t *testing.T) {
 		},
 		{
 			name: "error deleting webhook",
-			setupMock: func(m *repository.MockWebhookClient) {
+			setupMock: func(m *repositorytest.MockWebhookClient) {
 				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 					Return(fmt.Errorf("failed to delete webhook"))
 			},
@@ -776,7 +777,7 @@ func TestWebhookOnDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := repository.NewMockWebhookClient(t)
+			mockClient := repositorytest.NewMockWebhookClient(t)
 			tt.setupMock(mockClient)
 
 			repo := newMockWebhookRepository(t, tt.config, "", mockClient)
@@ -795,7 +796,7 @@ func TestWebhookOnDelete(t *testing.T) {
 
 func TestRotateWebhookSecret(t *testing.T) {
 	t.Run("successful rotation returns status and secure patch ops", func(t *testing.T) {
-		mockClient := repository.NewMockWebhookClient(t)
+		mockClient := repositorytest.NewMockWebhookClient(t)
 		mockClient.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 			Return(&fakeWebhookConfig{id: "123", url: "https://example.com/hook", events: []string{"push"}}, nil)
 		mockClient.EXPECT().EditWebhook(mock.Anything, mock.MatchedBy(func(cfg repository.WebhookConfig) bool {
@@ -819,7 +820,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	})
 
 	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
-		mockClient := repository.NewMockWebhookClient(t)
+		mockClient := repositorytest.NewMockWebhookClient(t)
 		mockClient.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 			Return(nil, repository.ErrFileNotFound)
 
@@ -837,7 +838,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	})
 
 	t.Run("get webhook error returns error", func(t *testing.T) {
-		mockClient := repository.NewMockWebhookClient(t)
+		mockClient := repositorytest.NewMockWebhookClient(t)
 		mockClient.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 			Return(nil, fmt.Errorf("api error"))
 
@@ -852,7 +853,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	})
 
 	t.Run("edit webhook error returns error", func(t *testing.T) {
-		mockClient := repository.NewMockWebhookClient(t)
+		mockClient := repositorytest.NewMockWebhookClient(t)
 		mockClient.EXPECT().GetWebhook(mock.Anything, repository.WebhookID{ID: 123}).
 			Return(&fakeWebhookConfig{id: "123", url: "https://example.com/hook"}, nil)
 		mockClient.EXPECT().EditWebhook(mock.Anything, mock.Anything).
@@ -869,7 +870,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 	})
 
 	t.Run("skips when no webhook exists", func(t *testing.T) {
-		repo := newMockWebhookRepository(t, &provisioning.Repository{}, "", repository.NewMockWebhookClient(t))
+		repo := newMockWebhookRepository(t, &provisioning.Repository{}, "", repositorytest.NewMockWebhookClient(t))
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
 		require.NoError(t, err)
@@ -881,7 +882,7 @@ func TestRotateWebhookSecret(t *testing.T) {
 			Status: provisioning.RepositoryStatus{
 				Webhook: &provisioning.WebhookStatus{ID: 0},
 			},
-		}, "", repository.NewMockWebhookClient(t))
+		}, "", repositorytest.NewMockWebhookClient(t))
 
 		ops, err := rotateWebhookSecret(t.Context(), repo)
 		require.NoError(t, err)

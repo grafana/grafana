@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
@@ -28,7 +29,7 @@ func TestIntegrationSaveAlertRuleStatus(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 	ctx := context.Background()
 
-	gen := models.RuleGen.With(models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rule := createRule(t, store, gen)
 
 	getRule := func() *models.AlertRule {
@@ -64,7 +65,7 @@ func TestIntegrationSaveAlertRuleStatus(t *testing.T) {
 		require.NoError(t, store.SaveAlertRuleStatus(ctx, rule.OrgID, rule.UID, status))
 
 		existing := getRule()
-		newRule := models.CopyRule(existing)
+		newRule := modelstest.CopyRule(existing)
 		newRule.Title = util.GenerateShortUID()
 		usr := models.UserUID("1234")
 		require.NoError(t, store.UpdateAlertRules(ctx, &usr, []models.UpdateRule{{

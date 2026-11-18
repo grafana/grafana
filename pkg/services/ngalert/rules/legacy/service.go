@@ -46,7 +46,7 @@ type TransactionManager interface {
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.
 //
-//go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
+//go:generate mockery --name QuotaChecker --structname MockQuotaChecker --outpkg legacytest --output ./legacytest/ --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
 	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
 }

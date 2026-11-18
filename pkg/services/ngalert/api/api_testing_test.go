@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	fakes2 "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -174,7 +175,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			gen := models.RuleGen
+			gen := modelstest.RuleGen
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
@@ -201,7 +202,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
-			gen := models.RuleGen
+			gen := modelstest.RuleGen
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
@@ -255,7 +256,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		}
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			g := models.RuleGen
+			g := modelstest.RuleGen
 			data1 := g.GenerateQuery()
 			data2 := g.GenerateQuery()
 
@@ -275,8 +276,8 @@ func TestRouteEvalQueries(t *testing.T) {
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			data1 := modelstest.GenerateAlertQuery()
+			data2 := modelstest.GenerateAlertQuery()
 
 			currentTime := time.Now()
 
@@ -327,11 +328,11 @@ func TestRouteEvalQueries(t *testing.T) {
 		}
 		t.Run("should return warning notice on optimized queries", func(t *testing.T) {
 			queries := []models.AlertQuery{
-				models.CreatePrometheusQuery("A", "1", 1000, 43200, false, "some-ds"),
-				models.CreatePrometheusQuery("B", "1", 1000, 43200, false, "some-ds"),
-				models.CreatePrometheusQuery("C", "1", 1000, 43200, false, "some-ds"), // Not optimizable.
-				models.CreateReduceExpression("D", "A", "last"),
-				models.CreateReduceExpression("E", "B", "last"),
+				modelstest.CreatePrometheusQuery("A", "1", 1000, 43200, false, "some-ds"),
+				modelstest.CreatePrometheusQuery("B", "1", 1000, 43200, false, "some-ds"),
+				modelstest.CreatePrometheusQuery("C", "1", 1000, 43200, false, "some-ds"), // Not optimizable.
+				modelstest.CreateReduceExpression("D", "A", "last"),
+				modelstest.CreateReduceExpression("E", "B", "last"),
 			}
 
 			currentTime := time.Now()

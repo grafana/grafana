@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
@@ -160,7 +162,7 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 
 func TestEvaluatorTest(t *testing.T) {
 	randomResultCallback := func(now time.Time) (eval.Results, error) {
-		return eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil
+		return evaltest.GenerateResults(rand.Intn(5)+1, evaltest.ResultGen()), nil
 	}
 	evaluator := &fakeBacktestingEvaluator{
 		evalCallback: randomResultCallback,
@@ -187,7 +189,7 @@ func TestEvaluatorTest(t *testing.T) {
 		jitterStrategy:       schedule.JitterNever,
 		maxEvaluations:       10000,
 	}
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithInterval(time.Second)).GenerateRef()
 	ruleInterval := time.Duration(rule.IntervalSeconds) * time.Second
 
@@ -195,7 +197,7 @@ func TestEvaluatorTest(t *testing.T) {
 		from := time.Unix(0, 0)
 		to := from.Add(5 * ruleInterval)
 
-		labels := models.GenerateAlertLabels(rand.Intn(5)+1, "test-")
+		labels := modelstest.GenerateAlertLabels(rand.Intn(5)+1, "test-")
 		states := []state.StateTransition{
 			{
 				State: &state.State{

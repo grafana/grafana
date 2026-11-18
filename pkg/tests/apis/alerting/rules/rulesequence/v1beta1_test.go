@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -118,11 +118,11 @@ func getJSON(t *testing.T, req *rest.Request) map[string]any {
 
 func createRecordingRule(t *testing.T, helper *apis.K8sTestHelper) string {
 	t.Helper()
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 	created, err := common.NewRecordingRuleClient(t, helper.Org1.Admin).Create(context.Background(), &v0alpha1.RecordingRule{
 		ObjectMeta: v1.ObjectMeta{Name: rule.UID, Namespace: "default", Annotations: map[string]string{v0alpha1.FolderAnnotationKey: "test-folder"}},
@@ -146,10 +146,10 @@ func createRecordingRule(t *testing.T, helper *apis.K8sTestHelper) string {
 
 func createAlertRule(t *testing.T, helper *apis.K8sTestHelper) string {
 	t.Helper()
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithIntervalMatching(10*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithIntervalMatching(10*time.Second),
 	).Generate()
 	created, err := common.NewAlertRuleClient(t, helper.Org1.Admin).Create(context.Background(), &v0alpha1.AlertRule{
 		ObjectMeta: v1.ObjectMeta{Name: rule.UID, Namespace: "default", Annotations: map[string]string{v0alpha1.FolderAnnotationKey: "test-folder"}},

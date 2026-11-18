@@ -6,13 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
+
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -53,7 +56,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 		requestFromMs := int64(1000000000000)
 		requestToMs := int64(2000000000000)
 
-		annotationsRepo := &annotations.FakeAnnotationsRepo{}
+		annotationsRepo := &annotationstest.MockAnnotationsRepo{}
 
 		t.Run("time selection enabled, use request time range", func(t *testing.T) {
 			pubdash := &models.PublicDashboard{
@@ -64,9 +67,9 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: true,
 			}
-			fakeStore := &publicdashboards.FakePublicDashboardStore{}
+			fakeStore := &testhelpers.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-			fakeDashboardService := &dashboards.FakeDashboardService{}
+			fakeDashboardService := &dashboardstest.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
@@ -109,9 +112,9 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: false,
 			}
-			fakeStore := &publicdashboards.FakePublicDashboardStore{}
+			fakeStore := &testhelpers.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-			fakeDashboardService := &dashboards.FakeDashboardService{}
+			fakeDashboardService := &dashboardstest.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
@@ -158,9 +161,9 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: false,
 			}
-			fakeStore := &publicdashboards.FakePublicDashboardStore{}
+			fakeStore := &testhelpers.FakePublicDashboardStore{}
 			fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
-			fakeDashboardService := &dashboards.FakeDashboardService{}
+			fakeDashboardService := &dashboardstest.FakeDashboardService{}
 			fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
 			service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)

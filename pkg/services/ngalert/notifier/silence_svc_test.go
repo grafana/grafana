@@ -19,6 +19,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -26,9 +27,9 @@ import (
 func TestWithAccessControlMetadata(t *testing.T) {
 	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
 	silencesWithMetadata := []*models.SilenceWithMetadata{
-		{Silence: new(models.SilenceGen()())},
-		{Silence: new(models.SilenceGen()())},
-		{Silence: new(models.SilenceGen()())},
+		{Silence: new(modelstest.SilenceGen()())},
+		{Silence: new(modelstest.SilenceGen()())},
+		{Silence: new(modelstest.SilenceGen()())},
 	}
 	randPerm := func() models.SilencePermissionSet {
 		return models.SilencePermissionSet{
@@ -79,9 +80,9 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -113,10 +114,10 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen()())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen()())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -152,9 +153,9 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		silencesWithMetadata := []*models.SilenceWithMetadata{
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
-			{Silence: new(models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))())},
+			{Silence: new(modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule3", labels.MatchEqual))())},
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
@@ -169,38 +170,38 @@ func TestUpdateSilence(t *testing.T) {
 	testCases := []struct {
 		name        string
 		existing    func() models.Silence
-		mutators    []models.Mutator[models.Silence]
+		mutators    []modelstest.Mutator[models.Silence]
 		errContains string
 	}{
 		{
 			name:     "Updates to general silences allowed",
-			existing: models.SilenceGen(),
-			mutators: []models.Mutator[models.Silence]{
-				models.SilenceMuts.Expired(),
+			existing: modelstest.SilenceGen(),
+			mutators: []modelstest.Mutator[models.Silence]{
+				modelstest.SilenceMuts.Expired(),
 			},
 			errContains: "", // No Error.
 		},
 		{
 			name:     "Updates to general silences that add rule_uid matcher error",
-			existing: models.SilenceGen(),
-			mutators: []models.Mutator[models.Silence]{
-				models.SilenceMuts.WithRuleUID("rule1"),
+			existing: modelstest.SilenceGen(),
+			mutators: []modelstest.Mutator[models.Silence]{
+				modelstest.SilenceMuts.WithRuleUID("rule1"),
 			},
 			errContains: alertingmodels.RuleUIDLabel, // Mention matcher in error message.
 		},
 		{
 			name:     "Updates that change rule_uid matcher error",
-			existing: models.SilenceGen(models.SilenceMuts.WithRuleUID("rule1")),
-			mutators: []models.Mutator[models.Silence]{
-				models.SilenceMuts.WithRuleUID("rule2"),
+			existing: modelstest.SilenceGen(modelstest.SilenceMuts.WithRuleUID("rule1")),
+			mutators: []modelstest.Mutator[models.Silence]{
+				modelstest.SilenceMuts.WithRuleUID("rule2"),
 			},
 			errContains: alertingmodels.RuleUIDLabel, // Mention matcher in error message.
 		},
 		{
 			name:     "Updates that don't change rule_uid matcher are allowed",
-			existing: models.SilenceGen(models.SilenceMuts.WithRuleUID("rule1")),
-			mutators: []models.Mutator[models.Silence]{
-				models.SilenceMuts.Expired(),
+			existing: modelstest.SilenceGen(modelstest.SilenceMuts.WithRuleUID("rule1")),
+			mutators: []modelstest.Mutator[models.Silence]{
+				modelstest.SilenceMuts.Expired(),
 			},
 			errContains: "", // No Error.
 		},
@@ -223,7 +224,7 @@ func TestUpdateSilence(t *testing.T) {
 				store: &silenceStore,
 			}
 
-			modified := models.CopySilenceWith(silence, tc.mutators...)
+			modified := modelstest.CopySilenceWith(silence, tc.mutators...)
 			_, err := svc.UpdateSilence(context.Background(), user, modified)
 			if tc.errContains != "" {
 				assert.Error(t, err)
@@ -241,7 +242,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 	createSilenceStore := func(existingCount int) *ngfakes.FakeSilenceStore {
 		silences := make(map[string]*models.Silence, existingCount)
 		for range existingCount {
-			silence := models.SilenceGen()()
+			silence := modelstest.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}
 		return &ngfakes.FakeSilenceStore{Silences: silences}
@@ -267,7 +268,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			},
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.ErrorIs(t, err, ErrSilenceLimitExceeded)
@@ -294,9 +295,9 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		// Generate a silence with many matchers to increase its size
-		newSilence := models.SilenceGen(
-			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
-			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
+		newSilence := modelstest.SilenceGen(
+			modelstest.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
+			modelstest.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
 		)()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
@@ -323,7 +324,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			},
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.NoError(t, err)
@@ -344,7 +345,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			},
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.NoError(t, err)
@@ -370,7 +371,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			},
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.NoError(t, err)
@@ -391,7 +392,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			},
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.NoError(t, err)
@@ -410,7 +411,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 			limitsProvider: nil,
 		}
 
-		newSilence := models.SilenceGen()()
+		newSilence := modelstest.SilenceGen()()
 		_, err := svc.CreateSilence(context.Background(), user, newSilence)
 
 		require.NoError(t, err)
@@ -425,7 +426,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 			return nil
 		}
-		existingSilence := models.SilenceGen()()
+		existingSilence := modelstest.SilenceGen()()
 		silenceStore := &ngfakes.FakeSilenceStore{
 			Silences: map[string]*models.Silence{
 				*existingSilence.ID: &existingSilence,
@@ -446,9 +447,9 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		// Update with a large silence that exceeds size limit
-		updatedSilence := models.CopySilenceWith(existingSilence,
-			models.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
-			models.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
+		updatedSilence := modelstest.CopySilenceWith(existingSilence,
+			modelstest.SilenceMuts.WithMatcher("label1", "very-long-value-that-exceeds-limit", labels.MatchEqual),
+			modelstest.SilenceMuts.WithMatcher("label2", "another-long-value-that-exceeds-limit", labels.MatchEqual),
 		)
 		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
 
@@ -462,10 +463,10 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		}
 		// Create a store with many silences (at or over the limit)
 		silences := make(map[string]*models.Silence, 100)
-		existingSilence := models.SilenceGen()()
+		existingSilence := modelstest.SilenceGen()()
 		silences[*existingSilence.ID] = &existingSilence
 		for range 99 {
-			silence := models.SilenceGen()()
+			silence := modelstest.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}
 		silenceStore := &ngfakes.FakeSilenceStore{Silences: silences}
@@ -484,7 +485,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		}
 
 		// Update should succeed because count limit doesn't apply to updates
-		updatedSilence := models.CopySilenceWith(existingSilence, models.SilenceMuts.Expired())
+		updatedSilence := modelstest.CopySilenceWith(existingSilence, modelstest.SilenceMuts.Expired())
 		_, err := svc.UpdateSilence(context.Background(), user, updatedSilence)
 
 		require.NoError(t, err)

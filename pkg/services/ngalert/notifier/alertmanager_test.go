@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -60,7 +63,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	}
 
 	kvStore := fakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
 
 	orgID := 1
@@ -80,7 +83,7 @@ func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 }
 
 func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *testing.T) {
-	moa := NewTestMultiOrgAlertmanager(t)
+	moa := newTestMultiOrgAlertmanager(t, featuremgmt.WithFeatures(), nil)
 	am, err := moa.AlertmanagerFor(1)
 	require.NoError(t, err)
 
@@ -242,7 +245,7 @@ receivers:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			moa := NewTestMultiOrgAlertmanager(t, WithFeatureToggles(tc.features))
+			moa := newTestMultiOrgAlertmanager(t, tc.features, nil)
 			am, err := moa.AlertmanagerFor(1)
 			require.NoError(t, err)
 			ctx := context.Background()
@@ -466,12 +469,12 @@ receivers:
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			s := NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
-			s.notificationSettings = map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
+			s := notifiertest.NewFakeConfigStore(t, map[int64]*ngmodels.AlertConfiguration{})
+			s.NotificationSettings = map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting{
 				1: tc.initialSettings,
 			}
 
-			moa := NewTestMultiOrgAlertmanager(t, WithConfigStore(s), WithFeatureToggles(tc.features))
+			moa := newTestMultiOrgAlertmanager(t, tc.features, s)
 			am, err := moa.AlertmanagerFor(1)
 			require.NoError(t, err)
 			base := am.(*alertmanager).Base

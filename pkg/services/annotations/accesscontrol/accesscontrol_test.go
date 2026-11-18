@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,7 +25,7 @@ func TestDashboardsWithVisibleAnnotations(t *testing.T) {
 
 	signedInUser := &user.SignedInUser{OrgID: 1}
 
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboardstest.FakeDashboardService{}
 
 	// without DashboardUID: DashboardUIDs should be nil so the K8s search returns all visible dashboards
 	queryAllDashboards := &dashboards.FindPersistedDashboardsQuery{

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy/legacytest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -136,7 +139,7 @@ func newTestLegacyStorageWithStores(t *testing.T, validator legacy.RuleMutationV
 	t.Helper()
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
-	quotas := legacy.MockQuotaChecker{}
+	quotas := legacytest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
@@ -191,7 +194,7 @@ func deleteCollectionTestContext() context.Context {
 }
 
 func newAlertingRule(uid, folderUID string) *ngmodels.AlertRule {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithOrgID(1), gen.WithUID(uid), gen.WithNamespaceUID(folderUID)).GenerateRef()
 	rule.Record = nil // ensure alerting type
 	// The k8s conversion marks the query matching the condition as the source; it must exist to round-trip.

@@ -21,13 +21,21 @@ import (
 var ofClient = openfeature.NewDefaultClient()
 
 func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg, tracer tracing.Tracer) *OrgSync {
+	return NewOrgSync(userService, orgService, accessControl, cfg, tracer)
+}
+
+type orgPermissionDeleter interface {
+	DeleteUserPermissions(context.Context, int64, int64) error
+}
+
+func NewOrgSync(userService user.Service, orgService org.Service, accessControl orgPermissionDeleter, cfg *setting.Cfg, tracer tracing.Tracer) *OrgSync {
 	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync"), tracer}
 }
 
 type OrgSync struct {
 	userService   user.Service
 	orgService    org.Service
-	accessControl accesscontrol.Service
+	accessControl orgPermissionDeleter
 	cfg           *setting.Cfg
 	log           log.Logger
 	tracer        tracing.Tracer

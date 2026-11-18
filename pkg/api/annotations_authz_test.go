@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +29,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -45,7 +48,7 @@ func TestAPI_AnnotationNotFoundAfterDeletion(t *testing.T) {
 					dashboardUID = ""
 				}
 				items := []*annotations.ItemDTO{{ID: 123, DashboardUID: &dashboardUID}}
-				repo := &annotations.FakeAnnotationsRepo{}
+				repo := &annotationstest.MockAnnotationsRepo{}
 				repo.On("Find", mock.Anything, mock.Anything).Return(func(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 					assert.Equal(t, int64(1), query.OrgID)
 					assert.Equal(t, int64(123), query.AnnotationID)
@@ -142,7 +145,7 @@ func TestAPI_AnnotationScopeResolutionErrors(t *testing.T) {
 				if tc.method == "" {
 					tc.method = http.MethodGet
 				}
-				repo := &annotations.FakeAnnotationsRepo{}
+				repo := &annotationstest.MockAnnotationsRepo{}
 				var items []*annotations.ItemDTO
 				if tc.dashboard != "" {
 					items = []*annotations.ItemDTO{{ID: 123, DashboardUID: &tc.dashboard}}
@@ -176,7 +179,7 @@ func annotationScopeTestServer(t *testing.T, repo annotations.Repository, permis
 	ac := acimpl.ProvideAccessControlTest()
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.annotationsRepo = repo
-		dashService := &dashboards.FakeDashboardService{}
+		dashService := &dashboardstest.FakeDashboardService{}
 		dashService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: "dashboard", OrgID: 1}).Return(&dashboards.Dashboard{UID: "dashboard", FolderUID: "parent"}, nil)
 		ac.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(repo, hs.Features, dashService, &foldertest.FakeService{}))
 		hs.AccessControl = ac

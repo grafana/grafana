@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -52,11 +53,11 @@ func (p *recordingValidatorProvider) Validator(context.Context, int64) (notifier
 func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	newRule := func() models.AlertRule {
 		return gen.With(
 			gen.WithOrgID(orgID),
-			gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver"))),
+			gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver("receiver"))),
 		).Generate()
 	}
 
@@ -141,12 +142,12 @@ func TestAlertRuleService_CreateAlertRuleAuthorizesNotificationSettings(t *testi
 func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 	rules := gen.With(
 		gen.WithGroupKey(groupKey),
 		gen.WithIntervalSeconds(30),
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver"))),
+		gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver("receiver"))),
 	).GenerateManyRef(3)
 
 	setup := func(t *testing.T) (*AlertRuleService, *[]string) {
@@ -167,7 +168,7 @@ func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t
 
 	t.Run("it authorizes the receiver of settings that changed before validating them", func(t *testing.T) {
 		service, events := setup(t)
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.NotificationSettings.ContactPointRouting.Receiver = "other"
 
 		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
@@ -177,7 +178,7 @@ func TestAlertRuleService_UpdateAlertRuleAuthorizesChangedNotificationSettings(t
 
 	t.Run("it does not authorize the receiver of settings that did not change but still validates them", func(t *testing.T) {
 		service, events := setup(t)
-		rule := models.CopyRule(rules[0])
+		rule := modelstest.CopyRule(rules[0])
 		rule.Title += "_new"
 
 		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))

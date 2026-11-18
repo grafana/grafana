@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,7 @@ func (r *capturingResponder) Error(err error)                  { r.err = err }
 
 func newDeleteKeyREST(t *testing.T) *deleteKeyREST {
 	t.Helper()
-	mockService := dashboardsnapshots.NewMockService(t)
+	mockService := dashboardsnapshotstest.NewMockService(t)
 	mockService.On("GetDashboardSnapshot", mock.Anything, mock.Anything).
 		Return(&dashboardsnapshots.DashboardSnapshot{
 			Key:       "snap-1",

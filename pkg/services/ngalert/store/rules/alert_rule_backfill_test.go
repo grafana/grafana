@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -29,9 +29,9 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 	store := createTestStore(sqlStore, fakeFolderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
 	orgID := int64(1)
-	gen := models.RuleGen.With(
-		models.RuleGen.WithOrgID(orgID),
-		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
+	gen := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithOrgID(orgID),
+		modelstest.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
 	)
 
 	ctx := context.Background()
@@ -58,7 +58,7 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 
 		// Create alert rule in child folder using createRule helper
 		// This bypasses the automatic fullpath population in InsertAlertRules
-		ruleGen := gen.With(models.RuleGen.WithNamespaceUID(childFolderUID))
+		ruleGen := gen.With(modelstest.RuleGen.WithNamespaceUID(childFolderUID))
 		rule := createRule(t, store, ruleGen)
 
 		// Manually clear the folder_fullpath to simulate pre-migration state
@@ -103,10 +103,10 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 		})
 
 		// Create rules in both folders
-		rule1Gen := gen.With(models.RuleGen.WithNamespaceUID(folder1UID))
+		rule1Gen := gen.With(modelstest.RuleGen.WithNamespaceUID(folder1UID))
 		rule1 := createRule(t, store, rule1Gen)
 
-		rule2Gen := gen.With(models.RuleGen.WithNamespaceUID(folder2UID))
+		rule2Gen := gen.With(modelstest.RuleGen.WithNamespaceUID(folder2UID))
 		rule2 := createRule(t, store, rule2Gen)
 
 		// Clear folder_fullpath for both rules
@@ -148,7 +148,7 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 			Fullpath: "Folder Three",
 		})
 
-		rule3Gen := gen.With(models.RuleGen.WithNamespaceUID(folder3UID))
+		rule3Gen := gen.With(modelstest.RuleGen.WithNamespaceUID(folder3UID))
 		rule3 := createRule(t, store, rule3Gen)
 
 		// Clear folder_fullpath

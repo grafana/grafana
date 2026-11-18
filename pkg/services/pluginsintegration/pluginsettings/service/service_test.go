@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -26,7 +27,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -64,7 +65,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 	t.Run("When plugin settings is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
 		ctx := context.Background()
 
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 		psService := ProvideService(nil, secretsService)
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
@@ -103,7 +104,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 
 func TestService_UpdatePluginSetting_JSONDataSize(t *testing.T) {
 	// A nil store proves the size check runs before any database access.
-	psService := ProvideService(nil, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+	psService := ProvideService(nil, managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore()))
 
 	err := psService.UpdatePluginSetting(context.Background(), &pluginsettings.UpdateArgs{
 		PluginID: "test-app",
@@ -119,7 +120,7 @@ func TestIntegrationUpdatePluginSetting_SecureJSONDataSize(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	psService := ProvideService(store, secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+	psService := ProvideService(store, managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore()))
 	large := map[string]string{"k": strings.Repeat("a", maxJSONDataBytes)}
 
 	t.Run("rejects a new setting", func(t *testing.T) {
@@ -156,7 +157,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	psService := ProvideService(store, secretsService)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {

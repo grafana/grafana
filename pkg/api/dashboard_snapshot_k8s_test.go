@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -80,7 +82,7 @@ func TestSelfManagedPublicSnapshotReadStore(t *testing.T) {
 					t.Fatal("Self-managed public reads must not reach Kubernetes storage")
 					return nil, nil
 				})}
-				service := dashboardsnapshots.NewMockService(t)
+				service := dashboardsnapshotstest.NewMockService(t)
 				hs.dashboardsnapshotsService = service
 				status := http.StatusServiceUnavailable
 				if resolved == unifiedmigrations.StorageModeLegacy {
@@ -97,7 +99,7 @@ func TestSelfManagedPublicSnapshotReadStore(t *testing.T) {
 func TestSelfManagedPublicSnapshotReadStorageError(t *testing.T) {
 	hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
 	hs.migrationStatusReader = snapshotMigrationStatusReader{err: errors.New("migration log unavailable")}
-	hs.dashboardsnapshotsService = dashboardsnapshots.NewMockService(t)
+	hs.dashboardsnapshotsService = dashboardsnapshotstest.NewMockService(t)
 	require.Equal(t, http.StatusServiceUnavailable, hs.GetDashboardSnapshot(c).Status())
 }
 
@@ -187,7 +189,7 @@ func TestDeleteSnapshotFromAPI(t *testing.T) {
 		t.Run(fmt.Sprint(byKey), func(t *testing.T) {
 			hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
 			if !byKey {
-				service := dashboardsnapshots.NewMockService(t)
+				service := dashboardsnapshotstest.NewMockService(t)
 				service.On("GetDashboardSnapshot", mock.Anything, &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}).
 					Return(&dashboardsnapshots.DashboardSnapshot{ID: 42}, nil)
 				hs.dashboardsnapshotsService = service
@@ -315,7 +317,7 @@ func TestSnapshotMigrationLegacyFallbacks(t *testing.T) {
 			} else {
 				featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 			}
-			service := dashboardsnapshots.NewMockService(t)
+			service := dashboardsnapshotstest.NewMockService(t)
 			hs.dashboardsnapshotsService = service
 			if endpoint == "list" {
 				service.On("SearchDashboardSnapshots", c.Req.Context(), mock.Anything).Return(dashboardsnapshots.DashboardSnapshotsList{{Key: "snapshot-key", Name: "legacy"}}, nil)

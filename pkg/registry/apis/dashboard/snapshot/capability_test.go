@@ -19,6 +19,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -46,7 +47,7 @@ func TestDeleteKeyPreservesExternalSnapshotOnRemoteFailure(t *testing.T) {
 				Run(func(mock.Arguments) { require.True(t, remoteDeleted.Load()) }).Return(&snap, true, nil).Once()
 			routes := GetRoutes(dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, ExternalSnapshotURL: server.URL},
 				acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}),
-				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboards.NewFakeDashboardService(t), nil, testReadFromLegacy)
+				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboardstest.NewFakeDashboardService(t), nil, testReadFromLegacy)
 			request := func() *httptest.ResponseRecorder {
 				req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/delete-key", nil)
 				req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{OrgID: 1, UserID: 1}))
@@ -83,7 +84,7 @@ func TestDeleteKeyCapabilityCannotAuthorizeArbitraryDeletes(t *testing.T) {
 			}
 			routes := GetRoutes(dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 				acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}),
-				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboards.NewFakeDashboardService(t), nil, testReadFromLegacy)
+				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboardstest.NewFakeDashboardService(t), nil, testReadFromLegacy)
 			req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/delete-key", nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{OrgID: 1, UserID: 1}))
 			req = mux.SetURLVars(req, map[string]string{"namespace": tc.requestNamespace, "deleteKey": "delete-key"})

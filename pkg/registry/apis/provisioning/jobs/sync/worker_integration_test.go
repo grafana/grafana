@@ -11,10 +11,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
 )
 
 func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
@@ -22,12 +22,12 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		t.Skip("skipping integration test in short mode")
 	}
 
-	repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	repoResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 	repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("boom"))
 
 	readerWriter := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
-		MockVersioned:  repository.NewMockVersioned(t),
+		MockRepository: repositorytest.NewMockRepository(t),
+		MockVersioned:  repositorytest.NewMockVersioned(t),
 	}
 	repoConfig := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -51,7 +51,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 	}
 
 	worker := NewSyncWorker(
-		resources.NewMockClientFactory(t),
+		resourcestest.NewMockClientFactory(t),
 		repoResourcesFactory,
 		patchFn,
 		NewMockSyncer(t),

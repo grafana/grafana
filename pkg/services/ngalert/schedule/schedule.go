@@ -36,7 +36,7 @@ type ScheduleService interface {
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
-//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
+//go:generate mockery --name AlertsSender --structname AlertsSenderMock --outpkg scheduletest --output ./scheduletest/ --filename alerts_sender_mock.go --with-expecter
 type AlertsSender interface {
 	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }

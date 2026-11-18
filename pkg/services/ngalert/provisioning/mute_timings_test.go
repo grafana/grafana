@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
@@ -418,12 +422,12 @@ func TestCreateMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -528,7 +532,7 @@ func TestCreateMuteTimings(t *testing.T) {
 				return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 			}
 			expectedErr := fmt.Errorf("failed to save provenance")
-			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
+			sut.provenanceStore.(*provisioningtest.MockProvisioningStore).EXPECT().
 				SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
@@ -728,13 +732,13 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -805,7 +809,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		original := initialConfig().TimeIntervals[v1.TimeIntervalUID("Test2")]
@@ -813,7 +817,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{original.Title: expectedProvenance}, nil)
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -859,24 +863,24 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(expectedProvenance, nil).Maybe()
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, provisionable models.Provisionable, i int64) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		})
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64, _ models.Provenance) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
-		ruleStore := &fakeAlertRuleNotificationStore{
+		ruleStore := &provisioningtest.FakeAlertRuleNotificationStore{
 			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
 		}
@@ -945,9 +949,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(models.ProvenanceFile, nil)
 
-		ruleStore := &fakeAlertRuleNotificationStore{
+		ruleStore := &provisioningtest.FakeAlertRuleNotificationStore{
 			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil, nil, nil
 			},
 		}
@@ -982,10 +986,10 @@ func TestUpdateMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 		prov.EXPECT().GetProvenance(mock.Anything, mock.MatchedBy(func(*v1.Route) bool { return true }), mock.Anything).Return(models.ProvenanceNone, nil)
 
-		ruleStore := &fakeAlertRuleNotificationStore{
+		ruleStore := &provisioningtest.FakeAlertRuleNotificationStore{
 			RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
-				assertInTransaction(t, ctx)
-				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
+				provisioningtest.AssertInTransaction(t, ctx)
+				return nil, []models.AlertRuleKey{modelstest.GenerateRuleKey(orgID)}, nil
 			},
 		}
 		sut.ruleNotificationsStore = ruleStore
@@ -1028,10 +1032,10 @@ func TestUpdateMuteTimings(t *testing.T) {
 				return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 			}
 			expectedErr := fmt.Errorf("failed to save provenance")
-			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
+			sut.provenanceStore.(*provisioningtest.MockProvisioningStore).EXPECT().
 				GetProvenances(mock.Anything, mock.Anything, mock.Anything).
 				Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
-			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
+			sut.provenanceStore.(*provisioningtest.MockProvisioningStore).EXPECT().
 				SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
@@ -1051,7 +1055,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 				return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 			}
-			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
+			sut.provenanceStore.(*provisioningtest.MockProvisioningStore).EXPECT().
 				GetProvenances(mock.Anything, mock.Anything, mock.Anything).
 				Return(map[string]models.Provenance{expected.Title: expectedProvenance}, nil)
 			expectedErr := errors.New("test-err")
@@ -1081,7 +1085,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			expectedErr := errors.New("test-err")
 
-			ruleStore := &fakeAlertRuleNotificationStore{
+			ruleStore := &provisioningtest.FakeAlertRuleNotificationStore{
 				RenameTimeIntervalInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 					return nil, nil, expectedErr
 				},
@@ -1222,10 +1226,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used by rules", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
-		ruleKey := models.GenerateRuleKey(orgID)
-		ruleNsStore := fakeAlertRuleNotificationStore{
+		ruleKey := modelstest.GenerateRuleKey(orgID)
+		ruleNsStore := provisioningtest.FakeAlertRuleNotificationStore{
 			ListContactPointRoutingsFn: func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				assert.Equal(t, orgID, q.OrgID)
 				assert.Equal(t, timingToDelete.Title, q.TimeIntervalName)
 				assert.Empty(t, q.ReceiverName)
@@ -1275,13 +1279,13 @@ func TestDeleteMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -1323,13 +1327,13 @@ func TestDeleteMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -1361,13 +1365,13 @@ func TestDeleteMuteTimings(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
 			func(ctx context.Context, _ models.Provisionable, _ int64) error {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 				return nil
 			})
 
@@ -1464,7 +1468,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
 			}
 			expectedErr := fmt.Errorf("failed to save provenance")
-			sut.provenanceStore.(*MockProvisioningStore).EXPECT().
+			sut.provenanceStore.(*provisioningtest.MockProvisioningStore).EXPECT().
 				DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
@@ -1537,18 +1541,18 @@ func TestMuteTimingUIDLifecycle(t *testing.T) {
 	require.Len(t, cfg.TimeIntervals, 2)
 }
 
-func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
-	store := &legacy_storage.AlertmanagerConfigStoreFake{}
-	prov := &MockProvisioningStore{}
+func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storagetest.AlertmanagerConfigStoreFake, *provisioningtest.MockProvisioningStore) {
+	store := &legacy_storagetest.AlertmanagerConfigStoreFake{}
+	prov := &provisioningtest.MockProvisioningStore{}
 	return &MuteTimingService{
 		configStore:     store,
 		provenanceStore: prov,
-		xact:            newNopTransactionManager(),
+		xact:            provisioningtest.NewNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		validator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
-		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},
+		ruleNotificationsStore: &provisioningtest.FakeAlertRuleNotificationStore{},
 		routeService:           routes.NewFakeService(legacy_storage.ConfigRevision{}),
 	}, store, prov
 }

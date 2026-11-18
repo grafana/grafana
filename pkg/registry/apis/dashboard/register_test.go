@@ -11,6 +11,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/gorilla/mux"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -59,14 +61,16 @@ import (
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite/dualwritetest"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -287,7 +291,7 @@ func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var checks []authlib.CheckRequest
 			var folders []string
-			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService := dashboardstest.NewFakeDashboardService(t)
 			dashboardService.On("ValidateBasicDashboardProperties", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			b := &DashboardsAPIBuilder{
 				dashboardService: dashboardService,
@@ -814,7 +818,7 @@ func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
 	})))
 	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
 
-	service := dashboardsnapshots.NewMockService(t)
+	service := dashboardsnapshotstest.NewMockService(t)
 	service.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			cmd := args.Get(1).(*dashboardsnapshots.CreateDashboardSnapshotCommand)
@@ -827,11 +831,11 @@ func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
 		ResourceInfo: dashv0.SnapshotResourceInfo, Service: service,
 		Namespacer: authlib.OrgNamespaceFormatter,
 	}
-	mode := dualwrite.NewMockService(t)
+	mode := dualwritetest.NewMockService(t)
 	mode.On("ReadFromUnified", mock.Anything, dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil).Maybe()
 	b := &DashboardsAPIBuilder{snapshotStorage: legacy, dualWriter: mode}
-	blobs := resource.NewMockResourceClient(t)
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	blobs := resourcetest.NewMockResourceClient(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 		UID: "dash-1", OrgID: 1,
 	}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: 1}, nil)
@@ -856,7 +860,7 @@ func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
 }
 
 func TestSnapshotBlobEligibilityWithLegacyOnlyStore(t *testing.T) {
-	mode := dualwrite.NewMockService(t)
+	mode := dualwritetest.NewMockService(t)
 	b := &DashboardsAPIBuilder{
 		snapshotStorage: &snapshot.SnapshotLegacyStore{},
 		dualWriter:      mode,
@@ -968,7 +972,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 				iamFeatures:     iamapi.Features{ResourcePermissionsAPI: true},
 				accessControl:   acmock.New(),
 				namespacer:      apiserverrequest.GetNamespaceMapper(nil),
-				snapshotService: dashboardsnapshots.NewMockService(t),
+				snapshotService: dashboardsnapshotstest.NewMockService(t),
 			}
 			groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{}}
 			err = builder.storageForVersion(groupInfo, apiserverbuilder.APIGroupOptions{

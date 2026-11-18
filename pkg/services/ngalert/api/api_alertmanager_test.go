@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingmodels "github.com/grafana/alerting/models"
@@ -27,6 +29,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest/multiorgtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -182,11 +185,11 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			2: {AlertmanagerConfiguration: validConfigWithoutAutogen, OrgID: 2},
 		}
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingUseNewSimplifiedRoutingHashAlgorithm)
-		sut.mam = notifier.NewTestMultiOrgAlertmanager(t,
-			notifier.WithOrgs([]int64{1, 2, 3}),
-			notifier.WithConfigs(configs),
-			notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
-			notifier.WithFeatureToggles(ft),
+		sut.mam = multiorgtest.NewTestMultiOrgAlertmanager(t,
+			multiorgtest.WithOrgs([]int64{1, 2, 3}),
+			multiorgtest.WithConfigs(configs),
+			multiorgtest.WithDisabledOrgs(map[int64]struct{}{5: {}}),
+			multiorgtest.WithFeatureToggles(ft),
 		)
 		return sut, configs
 	}
@@ -441,9 +444,9 @@ func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
 }`
 
 	sut := createSut(t)
-	sut.mam = notifier.NewTestMultiOrgAlertmanager(t,
-		notifier.WithOrgs([]int64{orgID}),
-		notifier.WithConfigs(map[int64]*ngmodels.AlertConfiguration{
+	sut.mam = multiorgtest.NewTestMultiOrgAlertmanager(t,
+		multiorgtest.WithOrgs([]int64{orgID}),
+		multiorgtest.WithConfigs(map[int64]*ngmodels.AlertConfiguration{
 			orgID: {AlertmanagerConfiguration: twoReceiverAMConfig, OrgID: orgID},
 		}),
 	)
@@ -534,7 +537,7 @@ func createTestReceiverService(t *testing.T, amConfig string, amStatusFetcher *n
 		noopAlertRuleNotificationStore{},
 		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		secretsService,
-		&provisioning.NopTransactionManager{},
+		&provisioningtest.NopTransactionManager{},
 		log.NewNopLogger(),
 		ngfakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
@@ -554,10 +557,10 @@ func createSut(t *testing.T) AlertmanagerSrv {
 		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
-	mam := notifier.NewTestMultiOrgAlertmanager(t,
-		notifier.WithOrgs([]int64{1, 2, 3}),
-		notifier.WithConfigs(configs),
-		notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
+	mam := multiorgtest.NewTestMultiOrgAlertmanager(t,
+		multiorgtest.WithOrgs([]int64{1, 2, 3}),
+		multiorgtest.WithConfigs(configs),
+		multiorgtest.WithDisabledOrgs(map[int64]struct{}{5: {}}),
 	)
 	log := log.NewNopLogger()
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())

@@ -19,7 +19,8 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
 )
 
 func TestSnapshotCreateRejectsDryRunBeforeSideEffects(t *testing.T) {
@@ -35,7 +36,7 @@ func TestSnapshotCreateRejectsDryRunBeforeSideEffects(t *testing.T) {
 			routes := GetRoutes(dashv0.SnapshotSharingOptions{
 				SnapshotsEnabled: true, ExternalEnabled: true, ExternalSnapshotURL: remote.URL,
 			}, acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
-				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboards.NewFakeDashboardService(t), blobs, testReadFromLegacy)
+				map[string]common.OpenAPIDefinition{}, func() rest.Storage { return storage }, dashboardstest.NewFakeDashboardService(t), blobs, testReadFromLegacy)
 			body, err := json.Marshal(map[string]any{"dashboard": map[string]any{"uid": "source"}, "external": external})
 			require.NoError(t, err)
 			req := httptest.NewRequest(http.MethodPost, "/snapshots/create?"+query, bytes.NewReader(body))
@@ -74,7 +75,7 @@ func TestSnapshotInlineValidationBeforeStorage(t *testing.T) {
 				unified := NewUnifiedBlobStorage(resttest.NewMockStorage(t))
 				_, err := unified.Create(t.Context(), input, nil, options)
 				require.Error(t, err)
-				legacy := &SnapshotLegacyStore{Service: dashboardsnapshots.NewMockService(t)}
+				legacy := &SnapshotLegacyStore{Service: dashboardsnapshotstest.NewMockService(t)}
 				_, err = legacy.Create(t.Context(), input, nil, options)
 				require.Error(t, err)
 			}

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -818,7 +819,7 @@ func TestParseFormattedState(t *testing.T) {
 func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
-	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
+	rule := modelstest.RuleGen.With(modelstest.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewV4().String()
 
 	cpr := ngmodels.ContactPointRouting{
@@ -834,7 +835,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		expected      map[string]string
 	}{
 		"no_folder_no_notification": {
-			rule:          ngmodels.CopyRule(rule),
+			rule:          modelstest.CopyRule(rule),
 			includeFolder: false,
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
@@ -843,7 +844,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 			},
 		},
 		"with_folder_no_notification": {
-			rule:          ngmodels.CopyRule(rule),
+			rule:          modelstest.CopyRule(rule),
 			includeFolder: true,
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
@@ -853,7 +854,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 			},
 		},
 		"with_contact_point_routing": {
-			rule: ngmodels.CopyRule(rule, ngmodels.RuleGen.WithContactPointRouting(ngmodels.CopyContactPointRouting(cpr))),
+			rule: modelstest.CopyRule(rule, modelstest.RuleGen.WithContactPointRouting(modelstest.CopyContactPointRouting(cpr))),
 			expected: map[string]string{
 				models.NamespaceUIDLabel:                     rule.NamespaceUID,
 				model.AlertNameLabel:                         rule.Title,
@@ -864,7 +865,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 			},
 		},
 		"with_policy_routing": {
-			rule: ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
+			rule: modelstest.CopyRule(rule, modelstest.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,
@@ -874,7 +875,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		},
 		"with_both_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
 			rule: func() *ngmodels.AlertRule {
-				r := ngmodels.CopyRule(rule, ngmodels.RuleGen.WithContactPointRouting(ngmodels.CopyContactPointRouting(cpr)))
+				r := modelstest.CopyRule(rule, modelstest.RuleGen.WithContactPointRouting(modelstest.CopyContactPointRouting(cpr)))
 				r.NotificationSettings.PolicyRouting = new(ngmodels.PolicyRouting{Policy: "policy-a"})
 				return r
 			}(),
@@ -889,7 +890,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		},
 		"with_empty_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
 			rule: func() *ngmodels.AlertRule {
-				r := ngmodels.CopyRule(rule)
+				r := modelstest.CopyRule(rule)
 				r.NotificationSettings = &ngmodels.NotificationSettings{}
 				return r
 			}(),
@@ -920,15 +921,15 @@ func TestNewState(t *testing.T) {
 	}
 	l := log.New("test")
 
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
 
 	t.Run("should combine all labels", func(t *testing.T) {
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(5, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(5, "extra-")
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range extraLabels {
@@ -948,10 +949,10 @@ func TestNewState(t *testing.T) {
 	t.Run("extra labels should take precedence over rule and result labels", func(t *testing.T) {
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(2, "extra-")
 
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 		for key := range extraLabels {
 			rule.Labels[key] = "rule-" + util.GenerateShortUID()
@@ -966,10 +967,10 @@ func TestNewState(t *testing.T) {
 	t.Run("rule labels should take precedence over result labels", func(t *testing.T) {
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(2, "extra-")
 
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 		for key := range rule.Labels {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
@@ -981,11 +982,11 @@ func TestNewState(t *testing.T) {
 	})
 	t.Run("rule labels should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(2, "extra-")
 
 		labelTemplates := make(data.Labels)
 		for key := range extraLabels {
@@ -1006,12 +1007,12 @@ func TestNewState(t *testing.T) {
 	})
 	t.Run("rule annotations should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(2, "extra-")
 
 		annotationTemplates := make(data.Labels)
 		for key := range extraLabels {
@@ -1032,7 +1033,7 @@ func TestNewState(t *testing.T) {
 	})
 	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 		m := ngmodels.LabelsUserCannotSpecify
 		t.Cleanup(func() {
@@ -1088,10 +1089,10 @@ func TestNewState(t *testing.T) {
 	t.Run("creates a state with preset fields if there is no current state", func(t *testing.T) {
 		rule := generateRule()
 
-		extraLabels := ngmodels.GenerateAlertLabels(2, "extra-")
+		extraLabels := modelstest.GenerateAlertLabels(2, "extra-")
 
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 
 		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url, 0, nil)
@@ -1121,10 +1122,10 @@ func TestNewState(t *testing.T) {
 }
 
 func TestPatch(t *testing.T) {
-	key := ngmodels.GenerateRuleKey(1)
+	key := modelstest.GenerateRuleKey(1)
 	t.Run("it populates some fields from the current state if it exists", func(t *testing.T) {
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 
 		state := randomState(key)
@@ -1169,7 +1170,7 @@ func TestPatch(t *testing.T) {
 		}
 
 		result := eval.Result{
-			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
+			Instance: modelstest.GenerateAlertLabels(5, "result-"),
 		}
 
 		patch(state, current, result)
@@ -1199,7 +1200,7 @@ func TestPatch(t *testing.T) {
 }
 
 func TestResultStateReason(t *testing.T) {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	tests := []struct {
 		name     string
 		result   eval.Result
@@ -1211,7 +1212,7 @@ func TestResultStateReason(t *testing.T) {
 			result: eval.Result{
 				State: eval.Error,
 			},
-			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)).GenerateRef(),
+			rule:     gen.With(modelstest.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)).GenerateRef(),
 			expected: "Error, KeepLast",
 		},
 		{
@@ -1219,7 +1220,7 @@ func TestResultStateReason(t *testing.T) {
 			result: eval.Result{
 				State: eval.Error,
 			},
-			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)).GenerateRef(),
+			rule:     gen.With(modelstest.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)).GenerateRef(),
 			expected: "Error",
 		},
 		{
@@ -1227,7 +1228,7 @@ func TestResultStateReason(t *testing.T) {
 			result: eval.Result{
 				State: eval.NoData,
 			},
-			rule:     gen.With(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)).GenerateRef(),
+			rule:     gen.With(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)).GenerateRef(),
 			expected: "NoData, KeepLast",
 		},
 		{
@@ -1235,7 +1236,7 @@ func TestResultStateReason(t *testing.T) {
 			result: eval.Result{
 				State: eval.NoData,
 			},
-			rule:     gen.With(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
+			rule:     gen.With(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
 			expected: "NoData",
 		},
 		{
@@ -1243,7 +1244,7 @@ func TestResultStateReason(t *testing.T) {
 			result: eval.Result{
 				State: eval.NoData,
 			},
-			rule:     gen.With(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState), ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
+			rule:     gen.With(modelstest.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState), modelstest.RuleMuts.WithNoDataExecAs(ngmodels.NoData)).GenerateRef(),
 			expected: "NoData",
 		},
 	}

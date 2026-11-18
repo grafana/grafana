@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
@@ -85,8 +87,8 @@ func TestManager_Readiness_ClearCacheResets(t *testing.T) {
 // processResults applies a single Alerting result for a generated rule.
 func processResults(t *testing.T, mgr *state.Manager, now time.Time) (*models.AlertRule, state.StateTransitions, error) {
 	t.Helper()
-	rule := models.RuleGen.GenerateRef()
-	results := eval.Results{eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(now))()}
+	rule := modelstest.RuleGen.GenerateRef()
+	results := eval.Results{evaltest.ResultGen(evaltest.WithState(eval.Alerting), evaltest.WithEvaluatedAt(now))()}
 	transitions, err := mgr.ProcessEvalResults(context.Background(), now, rule, results, nil, nil)
 	return rule, transitions, err
 }

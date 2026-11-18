@@ -17,12 +17,13 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager/managertest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -132,7 +133,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	globalDataKeyStore, err := encryptionstorage.ProvideGlobalDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	usageStats := &usagestats.UsageStatsMock{T: t}
+	usageStats := &usagestatstest.UsageStatsMock{T: t}
 
 	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
 	require.NoError(t, err)
@@ -146,7 +147,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		usageStats,
 		enc,
 		ossProviders,
-		&manager.NoopDataKeyCache{},
+		&managertest.NoopDataKeyCache{},
 		cfg,
 	)
 	require.NoError(t, err)

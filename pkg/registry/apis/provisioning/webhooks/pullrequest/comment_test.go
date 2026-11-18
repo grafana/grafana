@@ -16,12 +16,13 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func newPullRequestRepo(t *testing.T) (*repository.MockPullRequestRepo, *repository.MockPullRequestClient) {
-	client := repository.NewMockPullRequestClient(t)
-	repo := repository.NewMockPullRequestRepo(t)
+func newPullRequestRepo(t *testing.T) (*repositorytest.MockPullRequestRepo, *repositorytest.MockPullRequestClient) {
+	client := repositorytest.NewMockPullRequestClient(t)
+	repo := repositorytest.NewMockPullRequestRepo(t)
 	repo.On("PullRequestClient").Return(client).Maybe()
 	return repo, client
 }

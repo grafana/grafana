@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -73,7 +74,7 @@ func TestAPIFeatureDisabled(t *testing.T) {
 		t.Run(test.Name+" - setting disabled", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.PublicDashboardsEnabled = false
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 			testServer := setupTestServer(t, cfg, service, userAdmin)
 			response := callAPI(testServer, test.Method, test.Path, nil, t)
 			assert.Equal(t, http.StatusNotFound, response.Code)
@@ -125,7 +126,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 			service.On("FindAllWithPagination", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
@@ -249,7 +250,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
 				service.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -331,7 +332,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
 				service.On("FindByDashboardUid", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
@@ -448,7 +449,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 
 			// this is to avoid AssertExpectations fail at t.Cleanup when the middleware returns before calling the service
 			if test.ShouldCallService {
@@ -583,7 +584,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 
 			if test.ShouldCallService {
 				service.On("Update", mock.Anything, mock.Anything, mock.Anything).

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +20,7 @@ func nsMapperForTest() request.NamespaceMapper {
 
 func TestConvertVersionToK8sResource(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
 
 	t.Run("converts and preserves the revision message", func(t *testing.T) {
@@ -44,7 +45,7 @@ func TestConvertVersionToK8sResource(t *testing.T) {
 
 func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	recording := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
 	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
 	alerting.Record = nil
@@ -62,7 +63,7 @@ func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
 
 func TestConvertDeletedToK8sResources(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
 	rule.UID = ""
 	rule.Updated = time.Now()
@@ -77,7 +78,7 @@ func TestConvertDeletedToK8sResources(t *testing.T) {
 }
 
 func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
-	rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1), ngmodels.RuleGen.WithAllRecordingRules()).GenerateRef()
+	rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(1), modelstest.RuleGen.WithAllRecordingRules()).GenerateRef()
 	query := rule.Data[0]
 	refIDs := []string{"H", "G", "F", "E", "D", "C", "B", "A"}
 	rule.Data = make([]ngmodels.AlertQuery, 0, len(refIDs))
@@ -100,7 +101,7 @@ func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
 
 func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 	mapper := nsMapperForTest()
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	const def = "record: job:errors:rate5m\nexpr: rate(errors[5m])\n"
 
 	t.Run("original definition survives a k8s round-trip", func(t *testing.T) {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -71,7 +72,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 	t.Helper()
 
 	h := &staleHarness{t: t, ev: &scriptedEvaluator{}, now: time.Unix(1_700_000_000, 0)}
-	h.model = models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123)).GenerateRef()
+	h.model = modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules(), modelstest.RuleGen.WithOrgID(123)).GenerateRef()
 	h.model.Record.Metric = "my_metric"
 	h.model.Record.TargetDatasourceUID = "ds-1"
 	h.model.Record.From = "A"

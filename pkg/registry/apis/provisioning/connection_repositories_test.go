@@ -7,6 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github/githubtest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -99,9 +102,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
 		}
 
-		lister := connection.NewMockRepositoryLister(t)
+		lister := connectiontest.NewMockRepositoryLister(t)
 		lister.EXPECT().ListRepositories(mock.Anything).Return(expectedRepos, nil).Once()
-		conn := listingConnection{connection.NewMockConnection(t), lister}
+		conn := listingConnection{connectiontest.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
@@ -127,9 +130,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		lister := connection.NewMockRepositoryLister(t)
+		lister := connectiontest.NewMockRepositoryLister(t)
 		lister.EXPECT().ListRepositories(mock.Anything).Return(nil, errors.New("github API error")).Once()
-		conn := listingConnection{connection.NewMockConnection(t), lister}
+		conn := listingConnection{connectiontest.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
@@ -149,9 +152,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		lister := connection.NewMockRepositoryLister(t)
+		lister := connectiontest.NewMockRepositoryLister(t)
 		lister.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrAuthentication).Once()
-		conn := listingConnection{connection.NewMockConnection(t), lister}
+		conn := listingConnection{connectiontest.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 		access.EXPECT().
 			GetConnectionSpec(mock.Anything, "test-connection").
@@ -174,8 +177,8 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 
 // mockResponder implements rest.Responder for testing
 type listingConnection struct {
-	*connection.MockConnection
-	*connection.MockRepositoryLister
+	*connectiontest.MockConnection
+	*connectiontest.MockRepositoryLister
 }
 
 type mockResponder struct {
@@ -222,8 +225,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		}
 
 		// Setup GitHub mocks
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		expectedRepos := []github.Repository{
 			{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
@@ -312,8 +315,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		}
 
 		// Setup GitHub mocks to return error
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().
 			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
@@ -361,7 +364,7 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		conn := connection.NewMockConnection(t)
+		conn := connectiontest.NewMockConnection(t)
 		access := NewMockConnectionRepositoriesAccess(t)
 		access.EXPECT().GetConnection(mock.Anything, "test-gitlab-connection").Return(conn, nil).Once()
 

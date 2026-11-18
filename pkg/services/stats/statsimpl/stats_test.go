@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -32,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -48,14 +49,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgSvc := populateDB(t, db, cfg)
 
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboardstest.FakeDashboardService{}
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := new(resourcetest.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(
 		func(_ context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) *resourcepb.ResourceStatsResponse {
 			s := make([]*resourcepb.ResourceStatsResponse_Stats, len(req.Kinds))
@@ -92,7 +93,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		{name: "provisioned dashboard count errors propagate", query: &stats.GetSystemStatsQuery{}, countErr: errors.New("provisioned dashboard count failed")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			dashSvc := &dashboards.FakeDashboardService{}
+			dashSvc := &dashboardstest.FakeDashboardService{}
 			if tc.countErr != nil {
 				dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(1)).Return(int64(0), tc.countErr).Once()
 			} else if tc.query == nil || !tc.query.SkipProvisionedDashboardCount {

@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -26,7 +27,7 @@ func TestValidateNoOwnedFoldersErrorStatus(t *testing.T) {
 		"transport": {err: fmt.Errorf("search: %w", status.Error(codes.Unavailable, "search unavailable"))},
 	} {
 		t.Run(name, func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.EXPECT().Search(mock.Anything, mock.Anything).Return(input.resp, input.err).Once()
 			err := ValidateNoOwnedFolders(t.Context(), client, "default", "team")
 			require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)

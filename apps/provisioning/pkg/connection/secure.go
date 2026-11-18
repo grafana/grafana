@@ -41,7 +41,7 @@ const (
 
 type Decrypter = func(c *provisioning.Connection) SecureValues
 
-//go:generate mockery --name SecureValues --structname MockSecureValues --inpackage --filename secure_mock.go --with-expecter
+//go:generate mockery --name SecureValues --structname MockSecureValues --outpkg connectiontest --output ./connectiontest/ --filename secure_mock.go --with-expecter
 type SecureValues interface {
 	PrivateKey(ctx context.Context) (common.RawSecureValue, error)
 	ClientSecret(ctx context.Context) (common.RawSecureValue, error)

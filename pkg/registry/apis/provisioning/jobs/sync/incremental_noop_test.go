@@ -4,6 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,8 +32,8 @@ func TestIncrementalSync_NoopFolderMetadata(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newCompositeRepoWithConfig(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			quotaTracker := newPermissiveMockQuotaTracker(t)
 			previousRef, currentRef := "current-ref", "current-ref"
 			message := "same commit as last time"

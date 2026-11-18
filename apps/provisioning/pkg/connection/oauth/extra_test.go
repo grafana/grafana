@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,7 +21,7 @@ import (
 )
 
 func TestExtra_Type(t *testing.T) {
-	e := newTestExtra(t, connection.NewMockSecureValues(t), nil)
+	e := newTestExtra(t, connectiontest.NewMockSecureValues(t), nil)
 	assert.Equal(t, provisioning.GitlabOAuthConnectionType, e.Type())
 }
 
@@ -27,7 +29,7 @@ func TestExtra_Build(t *testing.T) {
 	tests := []struct {
 		name        string
 		conn        *provisioning.Connection
-		setup       func(m *connection.MockSecureValues)
+		setup       func(m *connectiontest.MockSecureValues)
 		expectedErr string
 	}{
 		{
@@ -39,7 +41,7 @@ func TestExtra_Build(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
-			setup: func(m *connection.MockSecureValues) {
+			setup: func(m *connectiontest.MockSecureValues) {
 				m.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
 				m.EXPECT().Token(mock.Anything).Return(common.RawSecureValue(`{"access_token":"token"}`), nil)
 			},
@@ -67,7 +69,7 @@ func TestExtra_Build(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
-			setup: func(m *connection.MockSecureValues) {
+			setup: func(m *connectiontest.MockSecureValues) {
 				m.EXPECT().ClientSecret(mock.Anything).Return("", errors.New("boom"))
 			},
 			expectedErr: "decrypt client secret: boom",
@@ -81,7 +83,7 @@ func TestExtra_Build(t *testing.T) {
 					OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
 				},
 			},
-			setup: func(m *connection.MockSecureValues) {
+			setup: func(m *connectiontest.MockSecureValues) {
 				m.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
 				m.EXPECT().Token(mock.Anything).Return("", errors.New("boom"))
 			},
@@ -91,7 +93,7 @@ func TestExtra_Build(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secure := connection.NewMockSecureValues(t)
+			secure := connectiontest.NewMockSecureValues(t)
 			if tt.setup != nil {
 				tt.setup(secure)
 			}
@@ -121,7 +123,7 @@ func TestExtra_Build_PassesAccessToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secure := connection.NewMockSecureValues(t)
+			secure := connectiontest.NewMockSecureValues(t)
 			secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
 			secure.EXPECT().Token(mock.Anything).Return(tt.token, nil)
 
@@ -145,7 +147,7 @@ func TestExtra_Build_PassesAccessToken(t *testing.T) {
 }
 
 func TestExtra_Build_InvalidToken(t *testing.T) {
-	secure := connection.NewMockSecureValues(t)
+	secure := connectiontest.NewMockSecureValues(t)
 	secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
 	secure.EXPECT().Token(mock.Anything).Return("not-a-token", nil)
 
@@ -156,7 +158,7 @@ func TestExtra_Build_InvalidToken(t *testing.T) {
 }
 
 func TestExtra_Build_ProviderError(t *testing.T) {
-	secure := connection.NewMockSecureValues(t)
+	secure := connectiontest.NewMockSecureValues(t)
 	secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
 	secure.EXPECT().Token(mock.Anything).Return("", nil)
 
@@ -185,7 +187,7 @@ func newBuildTestConnection() *provisioning.Connection {
 }
 
 func TestExtra_Mutate(t *testing.T) {
-	e := newTestExtra(t, connection.NewMockSecureValues(t), nil)
+	e := newTestExtra(t, connectiontest.NewMockSecureValues(t), nil)
 	require.NoError(t, e.Mutate(t.Context(), &provisioning.Connection{}))
 }
 
@@ -299,7 +301,7 @@ func TestExtra_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := newTestExtra(t, connection.NewMockSecureValues(t), tt.validateSpec)
+			e := newTestExtra(t, connectiontest.NewMockSecureValues(t), tt.validateSpec)
 
 			list := e.Validate(t.Context(), tt.obj)
 			if len(tt.errorContains) == 0 {
@@ -315,7 +317,7 @@ func TestExtra_Validate(t *testing.T) {
 	}
 }
 
-func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpec oauth.ValidateSpecFunc) connection.Extra {
+func newTestExtra(t *testing.T, secure *connectiontest.MockSecureValues, validateSpec oauth.ValidateSpecFunc) connection.Extra {
 	return oauth.NewExtra(
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.GitlabOAuthConnectionType,

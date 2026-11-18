@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -647,7 +648,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsService := managertest.SetupService(secretsmng.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
 		tests := []*testCase{
@@ -1240,7 +1241,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	var routes []*plugins.Route
 	cfg := setting.NewCfg()
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsmng.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
@@ -1433,7 +1434,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsmng.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures()
 	var sqlStore db.DB = nil

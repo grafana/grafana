@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -30,7 +31,7 @@ func TestFederatedGetStatsErrors(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			err := st.Err()
-			base := resource.NewMockResourceClient(t)
+			base := resourcetest.NewMockResourceClient(t)
 			in := &resourcepb.ResourceStatsRequest{Namespace: "default", Folder: []string{"missing"}}
 			base.On("GetStats", mock.Anything, in).Return(response, err).Once()
 			client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
@@ -48,7 +49,7 @@ func TestFederatedGetStatsErrors(t *testing.T) {
 }
 
 func TestFederatedGetStatsWithoutLegacySourceFails(t *testing.T) {
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, nil, nil)
@@ -62,7 +63,7 @@ func TestFederatedGetStatsWithoutLegacySourceFails(t *testing.T) {
 
 func TestFederatedGetStatsDeletedLegacyNamespace(t *testing.T) {
 	stats := []*resourcepb.ResourceStatsResponse_Stats{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2}}
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{Stats: stats}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
@@ -75,7 +76,7 @@ func TestFederatedGetStatsDeletedLegacyNamespace(t *testing.T) {
 }
 
 func TestFederatedGetStatsLegacyLookupError(t *testing.T) {
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
@@ -87,7 +88,7 @@ func TestFederatedGetStatsLegacyLookupError(t *testing.T) {
 }
 
 func TestFederatedGetStatsUnavailableLegacyNamespace(t *testing.T) {
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
@@ -105,7 +106,7 @@ func TestFederatedGetStatsRecordsLegacyErrorOnSpan(t *testing.T) {
 	tracer = provider.Tracer("github.com/grafana/grafana/pkg/storage/unified/federated")
 	t.Cleanup(func() { tracer = previous })
 
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {

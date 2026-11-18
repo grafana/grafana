@@ -22,6 +22,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
@@ -242,7 +243,7 @@ func TestExportRules(t *testing.T) {
 		RuleGroup:    "HAS-ACCESS-1",
 	}
 
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	accessQuery := gen.GenerateQuery()
 	noAccessQuery := gen.GenerateQuery()
 	mdl := map[string]any{

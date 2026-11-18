@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	starapi "github.com/grafana/grafana/pkg/services/star/api"
+	"github.com/grafana/grafana/pkg/services/star/api/apitest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,7 +39,7 @@ func reqContextOnRequest(t *testing.T, signedInUser *user.SignedInUser) *http.Re
 func TestSearch_SortedResults(t *testing.T) {
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()
-	ds := dashboards.NewFakeDashboardService(t)
+	ds := dashboardstest.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(model.HitList{
 		&model.Hit{UID: "test", Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
 		&model.Hit{UID: "test2", Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
@@ -52,7 +52,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	signedInUser := &user.SignedInUser{IsGrafanaAdmin: true}
 	req := reqContextOnRequest(t, signedInUser)
 
-	starClient := starapi.NewMockK8sClients(t)
+	starClient := apitest.NewMockK8sClients(t)
 	starClient.On("GetStars", mock.Anything).Return([]string{"test2", "test7"}, nil)
 
 	svc := &SearchService{
@@ -85,7 +85,7 @@ func TestSearch_SortedResults(t *testing.T) {
 func TestSearch_StarredResults(t *testing.T) {
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()
-	ds := dashboards.NewFakeDashboardService(t)
+	ds := dashboardstest.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(model.HitList{
 		&model.Hit{UID: "test", Title: "A", Type: "dash-db"},
 		&model.Hit{UID: "test2", Title: "B", Type: "dash-db"},
@@ -96,7 +96,7 @@ func TestSearch_StarredResults(t *testing.T) {
 	signedInUser := &user.SignedInUser{}
 	req := reqContextOnRequest(t, signedInUser)
 
-	starClient := starapi.NewMockK8sClients(t)
+	starClient := apitest.NewMockK8sClients(t)
 	starClient.On("GetStars", mock.Anything).Return([]string{"test", "test3", "test4"}, nil)
 
 	svc := &SearchService{

@@ -9,11 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 )
 
 func TestDashboardResolver(t *testing.T) {
 	t.Run("fetches dashboards from dashboard service", func(t *testing.T) {
-		dbs := &dashboards.FakeDashboardService{}
+		dbs := &dashboardstest.FakeDashboardService{}
 		exp := int64(14)
 		result := &dashboards.Dashboard{ID: exp}
 		dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(result, nil)
@@ -26,7 +27,7 @@ func TestDashboardResolver(t *testing.T) {
 	})
 
 	t.Run("fetches dashboardNotFound if underlying dashboard does not exist", func(t *testing.T) {
-		dbs := &dashboards.FakeDashboardService{}
+		dbs := &dashboardstest.FakeDashboardService{}
 		dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 		sut := createDashboardResolverSut(dbs)
 
@@ -37,6 +38,6 @@ func TestDashboardResolver(t *testing.T) {
 	})
 }
 
-func createDashboardResolverSut(dbs *dashboards.FakeDashboardService) *dashboardResolver {
+func createDashboardResolverSut(dbs *dashboardstest.FakeDashboardService) *dashboardResolver {
 	return newDashboardResolver(dbs, 1*time.Nanosecond)
 }

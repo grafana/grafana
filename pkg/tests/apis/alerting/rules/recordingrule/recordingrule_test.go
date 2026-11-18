@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -36,13 +36,13 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 
 	newResource := &v0alpha1.RecordingRule{
@@ -135,13 +135,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
@@ -217,13 +217,13 @@ func TestIntegrationCRUD(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	baseGen := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	baseGen := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	)
 
 	t.Run("should be able to create and read recording rule", func(t *testing.T) {
@@ -450,7 +450,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 	t.Run("should not be able to create rule with interval less than base", func(t *testing.T) {
 		rule := baseGen.With(
-			ngmodels.RuleMuts.WithInterval(time.Duration(1) * time.Second),
+			modelstest.RuleMuts.WithInterval(time.Duration(1) * time.Second),
 		).Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
@@ -499,13 +499,13 @@ func TestIntegrationPatch(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
@@ -599,13 +599,13 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 	common.CreateTestFolder(t, helper, "test-folder-a")
 	common.CreateTestFolder(t, helper, "test-folder-b")
 
-	baseGen := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder-a"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	baseGen := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder-a"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	)
 
 	t.Run("should keep folder label in sync with folder annotation on create and update", func(t *testing.T) {
@@ -738,12 +738,12 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 	common.CreateTestFolder(t, helper, "rr-folder-beta")
 
 	makeRule := func(folder string) *v0alpha1.RecordingRule {
-		rule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUniqueUID(),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithNamespaceUID(folder),
-			ngmodels.RuleMuts.WithAllRecordingRules(),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueUID(),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithNamespaceUID(folder),
+			modelstest.RuleMuts.WithAllRecordingRules(),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.RecordingRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -823,12 +823,12 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 	common.CreateTestFolder(t, helper, "rr-fs-folder")
 
 	baseRule := func(folder string) *v0alpha1.RecordingRule {
-		rule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUniqueUID(),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithNamespaceUID(folder),
-			ngmodels.RuleMuts.WithAllRecordingRules(),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueUID(),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithNamespaceUID(folder),
+			modelstest.RuleMuts.WithAllRecordingRules(),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.RecordingRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -1043,13 +1043,13 @@ func TestIntegrationRecordingRuleStatusSubresource(t *testing.T) {
 
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 
 	ruleResource := &v0alpha1.RecordingRule{

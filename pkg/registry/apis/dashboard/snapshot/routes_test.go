@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -54,7 +55,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	tests := []struct {
 		name               string
 		body               map[string]any
-		setupDashboardMock func(*dashboards.FakeDashboardService)
+		setupDashboardMock func(*dashboardstest.FakeDashboardService)
 		setupStorageMock   func(t *testing.T) func() rest.Storage
 		expectedStatus     int
 		expectedMessage    string
@@ -67,7 +68,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				},
 				"name": "test snapshot",
 			},
-			setupDashboardMock: func(m *dashboards.FakeDashboardService) {},
+			setupDashboardMock: func(m *dashboardstest.FakeDashboardService) {},
 			setupStorageMock:   func(t *testing.T) func() rest.Storage { return func() rest.Storage { return nil } },
 			expectedStatus:     http.StatusBadRequest,
 			expectedMessage:    "dashboard UID is required",
@@ -81,7 +82,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				},
 				"name": "test snapshot",
 			},
-			setupDashboardMock: func(m *dashboards.FakeDashboardService) {},
+			setupDashboardMock: func(m *dashboardstest.FakeDashboardService) {},
 			setupStorageMock:   func(t *testing.T) func() rest.Storage { return func() rest.Storage { return nil } },
 			expectedStatus:     http.StatusBadRequest,
 			expectedMessage:    "dashboard UID is required",
@@ -95,7 +96,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				},
 				"name": "test snapshot",
 			},
-			setupDashboardMock: func(m *dashboards.FakeDashboardService) {
+			setupDashboardMock: func(m *dashboardstest.FakeDashboardService) {
 				m.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 					UID:   "does-not-exist",
 					OrgID: orgID,
@@ -114,7 +115,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				},
 				"name": "test snapshot",
 			},
-			setupDashboardMock: func(m *dashboards.FakeDashboardService) {
+			setupDashboardMock: func(m *dashboardstest.FakeDashboardService) {
 				m.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 					UID:   "valid-uid",
 					OrgID: orgID,
@@ -133,7 +134,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService := dashboardstest.NewFakeDashboardService(t)
 			tt.setupDashboardMock(dashboardService)
 
 			routes := GetRoutes(
@@ -176,7 +177,7 @@ func TestCreateSnapshotDefersBlobUploadToStorage(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 		UID: "valid-uid", OrgID: orgID,
 	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
@@ -221,7 +222,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 
 	testUser := snapshotCreatorForTest(orgID)
 
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 		UID:   "valid-uid",
 		OrgID: orgID,
@@ -307,7 +308,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService := dashboardstest.NewFakeDashboardService(t)
 
 			var createdSnapshot *dashv0.Snapshot
 			mockStorage := resttest.NewMockStorage(t)
@@ -359,7 +360,7 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		OrgID:  orgID,
 	}
 
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 	mockStorage := resttest.NewMockStorage(t)
 
 	routes := GetRoutes(
@@ -424,7 +425,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token-123",
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -490,7 +491,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "bad-token",
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -536,7 +537,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token",
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -575,7 +576,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalEnabled:  false,
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		routes := GetRoutes(
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
@@ -619,7 +620,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "",
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -693,7 +694,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			ExternalSnapshotToken: "ignored-token",
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -752,7 +753,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			ExternalSnapshotURL: externalServer.URL,
 		}
 
-		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService := dashboardstest.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
 			OrgID: orgID,
@@ -909,7 +910,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
-			dashboards.NewFakeDashboardService(t),
+			dashboardstest.NewFakeDashboardService(t),
 			nil,
 			testReadFromLegacy,
 		)
@@ -935,7 +936,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
-			dashboards.NewFakeDashboardService(t),
+			dashboardstest.NewFakeDashboardService(t),
 			nil,
 			testReadFromLegacy,
 		)
@@ -959,7 +960,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			acmock.New().WithPermissions([]accesscontrol.Permission{}),
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
-			dashboards.NewFakeDashboardService(t),
+			dashboardstest.NewFakeDashboardService(t),
 			nil,
 			testReadFromLegacy,
 		)

@@ -18,7 +18,8 @@ type RepoGetter interface {
 
 // JobProgressRecorder is a function that can be called to record the progress of a job
 //
-//go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock.go --with-expecter
+//go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --inpackage --filename job_progress_recorder_mock_test.go --with-expecter
+//go:generate mockery --name JobProgressRecorder --structname MockJobProgressRecorder --outpkg jobstest --output ./jobstest/ --filename job_progress_recorder_mock.go --with-expecter
 type JobProgressRecorder interface {
 	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
@@ -56,7 +57,8 @@ type JobProgressRecorder interface {
 
 // Worker is a worker that can process a job
 //
-//go:generate mockery --name Worker --structname MockWorker --inpackage --filename worker_mock.go --with-expecter
+//go:generate mockery --name Worker --structname MockWorker --inpackage --filename worker_mock_test.go --with-expecter
+//go:generate mockery --name Worker --structname MockWorker --outpkg jobstest --output ./jobstest/ --filename worker_mock.go --with-expecter
 type Worker interface {
 	IsSupported(ctx context.Context, job provisioning.Job) bool
 	// Process the job. The job status should be updated as the job progresses.

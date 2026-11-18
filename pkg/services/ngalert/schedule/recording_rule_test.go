@@ -32,6 +32,7 @@ import (
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer/writertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +40,7 @@ import (
 )
 
 func TestRecordingRule(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules())
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules())
 	// evalRetval carries the return value of Rule.Eval() calls.
 	type evalRetval struct {
 		success     bool
@@ -167,7 +168,7 @@ func TestRecordingRule(t *testing.T) {
 
 func TestRecordingRuleIdentifier(t *testing.T) {
 	t.Run("should return correct identifier", func(t *testing.T) {
-		key := models.GenerateRuleKeyWithGroup(1)
+		key := modelstest.GenerateRuleKeyWithGroup(1)
 		r := blankRecordingRuleForTests(context.Background())
 		r.key = key
 		require.Equal(t, key, r.Identifier())
@@ -193,7 +194,7 @@ func TestRecordingRule_Integration(t *testing.T) {
 }
 
 func TestRecordingRuleAfterEval(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules(), modelstest.RuleGen.WithOrgID(123))
 
 	type testContext struct {
 		rule         *models.AlertRule
@@ -429,7 +430,7 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 }
 
 func testRecordingRule_Integration(t *testing.T, writeTarget *writertest.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
-	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules(), modelstest.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	clk := clock.NewMock()
@@ -846,7 +847,7 @@ func testRecordingRule_Integration(t *testing.T, writeTarget *writertest.TestRem
 	})
 }
 
-func withQueryForHealth(health string) models.AlertRuleMutator {
+func withQueryForHealth(health string) modelstest.AlertRuleMutator {
 	var expression string
 	switch health {
 	case "ok":
@@ -947,7 +948,7 @@ func getLabel(req *prompb.WriteRequest, labelName string) (string, bool) {
 }
 
 func TestRecordingRuleNoRetryOnNonRetryableWrite(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123), withQueryForHealth("ok"))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithAllRecordingRules(), modelstest.RuleGen.WithOrgID(123), withQueryForHealth("ok"))
 	rule := gen.GenerateRef()
 	// FakeWriter only invokes WriteFunc when the target datasource UID is empty
 	// (it writes to the default remote-write target otherwise).

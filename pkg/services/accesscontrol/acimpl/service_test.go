@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -930,7 +931,7 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 
 			ac.store = store
 			if tt.injectSearchErr || tt.injectBasicErr {
-				failingStore := actest.NewMockStore(t)
+				failingStore := actestfixtures.NewMockStore(t)
 				if tt.injectBasicErr {
 					failingStore.On("GetUsersBasicRoles", mock.Anything, []int64(nil), int64(2)).Return(nil, assert.AnError).Once()
 				} else {

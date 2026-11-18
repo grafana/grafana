@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,18 +27,18 @@ type testSetup struct {
 	handler            *K8sClientWithFallback
 	mockMetrics        *k8sClientMetrics
 	mockFactoryCalls   map[string]int
-	mockClientV0Alpha1 *client.MockK8sHandler
-	mockClientV1       *client.MockK8sHandler
-	mockClientV2Alpha1 *client.MockK8sHandler
-	mockClientV2Beta1  *client.MockK8sHandler
+	mockClientV0Alpha1 *clienttest.MockK8sHandler
+	mockClientV1       *clienttest.MockK8sHandler
+	mockClientV2Alpha1 *clienttest.MockK8sHandler
+	mockClientV2Beta1  *clienttest.MockK8sHandler
 }
 
 func setupTest(t *testing.T) *testSetup {
 	var (
-		mockClientV0Alpha1 = &client.MockK8sHandler{}
-		mockClientV1       = &client.MockK8sHandler{}
-		mockClientV2Alpha1 = &client.MockK8sHandler{}
-		mockClientV2Beta1  = &client.MockK8sHandler{}
+		mockClientV0Alpha1 = &clienttest.MockK8sHandler{}
+		mockClientV1       = &clienttest.MockK8sHandler{}
+		mockClientV2Alpha1 = &clienttest.MockK8sHandler{}
+		mockClientV2Beta1  = &clienttest.MockK8sHandler{}
 	)
 
 	mockMetrics := newK8sClientMetrics(prometheus.NewRegistry())

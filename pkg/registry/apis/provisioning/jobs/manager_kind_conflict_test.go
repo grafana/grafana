@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -93,7 +94,7 @@ func TestJobProcessor_ManagerKindConflict(t *testing.T) {
 			var completed *provisioning.Job
 			history.EXPECT().WriteJob(mock.Anything, mock.Anything).
 				Run(func(_ context.Context, job *provisioning.Job) { completed = job.DeepCopy() }).Return(nil).Once()
-			repo := repository.NewMockRepository(t)
+			repo := repositorytest.NewMockRepository(t)
 			repo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 			repoGetter := NewMockRepoGetter(t)
 			repoGetter.EXPECT().GetRepository(mock.Anything, job.Namespace, "test-repo").Return(repo, nil)

@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -540,11 +543,11 @@ func TestUpsertTemplate(t *testing.T) {
 			}, nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 		}).Return(nil)
 
 		tmpl := v1.TemplateGroup{
@@ -590,7 +593,7 @@ func TestUpsertTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 			}).Return(nil)
 
 			tmpl := v1.TemplateGroup{
@@ -629,7 +632,7 @@ func TestUpsertTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 			}).Return(nil)
 
 			tmpl := v1.TemplateGroup{
@@ -925,11 +928,11 @@ func TestCreateTemplate(t *testing.T) {
 			return revision(), nil
 		}
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 			return nil
 		}
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 		}).Return(nil)
 
 		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
@@ -1200,7 +1203,7 @@ func TestUpdateTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 			}).Return(nil)
 
 			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
@@ -1229,7 +1232,7 @@ func TestUpdateTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 			prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-				assertInTransaction(t, ctx)
+				provisioningtest.AssertInTransaction(t, ctx)
 			}).Return(nil)
 
 			result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
@@ -1257,10 +1260,10 @@ func TestUpdateTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Run(func(ctx context.Context, o models.Provisionable, org int64) {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 		}).Return(nil)
 		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 		}).Return(nil)
 
 		oldName := tmpl.Title
@@ -1524,7 +1527,7 @@ func TestDeleteTemplate(t *testing.T) {
 				}
 				prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceFile, nil)
 				prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64) {
-					assertInTransaction(t, ctx)
+					provisioningtest.AssertInTransaction(t, ctx)
 				}).Return(nil)
 
 				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, templateVersion)
@@ -1552,7 +1555,7 @@ func TestDeleteTemplate(t *testing.T) {
 				}
 				prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceFile, nil)
 				prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64) {
-					assertInTransaction(t, ctx)
+					provisioningtest.AssertInTransaction(t, ctx)
 				}).Return(nil)
 
 				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, "")
@@ -1592,7 +1595,7 @@ func TestDeleteTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceFile, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, o models.Provisionable, org int64) {
-			assertInTransaction(t, ctx)
+			provisioningtest.AssertInTransaction(t, ctx)
 		}).Return(nil)
 
 		err := sut.DeleteTemplate(context.Background(), orgID, expectedToDelete.Title, models.ProvenanceFile, templateVersion)
@@ -1724,13 +1727,13 @@ func TestDeleteTemplate(t *testing.T) {
 	})
 }
 
-func createTemplateServiceSut() (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
-	store := &legacy_storage.AlertmanagerConfigStoreFake{}
-	provStore := &MockProvisioningStore{}
+func createTemplateServiceSut() (*TemplateService, *legacy_storagetest.AlertmanagerConfigStoreFake, *provisioningtest.MockProvisioningStore) {
+	store := &legacy_storagetest.AlertmanagerConfigStoreFake{}
+	provStore := &provisioningtest.MockProvisioningStore{}
 	return &TemplateService{
 		configStore:     store,
 		provenanceStore: provStore,
-		xact:            newNopTransactionManager(),
+		xact:            provisioningtest.NewNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		validator:       validation.ValidateProvenanceRelaxed,
 		limitsProvider:  &NoopLimitsProvider{},
@@ -1966,7 +1969,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 			ConcurrencyToken: amConfigToken,
 		}
 	}
-	newSut := func(t *testing.T) (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
+	newSut := func(t *testing.T) (*TemplateService, *legacy_storagetest.AlertmanagerConfigStoreFake, *provisioningtest.MockProvisioningStore) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
@@ -1976,7 +1979,7 @@ func TestTemplateServiceWithUIDsNotDerivedFromTitles(t *testing.T) {
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		return sut, store, prov
 	}
-	savedTemplates := func(t *testing.T, store *legacy_storage.AlertmanagerConfigStoreFake) map[v1.ResourceUID]v1.TemplateGroup {
+	savedTemplates := func(t *testing.T, store *legacy_storagetest.AlertmanagerConfigStoreFake) map[v1.ResourceUID]v1.TemplateGroup {
 		require.Equal(t, "Save", store.Calls[len(store.Calls)-1].Method)
 		return store.Calls[len(store.Calls)-1].Args[1].(*legacy_storage.ConfigRevision).Config.Templates
 	}
@@ -2078,7 +2081,7 @@ func TestTemplateServiceByUID(t *testing.T) {
 	target := v1.NewTemplateGroup(uid, "target", "{{ define \"target\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
 	// This template has the UID of the target as its title.
 	decoy := v1.NewTemplateGroup("decoy-uid", string(uid), "{{ define \"decoy\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone)
-	newSut := func(t *testing.T) (*TemplateService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {
+	newSut := func(t *testing.T) (*TemplateService, *legacy_storagetest.AlertmanagerConfigStoreFake, *provisioningtest.MockProvisioningStore) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{

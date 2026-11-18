@@ -25,10 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -216,7 +218,7 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
@@ -228,9 +230,9 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
-	dbs := &dashboards.FakeDashboardService{}
+	dbs := &dashboardstest.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
@@ -242,9 +244,9 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	fakeAnnoRepo := &failingAnnotationRepo{}
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
-	dbs := &dashboards.FakeDashboardService{}
+	dbs := &dashboardstest.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
@@ -408,7 +410,7 @@ func makeStateTransition() state.StateTransition {
 	}
 }
 
-func withUID(uid string) models.AlertRuleMutator {
+func withUID(uid string) modelstest.AlertRuleMutator {
 	return func(rule *models.AlertRule) {
 		rule.UID = uid
 	}

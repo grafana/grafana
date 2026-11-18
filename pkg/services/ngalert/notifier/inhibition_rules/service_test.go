@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
+
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
@@ -280,8 +282,8 @@ func TestService_DeleteInhibitionRule(t *testing.T) {
 
 // Test helpers
 
-func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.AlertmanagerConfigStoreFake) {
-	store := &legacy_storage.AlertmanagerConfigStoreFake{}
+func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storagetest.AlertmanagerConfigStoreFake) {
+	store := &legacy_storagetest.AlertmanagerConfigStoreFake{}
 	logger := log.NewNopLogger()
 	var ff featuremgmt.FeatureToggles
 	if enableImported {

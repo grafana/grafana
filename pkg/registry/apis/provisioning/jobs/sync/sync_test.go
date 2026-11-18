@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas/quotastest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
 	"github.com/prometheus/client_golang/prometheus"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,8 +21,8 @@ import (
 )
 
 type mockReaderWriter struct {
-	*repository.MockRepository
-	*repository.MockVersioned
+	*repositorytest.MockRepository
+	*repositorytest.MockVersioned
 }
 
 // FIXME: understand how the MockRepository was generated as it seems
@@ -45,7 +48,7 @@ func TestSyncer_Sync(t *testing.T) {
 	tests := []struct {
 		name             string
 		options          provisioning.SyncJobOptions
-		setupMocks       func(*mockReaderWriter, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn, *MockFullSyncFn, *MockIncrementalSyncFn)
+		setupMocks       func(*mockReaderWriter, *resourcestest.MockRepositoryResources, *resourcestest.MockResourceClients, *jobstest.MockJobProgressRecorder, *MockCompareFn, *MockFullSyncFn, *MockIncrementalSyncFn)
 		expectedRef      string
 		expectedError    string
 		expectedMessages []string
@@ -60,7 +63,7 @@ func TestSyncer_Sync(t *testing.T) {
 				Incremental: false,
 			},
 			expectedVariance: "full",
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+			setupMocks: func(repo *mockReaderWriter, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -82,7 +85,7 @@ func TestSyncer_Sync(t *testing.T) {
 				Incremental: true,
 			},
 			expectedVariance: "incremental",
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+			setupMocks: func(repo *mockReaderWriter, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -106,7 +109,7 @@ func TestSyncer_Sync(t *testing.T) {
 				Incremental: true,
 			},
 			expectedVariance: "full",
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+			setupMocks: func(repo *mockReaderWriter, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -138,7 +141,7 @@ func TestSyncer_Sync(t *testing.T) {
 			options: provisioning.SyncJobOptions{
 				Incremental: true,
 			},
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+			setupMocks: func(repo *mockReaderWriter, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -159,7 +162,7 @@ func TestSyncer_Sync(t *testing.T) {
 				Incremental: true,
 			},
 			expectedVariance: "incremental",
-			setupMocks: func(repo *mockReaderWriter, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
+			setupMocks: func(repo *mockReaderWriter, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn, fullSyncFn *MockFullSyncFn, incrementalSyncFn *MockIncrementalSyncFn) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -182,16 +185,16 @@ func TestSyncer_Sync(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			clients := resourcestest.NewMockResourceClients(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			compareFn := NewMockCompareFn(t)
 			fullSyncFn := NewMockFullSyncFn(t)
 			incrementalSyncFn := NewMockIncrementalSyncFn(t)
 
 			repo := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
-				MockVersioned:  repository.NewMockVersioned(t),
+				MockRepository: repositorytest.NewMockRepository(t),
+				MockVersioned:  repositorytest.NewMockVersioned(t),
 			}
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn, fullSyncFn, incrementalSyncFn)
@@ -213,7 +216,7 @@ func TestSyncer_Sync(t *testing.T) {
 				0,
 			)
 
-			quotaTracker := quotas.NewMockQuotaTracker(t)
+			quotaTracker := quotastest.NewMockQuotaTracker(t)
 			ref, err := syncer.Sync(context.Background(), repo, tt.options, repoResources, clients, progress, quotaTracker)
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)

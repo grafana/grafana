@@ -7,11 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRuleToModelsAlertRule(t *testing.T) {
-	g := ngmodels.RuleGen
+	g := modelstest.RuleGen
 
 	t.Run("make sure no data is lost between conversions", func(t *testing.T) {
 		for _, rule := range g.GenerateMany(100) {
@@ -225,7 +226,7 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 }
 
 func TestAlertRuleVersionToAlertRule(t *testing.T) {
-	g := ngmodels.RuleGen
+	g := modelstest.RuleGen
 
 	t.Run("make sure no data is lost between conversions", func(t *testing.T) {
 		for _, rule := range g.GenerateMany(100) {

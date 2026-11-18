@@ -1,8 +1,11 @@
-package models
+package models_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -11,11 +14,11 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	validNotificationSettings := NotificationSettingsGen(NSMuts.WithGroupBy(model.AlertNameLabel, FolderTitleLabel))
+	validNotificationSettings := modelstest.NotificationSettingsGen(modelstest.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel))
 
 	testCases := []struct {
 		name                 string
-		notificationSettings NotificationSettings
+		notificationSettings models.NotificationSettings
 		expErrorContains     string
 	}{
 		{
@@ -24,104 +27,104 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:                 "missing receiver is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithReceiver("")),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithReceiver("")),
 			expErrorContains:     "receiver",
 		},
 		{
 			name:                 "group by empty is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy()),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy()),
 		},
 		{
 			name:                 "group by ... is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy("...")),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy("...")),
 		},
 		{
 			name:                 "group by with alert name and folder name labels is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, FolderTitleLabel)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
 		},
 		{
 			name:                 "group by missing alert name label is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(FolderTitleLabel)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.FolderTitleLabel)),
 		},
 		{
 			name:                 "group by missing folder name label is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(model.AlertNameLabel)),
 		},
 		{
 			name:                 "group by with duplicate values is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, FolderTitleLabel, model.AlertNameLabel)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel, model.AlertNameLabel)),
 			expErrorContains:     "duplicate",
 		},
 		{
 			name:                 "group wait empty is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(nil)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupWait(nil)),
 		},
 		{
 			name:                 "group wait positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(new(1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupWait(new(1*time.Second))),
 		},
 		{
 			name:                 "group wait negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupWait(new(-1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupWait(new(-1*time.Second))),
 			expErrorContains:     "group wait",
 		},
 		{
 			name:                 "group interval empty is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(nil)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupInterval(nil)),
 		},
 		{
 			name:                 "group interval positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupInterval(new(1*time.Second))),
 		},
 		{
 			name:                 "group interval negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(-1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupInterval(new(-1*time.Second))),
 			expErrorContains:     "group interval",
 		},
 		{
 			name:                 "group interval zero is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupInterval(new(0*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupInterval(new(0*time.Second))),
 			expErrorContains:     "group interval",
 		},
 		{
 			name:                 "repeat interval empty is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(nil)),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithRepeatInterval(nil)),
 		},
 		{
 			name:                 "repeat interval positive is valid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithRepeatInterval(new(1*time.Second))),
 		},
 		{
 			name:                 "repeat interval negative is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(-1*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithRepeatInterval(new(-1*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
 		{
 			name:                 "repeat interval zero is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithRepeatInterval(new(0*time.Second))),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithRepeatInterval(new(0*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
 		{
 			name:                 "valid notification settings with policy routing",
-			notificationSettings: NotificationSettingsFromPolicy("policy"),
+			notificationSettings: models.NotificationSettingsFromPolicy("policy"),
 		},
 		{
 			name:                 "empty policy is invalid",
-			notificationSettings: NotificationSettingsFromPolicy(""),
+			notificationSettings: models.NotificationSettingsFromPolicy(""),
 			expErrorContains:     "policy must be specified",
 		},
 		{
 			name:                 "default policy is invalid",
-			notificationSettings: NotificationSettingsFromPolicy(DefaultRoutingTreeName),
+			notificationSettings: models.NotificationSettingsFromPolicy(models.DefaultRoutingTreeName),
 			expErrorContains:     "default",
 		},
 		{
 			name:                 "contact point and policy routing both unspecific is valid",
-			notificationSettings: NotificationSettings{}, // Additional checks are done at the API level to reject this, but at the model level it's ok to ignore this state.
+			notificationSettings: models.NotificationSettings{}, // Additional checks are done at the API level to reject this, but at the model level it's ok to ignore this state.
 		},
 		{
 			name:                 "contact point and policy routing both specific is invalid",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithPolicy("policy")),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithPolicy("policy")),
 			expErrorContains:     "only one of policy routing or contact point routing can be specified",
 		},
 	}
@@ -144,32 +147,32 @@ func TestContactPointRoutingLabels(t *testing.T) {
 
 	testCases := []struct {
 		name                 string
-		notificationSettings ContactPointRouting
+		notificationSettings models.ContactPointRouting
 		labels               data.Labels
 	}{
 		{
 			name:                 "default notification settings",
-			notificationSettings: NewDefaultContactPointRouting("receiver name"),
+			notificationSettings: models.NewDefaultContactPointRouting("receiver name"),
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
 			},
 		},
 		{
 			name: "default notification settings with hardcoded default group by",
-			notificationSettings: ContactPointRouting{
+			notificationSettings: models.ContactPointRouting{
 				Receiver: "receiver name",
-				GroupBy:  DefaultNotificationSettingsGroupBy,
+				GroupBy:  models.DefaultNotificationSettingsGroupBy,
 			},
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
-				AutogeneratedRouteSettingsHashLabel: "c65d254ff4c279f2",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteSettingsHashLabel: "c65d254ff4c279f2",
 			},
 		},
 		{
 			name: "custom notification settings",
-			notificationSettings: ContactPointRouting{
+			notificationSettings: models.ContactPointRouting{
 				Receiver:          "receiver name",
 				GroupBy:           []string{"label1", "label2"},
 				GroupWait:         new(model.Duration(1 * time.Minute)),
@@ -178,14 +181,14 @@ func TestContactPointRoutingLabels(t *testing.T) {
 				MuteTimeIntervals: []string{"maintenance1", "maintenance2"},
 			},
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
-				AutogeneratedRouteSettingsHashLabel: "634e52b238fc78f0",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteSettingsHashLabel: "634e52b238fc78f0",
 			},
 		},
 		{
 			name: "custom notification settings with active time interval",
-			notificationSettings: ContactPointRouting{
+			notificationSettings: models.ContactPointRouting{
 				Receiver:            "receiver name",
 				GroupBy:             []string{"label1", "label2"},
 				GroupWait:           new(model.Duration(1 * time.Minute)),
@@ -195,27 +198,27 @@ func TestContactPointRoutingLabels(t *testing.T) {
 				ActiveTimeIntervals: []string{"active1", "active2"},
 			},
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
-				AutogeneratedRouteSettingsHashLabel: "9ac606ba0f6bcfb5",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteSettingsHashLabel: "9ac606ba0f6bcfb5",
 			},
 		},
 		{
 			name:                 "default notification settings with active time interval",
-			notificationSettings: CopyContactPointRouting(NewDefaultContactPointRouting("receiver name"), CPRMuts.WithActiveTimeIntervals(timeInterval)),
+			notificationSettings: modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver name"), modelstest.CPRMuts.WithActiveTimeIntervals(timeInterval)),
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
-				AutogeneratedRouteSettingsHashLabel: "8304d9c06fda36e2",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteSettingsHashLabel: "8304d9c06fda36e2",
 			},
 		},
 		{
 			name:                 "default notification settings with mute time interval",
-			notificationSettings: CopyContactPointRouting(NewDefaultContactPointRouting("receiver name"), CPRMuts.WithMuteTimeIntervals(timeInterval)),
+			notificationSettings: modelstest.CopyContactPointRouting(models.NewDefaultContactPointRouting("receiver name"), modelstest.CPRMuts.WithMuteTimeIntervals(timeInterval)),
 			labels: data.Labels{
-				AutogeneratedRouteLabel:             "true",
-				AutogeneratedRouteReceiverNameLabel: "receiver name",
-				AutogeneratedRouteSettingsHashLabel: "171cfd2d4e0810fa",
+				models.AutogeneratedRouteLabel:             "true",
+				models.AutogeneratedRouteReceiverNameLabel: "receiver name",
+				models.AutogeneratedRouteSettingsHashLabel: "171cfd2d4e0810fa",
 			},
 		},
 	}
@@ -236,12 +239,12 @@ func TestNotificationSettings_TimeIntervals(t *testing.T) {
 	receiver := "receiver name"
 	timeInterval := "time interval name"
 
-	muteSettings := ContactPointRouting{
+	muteSettings := models.ContactPointRouting{
 		Receiver:          receiver,
 		MuteTimeIntervals: []string{timeInterval},
 	}
 
-	activeSettings := ContactPointRouting{
+	activeSettings := models.ContactPointRouting{
 		Receiver:            receiver,
 		ActiveTimeIntervals: []string{timeInterval},
 	}
@@ -250,61 +253,61 @@ func TestNotificationSettings_TimeIntervals(t *testing.T) {
 }
 
 func TestNormalizedGroupBy(t *testing.T) {
-	validNotificationSettings := NotificationSettingsGen()
+	validNotificationSettings := modelstest.NotificationSettingsGen()
 
 	testCases := []struct {
 		name                      string
-		notificationSettings      NotificationSettings
+		notificationSettings      models.NotificationSettings
 		expectedNormalizedGroupBy []string
 	}{
 		{
 			name:                      "default group by is normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(DefaultNotificationSettingsGroupBy...)),
-			expectedNormalizedGroupBy: DefaultNotificationSettingsGroupBy,
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.DefaultNotificationSettingsGroupBy...)),
+			expectedNormalizedGroupBy: models.DefaultNotificationSettingsGroupBy,
 		},
 		{
 			name:                      "group by ... is normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(GroupByAll)),
-			expectedNormalizedGroupBy: []string{GroupByAll},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.GroupByAll)),
+			expectedNormalizedGroupBy: []string{models.GroupByAll},
 		},
 		{
 			name:                 "group by empty is normal",
-			notificationSettings: CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy()),
+			notificationSettings: modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy()),
 		},
 		{
 			name:                      "group by with ... and other labels is not normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(FolderTitleLabel, model.AlertNameLabel, GroupByAll)),
-			expectedNormalizedGroupBy: []string{GroupByAll},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.FolderTitleLabel, model.AlertNameLabel, models.GroupByAll)),
+			expectedNormalizedGroupBy: []string{models.GroupByAll},
 		},
 		{
 			name:                      "group by missing alert name label is not normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(FolderTitleLabel)),
-			expectedNormalizedGroupBy: DefaultNotificationSettingsGroupBy,
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.FolderTitleLabel)),
+			expectedNormalizedGroupBy: models.DefaultNotificationSettingsGroupBy,
 		},
 		{
 			name:                      "group by missing folder name label is not normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel)),
-			expectedNormalizedGroupBy: DefaultNotificationSettingsGroupBy,
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(model.AlertNameLabel)),
+			expectedNormalizedGroupBy: models.DefaultNotificationSettingsGroupBy,
 		},
 		{
 			name:                      "group by with all required labels plus extra is normal",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(FolderTitleLabel, model.AlertNameLabel, "custom")),
-			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom"},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.FolderTitleLabel, model.AlertNameLabel, "custom")),
+			expectedNormalizedGroupBy: []string{models.FolderTitleLabel, model.AlertNameLabel, "custom"},
 		},
 		{
 			name:                      "ensure consistent ordering, required labels in front followed by sorted custom labels ",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy("custom", model.AlertNameLabel, "something", FolderTitleLabel, "other")),
-			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom", "other", "something"},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy("custom", model.AlertNameLabel, "something", models.FolderTitleLabel, "other")),
+			expectedNormalizedGroupBy: []string{models.FolderTitleLabel, model.AlertNameLabel, "custom", "other", "something"},
 		},
 		{
 			name:                      "deduplicates repeated labels",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(model.AlertNameLabel, "custom", model.AlertNameLabel, "custom")),
-			expectedNormalizedGroupBy: []string{FolderTitleLabel, model.AlertNameLabel, "custom"},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(model.AlertNameLabel, "custom", model.AlertNameLabel, "custom")),
+			expectedNormalizedGroupBy: []string{models.FolderTitleLabel, model.AlertNameLabel, "custom"},
 		},
 		{
 			name:                      "deduplicates ... leaving only ...",
-			notificationSettings:      CopyNotificationSettings(validNotificationSettings(), NSMuts.WithGroupBy(GroupByAll, GroupByAll)),
-			expectedNormalizedGroupBy: []string{GroupByAll},
+			notificationSettings:      modelstest.CopyNotificationSettings(validNotificationSettings(), modelstest.NSMuts.WithGroupBy(models.GroupByAll, models.GroupByAll)),
+			expectedNormalizedGroupBy: []string{models.GroupByAll},
 		},
 	}
 
@@ -317,8 +320,8 @@ func TestNormalizedGroupBy(t *testing.T) {
 }
 
 func TestFingerprintStabilityWithDuplicateGroupBy(t *testing.T) {
-	withDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom", model.AlertNameLabel, "custom"}}
-	withoutDups := ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom"}}
+	withDups := models.ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom", model.AlertNameLabel, "custom"}}
+	withoutDups := models.ContactPointRouting{Receiver: "receiver", GroupBy: []string{model.AlertNameLabel, "custom"}}
 	require.Equal(t, withDups.Fingerprint(nil), withoutDups.Fingerprint(nil),
 		"fingerprint should be identical for semantically equivalent group_by regardless of duplicates")
 }

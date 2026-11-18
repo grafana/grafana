@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -80,9 +81,9 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 	)
 
 	silenceGens := map[silenceType]func() ngmodels.Silence{
-		generalSilence:       ngmodels.SilenceGen(),
-		ruleSilenceInFolder1: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithMatcher(models.RuleUIDLabel, ruleInFolder1UID, labels.MatchEqual)),
-		ruleSilenceInFolder2: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithMatcher(models.RuleUIDLabel, ruleInFolder2UID, labels.MatchEqual)),
+		generalSilence:       modelstest.SilenceGen(),
+		ruleSilenceInFolder1: modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(models.RuleUIDLabel, ruleInFolder1UID, labels.MatchEqual)),
+		ruleSilenceInFolder2: modelstest.SilenceGen(modelstest.SilenceMuts.WithMatcher(models.RuleUIDLabel, ruleInFolder2UID, labels.MatchEqual)),
 	}
 
 	defaultStatus := map[silenceAction]map[bool]int{
@@ -381,7 +382,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 				filterLabel := util.GenerateShortUID()
 				for sType, gen := range silenceGens {
 					genWithFilterLabels := func() ngmodels.Silence {
-						return ngmodels.CopySilenceWith(gen(), ngmodels.SilenceMuts.WithMatcher(filterLabel, filterLabel, labels.MatchEqual))
+						return modelstest.CopySilenceWith(gen(), modelstest.SilenceMuts.WithMatcher(filterLabel, filterLabel, labels.MatchEqual))
 					}
 					silence := persistSilence(genWithFilterLabels)
 					ids[sType] = silence.ID

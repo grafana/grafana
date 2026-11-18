@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -32,7 +33,7 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	t.Helper()
 	cfg := &setting.Cfg{}
 	features := featuremgmt.WithFeatures()
-	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsmng.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
@@ -48,7 +49,7 @@ func TestIntegrationMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		kvStore := kvstore.ProvideService(sqlStore)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsService := managertest.SetupService(secretsmng.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore)
 		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())

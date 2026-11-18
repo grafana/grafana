@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -57,7 +57,7 @@ func TestCleanUpTmpFiles(t *testing.T) {
 
 func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 	t.Run("calls DeleteExpiredSnapshots on success", func(t *testing.T) {
-		mockSnapService := dashboardsnapshots.NewMockService(t)
+		mockSnapService := dashboardsnapshotstest.NewMockService(t)
 		mockSnapService.On("DeleteExpiredSnapshots", mock.Anything, mock.Anything).Return(nil)
 
 		service := &CleanUpService{
@@ -73,7 +73,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 	})
 
 	t.Run("handles error gracefully", func(t *testing.T) {
-		mockSnapService := dashboardsnapshots.NewMockService(t)
+		mockSnapService := dashboardsnapshotstest.NewMockService(t)
 		mockSnapService.On("DeleteExpiredSnapshots", mock.Anything, mock.Anything).Return(errors.New("db error"))
 
 		service := &CleanUpService{

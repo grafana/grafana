@@ -6,6 +6,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,10 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
 )
 
 // What the lister returns for a repository the managed-object index has no counts for.
@@ -60,7 +62,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 }
 
 func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
-	repo := repository.NewMockReader(t)
+	repo := repositorytest.NewMockReader(t)
 	repo.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-repo",
@@ -70,7 +72,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	})
 	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
-	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
+	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobstest.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
 
@@ -115,15 +117,15 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			clientFactory := resources.NewMockClientFactory(t)
-			repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+			clientFactory := resourcestest.NewMockClientFactory(t)
+			repoResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 			repositoryPatchFn := NewMockRepositoryPatchFn(t)
 			syncer := NewMockSyncer(t)
 			readerWriter := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
-				MockVersioned:  repository.NewMockVersioned(t),
+				MockRepository: repositorytest.NewMockRepository(t),
+				MockVersioned:  repositorytest.NewMockVersioned(t),
 			}
-			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			progressRecorder := jobstest.NewMockJobProgressRecorder(t)
 
 			repoConfig := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -144,11 +146,11 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 			// Setup resources and clients
-			mockRepoResources := resources.NewMockRepositoryResources(t)
+			mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 			mockRepoResources.On("Stats", mock.Anything).Return(tt.stats, nil)
 			repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-			mockClients := resources.NewMockResourceClients(t)
+			mockClients := resourcestest.NewMockResourceClients(t)
 			clientFactory.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 			// Sync succeeds
@@ -264,15 +266,15 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.jobStatus.Finished = 1234567890
-			clientFactory := resources.NewMockClientFactory(t)
-			repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+			clientFactory := resourcestest.NewMockClientFactory(t)
+			repoResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 			repositoryPatchFn := NewMockRepositoryPatchFn(t)
 			syncer := NewMockSyncer(t)
 			readerWriter := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
-				MockVersioned:  repository.NewMockVersioned(t),
+				MockRepository: repositorytest.NewMockRepository(t),
+				MockVersioned:  repositorytest.NewMockVersioned(t),
 			}
-			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			progressRecorder := jobstest.NewMockJobProgressRecorder(t)
 
 			repoConfig := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -292,11 +294,11 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			progressRecorder.On("SetMessage", mock.Anything, "update sync status at start").Return()
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-			mockRepoResources := resources.NewMockRepositoryResources(t)
+			mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 			mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 			repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-			mockClients := resources.NewMockResourceClients(t)
+			mockClients := resourcestest.NewMockResourceClients(t)
 			clientFactory.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 			progressRecorder.On("SetMessage", mock.Anything, "execute sync job").Return()
@@ -441,13 +443,13 @@ func matchErrorMessage(msg string) func(error) bool {
 func TestSyncWorker_Process(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupMocks     func(*resources.MockClientFactory, *resources.MockRepositoryResourcesFactory, *MockRepositoryPatchFn, *MockSyncer, *mockReaderWriter, *jobs.MockJobProgressRecorder)
+		setupMocks     func(*resourcestest.MockClientFactory, *resourcestest.MockRepositoryResourcesFactory, *MockRepositoryPatchFn, *MockSyncer, *mockReaderWriter, *jobstest.MockJobProgressRecorder)
 		expectedError  string
 		expectedStatus *provisioning.SyncStatus
 	}{
 		{
 			name: "failed initial status patching",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				// Setup repository config with existing LastRef
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -476,7 +478,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "failed getting repository resources",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				// Setup repository config
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -521,7 +523,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "failed getting clients for namespace",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				// Setup repository config
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -544,7 +546,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Repository resources creation succeeds
-				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(&resources.MockRepositoryResources{}, nil)
+				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(&resourcestest.MockRepositoryResources{}, nil)
 
 				// Getting clients for namespace fails
 				cf.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to get clients"))
@@ -570,7 +572,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "successful sync",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -589,11 +591,11 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 				// Sync execution succeeds
@@ -616,7 +618,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "failed sync",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -635,11 +637,11 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 				// Sync execution fails
@@ -663,7 +665,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "stats call fails",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -672,12 +674,12 @@ func TestSyncWorker_Process(t *testing.T) {
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errors.New("stats error"))
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Simple mocks for other calls
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
@@ -692,7 +694,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "repository manages nothing that can be counted",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -701,7 +703,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
@@ -715,7 +717,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				).Return(nil).Once()
 
 				// Simple mocks for other calls
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
@@ -727,7 +729,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "stats returns one managed stats",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -738,7 +740,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				// Initial patch with granular updates
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				stats := []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 42}}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
@@ -751,7 +753,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				).Return(nil).Once()
 
 				// Simple mocks for other calls
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 				pr.On("StrictMaxErrors", 20).Return()
@@ -763,7 +765,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "quota exceeded error preserves lastRef",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -782,11 +784,11 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, "test-namespace").Return(mockClients, nil)
 
 				pr.On("SetMessage", mock.Anything, "execute sync job").Return()
@@ -808,7 +810,7 @@ func TestSyncWorker_Process(t *testing.T) {
 		},
 		{
 			name: "failed final status patch",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(cf *resourcestest.MockClientFactory, rrf *resourcestest.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobstest.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -821,11 +823,11 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				// Setup resources and clients
-				mockRepoResources := resources.NewMockRepositoryResources(t)
+				mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
-				mockClients := resources.NewMockResourceClients(t)
+				mockClients := resourcestest.NewMockResourceClients(t)
 				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
 
 				// Sync succeeds
@@ -845,15 +847,15 @@ func TestSyncWorker_Process(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			clientFactory := resources.NewMockClientFactory(t)
-			repoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+			clientFactory := resourcestest.NewMockClientFactory(t)
+			repoResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 			repositoryPatchFn := NewMockRepositoryPatchFn(t)
 			syncer := NewMockSyncer(t)
 			readerWriter := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
-				MockVersioned:  repository.NewMockVersioned(t),
+				MockRepository: repositorytest.NewMockRepository(t),
+				MockVersioned:  repositorytest.NewMockVersioned(t),
 			}
-			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			progressRecorder := jobstest.NewMockJobProgressRecorder(t)
 
 			// Setup mocks
 			tt.setupMocks(clientFactory, repoResourcesFactory, repositoryPatchFn, syncer, readerWriter, progressRecorder)

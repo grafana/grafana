@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,12 +66,12 @@ func (m *mockClients) SupportedResources() []resources.SupportedResource {
 
 func TestNamespaceCleaner_Clean(t *testing.T) {
 	t.Run("should fail when getting clients fails", func(t *testing.T) {
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(nil, errors.New("failed to get clients"))
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		err := cleaner.Clean(context.Background(), "test-namespace", progress)
 		require.Error(t, err)
@@ -82,12 +85,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		clients.On("ForKind", mock.Anything, mock.Anything).
 			Return(nil, schema.GroupVersionResource{}, errors.New("failed to get resource client"))
 
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(clients, nil)
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		// SetMessage now runs only after the client resolves, so it is not called on this path.
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
 
@@ -120,12 +123,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		clients := &mockClients{}
 		clients.On("ForKind", mock.Anything, mock.Anything).Return(mockDynamicClient, schema.GroupVersionResource{}, nil)
 
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(clients, nil)
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionDeleted &&
@@ -189,12 +192,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
 			Return(mockDynamicClient, resources.FolderResource, nil)
 
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(clients, nil)
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
 
@@ -264,12 +267,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
 			Return(mockDynamicClient, resources.FolderResource, nil)
 
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(clients, nil)
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
 
@@ -321,12 +324,12 @@ func TestNamespaceCleaner_Clean(t *testing.T) {
 		clients.On("ForKind", mock.Anything, schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}).
 			Return(mockDynamicClient, resources.FolderResource, nil)
 
-		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory := resourcestest.NewMockClientFactory(t)
 		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
 			Return(clients, nil)
 
 		cleaner := NewNamespaceCleaner(mockClientFactory)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned folders").Return()
 		progress.On("SetMessage", mock.Anything, "remove unprovisioned dashboards").Return()
 

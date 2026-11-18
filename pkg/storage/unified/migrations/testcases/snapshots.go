@@ -17,7 +17,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -96,7 +96,7 @@ func (tc *snapshotsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) boo
 	}
 
 	cfg := helper.GetEnv().Cfg
-	enc, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encryptionprovider.Provider{}, &usagestats.UsageStatsMock{}, cfg)
+	enc, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encryptionprovider.Provider{}, &usagestatstest.UsageStatsMock{}, cfg)
 	require.NoError(t, err)
 	body := []byte(`{"title":"Migrated dashboard","panels":[],"snapshotData":[1,2,3]}`)
 	encrypted, err := enc.Encrypt(t.Context(), body, cfg.SectionWithEnvOverrides("security").Key("secret_key").Value())

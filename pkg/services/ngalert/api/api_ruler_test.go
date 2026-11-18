@@ -14,6 +14,8 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -70,7 +73,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	orgID := rand.Int63()
 	folder := randFolder()
-	gen := models.RuleGen.With(models.RuleGen.WithOrgID(orgID))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID))
 
 	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
 		ruleStore := fakes.NewRuleStore(t)
@@ -245,7 +248,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 }
 
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return all rules, with or without data source access", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -368,7 +371,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := make([]*models.AlertRule, 0, 100)
@@ -432,9 +435,9 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
-		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+		gen := modelstest.RuleGen.With(modelstest.RuleGen.WithGroupKey(groupKey))
 
 		createdRules := gen.With(
 			gen.WithUniqueGroupIndex(), gen.WithUniqueID(),
@@ -565,9 +568,9 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
-		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+		gen := modelstest.RuleGen.With(modelstest.RuleGen.WithGroupKey(groupKey))
 
 		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
@@ -587,9 +590,9 @@ func TestRouteGetRuleByUID(t *testing.T) {
 func TestRouteGetRuleVersionsByUID(t *testing.T) {
 	orgID := rand.Int63()
 	f := randFolder()
-	groupKey := models.GenerateGroupKey(orgID)
+	groupKey := modelstest.GenerateGroupKey(orgID)
 	groupKey.NamespaceUID = f.UID
-	gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey), models.RuleGen.WithUniqueID())
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithGroupKey(groupKey), modelstest.RuleGen.WithUniqueID())
 
 	t.Run("rule history is successfully fetched with the correct UID", func(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
@@ -722,7 +725,7 @@ func TestRouteGetRuleVersionsByUID(t *testing.T) {
 }
 
 func TestRouteGetRulesConfig(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -731,9 +734,9 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			folder2 := randFolder()
 			ruleStore.Folders[orgID] = []*folder.Folder{folder1, folder2}
 
-			group1Key := models.GenerateGroupKey(orgID)
+			group1Key := modelstest.GenerateGroupKey(orgID)
 			group1Key.NamespaceUID = folder1.UID
-			group2Key := models.GenerateGroupKey(orgID)
+			group2Key := modelstest.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
 			ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
@@ -777,7 +780,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		rules := make([]*models.AlertRule, 0, len(folders))
 		expected := make([]string, 0, len(folders))
 		for _, f := range folders {
-			groupKey := models.GenerateGroupKey(orgID)
+			groupKey := modelstest.GenerateGroupKey(orgID)
 			groupKey.NamespaceUID = f.UID
 			rules = append(rules, gen.With(gen.WithGroupKey(groupKey)).GenerateRef())
 			expected = append(expected, f.UID)
@@ -804,7 +807,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
 		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
@@ -855,13 +858,13 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		// Create three deleted rules with distinct deletion times.
 		// The fake store returns them in the order they are appended (oldest first),
 		// which is the wrong order the fix must correct.
-		rule1 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID)).Generate()
 		rule1.Updated = now.Add(-2 * time.Minute) // deleted earliest
 
-		rule2 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule2 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID)).Generate()
 		rule2.Updated = now.Add(-1 * time.Minute) // deleted in the middle
 
-		rule3 := models.RuleGen.With(models.RuleGen.WithOrgID(orgID)).Generate()
+		rule3 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID)).Generate()
 		rule3.Updated = now // deleted most recently
 
 		// Intentionally append in oldest-first order so that any accidental
@@ -914,13 +917,13 @@ func TestRouteGetRulesConfig(t *testing.T) {
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	t.Run("should return rules in group sorted by group index", func(t *testing.T) {
 		orgID := rand.Int63()
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
 		ruleUpdatedBy := new(models.UserUID(util.GenerateShortUID()))
@@ -963,7 +966,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		folder := randFolder()
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-		groupKey := models.GenerateGroupKey(orgID)
+		groupKey := modelstest.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
@@ -984,16 +987,16 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 
 func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
-	group := models.GenerateGroupKey(orgID)
+	group := modelstest.GenerateGroupKey(orgID)
 	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	var allRules []*models.AlertRule
 	{
 		rules := gen.With(gen.WithGroupKey(group)).GenerateManyRef(1, 4)
 		allRules = append(allRules, rules...)
 		affectedGroups[group] = rules
 		for i := 0; i < rand.Intn(3)+1; i++ {
-			g := models.GenerateGroupKey(orgID)
+			g := modelstest.GenerateGroupKey(orgID)
 			rules := gen.With(gen.WithGroupKey(g)).GenerateManyRef(1, 4)
 			allRules = append(allRules, rules...)
 			affectedGroups[g] = rules
@@ -1012,7 +1015,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		storeResult[allRules[0].UID] = models.ProvenanceAPI
 		storeResult[allRules[1].UID] = models.ProvenanceFile
 
-		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore := &provisioningtest.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
 
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
@@ -1028,7 +1031,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 			storeResult[rule.UID] = models.ProvenanceNone
 		}
 
-		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore := &provisioningtest.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
 
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
@@ -1036,7 +1039,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 
 	t.Run("should return nil if no alerts have provisioning status", func(t *testing.T) {
-		provenanceStore := &provisioning.MockProvisioningStore{}
+		provenanceStore := &provisioningtest.MockProvisioningStore{}
 		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(make(map[string]models.Provenance, len(allRules)), nil)
 
 		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
@@ -1045,7 +1048,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 }
 
 func TestValidateQueries(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	delta := rulestore.GroupDelta{
 		New: []*models.AlertRule{
 			gen.With(gen.WithCondition("New")).GenerateRef(),
@@ -1217,9 +1220,9 @@ func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) 
 func TestRouteUpdateNamespaceRules(t *testing.T) {
 	orgID := rand.Int63()
 	folder := randFolder()
-	gen := models.RuleGen.With(
-		models.RuleGen.WithOrgID(orgID),
-		models.RuleGen.WithNamespaceUID(folder.UID),
+	gen := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithOrgID(orgID),
+		modelstest.RuleGen.WithNamespaceUID(folder.UID),
 	)
 
 	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
@@ -1550,9 +1553,9 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], managedFolder)
 
 		// Create some rules in the managed folder
-		ruleGen := models.RuleGen.With(
-			models.RuleGen.WithOrgID(orgID),
-			models.RuleGen.WithNamespaceUID(managedFolder.UID),
+		ruleGen := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(orgID),
+			modelstest.RuleGen.WithNamespaceUID(managedFolder.UID),
 		)
 		rules := ruleGen.GenerateManyRef(2)
 		ruleStore.PutRule(context.Background(), rules...)

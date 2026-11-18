@@ -20,7 +20,7 @@ const (
 // These are the api contracts. The API should match the underlying service and store
 
 //go:generate go run ./commands/generate_datasources/main.go
-//go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
+//go:generate mockery --name Service --structname FakePublicDashboardService --outpkg testhelpers --output ./testhelpers/ --filename public_dashboard_service_mock.go
 type Service interface {
 	GetPublicDashboardForView(ctx context.Context, accessToken string) (*dtos.DashboardFullWithMeta, error)
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error)
@@ -49,14 +49,14 @@ type Service interface {
 
 // ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first
 //
-//go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
+//go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --outpkg testhelpers --output ./testhelpers/ --filename public_dashboard_service_wrapper_mock.go
 type ServiceWrapper interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error)
 	Delete(ctx context.Context, orgId int64, uid string) error
 	DeleteByDashboardUIDs(ctx context.Context, orgId int64, dashboardUIDs []string) error
 }
 
-//go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
+//go:generate mockery --name Store --structname FakePublicDashboardStore --outpkg testhelpers --output ./testhelpers/ --filename public_dashboard_store_mock.go
 type Store interface {
 	Find(ctx context.Context, uid string) (*models.PublicDashboard, error)
 	FindByOrgAndUid(ctx context.Context, orgId int64, uid string) (*models.PublicDashboard, error)
@@ -74,7 +74,7 @@ type Store interface {
 	GetMetrics(ctx context.Context) (*models.Metrics, error)
 }
 
-//go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --inpackage --filename public_dashboard_middleware_mock.go
+//go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --outpkg testhelpers --output ./testhelpers/ --filename public_dashboard_middleware_mock.go
 type Middleware interface {
 	HandleApi(c *contextmodel.ReqContext)
 	HandleView(c *contextmodel.ReqContext)

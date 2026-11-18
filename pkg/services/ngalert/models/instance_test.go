@@ -1,10 +1,13 @@
-package models
+package models_test
 
 import (
 	"errors"
 	"fmt"
 	"math"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -13,35 +16,35 @@ import (
 
 func TestInstanceStateType_IsValid(t *testing.T) {
 	testCases := []struct {
-		instanceType     InstanceStateType
+		instanceType     models.InstanceStateType
 		expectedValidity bool
 	}{
 		{
-			instanceType:     InstanceStateFiring,
+			instanceType:     models.InstanceStateFiring,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStateNormal,
+			instanceType:     models.InstanceStateNormal,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStatePending,
+			instanceType:     models.InstanceStatePending,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStateNoData,
+			instanceType:     models.InstanceStateNoData,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStateError,
+			instanceType:     models.InstanceStateError,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStateRecovering,
+			instanceType:     models.InstanceStateRecovering,
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStateType("notAValidInstanceStateType"),
+			instanceType:     models.InstanceStateType("notAValidInstanceStateType"),
 			expectedValidity: false,
 		},
 	}
@@ -53,7 +56,7 @@ func TestInstanceStateType_IsValid(t *testing.T) {
 	}
 }
 
-func buildTestInstanceStateTypeIsValidName(instanceType InstanceStateType, expectedValidity bool) string {
+func buildTestInstanceStateTypeIsValidName(instanceType models.InstanceStateType, expectedValidity bool) string {
 	if expectedValidity {
 		return fmt.Sprintf("%q should be valid", instanceType)
 	}
@@ -65,48 +68,48 @@ func TestValidateAlertInstance(t *testing.T) {
 		name         string
 		orgId        int64
 		uid          string
-		currentState InstanceStateType
+		currentState models.InstanceStateType
 		err          error
 	}{
 		{
 			name:         "fails if orgID is empty",
 			orgId:        0,
 			uid:          "validUid",
-			currentState: InstanceStateNormal,
+			currentState: models.InstanceStateNormal,
 			err:          errors.New("alert instance is invalid due to missing alert rule organisation"),
 		},
 		{
 			name:         "fails if uid is empty",
 			orgId:        1,
 			uid:          "",
-			currentState: InstanceStateNormal,
+			currentState: models.InstanceStateNormal,
 			err:          errors.New("alert instance is invalid due to missing alert rule uid"),
 		},
 		{
 			name:         "fails if current state is not valid",
 			orgId:        1,
 			uid:          "validUid",
-			currentState: InstanceStateType("notAValidType"),
+			currentState: models.InstanceStateType("notAValidType"),
 			err:          errors.New("alert instance is invalid because the state 'notAValidType' is invalid"),
 		},
 		{
 			name:         "ok if validated fields are correct",
 			orgId:        1,
 			uid:          "validUid",
-			currentState: InstanceStateNormal,
+			currentState: models.InstanceStateNormal,
 			err:          nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			instance := AlertInstanceGen(func(instance *AlertInstance) {
+			instance := modelstest.AlertInstanceGen(func(instance *models.AlertInstance) {
 				instance.RuleOrgID = tc.orgId
 				instance.RuleUID = tc.uid
 				instance.CurrentState = tc.currentState
 			})
 
-			require.Equal(t, tc.err, ValidateAlertInstance(*instance))
+			require.Equal(t, tc.err, models.ValidateAlertInstance(*instance))
 		})
 	}
 }
@@ -156,7 +159,7 @@ func TestJsonifyValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := jsonifyValues(tt.input)
+			result := models.JsonifyValuesForTest(tt.input)
 			require.Equal(t, tt.expected, result)
 		})
 	}
@@ -223,7 +226,7 @@ func TestUnjsonifyValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := unjsonifyValues(tt.input)
+			result, err := models.UnjsonifyValuesForTest(tt.input)
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
 				return
@@ -255,8 +258,8 @@ func TestJsonifyUnjsonifyRoundTrip(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			jsonified := jsonifyValues(tt.input)
-			result, err := unjsonifyValues(jsonified)
+			jsonified := models.JsonifyValuesForTest(tt.input)
+			result, err := models.UnjsonifyValuesForTest(jsonified)
 			require.NoError(t, err)
 			require.True(t, cmp.Equal(tt.input, result, cmpopts.EquateNaNs()), "round-trip mismatch: %s", cmp.Diff(tt.input, result, cmpopts.EquateNaNs()))
 		})

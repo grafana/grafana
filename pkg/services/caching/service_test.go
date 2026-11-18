@@ -1,10 +1,13 @@
-package caching
+package caching_test
 
 import (
 	"context"
 	"errors"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/caching/cachingtest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -15,7 +18,7 @@ import (
 
 func TestWithQueryDataCaching(t *testing.T) {
 	t.Run("caching is a no-op when service is nil", func(t *testing.T) {
-		var s *CachingServiceClient
+		var s *caching.CachingServiceClient
 		req := backend.QueryDataRequest{}
 		fakeResponse := &backend.QueryDataResponse{}
 		response, err := s.WithQueryDataCaching(t.Context(), &req, func() (*backend.QueryDataResponse, error) {
@@ -26,9 +29,9 @@ func TestWithQueryDataCaching(t *testing.T) {
 	})
 
 	t.Run("cache status is included in the response if a request context is available", func(t *testing.T) {
-		fakeCachingService := NewFakeOSSCachingService()
-		fakeCachingService.ReturnStatus = StatusMiss
-		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		fakeCachingService := cachingtest.NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = caching.StatusMiss
+		client := caching.ProvideCachingServiceClient(fakeCachingService, nil)
 
 		req := backend.QueryDataRequest{}
 
@@ -44,13 +47,13 @@ func TestWithQueryDataCaching(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, fakeResponse, response)
-		require.EqualValues(t, StatusMiss, reqCtx.Resp.Header().Get(XCacheHeader))
+		require.EqualValues(t, caching.StatusMiss, reqCtx.Resp.Header().Get(caching.XCacheHeader))
 	})
 
 	t.Run("caching can be used without a request context", func(t *testing.T) {
-		fakeCachingService := NewFakeOSSCachingService()
-		fakeCachingService.ReturnStatus = StatusMiss
-		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		fakeCachingService := cachingtest.NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = caching.StatusMiss
+		client := caching.ProvideCachingServiceClient(fakeCachingService, nil)
 
 		req := backend.QueryDataRequest{}
 
@@ -66,7 +69,7 @@ func TestWithQueryDataCaching(t *testing.T) {
 
 func TestWithCallResourceCaching(t *testing.T) {
 	t.Run("caching is a no-op when service is nil", func(t *testing.T) {
-		var s *CachingServiceClient
+		var s *caching.CachingServiceClient
 		req := backend.CallResourceRequest{}
 		fakeErr := errors.New("oops")
 		err := s.WithCallResourceCaching(t.Context(), &req, nil, func(backend.CallResourceResponseSender) error {
@@ -76,9 +79,9 @@ func TestWithCallResourceCaching(t *testing.T) {
 	})
 
 	t.Run("cache status is included in the response if a request context is available", func(t *testing.T) {
-		fakeCachingService := NewFakeOSSCachingService()
-		fakeCachingService.ReturnStatus = StatusMiss
-		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		fakeCachingService := cachingtest.NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = caching.StatusMiss
+		client := caching.ProvideCachingServiceClient(fakeCachingService, nil)
 
 		req := backend.CallResourceRequest{}
 
@@ -96,13 +99,13 @@ func TestWithCallResourceCaching(t *testing.T) {
 			return fakeErr
 		})
 		require.ErrorIs(t, err, fakeErr)
-		require.EqualValues(t, StatusMiss, reqCtx.Resp.Header().Get(XCacheHeader))
+		require.EqualValues(t, caching.StatusMiss, reqCtx.Resp.Header().Get(caching.XCacheHeader))
 	})
 
 	t.Run("caching can be used without a request context", func(t *testing.T) {
-		fakeCachingService := NewFakeOSSCachingService()
-		fakeCachingService.ReturnStatus = StatusMiss
-		client := ProvideCachingServiceClient(fakeCachingService, nil)
+		fakeCachingService := cachingtest.NewFakeOSSCachingService()
+		fakeCachingService.ReturnStatus = caching.StatusMiss
+		client := caching.ProvideCachingServiceClient(fakeCachingService, nil)
 
 		req := backend.CallResourceRequest{}
 
@@ -116,15 +119,4 @@ func TestWithCallResourceCaching(t *testing.T) {
 		})
 		require.ErrorIs(t, err, fakeErr)
 	})
-}
-
-func TestGetDatasourceType(t *testing.T) {
-	t.Parallel()
-
-	require.Equal(t, "unknown", getDatasourceType(backend.PluginContext{}))
-	require.Equal(t, "name", getDatasourceType(backend.PluginContext{
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			Name: "name",
-		},
-	}))
 }

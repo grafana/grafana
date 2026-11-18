@@ -1,4 +1,4 @@
-package repository
+package repository_test
 
 import (
 	"context"
@@ -7,6 +7,9 @@ import (
 	"testing"
 	"testing/synctest"
 	"time"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +29,7 @@ var noopTracer = noop.NewTracerProvider().Tracer("test")
 func TestNewFactory(t *testing.T) {
 	t.Run("creates factory with empty extras", func(t *testing.T) {
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		factory, err := ProvideFactory(enabled, []Extra{}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{}, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -35,13 +38,13 @@ func TestNewFactory(t *testing.T) {
 	})
 
 	t.Run("creates factory with multiple extras", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		githubExtra := &MockExtra{}
+		githubExtra := &repositorytest.MockExtra{}
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
@@ -49,8 +52,8 @@ func TestNewFactory(t *testing.T) {
 			provisioning.GitRepositoryType:    {},
 			provisioning.GitHubRepositoryType: {},
 		}
-		extras := []Extra{localExtra, gitExtra, githubExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra, gitExtra, githubExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -71,17 +74,17 @@ func TestNewFactory(t *testing.T) {
 	})
 
 	t.Run("returns error for duplicate repository types", func(t *testing.T) {
-		firstExtra := &MockExtra{}
+		firstExtra := &repositorytest.MockExtra{}
 		firstExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		secondExtra := &MockExtra{}
+		secondExtra := &repositorytest.MockExtra{}
 		secondExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		extras := []Extra{firstExtra, secondExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{firstExtra, secondExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		assert.Error(t, err)
 		assert.Nil(t, factory)
@@ -92,21 +95,21 @@ func TestNewFactory(t *testing.T) {
 	})
 
 	t.Run("returns error for duplicate among multiple different types", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		duplicateGitExtra := &MockExtra{}
+		duplicateGitExtra := &repositorytest.MockExtra{}
 		duplicateGitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		extras := []Extra{localExtra, gitExtra, duplicateGitExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra, gitExtra, duplicateGitExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		assert.Error(t, err)
 		assert.Nil(t, factory)
@@ -119,7 +122,7 @@ func TestNewFactory(t *testing.T) {
 
 	t.Run("handles nil extras slice", func(t *testing.T) {
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		factory, err := ProvideFactory(enabled, nil, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, nil, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -131,7 +134,7 @@ func TestNewFactory(t *testing.T) {
 func TestFactory_Types(t *testing.T) {
 	t.Run("returns empty slice for factory with no extras", func(t *testing.T) {
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		factory, err := ProvideFactory(enabled, []Extra{}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{}, noopTracer)
 
 		require.NoError(t, err)
 		types := factory.Types()
@@ -139,19 +142,19 @@ func TestFactory_Types(t *testing.T) {
 	})
 
 	t.Run("returns all registered repository types in stable order", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		githubExtra := &MockExtra{}
+		githubExtra := &repositorytest.MockExtra{}
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
-		bitbucketExtra := &MockExtra{}
+		bitbucketExtra := &repositorytest.MockExtra{}
 		bitbucketExtra.On("Type").Return(provisioning.BitbucketRepositoryType)
 
-		gitlabExtra := &MockExtra{}
+		gitlabExtra := &repositorytest.MockExtra{}
 		gitlabExtra.On("Type").Return(provisioning.GitLabRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
@@ -161,8 +164,8 @@ func TestFactory_Types(t *testing.T) {
 			provisioning.BitbucketRepositoryType: {},
 			provisioning.GitLabRepositoryType:    {},
 		}
-		extras := []Extra{localExtra, gitExtra, githubExtra, bitbucketExtra, gitlabExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra, gitExtra, githubExtra, bitbucketExtra, gitlabExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		types := factory.Types()
@@ -187,13 +190,13 @@ func TestFactory_Types(t *testing.T) {
 	})
 
 	t.Run("returns consistent order across multiple calls", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		githubExtra := &MockExtra{}
+		githubExtra := &repositorytest.MockExtra{}
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
@@ -201,8 +204,8 @@ func TestFactory_Types(t *testing.T) {
 			provisioning.GitRepositoryType:    {},
 			provisioning.GitHubRepositoryType: {},
 		}
-		extras := []Extra{githubExtra, localExtra, gitExtra} // Intentionally unordered
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{githubExtra, localExtra, gitExtra} // Intentionally unordered
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		types1 := factory.Types()
@@ -235,13 +238,13 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
-	localExtra := &MockExtra{}
+	localExtra := &repositorytest.MockExtra{}
 	localExtra.On("Type").Return(provisioning.LocalRepositoryType)
-	localExtra.On("Build", mock.Anything, mock.Anything).Return(&MockConfigRepository{}, nil)
+	localExtra.On("Build", mock.Anything, mock.Anything).Return(&repositorytest.MockConfigRepository{}, nil)
 
-	factory, err := ProvideFactory(
+	factory, err := repository.ProvideFactory(
 		map[provisioning.RepositoryType]struct{}{provisioning.LocalRepositoryType: {}},
-		[]Extra{localExtra},
+		[]repository.Extra{localExtra},
 		tp.Tracer("test"),
 	)
 	require.NoError(t, err)
@@ -271,15 +274,15 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 
 func TestFactory_Build(t *testing.T) {
 	t.Run("successfully builds repository with matching type", func(t *testing.T) {
-		expectedRepo := &MockConfigRepository{}
-		localExtra := &MockExtra{}
+		expectedRepo := &repositorytest.MockConfigRepository{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(expectedRepo, nil)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -297,13 +300,13 @@ func TestFactory_Build(t *testing.T) {
 	})
 
 	t.Run("returns error for unsupported repository type", func(t *testing.T) {
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.GitRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{gitExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{gitExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -324,14 +327,14 @@ func TestFactory_Build(t *testing.T) {
 
 	t.Run("propagates error from extra.Build", func(t *testing.T) {
 		expectedError := errors.New("build failed")
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(nil, expectedError)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -350,12 +353,12 @@ func TestFactory_Build(t *testing.T) {
 	})
 
 	t.Run("finds correct extra among multiple", func(t *testing.T) {
-		gitRepo := &MockConfigRepository{}
+		gitRepo := &repositorytest.MockConfigRepository{}
 
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 		gitExtra.On("Build", mock.Anything, mock.Anything).Return(gitRepo, nil)
 
@@ -363,7 +366,7 @@ func TestFactory_Build(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra, gitExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra, gitExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -383,13 +386,13 @@ func TestFactory_Build(t *testing.T) {
 	})
 
 	t.Run("handles empty repository type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -409,8 +412,8 @@ func TestFactory_Build(t *testing.T) {
 	})
 
 	t.Run("passes context correctly to extra.Build", func(t *testing.T) {
-		localRepo := &MockConfigRepository{}
-		localExtra := &MockExtra{}
+		localRepo := &repositorytest.MockConfigRepository{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		// Create context with value to verify it's passed through
@@ -425,7 +428,7 @@ func TestFactory_Build(t *testing.T) {
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repoConfig := &provisioning.Repository{
@@ -464,12 +467,12 @@ func TestFactory_Build_Timeout(t *testing.T) {
 				cfg := &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 				}
-				built := NewMockRepository(t)
-				extra := NewMockExtra(t)
+				built := repositorytest.NewMockRepository(t)
+				extra := repositorytest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(cfg.Spec.Type)
 				start := time.Now()
 				var receivedContext context.Context
-				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(ctx context.Context, _ *provisioning.Repository) (Repository, error) {
+				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
 					receivedContext = ctx
 					deadline, ok := ctx.Deadline()
 					require.True(t, ok)
@@ -480,9 +483,9 @@ func TestFactory_Build_Timeout(t *testing.T) {
 					}
 					return built, ctx.Err()
 				}).Once()
-				factory, err := ProvideFactory(
+				factory, err := repository.ProvideFactory(
 					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
-					[]Extra{extra}, noopTracer,
+					[]repository.Extra{extra}, noopTracer,
 				)
 				require.NoError(t, err)
 
@@ -492,7 +495,7 @@ func TestFactory_Build_Timeout(t *testing.T) {
 					assert.Same(t, built, got)
 				} else {
 					require.ErrorIs(t, err, context.DeadlineExceeded)
-					assert.ErrorIs(t, err, ErrServerUnavailable)
+					assert.ErrorIs(t, err, repository.ErrServerUnavailable)
 					assert.Nil(t, got)
 				}
 				assert.Error(t, receivedContext.Err(), "the build context must be released when Build returns")
@@ -505,7 +508,7 @@ func TestFactory_Build_Timeout(t *testing.T) {
 }
 
 func TestFactory_Build_DeadlineFailures(t *testing.T) {
-	classifiedErr := fmt.Errorf("%w: %w", ErrServerUnavailable, context.DeadlineExceeded)
+	classifiedErr := fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
 	for _, tt := range []struct {
 		name            string
 		buildErr        error
@@ -519,7 +522,7 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 		{name: "context deadline", waitForDeadline: true, buildErr: context.DeadlineExceeded, wantUnavailable: true},
 		{name: "cancellation after deadline", waitForDeadline: true, buildErr: context.Canceled, wantUnavailable: true},
 		{name: "success after deadline", waitForDeadline: true, wantUnavailable: true},
-		{name: "provider error after deadline", waitForDeadline: true, buildErr: ErrSecretDecryptFailed, wantUnavailable: true},
+		{name: "provider error after deadline", waitForDeadline: true, buildErr: repository.ErrSecretDecryptFailed, wantUnavailable: true},
 		{name: "caller cancellation", cancelContext: true},
 		{name: "provider cancellation", buildErr: context.Canceled},
 	} {
@@ -539,17 +542,17 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 				cfg := &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 				}
-				extra := NewMockExtra(t)
+				extra := repositorytest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(cfg.Spec.Type)
-				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(buildCtx context.Context, _ *provisioning.Repository) (Repository, error) {
+				extra.EXPECT().Build(mock.Anything, cfg).RunAndReturn(func(buildCtx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
 					if tt.waitForDeadline {
 						<-buildCtx.Done()
 					}
-					return &MockConfigRepository{}, tt.buildErr
+					return &repositorytest.MockConfigRepository{}, tt.buildErr
 				}).Once()
-				factory, err := ProvideFactory(
+				factory, err := repository.ProvideFactory(
 					map[provisioning.RepositoryType]struct{}{cfg.Spec.Type: {}},
-					[]Extra{extra}, noopTracer,
+					[]repository.Extra{extra}, noopTracer,
 				)
 				require.NoError(t, err)
 
@@ -562,7 +565,7 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 				if ctx.Err() != nil {
 					assert.ErrorIs(t, err, ctx.Err())
 				}
-				assert.Equal(t, tt.wantUnavailable, errors.Is(err, ErrServerUnavailable))
+				assert.Equal(t, tt.wantUnavailable, errors.Is(err, repository.ErrServerUnavailable))
 				if errors.Is(tt.buildErr, classifiedErr) {
 					assert.Same(t, classifiedErr, err, "an already classified deadline must not be wrapped again")
 				}
@@ -573,13 +576,13 @@ func TestFactory_Build_DeadlineFailures(t *testing.T) {
 
 func TestFactory_Types_EnabledFiltering(t *testing.T) {
 	t.Run("returns only enabled types", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		githubExtra := &MockExtra{}
+		githubExtra := &repositorytest.MockExtra{}
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		// Only enable local and github, not git
@@ -587,8 +590,8 @@ func TestFactory_Types_EnabledFiltering(t *testing.T) {
 			provisioning.LocalRepositoryType:  {},
 			provisioning.GitHubRepositoryType: {},
 		}
-		extras := []Extra{localExtra, gitExtra, githubExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra, gitExtra, githubExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		types := factory.Types()
@@ -606,16 +609,16 @@ func TestFactory_Types_EnabledFiltering(t *testing.T) {
 	})
 
 	t.Run("returns empty when no types enabled", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
 		// Nothing enabled
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		extras := []Extra{localExtra, gitExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra, gitExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		types := factory.Types()
@@ -627,7 +630,7 @@ func TestFactory_Types_EnabledFiltering(t *testing.T) {
 	})
 
 	t.Run("ignores enabled types without corresponding extras", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		// Enable local and git, but only have local extra
@@ -635,8 +638,8 @@ func TestFactory_Types_EnabledFiltering(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		extras := []Extra{localExtra}
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		extras := []repository.Extra{localExtra}
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		types := factory.Types()
@@ -651,13 +654,13 @@ func TestFactory_Types_EnabledFiltering(t *testing.T) {
 
 func TestProvideFactory_EnabledParameter(t *testing.T) {
 	t.Run("creates factory with specific enabled types", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
-		githubExtra := &MockExtra{}
+		githubExtra := &repositorytest.MockExtra{}
 		githubExtra.On("Type").Return(provisioning.GitHubRepositoryType)
 
 		// Only enable local and git, not github
@@ -665,9 +668,9 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		extras := []Extra{localExtra, gitExtra, githubExtra}
+		extras := []repository.Extra{localExtra, gitExtra, githubExtra}
 
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -687,17 +690,17 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 	})
 
 	t.Run("creates factory with no enabled types", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 
 		// Enable nothing
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		extras := []Extra{localExtra, gitExtra}
+		extras := []repository.Extra{localExtra, gitExtra}
 
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -710,7 +713,7 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 	})
 
 	t.Run("enabled types without extras are ignored", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		// Enable both local and git, but only provide local extra
@@ -718,9 +721,9 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		extras := []Extra{localExtra}
+		extras := []repository.Extra{localExtra}
 
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		require.NoError(t, err)
 		require.NotNil(t, factory)
@@ -735,18 +738,18 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 
 	t.Run("still errors for duplicate repository types", func(t *testing.T) {
 		// Create duplicate extras to trigger error
-		firstExtra := &MockExtra{}
+		firstExtra := &repositorytest.MockExtra{}
 		firstExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
-		secondExtra := &MockExtra{}
+		secondExtra := &repositorytest.MockExtra{}
 		secondExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		extras := []Extra{firstExtra, secondExtra}
+		extras := []repository.Extra{firstExtra, secondExtra}
 
-		factory, err := ProvideFactory(enabled, extras, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, extras, noopTracer)
 
 		assert.Error(t, err)
 		assert.Nil(t, factory)
@@ -757,12 +760,12 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 	})
 
 	t.Run("build fails for disabled repository type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		// Create factory with local extra but don't enable it
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -782,8 +785,8 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 	})
 
 	t.Run("build succeeds for enabled repository type", func(t *testing.T) {
-		expectedRepo := &MockConfigRepository{}
-		localExtra := &MockExtra{}
+		expectedRepo := &repositorytest.MockConfigRepository{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Build", mock.Anything, mock.Anything).Return(expectedRepo, nil)
 
@@ -791,7 +794,7 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		ctx := context.Background()
@@ -811,11 +814,11 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 
 func TestFactory_Mutate(t *testing.T) {
 	t.Run("calls mutate only for matching type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Mutate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 		// Note: gitExtra.Mutate should NOT be called
 
@@ -823,7 +826,7 @@ func TestFactory_Mutate(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra, gitExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra, gitExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -840,13 +843,13 @@ func TestFactory_Mutate(t *testing.T) {
 	})
 
 	t.Run("returns nil for non-repository object", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		// Pass a non-repository object
@@ -857,13 +860,13 @@ func TestFactory_Mutate(t *testing.T) {
 	})
 
 	t.Run("returns nil for unsupported type (caught by Validate)", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -886,14 +889,14 @@ func TestFactory_Mutate(t *testing.T) {
 			},
 		}
 
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Mutate", mock.Anything, mock.Anything, oldRepo).Return(nil)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -910,14 +913,14 @@ func TestFactory_Mutate(t *testing.T) {
 
 	t.Run("propagates error from extra.Mutate", func(t *testing.T) {
 		expectedError := errors.New("mutate failed")
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Mutate", mock.Anything, mock.Anything, mock.Anything).Return(expectedError)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -936,11 +939,11 @@ func TestFactory_Mutate(t *testing.T) {
 
 func TestFactory_Validate(t *testing.T) {
 	t.Run("validates only for matching type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 		localExtra.On("Validate", mock.Anything, mock.Anything).Return(nil)
 
-		gitExtra := &MockExtra{}
+		gitExtra := &repositorytest.MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
 		// Note: gitExtra.Validate should NOT be called
 
@@ -948,7 +951,7 @@ func TestFactory_Validate(t *testing.T) {
 			provisioning.LocalRepositoryType: {},
 			provisioning.GitRepositoryType:   {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra, gitExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra, gitExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -965,13 +968,13 @@ func TestFactory_Validate(t *testing.T) {
 	})
 
 	t.Run("returns error for unsupported type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -988,12 +991,12 @@ func TestFactory_Validate(t *testing.T) {
 	})
 
 	t.Run("returns error for disabled type", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		// Type is registered but not enabled
 		enabled := map[provisioning.RepositoryType]struct{}{}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		repo := &provisioning.Repository{
@@ -1010,13 +1013,13 @@ func TestFactory_Validate(t *testing.T) {
 	})
 
 	t.Run("returns empty for non-repository object", func(t *testing.T) {
-		localExtra := &MockExtra{}
+		localExtra := &repositorytest.MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
 		}
-		factory, err := ProvideFactory(enabled, []Extra{localExtra}, noopTracer)
+		factory, err := repository.ProvideFactory(enabled, []repository.Extra{localExtra}, noopTracer)
 		require.NoError(t, err)
 
 		// Pass a non-repository object

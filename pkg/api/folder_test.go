@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -520,7 +520,7 @@ func TestFolderGetAPIEndpointMissingFolder(t *testing.T) {
 
 func TestFolderGetByIDAPIEndpointMissingFolder(t *testing.T) {
 	// An empty search drives the real ID lookup behind the registered folders:id: resolver.
-	searchMock := resource.NewMockResourceClient(t)
+	searchMock := resourcetest.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
@@ -88,7 +88,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 
-		actest.AddUserPermissionToDB(t, sqlStore, usr)
+		actestfixtures.AddUserPermissionToDB(t, sqlStore, usr)
 
 		query := &models.PublicDashboardListQuery{
 			User:   usr,

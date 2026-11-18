@@ -64,7 +64,7 @@ type Service interface {
 	GetStaticRoles(ctx context.Context) map[string]*RoleDTO
 }
 
-//go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
+//go:generate  mockery --name Store --structname MockStore --outpkg actestfixtures --filename store_mock.go --output ./actest/actestfixtures/
 type Store interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	GetBasicRolesPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)

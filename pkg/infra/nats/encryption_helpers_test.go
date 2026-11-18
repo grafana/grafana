@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	cipherservice "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -155,7 +155,7 @@ const testDataKeyID = "test-data-key"
 
 func newFakeEncryption(t *testing.T, key string) *fakeEncryption {
 	t.Helper()
-	c, err := cipherservice.ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), &usagestats.UsageStatsMock{})
+	c, err := cipherservice.ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), &usagestatstest.UsageStatsMock{})
 	require.NoError(t, err)
 	return &fakeEncryption{cipher: c, key: key}
 }

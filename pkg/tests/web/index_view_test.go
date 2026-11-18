@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -172,7 +173,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 				OrgID:    1,
 			})
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
+			secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, database.ProvideSecretsStore(store))
 			legacyAuthInfoStore, err := authinfoimpl.ProvideLegacyStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService)
 			require.NoError(t, err)
 			authInfoStore := authinfoimpl.ProvideStore(legacyAuthInfoStore, env.Cfg, nil, tracing.InitializeTracerForTest())

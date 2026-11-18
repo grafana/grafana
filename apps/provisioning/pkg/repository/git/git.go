@@ -5,7 +5,7 @@ import "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 // GitRepository is an interface that combines all repository capabilities
 // needed for Git repositories.
 //
-//go:generate mockery --name GitRepository --structname MockGitRepository --inpackage --filename git_repository_mock.go --with-expecter
+//go:generate mockery --name GitRepository --structname MockGitRepository --outpkg gittest --output ./gittest/ --filename git_repository_mock.go --with-expecter
 type GitRepository interface {
 	repository.Repository
 	repository.Versioned

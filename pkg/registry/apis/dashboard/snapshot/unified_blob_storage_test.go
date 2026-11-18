@@ -9,6 +9,8 @@ import (
 	"testing"
 	"testing/synctest"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -88,7 +90,7 @@ func TestSnapshotGenericInlineCreate(t *testing.T) {
 	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode1, grafanarest.Mode2, grafanarest.Mode3, grafanarest.Mode4} {
 		t.Run(fmt.Sprint(mode), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				service := dashboardsnapshots.NewMockService(t)
+				service := dashboardsnapshotstest.NewMockService(t)
 				if mode != grafanarest.Mode4 {
 					service.On("CreateDashboardSnapshot", mock.Anything, mock.MatchedBy(func(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) bool {
 						return cmd.Dashboard.Object["title"] == "CPU"

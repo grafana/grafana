@@ -23,6 +23,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -32,7 +33,7 @@ import (
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/publicdashboardstest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -387,7 +388,7 @@ type scenarioContext struct {
 	sqlStore           db.DB
 	log                log.Logger
 	folderSvc          *foldertest.FakeService
-	dashboardSvc       *dashboards.FakeDashboardService
+	dashboardSvc       *dashboardstest.FakeDashboardService
 	defaultGetDashByLP *mock.Call
 }
 
@@ -486,7 +487,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	ac := acimpl.ProvideAccessControl(features)
 	folderPermissions := acmock.NewMockedPermissionsService()
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	publicDash := &publicdashboards.FakePublicDashboardServiceWrapper{}
+	publicDash := &publicdashboardstest.FakePublicDashboardServiceWrapper{}
 	publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	folderSvc := foldertest.NewFakeService()
@@ -499,7 +500,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	folderSvc.ExpectedFolder = f
 	folderSvc.ExpectedFolders = []*folder.Folder{f}
 
-	dashService := dashboards.NewFakeDashboardService(t)
+	dashService := dashboardstest.NewFakeDashboardService(t)
 
 	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
 	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)

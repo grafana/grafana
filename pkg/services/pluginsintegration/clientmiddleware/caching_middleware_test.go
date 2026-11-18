@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/caching/cachingtest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -21,7 +22,7 @@ func TestCachingMiddleware(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/query", nil)
 		require.NoError(t, err)
 
-		cs := caching.NewFakeOSSCachingService()
+		cs := cachingtest.NewFakeOSSCachingService()
 		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
@@ -216,7 +217,7 @@ func TestCachingMiddleware(t *testing.T) {
 			Body:   []byte("bogus"),
 		}
 
-		cs := caching.NewFakeOSSCachingService()
+		cs := cachingtest.NewFakeOSSCachingService()
 		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
@@ -293,7 +294,7 @@ func TestCachingMiddleware(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/doesnt/matter", nil)
 		require.NoError(t, err)
 
-		cs := caching.NewFakeOSSCachingService()
+		cs := cachingtest.NewFakeOSSCachingService()
 		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			// Skip the request context in this case

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy/legacytest"
+
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -53,7 +56,7 @@ func (fakeRuleAccessControl) HasAccessInFolder(context.Context, identity.Request
 func newTestLegacyStorageWithStore(t *testing.T) (*legacyStorage, *fakes.RuleStore) {
 	t.Helper()
 	ruleStore := fakes.NewRuleStore(t)
-	quotas := legacy.MockQuotaChecker{}
+	quotas := legacytest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "folder-1", Title: "Folder"}
@@ -71,7 +74,7 @@ func deleteCollectionTestContext() context.Context {
 }
 
 func newRecordingRule(uid, folderUID string) *ngmodels.AlertRule {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithOrgID(1), gen.WithUID(uid), gen.WithNamespaceUID(folderUID), gen.WithAllRecordingRules()).GenerateRef()
 	// The k8s conversion marks the query matching the record source as the source; it must exist to round-trip.
 	rule.Record.From = rule.Data[0].RefID

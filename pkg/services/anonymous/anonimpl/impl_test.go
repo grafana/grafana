@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -148,7 +148,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			cfg.Anonymous.Enabled = !tc.disableService
 
 			anonService := ProvideAnonymousDeviceService(
-				&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(),
+				&usagestatstest.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(),
 				nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{},
 			)
 
@@ -210,7 +210,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+	anonService := ProvideAnonymousDeviceService(&usagestatstest.UsageStatsMock{},
 		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	req := &http.Request{
@@ -327,7 +327,7 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.Anonymous.Enabled = true
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
+	anonService := ProvideAnonymousDeviceService(&usagestatstest.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
 		err := store.Reset()
@@ -359,7 +359,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Anonymous.DeviceLimit = 1 // Set device limit to 1 for testing
 	anonService := ProvideAnonymousDeviceService(
-		&usagestats.UsageStatsMock{},
+		&usagestatstest.UsageStatsMock{},
 		&authntest.FakeService{},
 		store,
 		cfg,

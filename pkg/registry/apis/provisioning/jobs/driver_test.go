@@ -17,6 +17,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 func newConflictError() error {
@@ -350,7 +351,7 @@ func TestProcessJob_OrphanCleanup_RepoTerminating(t *testing.T) {
 
 			now := metav1.Now()
 			repoCfg := makeRepoConfig("deleted-repo", &now, nil)
-			mockRepo := &repository.MockRepository{}
+			mockRepo := &repositorytest.MockRepository{}
 			mockRepo.On("Config").Return(repoCfg)
 
 			worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -393,7 +394,7 @@ func TestProcessJob_NormalAction_RepoTerminating_SkipsJob(t *testing.T) {
 
 	now := metav1.Now()
 	repoCfg := makeRepoConfig("test-repo", &now, nil)
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -416,7 +417,7 @@ func TestProcessJob_NormalAction_RepoPendingDelete_SkipsJob(t *testing.T) {
 	repoCfg := makeRepoConfig("test-repo", nil, map[string]string{
 		appcontroller.LabelPendingDelete: "true",
 	})
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -455,7 +456,7 @@ func TestProcessJob_AuthFailureRepo_SkipsJob(t *testing.T) {
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
 	}}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -494,7 +495,7 @@ func TestProcessJob_AuthFailureRepo_TestActionStillRuns(t *testing.T) {
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
 	}}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -535,7 +536,7 @@ func TestProcessJob_StaleAuthFailureCondition_CallsWorker(t *testing.T) {
 		Reason:             provisioning.ReasonAuthenticationFailed,
 		ObservedGeneration: 1, // stale -- controller hasn't reconciled generation 2 yet
 	}}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -575,7 +576,7 @@ func TestProcessJob_UnhealthyButReachableRepo_CallsWorker(t *testing.T) {
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonInvalidSpec,
 	}}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -615,7 +616,7 @@ func TestProcessJob_HookPermissionFailure_CallsWorker(t *testing.T) {
 		Status: metav1.ConditionFalse,
 		Reason: provisioning.ReasonAuthenticationFailed,
 	}}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -641,7 +642,7 @@ func TestProcessJob_UncheckedHealth_CallsWorker(t *testing.T) {
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
 	repoCfg.Status.Health = provisioning.HealthStatus{Healthy: false}
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -663,7 +664,7 @@ func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -685,7 +686,7 @@ func TestProcessJob_HealthyRepo_WorkerError_PropagatesError(t *testing.T) {
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -726,7 +727,7 @@ func TestProcessJob_OrphanCleanup_RepoRecreated_ReturnsError(t *testing.T) {
 			driver.currentJob = makeOrphanJob(action)
 
 			repoCfg := makeRepoConfig("deleted-repo", nil, nil)
-			mockRepo := &repository.MockRepository{}
+			mockRepo := &repositorytest.MockRepository{}
 			mockRepo.On("Config").Return(repoCfg)
 
 			worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
@@ -762,7 +763,7 @@ func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testin
 	driver.currentJob = makeTestJob("1")
 
 	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
 
 	workerStarted := make(chan struct{})

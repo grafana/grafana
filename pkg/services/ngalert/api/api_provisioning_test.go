@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
@@ -33,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -41,9 +44,11 @@ import (
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest/multiorgtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -260,7 +265,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			require.NoError(t, err)
 
 			env := createTestEnv(t, string(raw))
-			prov := env.prov.(*provisioning.MockProvisioningStore)
+			prov := env.prov.(*provisioningtest.MockProvisioningStore)
 			sut := createProvisioningSrvSutFromEnv(t, &env)
 			configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
 			templateService := provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed)
@@ -581,7 +586,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 		t.Run("have reached the rule quota, POST returns 403", func(t *testing.T) {
 			env := createTestEnv(t, testConfig)
-			quotas := provisioning.MockQuotaChecker{}
+			quotas := provisioningtest.MockQuotaChecker{}
 			quotas.EXPECT().LimitExceeded()
 			env.quotas = &quotas
 			sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -780,7 +785,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 		t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
 			env := createTestEnv(t, testConfig)
-			quotas := provisioning.MockQuotaChecker{}
+			quotas := provisioningtest.MockQuotaChecker{}
 			quotas.EXPECT().LimitExceeded()
 			env.quotas = &quotas
 			sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -2147,15 +2152,15 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 					t.Run(fmt.Sprintf("redacted=%t", redacted), func(t *testing.T) {
 						allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
 						for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
-							integration := models.IntegrationGen(
-								models.IntegrationMuts.WithName(allIntegrationsName),
-								models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
-								models.IntegrationMuts.WithValidConfig(integrationType),
+							integration := modelstest.IntegrationGen(
+								modelstest.IntegrationMuts.WithName(allIntegrationsName),
+								modelstest.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
+								modelstest.IntegrationMuts.WithValidConfig(integrationType),
 							)()
 							integration.DisableResolveMessage = redacted
 							allIntegrations = append(allIntegrations, integration)
 						}
-						receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
+						receiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName(allIntegrationsName), modelstest.ReceiverMuts.WithIntegrations(allIntegrations...))()
 						runTestCase(t, testcase{
 							name:       allIntegrationsName,
 							receiver:   receiver,
@@ -2250,16 +2255,16 @@ func TestApiGetSnapshots(t *testing.T) {
 	allIntegrationsName := "all-integrations"
 	allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
-		integration := models.IntegrationGen(
-			models.IntegrationMuts.WithName(allIntegrationsName),
-			models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
-			models.IntegrationMuts.WithValidConfig(integrationType),
-			models.IntegrationMuts.RemoveSetting("http_config"),
+		integration := modelstest.IntegrationGen(
+			modelstest.IntegrationMuts.WithName(allIntegrationsName),
+			modelstest.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
+			modelstest.IntegrationMuts.WithValidConfig(integrationType),
+			modelstest.IntegrationMuts.RemoveSetting("http_config"),
 		)()
 		integration.DisableResolveMessage = false
 		allIntegrations = append(allIntegrations, integration)
 	}
-	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
+	receiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName(allIntegrationsName), modelstest.ReceiverMuts.WithIntegrations(allIntegrations...))()
 	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
 	require.NoError(t, err)
 	if cfg.Receivers == nil {
@@ -2389,14 +2394,14 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	log := log.NewNopLogger()
 	sqlStore, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
-	quotas := &provisioning.MockQuotaChecker{}
+	quotas := &provisioningtest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
-	xact := &provisioning.NopTransactionManager{}
-	prov := &provisioning.MockProvisioningStore{}
+	xact := &provisioningtest.NopTransactionManager{}
+	prov := &provisioningtest.MockProvisioningStore{}
 	prov.EXPECT().SaveSucceeds()
 	prov.EXPECT().GetReturns(models.ProvenanceNone)
 
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
 		UID:   "folder-uid",
 		Title: "Folder Title",
@@ -2496,7 +2501,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		user:             user,
 		rulesAuthz:       ruleAuthz,
 		features:         features,
-		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
+		nsValidator:      &provisioningtest.NotificationSettingsValidatorProviderFake{},
 		settings:         settings,
 	}
 }
@@ -2662,7 +2667,7 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 
 func (f *fakeRejectingNotificationSettingsValidatorProvider) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
-	return notifier.RejectingValidation{}, nil
+	return multiorgtest.RejectingValidation{}, nil
 }
 
 func createInvalidContactPoint() definitions.EmbeddedContactPoint {

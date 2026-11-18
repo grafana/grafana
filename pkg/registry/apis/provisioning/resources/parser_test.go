@@ -19,6 +19,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -374,7 +375,7 @@ spec:
 	}
 
 	t.Run("reads folder metadata from target ref", func(t *testing.T) {
-		reader := repository.NewMockReader(t)
+		reader := repositorytest.NewMockReader(t)
 		reader.On("Config").Return(repoConfig).Maybe()
 		reader.On("Read", mock.Anything, "team-a/_folder.json", "feature-branch").
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
@@ -396,7 +397,7 @@ spec:
 	})
 
 	t.Run("falls back to configured branch when target ref not found", func(t *testing.T) {
-		reader := repository.NewMockReader(t)
+		reader := repositorytest.NewMockReader(t)
 		reader.On("Config").Return(repoConfig).Maybe()
 		reader.On("Read", mock.Anything, "team-a/_folder.json", "new-pr-branch").
 			Return(nil, fmt.Errorf("ref not found: refs/heads/new-pr-branch: %w", repository.ErrRefNotFound))
@@ -421,7 +422,7 @@ spec:
 	})
 
 	t.Run("falls back to hash-based ID when both refs lack metadata", func(t *testing.T) {
-		reader := repository.NewMockReader(t)
+		reader := repositorytest.NewMockReader(t)
 		reader.On("Config").Return(repoConfig).Maybe()
 		reader.On("Read", mock.Anything, "team-a/_folder.json", "new-pr-branch").
 			Return(nil, fmt.Errorf("ref not found: refs/heads/new-pr-branch: %w", repository.ErrRefNotFound))
@@ -446,7 +447,7 @@ spec:
 	})
 
 	t.Run("does not fall back for non-ref errors", func(t *testing.T) {
-		reader := repository.NewMockReader(t)
+		reader := repositorytest.NewMockReader(t)
 		reader.On("Config").Return(repoConfig).Maybe()
 		reader.On("Read", mock.Anything, "team-a/_folder.json", "feature-branch").
 			Return(nil, repository.ErrFileNotFound)

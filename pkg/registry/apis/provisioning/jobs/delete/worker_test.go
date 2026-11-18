@@ -7,12 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,7 +25,7 @@ import (
 )
 
 type mockReaderWriter struct {
-	*repository.MockRepository
+	*repositorytest.MockRepository
 }
 
 func (m *mockReaderWriter) Delete(ctx context.Context, path, ref, message string) error {
@@ -106,9 +110,9 @@ func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return opts.CommitOnlyOnceMessage == "custom commit message from spec"
@@ -119,7 +123,7 @@ func TestDeleteWorker_CommitMessageFromJobSpec(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.Anything, mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -137,9 +141,9 @@ func TestDeleteWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return !opts.PushOnWrites &&
@@ -166,9 +170,9 @@ func TestDeleteWorker_ProcessWrapFnError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
@@ -191,10 +195,10 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return !opts.PushOnWrites &&
@@ -240,10 +244,10 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -277,11 +281,11 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -322,11 +326,11 @@ func TestDeleteWorker_ProcessSyncWorkerError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -403,9 +407,9 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
+				MockRepository: repositorytest.NewMockRepository(t),
 			}
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 			opts := v0alpha1.DeleteJobOptions{
 				Ref: "main",
@@ -454,10 +458,10 @@ func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -505,12 +509,12 @@ func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 	mockRepositoryResources.On("FindResourcePath", mock.Anything, "missing-dashboard", schema.GroupVersionKind{
@@ -546,9 +550,9 @@ func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 
 func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
 	path := "test/nonexistent.yaml"
@@ -574,9 +578,9 @@ func TestDeleteWorker_deleteFilesFileNotFoundIsWarning(t *testing.T) {
 
 func TestDeleteWorker_deleteFilesOtherErrorIsNotWarning(t *testing.T) {
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.DeleteJobOptions{Ref: "main"}
 	path := "test/file.yaml"
@@ -625,12 +629,12 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	// Mock repository resources factory and client
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
@@ -708,12 +712,12 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
@@ -763,12 +767,12 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
@@ -802,7 +806,7 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	mockProgress.On("ResetResults", true).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
 	}), mockProgress).Return(nil)
@@ -829,11 +833,11 @@ func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	factoryError := errors.New("failed to create repository resources client")
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(nil, factoryError)
@@ -869,9 +873,9 @@ func TestDeleteWorker_ProcessResourceRefsNotReaderWriter(t *testing.T) {
 
 	// Create a simple repository that doesn't implement ReaderWriter
 	mockRepo := &simpleRepository{}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	// Mock the wrap function that will call our function and get the ReaderWriter error
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -904,12 +908,12 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
@@ -957,12 +961,12 @@ func TestDeleteWorker_ProcessMissingSourcePathStopsBeforeDeletion(t *testing.T) 
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -1025,12 +1029,12 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
@@ -1124,14 +1128,14 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	// Mock resources factory and repository resources
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepositoryResources := resources.NewMockRepositoryResources(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepositoryResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepositoryResources, nil)
 
@@ -1200,9 +1204,9 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 
 func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.DeleteJobOptions{
 		Ref: "main",
@@ -1238,9 +1242,9 @@ func TestDeleteWorker_deleteFilesFileNotFoundWarning(t *testing.T) {
 
 func TestDeleteWorker_deleteFilesOtherErrorNoWarning(t *testing.T) {
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	opts := v0alpha1.DeleteJobOptions{
 		Ref: "main",
@@ -1332,7 +1336,7 @@ func TestDeduplicatePaths(t *testing.T) {
 }
 
 func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 	config := &v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -1352,7 +1356,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 	}
 	mockRepoWithURLs.On("RefURLs", mock.Anything, "feature-branch").Return(expectedRefURLs, nil)
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
@@ -1360,15 +1364,15 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil).Once()
 	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Delete", mock.Anything, "test.json", "feature-branch", "Delete test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1391,7 +1395,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 }
 
 func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 	config := &v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -1403,7 +1407,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
@@ -1414,18 +1418,18 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Delete", mock.Anything, "test.json", "", "Delete test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 	mockSyncWorker.On("Process", mock.Anything, mockRepoWithURLs, mock.Anything, mockProgress).Return(nil)
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1447,7 +1451,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 }
 
 func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	config := &v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -1459,7 +1463,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	}
 	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Deleting test.json").Once()
@@ -1468,15 +1472,15 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// SetRefURLs should NOT be called since repo doesn't support URLs
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Delete", mock.Anything, "test.json", "feature-branch", "Delete test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},

@@ -14,7 +14,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
-//go:generate mockery --name K8sClients --structname MockK8sClients --inpackage --filename client_mock.go --with-expecter
+//go:generate mockery --name K8sClients --structname MockK8sClients --outpkg apitest --output ./apitest/ --filename client_mock.go --with-expecter
 type K8sClients interface {
 	GetStars(c *contextmodel.ReqContext) ([]string, error)
 	AddStar(c *contextmodel.ReqContext, uid string) error

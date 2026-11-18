@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 )
 
@@ -25,7 +25,7 @@ func TestSearchUserPermissions_FailureDoesNotPopulateCache(t *testing.T) {
 
 	for _, failure := range []string{basicRolesFailure, permissionSearchFailure} {
 		t.Run(failure, func(t *testing.T) {
-			store := actest.NewMockStore(t)
+			store := actestfixtures.NewMockStore(t)
 			roles := map[int64][]string{testUserID: {"None"}}
 			options := accesscontrol.SearchOptions{UserID: testUserID, Action: "test:read"}
 			permissions := []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}}

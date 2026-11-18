@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -28,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -143,7 +144,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	logger := log.New("test-logger")
 	cfg := &config{}
 
-	fakeService := &dashboards.FakeDashboardProvisioning{}
+	fakeService := &dashboardstest.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 	fakeStore := &fakeDashboardStore{}
 	setup := func() {
@@ -157,7 +158,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 	}
 
 	_, cfgT := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	searchMock := resource.NewMockResourceClient(t)
+	searchMock := resourcetest.NewMockResourceClient(t)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
 		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
@@ -586,7 +587,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		fakeFolder.ExpectedFolder = &folder.Folder{UID: "team-a"}
 		// Dedicated mock: the shared fakeService has a broader UpdateFolderWithManagedByAnnotation
 		// expectation from another subtest that would otherwise swallow this call.
-		localFake := &dashboards.FakeDashboardProvisioning{}
+		localFake := &dashboardstest.FakeDashboardProvisioning{}
 		localFake.On("UpdateFolderWithManagedByAnnotation", mock.Anything, mock.Anything, configName).
 			Return(nil, apierrors.NewServiceUnavailable("folder API unavailable"))
 
@@ -684,7 +685,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		t.Run("Missing dashboard should be unprovisioned if DisableDeletion = true", func(t *testing.T) {
 			setupFakeService()
 
-			fakeForUnprovision := &dashboards.FakeDashboardProvisioning{}
+			fakeForUnprovision := &dashboardstest.FakeDashboardProvisioning{}
 			defer fakeForUnprovision.AssertExpectations(t)
 			fakeForUnprovision.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
 			fakeForUnprovision.On("UnprovisionDashboard", mock.Anything, mock.Anything).Return(nil).Once()
@@ -703,7 +704,7 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		t.Run("Missing dashboard should be deleted if DisableDeletion = false", func(t *testing.T) {
 			setupFakeService()
 
-			fakeForDelete := &dashboards.FakeDashboardProvisioning{}
+			fakeForDelete := &dashboardstest.FakeDashboardProvisioning{}
 			defer fakeForDelete.AssertExpectations(t)
 			fakeForDelete.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
 			fakeForDelete.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
@@ -730,7 +731,7 @@ func TestSplitFolderFullpath(t *testing.T) {
 func TestIntegrationFolderPathCacheReuse(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeService := &dashboards.FakeDashboardProvisioning{}
+	fakeService := &dashboardstest.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 	fakeStore := &fakeDashboardStore{}
 

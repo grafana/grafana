@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -19,12 +22,12 @@ import (
 func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMocks    func(*MockNamespaceCleaner, *jobs.MockWorker, *jobs.MockWorker, *jobs.MockJobProgressRecorder, *repository.MockRepository)
+		setupMocks    func(*MockNamespaceCleaner, *jobstest.MockWorker, *jobstest.MockWorker, *jobstest.MockJobProgressRecorder, *repositorytest.MockRepository)
 		expectedError string
 	}{
 		{
 			name: "should fail when export job fails",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -46,7 +49,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should fail when sync job fails",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -73,7 +76,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should fail when resource cleanup fails",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -104,7 +107,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should succeed with complete workflow",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -137,7 +140,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should run export and sync for folder-type repositories",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -167,7 +170,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should skip namespace cleanup for folderless-type repositories",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -196,7 +199,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should fail when sync job fails for folder-type repositories",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -225,7 +228,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should run complete workflow for instance-type repositories",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -257,7 +260,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should handle empty target type as instance",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -287,7 +290,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 		},
 		{
 			name: "should pass migrate options to export job",
-			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
+			setupMocks: func(nc *MockNamespaceCleaner, ew *jobstest.MockWorker, sw *jobstest.MockWorker, pr *jobstest.MockJobProgressRecorder, rw *repositorytest.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -319,10 +322,10 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			exportWorker := jobs.NewMockWorker(t)
-			syncWorker := jobs.NewMockWorker(t)
-			progressRecorder := jobs.NewMockJobProgressRecorder(t)
-			readerWriter := repository.NewMockRepository(t)
+			exportWorker := jobstest.NewMockWorker(t)
+			syncWorker := jobstest.NewMockWorker(t)
+			progressRecorder := jobstest.NewMockJobProgressRecorder(t)
+			readerWriter := repositorytest.NewMockRepository(t)
 			mockNamespaceCleaner := NewMockNamespaceCleaner(t)
 
 			if tt.setupMocks != nil {
@@ -370,10 +373,10 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	}
 
 	t.Run("migrating to a non-default branch exports to that branch, skips pull, and deletes migrated resources", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(gitInstanceRepo("main"))
@@ -401,10 +404,10 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	})
 
 	t.Run("selective branch migration on a folder repo deletes only the migrated resources", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		// Selective migration is only valid on folder/folderless targets (instance
@@ -465,10 +468,10 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	})
 
 	t.Run("full branch migration on a folder repo deletes the migrated resources without a namespace clean", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -513,10 +516,10 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	})
 
 	t.Run("full branch migration on a folderless repo deletes the migrated resources without a namespace clean", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -561,10 +564,10 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	})
 
 	t.Run("migrating to the configured branch keeps the pull/takeover flow", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(gitInstanceRepo("main"))
@@ -607,10 +610,10 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 	}
 
 	t.Run("instance migration with SkipResourceDeletion does not delete the migrated resources", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(instanceRepo)
@@ -636,10 +639,10 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 	// A folder branch migration normally deletes the exported resources; with
 	// SkipResourceDeletion it exports to the branch but deletes nothing.
 	t.Run("folder branch migration with SkipResourceDeletion does not delete exported resources", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(folderRepo)
@@ -686,10 +689,10 @@ func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			exportWorker := jobs.NewMockWorker(t)
-			syncWorker := jobs.NewMockWorker(t)
-			pr := jobs.NewMockJobProgressRecorder(t)
-			repo := repository.NewMockRepository(t)
+			exportWorker := jobstest.NewMockWorker(t)
+			syncWorker := jobstest.NewMockWorker(t)
+			pr := jobstest.NewMockJobProgressRecorder(t)
+			repo := repositorytest.NewMockRepository(t)
 			nc := NewMockNamespaceCleaner(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
@@ -725,10 +728,10 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 	testGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"}
 
 	t.Run("export wraps progress recorder with collector that populates allowlist", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -772,10 +775,10 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 	})
 
 	t.Run("allowlist is empty when export records no successful resources", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -805,10 +808,10 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 	})
 
 	t.Run("only successfully exported resources appear in allowlist", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -861,10 +864,10 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 	}
 
 	t.Run("forwards Resources to the inner export job", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
@@ -900,10 +903,10 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 	})
 
 	t.Run("rejects a selective migration on instance-target repos before doing any work", func(t *testing.T) {
-		exportWorker := jobs.NewMockWorker(t)
-		syncWorker := jobs.NewMockWorker(t)
-		pr := jobs.NewMockJobProgressRecorder(t)
-		repo := repository.NewMockRepository(t)
+		exportWorker := jobstest.NewMockWorker(t)
+		syncWorker := jobstest.NewMockWorker(t)
+		pr := jobstest.NewMockJobProgressRecorder(t)
+		repo := repositorytest.NewMockRepository(t)
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -29,7 +30,7 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 
 	t.Run("should be able to list acl with correct permission", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			svc := dashboards.NewFakeDashboardService(t)
+			svc := dashboardstest.NewFakeDashboardService(t)
 			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
 			hs.DashboardService = svc
 			hs.dashboardPermissionsService = &actest.FakePermissionsService{
@@ -52,7 +53,7 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
 			hs.Cfg = cfg
 
-			svc := dashboards.NewFakeDashboardService(t)
+			svc := dashboardstest.NewFakeDashboardService(t)
 			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
 
 			hs.DashboardService = svc
@@ -92,7 +93,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 	t.Run("should be able to update acl with correct permissions", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			svc := dashboards.NewFakeDashboardService(t)
+			svc := dashboardstest.NewFakeDashboardService(t)
 			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
 
 			hs.DashboardService = svc
@@ -111,7 +112,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 	t.Run("should not be able to specify team and user in same acl", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.DashboardService = dashboardstest.NewFakeDashboardService(t)
 			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
 		})
 
@@ -127,7 +128,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 	t.Run("should not be able to specify team and role in same acl", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.DashboardService = dashboardstest.NewFakeDashboardService(t)
 			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
 		})
 
@@ -143,7 +144,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 	t.Run("should not be able to specify user and role in same acl", func(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.DashboardService = dashboardstest.NewFakeDashboardService(t)
 			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
 		})
 

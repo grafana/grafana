@@ -12,6 +12,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
@@ -53,7 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/publicdashboardstest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -74,7 +75,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestDashboardServiceValidation(t *testing.T) {
-	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
@@ -155,8 +156,8 @@ func TestDashboardServiceValidation(t *testing.T) {
 	})
 }
 
-func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *client.MockK8sHandler) {
-	mockCli := new(client.MockK8sHandler)
+func setupK8sDashboardTests(service *DashboardServiceImpl) (context.Context, *clienttest.MockK8sHandler) {
+	mockCli := new(clienttest.MockK8sHandler)
 	service.k8sclient = mockCli
 
 	ctx := context.Background()
@@ -853,7 +854,7 @@ func TestSaveDashboard(t *testing.T) {
 }
 
 func TestDeleteDashboard(t *testing.T) {
-	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 	service := &DashboardServiceImpl{
 		cfg:                    setting.NewCfg(),
 		publicDashboardService: fakePublicDashboardService,
@@ -1286,7 +1287,7 @@ func TestGetDashboardUIDByID(t *testing.T) {
 }
 
 func TestUnstructuredToLegacyDashboard(t *testing.T) {
-	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock := new(clienttest.MockK8sHandler)
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{"user:useruid": {ID: 10, UID: "useruid"}}, nil)
 	dr := &DashboardServiceImpl{
 		k8sclient: k8sCliMock,
@@ -1400,7 +1401,7 @@ func TestGetDashboardTagsErrors(t *testing.T) {
 		{name: "canceled", err: context.Canceled, want: context.Canceled},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.resp, tc.err).Once()
 			service := &DashboardServiceImpl{k8sclient: cli}
 			got, err := service.GetDashboardTags(t.Context(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
@@ -1765,7 +1766,7 @@ func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
 		{name: "grpc with partial response", resp: &resourcepb.ResourceSearchResponse{TotalHits: 1}, err: grpcStatus.Err(), want: grpcStatus.Err()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("GetNamespace", int64(1)).Return("default").Once()
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return req.Page == 2 && req.Limit == 3 && req.Offset == 3
@@ -1783,7 +1784,7 @@ func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 	t.Run("uses field-value results with the requested response fields", func(t *testing.T) {
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		fields := []string{resource.SEARCH_FIELD_TITLE}
@@ -1795,7 +1796,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 	})
 
 	t.Run("internal searches use field-value results", func(t *testing.T) {
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
@@ -1825,7 +1826,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 
 	t.Run("uses field-value results for dashboard searches", func(t *testing.T) {
 		ctx := t.Context()
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
@@ -1872,7 +1873,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 
 	t.Run("search will try and match all included tags", func(t *testing.T) {
 		ctx := context.Background()
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
@@ -1897,7 +1898,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 
 	t.Run("search will include sort field in hit fields", func(t *testing.T) {
 		ctx := context.Background()
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
@@ -1932,7 +1933,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 
 	t.Run("search will request legacy dashboard ID", func(t *testing.T) {
 		ctx := context.Background()
-		k8sCliMock := new(client.MockK8sHandler)
+		k8sCliMock := new(clienttest.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
 			ManagedBy: utils.ManagerKindClassicFP, //nolint:staticcheck
@@ -1953,7 +1954,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 
 func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 	ctx := context.Background()
-	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock := new(clienttest.MockK8sHandler)
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 	query := &dashboards.FindPersistedDashboardsQuery{
 		OrgId: 1,
@@ -2005,7 +2006,7 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 
 func TestCountProvisionedDashboardsInOrg(t *testing.T) {
 	ctx := context.Background()
-	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock := new(clienttest.MockK8sHandler)
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
@@ -2167,7 +2168,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 func TestCleanUpDashboard(t *testing.T) {
 	t.Run("Should delete public dashboards and clean up after delete", func(t *testing.T) {
 		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
 			sqlStore:               sqlStore,
@@ -2182,7 +2183,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	})
 
 	t.Run("Should return error if DeleteByDashboardUIDs fails", func(t *testing.T) {
-		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
 			publicDashboardService: fakePublicDashboardService,
@@ -2197,7 +2198,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	})
 
 	t.Run("Should return error if dashboard UID is empty", func(t *testing.T) {
-		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
 			publicDashboardService: fakePublicDashboardService,
@@ -2211,7 +2212,7 @@ func TestCleanUpDashboard(t *testing.T) {
 
 	t.Run("Should not delete org-scope annotations when dashboard ID is zero", func(t *testing.T) {
 		sqlStore, _ := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-		fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+		fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 		service := &DashboardServiceImpl{
 			cfg:                    setting.NewCfg(),
 			sqlStore:               sqlStore,
@@ -2255,13 +2256,13 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	tests := []struct {
 		name       string
 		batchSize  int
-		setupFunc  func(*DashboardServiceImpl, context.Context, *client.MockK8sHandler)
-		verifyFunc func(*testing.T, *DashboardServiceImpl, context.Context, *client.MockK8sHandler, *kvstore.FakeKVStore)
+		setupFunc  func(*DashboardServiceImpl, context.Context, *clienttest.MockK8sHandler)
+		verifyFunc func(*testing.T, *DashboardServiceImpl, context.Context, *clienttest.MockK8sHandler, *kvstore.FakeKVStore)
 	}{
 		{
 			name:      "Should process dashboard cleanup for all orgs",
 			batchSize: 10,
-			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
+			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *clienttest.MockK8sHandler) {
 				// Test organizations
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
 				fakeOrgService.ExpectedOrgs = []*org.OrgDTO{
@@ -2270,7 +2271,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				}
 
 				kv := service.kvstore.(*kvstore.FakeKVStore)
-				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
+				fakePublicDashboardService := service.publicDashboardService.(*publicdashboardstest.FakePublicDashboardServiceWrapper)
 
 				// Create dashboard unstructured items for response
 				dashboard1 := createTestUnstructuredDashboard("dash1", "org1-dashboard", "101")
@@ -2312,7 +2313,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash1"}).Return(nil).Once()
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(2), []string{"dash2"}).Return(nil).Once()
 			},
-			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
+			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *clienttest.MockK8sHandler, kv *kvstore.FakeKVStore) {
 				k8sCliMock.AssertExpectations(t)
 
 				// Verify KV store was updated with new resource versions
@@ -2328,7 +2329,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		{
 			name:      "Should handle pagination and batching when processing large sets of dashboards",
 			batchSize: 3,
-			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler) {
+			setupFunc: func(service *DashboardServiceImpl, ctx context.Context, k8sCliMock *clienttest.MockK8sHandler) {
 				// Test organization
 				fakeOrgService := service.orgService.(*orgtest.FakeOrgService)
 				fakeOrgService.ExpectedOrgs = []*org.OrgDTO{
@@ -2336,7 +2337,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				}
 
 				kv := service.kvstore.(*kvstore.FakeKVStore)
-				fakePublicDashboardService := service.publicDashboardService.(*publicdashboards.FakePublicDashboardServiceWrapper)
+				fakePublicDashboardService := service.publicDashboardService.(*publicdashboardstest.FakePublicDashboardServiceWrapper)
 
 				// Setup initial resource version
 				initialVersion := "100"
@@ -2390,7 +2391,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash4"}).Return(nil).Once()
 				fakePublicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash5"}).Return(nil).Once()
 			},
-			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *client.MockK8sHandler, kv *kvstore.FakeKVStore) {
+			verifyFunc: func(t *testing.T, service *DashboardServiceImpl, ctx context.Context, k8sCliMock *clienttest.MockK8sHandler, kv *kvstore.FakeKVStore) {
 				k8sCliMock.AssertExpectations(t)
 
 				// Verify KV store was updated with latest resource version
@@ -2408,7 +2409,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
-			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+			fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 			fakeOrgService := orgtest.NewOrgServiceFake()
 			service := &DashboardServiceImpl{
 				cfg:                    setting.NewCfg(),
@@ -2494,9 +2495,9 @@ func createTestUnstructuredDashboard(uid, title string, resourceVersion string) 
 }
 
 func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
-	fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	fakePublicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 
-	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock := new(clienttest.MockK8sHandler)
 
 	folderSvc := foldertest.NewFakeService()
 	service := &DashboardServiceImpl{
@@ -2584,7 +2585,7 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 }
 
 func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
-	k8sCliMock := new(client.MockK8sHandler)
+	k8sCliMock := new(clienttest.MockK8sHandler)
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
@@ -2668,7 +2669,7 @@ func withParallelDashboardDelete(t *testing.T, concurrency int) {
 }
 
 func newFolderDeleteService(t *testing.T, count int, cleanupErr error) (*DashboardServiceImpl, *folderDeleteClient, *user.SignedInUser) {
-	public := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	public := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 	public.On("DeleteByDashboardUIDs", mock.Anything, int64(1), mock.Anything).Return(cleanupErr).Maybe()
 	client := &folderDeleteClient{}
 	for i := range count {

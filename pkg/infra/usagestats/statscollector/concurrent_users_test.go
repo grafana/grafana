@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -37,11 +37,11 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := new(resourcetest.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
 	}, nil)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures(), ngrulesvc.NewService(&rules.RuleStore{SQLStore: sqlStore}))
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboardstest.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures(), ngrulesvc.NewService(&rules.RuleStore{SQLStore: sqlStore}))
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
@@ -61,11 +61,11 @@ func TestIntegrationConcurrentUsersStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := new(resourcetest.MockResourceClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
 	}, nil)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboards.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures(), ngrulesvc.NewService(&rules.RuleStore{SQLStore: sqlStore}))
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore, &dashboardstest.FakeDashboardService{}, &foldertest.FakeService{}, &orgtest.FakeOrgService{}, unifiedStorage, featuremgmt.WithFeatures(), ngrulesvc.NewService(&rules.RuleStore{SQLStore: sqlStore}))
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)

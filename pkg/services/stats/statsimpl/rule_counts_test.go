@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -151,11 +152,11 @@ func newRuleCountStatsService(sqlStore db.DB, ruleStore rules.Store) *sqlStatsSe
 }
 
 func newAlertRule(orgID int64, namespaceUID, group string, paused bool) models.AlertRule {
-	return models.RuleGen.With(
-		models.RuleMuts.WithOrgID(orgID),
-		models.RuleMuts.WithNamespaceUID(namespaceUID),
-		models.RuleMuts.WithGroupName(group),
-		models.RuleMuts.WithIsPaused(paused),
+	return modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithOrgID(orgID),
+		modelstest.RuleMuts.WithNamespaceUID(namespaceUID),
+		modelstest.RuleMuts.WithGroupName(group),
+		modelstest.RuleMuts.WithIsPaused(paused),
 	).Generate()
 }
 

@@ -11,6 +11,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,14 +44,14 @@ type mockConnectionWithToken struct {
 func TestConnectionController_process(t *testing.T) {
 	testCases := []struct {
 		name          string
-		setupMocks    func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory)
+		setupMocks    func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory)
 		conn          *provisioning.Connection
 		expectError   bool
 		errorContains string
 	}{
 		{
 			name: "deletion timestamp - skip without error",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -72,7 +74,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "no reconcile needed",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -91,8 +93,8 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.IsType(&provisioning.Connection{})).Return(false)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 				// Build is called before checking if reconciliation is needed, so we need to provide a mock
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 				return mockLister, mockHealthChecker, nil, mockFactory
@@ -115,7 +117,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "spec changed - full reconciliation",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -141,8 +143,8 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 
 				testResults := &provisioning.TestResults{
 					Success: true,
@@ -194,7 +196,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "unhealthy with token regeneration",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -226,9 +228,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -296,7 +298,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token not expired and not regenerated as it's new",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -323,9 +325,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -400,7 +402,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token not expired and not regenerated",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -427,9 +429,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -500,7 +502,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token not expired but regenerated",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -527,9 +529,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -601,7 +603,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token expired but health check not needed",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -628,9 +630,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -707,7 +709,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "health check failure",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -728,8 +730,8 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
@@ -760,7 +762,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "patch error",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -778,8 +780,8 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 
 				testResults := &provisioning.TestResults{
 					Success: true,
@@ -826,7 +828,7 @@ func TestConnectionController_process(t *testing.T) {
 			// Nothing is left to reconcile, so process returns nil rather than a
 			// spurious error and a recorded processing failure.
 			name: "connection not found - no-op",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{}
 
 				return mockLister, nil, nil, nil
@@ -841,7 +843,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "build connection error",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -858,7 +860,7 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
-				mockFactory := connection.NewMockFactory(t)
+				mockFactory := connectiontest.NewMockFactory(t)
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
@@ -884,7 +886,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "missing token triggers initial token generation",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -908,9 +910,9 @@ func TestConnectionController_process(t *testing.T) {
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -959,7 +961,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "invalid token triggers regeneration",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -986,9 +988,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -1060,7 +1062,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token generation error - continues with health check",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1087,9 +1089,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -1150,7 +1152,7 @@ func TestConnectionController_process(t *testing.T) {
 		},
 		{
 			name: "token secret not found - rebuilds and regenerates",
-			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
+			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connectiontest.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1180,9 +1182,9 @@ func TestConnectionController_process(t *testing.T) {
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockFactory := connection.NewMockFactory(t)
-				mockConnection := connection.NewMockConnection(t)
-				mockTokenConnection := connection.NewMockTokenConnection(t)
+				mockFactory := connectiontest.NewMockFactory(t)
+				mockConnection := connectiontest.NewMockConnection(t)
+				mockTokenConnection := connectiontest.NewMockTokenConnection(t)
 				mockConnWithToken := &mockConnectionWithToken{
 					Connection:      mockConnection,
 					TokenConnection: mockTokenConnection,
@@ -1377,9 +1379,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 				Return(nil)
 
 			// Create mock factory for tester
-			mockFactory := connection.NewMockFactory(t)
+			mockFactory := connectiontest.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil).Maybe()
-			mockConn := connection.NewMockConnection(t)
+			mockConn := connectiontest.NewMockConnection(t)
 			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Maybe()
 			mockHealthChecker := NewMockConnectionHealthChecker(t)
 			mockHealthChecker.EXPECT().ShouldCheckHealth(mock.IsType(&provisioning.Connection{})).Return(true)
@@ -1451,7 +1453,7 @@ func TestConnectionController_generateConnectionToken_ReturnsExpiry(t *testing.T
 	cc := &ConnectionController{tokenMetrics: registerConnectionTokenMetrics(reg)}
 
 	exp := time.Now().Add(10 * time.Minute)
-	mockConn := connection.NewMockTokenConnection(t)
+	mockConn := connectiontest.NewMockTokenConnection(t)
 	mockConn.EXPECT().GenerateConnectionToken(mock.Anything).
 		Return(&connection.ExpirableSecureValue{Token: "tok", ExpiresAt: exp}, nil)
 
@@ -1519,7 +1521,7 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 		},
 		Secure: provisioning.ConnectionSecure{Token: common.InlineSecureValue{Create: "existing-token"}},
 	}
-	mockConn := connection.NewMockTokenConnection(t)
+	mockConn := connectiontest.NewMockTokenConnection(t)
 	mockConn.EXPECT().ValidateToken().Return(time.Now().Add(-time.Minute), nil)
 
 	cc.shouldGenerateToken(context.Background(), obj, mockConn)
@@ -1534,12 +1536,12 @@ func TestConnectionController_shouldGenerateToken_SkipsUnauthorizedOAuthConnecti
 	}
 	unauthorized := &provisioning.Connection{}
 	oauthConn := struct {
-		*connection.MockTokenConnection
-		*connection.MockOAuthConnection
-	}{connection.NewMockTokenConnection(t), connection.NewMockOAuthConnection(t)}
+		*connectiontest.MockTokenConnection
+		*connectiontest.MockOAuthConnection
+	}{connectiontest.NewMockTokenConnection(t), connectiontest.NewMockOAuthConnection(t)}
 
 	assert.False(t, cc.shouldGenerateToken(context.Background(), unauthorized, oauthConn), "an OAuth connection waiting for authorization has no token to generate")
-	assert.True(t, cc.shouldGenerateToken(context.Background(), unauthorized, connection.NewMockTokenConnection(t)), "other token connections generate a missing token")
+	assert.True(t, cc.shouldGenerateToken(context.Background(), unauthorized, connectiontest.NewMockTokenConnection(t)), "other token connections generate a missing token")
 }
 
 func newConnectionControllerForQueueTest(t *testing.T) (*ConnectionController, *prometheus.Registry) {
@@ -1794,10 +1796,10 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		healthChecker := NewMockConnectionHealthChecker(t)
 		healthChecker.EXPECT().ShouldCheckHealth(conn).Return(false).Twice()
 		cc.healthChecker = healthChecker
-		factory := connection.NewMockFactory(t)
+		factory := connectiontest.NewMockFactory(t)
 		factory.EXPECT().Build(mock.Anything, conn).
 			Return(nil, fmt.Errorf("unable to decrypt token: %w", connection.ErrTokenNotFound)).Once()
-		factory.EXPECT().Build(mock.Anything, conn).Return(connection.NewMockConnection(t), nil).Once()
+		factory.EXPECT().Build(mock.Anything, conn).Return(connectiontest.NewMockConnection(t), nil).Once()
 		cc.connectionFactory = factory
 
 		cc.EventHandler().AddFunc(conn, true)

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,8 +19,8 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -92,9 +94,9 @@ func TestWorker_IsSupported(t *testing.T) {
 
 func TestWorker_Process(t *testing.T) {
 	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
-	clientFactory := resources.NewMockClientFactory(t)
-	mockClients := resources.NewMockResourceClients(t)
+	lister := resourcestest.NewMockResourceLister(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	mockClients := resourcestest.NewMockResourceClients(t)
 	fakeClient := &fakeDynamicClient{}
 
 	w := NewWorker(lister, clientFactory, 1)
@@ -120,7 +122,7 @@ func TestWorker_Process(t *testing.T) {
 		Group: "dashboard.grafana.app", Resource: "dashboards",
 	}).Return(fakeClient, schema.GroupVersionKind{}, nil)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -133,7 +135,7 @@ func TestWorker_Process(t *testing.T) {
 
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
 	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
+	lister := resourcestest.NewMockResourceLister(t)
 	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
@@ -146,7 +148,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 
 	lister.EXPECT().List(mock.Anything, "default", "my-repo", resources.ListOptions{}).Return(&provisioning.ResourceList{}, nil)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("SetTotal", mock.Anything, 0).Return()
 
@@ -156,7 +158,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 
 func TestWorker_Process_ListError(t *testing.T) {
 	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
+	lister := resourcestest.NewMockResourceLister(t)
 	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
@@ -169,7 +171,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 
 	lister.EXPECT().List(mock.Anything, "default", "gone-repo", resources.ListOptions{}).Return(nil, errors.New("storage error"))
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
 	err := w.Process(ctx, nil, job, progress)
@@ -179,7 +181,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 	w := NewWorker(nil, nil, 1)
 
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "healthy-repo"},
 	})
@@ -192,7 +194,7 @@ func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 		},
 	}
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	err := w.Process(context.Background(), mockRepo, job, progress)
 	require.Error(t, err)
@@ -201,9 +203,9 @@ func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 
 func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
-	clientFactory := resources.NewMockClientFactory(t)
-	mockClients := resources.NewMockResourceClients(t)
+	lister := resourcestest.NewMockResourceLister(t)
+	clientFactory := resourcestest.NewMockClientFactory(t)
+	mockClients := resourcestest.NewMockResourceClients(t)
 
 	notFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "dash-1")
 	fakeClient := &fakeDynamicClient{patchErr: notFoundErr}
@@ -228,7 +230,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	clientFactory.EXPECT().Clients(mock.Anything, "default").Return(mockClients, nil)
 	mockClients.EXPECT().ForResource(mock.Anything, mock.Anything).Return(fakeClient, schema.GroupVersionKind{}, nil)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.Anything).Return()

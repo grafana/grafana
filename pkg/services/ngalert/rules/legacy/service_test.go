@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -53,7 +54,7 @@ func (f transactionManagerFunc) InTransaction(ctx context.Context, work func(con
 
 func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 	const baselineVersion = int64(7)
-	stored := models.RuleGen.GenerateRef()
+	stored := modelstest.RuleGen.GenerateRef()
 	stored.Version = baselineVersion
 	stored.NotificationSettings = nil
 	updated := stored.Copy()
@@ -123,9 +124,9 @@ func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
 func TestListAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey1 := models.GenerateGroupKey(orgID)
-	groupKey2 := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey1 := modelstest.GenerateGroupKey(orgID)
+	groupKey2 := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
 	models.RulesGroup(rules1).SortByGroupIndex()
 	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
@@ -253,8 +254,8 @@ func (c *countingTransactionManager) InTransaction(ctx context.Context, work fun
 func TestDeleteAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 
 	type env struct {
 		service    *LegacyRuleService
@@ -373,8 +374,8 @@ func TestDeleteAlertRules(t *testing.T) {
 func TestDeleteAlertRule_SingleTransaction(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	gen := models.RuleGen
-	rule := gen.With(gen.WithGroupKey(models.GenerateGroupKey(orgID))).GenerateRef()
+	gen := modelstest.RuleGen
+	rule := gen.With(gen.WithGroupKey(modelstest.GenerateGroupKey(orgID))).GenerateRef()
 
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Rules = map[int64][]*models.AlertRule{orgID: {rule}}

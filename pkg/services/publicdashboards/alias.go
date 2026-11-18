@@ -30,12 +30,10 @@ const (
 )
 
 type (
-	Service                           = publicdashboards.Service
-	FakePublicDashboardService        = publicdashboards.FakePublicDashboardService
-	Middleware                        = publicdashboards.Middleware
-	ServiceWrapper                    = publicdashboards.ServiceWrapper
-	Store                             = publicdashboards.Store
-	FakePublicDashboardServiceWrapper = publicdashboards.FakePublicDashboardServiceWrapper
+	Service        = publicdashboards.Service
+	Middleware     = publicdashboards.Middleware
+	ServiceWrapper = publicdashboards.ServiceWrapper
+	Store          = publicdashboards.Store
 
 	PublicDashboardServiceWrapperImpl = service.PublicDashboardServiceWrapperImpl
 	PublicDashboardServiceImpl        = service.PublicDashboardServiceImpl
@@ -65,10 +63,6 @@ var (
 	SetPublicDashboardOrgIdOnContext = api.SetPublicDashboardOrgIdOnContext
 	CountPublicDashboardRequest      = api.CountPublicDashboardRequest
 	RequiresExistingAccessToken      = api.RequiresExistingAccessToken
-
-	NewFakePublicDashboardMiddleware     = publicdashboards.NewFakePublicDashboardMiddleware
-	NewFakePublicDashboardService        = publicdashboards.NewFakePublicDashboardService
-	NewFakePublicDashboardServiceWrapper = publicdashboards.NewFakePublicDashboardServiceWrapper
 
 	IsValidShortUID    = validation.IsValidShortUID
 	IsValidAccessToken = validation.IsValidAccessToken

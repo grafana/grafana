@@ -10,10 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func BenchmarkRuleWithFolderFingerprint(b *testing.B) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	withQueries := func(condition string, extra ...models.AlertQuery) func(rule *models.AlertRule) {
 		return func(rule *models.AlertRule) {
 			rule.Data = make([]models.AlertQuery, 0, 5+len(extra))

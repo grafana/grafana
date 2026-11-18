@@ -53,7 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -174,7 +174,7 @@ func TestFolderAPIBuilder_PendingDeletionStorage(t *testing.T) {
 				}
 			})
 			t.Run("mounted keys routes", func(t *testing.T) {
-				store := resource.NewMockResourceClient(t)
+				store := resourcetest.NewMockResourceClient(t)
 				var listed []*resourcepb.ListRequest
 				store.On("List", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					listed = append(listed, args.Get(1).(*resourcepb.ListRequest))
@@ -828,7 +828,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			us := resttest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := resourcetest.NewMockResourceClient(t)
 			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
 				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
 					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
@@ -1018,7 +1018,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			us := resttest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := resourcetest.NewMockResourceClient(t)
 			// the source chain is resolved to reject moves out of the k6 tree
 			us.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
 				&folders.Folder{
@@ -1123,7 +1123,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
 			us := resttest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := resourcetest.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
@@ -1227,7 +1227,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		},
 	}
 	us := resttest.NewMockStorage(t)
-	sm := resource.NewMockResourceClient(t)
+	sm := resourcetest.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
 		storage:  us,
 		searcher: sm,
@@ -1268,7 +1268,7 @@ func TestFolderAPIBuilder_Mutate_CascadeDeleteFinalizer(t *testing.T) {
 		us := resttest.NewMockStorage(t)
 		return &FolderAPIBuilder{
 			storage:  us,
-			searcher: resource.NewMockResourceClient(t),
+			searcher: resourcetest.NewMockResourceClient(t),
 			parents:  newParentsGetter(us),
 		}
 	}

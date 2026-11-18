@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -2716,7 +2716,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 		routing.NewRouteRegister(),
 		featureManager,
 		secretsFakes.NewMockService(t),
-		&usagestats.UsageStatsMock{},
+		&usagestatstest.UsageStatsMock{},
 		prometheus.NewRegistry(),
 		&setting.OSSImpl{Cfg: cfg},
 		licensing,

@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas/quotastest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,13 +21,14 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func newPermissiveMockQuotaTracker(t *testing.T) quotas.QuotaTracker {
-	qt := quotas.NewMockQuotaTracker(t)
+	qt := quotastest.NewMockQuotaTracker(t)
 	qt.On("TryAcquire").Return(true).Maybe()
 	qt.On("Release").Maybe()
 	qt.On("AllowOverLimit", mock.Anything).Maybe()
@@ -33,9 +38,9 @@ func newPermissiveMockQuotaTracker(t *testing.T) quotas.QuotaTracker {
 func TestIncrementalSync_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
 		{
 			Action: repository.FileActionCreated,
@@ -52,7 +57,7 @@ func TestIncrementalSync_ContextCancelled(t *testing.T) {
 
 type incrementalSyncTestCase struct {
 	name          string
-	setupMocks    func(*repository.MockVersioned, *resources.MockRepositoryResources, *jobs.MockJobProgressRecorder)
+	setupMocks    func(*repositorytest.MockVersioned, *resourcestest.MockRepositoryResources, *jobstest.MockJobProgressRecorder)
 	quotaTracker  quotas.QuotaTracker
 	previousRef   string
 	currentRef    string
@@ -63,9 +68,9 @@ func runIncrementalSyncTests(t *testing.T, tests []incrementalSyncTestCase) {
 	t.Helper()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockVersioned(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repo := repositorytest.NewMockVersioned(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 
 			tt.setupMocks(repo, repoResources, progress)
 
@@ -86,7 +91,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "same commit as last time",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetFinalMessage", mock.Anything, "same commit as last time").Return()
 			},
 			previousRef: "old-ref",
@@ -95,7 +100,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "no changes between commits",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{}, nil)
 				progress.On("SetFinalMessage", mock.Anything, "no changes detected between commits").Return()
 			},
@@ -105,7 +110,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "error comparing files",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(nil, fmt.Errorf("compare error"))
 			},
 			previousRef:   "old-ref",
@@ -115,7 +120,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "successful sync with file changes",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -159,7 +164,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "unsupported file path with valid folder",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -189,7 +194,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "unsupported file path with invalid folder",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -218,7 +223,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "file deletion",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -250,7 +255,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "file rename",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:       repository.FileActionRenamed,
@@ -287,7 +292,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "update with PreviousRef calls ReplaceResourceFromFileByRef",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionUpdated,
@@ -322,7 +327,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "update without PreviousRef falls back to WriteResourceFromFile",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionUpdated,
@@ -354,7 +359,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "file ignored",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionIgnored,
@@ -379,7 +384,7 @@ func TestIncrementalSync(t *testing.T) {
 		{
 			name:         "too many errors",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -401,9 +406,9 @@ func TestIncrementalSync(t *testing.T) {
 }
 
 func TestIncrementalSync_FolderMetadataRequiresReader(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
 		{
@@ -436,7 +441,7 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 		{
 			name:         "directory created is skipped",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -462,7 +467,7 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 		{
 			name:         "directory deleted is skipped",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -575,11 +580,11 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 
-	renameOnto := func(name, path string, removal func(*resources.MockRepositoryResources), expectDeletion func(jobs.JobResourceResult) bool) incrementalSyncTestCase {
+	renameOnto := func(name, path string, removal func(*resourcestest.MockRepositoryResources), expectDeletion func(jobs.JobResourceResult) bool) incrementalSyncTestCase {
 		return incrementalSyncTestCase{
 			name:         name,
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{{
 					Action:       repository.FileActionRenamed,
 					Path:         path,
@@ -613,7 +618,7 @@ func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
 		tests = append(tests, renameOnto(
 			"a dashboard renamed onto "+path+" is removed without a warning",
 			path,
-			func(repoResources *resources.MockRepositoryResources) {
+			func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
 					Return("removed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 			},
@@ -625,7 +630,7 @@ func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
 	tests = append(tests, renameOnto(
 		"a failed removal on rename onto a non-resource path is an error",
 		"README.md",
-		func(repoResources *resources.MockRepositoryResources) {
+		func(repoResources *resourcestest.MockRepositoryResources) {
 			repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
 				Return("", "", schema.GroupVersionKind{}, 0, errors.New("boom"))
 		},
@@ -642,7 +647,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "unsafe path is reported instead of silently ignored",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -674,7 +679,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "unsafe path on update is also reported instead of silently ignored",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionUpdated,
@@ -704,7 +709,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "renamed onto an unsafe path removes the resource and warns about the new path",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:       repository.FileActionRenamed,
@@ -742,7 +747,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "a failed removal on rename onto an unsafe path is an error",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:       repository.FileActionRenamed,
@@ -776,7 +781,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "renamed from an unsafe path to another unsafe path only warns",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:       repository.FileActionRenamed,
@@ -809,7 +814,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "delete of an unsafe path is not reported as unsupported",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionDeleted,
@@ -836,7 +841,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "non-resource file with an unsafe character is not reported as unsupported",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// validatePathBasics runs before the extension check inside
 				// IsPathSupported, so this fails with a path-basics error, not
 				// ErrUnsupportedFileExtension -- must still be excluded by
@@ -870,7 +875,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "hidden file that also fails an earlier check is not reported as unsupported",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// "&" trips ErrInvalidCharacters before IsSafe ever reaches the
 				// hidden-path check.
 				changes := []repository.VersionedFileChange{
@@ -902,7 +907,7 @@ func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 		{
 			name:         "traversal path is reported as unsupported, not silently dropped as hidden",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// ".." starts with '.' too; IsHidden must not treat it as hidden,
 				// or a traversal attempt would be waved through instead of
 				// failing the sync.
@@ -941,7 +946,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 		{
 			name:         "error creating folder",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -974,7 +979,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 		{
 			name:         "error writing resource",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -1010,7 +1015,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 		{
 			name:         "error replacing resource with PreviousRef",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionUpdated,
@@ -1046,7 +1051,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 		{
 			name:         "error deleting resource",
 			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1084,7 +1089,7 @@ func TestIncrementalSync_RenameQuotaGate(t *testing.T) {
 		{
 			name:         "rename passes the real quota check through to RenameResourceFile",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:       repository.FileActionRenamed,
@@ -1145,7 +1150,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "quota exceeded skips creation",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -1177,7 +1182,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "quota allows creation then blocks when full",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -1221,7 +1226,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "deletion releases quota allowing subsequent creation",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1262,7 +1267,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "update does not consume quota",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionUpdated,
@@ -1294,7 +1299,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "creation before deletion in diff still succeeds at quota limit due to sorting",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action: repository.FileActionCreated,
@@ -1335,7 +1340,7 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 		{
 			name:         "failed deletion does not release quota",
 			quotaTracker: quotas.NewInMemoryQuotaTracker(10, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1426,19 +1431,19 @@ func TestSortChangesByActionPriority_StableOrder(t *testing.T) {
 }
 
 type compositeRepo struct {
-	*repository.MockVersioned
-	*repository.MockReader
+	*repositorytest.MockVersioned
+	*repositorytest.MockReader
 }
 
 func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMocks    func(*compositeRepo, *resources.MockRepositoryResources, *jobs.MockJobProgressRecorder)
+		setupMocks    func(*compositeRepo, *resourcestest.MockRepositoryResources, *jobstest.MockJobProgressRecorder)
 		expectedError string
 	}{
 		{
 			name: "delete folder when it no longer exists in git",
-			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *compositeRepo, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1468,7 +1473,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 		},
 		{
 			name: "keep folder when it still exists in git",
-			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *compositeRepo, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1493,7 +1498,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 		},
 		{
 			name: "delete multiple folders when they no longer exist in git",
-			setupMocks: func(repo *compositeRepo, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *compositeRepo, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				changes := []repository.VersionedFileChange{
 					{
 						Action:      repository.FileActionDeleted,
@@ -1536,14 +1541,14 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockVersioned := repository.NewMockVersioned(t)
-			mockReader := repository.NewMockReader(t)
+			mockVersioned := repositorytest.NewMockVersioned(t)
+			mockReader := repositorytest.NewMockReader(t)
 			repo := &compositeRepo{
 				MockVersioned: mockVersioned,
 				MockReader:    mockReader,
 			}
-			repoResources := resources.NewMockRepositoryResources(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 
 			tt.setupMocks(repo, repoResources, progress)
 
@@ -1580,7 +1585,7 @@ func TestIncrementalSync_DeletedNonResourceFolders(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newCompositeRepoWithConfig(t)
-			repoResources := resources.NewMockRepositoryResources(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
 			metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 			progress := jobs.NewJobProgressRecorder(func(context.Context, provisioning.JobStatus) error { return nil }, &metrics, provisioning.JobActionPull)
 			changes := make([]repository.VersionedFileChange, 0, len(tt.paths))
@@ -1629,8 +1634,8 @@ func TestIncrementalSync_DeletedNonResourceFolders(t *testing.T) {
 
 func TestIncrementalSync_FolderCleanupListingFailure(t *testing.T) {
 	repo := newCompositeRepoWithConfig(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
 		{Action: repository.FileActionDeleted, Path: "empty/.keep", Ref: "new-ref", PreviousRef: "old-ref"},
 		{Action: repository.FileActionCreated, Path: "dashboard.json", Ref: "new-ref"},
@@ -1643,9 +1648,9 @@ func TestIncrementalSync_FolderCleanupListingFailure(t *testing.T) {
 }
 
 func TestFindOrphanedFolders_SkipsRelocatedUIDs(t *testing.T) {
-	mockReader := repository.NewMockReader(t)
+	mockReader := repositorytest.NewMockReader(t)
 	repo := &compositeRepo{
-		MockVersioned: repository.NewMockVersioned(t),
+		MockVersioned: repositorytest.NewMockVersioned(t),
 		MockReader:    mockReader,
 	}
 	mockReader.On("Read", mock.Anything, "removed/", "new-ref").
@@ -1668,14 +1673,14 @@ func TestFindOrphanedFolders_SkipsRelocatedUIDs(t *testing.T) {
 
 func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 	t.Run("detects missing folder metadata", func(t *testing.T) {
-		mockVersioned := repository.NewMockVersioned(t)
-		mockReader := repository.NewMockReader(t)
+		mockVersioned := repositorytest.NewMockVersioned(t)
+		mockReader := repositorytest.NewMockReader(t)
 		repo := &compositeRepo{
 			MockVersioned: mockVersioned,
 			MockReader:    mockReader,
 		}
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{
@@ -1717,14 +1722,14 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("ReadTree error fails the job", func(t *testing.T) {
-		mockVersioned := repository.NewMockVersioned(t)
-		mockReader := repository.NewMockReader(t)
+		mockVersioned := repositorytest.NewMockVersioned(t)
+		mockReader := repositorytest.NewMockReader(t)
 		repo := &compositeRepo{
 			MockVersioned: mockVersioned,
 			MockReader:    mockReader,
 		}
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{
@@ -1757,8 +1762,8 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 	t.Run("created invalid metadata records created warning and still applies fallback folder replay", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionCreated, Path: "alpha/_folder.json", Ref: "new-ref"},
@@ -1798,8 +1803,8 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 
 	t.Run("updated invalid metadata records updated warning without replacing the folder", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
@@ -1844,8 +1849,8 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 
 	t.Run("renamed invalid metadata records renamed warning and recreates the folder", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionRenamed, Path: "moved/", PreviousPath: "team/", PreviousRef: "old-ref", Ref: "new-ref"},
@@ -1906,8 +1911,8 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 func TestIncrementalSync_FolderRouting(t *testing.T) {
 	t.Run("updated folder path routes to EnsureFolderPathExist", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{
@@ -1941,8 +1946,8 @@ func TestIncrementalSync_FolderRouting(t *testing.T) {
 
 	t.Run("EnsureFolderPathExist error is recorded for updated folder path", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{
@@ -1976,8 +1981,8 @@ func TestIncrementalSync_FolderRouting(t *testing.T) {
 func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 	t.Run("metadata deletion re-parents children and deletes old folder", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionDeleted, Path: "alpha/_folder.json", PreviousRef: "old-ref"},
@@ -2030,8 +2035,8 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 	t.Run("metadata deletion without existing hash does not pass WithExistingHash", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionDeleted, Path: "gamma/_folder.json", PreviousRef: "old-ref"},
@@ -2079,8 +2084,8 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 	t.Run("deleted _folder.json is skipped in apply phase", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		// _folder.json deletion + dashboard creation in same commit
 		changes := []repository.VersionedFileChange{
@@ -2119,14 +2124,14 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 	t.Run("UID change re-parents children and deletes old folder", func(t *testing.T) {
-		mockVersioned := repository.NewMockVersioned(t)
-		mockReader := repository.NewMockReader(t)
+		mockVersioned := repositorytest.NewMockVersioned(t)
+		mockReader := repositorytest.NewMockReader(t)
 		repo := &compositeRepo{
 			MockVersioned: mockVersioned,
 			MockReader:    mockReader,
 		}
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
@@ -2182,8 +2187,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 	t.Run("child folder re-parented via EnsureFolderPathExist", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
@@ -2231,8 +2236,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 	t.Run("old folder not deleted when new folder creation fails", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		changes := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
@@ -2278,8 +2283,8 @@ func TestDeleteFolders(t *testing.T) {
 	tracer := tracing.NewNoopTracerService()
 
 	t.Run("empty map is a no-op", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		deleteFolders(context.Background(), nil, repoResources, progress, tracer)
 		deleteFolders(context.Background(), []folderDeletion{}, repoResources, progress, tracer)
@@ -2289,8 +2294,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("deletes single folder and records result", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
@@ -2312,8 +2317,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("records error when RemoveFolder fails", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
@@ -2333,8 +2338,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("a folder that never existed is not a failure", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "bad&path/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "bad&path/").Return(false)
@@ -2354,8 +2359,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("skips folder when creation failed", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(true)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -2372,8 +2377,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("skips folder when child deletion failed", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(true)
@@ -2391,8 +2396,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("skips folder when child reparenting failed", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
@@ -2411,8 +2416,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("skips folder when child update failed", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
@@ -2432,8 +2437,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("processes deepest paths first", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
@@ -2462,8 +2467,8 @@ func TestDeleteFolders(t *testing.T) {
 	})
 
 	t.Run("never deletes the repository root folder", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
@@ -2501,8 +2506,8 @@ func folderJSON(t *testing.T, uid, title string) []byte {
 func newCompositeRepoWithConfig(t *testing.T) *compositeRepo {
 	t.Helper()
 
-	mockVersioned := repository.NewMockVersioned(t)
-	mockReader := repository.NewMockReader(t)
+	mockVersioned := repositorytest.NewMockVersioned(t)
+	mockReader := repositorytest.NewMockReader(t)
 	mockReader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 	}).Maybe()
@@ -2542,7 +2547,7 @@ func TestDeduplicateFolderDeletions(t *testing.T) {
 	})
 }
 
-func allowFolderTreeSeed(repoResources *resources.MockRepositoryResources, target *provisioning.ResourceList) {
+func allowFolderTreeSeed(repoResources *resourcestest.MockRepositoryResources, target *provisioning.ResourceList) {
 	repoResources.On("List", mock.Anything).Return(target, nil).Maybe()
 	repoResources.On("SetTree", mock.Anything).Return().Maybe()
 }
@@ -2557,7 +2562,7 @@ func TestIncrementalSync_QuotaBlockedCreateDoesNotAccessResource(t *testing.T) {
 
 // Incremental sync reads metadata and seeds its folder tree even when the diff
 // only contains ordinary files. These fixtures have no additional stored folders.
-func withIncrementalSyncReader(t *testing.T, repo repository.Versioned, repoResources *resources.MockRepositoryResources) repository.Versioned {
+func withIncrementalSyncReader(t *testing.T, repo repository.Versioned, repoResources *resourcestest.MockRepositoryResources) repository.Versioned {
 	t.Helper()
 	allowFolderTreeSeed(repoResources, &provisioning.ResourceList{})
 	switch r := repo.(type) {
@@ -2571,7 +2576,7 @@ func withIncrementalSyncReader(t *testing.T, repo repository.Versioned, repoReso
 	if _, ok := repo.(repository.Reader); ok {
 		return repo
 	}
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.EXPECT().ReadTree(mock.Anything, mock.Anything).Return([]repository.FileTreeEntry{}, nil).Maybe()
 	reader.EXPECT().Read(mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 	return struct {

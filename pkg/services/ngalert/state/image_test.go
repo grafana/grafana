@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -120,7 +121,7 @@ func TestCacheCaptureAttempt(t *testing.T) {
 // instance, so an instance that began alerting during the cooldown found no history
 // of its own and captured again, defeating the backoff.
 func TestProcessEvalResults_CaptureBackoffIsPerRule(t *testing.T) {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(
 		gen.WithDashboardAndPanel(new(util.GenerateShortUID()), new(rand.Int63())),
 		gen.WithLabels(nil),

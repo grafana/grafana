@@ -9,6 +9,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/mock"
@@ -22,6 +24,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/alertmanager_mock"
 	"github.com/grafana/grafana/pkg/services/org"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -54,7 +57,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}
 	encryptionServiceFake := secrets_fakes.NewFakeSecretsService()
 	authz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false)
-	emailValidator := &FakeEmailValidator{}
+	emailValidator := &notifiertest.FakeEmailValidator{}
 	svc := &ReceiverTestingService{
 		receiverSvc:       receiverSvcFake,
 		amProvider:        amProviderFake,
@@ -82,18 +85,18 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	// Pin to a non-email type so the default integration doesn't randomly land on EmailType,
 	// which would route through emailValidator and fail with 'email address is not allowed'
 	// because the generator's random Name won't match validEmailIntegration.
-	integration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig(schema.SlackType))()
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithUID(""), models.IntegrationMuts.WithValidConfig("slack"))()
-	validEmailIntegration := models.IntegrationGen(
-		models.IntegrationMuts.WithUID(""),
-		models.IntegrationMuts.WithValidConfig(schema.EmailType),
-		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
-		models.IntegrationMuts.WithName("valid"),
+	integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithUID(""), modelstest.IntegrationMuts.WithValidConfig(schema.SlackType))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithUID(""), modelstest.IntegrationMuts.WithValidConfig("slack"))()
+	validEmailIntegration := modelstest.IntegrationGen(
+		modelstest.IntegrationMuts.WithUID(""),
+		modelstest.IntegrationMuts.WithValidConfig(schema.EmailType),
+		modelstest.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
+		modelstest.IntegrationMuts.WithName("valid"),
 	)()
-	invalidEmailIntegration := models.IntegrationGen(
-		models.IntegrationMuts.WithUID(""),
-		models.IntegrationMuts.WithValidConfig(schema.EmailType),
-		models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@org.com"}),
+	invalidEmailIntegration := modelstest.IntegrationGen(
+		modelstest.IntegrationMuts.WithUID(""),
+		modelstest.IntegrationMuts.WithValidConfig(schema.EmailType),
+		modelstest.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@org.com"}),
 	)()
 
 	expectedAlert, err := convertToAlertParam(alert)
@@ -115,7 +118,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 	}{
 		{
 			name:        "error if integration UID is not empty",
-			integration: new(models.IntegrationGen()()),
+			integration: new(modelstest.IntegrationGen()()),
 			user:        userAuthorizedToCreate,
 			expectedErr: models.ErrReceiverTestingInvalidIntegrationBase,
 		},
@@ -176,7 +179,7 @@ func TestReceiverTestingService_TestNewReceiverIntegration(t *testing.T) {
 }
 
 func TestReceiverTestingService_authorizeEdits_HasUpdateProtectedError(t *testing.T) {
-	integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig("webhook"))()
+	integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig("webhook"))()
 	rcv := &models.Receiver{UID: "receiver-uid", Name: "existing", Integrations: []*models.Integration{&integration}}
 	usr := &user.SignedInUser{OrgID: 1}
 
@@ -221,13 +224,13 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 	orgID := int64(1)
 
 	// Create a webhook integration with a known URL (protected field)
-	existingIntegration := models.IntegrationGen(
-		models.IntegrationMuts.WithUID(integrationUID),
-		models.IntegrationMuts.WithValidConfig("webhook"),
-		models.IntegrationMuts.WithSettings(map[string]any{
+	existingIntegration := modelstest.IntegrationGen(
+		modelstest.IntegrationMuts.WithUID(integrationUID),
+		modelstest.IntegrationMuts.WithValidConfig("webhook"),
+		modelstest.IntegrationMuts.WithSettings(map[string]any{
 			"url": "http://example.com",
 		}),
-		models.IntegrationMuts.WithSecureSettings(map[string]string{
+		modelstest.IntegrationMuts.WithSecureSettings(map[string]string{
 			"username": base64.StdEncoding.EncodeToString([]byte("test-secret-user")),
 			"password": base64.StdEncoding.EncodeToString([]byte("test-secret-pass")),
 		}),
@@ -304,16 +307,16 @@ func TestReceiverTestingService_PatchIntegrationAndTest(t *testing.T) {
 		{
 			name:        "error if integration does not exist in receiver",
 			receiverUID: receiverUID,
-			integration: new(models.IntegrationGen(models.IntegrationMuts.WithUID("other-integration"))()),
+			integration: new(modelstest.IntegrationGen(modelstest.IntegrationMuts.WithUID("other-integration"))()),
 			expectedErr: models.ErrReceiverTestingIntegrationNotFound,
 		},
 		{
 			name:        "error if user changes protected field (url) without permission",
 			receiverUID: receiverUID,
-			integration: new(models.IntegrationGen(
-				models.IntegrationMuts.WithUID(integrationUID),
-				models.IntegrationMuts.WithValidConfig("webhook"),
-				models.IntegrationMuts.AddSetting("url", "http://different-url.com"),
+			integration: new(modelstest.IntegrationGen(
+				modelstest.IntegrationMuts.WithUID(integrationUID),
+				modelstest.IntegrationMuts.WithValidConfig("webhook"),
+				modelstest.IntegrationMuts.AddSetting("url", "http://different-url.com"),
 			)()),
 			expectedErr: ac.ErrAuthorizationBase,
 		},

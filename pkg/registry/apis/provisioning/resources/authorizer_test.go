@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth/authtest"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,6 +25,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -99,7 +102,7 @@ func TestAuthorizeResource(t *testing.T) {
 
 	t.Run("new resource uses destination folder only", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "dest-folder", "", false)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbCreate
 		}), "dest-folder").Return(nil).Once()
@@ -111,7 +114,7 @@ func TestAuthorizeResource(t *testing.T) {
 
 	t.Run("same-folder update runs single check", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "folder-a", "folder-a", true)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbUpdate
 		}), "folder-a").Return(nil).Once()
@@ -123,7 +126,7 @@ func TestAuthorizeResource(t *testing.T) {
 
 	t.Run("cross-folder move checks both source and destination", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "folder-b", "folder-a", true)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		// source check
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbUpdate
@@ -140,7 +143,7 @@ func TestAuthorizeResource(t *testing.T) {
 
 	t.Run("cross-folder move denied when destination is inaccessible", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "restricted-folder", "allowed-folder", true)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		// source check passes
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbUpdate
@@ -157,7 +160,7 @@ func TestAuthorizeResource(t *testing.T) {
 
 	t.Run("cross-folder move denied when source is inaccessible", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "dest-folder", "restricted-folder", true)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		// source check fails — destination check never runs
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 			return req.Verb == utils.VerbUpdate
@@ -207,7 +210,7 @@ func makeAuthorizeResourceReadParsed(t *testing.T, gvr schema.GroupVersionResour
 	return parsed, sourceFolder
 }
 
-func expectConfiguredAncestorMetadata(t *testing.T, reader *repository.MockReaderWriter, caller *identity.StaticRequester, data []byte, readErr error) {
+func expectConfiguredAncestorMetadata(t *testing.T, reader *repositorytest.MockReaderWriter, caller *identity.StaticRequester, data []byte, readErr error) {
 	t.Helper()
 	reader.EXPECT().Read(mock.Anything, mock.Anything, "").RunAndReturn(func(readCtx context.Context, path, _ string) (*repository.FileInfo, error) {
 		id, err := identity.GetRequester(readCtx)
@@ -478,7 +481,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			if hasExisting {
 				existingOriginal = parsed.Existing.DeepCopy()
 			}
-			reader := repository.NewMockReaderWriter(t)
+			reader := repositorytest.NewMockReaderWriter(t)
 			reader.On("Config").Return(cfg).Maybe()
 			expectConfiguredAncestorMetadata(t, reader, caller, tt.metadata, tt.metadataErr)
 			var probes, checks []string
@@ -505,7 +508,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 					Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
 			}
 			clients := NewMockResourceClients(t)
-			access := auth.NewMockAccessChecker(t)
+			access := authtest.NewMockAccessChecker(t)
 			wantChecks := tt.wantChecks
 			checkSource := hasExisting && sourceFolder != destination
 			checkResolvedSource := state == "same-folder" && len(tt.wantChecks) > 0 && sourceFolder != tt.wantChecks[0]
@@ -612,7 +615,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 					}
 					req := authlib.CheckRequest{Group: gvr.Group, Resource: gvr.Resource, Name: name, Verb: utils.VerbGet}
 					denied := apierrors.NewForbidden(gvr.GroupResource(), name, errors.New("no read permission"))
-					reader := repository.NewMockReader(t)
+					reader := repositorytest.NewMockReader(t)
 					folders := NewMockFolderAncestorFinder(t)
 					lookupCompleted := false
 					wantLookup := tt.state != "moved" || !tt.denySource
@@ -620,7 +623,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 						folders.EXPECT().FindExistingAncestor(ctx, "team/new/", "").Return("", false, nil).
 							Run(func(context.Context, string, string) { lookupCompleted = true }).Once()
 					}
-					access := auth.NewMockAccessChecker(t)
+					access := authtest.NewMockAccessChecker(t)
 					if parsed.Existing == nil {
 						access.On("Check", ctx, req, destination).Return(nil).Maybe()
 					}
@@ -721,7 +724,7 @@ func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 						decoyID, path = cfg.Name, "resource.json"
 					}
 					parsed, _ := makeAuthorizeResourceReadParsed(t, gvr, "new", decoyID, path)
-					reader := repository.NewMockReaderWriter(t)
+					reader := repositorytest.NewMockReaderWriter(t)
 					reader.EXPECT().Config().Return(cfg).Maybe()
 					manifest, err := json.Marshal(NewFolderManifest(decoyID, "New", FolderKind))
 					require.NoError(t, err)
@@ -768,7 +771,7 @@ func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 							}
 						}
 					}
-					access := auth.NewMockAccessChecker(t)
+					access := authtest.NewMockAccessChecker(t)
 					if canAuthorize {
 						var accessErr error
 						if !tt.canReadAncestor {
@@ -847,7 +850,7 @@ func TestAuthorizeResource_FolderReadsUseDirectAuthorization(t *testing.T) {
 					}
 					req := authlib.CheckRequest{Group: FolderResource.Group, Resource: FolderResource.Resource, Name: name, Verb: utils.VerbGet}
 					denied := apierrors.NewForbidden(FolderResource.GroupResource(), name, errors.New("no read permission"))
-					access := auth.NewMockAccessChecker(t)
+					access := authtest.NewMockAccessChecker(t)
 					var wantErr error
 					var previous *mock.Call
 					for i, parent := range checkedParents {
@@ -863,7 +866,7 @@ func TestAuthorizeResource_FolderReadsUseDirectAuthorization(t *testing.T) {
 							break
 						}
 					}
-					reader := repository.NewMockReaderWriter(t)
+					reader := repositorytest.NewMockReaderWriter(t)
 					authorizer := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), nil)
 
 					err := authorizer.AuthorizeResource(t.Context(), parsed, utils.VerbGet)
@@ -892,14 +895,14 @@ func TestAuthorizeResourcePreview_PanicsWithoutFolderManager(t *testing.T) {
 			parsed := makeAuthorizeResourceParsed(t, "destination-folder", tt.existingFolder, tt.existingFolder != "")
 			parsed.FolderScoped = true
 			parsed.Info = &repository.FileInfo{Path: "team/new/resource.json", Ref: "feature"}
-			access := auth.NewMockAccessChecker(t)
+			access := authtest.NewMockAccessChecker(t)
 			if tt.existingFolder != "" && tt.existingFolder != parsed.Meta.GetFolder() {
 				access.On("Check", ctx, authlib.CheckRequest{
 					Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: parsed.Existing.GetName(), Verb: utils.VerbGet,
 				}, tt.existingFolder).Return(nil).Once()
 			}
 			clients := NewMockResourceClients(t)
-			reader := repository.NewMockReaderWriter(t)
+			reader := repositorytest.NewMockReaderWriter(t)
 
 			require.Panics(t, func() {
 				_ = NewAuthorizer(cfg, reader, access, clients, nil).AuthorizeResourcePreview(ctx, parsed)
@@ -939,9 +942,9 @@ func TestAuthorizeResourcePreview_RequiresSourceAccess(t *testing.T) {
 					if gvr.GroupResource() == FolderResource.GroupResource() {
 						parsed.Info.Path = "team/new/child/_folder.json"
 					}
-					reader := repository.NewMockReaderWriter(t)
+					reader := repositorytest.NewMockReaderWriter(t)
 					clients := NewMockResourceClients(t)
-					access := auth.NewMockAccessChecker(t)
+					access := authtest.NewMockAccessChecker(t)
 					access.On("Check", ctx, authlib.CheckRequest{
 						Group: gvr.Group, Resource: gvr.Resource, Name: parsed.Existing.GetName(), Verb: utils.VerbGet,
 					}, "source-folder").Return(tt.err).Once()
@@ -971,7 +974,7 @@ func TestAuthorizeResourcePreview_MatchingPRMetadataRetainsSourceCheck(t *testin
 			parsed.GVR = gvr
 			parsed.Info = &repository.FileInfo{Path: "team/new/resource.json", Ref: "feature"}
 			ancestor := ParseFolder("team/new/", cfg.Name).ID
-			reader := repository.NewMockReaderWriter(t)
+			reader := repositorytest.NewMockReaderWriter(t)
 			reader.EXPECT().Config().Return(cfg).Maybe()
 			folderClient := &MockDynamicResourceInterface{}
 			folderClient.Test(t)
@@ -980,7 +983,7 @@ func TestAuthorizeResourcePreview_MatchingPRMetadataRetainsSourceCheck(t *testin
 			folderClient.On("Get", mock.Anything, ancestor, metav1.GetOptions{}, []string(nil)).
 				Return(newManagedAncestorFolder(t, cfg, ancestor, "team/new/"), nil).Run(func(mock.Arguments) { found = true }).Once()
 			denied := apierrors.NewForbidden(gvr.GroupResource(), parsed.Existing.GetName(), errors.New("no source access"))
-			access := auth.NewMockAccessChecker(t)
+			access := authtest.NewMockAccessChecker(t)
 			access.On("Check", ctx, authlib.CheckRequest{
 				Group: gvr.Group, Resource: gvr.Resource, Name: parsed.Existing.GetName(), Verb: utils.VerbGet,
 			}, "restricted-source").Return(denied).Run(func(mock.Arguments) {
@@ -1060,7 +1063,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			if tt.modify != nil {
 				tt.modify(parsed)
 			}
-			access := auth.NewMockAccessChecker(t)
+			access := authtest.NewMockAccessChecker(t)
 			name := parsed.Obj.GetName()
 			if parsed.Existing != nil {
 				name = parsed.Existing.GetName()
@@ -1071,7 +1074,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			}
 			access.On("Check", mock.Anything, req, parsed.Meta.GetFolder()).Return(tt.result).Once()
 			clients := NewMockResourceClients(t)
-			reader := repository.NewMockReaderWriter(t)
+			reader := repositorytest.NewMockReaderWriter(t)
 			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil).
 				AuthorizeResource(context.Background(), parsed, tt.verb)
 			assert.Equal(t, tt.result, err)
@@ -1132,7 +1135,7 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 						parsed.Existing.SetName("existing-resource")
 						resourceName = parsed.Existing.GetName()
 					}
-					reader := repository.NewMockReaderWriter(t)
+					reader := repositorytest.NewMockReaderWriter(t)
 					reader.EXPECT().Config().Return(cfg).Maybe()
 
 					isProvisioning := mock.MatchedBy(func(ctx context.Context) bool {
@@ -1239,7 +1242,7 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
@@ -1296,8 +1299,8 @@ func TestAuthorizeDeleteByPath_Folders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
-			mockReader := repository.NewMockReader(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
+			mockReader := repositorytest.NewMockReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
@@ -1383,8 +1386,8 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
-			mockReader := repository.NewMockReader(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
+			mockReader := repositorytest.NewMockReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: tt.repoName,
@@ -1454,7 +1457,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 		{
 			name: "folder metadata exists - uses stable UID from _folder.json",
 			setupReader: func(t *testing.T) repository.Reader {
-				rw := repository.NewMockReaderWriter(t)
+				rw := repositorytest.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -1480,7 +1483,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 		{
 			name: "folder metadata missing - falls back to hash-based ID",
 			setupReader: func(t *testing.T) repository.Reader {
-				rw := repository.NewMockReaderWriter(t)
+				rw := repositorytest.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -1502,7 +1505,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
 			reader := tt.setupReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1545,7 +1548,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 		{
 			name: "parent has _folder.json - uses stable UID",
 			setupReader: func(t *testing.T) repository.Reader {
-				rw := repository.NewMockReaderWriter(t)
+				rw := repositorytest.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -1571,7 +1574,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 		{
 			name: "parent missing _folder.json - uses hash-based ID",
 			setupReader: func(t *testing.T) repository.Reader {
-				rw := repository.NewMockReaderWriter(t)
+				rw := repositorytest.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-repo",
@@ -1593,7 +1596,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
 			reader := tt.setupReader(t)
 			repo := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1626,7 +1629,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 // TestAuthorizeMoveByPathWithMetadata tests folder move authorization with metadata
 func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 	t.Run("both source and target use stable UIDs from metadata", func(t *testing.T) {
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
@@ -1650,7 +1653,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		// Expect update check on source with stable UID
 		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -1676,7 +1679,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -1697,7 +1700,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
 		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
@@ -1715,7 +1718,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -1739,7 +1742,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
 			},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -1763,7 +1766,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
 		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
@@ -1778,7 +1781,7 @@ func TestAuthorizeDeleteAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
@@ -1799,7 +1802,7 @@ func TestAuthorizeDeleteAllSupported(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
 		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
@@ -1822,8 +1825,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
 			Return(dashboardFileInfo(), nil)
@@ -1848,8 +1851,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
 		rootFolder := RootFolder(repo)
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Read", mock.Anything, "dashboard.json", "").
 			Return(dashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
@@ -1872,8 +1875,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
@@ -1895,8 +1898,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").
 			Return(dashboardFileInfo(), nil)
@@ -1915,8 +1918,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
@@ -1932,8 +1935,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "bad/widget.json", "").
 			Return(&repository.FileInfo{
@@ -1953,8 +1956,8 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "sneaky/folder.json", "").
 			Return(&repository.FileInfo{
@@ -1974,9 +1977,9 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(repo).Maybe()
 		parentMeta := NewFolderManifest("stable-folder-uid", "team-a", FolderKind)
 		data, _ := json.Marshal(parentMeta)
@@ -2006,8 +2009,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "src/dashboard.json", "").
 			Return(dashboardFileInfo(), nil)
@@ -2036,8 +2039,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
@@ -2064,8 +2067,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "restricted/dash.json", "").
 			Return(dashboardFileInfo(), nil)
@@ -2086,8 +2089,8 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 		}
-		mockAccess := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Config").Return(repo).Maybe()
 		mockReader.On("Read", mock.Anything, "src/dash.json", "").
 			Return(dashboardFileInfo(), nil)
@@ -2151,7 +2154,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				},
 			}
 			preview := tt.ref != "" && tt.ref != cfg.Branch()
-			repo := repository.NewMockReaderWriter(t)
+			repo := repositorytest.NewMockReaderWriter(t)
 			repo.EXPECT().Config().Return(cfg).Maybe()
 			repo.EXPECT().Read(mock.Anything, tt.path, tt.ref).Return(&repository.FileInfo{
 				Path: tt.path,
@@ -2319,7 +2322,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 				id, err := identity.GetRequester(lookupCtx)
 				return err == nil && identity.IsProvisioningServiceIdentity(id) && id.GetNamespace() == cfg.Namespace
 			})
-			repo := repository.NewMockReaderWriter(t)
+			repo := repositorytest.NewMockReaderWriter(t)
 			repo.EXPECT().Config().Return(cfg)
 			repo.EXPECT().Read(callerContext, resourcePath, "feature").Return(&repository.FileInfo{
 				Path: resourcePath, Ref: "feature",
@@ -2406,7 +2409,7 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},
 	}
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	repo.EXPECT().Config().Return(cfg)
 	repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
 		Path: resourcePath, Ref: "feature",
@@ -2527,7 +2530,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				destination = ParentFolder(resourcePath, cfg)
 				configuredFolder = destination
 			}
-			repo := repository.NewMockReaderWriter(t)
+			repo := repositorytest.NewMockReaderWriter(t)
 			repo.EXPECT().Config().Return(cfg)
 			repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
 				Path: resourcePath, Ref: "feature",
@@ -2718,9 +2721,9 @@ func newMovedResourcePreviewFixture(tt movedResourcePreviewCase, resource schema
 	return f
 }
 
-func (f movedResourcePreviewFixture) expectRepositoryReads(t *testing.T, tt movedResourcePreviewCase, cfg *provisioning.Repository, kind schema.GroupVersionKind) *repository.MockReaderWriter {
+func (f movedResourcePreviewFixture) expectRepositoryReads(t *testing.T, tt movedResourcePreviewCase, cfg *provisioning.Repository, kind schema.GroupVersionKind) *repositorytest.MockReaderWriter {
 	t.Helper()
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	repo.EXPECT().Config().Return(cfg).Maybe()
 	repo.EXPECT().Read(mock.Anything, f.resourcePath, "feature").Return(&repository.FileInfo{
 		Path: f.resourcePath, Ref: "feature",
@@ -2996,11 +2999,11 @@ func TestAuthorizeResourcePreview_Eligibility(t *testing.T) {
 				wantFolder = "configured-ancestor"
 				folders.EXPECT().FindExistingAncestor(t.Context(), safepath.Dir(tt.path), "").Return(wantFolder, true, nil).Once()
 			}
-			access := auth.NewMockAccessChecker(t)
+			access := authtest.NewMockAccessChecker(t)
 			access.EXPECT().Check(t.Context(), authlib.CheckRequest{
 				Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: parsed.Obj.GetName(), Verb: utils.VerbGet,
 			}, wantFolder).Return(nil).Once()
-			authorizer := NewAuthorizer(cfg, repository.NewMockReader(t), access, NewMockResourceClients(t), folders)
+			authorizer := NewAuthorizer(cfg, repositorytest.NewMockReader(t), access, NewMockResourceClients(t), folders)
 			require.NoError(t, authorizer.AuthorizeResourcePreview(t.Context(), parsed))
 		})
 	}

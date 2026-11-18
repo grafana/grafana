@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	cipherservice "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -187,7 +187,7 @@ func newEncryptionManagerWith(t *testing.T, sqlStore db.DB, current string, prov
 	tracer := noop.NewTracerProvider().Tracer("test")
 	store, err := encryption.ProvideDataKeyStorage(secretdatabase.ProvideDatabase(sqlStore, tracer), tracer, prometheus.NewRegistry())
 	require.NoError(t, err)
-	usage := &usagestats.UsageStatsMock{}
+	usage := &usagestatstest.UsageStatsMock{}
 	aesgcm, err := cipherservice.ProvideAESGCMCipherService(tracer, usage)
 	require.NoError(t, err)
 	providerCfg, err := kmsproviders.ProvideOSSKMSProviders(cfg, aesgcm)

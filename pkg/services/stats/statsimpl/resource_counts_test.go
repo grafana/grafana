@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,7 +32,7 @@ func TestGetResourceCountsErrors(t *testing.T) {
 		}, err: st.Err()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 5}},
 			}, nil).Once()

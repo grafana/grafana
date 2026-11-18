@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github/githubtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -12,7 +14,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 )
 
 func TestProvider_ListRepositories(t *testing.T) {
@@ -21,7 +22,7 @@ func TestProvider_ListRepositories(t *testing.T) {
 		{Name: "repo-two", Owner: "my-org", URL: "https://github.com/my-org/repo-two"},
 	}
 
-	client := github.NewMockClient(t)
+	client := githubtest.NewMockClient(t)
 	client.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
 
 	p := &provider{client: client}
@@ -43,7 +44,7 @@ func TestProvider_ListRepositories_Errors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := github.NewMockClient(t)
+			client := githubtest.NewMockClient(t)
 			client.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.clientErr)
 
 			p := &provider{client: client}

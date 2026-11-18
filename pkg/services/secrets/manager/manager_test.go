@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -197,7 +197,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 		cfg := &setting.Cfg{Raw: raw}
 
 		encProvider := encryptionprovider.Provider{}
-		usageStats := &usagestats.UsageStatsMock{}
+		usageStats := &usagestatstest.UsageStatsMock{}
 
 		encryptionService, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
 		require.NoError(t, err)
@@ -214,7 +214,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 			encryptionService,
 			cfg,
 			features,
-			&usagestats.UsageStatsMock{T: t},
+			&usagestatstest.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 
@@ -233,7 +233,7 @@ func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 			encryptionService,
 			cfg,
 			features,
-			&usagestats.UsageStatsMock{T: t},
+			&usagestatstest.UsageStatsMock{T: t},
 		)
 		require.NoError(t, err)
 

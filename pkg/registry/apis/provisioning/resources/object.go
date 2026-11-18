@@ -21,7 +21,7 @@ import (
 // ResourceLister reads what one repository manages. This is the whole of what the operators ask
 // for, so a reader answering per repository needs nothing else.
 //
-//go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
+//go:generate mockery --name ResourceLister --structname MockResourceLister --outpkg resourcestest --output ./resourcestest/ --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string, opts ListOptions) (*provisioning.ResourceList, error)
 	// RepositoryStats counts what one repository manages.
@@ -31,7 +31,7 @@ type ResourceLister interface {
 // NamespaceStatsReader counts every manager in the namespace alongside the instance and unmanaged
 // totals, which only the API server's own stats route reads.
 //
-//go:generate mockery --name NamespaceStatsReader --structname MockNamespaceStatsReader --inpackage --filename namespace_stats_reader_mock.go --with-expecter
+//go:generate mockery --name NamespaceStatsReader --structname MockNamespaceStatsReader --outpkg resourcestest --output ./resourcestest/ --filename namespace_stats_reader_mock.go --with-expecter
 type NamespaceStatsReader interface {
 	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
 }

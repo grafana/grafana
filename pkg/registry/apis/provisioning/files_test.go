@@ -9,9 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth/authtest"
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -139,7 +142,7 @@ func TestCheckQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
+			repo := repositorytest.NewMockRepository(t)
 			repo.On("Config").Return(&provisioningapi.Repository{
 				Status: provisioningapi.RepositoryStatus{
 					Conditions: tt.conditions,
@@ -162,11 +165,11 @@ func TestCheckQuota(t *testing.T) {
 // (a *fmt.wrapError, not an APIStatus). The directory-listing handler must unwrap it so
 // the client gets a 404 instead of a 500 + UnhandledError log.
 func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
-	mockAccess := auth.NewMockAccessChecker(t)
+	mockAccess := authtest.NewMockAccessChecker(t)
 	mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	wrappedErr := fmt.Errorf("ref not found: %s: %w", "refs/heads/test-panel", repository.ErrRefNotFound)
-	mockReadWriter := repository.NewMockReaderWriter(t)
+	mockReadWriter := repositorytest.NewMockReaderWriter(t)
 	mockReadWriter.EXPECT().ReadTree(mock.Anything, "test-panel").Return([]repository.FileTreeEntry(nil), wrappedErr)
 
 	connector := &filesConnector{access: mockAccess}
@@ -408,7 +411,7 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(&provisioningapi.Repository{
 				Spec: provisioningapi.RepositorySpec{
 					Title: "test-repo",
@@ -436,7 +439,7 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 // The apiserver decodes %20 into r.URL.Path before we extract the file path, and
 // IsSafe explicitly allows spaces, so the path is served as-is.
 func TestParseRequestOptionsPathWithSpace(t *testing.T) {
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&provisioningapi.Repository{
 		Spec: provisioningapi.RepositorySpec{
 			Title: "test-repo",
@@ -472,7 +475,7 @@ func TestParseRequestOptionsRefValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(&provisioningapi.Repository{
 				Spec: provisioningapi.RepositorySpec{
 					Title: "test-repo",
@@ -532,8 +535,8 @@ func TestHandleGetRawFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockReadWriter := repository.NewMockReaderWriter(t)
-			mockAccess := auth.NewMockAccessChecker(t)
+			mockReadWriter := repositorytest.NewMockReaderWriter(t)
+			mockAccess := authtest.NewMockAccessChecker(t)
 			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			repo := &provisioningapi.Repository{
@@ -544,7 +547,7 @@ func TestHandleGetRawFile(t *testing.T) {
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
 			mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil)
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resourcestest.NewMockResourceClients(t), nil)
 
 			if tt.readError != nil {
 				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(nil, tt.readError)
@@ -581,8 +584,8 @@ func TestHandleGetRawFile(t *testing.T) {
 
 func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 	t.Run("denies the read when the user lacks folder read permission", func(t *testing.T) {
-		mockReadWriter := repository.NewMockReaderWriter(t)
-		mockAccess := auth.NewMockAccessChecker(t)
+		mockReadWriter := repositorytest.NewMockReaderWriter(t)
+		mockAccess := authtest.NewMockAccessChecker(t)
 
 		repo := &provisioningapi.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
@@ -599,7 +602,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 
 		mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil)
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resourcestest.NewMockResourceClients(t), nil)
 		connector := &filesConnector{access: mockAccess}
 
 		_, err := connector.handleGetRawFile(

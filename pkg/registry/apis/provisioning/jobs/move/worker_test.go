@@ -7,21 +7,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 type mockReaderWriter struct {
-	*repository.MockRepository
+	*repositorytest.MockRepository
 }
 
 func (m *mockReaderWriter) Move(ctx context.Context, oldPath, newPath, ref, message string) error {
@@ -139,9 +142,9 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return opts.CommitOnlyOnceMessage == "custom move message"
@@ -168,9 +171,9 @@ func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute &&
@@ -197,9 +200,9 @@ func TestMoveWorker_ProcessWrapFnError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockRepo := repositorytest.NewMockRepository(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 	mockProgress.On("SetTotal", mock.Anything, 1).Return()
@@ -223,10 +226,10 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
 		return !opts.PushOnWrites && opts.Timeout == 10*time.Minute &&
@@ -271,10 +274,10 @@ func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -309,10 +312,10 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -347,11 +350,11 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -393,11 +396,11 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -468,9 +471,9 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
+				MockRepository: repositorytest.NewMockRepository(t),
 			}
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 			opts := provisioning.MoveJobOptions{
 				TargetPath: "new/location/",
@@ -514,9 +517,9 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 
 func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	opts := provisioning.MoveJobOptions{
 		TargetPath: "/",
@@ -623,13 +626,13 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResources := resources.NewMockRepositoryResources(t)
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResources(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -689,12 +692,12 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResources := resources.NewMockRepositoryResources(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -721,7 +724,7 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	})).Return()
 
 	// Add expectations for sync worker (called when ref is empty)
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
@@ -751,11 +754,11 @@ func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
 	}
 
 	mockRepo := &mockReaderWriter{
-		MockRepository: repository.NewMockRepository(t),
+		MockRepository: repositorytest.NewMockRepository(t),
 	}
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockRepo, false)
@@ -851,11 +854,11 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockReaderWriter{
-				MockRepository: repository.NewMockRepository(t),
+				MockRepository: repositorytest.NewMockRepository(t),
 			}
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
-			mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-			mockRepoResources := resources.NewMockRepositoryResources(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
+			mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
+			mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 
 			if len(tt.resources) > 0 {
 				mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
@@ -948,7 +951,7 @@ func TestMoveWorker_deduplicatePaths(t *testing.T) {
 }
 
 func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 	config := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -968,7 +971,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	}
 	mockRepoWithURLs.On("RefURLs", mock.Anything, "feature-branch").Return(expectedRefURLs, nil)
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
@@ -976,15 +979,15 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil).Once()
 	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Move", mock.Anything, "test.json", "target/test.json", "feature-branch", "Move test.json to target/test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1008,7 +1011,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 }
 
 func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 	config := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -1020,7 +1023,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	}
 	mockRepoWithURLs.On("Config").Return(config).Maybe() // Config may be called multiple times
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
@@ -1031,18 +1034,18 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Move", mock.Anything, "test.json", "target/test.json", "", "Move test.json to target/test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepoWithURLs, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockSyncWorker := jobs.NewMockWorker(t)
+	mockSyncWorker := jobstest.NewMockWorker(t)
 	mockSyncWorker.On("Process", mock.Anything, mockRepoWithURLs, mock.Anything, mockProgress).Return(nil)
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1065,7 +1068,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 }
 
 func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	config := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -1077,7 +1080,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	}
 	mockRepo.On("Config").Return(config).Maybe() // Config may be called multiple times
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetTotal", mock.Anything, 1).Once()
 	mockProgress.On("StrictMaxErrors", 1).Once()
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
@@ -1086,15 +1089,15 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since repo doesn't support URLs
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 	mockReaderWriter.On("Move", mock.Anything, "test.json", "target/test.json", "feature-branch", "Move test.json to target/test.json").Return(nil)
 
-	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn := repositorytest.NewMockWrapWithStageFn(t)
 	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, opts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(mockReaderWriter, true)
 	})
 
-	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockResourcesFactory := resourcestest.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},

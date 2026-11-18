@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/testcases"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -550,7 +551,7 @@ func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := resource.NewMockResourceClient(t)
+			mockClient := resourcetest.NewMockResourceClient(t)
 
 			var capturedCtx context.Context
 			bulkStream := &noopBulkProcessClient{}
@@ -610,7 +611,7 @@ func TestUnifiedMigration_Migrate_UsesRegisteredResources(t *testing.T) {
 	}
 	registry.Register(migrations.MigrationDefinition{ID: "test-migration", Migrators: migrators})
 
-	client := resource.NewMockResourceClient(t)
+	client := resourcetest.NewMockResourceClient(t)
 	client.EXPECT().BulkProcess(mock.Anything).Run(func(ctx context.Context, _ ...grpc.CallOption) {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		require.True(t, ok)
@@ -684,7 +685,7 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock SearchClient
-			mockClient := resource.NewMockResourceClient(t)
+			mockClient := resourcetest.NewMockResourceClient(t)
 
 			// Setup expectation for RebuildIndexes call - will be called numRetries times
 			mockClient.EXPECT().
@@ -738,7 +739,7 @@ func TestUnifiedMigration_RebuildIndexes(t *testing.T) {
 
 func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	// Test that retries work - first call fails, second succeeds
-	mockClient := resource.NewMockResourceClient(t)
+	mockClient := resourcetest.NewMockResourceClient(t)
 
 	// First call returns an error
 	mockClient.EXPECT().
@@ -788,7 +789,7 @@ func TestUnifiedMigration_RebuildIndexes_ContextCanceledDuringBackoff(t *testing
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	mockClient := resource.NewMockResourceClient(t)
+	mockClient := resourcetest.NewMockResourceClient(t)
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		RunAndReturn(func(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
@@ -823,7 +824,7 @@ func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	t.Cleanup(cancel)
 
-	mockClient := resource.NewMockResourceClient(t)
+	mockClient := resourcetest.NewMockResourceClient(t)
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(nil, fmt.Errorf("temporary failure")).
@@ -998,7 +999,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock SearchClient
-			mockClient := resource.NewMockResourceClient(t)
+			mockClient := resourcetest.NewMockResourceClient(t)
 
 			// Setup expectation for RebuildIndexes call - will be called numRetries times
 			mockClient.EXPECT().
@@ -1047,7 +1048,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testing.T) {
 	// A build from the previous second is stale, but a rebuild in the migration finish second is valid.
 	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
-	mockClient := resource.NewMockResourceClient(t)
+	mockClient := resourcetest.NewMockResourceClient(t)
 
 	// First call returns a build time from before migration finished.
 	mockClient.EXPECT().

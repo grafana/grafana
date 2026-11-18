@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -51,7 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore/kvstoretest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -803,7 +803,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
 	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewV4().String())
 
-	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService := dashboardstest.NewFakeDashboardService(t)
 
 	dsService := &datafakes.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
@@ -897,7 +897,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		featureToggles,
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
+		kvstoretest.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,

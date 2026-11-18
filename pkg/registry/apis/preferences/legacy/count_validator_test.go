@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -32,7 +33,7 @@ func TestPreferencesCountValidatorStats(t *testing.T) {
 		}, err: structured.Err()},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: "default", Kinds: []string{gr.Group + "/" + gr.Resource}}).
 				Return(tt.resp, tt.err).Once()
 			v := &preferencesCountValidator{client: client, resource: gr, driverName: migrator.MySQL}

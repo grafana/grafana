@@ -16,6 +16,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -46,7 +47,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 		ExpectedFolder: testFolder,
 	}
 
-	dashboardsSvc := &dashboards.FakeDashboardService{}
+	dashboardsSvc := &dashboardstest.FakeDashboardService{}
 	testDashboard := &dashboards.DashboardRef{
 		ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 		UID:       "test-dashboard-uid",

@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-//go:generate mockery --name AccessChecker --structname MockAccessChecker --inpackage --filename access_checker_mock.go --with-expecter
+//go:generate mockery --name AccessChecker --structname MockAccessChecker --outpkg authtest --output ./authtest/ --filename access_checker_mock.go --with-expecter
 
 // AccessChecker provides access control checks with optional role-based fallback.
 type AccessChecker interface {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -40,7 +41,7 @@ func (noopDashboardPermissionsRegistration) RegisterDashboardPermissions(accessc
 func TestIntegrationDashboardPermissionsMissingFolderIsConflict(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dashboardSvc := dashboards.NewFakeDashboardService(t)
+	dashboardSvc := dashboardstest.NewFakeDashboardService(t)
 	dashboardSvc.On("GetDashboard", mock.Anything, mock.Anything).
 		Return(&dashboards.Dashboard{UID: "dash", OrgID: 1, FolderUID: "gone"}, nil)
 	// Same shape as the unified store error for a missing folder.

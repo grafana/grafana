@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -368,10 +368,10 @@ func updateRuleSequence(t *testing.T, ctx context.Context, client *apis.TypedCli
 
 func createSequenceRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], folder string) string {
 	t.Helper()
-	base := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithNamespaceUID(folder),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
+	base := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithNamespaceUID(folder),
+		modelstest.RuleMuts.WithAllRecordingRules(),
 	).Generate()
 
 	created, err := client.Create(ctx, &v0alpha1.RecordingRule{
@@ -405,9 +405,9 @@ func createSequenceRecordingRule(t *testing.T, ctx context.Context, client *apis
 
 func createSequenceAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], folder string) string {
 	t.Helper()
-	base := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithNamespaceUID(folder),
+	base := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithNamespaceUID(folder),
 	).Generate()
 
 	created, err := client.Create(ctx, &v0alpha1.AlertRule{

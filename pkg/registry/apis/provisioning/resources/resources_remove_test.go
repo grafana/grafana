@@ -16,6 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -50,7 +51,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	}
 
 	t.Run("resource is deleted successfully", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -85,7 +86,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("folder resource file is rejected by parser", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "folders/my-folder.json"}
@@ -105,7 +106,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("non-resource file is rejected by parser", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{"some_key": "some_value"}`), Path: "config/settings.json"}
@@ -125,7 +126,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("file read error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		repo.On("Read", mock.Anything, "dashboards/missing.json", "abc123").
@@ -139,7 +140,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("already deleted resource is a no-op", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -170,7 +171,7 @@ func TestRemoveResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("delete failure preserves name and GVK", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -232,7 +233,7 @@ func TestRenameResourceFile(t *testing.T) {
 	}
 
 	t.Run("same name skips delete and updates in place", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -286,7 +287,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("destination writing a secure value is rejected before the old resource is deleted", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -334,7 +335,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("different name deletes old then creates new", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -389,7 +390,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("new file parse error does not delete old resource", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -423,7 +424,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file read error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").
@@ -437,7 +438,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error still attempts to write new resource", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -482,7 +483,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, byte-identical rename, still skips strict validation", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -527,7 +528,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, brand new resource, uses Create with strict validation", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -575,7 +576,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error for a reason other than path support stays fatal", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{`), Path: "old/dash.json"}
@@ -606,7 +607,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, byte-identical rename, destination never synced keeps strict validation", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -654,7 +655,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, never synced, quota exceeded blocks the create", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -694,7 +695,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, never synced, ForceCreate falls back to update on AlreadyExists", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -748,7 +749,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, never synced, failed write releases quota", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -790,7 +791,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("old file parse error, existence check errors transiently, stays fatal", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -840,7 +841,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -888,7 +889,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("same parent folder after rename suppresses old folder signal", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		dashClient := &MockDynamicResourceInterface{}
 
@@ -952,7 +953,7 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 
 	t.Run("different parent folder after rename returns old folder for cleanup", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		dashClient := &MockDynamicResourceInterface{}
 
@@ -1025,9 +1026,9 @@ func TestRenameResourceFile(t *testing.T) {
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
 
-	makeRenameMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+	makeRenameMocks := func(t *testing.T, oldHash, newHash string) (*repositorytest.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
 		t.Helper()
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -1120,9 +1121,9 @@ func TestWriteResourceFromFile_ExistingHashSkipsValidation(t *testing.T) {
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
 
-	makeWriteMocks := func(t *testing.T, fileHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+	makeWriteMocks := func(t *testing.T, fileHash string) (*repositorytest.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
 		t.Helper()
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -1210,9 +1211,9 @@ func TestReplaceResourceFromFileByRef_HashComparison(t *testing.T) {
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
 
-	makeReplaceMocks := func(t *testing.T, oldHash, newHash string) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
+	makeReplaceMocks := func(t *testing.T, oldHash, newHash string) (*repositorytest.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *unstructured.Unstructured) {
 		t.Helper()
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
@@ -1301,7 +1302,7 @@ func TestReplaceResourceFromFile_PassesExistingHash(t *testing.T) {
 	fakeGVK := schema.GroupVersionKind{Group: "fake.grafana.app", Version: "v1", Kind: "Fake"}
 	fakeGVR := schema.GroupVersionResource{Group: "fake.grafana.app", Version: "v1", Resource: "fakes"}
 
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	mockParser := NewMockParser(t)
 	mockClient := &MockDynamicResourceInterface{}
 

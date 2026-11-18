@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
+
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
@@ -71,7 +73,7 @@ func requireFolderStorageError(t *testing.T, want, got error) {
 func TestFolderChildrenSearchErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
 
@@ -87,7 +89,7 @@ func TestFolderChildrenSearchErrors(t *testing.T) {
 func TestFolderSearchLaterPageErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return req.Offset == 0
 			})).Return(buildFolderSearchResponse(folderResult{uid: "first"}), nil).Once()
@@ -108,7 +110,7 @@ func TestFolderSearchLaterPageErrors(t *testing.T) {
 func TestFolderCountInOrgErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("GetStats", mock.Anything, int64(1)).Return(nil, tc.err).Once()
 			store := &FolderUnifiedStoreImpl{k8sclient: cli}
 			got, err := store.CountInOrg(t.Context(), 1)
@@ -120,7 +122,7 @@ func TestFolderCountInOrgErrors(t *testing.T) {
 }
 
 func TestFolderCountInOrgSuccess(t *testing.T) {
-	cli := new(client.MockK8sHandler)
+	cli := new(clienttest.MockK8sHandler)
 	cli.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 42}},
 	}, nil).Once()
@@ -283,7 +285,7 @@ func TestToFolderLegacyCounts(t *testing.T) {
 }
 
 func TestGetParents(t *testing.T) {
-	mockCli := new(client.MockK8sHandler)
+	mockCli := new(clienttest.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
@@ -448,7 +450,7 @@ func TestStoreFolderNotFound(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockCli := new(client.MockK8sHandler)
+			mockCli := new(clienttest.MockK8sHandler)
 			mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(nil, notFound)
 			store := &FolderUnifiedStoreImpl{
 				k8sclient: mockCli,
@@ -473,7 +475,7 @@ func TestStoreFolderNotFound(t *testing.T) {
 }
 
 func TestGetChildren(t *testing.T) {
-	mockCli := new(client.MockK8sHandler)
+	mockCli := new(clienttest.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
@@ -806,7 +808,7 @@ func TestGetFolders(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		mock    func(mockCli *client.MockK8sHandler)
+		mock    func(mockCli *clienttest.MockK8sHandler)
 		want    []*folder.Folder
 		wantErr bool
 	}{
@@ -820,7 +822,7 @@ func TestGetFolders(t *testing.T) {
 					},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
@@ -876,7 +878,7 @@ func TestGetFolders(t *testing.T) {
 					},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
@@ -943,7 +945,7 @@ func TestGetFolders(t *testing.T) {
 					},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
@@ -955,7 +957,7 @@ func TestGetFolders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCLI := new(client.MockK8sHandler)
+			mockCLI := new(clienttest.MockK8sHandler)
 			tt.mock(mockCLI)
 			tracer := noop.NewTracerProvider().Tracer("TestGetFolders")
 			ss := &FolderUnifiedStoreImpl{
@@ -983,7 +985,7 @@ func TestGetFolders(t *testing.T) {
 // Key.Name is the child UID and the first cell is the parent UID (matches
 // the column definition the implementation does not actually inspect, but
 // mirrors the existing TestGetChildren mock shape).
-func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents []string, byParent map[string][]string) {
+func expectSearchChildren(mockCli *clienttest.MockK8sHandler, orgID int64, parents []string, byParent map[string][]string) {
 	matcher := func(req *resourcepb.ResourceSearchRequest) bool {
 		// Internal searchChildren applies no visibility filters, so the
 		// request should carry exactly one Fields entry: the folder In.
@@ -1017,7 +1019,7 @@ func expectSearchChildren(mockCli *client.MockK8sHandler, orgID int64, parents [
 // expectGetFolder sets up a minimal Get mock returning an Unstructured for the
 // given UID. The body is intentionally minimal — the call sites here only need
 // existence, not field fidelity.
-func expectGetFolder(mockCli *client.MockK8sHandler, uid string, orgID int64) {
+func expectGetFolder(mockCli *clienttest.MockK8sHandler, uid string, orgID int64) {
 	mockCli.On("Get", mock.Anything, uid, orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{"name": uid},
@@ -1030,7 +1032,7 @@ func TestGetDescendants(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns full subtree via level-by-level search", func(t *testing.T) {
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
 		// One Search per level (parents at that level batched into a single In).
 		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"child1", "child3"}})
@@ -1057,7 +1059,7 @@ func TestGetDescendants(t *testing.T) {
 	})
 
 	t.Run("returns empty when ancestor is a leaf", func(t *testing.T) {
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "leaf", orgID)
 		expectSearchChildren(mockCli, orgID, []string{"leaf"}, nil)
 
@@ -1075,7 +1077,7 @@ func TestGetDescendants(t *testing.T) {
 	})
 
 	t.Run("propagates ErrFolderNotFound when ancestor is missing", func(t *testing.T) {
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		mockCli.On("Get", mock.Anything, "missing", orgID, mock.Anything, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "missing")).Once()
 
@@ -1093,7 +1095,7 @@ func TestGetDescendants(t *testing.T) {
 
 	t.Run("detects 3-node cycle", func(t *testing.T) {
 		// a -> b -> c -> a
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "a", orgID)
 		expectSearchChildren(mockCli, orgID, []string{"a"}, map[string][]string{"a": {"b"}})
 		expectSearchChildren(mockCli, orgID, []string{"b"}, map[string][]string{"b": {"c"}})
@@ -1112,7 +1114,7 @@ func TestGetDescendants(t *testing.T) {
 
 	t.Run("detects self-referencing cycle", func(t *testing.T) {
 		// self -> self
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "self", orgID)
 		expectSearchChildren(mockCli, orgID, []string{"self"}, map[string][]string{"self": {"self"}})
 
@@ -1131,7 +1133,7 @@ func TestGetDescendants(t *testing.T) {
 		// 150 root children at level 1 — exceeds descendantsBatchSize=100,
 		// so the level-2 walk must split into one Search per chunk-of-100
 		// parents (slices.Chunk).
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
 
 		n := descendantsBatchSize + descendantsBatchSize/2 // 150
@@ -1162,7 +1164,7 @@ func TestGetDescendants(t *testing.T) {
 		// processes levels 0, 1 and 2 (root, l1, l2), then exits with l3
 		// still queued. Returning the partial subtree would let Service.Delete
 		// leave the rest behind, so we surface ErrMaximumDepthReached instead.
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		expectGetFolder(mockCli, "root", orgID)
 		expectSearchChildren(mockCli, orgID, []string{"root"}, map[string][]string{"root": {"l1"}})
 		expectSearchChildren(mockCli, orgID, []string{"l1"}, map[string][]string{"l1": {"l2"}})
@@ -1192,7 +1194,7 @@ func TestSearchChildren(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("does not validate parent existence and applies no visibility filters", func(t *testing.T) {
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 		// Only Search is expected; Get is NOT called for the parent.
 		expectSearchChildren(mockCli, orgID, []string{"some-parent"}, map[string][]string{"some-parent": {"a", "b"}})
 
@@ -1209,7 +1211,7 @@ func TestSearchChildren(t *testing.T) {
 	})
 
 	t.Run("paginates when a page returns searchPageSize hits", func(t *testing.T) {
-		mockCli := new(client.MockK8sHandler)
+		mockCli := new(clienttest.MockK8sHandler)
 
 		// Build searchPageSize+1 children so the first Search returns a full
 		// page (triggering the inner page loop) and the second returns the
@@ -1557,7 +1559,7 @@ func TestList(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		mock    func(mockCli *client.MockK8sHandler)
+		mock    func(mockCli *clienttest.MockK8sHandler)
 		want    *unstructured.UnstructuredList
 		wantErr bool
 	}{
@@ -1571,7 +1573,7 @@ func TestList(t *testing.T) {
 					TypeMeta: metav1.TypeMeta{},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
 					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
@@ -1639,7 +1641,7 @@ func TestList(t *testing.T) {
 					TypeMeta: metav1.TypeMeta{},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
 					Limit:    1,
 					TypeMeta: metav1.TypeMeta{},
@@ -1697,7 +1699,7 @@ func TestList(t *testing.T) {
 					TypeMeta: metav1.TypeMeta{},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
 					Limit:    1,
 					TypeMeta: metav1.TypeMeta{},
@@ -1749,7 +1751,7 @@ func TestList(t *testing.T) {
 					TypeMeta: metav1.TypeMeta{},
 				},
 			},
-			mock: func(mockCli *client.MockK8sHandler) {
+			mock: func(mockCli *clienttest.MockK8sHandler) {
 				mockCli.On("List", mock.Anything, int64(1), metav1.ListOptions{
 					Limit:    folderListLimit,
 					TypeMeta: metav1.TypeMeta{},
@@ -1761,7 +1763,7 @@ func TestList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCLI := new(client.MockK8sHandler)
+			mockCLI := new(clienttest.MockK8sHandler)
 			tt.mock(mockCLI)
 			tracer := noop.NewTracerProvider().Tracer("TestList")
 			ss := &FolderUnifiedStoreImpl{
@@ -2080,7 +2082,7 @@ func TestFolderSearchPagination(t *testing.T) {
 	} {
 		for _, children := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/children=%t", tc.name, children), func(t *testing.T) {
-				cli := new(client.MockK8sHandler)
+				cli := new(clienttest.MockK8sHandler)
 				var want []string
 				offset := int64(0)
 				for _, p := range tc.pages {
@@ -2131,7 +2133,7 @@ func TestFolderSearchPagination(t *testing.T) {
 func TestGetFoldersMetadataAncestorErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			child := buildFolderSearchResponse(folderResult{uid: "child", parentUID: "parent"})
 			child.TotalHitsExact = true
 			for _, uid := range []string{"child", "parent"} {
@@ -2370,8 +2372,8 @@ func TestGetFoldersMetadata(t *testing.T) {
 
 	// A -> B -> C tree; getFoldersMetadata must build full paths from the search
 	// hits alone, never reading a full folder object (no List/BatchGet/Get).
-	newStore := func(t *testing.T) (*FolderUnifiedStoreImpl, *client.MockK8sHandler) {
-		mockCli := new(client.MockK8sHandler)
+	newStore := func(t *testing.T) (*FolderUnifiedStoreImpl, *clienttest.MockK8sHandler) {
+		mockCli := new(clienttest.MockK8sHandler)
 		return &FolderUnifiedStoreImpl{
 			k8sclient:   mockCli,
 			userService: usertest.NewUserServiceFake(),
@@ -2395,7 +2397,7 @@ func TestGetFoldersMetadata(t *testing.T) {
 		TotalHitsExact: true,
 	}
 
-	expectSearchAll := func(mockCli *client.MockK8sHandler) {
+	expectSearchAll := func(mockCli *clienttest.MockK8sHandler) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
 			Fields:       folderReferenceFields,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,

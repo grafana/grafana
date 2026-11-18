@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 )
@@ -63,10 +63,10 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 			Migrate: &provisioning.MigrateJobOptions{},
 		},
 	}
-	progressRecorder := jobs.NewMockJobProgressRecorder(t)
+	progressRecorder := jobstest.NewMockJobProgressRecorder(t)
 	progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 
-	repo := repository.NewMockReader(t)
+	repo := repositorytest.NewMockReader(t)
 	repo.On("Config").Return(&provisioning.Repository{})
 	err := worker.Process(context.Background(), repo, job, progressRecorder)
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
@@ -75,8 +75,8 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMocks    func(*MockMigrator, *jobs.MockJobProgressRecorder)
-		setupRepo     func(*repository.MockRepository)
+		setupMocks    func(*MockMigrator, *jobstest.MockJobProgressRecorder)
+		setupRepo     func(*repositorytest.MockRepository)
 		job           provisioning.Job
 		expectedError string
 	}{
@@ -88,9 +88,9 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: nil,
 				},
 			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobstest.MockJobProgressRecorder) {
 			},
-			setupRepo: func(repo *repository.MockRepository) {
+			setupRepo: func(repo *repositorytest.MockRepository) {
 				// No Config() call expected since we fail before that
 			},
 			expectedError: "missing migrate settings",
@@ -103,11 +103,11 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobstest.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
-			setupRepo: func(repo *repository.MockRepository) {
+			setupRepo: func(repo *repositorytest.MockRepository) {
 				repo.On("Config").Return(&provisioning.Repository{})
 			},
 		},
@@ -119,11 +119,11 @@ func TestMigrationWorker_Process(t *testing.T) {
 					Migrate: &provisioning.MigrateJobOptions{},
 				},
 			},
-			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
+			setupMocks: func(um *MockMigrator, pr *jobstest.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
-			setupRepo: func(repo *repository.MockRepository) {
+			setupRepo: func(repo *repositorytest.MockRepository) {
 				repo.On("Config").Return(&provisioning.Repository{})
 			},
 			expectedError: "",
@@ -133,7 +133,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			unifiedMigrator := NewMockMigrator(t)
-			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			progressRecorder := jobstest.NewMockJobProgressRecorder(t)
 			featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
 			worker := NewMigrationWorker(unifiedMigrator)
@@ -142,7 +142,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				tt.setupMocks(unifiedMigrator, progressRecorder)
 			}
 
-			rw := repository.NewMockRepository(t)
+			rw := repositorytest.NewMockRepository(t)
 			if tt.setupRepo != nil {
 				tt.setupRepo(rw)
 			}
@@ -196,7 +196,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			worker := NewMigrationWorker(mockMigrator)
 
 			// Create a mock repository (ReaderWriter interface required)
-			mockRepo := repository.NewMockReaderWriter(t)
+			mockRepo := repositorytest.NewMockReaderWriter(t)
 			mockRepo.On("Config").Return(&provisioning.Repository{})
 
 			// Create a test job
@@ -215,7 +215,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			}
 
 			// Create mock progress recorder
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			progress.On("SetTotal", mock.Anything, 10).Maybe()
 
 			// Process the job

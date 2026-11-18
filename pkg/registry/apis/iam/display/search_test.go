@@ -14,6 +14,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -31,7 +32,7 @@ func TestGetDisplayListSearchErrors(t *testing.T) {
 		"plain":     {err: plainErr},
 	} {
 		t.Run(name, func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.EXPECT().Search(mock.Anything, mock.Anything).Return(input.resp, input.err).Twice()
 			provider := NewSearchDisplayProvider(client)
 			result, err := provider.GetDisplayList(t.Context(), authlib.NamespaceInfo{Value: "stacks-1"}, []string{"user:user-1"})

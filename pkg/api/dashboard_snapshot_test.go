@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
@@ -51,7 +54,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 	})
 
 	t.Run("User should not be able to delete snapshot without permissions", func(t *testing.T) {
-		svc := dashboards.NewFakeDashboardService(t)
+		svc := dashboardstest.NewFakeDashboardService(t)
 		server := setup(t, svc, 0, "")
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(
@@ -65,7 +68,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 	})
 
 	t.Run("User should be able to delete snapshot with correct permissions", func(t *testing.T) {
-		svc := dashboards.NewFakeDashboardService(t)
+		svc := dashboardstest.NewFakeDashboardService(t)
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: "1"}, nil)
 
 		server := setup(t, svc, 0, "")
@@ -80,7 +83,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 	})
 
 	t.Run("User should not be able to delete snapshot if fetching dashboard fails", func(t *testing.T) {
-		svc := dashboards.NewFakeDashboardService(t)
+		svc := dashboardstest.NewFakeDashboardService(t)
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, errors.New("some-error"))
 
 		server := setup(t, svc, 0, "")
@@ -95,7 +98,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 	})
 
 	t.Run("User should be able to delete snapshot if connected dashboard no longer exists", func(t *testing.T) {
-		svc := dashboards.NewFakeDashboardService(t)
+		svc := dashboardstest.NewFakeDashboardService(t)
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
 
 		server := setup(t, svc, 0, "")
@@ -110,7 +113,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 	})
 
 	t.Run("User should be able to delete when user is creator but does not have permissions to edit dashboard", func(t *testing.T) {
-		svc := dashboards.NewFakeDashboardService(t)
+		svc := dashboardstest.NewFakeDashboardService(t)
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: "1"}, nil)
 
 		server := setup(t, svc, 1, "")
@@ -172,7 +175,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
 				})
 
-				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc := dashboardstest.NewFakeDashboardService(t)
 				d := setUpSnapshotTest(t, testUserID, ts.URL)
 				hs := buildHttpServer(d, true)
 				hs.DashboardService = dashSvc
@@ -244,7 +247,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 	setUpSnapshotTest := func(t *testing.T) dashboardsnapshots.Service {
 		t.Helper()
 
-		dashSnapSvc := dashboardsnapshots.NewMockService(t)
+		dashSnapSvc := dashboardsnapshotstest.NewMockService(t)
 		dashSnapSvc.
 			On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).
 			Run(func(args mock.Arguments) {}).
@@ -294,7 +297,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		t.Helper()
 
 		if shouldMockDashSnapServ {
-			dashSnapSvc := dashboardsnapshots.NewMockService(t)
+			dashSnapSvc := dashboardsnapshotstest.NewMockService(t)
 			dashSnapSvc.
 				On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).
 				Run(func(args mock.Arguments) {}).
@@ -399,7 +402,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
-			dashSnapSvc := dashboardsnapshots.NewMockService(t)
+			dashSnapSvc := dashboardsnapshotstest.NewMockService(t)
 			if tt.supportLegacy {
 				dashSnapSvc.On("CreateDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.CreateDashboardSnapshotCommand")).
 					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
@@ -435,7 +438,7 @@ func TestCreateDashboardSnapshot_DispatchSwitchesAtRuntime(t *testing.T) {
 		cfg.SnapshotEnabled = true
 		hs.Cfg = cfg
 		hs.Features = featuremgmt.WithFeatures()
-		hs.dashboardsnapshotsService = dashboardsnapshots.NewMockService(t)
+		hs.dashboardsnapshotsService = dashboardsnapshotstest.NewMockService(t)
 		hs.clientConfigProvider = kubeMock
 	})
 
@@ -483,7 +486,7 @@ func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPSe
 func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsnapshots.Service {
 	t.Helper()
 
-	dashSnapSvc := dashboardsnapshots.NewMockService(t)
+	dashSnapSvc := dashboardsnapshotstest.NewMockService(t)
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 
 	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))

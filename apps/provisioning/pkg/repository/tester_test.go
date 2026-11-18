@@ -1,10 +1,13 @@
-package repository
+package repository_test
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 	"testing"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,18 +20,18 @@ import (
 func TestTester_Test_Cases(t *testing.T) {
 	tests := []struct {
 		name          string
-		repository    *MockRepository
+		repository    *repositorytest.MockRepository
 		expectedCode  int
 		expectedErrs  []provisioning.ErrorDetails
 		expectedError error
 	}{
 		{
 			name: "validation fails",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
+			repository: func() *repositorytest.MockRepository {
+				m := repositorytest.NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						// Missing required title
@@ -45,11 +48,11 @@ func TestTester_Test_Cases(t *testing.T) {
 		},
 		{
 			name: "test passes",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
+			repository: func() *repositorytest.MockRepository {
+				m := repositorytest.NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -66,11 +69,11 @@ func TestTester_Test_Cases(t *testing.T) {
 		},
 		{
 			name: "test fails with error",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
+			repository: func() *repositorytest.MockRepository {
+				m := repositorytest.NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -83,11 +86,11 @@ func TestTester_Test_Cases(t *testing.T) {
 		},
 		{
 			name: "test fails with results",
-			repository: func() *MockRepository {
-				m := NewMockRepository(t)
+			repository: func() *repositorytest.MockRepository {
+				m := repositorytest.NewMockRepository(t)
 				m.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -111,11 +114,11 @@ func TestTester_Test_Cases(t *testing.T) {
 		},
 	}
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	// Use basic RepositoryValidator since Tester is used for health checks
-	tester := NewTester(validator)
+	tester := repository.NewTester(validator)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results, err := tester.Test(context.Background(), tt.repository)
@@ -142,26 +145,26 @@ func TestTester_Test_Cases(t *testing.T) {
 }
 
 func TestTester_Test(t *testing.T) {
-	repository := NewMockRepository(t)
-	repository.On("Config").Return(&provisioning.Repository{
+	repo := repositorytest.NewMockRepository(t)
+	repo.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 		},
 	})
-	repository.On("Test", mock.Anything).Return(&provisioning.TestResults{
+	repo.On("Test", mock.Anything).Return(&provisioning.TestResults{
 		Code:    http.StatusOK,
 		Success: true,
 	}, nil)
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	// Use basic RepositoryValidator since Tester is used for health checks
-	tester := NewTester(validator)
-	results, err := tester.Test(context.Background(), repository)
+	tester := repository.NewTester(validator)
+	results, err := tester.Test(context.Background(), repo)
 	require.NoError(t, err)
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)
@@ -205,7 +208,7 @@ func TestFromFieldError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FromFieldError(tt.fieldError)
+			result := repository.FromFieldError(tt.fieldError)
 
 			require.NotNil(t, result)
 			require.Equal(t, tt.expectedCode, result.Code)

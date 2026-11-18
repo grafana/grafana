@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +27,7 @@ import (
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
@@ -35,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -43,7 +47,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -94,7 +98,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -236,7 +240,7 @@ func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	secretsService := managertest.SetupService(manager.ProvideSecretsService, t, database.ProvideSecretsStore(sqlStore))
 
 	getMethods := []string{"single", "multi"}
 
@@ -363,9 +367,9 @@ func TestReceiverService_Delete(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))() // nolint:staticcheck // SA4006 false positive with new
-	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))() // nolint:staticcheck // SA4006 false positive with new
+	baseReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
 		name             string
@@ -388,14 +392,14 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:      "service deletes receiver with multiple integrations",
 			user:      writer,
 			deleteUID: baseReceiver.UID,
-			existing:  new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))),
+			existing:  new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))),
 		},
 		{
 			name:             "service deletes receiver with provenance",
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceAPI,
-			existing:         new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI), models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))),
+			existing:         new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI), modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration))),
 		},
 		{
 			name:      "non-existing receiver doesn't fail",
@@ -415,7 +419,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID: baseReceiver.UID,
 			existing:  new(baseReceiver.Clone()),
 			storeSettings: map[models.AlertRuleKey]models.ContactPointRouting{
-				{OrgID: 1, UID: "rule1"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver(baseReceiver.Name))(),
+				{OrgID: 1, UID: "rule1"}: modelstest.ContactPointRoutingGen(modelstest.CPRMuts.WithReceiver(baseReceiver.Name))(),
 			},
 			expectedErr: makeReceiverInUseErr(false, []models.AlertRuleKey{{OrgID: 1, UID: "rule1"}}),
 		},
@@ -424,7 +428,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceNone,
-			existing:         new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
+			existing:         new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
 			expectedErr:      validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
@@ -432,7 +436,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			user:             writer,
 			deleteUID:        baseReceiver.UID,
 			callerProvenance: models.ProvenanceFile,
-			existing:         new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
+			existing:         new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI))),
 			// expectedErr:      validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceAPI, models.ProvenanceFile),
 		},
 		{
@@ -517,10 +521,10 @@ func TestReceiverService_Create(t *testing.T) {
 	generated := func(n int) string { return fmt.Sprintf("[GENERATED]%d", n) }
 	isGenerated := func(s string) bool { return strings.HasPrefix(s, "[GENERATED]") }
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
-	lineIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig(line.Type))()
-	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))()
+	lineIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig(line.Type))()
+	baseReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
 		name                string
@@ -536,95 +540,95 @@ func TestReceiverService_Create(t *testing.T) {
 			name:                "service creates receiver",
 			user:                writer,
 			receiver:            baseReceiver.Clone(),
-			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			expectedCreate:      modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
 			name:                "service creates receiver with multiple integrations",
 			user:                writer,
-			receiver:            models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
-			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration), models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			receiver:            modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
+			expectedCreate:      modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration), modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone, emailIntegration.UID: models.ProvenanceNone},
 		},
 		{
 			name:                "service creates receiver with provenance",
 			user:                writer,
-			receiver:            models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI), models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
-			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI), models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration), models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			receiver:            modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI), modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
+			expectedCreate:      modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI), modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration), modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceAPI, emailIntegration.UID: models.ProvenanceAPI},
 		},
 		{
 			name:        "existing receiver fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("grafana-default-email")),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithName("grafana-default-email")),
 			expectedErr: models.ErrReceiverExists,
 		},
 		{
 			name: "create integration with empty UID generates a new UID",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID("")),
-				models.CopyIntegrationWith(emailIntegration, models.IntegrationMuts.WithUID("")),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, modelstest.IntegrationMuts.WithUID("")),
+				modelstest.CopyIntegrationWith(emailIntegration, modelstest.IntegrationMuts.WithUID("")),
 			)),
-			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID(generated(0))), // Mark UIDs as generated so that test will insert generated UID.
-				models.CopyIntegrationWith(emailIntegration, models.IntegrationMuts.WithUID(generated(1))),
-			), models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			expectedCreate: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, modelstest.IntegrationMuts.WithUID(generated(0))), // Mark UIDs as generated so that test will insert generated UID.
+				modelstest.CopyIntegrationWith(emailIntegration, modelstest.IntegrationMuts.WithUID(generated(1))),
+			), modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{generated(0): models.ProvenanceNone, generated(1): models.ProvenanceNone}, // Mark UIDs as generated so that test will insert generated UID.
 		},
 		{
 			name:        "create receiver with non-Grafana origin fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithOrigin(models.ResourceOriginImported)),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithOrigin(models.ResourceOriginImported)),
 			expectedErr: models.ErrReceiverOrigin,
 		},
 		{
 			name: "create integration with invalid UID fails",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID("///@#$%^&*(")),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, modelstest.IntegrationMuts.WithUID("///@#$%^&*(")),
 			)),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "create integration with existing UID fails",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.WithUID("UID1")), // UID of grafana-default-email.
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, modelstest.IntegrationMuts.WithUID("UID1")), // UID of grafana-default-email.
 			)),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:        "create with invalid integration fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithInvalidIntegration("slack")),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "create with case-only duplicate of secret field fails",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, models.IntegrationMuts.AddSetting("TOKEN", "duplicate")),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, modelstest.IntegrationMuts.AddSetting("TOKEN", "duplicate")),
 			)),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "create integration with no normal settings should not store nil settings",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(lineIntegration,
-					models.IntegrationMuts.WithSettings(
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(lineIntegration,
+					modelstest.IntegrationMuts.WithSettings(
 						map[string]any{ // Line is valid with only the single secure field "token", so Settings will be empty when saving.
 							"token": "secret",
 						},
 					)),
 			)),
-			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
-				models.CopyIntegrationWith(lineIntegration,
-					models.IntegrationMuts.WithSettings(
+			expectedCreate: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(
+				modelstest.CopyIntegrationWith(lineIntegration,
+					modelstest.IntegrationMuts.WithSettings(
 						map[string]any{}, // Empty settings, not nil.
 					),
-					models.IntegrationMuts.WithSecureSettings(
+					modelstest.IntegrationMuts.WithSecureSettings(
 						map[string]string{
 							"token": "c2VjcmV0", // base64 encoded "secret".
 						},
@@ -648,7 +652,7 @@ func TestReceiverService_Create(t *testing.T) {
 		{
 			name:        "receiver with empty name fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("")),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithName("")),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
@@ -662,24 +666,24 @@ func TestReceiverService_Create(t *testing.T) {
 			name:                "create with integration in allowlist succeeds",
 			user:                writer,
 			receiver:            baseReceiver.Clone(),
-			expectedCreate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.Encrypted(models.Base64Enrypt)),
+			expectedCreate:      modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
 		{
 			name:        "create with multiple integrations rejects when any is not in allowlist",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(slackIntegration, emailIntegration)),
 			expectedErr: models.ErrReceiverInvalidBase,
 			opts:        []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
 		{
 			name:     "should be able to create receiver with the same name as imported ones",
 			user:     writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithName("receiver1")),
-			expectedCreate: models.CopyReceiverWith(baseReceiver,
-				models.ReceiverMuts.Encrypted(models.Base64Enrypt),
-				models.ReceiverMuts.WithName("receiver1"),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithName("receiver1")),
+			expectedCreate: modelstest.CopyReceiverWith(baseReceiver,
+				modelstest.ReceiverMuts.Encrypted(modelstest.Base64Enrypt),
+				modelstest.ReceiverMuts.WithName("receiver1"),
 			),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withImportedIncluded},
@@ -687,16 +691,16 @@ func TestReceiverService_Create(t *testing.T) {
 		{
 			name:           "with email integration and allowed emails should not fail",
 			user:           writer,
-			receiver:       models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
-			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
-			opts:           []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+			receiver:       modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedCreate: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
+			opts:           []createReceiverServiceSutOpt{withEmailValidator(notifiertest.NewFakeEmailValidator(t, nil))},
 		},
 		{
 			name:        "with email integration and not allowed emails should fail",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
 			expectedErr: models.ErrReceiverInvalidBase,
-			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(notifiertest.NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -740,7 +744,7 @@ func TestReceiverService_Create(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			stored, err := sut.GetReceiver(context.Background(), created.UID, true, decryptUser)
 			require.NoError(t, err)
-			decrypted := models.CopyReceiverWith(tc.expectedCreate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
+			decrypted := modelstest.CopyReceiverWith(tc.expectedCreate, modelstest.ReceiverMuts.Decrypted(modelstest.Base64Decrypt))
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
 			assert.Equal(t, decrypted, *stored)
 
@@ -783,11 +787,11 @@ func TestReceiverService_Update(t *testing.T) {
 	generated := func(n int) string { return fmt.Sprintf("[GENERATED]%d", n) }
 	isGenerated := func(s string) bool { return strings.HasPrefix(s, "[GENERATED]") }
 
-	rm := models.ReceiverMuts
-	im := models.IntegrationMuts
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
-	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	rm := modelstest.ReceiverMuts
+	im := modelstest.IntegrationMuts
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))()
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))()
+	baseReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
 		name                string
@@ -804,38 +808,38 @@ func TestReceiverService_Update(t *testing.T) {
 		{
 			name: "copies existing secure fields",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
 			),
 			secureFields: map[string][]string{slackIntegration.UID: {"token"}},
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSecureSetting("token", "ZXhpc3RpbmdUb2tlbg=="), // This will get copied.
 					im.AddSecureSetting("url", "ZXhpc3RpbmdVcmw="),       // This won't get copied.
 				),
 			))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("newField", "newValue"),
 					im.AddSecureSetting("token", "ZXhpc3RpbmdUb2tlbg==")),
-			), rm.Encrypted(models.Base64Enrypt)),
+			), rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
 			name: "encrypts previously unencrypted secure fields",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, im.AddSetting("token", "unencryptedValue"))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, im.AddSetting("token", "unencryptedValue"))),
 			),
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("token", "unencryptedValue"), // This will get encrypted.
 				),
 			))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSecureSetting("token", "dW5lbmNyeXB0ZWRWYWx1ZQ==")),
-			), rm.Encrypted(models.Base64Enrypt)),
+			), rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
@@ -843,78 +847,78 @@ func TestReceiverService_Update(t *testing.T) {
 			// The UI will receive the field as secure and, if unchanged, will pass it back on update as a secureField instead of a Setting.
 			name: "encrypts previously unencrypted secure fields when passed in as secureFields",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
 			),
 			secureFields: map[string][]string{slackIntegration.UID: {"token"}},
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("token", "unencryptedValue"), // This will get encrypted.
 				),
 			))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("newField", "newValue"),
 					im.AddSecureSetting("token", "dW5lbmNyeXB0ZWRWYWx1ZQ==")),
-			), rm.Encrypted(models.Base64Enrypt)),
+			), rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
 			name: "doesn't copy existing unsecure fields",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, im.AddSetting("newField", "newValue"))),
 			),
 			secureFields: map[string][]string{slackIntegration.UID: {"somefield"}},
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("somefield", "somevalue"), // This won't get copied.
 				),
 			))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration,
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration,
 					im.AddSetting("newField", "newValue")),
-			), rm.Encrypted(models.Base64Enrypt)),
+			), rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 		},
 		{
 			name:     "creates new provenance when integration is added",
 			user:     writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, emailIntegration), models.ReceiverMuts.WithProvenance(models.ProvenanceFile)),
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration), models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver,
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, emailIntegration), modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile)),
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration), modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver,
 				rm.WithIntegrations(slackIntegration, emailIntegration),
-				models.ReceiverMuts.WithProvenance(models.ProvenanceFile),
-				rm.Encrypted(models.Base64Enrypt)),
+				modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile),
+				rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceFile, emailIntegration.UID: models.ProvenanceFile},
 		},
 		{
 			name:     "deletes old provenance when integration is removed",
 			user:     writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration), models.ReceiverMuts.WithProvenance(models.ProvenanceFile)),
-			existing: new(models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, emailIntegration), models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver,
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration), modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile)),
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, emailIntegration), modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver,
 				rm.WithIntegrations(slackIntegration),
-				models.ReceiverMuts.WithProvenance(models.ProvenanceFile),
-				rm.Encrypted(models.Base64Enrypt)),
+				modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile),
+				rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceFile},
 		},
 		{
 			name:        "changing provenance from something to None fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceNone)),
-			existing:    new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceNone)),
+			existing:    new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
 			expectedErr: validation.MakeErrProvenanceChangeNotAllowedWithReason(models.ProvenanceFile, models.ProvenanceNone, "transition is not allowed"),
 		},
 		{
 			name:     "changing provenance from one type to another fails", // TODO: This should fail once we move from lenient to strict validation.
 			user:     writer,
-			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceAPI)),
-			existing: new(models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI)),
+			existing: new(modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithProvenance(models.ProvenanceFile))),
 			// expectedErr: validation.MakeErrProvenanceChangeNotAllowed(models.ProvenanceFile, models.ProvenanceAPI),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver,
-				models.ReceiverMuts.WithProvenance(models.ProvenanceAPI),
-				rm.Encrypted(models.Base64Enrypt)),
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver,
+				modelstest.ReceiverMuts.WithProvenance(models.ProvenanceAPI),
+				rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceAPI},
 		},
 		{
@@ -934,32 +938,32 @@ func TestReceiverService_Update(t *testing.T) {
 		{
 			name:     "update that adds new integration generates a new UID",
 			user:     writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, models.CopyIntegrationWith(emailIntegration, im.WithUID("")))),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, modelstest.CopyIntegrationWith(emailIntegration, im.WithUID("")))),
 			existing: new(baseReceiver.Clone()),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver,
-				rm.WithIntegrations(slackIntegration, models.CopyIntegrationWith(emailIntegration, im.WithUID(generated(0)))), // Mark UID as generated so that test will insert generated UID.
-				rm.Encrypted(models.Base64Enrypt)),
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver,
+				rm.WithIntegrations(slackIntegration, modelstest.CopyIntegrationWith(emailIntegration, im.WithUID(generated(0)))), // Mark UID as generated so that test will insert generated UID.
+				rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone, generated(0): models.ProvenanceNone}, // Mark UID as generated so that test will insert generated UID.
 		},
 		{
 			name:        "update with integration that has a UID that already exists fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, models.CopyIntegrationWith(emailIntegration, im.WithUID(slackIntegration.UID)))),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(slackIntegration, modelstest.CopyIntegrationWith(emailIntegration, im.WithUID(slackIntegration.UID)))),
 			existing:    new(baseReceiver.Clone()),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name:        "update with invalid integration fails",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithInvalidIntegration("slack")),
 			existing:    new(baseReceiver.Clone()),
 			expectedErr: models.ErrReceiverInvalidBase,
 		},
 		{
 			name: "update with case-only duplicate of secret field fails",
 			user: writer,
-			receiver: models.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
-				models.CopyIntegrationWith(slackIntegration, im.AddSetting("TOKEN", "duplicate")),
+			receiver: modelstest.CopyReceiverWith(baseReceiver, rm.WithIntegrations(
+				modelstest.CopyIntegrationWith(slackIntegration, im.AddSetting("TOKEN", "duplicate")),
 			)),
 			existing:    new(baseReceiver.Clone()),
 			expectedErr: models.ErrReceiverInvalidBase,
@@ -967,7 +971,7 @@ func TestReceiverService_Update(t *testing.T) {
 		{
 			name:        "receivers with non-Grafana origin are not accepted",
 			user:        writer,
-			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithOrigin(models.ResourceOriginImported)),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, rm.WithOrigin(models.ResourceOriginImported)),
 			existing:    new(baseReceiver.Clone()),
 			expectedErr: models.ErrReceiverOrigin,
 		},
@@ -976,16 +980,16 @@ func TestReceiverService_Update(t *testing.T) {
 			user: writer,
 			// The imported receiver this is meant to match has no persisted UID of its own - it's
 			// looked up by its name-derived UID, same as any other imported/non-Grafana receiver.
-			receiver:    models.CopyReceiverWith(baseReceiver, rm.WithName("receiver1"), rm.WithUID(string(v1.ReceiverUID("receiver1")))),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, rm.WithName("receiver1"), rm.WithUID(string(v1.ReceiverUID("receiver1")))),
 			expectedErr: models.ErrReceiverOrigin,
 			opts:        []createReceiverServiceSutOpt{withImportedIncluded},
 		},
 		{
 			name:           "update should not fail if imported cannot be included",
 			user:           writer,
-			receiver:       models.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
-			existing:       new(models.CopyReceiverWith(baseReceiver)),
-			expectedUpdate: models.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
+			receiver:       modelstest.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
+			existing:       new(modelstest.CopyReceiverWith(baseReceiver)),
+			expectedUpdate: modelstest.CopyReceiverWith(baseReceiver, rm.WithEmptyIntegrations()),
 			opts:           []createReceiverServiceSutOpt{withImportedIncluded, withInvalidExtraConfig},
 		},
 		{
@@ -1001,7 +1005,7 @@ func TestReceiverService_Update(t *testing.T) {
 			user:                writer,
 			receiver:            baseReceiver.Clone(),
 			existing:            new(baseReceiver.Clone()),
-			expectedUpdate:      models.CopyReceiverWith(baseReceiver, rm.Encrypted(models.Base64Enrypt)),
+			expectedUpdate:      modelstest.CopyReceiverWith(baseReceiver, rm.Encrypted(modelstest.Base64Enrypt)),
 			expectedProvenances: map[string]models.Provenance{slackIntegration.UID: models.ProvenanceNone},
 			opts:                []createReceiverServiceSutOpt{withAllowedIntegrations(schema.SlackType)},
 		},
@@ -1009,18 +1013,18 @@ func TestReceiverService_Update(t *testing.T) {
 			name:                "update with email integration and allowed emails should not fail",
 			user:                writer,
 			existing:            new(baseReceiver.Clone()),
-			receiver:            models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
-			expectedUpdate:      models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			receiver:            modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
+			expectedUpdate:      modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
 			expectedProvenances: map[string]models.Provenance{emailIntegration.UID: models.ProvenanceNone},
-			opts:                []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, nil))},
+			opts:                []createReceiverServiceSutOpt{withEmailValidator(notifiertest.NewFakeEmailValidator(t, nil))},
 		},
 		{
 			name:        "update with email integration and not allowed emails should fail",
 			user:        writer,
 			existing:    new(baseReceiver.Clone()),
-			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(emailIntegration)),
+			receiver:    modelstest.CopyReceiverWith(baseReceiver, modelstest.ReceiverMuts.WithIntegrations(emailIntegration)),
 			expectedErr: models.ErrReceiverInvalidBase,
-			opts:        []createReceiverServiceSutOpt{withEmailValidator(NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
+			opts:        []createReceiverServiceSutOpt{withEmailValidator(notifiertest.NewFakeEmailValidator(t, fmt.Errorf("email validation failed")))},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1086,7 +1090,7 @@ func TestReceiverService_Update(t *testing.T) {
 			// Ensure receiver saved to store is correct.
 			stored, err := sut.GetReceiver(context.Background(), updated.UID, true, decryptUser)
 			require.NoError(t, err)
-			decrypted := models.CopyReceiverWith(tc.expectedUpdate, models.ReceiverMuts.Decrypted(models.Base64Decrypt))
+			decrypted := modelstest.CopyReceiverWith(tc.expectedUpdate, modelstest.ReceiverMuts.Decrypted(modelstest.Base64Decrypt))
 			decrypted.Version = tc.expectedUpdate.Version // Version is calculated before decryption.
 			assert.Equal(t, decrypted, *stored)
 
@@ -1102,8 +1106,8 @@ func TestReceiverService_Update(t *testing.T) {
 
 func TestReceiverService_Update_HasUpdateProtectedError(t *testing.T) {
 	writer := &user.SignedInUser{OrgID: 1}
-	existing := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"),
-		models.ReceiverMuts.WithIntegrations(models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()))()
+	existing := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver"),
+		modelstest.ReceiverMuts.WithIntegrations(modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))()))()
 
 	for _, tc := range []struct {
 		name        string
@@ -1151,10 +1155,10 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	secretsService := fake_secrets.NewFakeSecretsService()
 	receiverName := "grafana-default-email"
 	newReceiverName := "new-name"
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName(receiverName), modelstest.IntegrationMuts.WithValidConfig("slack"))()
 	// UID must match the seeded "grafana-default-email" entry in defaultAlertmanagerConfigJSON,
 	// which (having no persisted uid of its own) resolves to its name-derived UID on load.
-	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithUID(string(v1.ReceiverUID(receiverName))), models.ReceiverMuts.WithIntegrations(slackIntegration))()
+	baseReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName(receiverName), modelstest.ReceiverMuts.WithUID(string(v1.ReceiverUID(receiverName))), modelstest.ReceiverMuts.WithIntegrations(slackIntegration))()
 	baseReceiver.Version = "4e43d5834c652a74" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
@@ -1214,7 +1218,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		ruleStore := &fakeAlertRuleNotificationStore{
 			RenameReceiverInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 				assertInTransaction(t, ctx)
-				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
+				return nil, []models.AlertRuleKey{modelstest.GenerateRuleKey(orgID)}, nil
 			},
 		}
 		sut.ruleNotificationsStore = ruleStore
@@ -1362,7 +1366,7 @@ func TestReceiverService_validateNoDuplicateSecretFields(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			integrationGenerator := models.IntegrationGen(models.IntegrationMuts.WithName(tc.name), models.IntegrationMuts.WithValidConfig(schema.IntegrationType(tc.integration)), models.IntegrationMuts.WithSettings(tc.settings))
+			integrationGenerator := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName(tc.name), modelstest.IntegrationMuts.WithValidConfig(schema.IntegrationType(tc.integration)), modelstest.IntegrationMuts.WithSettings(tc.settings))
 			integration := integrationGenerator()
 			err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings)
 			if tc.wantErr == "" {
@@ -1386,11 +1390,11 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
-	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))
+	recv1 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver1"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv2 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver2"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1525,11 +1529,11 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 	var orgId int64 = 1
 	secretsService := fake_secrets.NewFakeSecretsService()
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
-	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))
+	recv1 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver1"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv2 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver2"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1613,11 +1617,11 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("webhook"))
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
-	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("webhook"))
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))
+	recv1 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver1"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv2 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver2"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1806,11 +1810,11 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 		},
 	}}
 
-	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))
-	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
-	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	slackIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("slack"))
+	emailIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithName("test receiver"), modelstest.IntegrationMuts.WithValidConfig("email"))
+	recv1 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver1"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv2 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver2"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), modelstest.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1966,14 +1970,14 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 			name: "mixed metadata",
 			user: admin,
 			existing: []*models.Receiver{
-				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver1-uid"), models.ReceiverMuts.WithName("receiver1"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver2-uid"), models.ReceiverMuts.WithName("receiver2"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver3-uid"), models.ReceiverMuts.WithName("receiver3"))()),
-				new(models.ReceiverGen(models.ReceiverMuts.WithUID("receiver4-uid"), models.ReceiverMuts.WithName("receiver4"))()),
+				new(modelstest.ReceiverGen(modelstest.ReceiverMuts.WithUID("receiver1-uid"), modelstest.ReceiverMuts.WithName("receiver1"))()),
+				new(modelstest.ReceiverGen(modelstest.ReceiverMuts.WithUID("receiver2-uid"), modelstest.ReceiverMuts.WithName("receiver2"))()),
+				new(modelstest.ReceiverGen(modelstest.ReceiverMuts.WithUID("receiver3-uid"), modelstest.ReceiverMuts.WithName("receiver3"))()),
+				new(modelstest.ReceiverGen(modelstest.ReceiverMuts.WithUID("receiver4-uid"), modelstest.ReceiverMuts.WithName("receiver4"))()),
 			},
 			storeSettings: map[models.AlertRuleKey]models.ContactPointRouting{
-				{OrgID: 1, UID: "rule1uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver1"))(),
-				{OrgID: 1, UID: "rule2uid"}: models.ContactPointRoutingGen(models.CPRMuts.WithReceiver("receiver2"))(),
+				{OrgID: 1, UID: "rule1uid"}: modelstest.ContactPointRoutingGen(modelstest.CPRMuts.WithReceiver("receiver1"))(),
+				{OrgID: 1, UID: "rule2uid"}: modelstest.ContactPointRoutingGen(modelstest.CPRMuts.WithReceiver("receiver2"))(),
 			},
 			storeRoute: v1.Route{
 				Receiver: "receiver1",
@@ -2272,7 +2276,7 @@ func assertInTransaction(t *testing.T, ctx context.Context) {
 }
 
 func receiverFingerprintCompat(t *testing.T, r *models.Receiver) string {
-	// Some test versions are computed via the domain-level Fingerprint() (see models.CopyReceiverWith/ReceiverGen).
+	// Some test versions are computed via the domain-level Fingerprint() (see modelstest.CopyReceiverWith/ReceiverGen).
 	// This is a different formula than v1.ReceiverFingerprint that is no longer used by the real
 	// UpdateReceiver path.
 	// This is only needed in the interim while both models.Receiver and v1.PostableApiReceiver both exist.

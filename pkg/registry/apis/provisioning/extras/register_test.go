@@ -3,6 +3,8 @@ package extras
 import (
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -39,7 +41,7 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 				provisioning.GithubConnectionType,
 				configuredType,
 			} {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.On("Type").Return(connectionType)
 				extras = append(extras, extra)
 			}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -42,13 +43,13 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
@@ -169,13 +170,13 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioning(t *testing.T) {
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).GenerateMany(2)
 
 	ruleGroup := apimodels.AlertRuleGroup{
@@ -311,13 +312,13 @@ func TestIntegrationRecordingRuleCompatCreateViaProvisioningChangeGroupInK8s(t *
 	// Create test folder first
 	common.CreateTestFolder(t, helper, "test-folder")
 
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
-		ngmodels.RuleMuts.WithGroupName("test-group"),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithNamespaceUID("test-folder"),
+		modelstest.RuleMuts.WithGroupName("test-group"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).GenerateMany(2)
 
 	ruleGroup := apimodels.AlertRuleGroup{
@@ -438,12 +439,12 @@ func TestIntegrationRecordingRuleCompatListWithGroupLabelSelectors(t *testing.T)
 	common.CreateTestFolder(t, helper, "compat-rr-group-sel-folder")
 
 	makeRule := func(uid, title, folder string) apimodels.ProvisionedAlertRule {
-		rule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUID(uid),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithNamespaceUID(folder),
-			ngmodels.RuleMuts.WithAllRecordingRules(),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUID(uid),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithNamespaceUID(folder),
+			modelstest.RuleMuts.WithAllRecordingRules(),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return apimodels.ProvisionedAlertRule{
 			UID:   uid,
@@ -469,15 +470,15 @@ func TestIntegrationRecordingRuleCompatListWithGroupLabelSelectors(t *testing.T)
 		}
 	}
 
-	rulesAlpha := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rulesAlpha := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).GenerateMany(2)
-	rulesBeta := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rulesBeta := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).GenerateMany(2)
 
 	groupAlpha := apimodels.AlertRuleGroup{

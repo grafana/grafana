@@ -6,6 +6,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github/githubtest"
+
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -39,7 +41,7 @@ func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, erro
 }
 
 func TestExtra_Type(t *testing.T) {
-	mockFactory := github.NewMockGithubFactory(t)
+	mockFactory := githubtest.NewMockGithubFactory(t)
 	decrypter := func(c *provisioning.Connection) connection.SecureValues {
 		return &mockSecureValues{}
 	}
@@ -214,7 +216,7 @@ func TestExtra_Build(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
 
-			mockFactory := github.NewMockGithubFactory(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
 			decrypter := tt.setupDecrypter()
 
 			e := github.Extra(decrypter, mockFactory)
@@ -349,7 +351,7 @@ func TestExtra_Mutate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
 
-			mockFactory := github.NewMockGithubFactory(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
 			decrypter := func(c *provisioning.Connection) connection.SecureValues {
 				return &mockSecureValues{}
 			}

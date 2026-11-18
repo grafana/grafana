@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
@@ -40,6 +41,17 @@ func cloudRBACRolesEnabled(ctx context.Context) bool {
 }
 
 func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry) *RBACSync {
+	return NewRBACSync(cfg, acService, tracer, permRegistry)
+}
+
+type rbacSyncAccessControl interface {
+	GetRoleByName(context.Context, int64, string) (*accesscontrol.RoleDTO, error)
+	GetUserPermissions(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error)
+	SyncUserRoles(context.Context, int64, accesscontrol.SyncUserRolesCommand) error
+	ClearUserPermissionCache(identity.Requester)
+}
+
+func NewRBACSync(cfg *setting.Cfg, acService rbacSyncAccessControl, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry) *RBACSync {
 	return &RBACSync{
 		cfg:          cfg,
 		ac:           acService,
@@ -52,7 +64,7 @@ func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer t
 
 type RBACSync struct {
 	cfg          *setting.Cfg
-	ac           accesscontrol.Service
+	ac           rbacSyncAccessControl
 	permRegistry permreg.PermissionRegistry
 	log          log.Logger
 	tracer       tracing.Tracer

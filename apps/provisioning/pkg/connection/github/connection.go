@@ -17,7 +17,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-//go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
+//go:generate mockery --name GithubFactory --structname MockGithubFactory --outpkg githubtest --output ./githubtest/ --filename factory_mock.go --with-expecter
 type GithubFactory interface {
 	New(ctx context.Context, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error)
 }

@@ -10,11 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
 func TestLoadedResultsFromRuleState(t *testing.T) {
-	rule := ngmodels.RuleGen.GenerateRef()
+	rule := modelstest.RuleGen.GenerateRef()
 	p := &FakeRuleStateProvider{
 		map[ngmodels.AlertRuleKey][]*state.State{
 			rule.GetKey(): {

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -51,7 +52,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 				State: &State{
 					State:       toState.State,
 					StateReason: toState.Reason,
-					Labels:      ngmodels.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
+					Labels:      modelstest.GenerateAlertLabels(5, fmt.Sprintf("%d--", i)),
 				},
 				PreviousState:       fromState.State,
 				PreviousStateReason: fromState.Reason,
@@ -141,8 +142,8 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 				CreatedAt: time.Now().Add(2 * time.Minute),
 				ExpiresAt: time.Now().Add(3 * time.Minute),
 			},
-			Annotations: ngmodels.GenerateAlertLabels(4, "annotations_"),
-			Labels:      ngmodels.GenerateAlertLabels(4, "labels_"),
+			Annotations: modelstest.GenerateAlertLabels(4, "annotations_"),
+			Labels:      modelstest.GenerateAlertLabels(4, "labels_"),
 			Values: map[string]float64{
 				"A1": 11.0,
 				"B1": 12.0,

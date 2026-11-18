@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -28,8 +31,8 @@ func TestExportFolders(t *testing.T) {
 		name           string
 		reactorFunc    func(action k8testing.Action) (bool, runtime.Object, error)
 		expectedError  string
-		setupProgress  func(progress *jobs.MockJobProgressRecorder)
-		setupResources func(repoResources *resources.MockRepositoryResources)
+		setupProgress  func(progress *jobstest.MockJobProgressRecorder)
+		setupResources func(repoResources *resourcestest.MockRepositoryResources)
 	}{
 		{
 			name: "list folders error",
@@ -37,10 +40,10 @@ func TestExportFolders(t *testing.T) {
 				return true, nil, fmt.Errorf("failed to list folders")
 			},
 			expectedError: "load folder tree: error executing list: failed to list folders",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 			},
 		},
 		{
@@ -67,10 +70,10 @@ func TestExportFolders(t *testing.T) {
 				return true, list, nil
 			},
 			expectedError: "load folder tree: too many folders",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 			},
 		},
 		{
@@ -80,10 +83,10 @@ func TestExportFolders(t *testing.T) {
 				return true, &metav1.PartialObjectMetadataList{}, nil
 			},
 			expectedError: "write folders to repository: failed to ensure folder tree",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 					return opts.Ref == "feature/branch" && opts.Path == "grafana"
 				})).Return(fmt.Errorf("failed to ensure folder tree"))
@@ -127,7 +130,7 @@ func TestExportFolders(t *testing.T) {
 				return true, list, nil
 			},
 			expectedError: "",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -139,7 +142,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
@@ -190,7 +193,7 @@ func TestExportFolders(t *testing.T) {
 				return true, list, nil
 			},
 			expectedError: "",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -202,7 +205,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
@@ -241,13 +244,13 @@ func TestExportFolders(t *testing.T) {
 				return true, list, nil
 			},
 			expectedError: "write folders to repository: too many errors encountered",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.Anything).Return()
 				progress.On("TooManyErrors").Return(fmt.Errorf("too many errors encountered"))
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 1
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
@@ -303,7 +306,7 @@ func TestExportFolders(t *testing.T) {
 				return true, list, nil
 			},
 			expectedError: "",
-			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+			setupProgress: func(progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "read folder tree from API server").Return()
 				progress.On("SetMessage", mock.Anything, "write folders to repository").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -315,7 +318,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("TooManyErrors").Return(nil)
 			},
-			setupResources: func(repoResources *resources.MockRepositoryResources) {
+			setupResources: func(repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 					return tree.Count() == 2
 				}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
@@ -350,10 +353,10 @@ func TestExportFolders(t *testing.T) {
 			})
 			fakeFolderClient := fakeDynamicClient.Resource(resources.FolderResource)
 			fakeDynamicClient.PrependReactor("list", "folders", tt.reactorFunc)
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
 			tt.setupProgress(mockProgress)
 
-			repoResources := resources.NewMockRepositoryResources(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources)
 
 			err := ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
@@ -397,14 +400,14 @@ func TestFolderMetaAccessor(t *testing.T) {
 			items: []unstructured.Unstructured{*obj},
 		}
 
-		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResources := resourcestest.NewMockRepositoryResources(t)
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 			return tree.Count() == 0 // Should be 0 since folder is managed by other manager
 		}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 			return opts.Ref == "feature/branch" && opts.Path == "grafana"
 		})).Return(nil)
 
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		// No Record calls expected since folder should be skipped
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
@@ -440,8 +443,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 			items: []unstructured.Unstructured{*obj},
 		}
 
-		mockRepoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		mockRepoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
 			return opts.Ref == "feature/branch" && opts.Path == "grafana"
@@ -468,8 +471,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 			items: []unstructured.Unstructured{*obj},
 		}
 
-		mockRepoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		mockRepoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		err := ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
 			Path:   "grafana",
@@ -504,8 +507,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 			items: []unstructured.Unstructured{*obj},
 		}
 
-		mockRepoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		mockRepoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 			return tree.Count() == 0 // Should be empty since folder was skipped
@@ -544,8 +547,8 @@ func TestFolderMetaAccessor(t *testing.T) {
 			items: []unstructured.Unstructured{*obj},
 		}
 
-		mockRepoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		mockRepoResources := resourcestest.NewMockRepositoryResources(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
 			return tree.Count() == 0 // Should be empty since folder was skipped
@@ -599,8 +602,8 @@ func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
 
 	// Leaving both mocks without expectations asserts EnsureFolderTreeExists (and
 	// therefore any per-folder Record) is never reached once a collision is found.
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
 	require.Error(t, err)
@@ -614,9 +617,9 @@ func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
 	tree.Add(resources.Folder{ID: "uid-a", Title: "Reports"}, "")
 	tree.Add(resources.Folder{ID: "uid-b", Title: "Metrics"}, "")
 
-	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
 	require.NoError(t, err)

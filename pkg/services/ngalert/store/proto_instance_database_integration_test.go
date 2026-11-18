@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -45,14 +46,14 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 			name: "can save and read alert rule state",
 			setupInstances: func() []models.AlertInstance {
 				return []models.AlertInstance{
-					*models.AlertInstanceGen(
-						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
-						models.InstanceMuts.WithRuleUID(alertRule1.UID),
-						models.InstanceMuts.WithLabelsHash("labelsHash1"),
-						models.InstanceMuts.WithReason(string(models.InstanceStateError)),
-						models.InstanceMuts.WithState(models.InstanceStateFiring),
-						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
-						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					*modelstest.AlertInstanceGen(
+						modelstest.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						modelstest.InstanceMuts.WithRuleUID(alertRule1.UID),
+						modelstest.InstanceMuts.WithLabelsHash("labelsHash1"),
+						modelstest.InstanceMuts.WithReason(string(models.InstanceStateError)),
+						modelstest.InstanceMuts.WithState(models.InstanceStateFiring),
+						modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						modelstest.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
 					),
 				}
 			},
@@ -69,21 +70,21 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 			name: "can save and read alert rule state with multiple instances",
 			setupInstances: func() []models.AlertInstance {
 				return []models.AlertInstance{
-					*models.AlertInstanceGen(
-						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
-						models.InstanceMuts.WithRuleUID(alertRule1.UID),
-						models.InstanceMuts.WithLabelsHash("hash1"),
-						models.InstanceMuts.WithState(models.InstanceStateFiring),
-						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
-						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					*modelstest.AlertInstanceGen(
+						modelstest.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						modelstest.InstanceMuts.WithRuleUID(alertRule1.UID),
+						modelstest.InstanceMuts.WithLabelsHash("hash1"),
+						modelstest.InstanceMuts.WithState(models.InstanceStateFiring),
+						modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						modelstest.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
 					),
-					*models.AlertInstanceGen(
-						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
-						models.InstanceMuts.WithRuleUID(alertRule1.UID),
-						models.InstanceMuts.WithLabelsHash("hash2"),
-						models.InstanceMuts.WithState(models.InstanceStateFiring),
-						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
-						models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+					*modelstest.AlertInstanceGen(
+						modelstest.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						modelstest.InstanceMuts.WithRuleUID(alertRule1.UID),
+						modelstest.InstanceMuts.WithLabelsHash("hash2"),
+						modelstest.InstanceMuts.WithState(models.InstanceStateFiring),
+						modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						modelstest.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
 					),
 				}
 			},
@@ -101,13 +102,13 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 			name: "truncates long LastError when saving compressed state",
 			setupInstances: func() []models.AlertInstance {
 				return []models.AlertInstance{
-					*models.AlertInstanceGen(
-						models.InstanceMuts.WithOrgID(alertRule1.OrgID),
-						models.InstanceMuts.WithRuleUID(alertRule1.UID),
-						models.InstanceMuts.WithLabelsHash("truncateHash"),
-						models.InstanceMuts.WithState(models.InstanceStateError),
-						models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
-						models.InstanceMuts.WithLastError(strings.Repeat("e", 1200)),
+					*modelstest.AlertInstanceGen(
+						modelstest.InstanceMuts.WithOrgID(alertRule1.OrgID),
+						modelstest.InstanceMuts.WithRuleUID(alertRule1.UID),
+						modelstest.InstanceMuts.WithLabelsHash("truncateHash"),
+						modelstest.InstanceMuts.WithState(models.InstanceStateError),
+						modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+						modelstest.InstanceMuts.WithLastError(strings.Repeat("e", 1200)),
 					),
 				}
 			},
@@ -158,14 +159,14 @@ func TestIntegration_ProtoInstanceDBStore_VerifyCompressedData(t *testing.T) {
 	alertRule := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
 
 	instances := []models.AlertInstance{
-		*models.AlertInstanceGen(
-			models.InstanceMuts.WithOrgID(alertRule.OrgID),
-			models.InstanceMuts.WithRuleUID(alertRule.UID),
-			models.InstanceMuts.WithLabelsHash("hash1"),
-			models.InstanceMuts.WithReason("reason"),
-			models.InstanceMuts.WithState(models.InstanceStateFiring),
-			models.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
-			models.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
+		*modelstest.AlertInstanceGen(
+			modelstest.InstanceMuts.WithOrgID(alertRule.OrgID),
+			modelstest.InstanceMuts.WithRuleUID(alertRule.UID),
+			modelstest.InstanceMuts.WithLabelsHash("hash1"),
+			modelstest.InstanceMuts.WithReason("reason"),
+			modelstest.InstanceMuts.WithState(models.InstanceStateFiring),
+			modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label1": "value1"}),
+			modelstest.InstanceMuts.WithAnnotations(models.InstanceAnnotations{"annotation1": "value1"}),
 		),
 	}
 
@@ -231,12 +232,12 @@ func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 		{TargetDatasourceUID: "ds", Metric: "metric", Labels: map[string]string{"job": "b"}, LastUpdate: time.Unix(1000, 0).UTC()},
 	}
 	instance := func(rule *models.AlertRule, hash string) models.AlertInstance {
-		return *models.AlertInstanceGen(
-			models.InstanceMuts.WithOrgID(rule.OrgID),
-			models.InstanceMuts.WithRuleUID(rule.UID),
-			models.InstanceMuts.WithLabelsHash(hash),
-			models.InstanceMuts.WithState(models.InstanceStateNormal),
-			models.InstanceMuts.WithLabels(models.InstanceLabels{"label": hash}),
+		return *modelstest.AlertInstanceGen(
+			modelstest.InstanceMuts.WithOrgID(rule.OrgID),
+			modelstest.InstanceMuts.WithRuleUID(rule.UID),
+			modelstest.InstanceMuts.WithLabelsHash(hash),
+			modelstest.InstanceMuts.WithState(models.InstanceStateNormal),
+			modelstest.InstanceMuts.WithLabels(models.InstanceLabels{"label": hash}),
 		)
 	}
 	rowCount := func(t *testing.T, rule *models.AlertRule) int64 {

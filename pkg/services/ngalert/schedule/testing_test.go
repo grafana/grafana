@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule/scheduletest"
+
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -89,13 +91,13 @@ func (f *fakeRulesStore) getNamespaceTitle(uid string) string {
 }
 
 type SyncAlertsSenderMock struct {
-	*AlertsSenderMock
+	*scheduletest.AlertsSenderMock
 	mu sync.Mutex
 }
 
 func NewSyncAlertsSenderMock() *SyncAlertsSenderMock {
 	return &SyncAlertsSenderMock{
-		AlertsSenderMock: new(AlertsSenderMock),
+		AlertsSenderMock: new(scheduletest.AlertsSenderMock),
 	}
 }
 

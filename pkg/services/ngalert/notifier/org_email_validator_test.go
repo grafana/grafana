@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
@@ -256,24 +256,24 @@ func TestOrgUserEmailValidator_ValidateIntegrationConfig(t *testing.T) {
 func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 	t.Run("non-email integration type is skipped", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgWithoutMember()}
-		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfig(schema.SlackType))()
+		integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(schema.SlackType))()
 		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
 	})
 
 	t.Run("email V1 with org member succeeds", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgHavingMember("alice@org.com")}
-		integration := models.IntegrationGen(
-			models.IntegrationMuts.WithValidConfig(schema.EmailType),
-			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
+		integration := modelstest.IntegrationGen(
+			modelstest.IntegrationMuts.WithValidConfig(schema.EmailType),
+			modelstest.IntegrationMuts.WithSettings(map[string]any{"addresses": "alice@org.com"}),
 		)()
 		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
 	})
 
 	t.Run("email V1 with non-org address returns error", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgWithoutMember()}
-		integration := models.IntegrationGen(
-			models.IntegrationMuts.WithValidConfig(schema.EmailType),
-			models.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
+		integration := modelstest.IntegrationGen(
+			modelstest.IntegrationMuts.WithValidConfig(schema.EmailType),
+			modelstest.IntegrationMuts.WithSettings(map[string]any{"addresses": "outsider@evil.com"}),
 		)()
 		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()), "are not members of this organization")
 	})
@@ -281,13 +281,13 @@ func TestOrgUserEmailValidator_ValidateIntegration(t *testing.T) {
 	// The valid V0mimir1 email config uses "team@example.com" as its "to" address.
 	t.Run("email V0mimir1 with org member succeeds", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgHavingMember("team@example.com")}
-		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
+		integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
 		require.NoError(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()))
 	})
 
 	t.Run("email V0mimir1 with non-org address returns error", func(t *testing.T) {
 		v := &OrgUserEmailValidator{orgSvc: orgWithoutMember()}
-		integration := models.IntegrationGen(models.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
+		integration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfigVersion(schema.EmailType, schema.V0mimir1))()
 		require.ErrorContains(t, v.ValidateIntegration(context.Background(), testValidatorOrgID, integration, decryptNoop, log.NewNopLogger()), "are not members of this organization")
 	})
 }

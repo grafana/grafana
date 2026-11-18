@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -74,7 +75,7 @@ func TestBlobProducerNegotiation(t *testing.T) {
 						},
 					},
 				})
-				client := resource.NewMockResourceClient(t)
+				client := resourcetest.NewMockResourceClient(t)
 				migrator := migrations.ProvideUnifiedMigrator(client, registry)
 				// A fresh handshake is required on every attempt, even after success.
 				for range 2 {
@@ -138,7 +139,7 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 				},
 			}})
 			stream := &blobProducerStream{response: tc.response, closeErr: tc.err}
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.EXPECT().BulkProcess(mock.Anything).Return(stream, nil)
 			response, err := migrations.ProvideUnifiedMigrator(client, registry).Migrate(t.Context(), migrations.MigrateOptions{Namespace: "default", Resources: []schema.GroupResource{gr}})
 			require.Same(t, tc.response, response)

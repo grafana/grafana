@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
@@ -46,7 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/publicdashboardstest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -134,12 +134,12 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		pluginsCDNService:    pluginsCDN,
 		pluginAssets:         pluginsAssets,
 		namespacer:           request.GetNamespaceMapper(cfg),
-		SocialService:        socialimpl.ProvideService(context.Background(), cfgProvider, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
+		SocialService:        socialimpl.ProvideService(context.Background(), cfgProvider, features, &usagestatstest.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		tracer:               tracing.InitializeTracerForTest(),
 		DataSourcesService:   &datafakes.FakeDataSourceService{},
 
 		dsGuardian:              guardian.ProvideGuardian(),
-		publicDashboardsService: &publicdashboards.FakePublicDashboardService{},
+		publicDashboardsService: &publicdashboardstest.FakePublicDashboardService{},
 	}
 
 	m := web.New()
@@ -966,7 +966,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 	dash := dashboards.NewDashboardFromJson(testDashboard)
 	dash.OrgID = 1
 
-	mockPubDashService := &publicdashboards.FakePublicDashboardService{}
+	mockPubDashService := &publicdashboardstest.FakePublicDashboardService{}
 	mockPubDashService.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, "test-token").Return(nil, dash, nil)
 	hs.publicDashboardsService = mockPubDashService
 

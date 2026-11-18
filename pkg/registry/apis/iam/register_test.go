@@ -41,9 +41,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite/dualwritetest"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 )
 
 type noopUserPermissionsClient struct{}
@@ -458,8 +459,8 @@ func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
 			require.NoError(t, iamv0.AddToScheme(scheme))
 
 			b := &IdentityAccessManagementAPIBuilder{
-				dual:    dualwrite.NewMockService(t),
-				unified: resource.NewMockResourceClient(t),
+				dual:    dualwritetest.NewMockService(t),
+				unified: resourcetest.NewMockResourceClient(t),
 				tracing: tracing.InitializeTracerForTest(),
 			}
 			storage := map[string]rest.Storage{}
@@ -488,8 +489,8 @@ func TestUpdateUsersAPIGroup_ReadOnly(t *testing.T) {
 			require.NoError(t, iamv0.AddToScheme(scheme))
 
 			b := &IdentityAccessManagementAPIBuilder{
-				dual:     dualwrite.NewMockService(t),
-				unified:  resource.NewMockResourceClient(t),
+				dual:     dualwritetest.NewMockService(t),
+				unified:  resourcetest.NewMockResourceClient(t),
 				tracing:  tracing.InitializeTracerForTest(),
 				logger:   log.NewNopLogger(),
 				features: Features{UsersAPI: true, UsersAPIReadOnly: tt.readOnly},

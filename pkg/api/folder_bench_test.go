@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -47,7 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	serviceaccountstest "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	starapi "github.com/grafana/grafana/pkg/services/star/api"
+	"github.com/grafana/grafana/pkg/services/star/api/apitest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -57,7 +57,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -418,7 +418,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	actionSets := resourcepermissions.NewActionSetService()
 	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
 	emptyStatsResponse := &resourcepb.ResourceStatsResponse{}
-	folderSearchMock := resource.NewMockResourceClient(b)
+	folderSearchMock := resourcetest.NewMockResourceClient(b)
 	folderSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
 	folderSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
 	folderServiceWithFlagOn := folderimpl.ProvideService(
@@ -449,7 +449,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			sc.cfg,
-			client.MockTestRestConfig{},
+			clienttest.MockTestRestConfig{},
 			sc.userSvc,
 			folderSearchMock,
 			sort.ProvideService(),
@@ -464,7 +464,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
-	starClient := starapi.NewMockK8sClients(b)
+	starClient := apitest.NewMockK8sClients(b)
 	starClient.On("GetStars", mock.Anything).Return([]string{}, nil).Maybe()
 
 	hs := &HTTPServer{

@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-//go:generate mockery --name K8sClient --structname MockK8sClient --inpackage --filename k8s_client_mock.go --with-expecter
+//go:generate mockery --name K8sClient --structname MockK8sClient --outpkg prefapitest --output ./prefapitest/ --filename k8s_client_mock.go --with-expecter
 
 // K8sClient performs the underlying preferences.grafana.app calls used by
 // the legacy /api preferences bridge. It is intentionally narrow so it can

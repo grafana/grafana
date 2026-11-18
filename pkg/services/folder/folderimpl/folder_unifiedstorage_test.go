@@ -15,6 +15,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
@@ -49,6 +52,7 @@ import (
 	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/publicdashboardstest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -56,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -279,7 +284,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
-	searchMock := resource.NewMockResourceClient(t)
+	searchMock := resourcetest.NewMockResourceClient(t)
 	k8sCli := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, userService, searchMock)
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer, cfg)
 
@@ -304,7 +309,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 
-	mockDashboardService := dashboards.NewFakeDashboardService(t)
+	mockDashboardService := dashboardstest.NewFakeDashboardService(t)
 	mockFolderService := foldertest.NewFakeService()
 	elementService := libraryelements.ProvideService(cfg, db, routing.NewRouteRegister(), mockFolderService, featuremgmt.WithFeatures(), actest.FakeAccessControl{ExpectedEvaluate: true}, mockDashboardService, nil, nil)
 	lps := librarypanels.LibraryPanelService{
@@ -314,10 +319,10 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		FolderService:         mockFolderService,
 	}
 
-	publicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	publicDashboardService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 
-	fakeK8sClient := new(client.MockK8sHandler)
-	variableK8sClient := new(client.MockK8sHandler)
+	fakeK8sClient := new(clienttest.MockK8sHandler)
+	variableK8sClient := new(clienttest.MockK8sHandler)
 	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
 	folderService := &Service{
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
@@ -579,7 +584,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 }
 
 func TestSearchFolders(t *testing.T) {
-	fakeK8sClient := new(client.MockK8sHandler)
+	fakeK8sClient := new(clienttest.MockK8sHandler)
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
@@ -912,7 +917,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 	} {
 		for _, tc := range folderStorageFailures(t) {
 			t.Run(name+"/"+tc.name, func(t *testing.T) {
-				cli := new(client.MockK8sHandler)
+				cli := new(clienttest.MockK8sHandler)
 				cli.On("GetNamespace", int64(1)).Return("default").Once()
 				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, tc.err).Once()
 				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
@@ -932,7 +937,7 @@ func TestFolderLookupSearchErrors(t *testing.T) {
 
 // newEmptySearchService returns a Service whose single folder search finds nothing.
 func newEmptySearchService(t *testing.T) *Service {
-	cli := new(client.MockK8sHandler)
+	cli := new(clienttest.MockK8sHandler)
 	cli.On("GetNamespace", int64(1)).Return("default")
 	cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
 	t.Cleanup(func() { cli.AssertExpectations(t) })
@@ -960,7 +965,7 @@ func TestFolderLookupEmptySearch(t *testing.T) {
 }
 
 func TestGetFolderByTitle(t *testing.T) {
-	fakeK8sClient := new(client.MockK8sHandler)
+	fakeK8sClient := new(clienttest.MockK8sHandler)
 	folderStore := folder.NewFakeStore()
 	folderStore.ExpectedFolder = &folder.Folder{
 		UID:   "parent-uid",
@@ -1239,7 +1244,7 @@ func TestDeleteVariablesInFoldersServiceIdentity(t *testing.T) {
 func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
 	for _, tc := range folderStorageFailures(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			cli := new(client.MockK8sHandler)
+			cli := new(clienttest.MockK8sHandler)
 			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
 			})).Return(nil, tc.err).Once()
@@ -1299,12 +1304,12 @@ func BenchmarkFolderDeletionSearchFields(b *testing.B) {
 func TestIntegrationDeleteFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	fakeK8sClient := new(client.MockK8sHandler)
+	fakeK8sClient := new(clienttest.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
-	dashboardK8sclient := new(client.MockK8sHandler)
-	variableK8sClient := new(client.MockK8sHandler)
+	dashboardK8sclient := new(clienttest.MockK8sHandler)
+	variableK8sClient := new(clienttest.MockK8sHandler)
 	fakeFolderStore := folder.NewFakeStore()
-	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	publicDashboardFakeService := publicdashboardstest.NewFakePublicDashboardServiceWrapper(t)
 	tracer := noop.NewTracerProvider().Tracer("TestDeleteFolders")
 	service := Service{
 		k8sclient:              fakeK8sClient,
@@ -1331,7 +1336,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	_, err := ngrulesvc.ProvideService(&alertingStore, &service)
 	require.NoError(t, err)
 
-	mockDashboardService := dashboards.NewFakeDashboardService(t)
+	mockDashboardService := dashboardstest.NewFakeDashboardService(t)
 	mockFolderService := foldertest.NewFakeService()
 	elementService := libraryelements.ProvideService(cfg, db, routing.NewRouteRegister(), mockFolderService, featuremgmt.WithFeatures(), actest.FakeAccessControl{ExpectedEvaluate: true}, mockDashboardService, nil, nil)
 	lps := librarypanels.LibraryPanelService{

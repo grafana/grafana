@@ -19,7 +19,7 @@ const buildTimeout = 30 * time.Second
 
 type Mutator func(ctx context.Context, obj runtime.Object) error
 
-//go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
+//go:generate mockery --name=Extra --structname=MockExtra --outpkg repositorytest --output ./repositorytest/ --filename=extra_mock.go --with-expecter
 type Extra interface {
 	Type() provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)
@@ -27,7 +27,7 @@ type Extra interface {
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
-//go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
+//go:generate mockery --name=Factory --structname=MockFactory --outpkg repositorytest --output ./repositorytest/ --filename=factory_mock.go --with-expecter
 type Factory interface {
 	Types() []provisioning.RepositoryType
 	Build(ctx context.Context, r *provisioning.Repository) (Repository, error)

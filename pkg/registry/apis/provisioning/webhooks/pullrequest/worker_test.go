@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
@@ -58,8 +61,8 @@ func TestPullRequestWorker_IsSupported(t *testing.T) {
 func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
-	repo := repository.NewMockRepository(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
@@ -83,10 +86,10 @@ func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	// Create a mock that implements PullRequestRepo but not Reader
-	repo := repository.NewMockConfigRepository(t)
+	repo := repositorytest.NewMockConfigRepository(t)
 
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
@@ -111,13 +114,13 @@ func TestPullRequestWorker_Process(t *testing.T) {
 	tests := []struct {
 		name          string
 		opts          *provisioning.PullRequestJobOptions
-		setupMocks    func(*MockEvaluator, *MockCommenter, *mockPullRequestRepo, *jobs.MockJobProgressRecorder)
+		setupMocks    func(*MockEvaluator, *MockCommenter, *mockPullRequestRepo, *jobstest.MockJobProgressRecorder)
 		expectedError string
 	}{
 		{
 			name: "missing pull request options",
 			opts: nil,
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 			},
 			expectedError: "missing spec.pr",
 		},
@@ -126,14 +129,14 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			opts: &provisioning.PullRequestJobOptions{
 				PR: 123,
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 			},
 			expectedError: "missing spec.ref",
 		},
 		{
 			name: "fork posts unsupported notice without reading or evaluating files",
 			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "contributor-branch", Hash: "unavailable-sha", IsFork: &fork},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(nil).Once()
 				progress.On("SetFinalMessage", mock.Anything, "Grafana doesn't currently support previews for pull requests from forks.").Return().Once()
 			},
@@ -141,7 +144,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "fork comment failure is surfaced",
 			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "contributor-branch", IsFork: &fork},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				commenter.On("Comment", mock.Anything, *repo, 123, changeInfo{UnsupportedFork: true}).Return(errors.New("comment unavailable")).Once()
 			},
 			expectedError: "comment pull request: comment unavailable",
@@ -149,7 +152,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 		{
 			name: "same-repository PR keeps branch-based comparison even with a head hash",
 			opts: &provisioning.PullRequestJobOptions{PR: 123, Ref: "test-ref", Hash: "abcdef0123456789abcdef0123456789abcdef01", IsFork: &sameRepo},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				repo.client.On("MergeBase", mock.Anything, "main", "test-ref").Return("merge-base-sha", nil)
 				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return([]repository.VersionedFileChange{}, nil)
@@ -162,7 +165,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				repo.client.On("MergeBase", mock.Anything, "main", "test-ref").Return("merge-base-sha", nil)
 				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return(nil, errors.New("failed to list files"))
@@ -175,7 +178,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				repo.MockRepository.On("Config").Return(&provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						Type:   provisioning.GitHubRepositoryType,
@@ -195,7 +198,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				repo.client.On("MergeBase", mock.Anything, "main", "test-ref").Return("merge-base-sha", nil)
 				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "merge-base-sha", "test-ref").Return([]repository.VersionedFileChange{}, nil)
@@ -209,7 +212,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 
 				// Create a mix of ignored and supported files
@@ -239,7 +242,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 
 				// Create a mix of supported and unsupported files
@@ -271,7 +274,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
@@ -288,7 +291,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
@@ -306,7 +309,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
@@ -324,7 +327,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR:  123,
 				Ref: "test-ref",
 			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobstest.MockJobProgressRecorder) {
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
@@ -343,11 +346,11 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			evaluator := NewMockEvaluator(t)
 			commenter := NewMockCommenter(t)
 			repo := mockPullRequestRepo{
-				MockRepository:      repository.NewMockRepository(t),
-				MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
-				client:              repository.NewMockPullRequestClient(t),
+				MockRepository:      repositorytest.NewMockRepository(t),
+				MockPullRequestRepo: repositorytest.NewMockPullRequestRepo(t),
+				client:              repositorytest.NewMockPullRequestClient(t),
 			}
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			tt.setupMocks(evaluator, commenter, &repo, progress)
 			repo.MockRepository.On("Config").Return(mainBranchConfig()).Maybe()
 
@@ -378,11 +381,11 @@ func TestPullRequestWorker_Process_StopsWhenHeadRefIsMissing(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
 	repo := mockPullRequestRepo{
-		MockRepository:      repository.NewMockRepository(t),
-		MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
-		client:              repository.NewMockPullRequestClient(t),
+		MockRepository:      repositorytest.NewMockRepository(t),
+		MockPullRequestRepo: repositorytest.NewMockPullRequestRepo(t),
+		client:              repositorytest.NewMockPullRequestClient(t),
 	}
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	repo.MockRepository.On("Config").Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -439,11 +442,11 @@ func TestPullRequestWorker_Process_MissingBaseRefRemainsError(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
 	repo := mockPullRequestRepo{
-		MockRepository:      repository.NewMockRepository(t),
-		MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
-		client:              repository.NewMockPullRequestClient(t),
+		MockRepository:      repositorytest.NewMockRepository(t),
+		MockPullRequestRepo: repositorytest.NewMockPullRequestRepo(t),
+		client:              repositorytest.NewMockPullRequestClient(t),
 	}
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	repo.MockRepository.On("Config").Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -487,11 +490,11 @@ func TestPullRequestWorker_Process_PostsCommentOnCanceledContext(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
 	repo := mockPullRequestRepo{
-		MockRepository:      repository.NewMockRepository(t),
-		MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
-		client:              repository.NewMockPullRequestClient(t),
+		MockRepository:      repositorytest.NewMockRepository(t),
+		MockPullRequestRepo: repositorytest.NewMockPullRequestRepo(t),
+		client:              repositorytest.NewMockPullRequestClient(t),
 	}
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	repo.MockRepository.On("Config").Return(mainBranchConfig())
 	progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
@@ -531,9 +534,9 @@ func TestPullRequestWorker_Process_PostsCommentOnCanceledContext(t *testing.T) {
 }
 
 type mockPullRequestRepo struct {
-	*repository.MockRepository
-	*repository.MockPullRequestRepo
-	client *repository.MockPullRequestClient
+	*repositorytest.MockRepository
+	*repositorytest.MockPullRequestRepo
+	client *repositorytest.MockPullRequestClient
 }
 
 func mainBranchConfig() *provisioning.Repository {

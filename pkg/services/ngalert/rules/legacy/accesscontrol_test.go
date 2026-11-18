@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -89,7 +90,7 @@ func TestCanWriteAllRules(t *testing.T) {
 
 func TestAuthorizeAccessToRule(t *testing.T) {
 	testUser := &user.SignedInUser{}
-	rule := models.RuleGen.Generate()
+	rule := modelstest.RuleGen.Generate()
 
 	t.Run("should return nil when user has rules permissions", func(t *testing.T) {
 		rs := &fakes.FakeRuleService{}

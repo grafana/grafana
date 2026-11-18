@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
+
 	config "github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -244,7 +248,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
-		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, store.Calls[1].Args[0].(context.Context))
 		assert.Equal(t, &expectedRev, store.Calls[1].Args[1])
 
 		c := prov.Calls[0]
@@ -253,7 +257,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		c = prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
-		assertInTransaction(t, c.Arguments[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, c.Arguments[0].(context.Context))
 		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
@@ -276,13 +280,13 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
-		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, store.Calls[1].Args[0].(context.Context))
 		assert.Equal(t, &expectedRev, store.Calls[1].Args[1])
 
 		assert.Len(t, prov.Calls, 2)
 		c := prov.Calls[1]
 		assert.Equal(t, "SetProvenance", c.MethodName)
-		assertInTransaction(t, c.Arguments[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, c.Arguments[0].(context.Context))
 		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		assert.Equal(t, models.ProvenanceAPI, c.Arguments[3].(models.Provenance))
@@ -391,7 +395,7 @@ func TestResetPolicyTree(t *testing.T) {
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
-		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, store.Calls[1].Args[0].(context.Context))
 		resetRev := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, expectedRev.Config, resetRev.Config)
 
@@ -402,7 +406,7 @@ func TestResetPolicyTree(t *testing.T) {
 		assert.Equal(t, orgID, c.Arguments[2].(int64))
 		c = prov.Calls[1]
 		assert.Equal(t, "DeleteProvenance", c.MethodName)
-		assertInTransaction(t, c.Arguments[0].(context.Context))
+		provisioningtest.AssertInTransaction(t, c.Arguments[0].(context.Context))
 		assert.IsType(t, &v1.Route{}, c.Arguments[1])
 		assert.Equal(t, orgID, c.Arguments[2])
 	})
@@ -522,9 +526,9 @@ func TestRoute_Fingerprint(t *testing.T) {
 	})
 }
 
-func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_storage.AlertmanagerConfigStoreFake, *fakes.FakeProvisioningStore) {
+func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_storagetest.AlertmanagerConfigStoreFake, *fakes.FakeProvisioningStore) {
 	prov := fakes.NewFakeProvisioningStore()
-	configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+	configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 		GetFn: func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			rev := getDefaultConfigRevision()
 			return &rev, nil
@@ -533,7 +537,7 @@ func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_s
 	return &NotificationPolicyService{
 		configStore:     configStore,
 		provenanceStore: prov,
-		xact:            newNopTransactionManager(),
+		xact:            provisioningtest.NewNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		settings: setting.UnifiedAlertingSettings{
 			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),

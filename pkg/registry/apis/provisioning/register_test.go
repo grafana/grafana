@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth/authtest"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -19,14 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 )
 
 func TestSetResourceListerMode(t *testing.T) {
 	newBuilder := func() *APIBuilder {
 		return &APIBuilder{
-			unified:  resource.NewMockResourceClient(t),
-			clients:  resources.NewMockClientFactory(t),
+			unified:  resourcetest.NewMockResourceClient(t),
+			clients:  resourcestest.NewMockClientFactory(t),
 			features: featuremgmt.WithFeatures(),
 		}
 	}
@@ -93,8 +95,8 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 
 	// readOnlyChecker stands in for a caller granted connections:read but not
 	// connections:write: any non-read verb is forbidden.
-	readOnlyChecker := func(t *testing.T) *auth.MockAccessChecker {
-		checker := auth.NewMockAccessChecker(t)
+	readOnlyChecker := func(t *testing.T) *authtest.MockAccessChecker {
+		checker := authtest.NewMockAccessChecker(t)
 		checker.EXPECT().Check(mock.Anything, mock.Anything, "").
 			RunAndReturn(func(_ context.Context, req authlib.CheckRequest, _ string) error {
 				if req.Verb == utils.VerbGet || req.Verb == utils.VerbList {
@@ -114,7 +116,7 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 
 		for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete} {
 			t.Run(fmt.Sprintf("%s: %s is checked as connections:%s and allowed", label, verb, verb), func(t *testing.T) {
-				adminChecker := auth.NewMockAccessChecker(t)
+				adminChecker := authtest.NewMockAccessChecker(t)
 				adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(verb)), "").Return(nil)
 
 				b := &APIBuilder{accessWithAdmin: adminChecker}
@@ -124,7 +126,7 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 			})
 
 			t.Run(fmt.Sprintf("%s: %s is denied when connections:%s is denied", label, verb, verb), func(t *testing.T) {
-				adminChecker := auth.NewMockAccessChecker(t)
+				adminChecker := authtest.NewMockAccessChecker(t)
 				adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(verb)), "").Return(mockForbidden())
 
 				b := &APIBuilder{accessWithAdmin: adminChecker}
@@ -156,7 +158,7 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 	// repositories always checks connections:read, whatever verb the request carries.
 	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbUpdate} {
 		t.Run("repositories: "+verb+" is checked as connections:get", func(t *testing.T) {
-			adminChecker := auth.NewMockAccessChecker(t)
+			adminChecker := authtest.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(utils.VerbGet)), "").Return(nil)
 
 			b := &APIBuilder{accessWithAdmin: adminChecker}
@@ -167,7 +169,7 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 	}
 
 	t.Run("repositories: denied when connections:get is denied", func(t *testing.T) {
-		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker := authtest.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(utils.VerbGet)), "").Return(mockForbidden())
 
 		b := &APIBuilder{accessWithAdmin: adminChecker}
@@ -179,7 +181,7 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 	// authorize always checks connections:write, even on a GET, because it rotates secrets.
 	for _, verb := range []string{utils.VerbGet, utils.VerbCreate, utils.VerbUpdate} {
 		t.Run("authorize: "+verb+" is checked as connections:update", func(t *testing.T) {
-			adminChecker := auth.NewMockAccessChecker(t)
+			adminChecker := authtest.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(utils.VerbUpdate)), "").Return(nil)
 
 			b := &APIBuilder{accessWithAdmin: adminChecker}

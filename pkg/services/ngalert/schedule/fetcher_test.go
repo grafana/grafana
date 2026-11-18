@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 // sequenceGroupName builds the expected padded sentinel for a given sequence UID.
@@ -19,17 +20,17 @@ func sequenceGroupName(t *testing.T, sequenceUID string) string {
 }
 
 func TestEnrichRulesWithSequenceMembership(t *testing.T) {
-	gen := models.RuleGen.With(
-		models.RuleGen.WithNamespaceUID("ns1"),
-		models.RuleGen.WithGroupName("original-group"),
-		models.RuleGen.WithIntervalSeconds(60),
-		models.RuleGen.WithGroupIndex(99),
+	gen := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithNamespaceUID("ns1"),
+		modelstest.RuleGen.WithGroupName("original-group"),
+		modelstest.RuleGen.WithIntervalSeconds(60),
+		modelstest.RuleGen.WithGroupIndex(99),
 	)
 
 	t.Run("sequence members get correct synthetic group, index, and interval", func(t *testing.T) {
-		rec1 := gen.With(models.RuleGen.WithUID("rec-1")).GenerateRef()
-		rec2 := gen.With(models.RuleGen.WithUID("rec-2")).GenerateRef()
-		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
+		rec1 := gen.With(modelstest.RuleGen.WithUID("rec-1")).GenerateRef()
+		rec2 := gen.With(modelstest.RuleGen.WithUID("rec-2")).GenerateRef()
+		alert1 := gen.With(modelstest.RuleGen.WithUID("alert-1")).GenerateRef()
 
 		sequences := []models.SchedulableRuleSequence{
 			{
@@ -58,8 +59,8 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	})
 
 	t.Run("recording rules indexed before alerting rules", func(t *testing.T) {
-		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
-		rec1 := gen.With(models.RuleGen.WithUID("rec-1")).GenerateRef()
+		alert1 := gen.With(modelstest.RuleGen.WithUID("alert-1")).GenerateRef()
+		rec1 := gen.With(modelstest.RuleGen.WithUID("rec-1")).GenerateRef()
 
 		sequences := []models.SchedulableRuleSequence{
 			{
@@ -81,8 +82,8 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	})
 
 	t.Run("non-sequence rules are unchanged", func(t *testing.T) {
-		standalone := gen.With(models.RuleGen.WithUID("standalone")).GenerateRef()
-		seqRule := gen.With(models.RuleGen.WithUID("seq-rule")).GenerateRef()
+		standalone := gen.With(modelstest.RuleGen.WithUID("standalone")).GenerateRef()
+		seqRule := gen.With(modelstest.RuleGen.WithUID("seq-rule")).GenerateRef()
 
 		originalGroup := standalone.RuleGroup
 		originalIndex := standalone.RuleGroupIndex
@@ -108,7 +109,7 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	})
 
 	t.Run("rule in sequence but not in fetched rules is a no-op", func(t *testing.T) {
-		rule := gen.With(models.RuleGen.WithUID("existing")).GenerateRef()
+		rule := gen.With(modelstest.RuleGen.WithUID("existing")).GenerateRef()
 
 		sequences := []models.SchedulableRuleSequence{
 			{
@@ -127,7 +128,7 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	})
 
 	t.Run("empty sequences produces no changes", func(t *testing.T) {
-		rule := gen.With(models.RuleGen.WithUID("lonely")).GenerateRef()
+		rule := gen.With(modelstest.RuleGen.WithUID("lonely")).GenerateRef()
 		originalGroup := rule.RuleGroup
 		originalIndex := rule.RuleGroupIndex
 		originalInterval := rule.IntervalSeconds
@@ -154,9 +155,9 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	})
 
 	t.Run("multiple sequences enrich independently", func(t *testing.T) {
-		rule1 := gen.With(models.RuleGen.WithUID("r1")).GenerateRef()
-		rule2 := gen.With(models.RuleGen.WithUID("r2")).GenerateRef()
-		rule3 := gen.With(models.RuleGen.WithUID("r3")).GenerateRef()
+		rule1 := gen.With(modelstest.RuleGen.WithUID("r1")).GenerateRef()
+		rule2 := gen.With(modelstest.RuleGen.WithUID("r2")).GenerateRef()
+		rule3 := gen.With(modelstest.RuleGen.WithUID("r3")).GenerateRef()
 
 		sequences := []models.SchedulableRuleSequence{
 			{
@@ -193,7 +194,7 @@ func TestEnrichRulesWithSequenceMembership(t *testing.T) {
 	t.Run("rule referenced by multiple sequences uses last sequence", func(t *testing.T) {
 		// This shouldn't happen in practice (admission prevents it),
 		// but test the defensive behavior: last-write-wins from map insertion.
-		rule := gen.With(models.RuleGen.WithUID("shared")).GenerateRef()
+		rule := gen.With(modelstest.RuleGen.WithUID("shared")).GenerateRef()
 
 		sequences := []models.SchedulableRuleSequence{
 			{

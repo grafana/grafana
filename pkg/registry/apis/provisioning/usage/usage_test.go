@@ -16,7 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -53,7 +53,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 		{name: "ordinary transport", err: transportErr},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			unified := resource.NewMockResourceClient(t)
+			unified := resourcetest.NewMockResourceClient(t)
 			unified.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{Namespace: "default"}).Return(tc.response, tc.err).Once()
 			repoLister := func(context.Context) ([]provisioning.Repository, error) {
 				t.Fatal("must not list repositories after count failure")
@@ -79,7 +79,7 @@ func TestMetricCollector_NoUnifiedStorage(t *testing.T) {
 
 // nil namespace lister falls back to the "default" namespace (single-tenant behaviour).
 func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
-	unified := resource.NewMockResourceClient(t)
+	unified := resourcetest.NewMockResourceClient(t)
 	unified.EXPECT().
 		CountManagedObjects(mock.Anything, mock.MatchedBy(func(req *resourcepb.CountManagedObjectsRequest) bool {
 			return req.Namespace == "default"
@@ -105,7 +105,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 
 // counts from every namespace are summed into the same stat keys.
 func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
-	unified := resource.NewMockResourceClient(t)
+	unified := resourcetest.NewMockResourceClient(t)
 	unified.EXPECT().
 		CountManagedObjects(mock.Anything, mock.MatchedBy(func(req *resourcepb.CountManagedObjectsRequest) bool {
 			return req.Namespace == "default"
@@ -144,7 +144,7 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 
 // fleet-wide dimensions are aggregated from repository spec/status across namespaces.
 func TestMetricCollector_RepositoryDimensions(t *testing.T) {
-	unified := resource.NewMockResourceClient(t)
+	unified := resourcetest.NewMockResourceClient(t)
 	unified.EXPECT().
 		CountManagedObjects(mock.Anything, mock.Anything).
 		Return(managedCount(managedKind, 0), nil).
@@ -228,7 +228,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 
 // connection stats are aggregated by type, health, and webhook state.
 func TestMetricCollector_ConnectionStats(t *testing.T) {
-	unified := resource.NewMockResourceClient(t)
+	unified := resourcetest.NewMockResourceClient(t)
 	unified.EXPECT().
 		CountManagedObjects(mock.Anything, mock.Anything).
 		Return(managedCount(managedKind, 0), nil).
@@ -274,7 +274,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 
 // an error from any namespace fails the whole collection (fail-fast).
 func TestMetricCollector_ErrorFailFast(t *testing.T) {
-	unified := resource.NewMockResourceClient(t)
+	unified := resourcetest.NewMockResourceClient(t)
 	unified.EXPECT().
 		CountManagedObjects(mock.Anything, mock.Anything).
 		Return(nil, errors.New("boom")).

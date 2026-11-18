@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 func TestIsOrphanCleanupAction(t *testing.T) {
@@ -41,7 +41,7 @@ func TestValidateRepoForCleanup(t *testing.T) {
 
 	t.Run("terminating repo — allowed", func(t *testing.T) {
 		now := metav1.Now()
-		mockRepo := &repository.MockRepository{}
+		mockRepo := &repositorytest.MockRepository{}
 		mockRepo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              "dying-repo",
@@ -52,7 +52,7 @@ func TestValidateRepoForCleanup(t *testing.T) {
 	})
 
 	t.Run("healthy repo — rejected", func(t *testing.T) {
-		mockRepo := &repository.MockRepository{}
+		mockRepo := &repositorytest.MockRepository{}
 		mockRepo.On("Config").Return(&provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "healthy-repo"},
 		})

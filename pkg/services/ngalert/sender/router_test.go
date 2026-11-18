@@ -26,9 +26,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest/multiorgtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender/sendertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/storetest"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -37,17 +40,17 @@ import (
 func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ruleKey := models.GenerateRuleKey(1)
+	ruleKey := modelstest.GenerateRuleKey(1)
 
 	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
-	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
-	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
+	moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1}), multiorgtest.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -105,18 +108,18 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ruleKey1 := models.GenerateRuleKey(1)
-	ruleKey2 := models.GenerateRuleKey(2)
+	ruleKey1 := modelstest.GenerateRuleKey(1)
+	ruleKey2 := modelstest.GenerateRuleKey(2)
 
 	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
-	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
-	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1, 2}), notifier.WithWaitReady())
+	moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1, 2}), multiorgtest.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -265,18 +268,18 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 }
 
 func TestChangingAlertmanagersChoice(t *testing.T) {
-	ruleKey := models.GenerateRuleKey(1)
+	ruleKey := modelstest.GenerateRuleKey(1)
 
 	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
-	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
+	moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1}), multiorgtest.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -357,18 +360,18 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 }
 
 func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
-	ruleKey := models.GenerateRuleKey(1)
+	ruleKey := modelstest.GenerateRuleKey(1)
 
 	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
-	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
+	moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1}), multiorgtest.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -450,12 +453,12 @@ func (s *pluginStoreNotReadyDataSourceService) GetDataSourcesByType(ctx context.
 }
 
 func TestSyncSendsToExternalAlertmanagerWhenPluginStoreIsNotReady(t *testing.T) {
-	ruleKey := models.GenerateRuleKey(1)
+	ruleKey := modelstest.GenerateRuleKey(1)
 
 	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
-	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 	fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.ExternalAlertmanagers)},
 	}, nil)
@@ -463,7 +466,7 @@ func TestSyncSendsToExternalAlertmanagerWhenPluginStoreIsNotReady(t *testing.T) 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
+	moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1}), multiorgtest.WithWaitReady())
 
 	ds := datasources.DataSource{
 		URL:   fakeAM.Server.URL,
@@ -528,12 +531,12 @@ func generatePostableAlert(t *testing.T, clk clock.Clock) models2.PostableAlert 
 		RawPath: "/" + util.GenerateShortUID(),
 	}
 	return models2.PostableAlert{
-		Annotations: models2.LabelSet(models.GenerateAlertLabels(5, "ann-")),
+		Annotations: models2.LabelSet(modelstest.GenerateAlertLabels(5, "ann-")),
 		EndsAt:      strfmt.DateTime(clk.Now().Add(1 * time.Minute)),
 		StartsAt:    strfmt.DateTime(clk.Now()),
 		Alert: models2.Alert{
 			GeneratorURL: strfmt.URI(u.String()),
-			Labels:       models2.LabelSet(models.GenerateAlertLabels(5, "lbl-")),
+			Labels:       models2.LabelSet(modelstest.GenerateAlertLabels(5, "lbl-")),
 		},
 	}
 }
@@ -1007,21 +1010,21 @@ func TestSendBroadcastAlerts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ruleKey := models.GenerateRuleKey(1)
+			ruleKey := modelstest.GenerateRuleKey(1)
 
 			mockedClock := clock.NewMock()
 			mockedClock.Set(time.Now())
 
-			mockChannel := &notifier.MockBroadcastChannel{}
-			mockPeer := &notifier.MockClusterPeer{Channel: mockChannel}
-			moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithPeer(mockPeer), notifier.WithWaitReady())
+			mockChannel := &notifiertest.MockBroadcastChannel{}
+			mockPeer := &notifiertest.MockClusterPeer{Channel: mockChannel}
+			moa := multiorgtest.NewTestMultiOrgAlertmanager(t, multiorgtest.WithOrgs([]int64{1}), multiorgtest.WithPeer(mockPeer), multiorgtest.WithWaitReady())
 
 			appUrl := &url.URL{
 				Scheme: "http",
 				Host:   "localhost",
 			}
 
-			fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+			fakeAdminConfigStore := &storetest.AdminConfigurationStoreMock{}
 			fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return(nil, nil)
 
 			alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},

@@ -20,6 +20,7 @@ import (
 	annotationsac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -350,7 +351,7 @@ func TestAPI_Annotations(t *testing.T) {
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1, DashboardUID: "dashuid1"}) //nolint:staticcheck // Exercise legacy field compatibility.
 				hs.annotationsRepo = repo
 				hs.Features = featuremgmt.WithFeatures()
-				dashService := &dashboards.FakeDashboardService{}
+				dashService := &dashboardstest.FakeDashboardService{}
 				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID, FolderID: 1}, nil) //nolint:staticcheck // Exercise legacy field compatibility.
 				folderService := &foldertest.FakeService{}
 				folderService.ExpectedFolder = &folder.Folder{UID: folderUID, ID: 1} //nolint:staticcheck // Exercise legacy field compatibility.
@@ -394,7 +395,7 @@ func TestAPI_GetAnnotationTags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			repo := annotations.FakeAnnotationsRepo{}
+			repo := annotationstest.MockAnnotationsRepo{}
 			var gotQuery *annotations.TagsQuery
 			repo.On("FindTags", mock.Anything, mock.Anything).
 				Run(func(args mock.Arguments) {
@@ -429,7 +430,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	rootDashUID := "root-dashboard"
 	folderDashUID := "folder-dashboard"
 	folderUID := "folder"
-	dashSvc := &dashboards.FakeDashboardService{}
+	dashSvc := &dashboardstest.FakeDashboardService{}
 	rootDash := &dashboards.Dashboard{ID: 1, OrgID: 1, UID: rootDashUID}
 	folderDash := &dashboards.Dashboard{ID: 2, OrgID: 1, UID: folderDashUID, FolderUID: folderUID}
 	dashSvc.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: rootDash.UID, OrgID: 1}).Return(rootDash, nil)

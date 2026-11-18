@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,10 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/manager/managertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,7 +46,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 	mam := setupMam(t, cfg)
 	reg := mam.metrics.Registerer.(*prometheus.Registry)
-	orgStore := mam.orgStore.(*FakeOrgStore)
+	orgStore := mam.orgStore.(*notifiertest.FakeOrgStore)
 	ctx := context.Background()
 
 	// Ensure that one Alertmanager is created per org.
@@ -59,7 +63,7 @@ grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
 
 		// Configurations should be marked as successfully applied.
-		for _, org := range orgStore.orgs {
+		for _, org := range orgStore.Orgs {
 			configs, err := mam.configStore.GetAppliedConfigurations(ctx, org, 10)
 			require.NoError(t, err)
 			require.Len(t, configs, 1)
@@ -67,7 +71,7 @@ grafana_alerting_discovered_configurations 3
 	}
 	// When an org is removed, it should detect it.
 	{
-		orgStore.orgs = []int64{1, 3}
+		orgStore.Orgs = []int64{1, 3}
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 2)
 		require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
@@ -81,7 +85,7 @@ grafana_alerting_discovered_configurations 2
 	}
 	// if the org comes back, it should detect it.
 	{
-		orgStore.orgs = []int64{1, 2, 3, 4}
+		orgStore.Orgs = []int64{1, 2, 3, 4}
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 4)
 		require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(`
@@ -95,7 +99,7 @@ grafana_alerting_discovered_configurations 4
 	}
 	// if the disabled org comes back, it should not detect it.
 	{
-		orgStore.orgs = []int64{1, 2, 3, 4, 5}
+		orgStore.Orgs = []int64{1, 2, 3, 4, 5}
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 4)
 	}
@@ -129,7 +133,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	// Include a broken configuration for organization 2.
 	var orgWithBadConfig int64 = 2
-	mam.configStore = NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+	mam.configStore = notifiertest.NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
 		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
 	})
 
@@ -186,7 +190,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	// If we fix the configuration, it becomes ready.
 	{
-		mam.configStore.(*fakeConfigStore).configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
+		mam.configStore.(*notifiertest.FakeConfigStore).Configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
 		require.True(t, mam.alertmanagers[1].Ready())
@@ -231,7 +235,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	}
 
 	// Let's now remove the previous queried organization.
-	mam.orgStore.(*FakeOrgStore).orgs = []int64{1, 3}
+	mam.orgStore.(*notifiertest.FakeOrgStore).Orgs = []int64{1, 3}
 	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 	{
 		_, err := mam.alertmanagerForOrg(2)
@@ -333,7 +337,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration_LegacyTimeInterval
 		LastApplied:               1,
 	}))
 	// The fake store assigns every history row the same ID, so give this one a distinct ID.
-	history := mam.configStore.(*fakeConfigStore).historicConfigs[2]
+	history := mam.configStore.(*notifiertest.FakeConfigStore).HistoricConfigs[2]
 	const legacyID = int64(42)
 	history[len(history)-1].ID = legacyID
 
@@ -468,7 +472,7 @@ func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 	require.Empty(t, v)
 
 	// Create 2 silences.
-	gen := models.SilenceGen(models.SilenceMuts.WithEmptyId())
+	gen := modelstest.SilenceGen(modelstest.SilenceMuts.WithEmptyId())
 	sid, err := mam.CreateSilence(ctx, 1, gen())
 	require.NoError(t, err)
 	require.NotEmpty(t, sid)
@@ -525,13 +529,13 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		}
 	}
 
-	cs := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
-	orgStore := &FakeOrgStore{
-		orgs: []int64{1, 2, 3},
+	cs := notifiertest.NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
+	orgStore := &notifiertest.FakeOrgStore{
+		Orgs: []int64{1, 2, 3},
 	}
 	kvStore := ngfakes.NewFakeKVStore(t)
 	provStore := ngfakes.NewFakeProvisioningStore()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := managertest.SetupService(secretsManager.ProvideSecretsService, t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)

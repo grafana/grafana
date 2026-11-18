@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -61,7 +62,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	})
-	gen := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(1))
 
 	dashboardRules := map[string][]*ngmodels.AlertRule{
 		dashboard1.UID: {
@@ -595,11 +596,11 @@ func createTestLokiStore(t *testing.T, sql *sqlstore.SQLStore, client lokiQueryC
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generator *modelstest.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	if generator == nil {
-		g := ngmodels.RuleGen
+		g := modelstest.RuleGen
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(nil, nil), g.WithOrgID(1))
 	}
 
@@ -622,14 +623,14 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 
 // createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title string, dashboard dashboards.Dashboard, generator *modelstest.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	panelID := new(int64)
 	*panelID = 123
 
 	if generator == nil {
-		g := ngmodels.RuleGen
+		g := modelstest.RuleGen
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(&dashboard.UID, panelID), g.WithOrgID(1))
 	}
 

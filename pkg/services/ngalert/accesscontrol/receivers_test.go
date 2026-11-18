@@ -9,13 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
 func TestReceiverAccess(t *testing.T) {
-	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver 1"), models.ReceiverMuts.WithValidIntegration("slack"))()
-	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver 2"), models.ReceiverMuts.WithValidIntegration("email"))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver 3"), models.ReceiverMuts.WithValidIntegration("webhook"))()
+	recv1 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver 1"), modelstest.ReceiverMuts.WithValidIntegration("slack"))()
+	recv2 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver 2"), modelstest.ReceiverMuts.WithValidIntegration("email"))()
+	recv3 := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver 3"), modelstest.ReceiverMuts.WithValidIntegration("webhook"))()
 
 	allReceivers := []*models.Receiver{
 		&recv1,

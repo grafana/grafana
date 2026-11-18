@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -171,7 +171,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 
 	// WebhookRepository shell: config/URL/events are test data, but WebhookClient
 	// is the real github client so the hooks hit the mock GitHub over HTTP.
-	repo := repository.NewMockWebhookRepository(t)
+	repo := repositorytest.NewMockWebhookRepository(t)
 	repo.EXPECT().Config().Return(config).Maybe()
 	repo.EXPECT().WebhookURL().Return(webhookURL).Maybe()
 	repo.EXPECT().SubscribedEvents().Return(subscribedEvents).Maybe()

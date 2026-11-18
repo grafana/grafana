@@ -5,7 +5,7 @@ import (
 
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,7 +23,7 @@ func TestRegisterMigrationValidatorOptions(t *testing.T) {
 			t.Run(driver+"/"+backend.name, func(t *testing.T) {
 				cfg := setting.NewCfg()
 				cfg.EnableSQLKVBackend = backend.sqlKV
-				client := resource.NewMockResourceClient(t)
+				client := resourcetest.NewMockResourceClient(t)
 				var captured []ValidatorOptions
 				def := MigrationDefinition{
 					ID: "test", MigrationID: "test migration",

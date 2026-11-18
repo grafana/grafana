@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,7 +67,7 @@ func TestService_getBasicRolePermissions_concurrentOrgsAreIsolated(t *testing.T)
 func setupBasicRoleService(t *testing.T) *Service {
 	t.Helper()
 
-	store := &actest.MockStore{}
+	store := &actestfixtures.MockStore{}
 	store.On("GetBasicRolesPermissions", mock.Anything, mock.Anything).Return(
 		func(_ context.Context, q accesscontrol.GetUserPermissionsQuery) []accesscontrol.Permission {
 			return []accesscontrol.Permission{{

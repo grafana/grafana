@@ -29,11 +29,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
@@ -313,7 +315,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
+	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboardstest.FakeDashboardService{}, historianMetrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
 	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics, ac, 500)
@@ -432,7 +434,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t2 := tn(2)
 	t3 := tn(3)
 
-	m := models.RuleMuts
+	m := modelstest.RuleMuts
 	baseRule := &models.AlertRule{
 		OrgID: 1,
 		Title: "test_title",
@@ -464,12 +466,12 @@ func TestProcessEvalResults(t *testing.T) {
 		return newEvaluationWithValues(evalTime, evalState, make(map[string]float64))
 	}
 
-	baseRuleWith := func(mutators ...models.AlertRuleMutator) *models.AlertRule {
-		r := models.CopyRule(baseRule, mutators...)
+	baseRuleWith := func(mutators ...modelstest.AlertRuleMutator) *models.AlertRule {
+		r := modelstest.CopyRule(baseRule, mutators...)
 		return r
 	}
 
-	newResult := func(mutators ...eval.ResultMutator) eval.Result {
+	newResult := func(mutators ...evaltest.ResultMutator) eval.Result {
 		r := eval.Result{
 			State:              eval.Normal,
 			EvaluationDuration: evaluationDuration,
@@ -515,7 +517,7 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedStates: []*state.State{
@@ -535,8 +537,8 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -568,10 +570,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(6): {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedStates: []*state.State{
@@ -591,10 +593,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -617,16 +619,16 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -649,10 +651,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -676,13 +678,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -706,16 +708,16 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(1)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)), // Alerting.
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)), // Alerting.
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)), // Pending.
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)), // Pending.
 				},
 			},
 			expectedAnnotations: 4,
@@ -739,19 +741,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have labels
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)), // TODO fix it because NoData does not have labels
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 3, // Normal -> Pending, Pending -> Pending (NoData), Pending (NoData) -> Alerting
@@ -774,22 +776,22 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				tn(6): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 4,
@@ -812,10 +814,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -837,10 +839,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(6)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -861,10 +863,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -886,10 +888,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(nil)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(nil)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -920,11 +922,11 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(data.Labels{})),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(data.Labels{})),
 				},
 			},
 			expectedAnnotations: 1,
@@ -964,13 +966,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -991,10 +993,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(6), m.WithErrorExecAs(models.AlertingErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -1018,19 +1020,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.AlertingErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1056,10 +1058,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(6), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -1083,19 +1085,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1119,13 +1121,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1146,10 +1148,10 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(6)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -1171,19 +1173,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1205,13 +1207,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1232,13 +1234,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending, Pending -> Pending (Error)
@@ -1262,13 +1264,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending, Pending -> Pending (NoData)
@@ -1290,13 +1292,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending (NoData), Pending (NoData) -> Pending (Error)
@@ -1320,13 +1322,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(3), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending (Error), Pending (Error) -> Pending (NoData)
@@ -1348,13 +1350,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(1), m.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending, Pending -> Error
@@ -1378,13 +1380,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(1)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2, // Normal -> Pending, Pending -> NoData
@@ -1406,16 +1408,16 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(1), m.WithErrorExecAs(models.ErrorErrState), m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Error), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 4,
@@ -1441,16 +1443,16 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithForNTimes(1), m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 4,
@@ -1477,7 +1479,7 @@ func TestProcessEvalResults(t *testing.T) {
 			),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(data.Labels{
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(data.Labels{
 						"cluster":   "us-central-1",
 						"namespace": "prod",
 						"pod":       "grafana",
@@ -1514,13 +1516,13 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(data.Labels{})),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error"))), eval.WithLabels(data.Labels{})),
+					newResult(evaltest.WithError(expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error"))), evaltest.WithLabels(data.Labels{})),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(data.Labels{})),
 				},
 			},
 			expectedStates: []*state.State{
@@ -1547,9 +1549,9 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: map[time.Time]eval.Results{
 				t1: {
 					newResult(
-						eval.WithState(eval.Alerting),
-						eval.WithLabels(data.Labels{}),
-						eval.WithValues(map[string]eval.NumberValueCapture{
+						evaltest.WithState(eval.Alerting),
+						evaltest.WithLabels(data.Labels{}),
+						evaltest.WithValues(map[string]eval.NumberValueCapture{
 							"A": {Var: "A", Labels: data.Labels{}, Value: new(1.0)},
 							"B": {Var: "B", Labels: data.Labels{}, Value: new(2.0)},
 						})),
@@ -1583,9 +1585,9 @@ func TestProcessEvalResults(t *testing.T) {
 			evalResults: map[time.Time]eval.Results{
 				t1: {
 					newResult(
-						eval.WithState(eval.Alerting),
-						eval.WithLabels(data.Labels{}),
-						eval.WithValues(map[string]eval.NumberValueCapture{
+						evaltest.WithState(eval.Alerting),
+						evaltest.WithLabels(data.Labels{}),
+						evaltest.WithValues(map[string]eval.NumberValueCapture{
 							"B0": {Var: "B", Labels: data.Labels{}, Value: new(1.0)},
 							"B1": {Var: "B", Labels: data.Labels{}, Value: new(2.0)},
 						})),
@@ -1617,13 +1619,13 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 2,
@@ -1646,19 +1648,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 3,
@@ -1682,22 +1684,22 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(6): {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 4,
@@ -1720,19 +1722,19 @@ func TestProcessEvalResults(t *testing.T) {
 			alertRule: baseRuleWith(m.WithKeepFiringForNTimes(2), m.WithForNTimes(1)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedAnnotations: 4,
@@ -1758,7 +1760,7 @@ func TestProcessEvalResults(t *testing.T) {
 			reg := prometheus.NewPedanticRegistry()
 			stateMetrics := metrics.NewStateMetrics(reg)
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
+			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboardstest.FakeDashboardService{}, m)
 			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 			ac := &acfakes.FakeRuleService{}
 			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac, 500)
@@ -1884,10 +1886,10 @@ func TestProcessEvalResults(t *testing.T) {
 		rule := baseRuleWith()
 		time := t1
 		res := eval.Results{newResult(
-			eval.WithState(eval.Alerting),
-			eval.WithLabels(data.Labels{}),
-			eval.WithEvaluatedAt(t1),
-			eval.WithValues(map[string]eval.NumberValueCapture{
+			evaltest.WithState(eval.Alerting),
+			evaltest.WithLabels(data.Labels{}),
+			evaltest.WithEvaluatedAt(t1),
+			evaltest.WithValues(map[string]eval.NumberValueCapture{
 				"A": {Var: "A", Labels: data.Labels{}, Value: nil},
 			}),
 		)}
@@ -1918,9 +1920,9 @@ func TestProcessEvalResults(t *testing.T) {
 		}
 		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
-		rule := models.RuleGen.GenerateRef()
+		rule := modelstest.RuleGen.GenerateRef()
 		now := clk.Now()
-		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
+		var results = evaltest.GenerateResults(rand.Intn(4)+1, evaltest.ResultGen(evaltest.WithEvaluatedAt(now)))
 
 		states, _ := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
@@ -2166,13 +2168,13 @@ func TestStaleResults(t *testing.T) {
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	rule := gen.With(gen.WithFor(0), gen.WithMissingSeriesEvalsToResolve(2)).GenerateRef()
 
 	initResults := eval.Results{
-		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
-		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
-		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
+		evaltest.ResultGen(evaltest.WithState(eval.Alerting), evaltest.WithEvaluatedAt(clk.Now()))(),
+		evaltest.ResultGen(evaltest.WithState(eval.Alerting), evaltest.WithEvaluatedAt(clk.Now()))(),
+		evaltest.ResultGen(evaltest.WithState(eval.Normal), evaltest.WithEvaluatedAt(clk.Now()))(),
 	}
 
 	state1 := getCacheID(t, rule, initResults[0])

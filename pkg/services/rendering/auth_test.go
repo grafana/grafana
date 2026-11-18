@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -234,7 +234,7 @@ func TestRenderingService_RenderKeyNamespace(t *testing.T) {
 				var err error
 				cache, err = remotecache.ProvideService(&setting.Cfg{
 					RemoteCacheOptions: &setting.RemoteCacheSettings{Name: "database"},
-				}, db.NewTestStore(t), &usagestats.UsageStatsMock{}, nil)
+				}, db.NewTestStore(t), &usagestatstest.UsageStatsMock{}, nil)
 				require.NoError(t, err)
 			}
 			for _, tt := range tests {

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -165,7 +167,7 @@ func TestTestByListingRepositories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			lister := connection.NewMockRepositoryLister(t)
+			lister := connectiontest.NewMockRepositoryLister(t)
 			lister.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr)
 
 			results := TestByListingRepositories(t.Context(), lister)
@@ -245,7 +247,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 	repos := []provisioning.ExternalRepository{{Name: "repo", Owner: "owner", URL: "https://gitlab.com/owner/repo"}}
 
 	t.Run("success", func(t *testing.T) {
-		lister := connection.NewMockRepositoryLister(t)
+		lister := connectiontest.NewMockRepositoryLister(t)
 		lister.EXPECT().ListRepositories(mock.Anything).Return(repos, nil)
 		conn := &listingConnection{
 			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "",
@@ -261,7 +263,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 	t.Run("failure - no token stored", func(t *testing.T) {
 		conn := &listingConnection{
 			oauthConnection: newConnection(newMockProvider(t, ""), provisioning.GitLabRepositoryType, testOAuthConfig, "", ""),
-			lister:          connection.NewMockRepositoryLister(t),
+			lister:          connectiontest.NewMockRepositoryLister(t),
 		}
 
 		_, err := conn.ListRepositories(t.Context())

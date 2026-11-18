@@ -25,8 +25,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -181,8 +183,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		ExecErrState:    ngmodels.ErrorErrState,
 	}
 
-	baseRuleWith := func(mutators ...ngmodels.AlertRuleMutator) *ngmodels.AlertRule {
-		return ngmodels.CopyRule(baseRule, mutators...)
+	baseRuleWith := func(mutators ...modelstest.AlertRuleMutator) *ngmodels.AlertRule {
+		return modelstest.CopyRule(baseRule, mutators...)
 	}
 
 	newEvaluationWithValues := func(evalTime time.Time, evalState eval.State, values map[string]float64) *Evaluation {
@@ -197,7 +199,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		return newEvaluationWithValues(evalTime, evalState, make(map[string]float64))
 	}
 
-	newResult := func(mutators ...eval.ResultMutator) eval.Result {
+	newResult := func(mutators ...evaltest.ResultMutator) eval.Result {
 		r := eval.Result{
 			State:              eval.Normal,
 			EvaluationDuration: evaluationDuration,
@@ -381,8 +383,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -417,8 +419,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -452,11 +454,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting,2:normal] and 'for'>0 at t1",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(3)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -491,12 +493,12 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -530,16 +532,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[1:alerting] t3[1:alerting] and 'for'=2 at t1,t2,t3",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(2)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -588,13 +590,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting], t2[1:normal] and 'for'=2 at t2",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(2)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -618,10 +620,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -647,15 +649,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels3)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels3)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels3)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -743,7 +745,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal)),
+					newResult(evaltest.WithState(eval.Normal)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -767,7 +769,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting)),
+					newResult(evaltest.WithState(eval.Alerting)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -790,10 +792,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[{}:alerting] and 'for'>0  at t1",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(3)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting)),
+					newResult(evaltest.WithState(eval.Alerting)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -814,19 +816,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[1:normal] t3[1:normal] t4[1:normal] and 'keep_firing_for'>0  at t2,t3,t4",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(2), ngmodels.RuleMuts.WithFor(0)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithKeepFiringForNTimes(2), modelstest.RuleMuts.WithFor(0)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t4: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -895,16 +897,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[1:normal] t3[1:alerting] and 'keep_firing_for'>0  at t2,t3",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithFor(0)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithKeepFiringForNTimes(1), modelstest.RuleMuts.WithFor(0)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -957,19 +959,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[1:alerting] t3[1:normal] t4[1:alerting] and 'keep_firing_for'>0 and 'for'>0 at t2,t3,t4",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithForNTimes(1)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithKeepFiringForNTimes(1), modelstest.RuleMuts.WithForNTimes(1)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 				},
 				t4: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1025,13 +1027,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1112,19 +1114,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[NoData] t3[NoData] t4[NoData] with missing_series_evals_to_resolve=3 at t3,t4",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithMissingSeriesEvalsToResolve(3)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithMissingSeriesEvalsToResolve(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 				t4: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1190,16 +1192,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[NoData] t3[NoData] with missing_series_evals_to_resolve=1 at t2,t3",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithMissingSeriesEvalsToResolve(1)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithMissingSeriesEvalsToResolve(1)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+					newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1267,17 +1269,17 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting,2:alerting] t2[1:alerting] t3[1:alerting] with missing_series_evals_to_resolve=1 at t2,t3",
-			alertRule: baseRuleWith(ngmodels.RuleMuts.WithMissingSeriesEvalsToResolve(1)),
+			alertRule: baseRuleWith(modelstest.RuleMuts.WithMissingSeriesEvalsToResolve(1)),
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1363,10 +1365,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal)),
+					newResult(evaltest.WithState(eval.Normal)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Alerting)),
+					newResult(evaltest.WithState(eval.Alerting)),
 				},
 			},
 			expectedTransitions: map[time.Time][]StateTransition{
@@ -1397,15 +1399,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 	t.Run("no-data", func(t *testing.T) {
 		rules := map[ngmodels.NoDataState]*ngmodels.AlertRule{
-			ngmodels.NoData:   baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)),
-			ngmodels.Alerting: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.Alerting)),
-			ngmodels.OK:       baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.OK)),
-			ngmodels.KeepLast: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)),
+			ngmodels.NoData:   baseRuleWith(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.NoData)),
+			ngmodels.Alerting: baseRuleWith(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.Alerting)),
+			ngmodels.OK:       baseRuleWith(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.OK)),
+			ngmodels.KeepLast: baseRuleWith(modelstest.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)),
 		}
 
 		type noDataTestCase struct {
 			desc                string
-			ruleMutators        []ngmodels.AlertRuleMutator
+			ruleMutators        []modelstest.AlertRuleMutator
 			results             map[time.Time]eval.Results
 			expectedTransitions map[ngmodels.NoDataState]map[time.Time][]StateTransition
 		}
@@ -1415,7 +1417,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			for stateExec, rule := range rules {
 				r := rule
 				if len(tc.ruleMutators) > 0 {
-					r = ngmodels.CopyRule(r, tc.ruleMutators...)
+					r = modelstest.CopyRule(r, tc.ruleMutators...)
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
 					expectedTransitions, ok := tc.expectedTransitions[stateExec]
@@ -1432,7 +1434,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[NoData] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -1509,13 +1511,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(
-							eval.WithState(eval.Normal),
-							eval.WithLabels(labels1),
-							eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}}),
+							evaltest.WithState(eval.Normal),
+							evaltest.WithLabels(labels1),
+							evaltest.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}}),
 						),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -1650,14 +1652,14 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[1:normal,2:alerting] t2[NoData] t3[NoData] at t2,t3",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -1970,17 +1972,17 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:normal,2:alerting] t2[NoData] t3[NoData] and 'for'=1 at t2*,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -2257,16 +2259,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:alerting] t2[NoData] t3[1:alerting] and 'for'=2 at t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -2357,19 +2359,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[NoData] t3[NoData] t4[NoData] and 'keep_firing_for'=2 at t2,t3,t4",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithKeepFiringForNTimes(2)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithKeepFiringForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t4: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -2619,22 +2621,22 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:normal] t2[NoData] t3[NoData] t4[{}:normal] t5[NoData] and 'keep_firing_for'=2 and 'for'=1 at t3,t4,t5",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithKeepFiringForNTimes(2), ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithKeepFiringForNTimes(2), modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t4: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t5: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -2892,13 +2894,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[NoData] t2[1:normal] t3[1:normal] at t2,t3",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -3117,10 +3119,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[{}:normal] t2[NoData] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -3211,13 +3213,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[{}:alerting] t2[NoData] t3[NoData] at t2,t3",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -3397,16 +3399,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[NoData] t3[{}:alerting] and 'for'=2 at t2,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+						newResult(evaltest.WithState(eval.NoData), evaltest.WithLabels(noDataLabels)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 				},
 				expectedTransitions: map[ngmodels.NoDataState]map[time.Time][]StateTransition{
@@ -3577,15 +3579,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		rules := map[ngmodels.ExecutionErrorState]*ngmodels.AlertRule{
-			ngmodels.ErrorErrState:    baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)),
-			ngmodels.AlertingErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.AlertingErrState)),
-			ngmodels.OkErrState:       baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.OkErrState)),
-			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
+			ngmodels.ErrorErrState:    baseRuleWith(modelstest.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)),
+			ngmodels.AlertingErrState: baseRuleWith(modelstest.RuleMuts.WithErrorExecAs(ngmodels.AlertingErrState)),
+			ngmodels.OkErrState:       baseRuleWith(modelstest.RuleMuts.WithErrorExecAs(ngmodels.OkErrState)),
+			ngmodels.KeepLastErrState: baseRuleWith(modelstest.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
 		}
 
 		type errorTestCase struct {
 			desc                string
-			ruleMutators        []ngmodels.AlertRuleMutator
+			ruleMutators        []modelstest.AlertRuleMutator
 			results             map[time.Time]eval.Results
 			expectedTransitions map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition
 		}
@@ -3595,7 +3597,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			for stateExec, rule := range rules {
 				r := rule
 				if len(tc.ruleMutators) > 0 {
-					r = ngmodels.CopyRule(r, tc.ruleMutators...)
+					r = modelstest.CopyRule(r, tc.ruleMutators...)
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
 					expectedTransitions, ok := tc.expectedTransitions[stateExec]
@@ -3612,7 +3614,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[QueryError] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -3696,7 +3698,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[GenericError] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(genericError)),
+						newResult(evaltest.WithError(genericError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -3776,13 +3778,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:alerting] t2[QueryError] and 'for'=1 at t2",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1), evaltest.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -3881,16 +3883,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:alerting] t2[QueryError] t3[1:alerting] and 'for'=1 at t2,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1), evaltest.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
+						newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1), evaltest.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4081,10 +4083,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[1:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1), evaltest.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4183,13 +4185,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[QueryError] t2[1:normal] t3[1:normal] at t3",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+						newResult(evaltest.WithState(eval.Normal), evaltest.WithLabels(labels1)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4303,19 +4305,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:QueryError] t2[{}:normal] t3[{}:normal] t4[{}:normal] and 'keep_firing_for'=2 at t2,t3,t4",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithKeepFiringForNTimes(2)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithKeepFiringForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t4: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4515,19 +4517,19 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:QueryError] t2[{}:QueryError] t3[{}:normal] t4[{}:QueryError] and 'keep_firing_for'=2 and 'for'=1 at t2,t3,t4",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithKeepFiringForNTimes(2), ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithKeepFiringForNTimes(2), modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t4: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4767,10 +4769,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[{}:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4863,13 +4865,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[QueryError] and 'for'=1 at t1*,t2",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4977,16 +4979,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[QueryError] t3[{}:alerting] and 'for'=2 at t2,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
+				ruleMutators: []modelstest.AlertRuleMutator{modelstest.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 					t2: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Alerting)),
+						newResult(evaltest.WithState(eval.Alerting)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -5157,10 +5159,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[QueryError] t2[{}:normal] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t2: {
-						newResult(eval.WithState(eval.Normal)),
+						newResult(evaltest.WithState(eval.Normal)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -5255,10 +5257,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithError(datasourceError)),
+						newResult(evaltest.WithError(datasourceError)),
 					},
 					t2: {
-						newResult(eval.WithError(genericError)),
+						newResult(evaltest.WithError(genericError)),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -5434,7 +5436,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 }
 
 func TestProcessEvalResults_Screenshots(t *testing.T) {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	baseRule := gen.With(
 		gen.WithDashboardAndPanel(new(util.GenerateShortUID()), new(rand.Int63())),
 		gen.WithLabels(nil),
@@ -5472,7 +5474,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		return res
 	}
 
-	newResult := func(mutators ...eval.ResultMutator) eval.Result {
+	newResult := func(mutators ...evaltest.ResultMutator) eval.Result {
 		r := eval.Result{
 			State: eval.Normal,
 		}
@@ -5506,9 +5508,9 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 			initStates: []State{},
 			results: [][]eval.Result{
 				{
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels3)),
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),
@@ -5523,9 +5525,9 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 			},
 			results: [][]eval.Result{
 				{
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels3)),
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),
@@ -5540,9 +5542,9 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 			},
 			results: [][]eval.Result{
 				{
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels2)),
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels3)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels1)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels2)),
+					newResult(evaltest.WithState(eval.Alerting), evaltest.WithLabels(labels3)),
 				},
 			},
 			imageService:        newSuccessfulCountingImageService(),

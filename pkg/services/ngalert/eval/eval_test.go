@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -389,7 +390,7 @@ func TestValidate(t *testing.T) {
 			name:  "fail if condition RefID does not exist",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -406,7 +407,7 @@ func TestValidate(t *testing.T) {
 					Condition: "C",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
+						modelstest.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -415,7 +416,7 @@ func TestValidate(t *testing.T) {
 			name:  "fail if condition RefID is empty",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -431,7 +432,7 @@ func TestValidate(t *testing.T) {
 					Condition: "",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
+						modelstest.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -440,7 +441,7 @@ func TestValidate(t *testing.T) {
 			name:  "fail if datasource with UID does not exists",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				// do not update the cache service
 				return models.Condition{
 					Condition: dsQuery.RefID,
@@ -454,7 +455,7 @@ func TestValidate(t *testing.T) {
 			name:  "fail if datasource cannot be found in plugin store",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -473,8 +474,8 @@ func TestValidate(t *testing.T) {
 			name:  "fail if datasource is not backend one",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery1 := models.GenerateAlertQuery()
-				dsQuery2 := models.GenerateAlertQuery()
+				dsQuery1 := modelstest.GenerateAlertQuery()
+				dsQuery2 := modelstest.GenerateAlertQuery()
 				ds1 := &datasources.DataSource{
 					UID:  dsQuery1.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -509,7 +510,7 @@ func TestValidate(t *testing.T) {
 			name:  "pass if datasource exists and condition is correct",
 			error: false,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -526,7 +527,7 @@ func TestValidate(t *testing.T) {
 					Condition: "B",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
+						modelstest.CreateClassicConditionExpression("B", dsQuery.RefID, "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -535,7 +536,7 @@ func TestValidate(t *testing.T) {
 			name:  "fail if hysteresis command is not the condition",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -552,8 +553,8 @@ func TestValidate(t *testing.T) {
 					Condition: "C",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
-						models.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
+						modelstest.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						modelstest.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -562,7 +563,7 @@ func TestValidate(t *testing.T) {
 			name:  "pass if hysteresis command and it is the condition",
 			error: false,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -579,7 +580,7 @@ func TestValidate(t *testing.T) {
 					Condition: "B",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						modelstest.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
 					},
 				}
 			},
@@ -635,7 +636,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			name:  "fail if hysteresis command is not the condition",
 			error: true,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -652,8 +653,8 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					Condition: "C",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
-						models.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
+						modelstest.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						modelstest.CreateClassicConditionExpression("C", "B", "last", "gt", rand.Int()),
 					},
 				}
 			},
@@ -663,7 +664,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			error:  false,
 			reader: FakeLoadedMetricsReader{fingerprints: map[data.Fingerprint]struct{}{1: {}, 2: {}, 3: {}}},
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -680,7 +681,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					Condition: "B",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						modelstest.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
 					},
 				}
 			},
@@ -690,7 +691,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			error:  false,
 			reader: nil,
 			condition: func(services services) models.Condition {
-				dsQuery := models.GenerateAlertQuery()
+				dsQuery := modelstest.GenerateAlertQuery()
 				ds := &datasources.DataSource{
 					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
@@ -707,7 +708,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 					Condition: "B",
 					Data: []models.AlertQuery{
 						dsQuery,
-						models.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
+						modelstest.CreateHysteresisExpression(t, "B", dsQuery.RefID, 4, 1),
 					},
 				}
 			},
@@ -1564,8 +1565,8 @@ func TestResults_Error(t *testing.T) {
 func TestCreate(t *testing.T) {
 	t.Run("should generate headers from metadata", func(t *testing.T) {
 		orgID := rand.Int63()
-		ctx := models.WithRuleKey(context.Background(), models.GenerateRuleKey(orgID))
-		q := models.CreateClassicConditionExpression("A", "B", "avg", "gt", 1)
+		ctx := models.WithRuleKey(context.Background(), modelstest.GenerateRuleKey(orgID))
+		q := modelstest.CreateClassicConditionExpression("A", "B", "avg", "gt", 1)
 		condition := models.Condition{
 			Condition: q.RefID,
 			Data: []models.AlertQuery{

@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -28,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/query/querytest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -36,10 +38,10 @@ import (
 func TestQueryDiagnosticsRecordsSuccessfulRun(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(backend.NewQueryDataResponse(), nil)
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newTestDiagnosticsMetrics(t, usage)
 	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
 
@@ -66,10 +68,10 @@ func TestQueryDiagnosticsRecordsSuccessfulRun(t *testing.T) {
 func TestQueryDiagnosticsRecordsFailedRun(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errors.New("query failed"))
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newTestDiagnosticsMetrics(t, usage)
 	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
 
@@ -93,7 +95,7 @@ func TestQueryDiagnosticsRecordsFailedRun(t *testing.T) {
 
 func TestQueryDiagnosticsDoesNotCountRejectedInput(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	hs := &HTTPServer{diagnosticsMetrics: newTestDiagnosticsMetrics(t, usage)}
 
 	req, err := http.NewRequest(http.MethodPost, "/api/ds/diagnostics", strings.NewReader(`{"queries":[]}`))
@@ -199,7 +201,7 @@ func diagHARResponse() *backend.QueryDataResponse {
 
 // returnFreshHARResponse stubs method to hand every call its own diagHARResponse, so a second
 // dispatch can't silently observe a capture frame the first one already consumed.
-func returnFreshHARResponse(fake *query.FakeQueryService, method string) {
+func returnFreshHARResponse(fake *querytest.FakeQueryService, method string) {
 	fake.On(method, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 			return diagHARResponse(), nil
@@ -208,14 +210,14 @@ func returnFreshHARResponse(fake *query.FakeQueryService, method string) {
 
 func TestQueryDiagnostics_flagOff_returns404(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, false)
-	hs := &HTTPServer{queryDataService: query.NewFakeQueryService(t)}
+	hs := &HTTPServer{queryDataService: querytest.NewFakeQueryService(t)}
 	c, _ := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, nil)
 	require.Equal(t, http.StatusNotFound, hs.QueryDiagnostics(c).Status())
 }
 
 func TestQueryDiagnostics_noQueries_returns400(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	hs := &HTTPServer{queryDataService: query.NewFakeQueryService(t)}
+	hs := &HTTPServer{queryDataService: querytest.NewFakeQueryService(t)}
 	c, rec := newDiagReqCtx(t, `{"queries":[]}`, nil)
 
 	resp := hs.QueryDiagnostics(c)
@@ -232,7 +234,7 @@ func TestQueryDiagnostics_noQueries_returns400(t *testing.T) {
 // something.
 func TestQueryDiagnostics_unparseableBody_returns400(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	hs := &HTTPServer{queryDataService: query.NewFakeQueryService(t)}
+	hs := &HTTPServer{queryDataService: querytest.NewFakeQueryService(t)}
 	c, rec := newDiagReqCtx(t, `{"queries":`, nil)
 
 	resp := hs.QueryDiagnostics(c)
@@ -244,7 +246,7 @@ func TestQueryDiagnostics_unparseableBody_returns400(t *testing.T) {
 
 func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	// SkipQueryCache is sampled from INSIDE the query, not after the handler returns: the caching
 	// middleware reads it off the ReqContext while the query runs, so setting the flag after dispatching
 	// would leave cache bypass broken — and a post-hoc `require.True(t, c.SkipQueryCache)` would still
@@ -290,7 +292,7 @@ func TestQueryDiagnostics_success_bundleHeadersAndSkipCache(t *testing.T) {
 // a shared marker would still match with the two transposed.
 func TestQueryDiagnostics_bundlesPanelAndDashboardJSON(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	returnFreshHARResponse(fakeQuery, "QueryData")
 	hs := &HTTPServer{queryDataService: fakeQuery}
 	c, rec := newDiagReqCtx(t, `{
@@ -316,7 +318,7 @@ func TestQueryDiagnostics_bundlesPanelAndDashboardJSON(t *testing.T) {
 // bundle with query-error.txt, not the bare 400 the no-capture path returns.
 func TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 			r := diagHARResponse()
@@ -343,7 +345,7 @@ func TestQueryDiagnostics_capturedTrafficWithQueryError_stillBundles(t *testing.
 // traffic.har silently dropped, which no test that supplies capture via a __har__ frame can see.
 func TestQueryDiagnostics_capturesInProcessTraffic(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, _ identity.Requester, _ bool, _ dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 			// Stands in for the datasource's HTTP round trip: the real capture middleware finds the
@@ -376,7 +378,7 @@ func TestQueryDiagnostics_capturesInProcessTraffic(t *testing.T) {
 // diagnostics.PluginCaptureError). Folding in only ResponseError drops it from query-error.txt.
 func TestQueryDiagnostics_externalPluginSwallowedError_bundlesIt(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(context.Context, identity.Requester, bool, dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 			r := diagHARResponse()
@@ -413,7 +415,7 @@ func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-			fakeQuery := query.NewFakeQueryService(t)
+			fakeQuery := querytest.NewFakeQueryService(t)
 			returnFreshHARResponse(fakeQuery, tc.wantMethod)
 			hs := &HTTPServer{queryDataService: fakeQuery}
 			c, _ := newDiagReqCtx(t, `{"queries":[{"refId":"A"}]}`, map[string]string{"X-Query-V2": tc.header})
@@ -426,7 +428,7 @@ func TestQueryDiagnostics_queryV2Dispatch(t *testing.T) {
 
 func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	errResp := backend.NewQueryDataResponse()
 	errResp.Responses["A"] = backend.DataResponse{Error: errors.New("bad promql")}
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -440,7 +442,7 @@ func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
 
 func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	returnFreshHARResponse(fakeQuery, "QueryData")
 	hs := &HTTPServer{queryDataService: fakeQuery}
 	c, rec := newDiagReqCtx(t, `{
@@ -475,7 +477,7 @@ func TestQueryDiagnostics_wrongShapedPanelDataDoesNotSinkTheBundle(t *testing.T)
 	// serializing the frames without their envelope.
 	for _, payload := range []string{`42`, `"not-an-object"`, `[]`, `{"unexpected":true}`} {
 		t.Run(payload, func(t *testing.T) {
-			fakeQuery := query.NewFakeQueryService(t)
+			fakeQuery := querytest.NewFakeQueryService(t)
 			returnFreshHARResponse(fakeQuery, "QueryData")
 			hs := &HTTPServer{queryDataService: fakeQuery}
 			c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}],"panelData":`+payload+`}`, nil)

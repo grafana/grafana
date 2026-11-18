@@ -10,7 +10,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots/dashboardsnapshotstest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -78,7 +78,7 @@ func TestSnapshotHistoricalUnifiedRead(t *testing.T) {
 }
 
 func TestSnapshotLegacyDryRun(t *testing.T) {
-	store := &SnapshotLegacyStore{Service: dashboardsnapshots.NewMockService(t)}
+	store := &SnapshotLegacyStore{Service: dashboardsnapshotstest.NewMockService(t)}
 	input := newBlobTestSnapshot()
 	out, err := store.Create(t.Context(), input, nil, &metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}})
 	require.NoError(t, err)

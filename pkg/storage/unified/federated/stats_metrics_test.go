@@ -15,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -120,7 +120,7 @@ func TestLegacyStatsMetricsNilRecordsNothing(t *testing.T) {
 
 func TestFederatedGetStatsCountsSkippedForDeletedNamespace(t *testing.T) {
 	reg := prometheus.NewRegistry()
-	base := resource.NewMockResourceClient(t)
+	base := resourcetest.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
@@ -159,7 +159,7 @@ func TestFederatedGetStatsRecordsLegacyAccessFailures(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := prometheus.NewRegistry()
-			base := resource.NewMockResourceClient(t)
+			base := resourcetest.NewMockResourceClient(t)
 			in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 			base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 			client := NewFederatedClient(base, tt.provider, nil, WithMetrics(reg))

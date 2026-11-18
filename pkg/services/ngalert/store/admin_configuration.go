@@ -17,7 +17,7 @@ type UpdateAdminConfigurationCmd struct {
 	AdminConfiguration *ngmodels.AdminConfiguration
 }
 
-//go:generate mockery --name AdminConfigurationStore --structname AdminConfigurationStoreMock --inpackage --filename admin_configuration_store_mock.go --with-expecter
+//go:generate mockery --name AdminConfigurationStore --structname AdminConfigurationStoreMock --outpkg storetest --output ./storetest/ --filename admin_configuration_store_mock.go --with-expecter
 type AdminConfigurationStore interface {
 	GetAdminConfiguration(ctx context.Context, orgID int64) (*ngmodels.AdminConfiguration, error)
 	GetAdminConfigurations(ctx context.Context) ([]*ngmodels.AdminConfiguration, error)

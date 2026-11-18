@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 // newClassifierDriver builds a driver with no workers, used only to exercise the
@@ -270,7 +270,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 
 	history := &MockHistoryWriter{}
 	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Once()
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 	repoGetter := &MockRepoGetter{}
 	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil)
@@ -407,7 +407,7 @@ func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver
 	history := &MockHistoryWriter{}
 	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Once()
 
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
 	repoGetter := &MockRepoGetter{}

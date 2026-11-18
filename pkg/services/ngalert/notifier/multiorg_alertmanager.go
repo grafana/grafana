@@ -125,6 +125,23 @@ type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager
 
 type Option func(*MultiOrgAlertmanager)
 
+// WithClusterPeer uses the supplied peer for alert broadcasts.
+func WithClusterPeer(peer alertingNotify.ClusterPeer) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.peer = peer
+		moa.initAlertBroadcast()
+	}
+}
+
+// WithInitialAlertmanagers registers alertmanagers before the first load.
+func WithInitialAlertmanagers(alertmanagers map[int64]Alertmanager) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		for orgID, alertmanager := range alertmanagers {
+			moa.alertmanagers[orgID] = alertmanager
+		}
+	}
+}
+
 func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFactory) Option {
 	return func(moa *MultiOrgAlertmanager) {
 		moa.factory = f(moa.factory)

@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	grafanautils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -72,7 +73,7 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 }
 
 func TestWriteResourceFileFromObject_RejectsPathTraversal(t *testing.T) {
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	// No Sync target → root folder is "", so the folder path is built straight
 	// from the (unsanitized) folder title. repo.Write must never be called; the
 	// mock fails the test if it is.
@@ -103,7 +104,7 @@ func TestWriteResourceFileFromObject_PreservesSizeOnWriteError(t *testing.T) {
 	// (e.g. an oversized resource rejected by the backend) must still report the
 	// real size — that is what lets the bytes metric's outcome=error series
 	// expose size-related failures instead of hiding them behind bytes=0.
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	repo.On("Config").Return(replaceRepoConfig())
 
 	// No folder set → resolves to the (empty) root folder, so no tree lookup runs.
@@ -135,7 +136,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 	// as supported, so the same resource exercises both branches.
 
 	t.Run("does not set the folder annotation for resources that do not support folders", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		clients := NewMockResourceClients(t)
@@ -159,7 +160,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 	})
 
 	t.Run("sets the folder annotation for resources that support folders", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		config := &provisioning.Repository{
@@ -191,7 +192,7 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -208,7 +209,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("empty oldName skips delete", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		fileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -225,7 +226,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("name changed deletes old resource", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
@@ -252,7 +253,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("write failure propagated without delete attempt", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		repo.On("Read", mock.Anything, "alerts/rule.json", "").
@@ -266,7 +267,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("delete failure returns error with new name", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
@@ -294,7 +295,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 	})
 
 	t.Run("ForResource error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
@@ -317,7 +318,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 
 func TestReplaceResourceFromFileByRef(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -339,7 +340,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("name changed deletes old resource", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
@@ -371,7 +372,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("previous file read error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").
@@ -385,7 +386,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("previous file parse error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`not-json`), Path: "alerts/rule.json"}
@@ -401,7 +402,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("write failure propagated without delete attempt", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "alerts/rule.json"}
@@ -420,7 +421,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("delete failure returns error with new name", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
@@ -453,7 +454,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	})
 
 	t.Run("old name empty skips delete", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
@@ -476,7 +477,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 
 func TestDeleteOldResource(t *testing.T) {
 	t.Run("successful delete", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
@@ -498,7 +499,7 @@ func TestDeleteOldResource(t *testing.T) {
 	})
 
 	t.Run("ForResource error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 
@@ -514,7 +515,7 @@ func TestDeleteOldResource(t *testing.T) {
 	})
 
 	t.Run("sets correct namespace from repo config", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
@@ -538,7 +539,7 @@ func TestDeleteOldResource(t *testing.T) {
 	})
 
 	t.Run("ownership check failure wraps error", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
@@ -567,7 +568,7 @@ func TestDeleteOldResource(t *testing.T) {
 	})
 
 	t.Run("skips delete when sourcePath points to a different file", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
@@ -595,7 +596,7 @@ func TestDeleteOldResource(t *testing.T) {
 	})
 
 	t.Run("proceeds with delete when sourcePath is empty", func(t *testing.T) {
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 		mockClients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
 		mockClient := &MockDynamicResourceInterface{}
@@ -760,7 +761,7 @@ func requireNotWrapped(t *testing.T, got, original error) {
 // against ErrSecureValuesNotAllowed, so the error the real guard produces has to
 // survive the write path to the caller with that match intact.
 func TestWriteResourceFromFile_SecureValueRejectionIsMatchable(t *testing.T) {
-	repo := repository.NewMockReaderWriter(t)
+	repo := repositorytest.NewMockReaderWriter(t)
 	mockParser := NewMockParser(t)
 
 	clients := NewMockResourceClients(t)

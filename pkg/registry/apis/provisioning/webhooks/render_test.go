@@ -17,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -46,7 +47,7 @@ func TestRenderErrorStatus(t *testing.T) {
 		"grpc with partial body": {resp: &resourcepb.GetBlobResponse{Value: []byte("partial"), ContentType: "image/png"}, err: st.Err()},
 	} {
 		t.Run(name, func(t *testing.T) {
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.EXPECT().GetBlob(mock.Anything, mock.Anything).Return(input.resp, input.err).Once()
 			connector := NewRenderConnector(client, nil)
 			responder := &renderErrorResponder{}

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github/githubtest"
+
 	"github.com/golang-jwt/jwt/v4"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -155,7 +157,7 @@ func TestConnection_Test(t *testing.T) {
 		name           string
 		connection     *provisioning.Connection
 		secrets        github.ConnectionSecrets
-		setupMock      func(*github.MockGithubFactory, *github.MockClient)
+		setupMock      func(*githubtest.MockGithubFactory, *githubtest.MockClient)
 		expectedCode   int
 		expectedErrors []provisioning.ErrorDetails
 		expectSuccess  bool
@@ -176,7 +178,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -356,7 +358,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -398,7 +400,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrServiceUnavailable)
 			},
@@ -427,7 +429,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, errors.New("unauthorized"))
 			},
@@ -456,7 +458,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 999, Slug: "wrong-app"}, nil)
 			},
@@ -487,7 +489,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, connection.ErrAuthentication)
 			},
@@ -524,7 +526,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrNotFound)
 			},
@@ -555,7 +557,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -595,7 +597,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -635,7 +637,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -675,7 +677,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -715,7 +717,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -758,7 +760,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -802,7 +804,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -842,7 +844,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -874,7 +876,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -915,7 +917,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -956,7 +958,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -997,7 +999,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1036,7 +1038,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1086,7 +1088,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1136,7 +1138,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1186,7 +1188,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1236,7 +1238,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1286,7 +1288,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1328,7 +1330,7 @@ func TestConnection_Test(t *testing.T) {
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 				Token:      token,
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+			setupMock: func(mockFactory *githubtest.MockGithubFactory, mockClient *githubtest.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
@@ -1358,8 +1360,8 @@ func TestConnection_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
-			mockClient := github.NewMockClient(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
+			mockClient := githubtest.NewMockClient(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockFactory, mockClient)
 			}
@@ -1449,7 +1451,7 @@ func TestConnection_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
 			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -1632,7 +1634,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
 
 			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
 			token, err := conn.GenerateConnectionToken(t.Context())
@@ -1667,7 +1669,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		name          string
 		connection    *provisioning.Connection
 		repo          *provisioning.Repository
-		setupMock     func(*github.MockGithubFactory)
+		setupMock     func(*githubtest.MockGithubFactory)
 		expectedToken *connection.ExpirableSecureValue
 		expectedError string
 	}{
@@ -1697,8 +1699,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
+			setupMock: func(mockFactory *githubtest.MockGithubFactory) {
+				mockClient := githubtest.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token"), mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
 					Return(github.InstallationToken{
@@ -1828,8 +1830,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
+			setupMock: func(mockFactory *githubtest.MockGithubFactory) {
+				mockClient := githubtest.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token"), mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
 					Return(github.InstallationToken{}, errors.New("API rate limit exceeded"))
@@ -1862,8 +1864,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
+			setupMock: func(mockFactory *githubtest.MockGithubFactory) {
+				mockClient := githubtest.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token"), mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
 					Return(github.InstallationToken{}, github.ErrUnprocessableEntity)
@@ -1896,8 +1898,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
+			setupMock: func(mockFactory *githubtest.MockGithubFactory) {
+				mockClient := githubtest.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token"), mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
 					Return(github.InstallationToken{}, github.ErrNotFound)
@@ -1930,8 +1932,8 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
+			setupMock: func(mockFactory *githubtest.MockGithubFactory) {
+				mockClient := githubtest.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token"), mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
 					Return(github.InstallationToken{}, connection.ErrAuthentication)
@@ -1942,7 +1944,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
+			mockFactory := githubtest.NewMockGithubFactory(t)
 			if tt.setupMock != nil {
 				tt.setupMock(mockFactory)
 			}
@@ -1982,8 +1984,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).Return(mockClient, nil).Once()
 		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
@@ -1991,7 +1993,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 			ExpiresAt: time.Now().Add(time.Hour),
 		}, nil)
 
-		mockInstallationClient := github.NewMockClient(t)
+		mockInstallationClient := githubtest.NewMockClient(t)
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token"), mock.Anything).Return(mockInstallationClient, nil)
 		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return([]github.Repository{
 			{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
@@ -2021,7 +2023,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{})
 		_, err := conn.ListRepositories(t.Context())
 
@@ -2046,8 +2048,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).Return(mockClient, nil).Once()
 		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
@@ -2055,7 +2057,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 			ExpiresAt: time.Now().Add(time.Hour),
 		}, nil)
 
-		mockInstallationClient := github.NewMockClient(t)
+		mockInstallationClient := githubtest.NewMockClient(t)
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token"), mock.Anything).Return(mockInstallationClient, nil)
 		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return(nil, assert.AnError)
 
@@ -2085,8 +2087,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).Return(mockClient, nil)
 		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{}, assert.AnError)
@@ -2117,8 +2119,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).Return(mockClient, nil)
 		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{}, github.ErrServiceUnavailable)
@@ -2149,8 +2151,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := github.NewMockGithubFactory(t)
-		mockClient := github.NewMockClient(t)
+		mockFactory := githubtest.NewMockGithubFactory(t)
+		mockClient := githubtest.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).Return(mockClient, nil).Once()
 		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
@@ -2158,7 +2160,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 			ExpiresAt: time.Now().Add(time.Hour),
 		}, nil)
 
-		mockInstallationClient := github.NewMockClient(t)
+		mockInstallationClient := githubtest.NewMockClient(t)
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token"), mock.Anything).Return(mockInstallationClient, nil)
 		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return([]github.Repository{}, nil)
 
@@ -2189,7 +2191,7 @@ func TestNewConnectionWithCustomConfig(t *testing.T) {
 		},
 	}
 
-	conn := github.NewConnectionWithCustomConfig(obj, github.NewMockGithubFactory(t), github.ConnectionSecrets{
+	conn := github.NewConnectionWithCustomConfig(obj, githubtest.NewMockGithubFactory(t), github.ConnectionSecrets{
 		PrivateKey: common.RawSecureValue(privateKeyBase64),
 	}, cfg)
 

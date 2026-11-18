@@ -1,4 +1,4 @@
-package legacy_storage
+package legacy_storage_test
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,9 +27,9 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 	orgID := int64(1)
 
 	t.Run("should read the latest config for giving organization", func(t *testing.T) {
-		cryptoMock := newFakeCrypto()
-		storeMock := &MockAMConfigStore{}
-		store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
+		cryptoMock := legacy_storagetest.NewFakeCrypto()
+		storeMock := &legacy_storagetest.MockAMConfigStore{}
+		store := legacy_storage.NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 		expected := models.AlertConfiguration{
 			ID:                        1,
@@ -39,7 +42,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 		}
 
 		expectedCfg := func() v1.AMConfigV1 {
-			dbmodel, err := DeserializeAlertmanagerConfig([]byte(defaultConfig))
+			dbmodel, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(defaultConfig))
 			require.NoError(t, err)
 			return *v1.ToModel(dbmodel)
 		}()
@@ -64,8 +67,8 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 
 	t.Run("propagate errors", func(t *testing.T) {
 		t.Run("when underlying store fails", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures())
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, legacy_storagetest.NewFakeCrypto(), featuremgmt.WithFeatures())
 			expectedErr := errors.New("test=err")
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, expectedErr)
 
@@ -74,29 +77,29 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 		})
 
 		t.Run("return ErrNoAlertmanagerConfiguration config does not exist", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures())
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, legacy_storagetest.NewFakeCrypto(), featuremgmt.WithFeatures())
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil, nil)
 
 			_, err := store.Get(context.Background(), orgID)
-			require.Truef(t, ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
+			require.Truef(t, legacy_storage.ErrNoAlertmanagerConfiguration.Is(err), "expected ErrNoAlertmanagerConfiguration but got %s", err.Error())
 		})
 
 		t.Run("when config cannot be unmarshalled", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures())
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, legacy_storagetest.NewFakeCrypto(), featuremgmt.WithFeatures())
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&models.AlertConfiguration{
 				AlertmanagerConfiguration: "invalid-json",
 			}, nil)
 
 			_, err := store.Get(context.Background(), orgID)
-			require.Truef(t, ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
+			require.Truef(t, legacy_storage.ErrBadAlertmanagerConfiguration.Base.Is(err), "expected ErrBadAlertmanagerConfiguration but got %s", err.Error())
 		})
 
 		t.Run("when decrypting extra configs fails", func(t *testing.T) {
-			cryptoMock := newFakeCrypto()
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
+			cryptoMock := legacy_storagetest.NewFakeCrypto()
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 			expectedErr := errors.New("test-err")
 			cryptoMock.DecryptExtraConfigsFunc = func(ctx context.Context, config *v1.AMConfigV1) error {
@@ -118,19 +121,19 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 	dbCfg := store.AMConfigDB{}
 	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &dbCfg))
 	cfg := *v1.ToModel(&dbCfg)
-	expectedCfg, err := SerializeAlertmanagerConfig(cfg)
+	expectedCfg, err := legacy_storage.SerializeAlertmanagerConfig(cfg)
 	require.NoError(t, err)
 
-	revision := ConfigRevision{
+	revision := legacy_storage.ConfigRevision{
 		Config:           &cfg,
 		ConcurrencyToken: "config-hash-123",
 		Version:          "123",
 	}
 
 	t.Run("should save the config to store", func(t *testing.T) {
-		cryptoMock := newFakeCrypto()
-		storeMock := &MockAMConfigStore{}
-		store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
+		cryptoMock := legacy_storagetest.NewFakeCrypto()
+		storeMock := &legacy_storagetest.MockAMConfigStore{}
+		store := legacy_storage.NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 		storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 			assert.Equal(t, string(expectedCfg), cmd.AlertmanagerConfiguration)
@@ -155,8 +158,8 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("when underlying storage returns error", func(t *testing.T) {
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures())
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, legacy_storagetest.NewFakeCrypto(), featuremgmt.WithFeatures())
 
 			expectedErr := errors.New("test-err")
 			storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(expectedErr)
@@ -167,9 +170,9 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 		})
 
 		t.Run("when encrypting extra configs fails", func(t *testing.T) {
-			cryptoMock := newFakeCrypto()
-			storeMock := &MockAMConfigStore{}
-			store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
+			cryptoMock := legacy_storagetest.NewFakeCrypto()
+			storeMock := &legacy_storagetest.MockAMConfigStore{}
+			store := legacy_storage.NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 			expectedErr := errors.New("test-err")
 			cryptoMock.EncryptExtraConfigsFunc = func(ctx context.Context, config *v1.AMConfigV1) error {

@@ -13,7 +13,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-//go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
+//go:generate mockery --name=Extra --structname=MockExtra --outpkg connectiontest --output ./connectiontest/ --filename=extra_mock.go --with-expecter
 type Extra interface {
 	Type() provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
@@ -21,7 +21,8 @@ type Extra interface {
 	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
-//go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
+//go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock_test.go --with-expecter
+//go:generate mockery --name=Factory --structname=MockFactory --outpkg connectiontest --output ./connectiontest/ --filename=factory_mock.go --with-expecter
 type Factory interface {
 	Types() []provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)

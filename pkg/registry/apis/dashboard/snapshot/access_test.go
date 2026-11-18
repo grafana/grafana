@@ -28,6 +28,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,7 +51,7 @@ func TestCreateSnapshotRequiresDashboardRead(t *testing.T) {
 			if tc.readScope != "" {
 				permissions = append(permissions, ac.Permission{Action: dashboards.ActionDashboardsRead, Scope: tc.readScope})
 			}
-			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService := dashboardstest.NewFakeDashboardService(t)
 			if tc.allowed && !tc.public {
 				dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: "source", OrgID: 1}).Return(&dashboards.Dashboard{UID: "source"}, nil)
 			}

@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/provisioningtest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -31,6 +33,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
@@ -262,11 +265,11 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// And a rule
-		rule := models.RuleGen.
-			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
-			With(models.RuleGen.WithOrgID(1)).
-			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
+		rule := modelstest.RuleGen.
+			With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(modelstest.RuleGen.WithGroupName(simpleGroup.Name)).
+			With(modelstest.RuleGen.WithOrgID(1)).
+			With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
@@ -324,11 +327,11 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
-		rule := models.RuleGen.
-			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-			With(models.RuleGen.WithGroupName(simpleGroup.Name)).
-			With(models.RuleGen.WithOrgID(1)).
-			With(models.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
+		rule := modelstest.RuleGen.
+			With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(modelstest.RuleGen.WithGroupName(simpleGroup.Name)).
+			With(modelstest.RuleGen.WithOrgID(1)).
+			With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("123")).
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 		// mark the rule as provisioned
@@ -363,7 +366,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	})
 
 	t.Run("when alert rule quota limit exceeded", func(t *testing.T) {
-		quotas := &provisioning.MockQuotaChecker{}
+		quotas := &provisioningtest.MockQuotaChecker{}
 		quotas.EXPECT().LimitExceeded()
 
 		srv, _, _ := createConvertPrometheusSrv(t, withQuotaChecker(quotas))
@@ -1040,25 +1043,25 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
-		groupKey := models.GenerateGroupKey(rc.OrgID)
+		groupKey := modelstest.GenerateGroupKey(rc.OrgID)
 		groupKey.NamespaceUID = fldr.UID
 		groupKey.RuleGroup = "test-group"
-		rule := models.RuleGen.
-			With(models.RuleGen.WithGroupKey(groupKey)).
-			With(models.RuleGen.WithTitle("TestAlert")).
-			With(models.RuleGen.WithIntervalSeconds(60)).
-			With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
+		rule := modelstest.RuleGen.
+			With(modelstest.RuleGen.WithGroupKey(groupKey)).
+			With(modelstest.RuleGen.WithTitle("TestAlert")).
+			With(modelstest.RuleGen.WithIntervalSeconds(60)).
+			With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Create a rule in another group
-		groupKeyNotFromProm := models.GenerateGroupKey(rc.OrgID)
+		groupKeyNotFromProm := modelstest.GenerateGroupKey(rc.OrgID)
 		groupKeyNotFromProm.NamespaceUID = fldr.UID
 		groupKeyNotFromProm.RuleGroup = "test-group-2"
-		ruleInOtherFolder := models.RuleGen.
-			With(models.RuleGen.WithGroupKey(groupKeyNotFromProm)).
-			With(models.RuleGen.WithTitle("in another group")).
-			With(models.RuleGen.WithIntervalSeconds(60)).
+		ruleInOtherFolder := modelstest.RuleGen.
+			With(modelstest.RuleGen.WithGroupKey(groupKeyNotFromProm)).
+			With(modelstest.RuleGen.WithTitle("in another group")).
+			With(modelstest.RuleGen.WithIntervalSeconds(60)).
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), ruleInOtherFolder)
 
@@ -1158,16 +1161,16 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.OrgID)
+			groupKey := modelstest.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
 			require.NoError(t, err)
-			rule := models.RuleGen.
-				With(models.RuleGen.WithGroupKey(groupKey)).
-				With(models.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
-				With(models.RuleGen.WithIntervalSeconds(60)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
+			rule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithGroupKey(groupKey)).
+				With(modelstest.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
+				With(modelstest.RuleGen.WithIntervalSeconds(60)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 		}
@@ -1305,16 +1308,16 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.OrgID)
+			groupKey := modelstest.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
 			require.NoError(t, err)
-			rule := models.RuleGen.
-				With(models.RuleGen.WithGroupKey(groupKey)).
-				With(models.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
-				With(models.RuleGen.WithIntervalSeconds(60)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
+			rule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithGroupKey(groupKey)).
+				With(modelstest.RuleGen.WithTitle(promGroup.Rules[0].Alert)).
+				With(modelstest.RuleGen.WithIntervalSeconds(60)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition(string(promRuleYAML))).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 		}
@@ -1469,10 +1472,10 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			folderService.ExpectedFolders = []*folder.Folder{fldr}
 			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
-			rule := models.RuleGen.
-				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
+			rule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 
@@ -1484,10 +1487,10 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 
 			// Create another rule group in a different namespace that should not be deleted
 			otherGroupName := "other-group"
-			otherRule := models.RuleGen.
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithGroupName(otherGroupName)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
+			otherRule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithGroupName(otherGroupName)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), otherRule)
 
@@ -1519,10 +1522,10 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			rc := createRequestCtx()
 
 			// Create a provisioned rule
-			rule2 := models.RuleGen.
-				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
+			rule2 := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule2)
 			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
@@ -1603,11 +1606,11 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			folderService.ExpectedFolders = []*folder.Folder{fldr}
 			ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
-			rule := models.RuleGen.
-				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithGroupName(groupName)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
+			rule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithGroupName(groupName)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition(promDefinition)).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule)
 
@@ -1620,11 +1623,11 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 			// Create another rule in a different group that should not be deleted
 			otherGroupName := "other-group"
-			otherRule := models.RuleGen.
-				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithGroupName(otherGroupName)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
+			otherRule := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithGroupName(otherGroupName)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("other prometheus definition")).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), otherRule)
 
@@ -1654,11 +1657,11 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			rc := createRequestCtx()
 
 			// Create a provisioned rule
-			rule2 := models.RuleGen.
-				With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-				With(models.RuleGen.WithOrgID(1)).
-				With(models.RuleGen.WithGroupName(groupName)).
-				With(models.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
+			rule2 := modelstest.RuleGen.
+				With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+				With(modelstest.RuleGen.WithOrgID(1)).
+				With(modelstest.RuleGen.WithGroupName(groupName)).
+				With(modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("prometheus definition")).
 				GenerateRef()
 			ruleStore.PutRule(context.Background(), rule2)
 			err := provenanceStore.SetProvenance(context.Background(), rule2, 1, models.ProvenanceAPI)
@@ -1711,10 +1714,10 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 		folderService.ExpectedFolders = []*folder.Folder{fldr}
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
-		rule := models.RuleGen.
-			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
-			With(models.RuleGen.WithOrgID(1)).
-			With(models.RuleGen.WithGroupName(groupName)).
+		rule := modelstest.RuleGen.
+			With(modelstest.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(modelstest.RuleGen.WithOrgID(1)).
+			With(modelstest.RuleGen.WithGroupName(groupName)).
 			GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)
 
@@ -1937,7 +1940,7 @@ func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
 type convertPrometheusSrvOptions struct {
 	provenanceStore              provisioning.ProvisioningStore
 	fakeAccessControlRuleService *acfakes.FakeRuleService
-	quotaChecker                 *provisioning.MockQuotaChecker
+	quotaChecker                 *provisioningtest.MockQuotaChecker
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
@@ -1959,7 +1962,7 @@ func withFakeAccessControlRuleService(service *acfakes.FakeRuleService) convertP
 	}
 }
 
-func withQuotaChecker(checker *provisioning.MockQuotaChecker) convertPrometheusSrvOptionsFunc {
+func withQuotaChecker(checker *provisioningtest.MockQuotaChecker) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.quotaChecker = checker
 	}
@@ -2010,7 +2013,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 	t.Helper()
 
 	// By default the quota checker will allow the operation
-	quotas := &provisioning.MockQuotaChecker{}
+	quotas := &provisioningtest.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 
 	options := convertPrometheusSrvOptions{
@@ -2042,12 +2045,12 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		options.provenanceStore,
 		options.folderService,
 		options.quotaChecker,
-		&provisioning.NopTransactionManager{},
+		&provisioningtest.NopTransactionManager{},
 		60,
 		10,
 		100,
 		log.New("test"),
-		&provisioning.NotificationSettingsValidatorProviderFake{},
+		&provisioningtest.NotificationSettingsValidatorProviderFake{},
 		options.fakeAccessControlRuleService,
 		provisioning.NoopRuleMutationValidator{},
 	)

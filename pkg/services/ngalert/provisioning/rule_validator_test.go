@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -93,8 +94,8 @@ func (v managerCapturingValidator) ValidateRuleMutations(_ context.Context, _ []
 func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
-	groupKey := models.GenerateGroupKey(orgID)
-	gen := models.RuleGen
+	groupKey := modelstest.GenerateGroupKey(orgID)
+	gen := modelstest.RuleGen
 	stored := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(30)).GenerateManyRef(1)
 	manager := models.ProvenanceToManagerProperties(models.ProvenanceAPI)
 
@@ -124,7 +125,7 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 
 	t.Run("UpdateAlertRule", func(t *testing.T) {
 		service, validator := initWithData(t)
-		rule := models.CopyRule(stored[0])
+		rule := modelstest.CopyRule(stored[0])
 		rule.Title = rule.Title + "_new"
 
 		_, err := service.UpdateAlertRule(context.Background(), u, *rule, manager)
@@ -135,7 +136,7 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 
 	t.Run("ReplaceRuleGroup", func(t *testing.T) {
 		service, validator := initWithData(t)
-		replacement := models.CopyRule(stored[0])
+		replacement := modelstest.CopyRule(stored[0])
 		replacement.Title = replacement.Title + "_replaced"
 		group := models.AlertRuleGroup{
 			Title:      groupKey.RuleGroup,
@@ -153,7 +154,7 @@ func TestRuleMutationValidatorIsReachedFromEveryWritePath(t *testing.T) {
 
 	t.Run("ReplaceRuleGroup sends added and updated rules as a single batch", func(t *testing.T) {
 		service, validator := initWithData(t)
-		updated := models.CopyRule(stored[0])
+		updated := modelstest.CopyRule(stored[0])
 		updated.Title = updated.Title + "_updated"
 		added := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(30)).Generate()
 		added.UID = ""

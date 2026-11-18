@@ -7,10 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func TestJitter(t *testing.T) {
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	genWithInterval10to600 := gen.With(gen.WithIntervalBetween(10, 600))
 	t.Run("when strategy is JitterNever", func(t *testing.T) {
 		t.Run("offset is always zero", func(t *testing.T) {

@@ -100,11 +100,11 @@ func TestIntegrationListFilesWithoutPermissions(t *testing.T) {
 	require.Equal(t, 0, rowLen)
 }
 
-func setupUploadStore(t *testing.T, authService storageAuthService) (StorageService, *filestorage.MockFileStorage, string) {
+func setupUploadStore(t *testing.T, authService storageAuthService) (StorageService, *fileStorageMock, string) {
 	t.Helper()
 	storageName := "resources"
-	mockStorage := &filestorage.MockFileStorage{}
 	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	mockStorage := &fileStorageMock{FileStorage: sqlStorage.store}
 	sqlStorage.store = mockStorage
 
 	if authService == nil {
@@ -259,18 +259,18 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	orgedUser := &user.SignedInUser{OrgID: 1}
 
 	t.Helper()
-	mockContentFSApi := &filestorage.MockFileStorage{}
 	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Content root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, false)
+	mockContentFSApi := &fileStorageMock{FileStorage: contentStorage.store}
 	contentStorage.store = mockContentFSApi
 
 	nestedRoot := "nested"
-	mockNestedFSApi := &filestorage.MockFileStorage{}
 	nestedStorage := newSQLStorage(RootStorageMeta{}, nestedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, true)
+	mockNestedFSApi := &fileStorageMock{FileStorage: nestedStorage.store}
 	nestedStorage.store = mockNestedFSApi
 
 	nestedOrgedRoot := "nestedOrged"
-	mockNestedOrgedFSApi := &filestorage.MockFileStorage{}
 	nestedOrgedStorage := newSQLStorage(RootStorageMeta{}, nestedOrgedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, true)
+	mockNestedOrgedFSApi := &fileStorageMock{FileStorage: nestedOrgedStorage.store}
 	nestedOrgedStorage.store = mockNestedOrgedFSApi
 
 	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -284,7 +284,7 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	tests := []struct {
 		user         *user.SignedInUser
 		name         string
-		mockNestedFS *filestorage.MockFileStorage
+		mockNestedFS *fileStorageMock
 		nestedRoot   string
 	}{
 		{

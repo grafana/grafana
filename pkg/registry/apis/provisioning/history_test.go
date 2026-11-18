@@ -11,13 +11,14 @@ import (
 
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 // versionedFakeRepo embeds MockRepository and adds a History method so the
 // connector's `repo.(repository.Versioned)` assertion succeeds. We track
 // whether History was called to assert backend invocation order.
 type versionedFakeRepo struct {
-	*repository.MockRepository
+	*repositorytest.MockRepository
 	historyCalled bool
 }
 
@@ -54,7 +55,7 @@ func TestHistorySubresource_RefValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(&provisioningapi.Repository{}).Maybe()
 			fakeRepo := &versionedFakeRepo{MockRepository: mockRepo}
 

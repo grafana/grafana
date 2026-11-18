@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -80,7 +80,7 @@ func ProvideFolderPermissions(
 		return nil, err
 	}
 
-	searchMock := &resource.MockResourceClient{}
+	searchMock := &resourcetest.MockResourceClient{}
 	searchMock.On("Search", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", testifymock.Anything, testifymock.Anything, testifymock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	fService := folderimpl.ProvideService(

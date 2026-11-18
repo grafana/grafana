@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -79,10 +80,10 @@ func SetupRBACPermission(t *testing.T, db db.DB, role *accesscontrol.Role, user 
 // NewMockDashboardService returns a FakeDashboardService pre-configured to
 // accept SaveDashboard calls and return the dashboard from the DTO with an
 // auto-assigned sequential ID.
-func NewMockDashboardService(t *testing.T) *dashboards.FakeDashboardService {
+func NewMockDashboardService(t *testing.T) *dashboardstest.FakeDashboardService {
 	t.Helper()
 	var counter atomic.Int64
-	svc := dashboards.NewFakeDashboardService(t)
+	svc := dashboardstest.NewFakeDashboardService(t)
 	svc.On("SaveDashboard", mock.Anything, mock.Anything, mock.Anything).
 		Return(
 			func(_ context.Context, dto *dashboards.SaveDashboardDTO, _ bool) *dashboards.Dashboard {

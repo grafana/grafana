@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,8 +26,8 @@ import (
 // mockOAuthCapableConnection combines the generated Connection and
 // OAuthConnection mocks so the built connection passes the OAuth assertion.
 type mockOAuthCapableConnection struct {
-	*connection.MockConnection
-	*connection.MockOAuthConnection
+	*connectiontest.MockConnection
+	*connectiontest.MockOAuthConnection
 }
 
 func TestConnectionAuthorizeConnector(t *testing.T) {
@@ -118,7 +120,7 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 		responder := &mockResponder{}
 		access := NewMockConnectionAuthorizeAccess(t)
 		access.EXPECT().GetConnectionSpec(mock.Anything, "test-connection").Return(testAuthorizeConnection(), nil)
-		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(connection.NewMockConnection(t), nil)
+		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(connectiontest.NewMockConnection(t), nil)
 		handler := newAuthorizeHandler(t, access, responder)
 
 		handler.ServeHTTP(httptest.NewRecorder(), newAuthorizeRequest(`{"spec":{"code":"abc"}}`))
@@ -132,8 +134,8 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 	t.Run("returns error when code exchange fails", func(t *testing.T) {
 		responder := &mockResponder{}
 		oauthConn := &mockOAuthCapableConnection{
-			MockConnection:      connection.NewMockConnection(t),
-			MockOAuthConnection: connection.NewMockOAuthConnection(t),
+			MockConnection:      connectiontest.NewMockConnection(t),
+			MockOAuthConnection: connectiontest.NewMockOAuthConnection(t),
 		}
 		oauthConn.MockOAuthConnection.EXPECT().
 			ExchangeAuthorizationCode(mock.Anything, "abc", "").
@@ -156,8 +158,8 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 			return true, nil, errors.New("storage unavailable")
 		})
 		oauthConn := &mockOAuthCapableConnection{
-			MockConnection:      connection.NewMockConnection(t),
-			MockOAuthConnection: connection.NewMockOAuthConnection(t),
+			MockConnection:      connectiontest.NewMockConnection(t),
+			MockOAuthConnection: connectiontest.NewMockOAuthConnection(t),
 		}
 		oauthConn.MockOAuthConnection.EXPECT().
 			ExchangeAuthorizationCode(mock.Anything, "abc", "").
@@ -183,8 +185,8 @@ func TestConnectionAuthorizeConnector(t *testing.T) {
 			return true, &provisioning.Connection{}, nil
 		})
 		oauthConn := &mockOAuthCapableConnection{
-			MockConnection:      connection.NewMockConnection(t),
-			MockOAuthConnection: connection.NewMockOAuthConnection(t),
+			MockConnection:      connectiontest.NewMockConnection(t),
+			MockOAuthConnection: connectiontest.NewMockOAuthConnection(t),
 		}
 		expiresAt := time.Now().Add(time.Hour)
 		oauthConn.MockOAuthConnection.EXPECT().

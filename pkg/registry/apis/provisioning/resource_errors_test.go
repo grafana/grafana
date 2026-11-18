@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -26,7 +28,7 @@ import (
 func TestListConnector_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			lister := resources.NewMockResourceLister(t)
+			lister := resourcestest.NewMockResourceLister(t)
 			lister.EXPECT().List(mock.Anything, "default", "repo", resources.ListOptions{}).Return(nil, tc.err).Once()
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
@@ -46,7 +48,7 @@ func TestListConnector_StorageErrors(t *testing.T) {
 func TestStatsConnector_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			lister := resources.NewMockResourceLister(t)
+			lister := resourcestest.NewMockResourceLister(t)
 			lister.EXPECT().RepositoryStats(mock.Anything, "default", "repo").Return(nil, tc.err).Once()
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
@@ -66,7 +68,7 @@ func TestStatsConnector_StorageErrors(t *testing.T) {
 func TestHandleStats_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			stats := resources.NewMockNamespaceStatsReader(t)
+			stats := resourcestest.NewMockNamespaceStatsReader(t)
 			stats.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
 			b := &APIBuilder{namespaceStats: stats}
 			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})

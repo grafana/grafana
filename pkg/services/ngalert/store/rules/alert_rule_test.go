@@ -36,6 +36,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
@@ -67,13 +68,13 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	capture := captureRuleChangeEvents(sqlStore)
 	usr := models.UserUID("1234")
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	recordingRuleGen := gen.With(gen.WithAllRecordingRules())
 
 	t.Run("should increase version", func(t *testing.T) {
 		rule := createRule(t, store, gen)
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
@@ -105,7 +106,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 	t.Run("updating record field should increase version", func(t *testing.T) {
 		rule := createRule(t, store, recordingRuleGen)
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Record.Metric = "new_metric"
 
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
@@ -130,7 +131,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		rule := createRule(t, store, gen)
 		rule.Version-- // simulate version discrepancy
 
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
@@ -156,7 +157,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			capture.fn = nil
 		})
 
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
@@ -168,7 +169,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 	t.Run("should set UpdatedBy", func(t *testing.T) {
 		rule := createRule(t, store, gen)
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
@@ -222,7 +223,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		const missingSeriesEvalsToResolve = int64(43200)
 
 		rule := createRule(t, store, gen)
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.MissingSeriesEvalsToResolve = new(missingSeriesEvalsToResolve)
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
@@ -249,7 +250,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 	t.Run("should save noop update", func(t *testing.T) {
 		rule := createRule(t, store, gen)
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
 			New:      *newRule,
@@ -318,7 +319,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		assert.Equal(t, folderATitle, existingRule.FolderFullpath, "Initial folder fullpath should be Folder A")
 
 		// Move the rule to folder B by updating NamespaceUID
-		newRule := models.CopyRule(existingRule)
+		newRule := modelstest.CopyRule(existingRule)
 		newRule.NamespaceUID = folderBUID
 
 		err = testStore.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
@@ -347,7 +348,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		require.NotEmpty(t, rule.GUID, "rule must have a guid after insert")
 		originalGUID := rule.GUID
 
-		newRule := models.CopyRule(rule)
+		newRule := modelstest.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 
 		err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
@@ -392,7 +393,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	store := createTestStore(sqlStore, fakeFolderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithUniqueOrgID())
 	recordingGen := gen.With(gen.WithAllRecordingRules())
 
@@ -579,7 +580,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithRandomRecordingRules())
 
 	rule := createRule(t, store, gen)
@@ -660,11 +661,11 @@ func TestIntegration_CountRuleGroups(t *testing.T) {
 		{2, "folder-c", "second-org-only"},
 		{2, "folder-d", "second-org-only"},
 	} {
-		createRule(t, store, models.RuleGen.With(
-			models.RuleMuts.WithOrgID(rule.orgID),
-			models.RuleMuts.WithNamespaceUID(rule.folder),
-			models.RuleMuts.WithGroupName(rule.group),
-			models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval),
+		createRule(t, store, modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithOrgID(rule.orgID),
+			modelstest.RuleMuts.WithNamespaceUID(rule.folder),
+			modelstest.RuleMuts.WithGroupName(rule.group),
+			modelstest.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval),
 		))
 	}
 
@@ -762,9 +763,9 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 
 	t.Run("should not delete any folder's rules if a later folder in the batch lacks permission", func(t *testing.T) {
 		ruleA := createRule(t, store, nil)
-		ruleB := createRule(t, store, models.RuleGen.With(
-			models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval),
-			models.RuleMuts.WithNamespaceUIDNotIn(ruleA.NamespaceUID),
+		ruleB := createRule(t, store, modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval),
+			modelstest.RuleMuts.WithNamespaceUIDNotIn(ruleA.NamespaceUID),
 		))
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ruleA.NamespaceUID)},
@@ -834,7 +835,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
 		// Create a new store to pass the custom bus to check the signal. The flag is required for
@@ -919,7 +920,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 		updates := make([]models.UpdateRule, 0, len(rules))
 		for _, rule := range rules {
-			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			rule2 := modelstest.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 			updates = append(updates, models.UpdateRule{
 				Existing: rule,
 				New:      *rule2,
@@ -985,7 +986,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 		updates := make([]models.UpdateRule, 0, len(rules))
 		for _, rule := range rules {
-			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			rule2 := modelstest.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 			updates = append(updates, models.UpdateRule{
 				Existing: rule,
 				New:      *rule2,
@@ -1037,7 +1038,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 		updates := make([]models.UpdateRule, 0, len(rules))
 		for _, rule := range rules {
-			rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+			rule2 := modelstest.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 			updates = append(updates, models.UpdateRule{
 				Existing: rule,
 				New:      *rule2,
@@ -1188,7 +1189,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 		}, nil
 	}
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 	require.NoError(t, err)
@@ -1222,7 +1223,7 @@ func TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession(t *testing
 		}, nil
 	}
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	var ambientSess *db.Session
 	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
@@ -1261,7 +1262,7 @@ func TestIntegration_DeleteAlertRulesByUID_RoutedToCallersDatabaseJoinsAmbientTr
 		}, nil
 	}
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	laterFailure := errors.New("a later step in the caller's transaction failed")
 	var ambientSess *db.Session
@@ -1301,7 +1302,7 @@ func TestIntegration_DeleteAlertRulesByUID_DefaultPathJoinsAmbientSession(t *tes
 	spy := &dbSpy{DB: sqlStore}
 	store.SQLStore = spy
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	var ambientSess *db.Session
 	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
@@ -1337,7 +1338,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired(t *tes
 		return nil, errors.New("provider unavailable")
 	}
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, true, rule.UID)
 	require.ErrorContains(t, err, "provider unavailable")
@@ -1366,7 +1367,7 @@ func TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool(t *testing.T) {
 		}, nil
 	}
 
-	rule := createRule(t, store, models.RuleGen)
+	rule := createRule(t, store, modelstest.RuleGen)
 
 	done := make(chan error, 1)
 	go func() {
@@ -1515,14 +1516,14 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 
-	gen := models.RuleGen.With(
-		models.RuleGen.WithOrgID(orgID),
-		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
+	gen := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithOrgID(orgID),
+		modelstest.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
 	)
 	recordingRulesGen := gen.With(
-		models.RuleGen.WithAllRecordingRules(),
-		models.RuleGen.WithRecordFrom("A"),
-		models.RuleGen.WithMetric("my_metric"),
+		modelstest.RuleGen.WithAllRecordingRules(),
+		modelstest.RuleGen.WithRecordFrom("A"),
+		modelstest.RuleGen.WithMetric("my_metric"),
 	)
 
 	rules := append(gen.GenerateMany(5), recordingRulesGen.GenerateMany(5)...)
@@ -1621,13 +1622,13 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
 	t.Run("should not fail insert rules with the same title in a folder", func(t *testing.T) {
-		cp := models.CopyRule(&rules[0])
+		cp := modelstest.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: *cp}})
 		require.NoError(t, err)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
-		cp := models.CopyRule(&rules[0])
+		cp := modelstest.CopyRule(&rules[0])
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: *cp}})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
@@ -1725,14 +1726,14 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	receiverName := "receiver\"-" + uuid.NewV4().String()
 	timeIntervalName := "time-" + util.GenerateShortUID()
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
-	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
-	mutetimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
-	activeTimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithActiveTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	receiveRules := gen.With(gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
+	mutetimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	activeTimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithActiveTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
 	timeIntervalRules := append(mutetimeIntervalRules, activeTimeIntervalRules...)
-	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(timeIntervalName), models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
+	noise := gen.With(gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver(timeIntervalName), modelstest.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
 
 	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(timeIntervalRules)+len(noise))
 	for _, rule := range append(append(append(rules, receiveRules...), noise...), timeIntervalRules...) {
@@ -2004,19 +2005,19 @@ func TestIntegrationListContactPointRoutings(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 
 	searchName := `name-%"-👍'test`
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 
 	rulesWithNotificationsAndReceiver := gen.With(
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(searchName))),
+		gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver(searchName))),
 	).GenerateMany(5)
 	rulesWithNotificationsAndTimeInterval := gen.With(
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(searchName))),
+		gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen(modelstest.NSMuts.WithMuteTimeIntervals(searchName))),
 	).GenerateMany(5)
 
 	rulesInOtherOrg := gen.With(
 		gen.WithOrgID(2),
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+		gen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen()),
 	).GenerateMany(5)
 
 	rulesWithNoNotifications := gen.With(gen.WithNoNotificationSettings()).GenerateMany(5)
@@ -2125,7 +2126,7 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 
-	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1), models.RuleMuts.WithRandomRecordingRules()).GenerateMany(5)
+	rules := modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1), modelstest.RuleMuts.WithRandomRecordingRules()).GenerateMany(5)
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(rules))
 	require.NoError(t, err)
 
@@ -2175,9 +2176,9 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
-	gen := models.RuleGen.With(models.RuleMuts.WithOrgID(1))
+	gen := modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1))
 	misc := gen.GenerateMany(5, 10)
-	groupKey1 := models.GenerateGroupKey(1)
+	groupKey1 := modelstest.GenerateGroupKey(1)
 	groupKey1.RuleGroup = strings.ToLower(groupKey1.RuleGroup)
 	groupKey2 := groupKey1
 	groupKey2.RuleGroup = strings.ToUpper(groupKey2.RuleGroup)
@@ -2282,10 +2283,10 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures()
 
-	gen := models.RuleGen.With(models.RuleMuts.WithOrgID(1))
+	gen := modelstest.RuleGen.With(modelstest.RuleMuts.WithOrgID(1))
 
 	// Create namespace and base group key
-	groupKey := models.GenerateGroupKey(1)
+	groupKey := modelstest.GenerateGroupKey(1)
 
 	// Create groups with case-sensitive names: "TEST", "Test", "test"
 	groupKeyUpper := groupKey
@@ -2417,14 +2418,14 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	orgID := int64(1)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
 
 	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
 	require.NoError(t, err)
 	ruleV1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: inserted[0].UID})
 	require.NoError(t, err)
-	ruleV2 := models.CopyRule(ruleV1, gen.WithTitle(util.GenerateShortUID()), gen.WithGroupIndex(rand.Int()))
+	ruleV2 := modelstest.CopyRule(ruleV1, gen.WithTitle(util.GenerateShortUID()), gen.WithGroupIndex(rand.Int()))
 
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
@@ -2447,7 +2448,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		for i := 0; i < rand.IntN(2)+1; i++ {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
 			require.NoError(t, err)
-			rn := models.CopyRule(r)
+			rn := modelstest.CopyRule(r)
 			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 				{
 					Existing: r,
@@ -2457,7 +2458,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 			require.NoError(t, err)
 		}
 		ruleV2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: ruleV2.UID})
-		ruleV3 := models.CopyRule(ruleV2, gen.WithGroupName(util.GenerateShortUID()), gen.WithNamespaceUID(util.GenerateShortUID()))
+		ruleV3 := modelstest.CopyRule(ruleV2, gen.WithGroupName(util.GenerateShortUID()), gen.WithNamespaceUID(util.GenerateShortUID()))
 
 		err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 			{
@@ -2485,7 +2486,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	orgID := int64(1)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID), gen.WithVersion(1))
 
 	inserted, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}})
@@ -2497,7 +2498,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 	updatedRule := ruleV1
 	updateRule := func(title string, folderUID string) {
 		oldRule = updatedRule
-		updatedRule = models.CopyRule(oldRule, gen.WithTitle(title), gen.WithNamespaceUID(folderUID))
+		updatedRule = modelstest.CopyRule(oldRule, gen.WithTitle(title), gen.WithNamespaceUID(folderUID))
 		require.NoError(t, store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{{Existing: oldRule, New: *updatedRule}}))
 		updatedRule.Version++ // Simulate version increment after update to avoid conflict errors.
 	}
@@ -2525,10 +2526,10 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createRule(tb testing.TB, store *RuleStore, generator *models.AlertRuleGenerator) *models.AlertRule {
+func createRule(tb testing.TB, store *RuleStore, generator *modelstest.AlertRuleGenerator) *models.AlertRule {
 	tb.Helper()
 	if generator == nil {
-		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
+		generator = modelstest.RuleGen.With(modelstest.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
 	converted, err := alertRuleFromModelsAlertRule(*rule)
@@ -2574,7 +2575,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
 	b := &fakeBus{}
 
-	generator := models.RuleGen
+	generator := modelstest.RuleGen
 	generator = generator.With(generator.WithIntervalMatching(cfg.BaseInterval), generator.WithUniqueOrgID())
 
 	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
@@ -2582,7 +2583,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
 
 		rule := createRule(t, store, generator)
-		firstNewRule := models.CopyRule(rule)
+		firstNewRule := modelstest.CopyRule(rule)
 		firstNewRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: rule,
@@ -2591,7 +2592,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		firstNewRule.Version = firstNewRule.Version + 1
-		secondNewRule := models.CopyRule(firstNewRule)
+		secondNewRule := modelstest.CopyRule(firstNewRule)
 		secondNewRule.Title = util.GenerateShortUID()
 		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
 			Existing: firstNewRule,
@@ -2631,7 +2632,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		for range 4 {
 			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
 			require.NoError(t, err)
-			rn := models.CopyRule(r)
+			rn := modelstest.CopyRule(r)
 			rn.Title = util.GenerateShortUID()
 			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 				{
@@ -2672,9 +2673,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	bus := &fakeBus{}
 	orgID := int64(1)
-	ruleGen := models.RuleGen.With(
-		models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
-		models.RuleMuts.WithOrgID(orgID),
+	ruleGen := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		modelstest.RuleMuts.WithOrgID(orgID),
 	)
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
 
@@ -2782,41 +2783,41 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		// Group 1: 2 rules, one with "str", one without
 		// Group 2: 2 rules, none with "str"
 		// Group 3: 2 rules, one with "str", one without
-		ruleGen := models.RuleGen.With(
-			models.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
-			models.RuleMuts.WithOrgID(orgID),
+		ruleGen := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+			modelstest.RuleMuts.WithOrgID(orgID),
 		)
 
 		ns := "test-ns"
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-1"),
-			models.RuleMuts.WithTitle("rule-1 with str"),
+			modelstest.RuleMuts.WithTitle("rule-1 with str"),
 		))
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-1"),
-			models.RuleMuts.WithTitle("rule-2"),
+			modelstest.RuleMuts.WithTitle("rule-2"),
 		))
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-2"),
-			models.RuleMuts.WithTitle("rule-3"),
+			modelstest.RuleMuts.WithTitle("rule-3"),
 		))
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-2"),
-			models.RuleMuts.WithTitle("rule-4"),
+			modelstest.RuleMuts.WithTitle("rule-4"),
 		))
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-3"),
-			models.RuleMuts.WithTitle("rule-5 with str"),
+			modelstest.RuleMuts.WithTitle("rule-5 with str"),
 		))
 		createRule(t, store, ruleGen.With(
 			ruleGen.WithNamespaceUID(ns),
 			ruleGen.WithGroupName("group-3"),
-			models.RuleMuts.WithTitle("rule-6"),
+			modelstest.RuleMuts.WithTitle("rule-6"),
 		))
 
 		// First page: get 1 group with SearchTitle filter
@@ -3084,7 +3085,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 func Benchmark_ListAlertRules(b *testing.B) {
 	orgID := int64(1)
-	ruleGen := models.RuleGen
+	ruleGen := modelstest.RuleGen
 
 	// init
 	sqlStore := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -3152,7 +3153,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 	}
 	b := &fakeBus{}
 	orgID := int64(1)
-	ruleGen := models.RuleGen
+	ruleGen := modelstest.RuleGen
 	ruleGen = ruleGen.With(
 		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
 		ruleGen.WithOrgID(orgID),
@@ -3163,7 +3164,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		regularRule := createRule(t, store, ruleGen)
 		importedRule := createRule(t, store, ruleGen.With(
-			models.RuleMuts.WithPrometheusOriginalRuleDefinition("data"),
+			modelstest.RuleMuts.WithPrometheusOriginalRuleDefinition("data"),
 		))
 		tc := []struct {
 			name                   string
@@ -3217,12 +3218,12 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			rule6UID = "rule-6"
 		)
 
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule1UID), models.RuleGen.WithDataSourceUID(uid1)))
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule2UID), models.RuleMuts.WithDataSourceUID(uid2)))
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule3UID), models.RuleMuts.WithDataSourceUID(uid3)))
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule4UID), models.RuleGen.WithDataSourceUID(uid1, uid2)))
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule5UID), models.RuleMuts.WithDataSourceUID(uid2, uid3)))
-		createRule(t, store, ruleGen.With(models.RuleGen.WithUID(rule6UID), models.RuleMuts.WithDataSourceUID(uid1, uid2, uid3)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule1UID), modelstest.RuleGen.WithDataSourceUID(uid1)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule2UID), modelstest.RuleMuts.WithDataSourceUID(uid2)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule3UID), modelstest.RuleMuts.WithDataSourceUID(uid3)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule4UID), modelstest.RuleGen.WithDataSourceUID(uid1, uid2)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule5UID), modelstest.RuleMuts.WithDataSourceUID(uid2, uid3)))
+		createRule(t, store, ruleGen.With(modelstest.RuleGen.WithUID(rule6UID), modelstest.RuleMuts.WithDataSourceUID(uid1, uid2, uid3)))
 
 		tc := []struct {
 			name         string
@@ -3281,10 +3282,10 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("CPU Usage Alert")))
-		rule2 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Memory Usage Alert")))
-		rule3 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Disk Space Alert")))
-		rule4 := createRule(t, store, ruleGen.With(models.RuleMuts.WithTitle("Application Error Rate")))
+		rule1 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithTitle("CPU Usage Alert")))
+		rule2 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithTitle("Memory Usage Alert")))
+		rule3 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithTitle("Disk Space Alert")))
+		rule4 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithTitle("Application Error Rate")))
 
 		tc := []struct {
 			name          string
@@ -3365,10 +3366,10 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-		rule1 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("database-alerts")))
-		rule2 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("application-alerts")))
-		rule3 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("network-alerts")))
-		rule4 := createRule(t, store, ruleGen.With(models.RuleMuts.WithGroupName("critical-monitoring")))
+		rule1 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithGroupName("database-alerts")))
+		rule2 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithGroupName("application-alerts")))
+		rule3 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithGroupName("network-alerts")))
+		rule4 := createRule(t, store, ruleGen.With(modelstest.RuleMuts.WithGroupName("critical-monitoring")))
 
 		tc := []struct {
 			name          string
@@ -3592,11 +3593,11 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		testOrgID := int64(12345)
-		testRuleGen := ruleGen.With(models.RuleMuts.WithOrgID(testOrgID))
+		testRuleGen := ruleGen.With(modelstest.RuleMuts.WithOrgID(testOrgID))
 
 		regularRule := createRule(t, store, testRuleGen)
 		pluginRule := createRule(t, store, testRuleGen.With(
-			models.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+			modelstest.RuleMuts.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
 		))
 
 		tc := []struct {
@@ -3647,7 +3648,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	orgID := int64(1)
-	ruleGen := models.RuleGen
+	ruleGen := modelstest.RuleGen
 	ruleGen = ruleGen.With(
 		ruleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
 		ruleGen.WithOrgID(orgID),
@@ -3655,7 +3656,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	t.Run("filter by RuleType", func(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 		alertingGen := ruleGen
-		recordingGen := ruleGen.With(models.RuleMuts.WithAllRecordingRules(), models.RuleMuts.WithMetric("metric1"), models.RuleMuts.WithRecordFrom("A"))
+		recordingGen := ruleGen.With(modelstest.RuleMuts.WithAllRecordingRules(), modelstest.RuleMuts.WithMetric("metric1"), modelstest.RuleMuts.WithRecordFrom("A"))
 
 		alertingRules := []*models.AlertRule{
 			createRule(t, store, alertingGen),
@@ -3748,7 +3749,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 		sqlStore := db.NewTestStore(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
-		recordingGen := ruleGen.With(models.RuleMuts.WithAllRecordingRules(), models.RuleMuts.WithMetric("metric1"), models.RuleMuts.WithRecordFrom("A"), func(rule *models.AlertRule) {
+		recordingGen := ruleGen.With(modelstest.RuleMuts.WithAllRecordingRules(), modelstest.RuleMuts.WithMetric("metric1"), modelstest.RuleMuts.WithRecordFrom("A"), func(rule *models.AlertRule) {
 			rule.Record.TargetDatasourceUID = "target-ds-uid"
 		})
 
@@ -3846,9 +3847,9 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		BaseInterval: time.Duration(rand.Int64N(100)+1) * time.Second,
 	}
 	orgID := int64(1)
-	ruleGen := models.RuleGen.With(
-		models.RuleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
-		models.RuleGen.WithOrgID(orgID),
+	ruleGen := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		modelstest.RuleGen.WithOrgID(orgID),
 	)
 	b := &fakeBus{}
 
@@ -4469,7 +4470,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
 		matchUID := "match-target-ds-uid"
-		setTargetUID := func(uid string) models.AlertRuleMutator {
+		setTargetUID := func(uid string) modelstest.AlertRuleMutator {
 			return func(rule *models.AlertRule) {
 				if rule.Record == nil {
 					rule.Record = &models.Record{}
@@ -4506,7 +4507,7 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 
 		excludedUID := "excluded-target-ds-uid"
-		setTargetUID := func(uid string) models.AlertRuleMutator {
+		setTargetUID := func(uid string) modelstest.AlertRuleMutator {
 			return func(rule *models.AlertRule) {
 				if rule.Record == nil {
 					rule.Record = &models.Record{}
@@ -4563,7 +4564,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	}
 
 	orgID := int64(1)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
 
 	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: gen.Generate()}, {AlertRule: gen.Generate()}})
@@ -4574,7 +4575,7 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	require.NoError(t, err)
 
 	clk.Add(1 * time.Hour)
-	rule1v2 := models.CopyRule(rule1, gen.WithTitle(util.GenerateShortUID()))
+	rule1v2 := modelstest.CopyRule(rule1, gen.WithTitle(util.GenerateShortUID()))
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
 			Existing: rule1,
@@ -4648,7 +4649,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	orgID := int64(rand.IntN(1000)) + 1
 
 	gen = gen.With(gen.WithOrgID(orgID))
@@ -4839,7 +4840,7 @@ func (f *fakeBus) Publish(ctx context.Context, msg bus.Msg) error {
 	return nil
 }
 
-func createManyRules(tb testing.TB, store *RuleStore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
+func createManyRules(tb testing.TB, store *RuleStore, ruleGen *modelstest.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
 	tb.Helper()
 
 	require.Greater(tb, numRules, 0, "numRules must be greater than 0")
@@ -4871,7 +4872,7 @@ func TestIntegrationGetAllFoldersWithRules(t *testing.T) {
 	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
 	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
 
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(cfg.BaseInterval))
 
 	insertRule := func(t *testing.T, orgID int64, namespaceUID string) {
@@ -4924,17 +4925,17 @@ func TestIntegrationFolderRuleTypeFilters(t *testing.T) {
 	cfg := setting.UnifiedAlertingSettings{BaseInterval: time.Second * 10}
 	ruleStore := createTestStore(sqlStore, nil, &logtest.Fake{}, cfg, &fakeBus{})
 
-	gen := models.RuleGen.With(models.RuleMuts.WithIntervalMatching(cfg.BaseInterval))
+	gen := modelstest.RuleGen.With(modelstest.RuleMuts.WithIntervalMatching(cfg.BaseInterval))
 	recordingGen := gen.With(
-		models.RuleMuts.WithAllRecordingRules(),
-		models.RuleMuts.WithMetric("metric1"),
-		models.RuleMuts.WithRecordFrom("A"),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithMetric("metric1"),
+		modelstest.RuleMuts.WithRecordFrom("A"),
 		func(rule *models.AlertRule) { rule.Record.TargetDatasourceUID = "target-ds-uid" },
 	)
 
-	insert := func(t *testing.T, g *models.AlertRuleGenerator, orgID int64, folder string) *models.AlertRule {
+	insert := func(t *testing.T, g *modelstest.AlertRuleGenerator, orgID int64, folder string) *models.AlertRule {
 		t.Helper()
-		rule := g.With(models.RuleMuts.WithOrgID(orgID), models.RuleMuts.WithNamespaceUID(folder)).Generate()
+		rule := g.With(modelstest.RuleMuts.WithOrgID(orgID), modelstest.RuleMuts.WithNamespaceUID(folder)).Generate()
 		_, err := ruleStore.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.InsertRule{{AlertRule: rule}})
 		require.NoError(t, err)
 		return &rule

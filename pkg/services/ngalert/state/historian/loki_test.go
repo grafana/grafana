@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -938,7 +939,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 func TestGetFolderUIDsForFilter(t *testing.T) {
 	orgID := int64(1)
-	rule := models.RuleGen.With(models.RuleMuts.WithNamespaceUID("folder-1")).GenerateRef()
+	rule := modelstest.RuleGen.With(modelstest.RuleMuts.WithNamespaceUID("folder-1")).GenerateRef()
 	folders := []string{
 		"folder-1",
 		"folder-2",
@@ -1109,10 +1110,10 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	simpleHistory := func(guid string) map[string][]*models.AlertRuleVersion {
 		return map[string][]*models.AlertRuleVersion{
 			guid: {
-				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-current")).Generate()},
-				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-1")).Generate()},
-				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-2")).Generate()},
-				&models.AlertRuleVersion{AlertRule: models.RuleGen.With(models.RuleMuts.WithGUID(guid), models.RuleMuts.WithNamespaceUID("folder-historical-3")).Generate()},
+				&models.AlertRuleVersion{AlertRule: modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID(guid), modelstest.RuleMuts.WithNamespaceUID("folder-current")).Generate()},
+				&models.AlertRuleVersion{AlertRule: modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID(guid), modelstest.RuleMuts.WithNamespaceUID("folder-historical-1")).Generate()},
+				&models.AlertRuleVersion{AlertRule: modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID(guid), modelstest.RuleMuts.WithNamespaceUID("folder-historical-2")).Generate()},
+				&models.AlertRuleVersion{AlertRule: modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID(guid), modelstest.RuleMuts.WithNamespaceUID("folder-historical-3")).Generate()},
 			},
 		}
 	}
@@ -1157,21 +1158,21 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 			name:            "should include historical folders when user can read all rules",
 			existingHistory: simpleHistory("guid-1"),
 			canReadAllRules: true,
-			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			rule:            modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID("guid-1"), modelstest.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
 			expectedFolders: []string{"folder-current", "folder-historical-1", "folder-historical-2", "folder-historical-3"},
 		},
 		{
 			name:                 "should include only authorized historical folders",
 			existingHistory:      simpleHistory("guid-1"),
 			folderAccessOverride: canReadRulesInFolders("folder-current", "folder-historical-2"),
-			rule:                 models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			rule:                 modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID("guid-1"), modelstest.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
 			expectedFolders:      []string{"folder-current", "folder-historical-2"},
 		},
 		{
 			name:            "if historical folders query fails, should return current folder",
 			existingHistory: simpleHistory("guid-1"),
 			canReadAllRules: true,
-			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			rule:            modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID("guid-1"), modelstest.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
 			ruleStoreHook:   failHistoryQueryHook,
 			expectedFolders: []string{"folder-current"},
 		},
@@ -1179,14 +1180,14 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 			name:                 "if historical folders query fails, should return current folder",
 			existingHistory:      simpleHistory("guid-1"),
 			folderAccessOverride: canReadRulesInFolders("folder-current", "folder-historical-2"),
-			rule:                 models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			rule:                 modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID("guid-1"), modelstest.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
 			ruleStoreHook:        failHistoryQueryHook,
 			expectedFolders:      []string{"folder-current"},
 		},
 		{
 			name:            "if access check for historical folders fails, should ignore",
 			existingHistory: simpleHistory("guid-1"),
-			rule:            models.RuleGen.With(models.RuleMuts.WithGUID("guid-1"), models.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
+			rule:            modelstest.RuleGen.With(modelstest.RuleMuts.WithGUID("guid-1"), modelstest.RuleMuts.WithNamespaceUID("folder-current")).GenerateRef(),
 			folderAccessOverride: func(folderUID string) (bool, error) {
 				switch folderUID {
 				case "folder-current", "folder-historical-3":
@@ -1236,8 +1237,8 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 				orgID: {
 					tc.rule,
 					// Add some irrelevant rules to ensure they are ignored.
-					models.RuleGen.With(models.RuleMuts.WithNamespaceUID(tc.rule.GetNamespaceUID())).GenerateRef(),
-					models.RuleGen.With(models.RuleMuts.WithNamespaceUID("irrelevant-folder")).GenerateRef(),
+					modelstest.RuleGen.With(modelstest.RuleMuts.WithNamespaceUID(tc.rule.GetNamespaceUID())).GenerateRef(),
+					modelstest.RuleGen.With(modelstest.RuleMuts.WithNamespaceUID("irrelevant-folder")).GenerateRef(),
 				},
 			}
 			rulesStore.History = tc.existingHistory

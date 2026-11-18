@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,7 +34,7 @@ func TestLegacyCheckReference_PermissionAssembly(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			permissionStore := &actest.MockStore{}
+			permissionStore := &actestfixtures.MockStore{}
 			permissionStore.On("GetUserPermissions", mock.Anything, accesscontrol.GetUserPermissionsQuery{
 				OrgID:        1,
 				UserID:       1,

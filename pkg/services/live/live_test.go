@@ -18,8 +18,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -406,9 +406,9 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		routing.NewRouteRegister(),
 		nil, nil, nil,
 		nil,
-		&usagestats.UsageStatsMock{T: t},
+		&usagestatstest.UsageStatsMock{T: t},
 		featuremgmt.WithFeatures(),
-		&dashboards.FakeDashboardService{},
+		&dashboardstest.FakeDashboardService{},
 		nil)
 }
 

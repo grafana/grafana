@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -23,8 +23,8 @@ func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
-	firstUsage := &usagestats.UsageStatsMock{T: t}
-	secondUsage := &usagestats.UsageStatsMock{T: t}
+	firstUsage := &usagestatstest.UsageStatsMock{T: t}
+	secondUsage := &usagestatstest.UsageStatsMock{T: t}
 	first := NewMetrics(sqlStore, firstUsage, prometheus.NewPedanticRegistry())
 	second := NewMetrics(sqlStore, secondUsage, prometheus.NewPedanticRegistry())
 
@@ -49,7 +49,7 @@ func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 func TestMetricsPublishesPersistedUsageStats(t *testing.T) {
 	ctx := context.Background()
 	store := newMemoryCounterStore()
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newMetrics(store, usage, prometheus.NewPedanticRegistry())
 
 	metrics.RecordStarted(ctx, ScopePanel)
@@ -70,7 +70,7 @@ func TestMetricsPersistsUsageStatsAfterRequestCancellation(t *testing.T) {
 	requestCtx, cancel := context.WithCancel(context.Background())
 	cancel()
 	store := newMemoryCounterStore()
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newMetrics(store, usage, prometheus.NewPedanticRegistry())
 
 	metrics.RecordStarted(requestCtx, ScopePanel)
@@ -86,11 +86,11 @@ func TestMetricsCountersSurviveRecreation(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
-	firstUsage := &usagestats.UsageStatsMock{T: t}
+	firstUsage := &usagestatstest.UsageStatsMock{T: t}
 	first := NewMetrics(sqlStore, firstUsage, prometheus.NewPedanticRegistry())
 	first.RecordStarted(ctx, ScopePanel)
 
-	secondUsage := &usagestats.UsageStatsMock{T: t}
+	secondUsage := &usagestatstest.UsageStatsMock{T: t}
 	NewMetrics(sqlStore, secondUsage, prometheus.NewPedanticRegistry())
 	report, err := secondUsage.GetUsageReport(ctx)
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func clearDiagnosticsMetrics(t *testing.T, sqlStore db.DB) {
 func TestMetricsConcurrentIncrementsAreNotLost(t *testing.T) {
 	ctx := context.Background()
 	store := newMemoryCounterStore()
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newMetrics(store, usage, prometheus.NewPedanticRegistry())
 
 	const increments = 50
@@ -128,7 +128,7 @@ func TestMetricsConcurrentIncrementsAreNotLost(t *testing.T) {
 func TestMetricsExposesTerminalResultsToPrometheus(t *testing.T) {
 	ctx := context.Background()
 	registry := prometheus.NewPedanticRegistry()
-	metrics := newMetrics(newMemoryCounterStore(), &usagestats.UsageStatsMock{T: t}, registry)
+	metrics := newMetrics(newMemoryCounterStore(), &usagestatstest.UsageStatsMock{T: t}, registry)
 
 	metrics.RecordCompleted(ctx, ScopePanel, ResultSuccess)
 	metrics.RecordCompleted(ctx, ScopeDashboard, ResultError)

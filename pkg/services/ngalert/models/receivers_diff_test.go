@@ -1,8 +1,11 @@
-package models
+package models_test
 
 import (
 	"slices"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
@@ -12,7 +15,7 @@ import (
 
 func TestReceiverIntegrationDiff(t *testing.T) {
 	s, _ := alertingNotify.GetSchemaVersionForIntegration("webhook", schema.V1)
-	a := Integration{
+	a := models.Integration{
 		UID:                   "test-uid",
 		Name:                  "test-name",
 		Config:                s,
@@ -65,7 +68,7 @@ func TestReceiverIntegrationDiff(t *testing.T) {
 	})
 
 	t.Run("should compare with zero objects", func(t *testing.T) {
-		result := a.Diff(Integration{})
+		result := a.Diff(models.Integration{})
 		assert.ElementsMatch(t,
 			[]string{
 				"UID",
@@ -83,7 +86,7 @@ func TestReceiverIntegrationDiff(t *testing.T) {
 }
 
 func TestReceiverIntegrationDiffReport_GetSettingsPaths(t *testing.T) {
-	a := Integration{
+	a := models.Integration{
 		UID:                   "test-uid",
 		Name:                  "test-name",
 		Config:                schema.IntegrationSchemaVersion{},
@@ -167,18 +170,18 @@ func TestReceiverIntegrationDiffReport_GetSettingsPaths(t *testing.T) {
 }
 
 func TestHasDifferentProtectedFields(t *testing.T) {
-	m := IntegrationMuts
+	m := modelstest.IntegrationMuts
 
 	testCase := []struct {
 		name     string
-		existing Integration
-		incoming Integration
+		existing models.Integration
+		incoming models.Integration
 		expected map[string][]string
 	}{
 		{
 			name:     "different UID do not match",
-			existing: IntegrationGen(m.WithUID("existing"), m.WithValidConfig("webhook"))(),
-			incoming: IntegrationGen(
+			existing: modelstest.IntegrationGen(m.WithUID("existing"), m.WithValidConfig("webhook"))(),
+			incoming: modelstest.IntegrationGen(
 				m.WithValidConfig("webhook"),
 				m.AddSetting("url", "http://some-other-url"),
 				m.WithUID("incoming"),
@@ -187,8 +190,8 @@ func TestHasDifferentProtectedFields(t *testing.T) {
 		},
 		{
 			name:     "find url protected",
-			existing: IntegrationGen(m.WithUID("1"), m.WithValidConfig("webhook"))(),
-			incoming: IntegrationGen(
+			existing: modelstest.IntegrationGen(m.WithUID("1"), m.WithValidConfig("webhook"))(),
+			incoming: modelstest.IntegrationGen(
 				m.WithValidConfig("webhook"),
 				m.AddSetting("url", "http://some-other-url"),
 				m.AddSetting("http_config", map[string]any{
@@ -211,14 +214,14 @@ func TestHasDifferentProtectedFields(t *testing.T) {
 		},
 		{
 			name: "secure and protected", // simulate the situation when protected secured field is in secure settings but the incoming one has it in settings
-			existing: IntegrationGen(
+			existing: modelstest.IntegrationGen(
 				m.WithUID("1"),
 				m.WithValidConfig("discord"),
 				m.RemoveSetting("url"),
 				m.WithSecureSettings(map[string]string{
 					"url": "<SECURED>",
 				}))(),
-			incoming: IntegrationGen(
+			incoming: modelstest.IntegrationGen(
 				m.WithValidConfig("discord"),
 				m.AddSetting("url", "http://some-other-url"),
 				m.WithSecureSettings(nil),
@@ -234,17 +237,17 @@ func TestHasDifferentProtectedFields(t *testing.T) {
 
 	for _, tc := range testCase {
 		t.Run(tc.name, func(t *testing.T) {
-			existing := &Receiver{
-				Integrations: []*Integration{
+			existing := &models.Receiver{
+				Integrations: []*models.Integration{
 					&tc.existing,
 				},
 			}
-			incoming := &Receiver{
-				Integrations: []*Integration{
+			incoming := &models.Receiver{
+				Integrations: []*models.Integration{
 					&tc.incoming,
 				},
 			}
-			actual := HasReceiversDifferentProtectedFields(existing, incoming)
+			actual := models.HasReceiversDifferentProtectedFields(existing, incoming)
 			if len(tc.expected) == 0 {
 				require.Empty(t, actual)
 				return

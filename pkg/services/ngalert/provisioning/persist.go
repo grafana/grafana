@@ -20,7 +20,7 @@ type alertmanagerConfigStore interface {
 // consumers, with the legacy provenance column kept in sync for backwards
 // compatibility.
 //
-//go:generate mockery --name ProvisioningStore --structname MockProvisioningStore --inpackage --filename provisioning_store_mock.go --with-expecter
+//go:generate mockery --name ProvisioningStore --structname MockProvisioningStore --outpkg provisioningtest --output ./provisioningtest/ --filename provisioning_store_mock.go --with-expecter
 type ProvisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
@@ -57,7 +57,7 @@ type RuleStore interface {
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.
 //
-//go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
+//go:generate mockery --name QuotaChecker --structname MockQuotaChecker --outpkg provisioningtest --output ./provisioningtest/ --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
 	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
 }

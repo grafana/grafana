@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 const (
@@ -336,12 +337,12 @@ func createMultiQueryMigratablePromRule(t *testing.T, muts ...func(*models.Alert
 
 func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.AlertQuery {
 	t.Helper()
-	return models.CreateLokiQuery(refID, "1", 1000, 43200, queryType, datasourceUID)
+	return modelstest.CreateLokiQuery(refID, "1", 1000, 43200, queryType, datasourceUID)
 }
 
 func prometheusQuery(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
 	t.Helper()
-	return models.CreatePrometheusQuery(refID, "1", 1000, 43200, isInstant, datasourceUID)
+	return modelstest.CreatePrometheusQuery(refID, "1", 1000, 43200, isInstant, datasourceUID)
 }
 
 func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInstant bool) models.AlertQuery {
@@ -363,5 +364,5 @@ func prometheusQueryWithoutDS(t *testing.T, refID, datasourceUID string, isInsta
 
 func reducer(t *testing.T, refID, exp, op string) models.AlertQuery {
 	t.Helper()
-	return models.CreateReduceExpression(refID, exp, op)
+	return modelstest.CreateReduceExpression(refID, exp, op)
 }

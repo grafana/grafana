@@ -7,13 +7,15 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager/managertest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -189,7 +191,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
-		usageStats := &usagestats.UsageStatsMock{T: t}
+		usageStats := &usagestatstest.UsageStatsMock{T: t}
 		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
@@ -202,7 +204,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfg,
 		)
 		require.NoError(t, err)
@@ -229,7 +231,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfg,
 		)
 		require.NoError(t, err)
@@ -267,7 +269,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
-		usageStats := &usagestats.UsageStatsMock{T: t}
+		usageStats := &usagestatstest.UsageStatsMock{T: t}
 		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
@@ -280,7 +282,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfgV1,
 		)
 		require.NoError(t, err)
@@ -320,7 +322,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProvidersV2,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfgV2,
 		)
 		require.NoError(t, err)
@@ -355,7 +357,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
-		usageStats := &usagestats.UsageStatsMock{T: t}
+		usageStats := &usagestatstest.UsageStatsMock{T: t}
 		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
@@ -377,7 +379,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProviders,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfgV1,
 		)
 		require.NoError(t, err)
@@ -403,7 +405,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 			usageStats,
 			enc,
 			ossProvidersV2,
-			&NoopDataKeyCache{},
+			&managertest.NoopDataKeyCache{},
 			cfgV2,
 		)
 		require.NoError(t, err)
@@ -573,7 +575,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 			require.NoError(t, err)
 
-			usageStats := &usagestats.UsageStatsMock{T: t}
+			usageStats := &usagestatstest.UsageStatsMock{T: t}
 
 			enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 			require.NoError(t, err)
@@ -634,7 +636,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("test")
-	usageStats := &usagestats.UsageStatsMock{T: t}
+	usageStats := &usagestatstest.UsageStatsMock{T: t}
 
 	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 	require.NoError(t, err)
@@ -652,7 +654,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 				encryption.ProviderID("fakeProvider.v1"): &fakeProvider{},
 			},
 		},
-		&NoopDataKeyCache{},
+		&managertest.NoopDataKeyCache{},
 		cfg,
 	)
 	require.NoError(t, err)
@@ -721,7 +723,7 @@ func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t 
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	usageStats := &usagestats.UsageStatsMock{T: t}
+	usageStats := &usagestatstest.UsageStatsMock{T: t}
 	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 
@@ -773,7 +775,7 @@ func TestEncryptionService_WithSkipCache(t *testing.T) {
 		store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
-		usageStats := &usagestats.UsageStatsMock{T: t}
+		usageStats := &usagestatstest.UsageStatsMock{T: t}
 		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
@@ -857,7 +859,7 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(t, err)
 
-	usageStats := &usagestats.UsageStatsMock{T: t}
+	usageStats := &usagestatstest.UsageStatsMock{T: t}
 	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 

@@ -16,7 +16,7 @@ import (
 
 // DashboardService is a service for operating on dashboards.
 //
-//go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
+//go:generate mockery --name DashboardService --structname FakeDashboardService --outpkg dashboardstest --output ./dashboardstest/ --filename dashboard_service_mock.go
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, dashboardUID string, orgId int64) error
@@ -63,7 +63,7 @@ type PluginService interface {
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 //
-//go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
+//go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --outpkg dashboardstest --output ./dashboardstest/ --filename dashboard_provisioning_mock.go
 type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error

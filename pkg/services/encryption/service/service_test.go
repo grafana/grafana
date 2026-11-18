@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,7 +18,7 @@ func Test_Service(t *testing.T) {
 	ctx := context.Background()
 
 	encProvider := provider.Provider{}
-	usageStats := &usagestats.UsageStatsMock{}
+	usageStats := &usagestatstest.UsageStatsMock{}
 	settings := setting.NewCfg()
 
 	svc, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, settings)
@@ -77,7 +77,7 @@ func Test_Service(t *testing.T) {
 
 func Test_Service_MissingProvider(t *testing.T) {
 	encProvider := fakeProvider{}
-	usageStats := &usagestats.UsageStatsMock{}
+	usageStats := &usagestatstest.UsageStatsMock{}
 	settings := setting.NewCfg()
 
 	service, err := ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, settings)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
@@ -59,7 +60,7 @@ func TestSequence(t *testing.T) {
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
 	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
-	gen := models.RuleGen.With(models.RuleGen.WithNamespaceUID("ns1"))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithNamespaceUID("ns1"))
 
 	t.Run("should set callbacks in correct order", func(t *testing.T) {
 		nextByGroup := map[string][]string{}
@@ -82,9 +83,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "3", Group: "rg2"},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("3"),
-						models.RuleGen.WithGroupIndex(1),
-						models.RuleGen.WithGroupName("rg2"),
+						modelstest.RuleGen.WithUID("3"),
+						modelstest.RuleGen.WithGroupIndex(1),
+						modelstest.RuleGen.WithGroupName("rg2"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -93,12 +94,12 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "4", Group: "rg2"},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("4"),
-						models.RuleGen.WithGroupIndex(2),
-						models.RuleGen.WithGroupName("rg2"),
+						modelstest.RuleGen.WithUID("4"),
+						modelstest.RuleGen.WithGroupIndex(2),
+						modelstest.RuleGen.WithGroupName("rg2"),
 						// This rule has the Prometheus rule YAML definition,
 						// indicating it was converted from Prometheus.
-						models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+						modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -107,12 +108,12 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "5", Group: "rg2"},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("5"),
-						models.RuleGen.WithGroupIndex(3),
-						models.RuleGen.WithGroupName("rg2"),
+						modelstest.RuleGen.WithUID("5"),
+						modelstest.RuleGen.WithGroupIndex(3),
+						modelstest.RuleGen.WithGroupName("rg2"),
 						// This rule does not have the YAML definition,
 						// but still has the label indicating it was converted from Prometheus.
-						models.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
+						modelstest.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -121,9 +122,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "1", Group: "rg1"},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("1"),
-						models.RuleGen.WithGroupIndex(1),
-						models.RuleGen.WithGroupName("rg1"),
+						modelstest.RuleGen.WithUID("1"),
+						modelstest.RuleGen.WithGroupIndex(1),
+						modelstest.RuleGen.WithGroupName("rg1"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -132,9 +133,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "2", Group: "rg1"},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("2"),
-						models.RuleGen.WithGroupIndex(2),
-						models.RuleGen.WithGroupName("rg1"),
+						modelstest.RuleGen.WithUID("2"),
+						modelstest.RuleGen.WithGroupIndex(2),
+						modelstest.RuleGen.WithGroupName("rg1"),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -181,9 +182,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "c1", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("c1"),
-						models.RuleGen.WithGroupIndex(1),
-						models.RuleGen.WithGroupName(seqGroup),
+						modelstest.RuleGen.WithUID("c1"),
+						modelstest.RuleGen.WithGroupIndex(1),
+						modelstest.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -192,9 +193,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "c2", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("c2"),
-						models.RuleGen.WithGroupIndex(2),
-						models.RuleGen.WithGroupName(seqGroup),
+						modelstest.RuleGen.WithUID("c2"),
+						modelstest.RuleGen.WithGroupIndex(2),
+						modelstest.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -203,9 +204,9 @@ func TestSequence(t *testing.T) {
 				ruleRoutine: &fakeSequenceRule{UID: "c3", Group: seqGroup},
 				Evaluation: Evaluation{
 					rule: gen.With(
-						models.RuleGen.WithUID("c3"),
-						models.RuleGen.WithGroupIndex(3),
-						models.RuleGen.WithGroupName(seqGroup),
+						modelstest.RuleGen.WithUID("c3"),
+						modelstest.RuleGen.WithGroupIndex(3),
+						modelstest.RuleGen.WithGroupName(seqGroup),
 					).GenerateRef(),
 					folderTitle: "folder1",
 				},
@@ -226,15 +227,15 @@ func TestSequence(t *testing.T) {
 }
 
 func TestShouldEvaluateSequentially(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithNamespaceUID("ns1"))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithNamespaceUID("ns1"))
 
 	makeItem := func(uid, group string) readyToRunItem {
 		return readyToRunItem{
 			ruleRoutine: &fakeSequenceRule{UID: uid, Group: group},
 			Evaluation: Evaluation{
 				rule: gen.With(
-					models.RuleGen.WithUID(uid),
-					models.RuleGen.WithGroupName(group),
+					modelstest.RuleGen.WithUID(uid),
+					modelstest.RuleGen.WithGroupName(group),
 				).GenerateRef(),
 				folderTitle: "folder1",
 			},
@@ -246,9 +247,9 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 			ruleRoutine: &fakeSequenceRule{UID: uid, Group: group},
 			Evaluation: Evaluation{
 				rule: gen.With(
-					models.RuleGen.WithUID(uid),
-					models.RuleGen.WithGroupName(group),
-					models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+					modelstest.RuleGen.WithUID(uid),
+					modelstest.RuleGen.WithGroupName(group),
+					modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 				).GenerateRef(),
 				folderTitle: "folder1",
 			},
@@ -334,7 +335,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 
 func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
 	ruleStore := newFakeRulesStore()
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	for group := range 2 {
 		for index := range 2 {
 			ruleStore.PutRule(context.Background(), gen.With(

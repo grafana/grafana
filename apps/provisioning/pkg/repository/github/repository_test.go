@@ -15,7 +15,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git/gittest"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -81,7 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			factory := ProvideFactory()
 			factory.Client = http.DefaultClient
 
-			gitRepo := git.NewMockGitRepository(t)
+			gitRepo := gittest.NewMockGitRepository(t)
 			gitRepo.EXPECT().URL().Return(tt.config.Spec.GitHub.URL).Maybe()
 
 			// Call the function under test
@@ -168,7 +169,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         *provisioning.Repository
-		mockSetup      func(m *git.MockGitRepository)
+		mockSetup      func(m *gittest.MockGitRepository)
 		expectedResult *provisioning.TestResults
 		expectedError  error
 	}{
@@ -188,7 +189,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(m *git.MockGitRepository) {
+			mockSetup: func(m *gittest.MockGitRepository) {
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusOK,
 					Success: true,
@@ -215,7 +216,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(_ *git.MockGitRepository) {
+			mockSetup: func(_ *gittest.MockGitRepository) {
 				// No mock calls expected as validation fails first
 			},
 			expectedResult: &provisioning.TestResults{
@@ -232,7 +233,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 			if tt.mockSetup != nil {
 				tt.mockSetup(mockGitRepo)
 			}
@@ -865,7 +866,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	}
 
 	t.Run("Config delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		mockGitRepo.On("Config").Return(config)
 
 		repo := &githubRepository{
@@ -879,7 +880,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Read delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		expectedFileInfo := &repo.FileInfo{
 			Path: "test.yaml",
 			Data: []byte("test data"),
@@ -900,7 +901,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("ReadTree delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		expectedEntries := []repo.FileTreeEntry{
 			{Path: "file1.yaml", Size: 100, Hash: "hash1", Blob: true},
 		}
@@ -918,7 +919,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Create delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		data := []byte("test content")
 		mockGitRepo.On("Create", ctx, "new-file.yaml", "main", data, "Create new file").Return(nil)
 
@@ -933,7 +934,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Update delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		data := []byte("updated content")
 		mockGitRepo.On("Update", ctx, "existing-file.yaml", "main", data, "Update file").Return(nil)
 
@@ -948,7 +949,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Write delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		data := []byte("file content")
 		mockGitRepo.On("Write", ctx, "file.yaml", "main", data, "Write file").Return(nil)
 
@@ -963,7 +964,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Delete delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		mockGitRepo.On("Delete", ctx, "file.yaml", "main", "Delete file").Return(nil)
 
 		repo := &githubRepository{
@@ -977,7 +978,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("LatestRef delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		expectedRef := "abc123def456"
 		mockGitRepo.On("LatestRef", ctx).Return(expectedRef, nil)
 
@@ -993,7 +994,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("ListRefs delegates to git repo but adds ref URL", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		// The git repo returns refs without RefURL
 		gitRepoRefs := []provisioning.RefItem{
 			{Name: "main", Hash: "abc123def456"},
@@ -1027,7 +1028,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("CompareFiles delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		expectedChanges := []repo.VersionedFileChange{
 			{
 				Action: repo.FileActionCreated,
@@ -1049,8 +1050,8 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 	})
 
 	t.Run("Stage delegates to git repo", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
-		mockStagedRepo := repo.NewMockStagedRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
+		mockStagedRepo := repositorytest.NewMockStagedRepository(t)
 		opts := repo.StageOptions{
 			Mode:    repo.StageModeCommitOnEach,
 			Timeout: 10 * time.Second,
@@ -1150,7 +1151,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 	})
 
 	t.Run("SetBranch updates config and delegates to git repository", func(t *testing.T) {
-		mockGitRepo := git.NewMockGitRepository(t)
+		mockGitRepo := gittest.NewMockGitRepository(t)
 		mockGitRepo.On("SetBranch", "develop").Once()
 
 		repo := &githubRepository{
@@ -1261,7 +1262,7 @@ func TestGithubRepository_Move(t *testing.T) {
 		newPath     string
 		ref         string
 		comment     string
-		setupMock   func(*git.MockGitRepository)
+		setupMock   func(*gittest.MockGitRepository)
 		expectedErr error
 	}{
 		{
@@ -1270,7 +1271,7 @@ func TestGithubRepository_Move(t *testing.T) {
 			newPath: "new.yaml",
 			ref:     "main",
 			comment: "move file",
-			setupMock: func(mockGitRepo *git.MockGitRepository) {
+			setupMock: func(mockGitRepo *gittest.MockGitRepository) {
 				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(nil)
 			},
 			expectedErr: nil,
@@ -1281,7 +1282,7 @@ func TestGithubRepository_Move(t *testing.T) {
 			newPath: "new.yaml",
 			ref:     "main",
 			comment: "move file",
-			setupMock: func(mockGitRepo *git.MockGitRepository) {
+			setupMock: func(mockGitRepo *gittest.MockGitRepository) {
 				mockGitRepo.EXPECT().Move(context.Background(), "old.yaml", "new.yaml", "main", "move file").Return(errors.New("git move failed"))
 			},
 			expectedErr: errors.New("git move failed"),
@@ -1292,7 +1293,7 @@ func TestGithubRepository_Move(t *testing.T) {
 			newPath: "new/",
 			ref:     "main",
 			comment: "move directory",
-			setupMock: func(mockGitRepo *git.MockGitRepository) {
+			setupMock: func(mockGitRepo *gittest.MockGitRepository) {
 				mockGitRepo.EXPECT().Move(context.Background(), "old/", "new/", "main", "move directory").Return(nil)
 			},
 			expectedErr: nil,
@@ -1302,7 +1303,7 @@ func TestGithubRepository_Move(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock git repository
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 
 			// Setup mock expectations
 			tt.setupMock(mockGitRepo)
@@ -1447,7 +1448,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 			mockClient := NewMockClient(t)
 
 			config := &provisioning.Repository{
@@ -1667,7 +1668,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 			mockClient := NewMockClient(t)
 
 			config := &provisioning.Repository{
@@ -1823,7 +1824,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 			mockClient := NewMockClient(t)
 
 			config := &provisioning.Repository{
@@ -2010,7 +2011,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup mocks
-			mockGitRepo := git.NewMockGitRepository(t)
+			mockGitRepo := gittest.NewMockGitRepository(t)
 			mockClient := NewMockClient(t)
 
 			config := &provisioning.Repository{

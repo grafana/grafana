@@ -1,10 +1,13 @@
-package repository
+package repository_test
 
 import (
 	"context"
 	"net"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +35,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -46,7 +49,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{},
 				}
@@ -61,7 +64,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -82,7 +85,7 @@ func TestValidator_Validate(t *testing.T) {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:       "sql",
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -103,7 +106,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -122,7 +125,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
@@ -141,7 +144,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
@@ -160,7 +163,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:            "Test Repo",
@@ -180,7 +183,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -200,7 +203,7 @@ func TestValidator_Validate(t *testing.T) {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:       "sql",
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -222,7 +225,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
@@ -241,7 +244,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
@@ -261,7 +264,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
@@ -281,7 +284,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
@@ -301,7 +304,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
@@ -324,7 +327,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
@@ -342,7 +345,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:       "Test Repo",
@@ -362,7 +365,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "Test Repo",
@@ -379,7 +382,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer},
+						Finalizers: []string{repository.CleanFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
@@ -398,7 +401,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{RemoveOrphanResourcesFinalizer, ReleaseOrphanResourcesFinalizer},
+						Finalizers: []string{repository.RemoveOrphanResourcesFinalizer, repository.ReleaseOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
@@ -417,7 +420,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, "invalid-finalizer", RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, "invalid-finalizer", repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:     "Test Repo",
@@ -436,7 +439,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
@@ -451,7 +454,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
@@ -466,7 +469,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
@@ -484,7 +487,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:   "Test Repo",
@@ -502,7 +505,7 @@ func TestValidator_Validate(t *testing.T) {
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+						Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repo",
@@ -551,9 +554,9 @@ func TestValidator_Validate(t *testing.T) {
 		},
 	}
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(false, mockFactory)
+	validator := repository.NewValidator(false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tests validate new configurations, so always pass isCreate=true
@@ -617,20 +620,20 @@ func TestValidator_ValidatePrivateEndpoint(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := NewMockFactory(t)
+			mockFactory := repositorytest.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			allowlist, err := NewAllowlist(tt.allowlistEntries)
+			allowlist, err := repository.NewAllowlist(tt.allowlistEntries)
 			require.NoError(t, err)
 
-			urlValidator := NewURLValidator(allowlist, func(_ context.Context, host string) ([]net.IPAddr, error) {
+			urlValidator := repository.NewURLValidator(allowlist, func(_ context.Context, host string) ([]net.IPAddr, error) {
 				if host == "github.internal.example.com" {
 					return []net.IPAddr{{IP: net.ParseIP("10.0.0.10")}}, nil
 				}
 				return []net.IPAddr{{IP: net.ParseIP("93.184.216.34")}}, nil
 			})
-			opts := []ValidatorOption{WithURLValidator(urlValidator)}
-			validator := NewValidator(false, mockFactory, opts...)
+			opts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
+			validator := repository.NewValidator(false, mockFactory, opts...)
 
 			errors := validator.Validate(context.Background(), tt.repository)
 			if tt.wantErrContains != "" {
@@ -647,7 +650,7 @@ func testPrivateEndpointGitRepository(repoType provisioning.RepositoryType, rawU
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -705,7 +708,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -721,7 +724,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					// Missing title
@@ -775,7 +778,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -786,7 +789,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			old: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -803,7 +806,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -814,7 +817,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			old: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -834,7 +837,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
 				Spec: provisioning.RepositorySpec{
@@ -861,7 +864,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -872,7 +875,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			old: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
 				Spec: provisioning.RepositorySpec{
@@ -889,7 +892,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
 				Spec: provisioning.RepositorySpec{
@@ -901,7 +904,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			old: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
@@ -917,7 +920,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
-					Finalizers: []string{CleanFinalizer},
+					Finalizers: []string{repository.CleanFinalizer},
 					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
 				Spec: provisioning.RepositorySpec{
@@ -933,12 +936,12 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := NewMockFactory(t)
+			mockFactory := repositorytest.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			validator := NewValidator(false, mockFactory)
+			validator := repository.NewValidator(false, mockFactory)
 
-			admissionValidator := NewAdmissionValidator(
+			admissionValidator := repository.NewAdmissionValidator(
 				[]provisioning.SyncTargetType{
 					provisioning.SyncTargetTypeFolder,
 					provisioning.SyncTargetTypeInstance,
@@ -964,12 +967,12 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 }
 
 func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	// No EXPECT() set up for Validate: the mock will fail the test if it's called,
 	// confirming the factory/extras validation never runs for status patches.
 
-	validator := NewValidator(false, mockFactory)
-	admissionValidator := NewAdmissionValidator(
+	validator := repository.NewValidator(false, mockFactory)
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		validator,
 	)
@@ -991,7 +994,7 @@ func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{Title: "Test Repo"},
 	}
@@ -1000,11 +1003,11 @@ func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
 	repo := old.DeepCopy()
 	repo.Spec.Title = ""
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Once()
 
-	validator := NewValidator(false, mockFactory)
-	admissionValidator := NewAdmissionValidator(
+	validator := repository.NewValidator(false, mockFactory)
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		validator,
 	)
@@ -1017,11 +1020,11 @@ func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
 }
 
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := NewValidator(false, mockFactory)
-	admissionValidator := NewAdmissionValidator(
+	validator := repository.NewValidator(false, mockFactory)
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		validator,
 	)
@@ -1029,7 +1032,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -1045,7 +1048,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	newRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -1122,11 +1125,11 @@ func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := NewMockFactory(t)
+			mockFactory := repositorytest.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			validator := NewValidator(false, mockFactory)
-			admissionValidator := NewAdmissionValidator(
+			validator := repository.NewValidator(false, mockFactory)
+			admissionValidator := repository.NewAdmissionValidator(
 				[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 				validator,
 			)
@@ -1160,7 +1163,7 @@ func newGitHubRepositoryForURLChangeTest(url string) *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -1186,13 +1189,13 @@ func (m *mockValidator) Validate(ctx context.Context, cfg *provisioning.Reposito
 }
 
 func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(false, mockFactory)
+	baseValidator := repository.NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{}
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		baseValidator,
 		additionalValidator,
@@ -1201,7 +1204,7 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -1218,15 +1221,15 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 }
 
 func TestAdmissionValidator_ValidatorError(t *testing.T) {
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(false, mockFactory)
+	baseValidator := repository.NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{
 		errors: field.ErrorList{field.Forbidden(field.NewPath("spec"), "duplicate repository")},
 	}
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		baseValidator,
 		additionalValidator,
@@ -1235,7 +1238,7 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "test",
-			Finalizers: []string{CleanFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
@@ -1304,7 +1307,7 @@ func TestValidateCommitOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			errs := validateCommitOptions(&provisioning.Repository{
+			errs := repository.ValidateCommitOptionsForTest(&provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Title:  "Test Repo",
 					Type:   provisioning.GitHubRepositoryType,
@@ -1325,7 +1328,7 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSp
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1339,10 +1342,10 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSp
 
 	// No EXPECT() for Validate: the type validators, which are what would reject the path,
 	// must not run for a change that introduces no spec content.
-	mockFactory := NewMockFactory(t)
-	admissionValidator := NewAdmissionValidator(
+	mockFactory := repositorytest.NewMockFactory(t)
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
@@ -1354,7 +1357,7 @@ func TestAdmissionValidator_Validate_StillValidatesChangesBundledWithDisablingSy
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1368,13 +1371,13 @@ func TestAdmissionValidator_Validate_StillValidatesChangesBundledWithDisablingSy
 	repo.Spec.Sync.Enabled = false
 	repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "/somewhere/else"}
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
 		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/somewhere/else", "not permitted")}).Once()
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
@@ -1388,7 +1391,7 @@ func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1400,13 +1403,13 @@ func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = true
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
 		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/no/longer/permitted", "not permitted")}).Once()
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
@@ -1421,7 +1424,7 @@ func TestAdmissionValidator_Validate_StillValidatesFinalizersBundledWithDisablin
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1432,14 +1435,14 @@ func TestAdmissionValidator_Validate_StillValidatesFinalizersBundledWithDisablin
 	}
 	repo := old.DeepCopy()
 	repo.Spec.Sync.Enabled = false
-	repo.Finalizers = append(repo.Finalizers, ReleaseOrphanResourcesFinalizer)
+	repo.Finalizers = append(repo.Finalizers, repository.ReleaseOrphanResourcesFinalizer)
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
@@ -1453,7 +1456,7 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1467,13 +1470,13 @@ func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisabl
 	repo.Spec.Sync.Enabled = false
 	repo.Secure.Token = common.InlineSecureValue{Create: "new-token"}
 
-	mockFactory := NewMockFactory(t)
+	mockFactory := repositorytest.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
 		Return(field.ErrorList{field.Invalid(field.NewPath("secure", "token"), "", "rejected")}).Once()
 
-	admissionValidator := NewAdmissionValidator(
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
@@ -1489,7 +1492,7 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamp
 	old := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "bootstrap",
-			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer, repository.RemoveOrphanResourcesFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{
 			Title: "Bootstrap",
@@ -1508,10 +1511,10 @@ func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamp
 	repo.Spec.Sync.IntervalSeconds = 60
 
 	// No EXPECT() for Validate: the type validators, which would reject the path, must not run.
-	mockFactory := NewMockFactory(t)
-	admissionValidator := NewAdmissionValidator(
+	mockFactory := repositorytest.NewMockFactory(t)
+	admissionValidator := repository.NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
-		NewValidator(false, mockFactory),
+		repository.NewValidator(false, mockFactory),
 	)
 
 	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)

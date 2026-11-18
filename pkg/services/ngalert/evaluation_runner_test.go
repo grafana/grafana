@@ -15,9 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -233,9 +234,9 @@ func TestEvaluationRunner_PersisterIsActive(t *testing.T) {
 		waitStarted(t, h.sched)
 
 		// Process an evaluation result to trigger state persistence
-		rule := models.RuleGen.GenerateRef()
+		rule := modelstest.RuleGen.GenerateRef()
 		now := clk.Now()
-		results := eval.GenerateResults(1, eval.ResultGen(eval.WithEvaluatedAt(now)))
+		results := evaltest.GenerateResults(1, evaltest.ResultGen(evaltest.WithEvaluatedAt(now)))
 		_, _ = h.ng.stateManager.ProcessEvalResults(h.ctx, now, rule, results, make(data.Labels), nil)
 
 		var saveCount int

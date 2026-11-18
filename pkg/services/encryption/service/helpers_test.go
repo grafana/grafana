@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,7 +14,7 @@ import (
 func SetupTestService(tb testing.TB) *Service {
 	tb.Helper()
 
-	usMock := &usagestats.UsageStatsMock{T: tb}
+	usMock := &usagestatstest.UsageStatsMock{T: tb}
 	provider := encryptionprovider.ProvideEncryptionProvider()
 	settings := setting.NewCfg()
 

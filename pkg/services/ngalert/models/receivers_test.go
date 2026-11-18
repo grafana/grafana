@@ -1,8 +1,11 @@
-package models
+package models_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/notify/notifytest"
@@ -14,11 +17,11 @@ import (
 func TestReceiver_Clone(t *testing.T) {
 	testCases := []struct {
 		name     string
-		receiver Receiver
+		receiver models.Receiver
 	}{
-		{name: "empty receiver", receiver: Receiver{}},
-		{name: "empty integration", receiver: Receiver{Integrations: []*Integration{{Config: schema.IntegrationSchemaVersion{}}}}},
-		{name: "random receiver", receiver: ReceiverGen()()},
+		{name: "empty receiver", receiver: models.Receiver{}},
+		{name: "empty integration", receiver: models.Receiver{Integrations: []*models.Integration{{Config: schema.IntegrationSchemaVersion{}}}}},
+		{name: "random receiver", receiver: modelstest.ReceiverGen()()},
 	}
 
 	for _, tc := range testCases {
@@ -35,17 +38,17 @@ func TestReceiver_Clone(t *testing.T) {
 }
 
 func TestReceiver_EncryptDecrypt(t *testing.T) {
-	encryptFn := Base64Enrypt
-	decryptnFn := Base64Decrypt
+	encryptFn := modelstest.Base64Enrypt
+	decryptnFn := modelstest.Base64Decrypt
 	// Test that all known integration types encrypt and decrypt their secrets.
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
-			decrypedIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+			decrypedIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
 			encrypted := decrypedIntegration.Clone()
 			typeVersion, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 			require.True(t, ok)
 			for _, key := range typeVersion.GetSecretFieldsPaths() {
-				val, ok, err := extractFieldCaseInsensitive(encrypted.Settings, key)
+				val, ok, err := models.ExtractFieldCaseInsensitiveForTest(encrypted.Settings, key)
 				assert.NoError(t, err)
 				if ok {
 					encryptedVal, err := encryptFn(val)
@@ -73,13 +76,13 @@ func TestReceiverIntegration_Redact(t *testing.T) {
 	// Test that all known integration types redact their secrets.
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
-			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+			validIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
 
 			expected := validIntegration.Clone()
 			version, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 			require.True(t, ok)
 			for _, key := range version.GetSecretFieldsPaths() {
-				err := setField(expected.Settings, key, func(current any) any {
+				err := models.SetFieldForTest(expected.Settings, key, func(current any) any {
 					if s, isString := current.(string); isString && s != "" {
 						delete(expected.SecureSettings, key.String())
 						return redactFn(s)
@@ -100,13 +103,13 @@ func TestReceiverIntegration_Validate(t *testing.T) {
 	// Test that all known integration types are valid.
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
-			validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
-			assert.NoError(t, validIntegration.Encrypt(Base64Enrypt))
-			assert.NoErrorf(t, validIntegration.Validate(Base64Decrypt), "integration should be valid")
+			validIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
+			assert.NoError(t, validIntegration.Encrypt(modelstest.Base64Enrypt))
+			assert.NoErrorf(t, validIntegration.Validate(modelstest.Base64Decrypt), "integration should be valid")
 
-			invalidIntegration := IntegrationGen(IntegrationMuts.WithInvalidConfig(integrationType))()
-			assert.NoError(t, invalidIntegration.Encrypt(Base64Enrypt))
-			assert.Errorf(t, invalidIntegration.Validate(Base64Decrypt), "integration should be invalid")
+			invalidIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithInvalidConfig(integrationType))()
+			assert.NoError(t, invalidIntegration.Encrypt(modelstest.Base64Enrypt))
+			assert.Errorf(t, invalidIntegration.Validate(modelstest.Base64Decrypt), "integration should be invalid")
 		})
 	}
 }
@@ -115,14 +118,14 @@ func TestReceiverIntegration_WithExistingSecureFields(t *testing.T) {
 	// Test that WithExistingSecureFields will copy over the secure fields from the existing integration.
 	testCases := []struct {
 		name         string
-		integration  Integration
+		integration  models.Integration
 		secureFields []string
-		existing     Integration
-		expected     Integration
+		existing     models.Integration
+		expected     models.Integration
 	}{
 		{
 			name: "test receiver",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{
 					"f1": "newVal1",
 					"f2": "newVal2",
@@ -131,7 +134,7 @@ func TestReceiverIntegration_WithExistingSecureFields(t *testing.T) {
 				},
 			},
 			secureFields: []string{"f2", "f4", "f5"},
-			existing: Integration{
+			existing: models.Integration{
 				SecureSettings: map[string]string{
 					"f1": "oldVal1",
 					"f2": "oldVal2",
@@ -139,7 +142,7 @@ func TestReceiverIntegration_WithExistingSecureFields(t *testing.T) {
 					"f4": "oldVal4",
 				},
 			},
-			expected: Integration{
+			expected: models.Integration{
 				SecureSettings: map[string]string{
 					"f1": "newVal1",
 					"f2": "oldVal2",
@@ -150,74 +153,74 @@ func TestReceiverIntegration_WithExistingSecureFields(t *testing.T) {
 		},
 		{
 			name: "Integration[exists], SecureFields[true], Existing[exists]: old value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{"f1": "newVal1"},
 			},
 			secureFields: []string{"f1"},
-			existing:     Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
-			expected:     Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			existing:     models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			expected:     models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
 		},
 		{
 			name: "Integration[exists], SecureFields[true], Existing[missing]: no value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{"f1": "newVal1"},
 			},
 			secureFields: []string{"f1"},
-			existing:     Integration{SecureSettings: map[string]string{}},
-			expected:     Integration{SecureSettings: map[string]string{}},
+			existing:     models.Integration{SecureSettings: map[string]string{}},
+			expected:     models.Integration{SecureSettings: map[string]string{}},
 		},
 
 		{
 			name: "Integration[exists], SecureFields[false], Existing[exists]: new value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{"f1": "newVal1"},
 			},
-			existing: Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
-			expected: Integration{SecureSettings: map[string]string{"f1": "newVal1"}},
+			existing: models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			expected: models.Integration{SecureSettings: map[string]string{"f1": "newVal1"}},
 		},
 		{
 			name: "Integration[exists], SecureFields[false], Existing[missing]: new value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{"f1": "newVal1"},
 			},
-			existing: Integration{SecureSettings: map[string]string{}},
-			expected: Integration{SecureSettings: map[string]string{"f1": "newVal1"}},
+			existing: models.Integration{SecureSettings: map[string]string{}},
+			expected: models.Integration{SecureSettings: map[string]string{"f1": "newVal1"}},
 		},
 
 		{
 			name: "Integration[missing], SecureFields[true], Existing[exists]: old value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{},
 			},
 			secureFields: []string{"f1"},
-			existing:     Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
-			expected:     Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			existing:     models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			expected:     models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
 		},
 		{
 			name: "Integration[missing], SecureFields[true], Existing[missing]: no value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{},
 			},
 			secureFields: []string{"f1"},
-			existing:     Integration{SecureSettings: map[string]string{}},
-			expected:     Integration{SecureSettings: map[string]string{}},
+			existing:     models.Integration{SecureSettings: map[string]string{}},
+			expected:     models.Integration{SecureSettings: map[string]string{}},
 		},
 
 		{
 			name: "Integration[missing], SecureFields[false], Existing[exists]: no value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{},
 			},
-			existing: Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
-			expected: Integration{SecureSettings: map[string]string{}},
+			existing: models.Integration{SecureSettings: map[string]string{"f1": "oldVal1"}},
+			expected: models.Integration{SecureSettings: map[string]string{}},
 		},
 		{
 			name: "Integration[missing], SecureFields[false], Existing[missing]: no value",
-			integration: Integration{
+			integration: models.Integration{
 				SecureSettings: map[string]string{},
 			},
-			existing: Integration{SecureSettings: map[string]string{}},
-			expected: Integration{SecureSettings: map[string]string{}},
+			existing: models.Integration{SecureSettings: map[string]string{}},
+			expected: models.Integration{SecureSettings: map[string]string{}},
 		},
 	}
 
@@ -259,13 +262,13 @@ func TestReceiverIntegration_SecureFields(t *testing.T) {
 	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
 			t.Run("contains SecureSettings", func(t *testing.T) {
-				validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+				validIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
 				expected := make(map[string]bool, len(validIntegration.SecureSettings))
 				for _, path := range validIntegration.Config.GetSecretFieldsPaths() {
 					if validIntegration.Config.IsSecureField(path) {
 						expected[path.String()] = true
 						validIntegration.SecureSettings[path.String()] = "test"
-						_, _, err := extractFieldCaseInsensitive(validIntegration.Settings, path)
+						_, _, err := models.ExtractFieldCaseInsensitiveForTest(validIntegration.Settings, path)
 						require.NoError(t, err)
 						continue
 					}
@@ -274,12 +277,12 @@ func TestReceiverIntegration_SecureFields(t *testing.T) {
 			})
 
 			t.Run("contains secret Settings not in SecureSettings", func(t *testing.T) {
-				validIntegration := IntegrationGen(IntegrationMuts.WithValidConfig(integrationType))()
+				validIntegration := modelstest.IntegrationGen(modelstest.IntegrationMuts.WithValidConfig(integrationType))()
 				expected := make(map[string]bool, len(validIntegration.SecureSettings))
 				for _, path := range validIntegration.Config.GetSecretFieldsPaths() {
 					if validIntegration.Config.IsSecureField(path) {
 						expected[path.String()] = true
-						assert.NoError(t, setField(validIntegration.Settings, path, func(current any) any {
+						assert.NoError(t, models.SetFieldForTest(validIntegration.Settings, path, func(current any) any {
 							return "test"
 						}, false))
 						delete(validIntegration.SecureSettings, path.String())
@@ -302,9 +305,9 @@ func (b broken) MarshalJSON() ([]byte, error) {
 
 func TestReceiver_Fingerprint(t *testing.T) {
 	// Test that the fingerprint is stable.
-	im := IntegrationMuts
-	baseReceiver := ReceiverGen(ReceiverMuts.WithName("test receiver"), ReceiverMuts.WithIntegrations(
-		IntegrationGen(im.WithName("test receiver"), im.WithValidConfig("slack"))(),
+	im := modelstest.IntegrationMuts
+	baseReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver"), modelstest.ReceiverMuts.WithIntegrations(
+		modelstest.IntegrationGen(im.WithName("test receiver"), im.WithValidConfig("slack"))(),
 	))()
 	baseReceiver.UID = "stable receiver UID" // Fingerprint includes UID, so pin it for a stable hash below.
 	baseReceiver.Integrations[0].UID = "stable UID"
@@ -317,13 +320,13 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		"data":      []string{"test"},
 	}
 
-	completelyDifferentReceiver := ReceiverGen(ReceiverMuts.WithName("test receiver2"), ReceiverMuts.WithIntegrations(
-		IntegrationGen(im.WithName("test receiver2"), im.WithValidConfig("discord"))(),
+	completelyDifferentReceiver := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("test receiver2"), modelstest.ReceiverMuts.WithIntegrations(
+		modelstest.IntegrationGen(im.WithName("test receiver2"), im.WithValidConfig("discord"))(),
 	))()
 	completelyDifferentReceiver.Integrations[0].UID = "stable UID2"
 	completelyDifferentReceiver.Integrations[0].DisableResolveMessage = false
 	completelyDifferentReceiver.Integrations[0].SecureSettings = map[string]string{"test": "test"}
-	completelyDifferentReceiver.Provenance = ProvenanceAPI
+	completelyDifferentReceiver.Provenance = models.ProvenanceAPI
 
 	t.Run("stable across code changes", func(t *testing.T) {
 		expectedFingerprint := "bece9dcee7216f0e" // If this is a valid fingerprint generation change, update the expected value.
@@ -349,7 +352,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 
 		reflectVal := reflect.ValueOf(&completelyDifferentReceiver).Elem()
 
-		receiverType := reflect.TypeFor[Receiver]()
+		receiverType := reflect.TypeFor[models.Receiver]()
 		for i := 0; i < receiverType.NumField(); i++ {
 			field := receiverType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
@@ -377,7 +380,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 		excludedFields = map[string]struct{}{}
 
 		reflectVal = reflect.ValueOf(completelyDifferentReceiver.Integrations[0]).Elem()
-		integrationType := reflect.TypeFor[Integration]()
+		integrationType := reflect.TypeFor[models.Integration]()
 		for i := 0; i < integrationType.NumField(); i++ {
 			field := integrationType.Field(i).Name
 			if _, ok := excludedFields[field]; ok {
@@ -411,7 +414,7 @@ func TestExtractFieldCaseInsensitive(t *testing.T) {
 			"apiKey": "test",
 		}
 
-		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		field, ok, err := models.ExtractFieldCaseInsensitiveForTest(settings, schema.ParseIntegrationPath("apiKey"))
 		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, "test", field)
@@ -425,7 +428,7 @@ func TestExtractFieldCaseInsensitive(t *testing.T) {
 			"APIKEY": "test",
 		}
 
-		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		field, ok, err := models.ExtractFieldCaseInsensitiveForTest(settings, schema.ParseIntegrationPath("apiKey"))
 		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, "test", field)
@@ -439,7 +442,7 @@ func TestExtractFieldCaseInsensitive(t *testing.T) {
 			"someKey": "test",
 		}
 
-		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		field, ok, err := models.ExtractFieldCaseInsensitiveForTest(settings, schema.ParseIntegrationPath("apiKey"))
 		require.NoError(t, err)
 		assert.False(t, ok)
 		assert.Equal(t, "", field)
@@ -456,7 +459,7 @@ func TestExtractFieldCaseInsensitive(t *testing.T) {
 			},
 		}
 
-		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("nested.apiKey"))
+		field, ok, err := models.ExtractFieldCaseInsensitiveForTest(settings, schema.ParseIntegrationPath("nested.apiKey"))
 		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, "test", field)
@@ -464,7 +467,7 @@ func TestExtractFieldCaseInsensitive(t *testing.T) {
 		_, ok = settings["nested"].(map[string]any)["apiKey"]
 		assert.False(t, ok)
 
-		field, ok, err = extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("nested.AUTH_KEY"))
+		field, ok, err = models.ExtractFieldCaseInsensitiveForTest(settings, schema.ParseIntegrationPath("nested.AUTH_KEY"))
 		require.NoError(t, err)
 		assert.True(t, ok)
 		assert.Equal(t, "test2", field)

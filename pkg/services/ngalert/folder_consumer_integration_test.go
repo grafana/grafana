@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
@@ -196,7 +197,7 @@ func seedFolderConsumerRules(t *testing.T, raw *rules.RuleStore, otherFolder str
 		folder string
 		uid    string
 	}{{2, "target-folder", "shared-uid"}, {2, otherFolder, "other-uid"}, {3, "target-folder", "shared-uid"}} {
-		rule := models.RuleGen.With(models.RuleGen.WithIntervalMatching(raw.Cfg.BaseInterval)).Generate()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithIntervalMatching(raw.Cfg.BaseInterval)).Generate()
 		rule.ID = 0
 		rule.OrgID = fixture.orgID
 		rule.NamespaceUID = fixture.folder

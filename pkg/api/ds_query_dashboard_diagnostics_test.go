@@ -24,12 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/query/querytest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -40,10 +40,10 @@ func TestQueryDashboardDiagnosticsRecordsAcceptedAndCompletedRun(t *testing.T) {
 	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
 
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(backend.NewQueryDataResponse(), nil)
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newTestDiagnosticsMetrics(t, usage)
 	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
 
@@ -80,10 +80,10 @@ func TestQueryDashboardDiagnosticsRecordsFailedRun(t *testing.T) {
 	dashboardDiagnosticsJobs = &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 	t.Cleanup(func() { dashboardDiagnosticsJobs = previousJobs })
 
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(mock.Arguments) { panic("query panic") })
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	metrics := newTestDiagnosticsMetrics(t, usage)
 	hs := &HTTPServer{queryDataService: fakeQuery, diagnosticsMetrics: metrics}
 
@@ -120,7 +120,7 @@ func TestQueryDashboardDiagnostics_survivesRequestContextCancellation(t *testing
 	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
 
 	var capturedCtx atomic.Pointer[context.Context]
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			ctxArg := args.Get(0).(context.Context)
@@ -207,7 +207,7 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 	}
 
 	// create() rejects before the handler touches queryDataService, so no fake is needed.
-	usage := &usagestats.UsageStatsMock{T: t}
+	usage := &usagestatstest.UsageStatsMock{T: t}
 	hs := &HTTPServer{diagnosticsMetrics: newTestDiagnosticsMetrics(t, usage)}
 
 	body := `{"panels":[{"id":1,"title":"Panel 1","from":"now-1h","to":"now","queries":[{"refId":"A","datasource":{"uid":"prom"}}]}]}`
@@ -241,7 +241,7 @@ func TestQueryDashboardDiagnostics_rejectsWhenInFlightCapReached(t *testing.T) {
 // way a datasource query fails -- see diagnostics.ResponseError) never reached panel.QueryErr: the
 // panel was recorded in the manifest as having run successfully, with no query-error.txt.
 func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T) {
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	failing := backend.NewQueryDataResponse()
 	failing.Responses["A"] = backend.DataResponse{Error: errors.New("datasource exploded")}
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -268,7 +268,7 @@ func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T
 }
 
 func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testing.T) {
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(backend.NewQueryDataResponse(), nil)
 	hs := &HTTPServer{queryDataService: fakeQuery}
@@ -298,7 +298,7 @@ func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testin
 // (the single-panel path) honors -- so captured traffic wouldn't match a panel using Query V2's
 // per-query time ranges.
 func TestBuildDashboardDiagnosticsArchive_queryV2Dispatch(t *testing.T) {
-	fakeQuery := query.NewFakeQueryService(t)
+	fakeQuery := querytest.NewFakeQueryService(t)
 	fakeQuery.On("QueryDataNew", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(backend.NewQueryDataResponse(), nil).Once()
 	hs := &HTTPServer{queryDataService: fakeQuery}

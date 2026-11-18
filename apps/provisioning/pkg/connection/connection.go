@@ -22,7 +22,8 @@ type ExpirableSecureValue struct {
 	ExpiresAt time.Time
 }
 
-//go:generate mockery --name Connection --structname MockConnection --inpackage --filename connection_mock.go --with-expecter
+//go:generate mockery --name Connection --structname MockConnection --inpackage --filename connection_mock_test.go --with-expecter
+//go:generate mockery --name Connection --structname MockConnection --outpkg connectiontest --output ./connectiontest/ --filename connection_mock.go --with-expecter
 type Connection interface {
 	// GenerateRepositoryToken generates a repository-scoped access token.
 	// The repo parameter specifies the repository name the token should be scoped to.
@@ -35,7 +36,7 @@ type Connection interface {
 // RepositoryLister is an optional interface that connections can implement if their
 // provider can list the repositories accessible through the connection.
 //
-//go:generate mockery --name RepositoryLister --structname MockRepositoryLister --inpackage --filename connection_repository_lister_mock.go --with-expecter
+//go:generate mockery --name RepositoryLister --structname MockRepositoryLister --outpkg connectiontest --output ./connectiontest/ --filename connection_repository_lister_mock.go --with-expecter
 type RepositoryLister interface {
 	// ListRepositories returns the list of repositories accessible through this connection.
 	// The repositories returned are external repositories from the git provider (e.g., GitHub, GitLab).
@@ -45,7 +46,7 @@ type RepositoryLister interface {
 // TokenConnection is an optional interface that connections can implement if they need
 // to handle tokens in their secrets.
 //
-//go:generate mockery --name TokenConnection --structname MockTokenConnection --inpackage --filename connection_token_mock.go --with-expecter
+//go:generate mockery --name TokenConnection --structname MockTokenConnection --outpkg connectiontest --output ./connectiontest/ --filename connection_token_mock.go --with-expecter
 type TokenConnection interface {
 	// ValidateToken checks that the stored token can authenticate requests
 	// right now, and reports when it stops working (zero when it never expires).
@@ -58,7 +59,8 @@ type TokenConnection interface {
 
 // OAuthConnection is the interface implemented by all OAuth app connections.
 //
-//go:generate mockery --name OAuthConnection --structname MockOAuthConnection --inpackage --filename connection_oauth_mock.go --with-expecter
+//go:generate mockery --name OAuthConnection --structname MockOAuthConnection --inpackage --filename connection_oauth_mock_test.go --with-expecter
+//go:generate mockery --name OAuthConnection --structname MockOAuthConnection --outpkg connectiontest --output ./connectiontest/ --filename connection_oauth_mock.go --with-expecter
 type OAuthConnection interface {
 	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
 	// Returns the value to store as the connection token together with when it

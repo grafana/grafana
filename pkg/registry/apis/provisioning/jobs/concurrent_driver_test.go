@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 )
 
 func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGetter RepoGetter, history HistoryWriter, metrics *JobMetrics, workers ...Worker) *ConcurrentJobDriver {
@@ -324,7 +324,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	history := &MockHistoryWriter{}
 	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Once()
 
-	mockRepo := &repository.MockRepository{}
+	mockRepo := &repositorytest.MockRepository{}
 	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
 	repoGetter := &MockRepoGetter{}
@@ -402,7 +402,7 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 		history := &MockHistoryWriter{}
 		history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-		mockRepo := &repository.MockRepository{}
+		mockRepo := &repositorytest.MockRepository{}
 		mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
 		repoGetter := &MockRepoGetter{}
@@ -490,7 +490,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 		history := &MockHistoryWriter{}
 		history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-		mockRepo := &repository.MockRepository{}
+		mockRepo := &repositorytest.MockRepository{}
 		mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
 
 		repoGetter := &MockRepoGetter{}

@@ -6,6 +6,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,7 +50,7 @@ func TestWorker_IsSupported(t *testing.T) {
 func TestWorker_Process(t *testing.T) {
 	t.Run("sleeps for the duration then completes", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			// 80ms can't deliver the default count without out-pacing the throttle, so
 			// the total is clamped to 1.
 			progress.On("SetTotal", mock.Anything, 1).Return()
@@ -65,7 +67,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("caps progress updates that out-pace the throttle", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			// 50ms / 3 is far tighter than the throttle, so the total is clamped to 1.
 			progress.On("SetTotal", mock.Anything, 1).Return()
 			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
@@ -79,7 +81,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("honors configured progress updates when the duration allows", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			// 2 updates over 4× the interval are deliverable, so the count is honored.
 			// Cancel early; SetTotal is recorded before the loop starts.
 			progress.On("SetTotal", mock.Anything, 2).Return()
@@ -97,7 +99,7 @@ func TestWorker_Process(t *testing.T) {
 
 	t.Run("records results so progress advances", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			progress.On("SetTotal", mock.Anything, 2).Return()
 			// Each tick must Record a result; without it JobStatus.Progress stays 0.
 			progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -111,21 +113,21 @@ func TestWorker_Process(t *testing.T) {
 	})
 
 	t.Run("missing test options", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		job := provisioning.Job{Spec: provisioning.JobSpec{Action: provisioning.JobActionTest}}
 		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, job, progress)
 		require.Error(t, err)
 	})
 
 	t.Run("non-positive duration", func(t *testing.T) {
-		progress := jobs.NewMockJobProgressRecorder(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		err := NewWorker(enabledFunc(true)).Process(context.Background(), nil, testJob(0, 0), progress)
 		require.Error(t, err)
 	})
 
 	t.Run("honors context cancellation", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			progress.On("SetTotal", mock.Anything, defaultProgressUpdates).Return()
 			progress.On("Record", mock.Anything, mock.Anything).Return().Maybe()
 			progress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()

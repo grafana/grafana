@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -255,10 +256,10 @@ func newBackfillTestService(t *testing.T, orgCount int) (*AlertNG, *backfillFold
 
 func seedBackfillRule(t *testing.T, ng *AlertNG, orgID int64, folderUID, uid string, fullpath any) {
 	t.Helper()
-	rule := models.RuleGen.With(
-		models.RuleGen.WithOrgID(orgID),
-		models.RuleGen.WithNamespaceUID(folderUID),
-		models.RuleGen.WithIntervalMatching(time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithOrgID(orgID),
+		modelstest.RuleGen.WithNamespaceUID(folderUID),
+		modelstest.RuleGen.WithIntervalMatching(time.Second),
 	).Generate()
 	rule.UID = uid
 	_, err := ng.ruleService.InsertAlertRules(context.Background(), nil, []models.InsertRule{{AlertRule: rule}})

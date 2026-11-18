@@ -10,6 +10,10 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas/quotastest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,6 +26,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -55,10 +60,10 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -78,10 +83,10 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 }
 
 func TestFullSync_Error(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -97,10 +102,10 @@ func TestFullSync_Error(t *testing.T) {
 }
 
 func TestFullSync_NoChanges(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -117,10 +122,10 @@ func TestFullSync_NoChanges(t *testing.T) {
 }
 
 func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -148,10 +153,10 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 }
 
 func TestFullSync_FolderCreationFailed(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -183,10 +188,10 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 // surface this as a per-resource validation warning in the pull job rather
 // than failing the whole job, so operators can see the actual cause.
 func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -227,10 +232,10 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 }
 
 func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -258,8 +263,8 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	tests := []struct {
 		name            string
-		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
-		verifyMocks     func(*testing.T, *resources.MockRepositoryResources)
+		setupMocks      func(*repositorytest.MockRepository, *resourcestest.MockRepositoryResources, *resourcestest.MockResourceClients, *jobstest.MockJobProgressRecorder, *MockCompareFn)
+		verifyMocks     func(*testing.T, *resourcestest.MockRepositoryResources)
 		changes         []ResourceFileChange
 		expectedError   string
 		description     string
@@ -282,7 +287,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/three.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				var callCount int64 = 0
 				progress.On("TooManyErrors").Return(func() error {
 					if atomic.AddInt64(&callCount, 1) > 1 {
@@ -315,7 +320,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
@@ -335,7 +340,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
@@ -362,7 +367,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
@@ -387,7 +392,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/test.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/test.json").Return(false)
 
@@ -414,7 +419,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "one/two/three/",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
@@ -437,7 +442,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "one/two/three/",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "one/two/three/").Return(false)
 
@@ -472,7 +477,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -528,7 +533,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/Bad & Name.json").Return(false)
 
@@ -561,7 +566,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -618,7 +623,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
 				scheme := runtime.NewScheme()
@@ -674,7 +679,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Existing: nil,
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted &&
@@ -694,7 +699,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Existing: &provisioning.ResourceListItem{},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionDeleted &&
@@ -718,7 +723,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 
 				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
@@ -750,7 +755,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
@@ -811,7 +816,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
 
@@ -857,7 +862,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 						result.Error().Error() == "deleting resource folders/Folder test-folder: delete failed"
 				})).Return()
 			},
-			verifyMocks: func(t *testing.T, repoResources *resources.MockRepositoryResources) {
+			verifyMocks: func(t *testing.T, repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.AssertNotCalled(t, "RemoveFolderFromTree", "test-folder")
 			},
 		},
@@ -871,7 +876,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					Path:   "dashboards/slow.json",
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
 				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
 
@@ -895,10 +900,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				repo := repository.NewMockRepository(t)
-				repoResources := resources.NewMockRepositoryResources(t)
-				clients := resources.NewMockResourceClients(t)
-				progress := jobs.NewMockJobProgressRecorder(t)
+				repo := repositorytest.NewMockRepository(t)
+				repoResources := resourcestest.NewMockRepositoryResources(t)
+				clients := resourcestest.NewMockResourceClients(t)
+				progress := jobstest.NewMockJobProgressRecorder(t)
 				compareFn := NewMockCompareFn(t)
 
 				tt.setupMocks(repo, repoResources, clients, progress, compareFn)
@@ -1212,7 +1217,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockConfigRepository(t)
+			repo := repositorytest.NewMockConfigRepository(t)
 			repo.EXPECT().Config().Return(tt.config)
 
 			err := checkQuotaBeforeSync(context.Background(), repo, tt.changes, tracer)
@@ -1227,10 +1232,10 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 }
 
 func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -1275,10 +1280,10 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 }
 
 func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -1311,10 +1316,10 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 }
 
 func TestFullSync_MissingFolderMetadata(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -1358,10 +1363,10 @@ func TestFullSync_MissingFolderMetadata(t *testing.T) {
 }
 
 func TestFullSync_InvalidFolderMetadataWarning(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockRepository(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
@@ -1404,10 +1409,10 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repo := repositorytest.NewMockRepository(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			clients := resourcestest.NewMockResourceClients(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			compareFn := NewMockCompareFn(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
@@ -1476,12 +1481,12 @@ func TestFullSync_DeletedFolderMetadataWithUnchangedFallbackUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repo := repositorytest.NewMockRepository(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			clients := resourcestest.NewMockResourceClients(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			// No expectations: the folder is not renamed, so no quota is lifted for it.
-			quotaTracker := quotas.NewMockQuotaTracker(t)
+			quotaTracker := quotastest.NewMockQuotaTracker(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
@@ -1525,9 +1530,9 @@ func TestFullSync_DeletedFolderMetadataWithUnchangedFallbackUID(t *testing.T) {
 func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	// Verify that old folder UIDs are deleted AFTER folder creations and file creations.
 	// The ordering must be: folder phase -> file phase -> old folder deletion.
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1607,9 +1612,9 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 }
 
 func TestApplyChanges_DefersOrphanFolderDeletion(t *testing.T) {
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1707,9 +1712,9 @@ func TestApplyChanges_SkipsDeferredFolderDeletionPerGuardCondition(t *testing.T)
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			clients := resourcestest.NewMockResourceClients(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			tracer := tracing.NewNoopTracerService()
 			metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1748,9 +1753,9 @@ func TestApplyChanges_SkipsDeferredFolderDeletionPerGuardCondition(t *testing.T)
 }
 
 func TestApplyChanges_DefersBothRenamedAndOrphanFolderDeletion(t *testing.T) {
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1839,9 +1844,9 @@ func TestApplyChanges_DefersBothRenamedAndOrphanFolderDeletion(t *testing.T) {
 
 func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 	t.Run("existing hash from change.Existing is passed as WriteResourceOption", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		clients := resources.NewMockResourceClients(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		clients := resourcestest.NewMockResourceClients(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		tracer := tracing.NewNoopTracerService()
 		metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1879,9 +1884,9 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 	})
 
 	t.Run("no option passed when existing has no hash", func(t *testing.T) {
-		repoResources := resources.NewMockRepositoryResources(t)
-		clients := resources.NewMockResourceClients(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
+		clients := resourcestest.NewMockResourceClients(t)
+		progress := jobstest.NewMockJobProgressRecorder(t)
 		tracer := tracing.NewNoopTracerService()
 		metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -1919,9 +1924,9 @@ func TestApplyChanges_ExistingHashPassedToWrite(t *testing.T) {
 }
 
 func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -2119,9 +2124,9 @@ func TestRelocatingFoldersForPath(t *testing.T) {
 
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	// When multiple folders have OldFolderUID, deeper paths must be deleted first.
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -2181,9 +2186,9 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 
 func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	// When RemoveFolder fails, the error is recorded in progress but applyChanges does NOT fail.
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	clients := resourcestest.NewMockResourceClients(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
@@ -2285,7 +2290,7 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 			var blockedCount atomic.Int32
 			var stopped atomic.Bool
 			tracker := quotas.NewInMemoryQuotaTracker(9, 10)
-			observedQuota := quotas.NewMockQuotaTracker(t)
+			observedQuota := quotastest.NewMockQuotaTracker(t)
 			observedQuota.On("TryAcquire").Return(func() bool {
 				acquired := tracker.TryAcquire()
 				if !acquired && blockedCount.Add(1) == 2 {
@@ -2294,7 +2299,7 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 				return acquired
 			})
 			observedQuota.On("Release").Run(func(mock.Arguments) { tracker.Release() })
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			progress.On("TooManyErrors").Return(func() error {
 				if stopped.Load() {
 					return tt.stopErr
@@ -2318,7 +2323,7 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 				defer resultsMu.Unlock()
 				results = append(results, args.Get(1).(jobs.JobResourceResult))
 			}).Return()
-			repoResources := resources.NewMockRepositoryResources(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
 			gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
 			repoResources.On("WriteResourceFromFile", mock.Anything, "first.json", "ref").Run(func(mock.Arguments) {
 				close(firstStarted)
@@ -2341,7 +2346,7 @@ func TestFullSync_DeferredCreates(t *testing.T) {
 				{Path: "first.json", Action: repository.FileActionCreated},
 				{Path: "second.json", Action: repository.FileActionCreated},
 				{Path: "valid.json", Action: repository.FileActionCreated},
-			}, resources.NewMockResourceClients(t), "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, observedQuota, 0)
+			}, resourcestest.NewMockResourceClients(t), "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, observedQuota, 0)
 			require.ErrorIs(t, err, tt.stopErr)
 			if tt.stopErr != nil {
 				require.Len(t, results, 1)
@@ -2367,16 +2372,16 @@ func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
 	const files, limit, workers = 128, 8, 4
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
-	repo := repository.NewMockRepository(t)
+	repo := repositorytest.NewMockRepository(t)
 	repo.On("Config").Return(&provisioning.Repository{})
 	changes := make([]ResourceFileChange, files)
 	for i := range changes {
 		changes[i] = ResourceFileChange{Path: fmt.Sprintf("dashboard-%d.json", i), Action: repository.FileActionCreated}
 	}
-	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
 	compare := NewMockCompareFn(t)
 	compare.On("Execute", mock.Anything, repo, repoResources, "ref").Return(changes, nil, nil, nil)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetTotal", mock.Anything, files).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
@@ -2392,7 +2397,7 @@ func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
 	}).Return().Times(files)
 	tracker := quotas.NewInMemoryQuotaTracker(0, limit)
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	clients := resources.NewMockResourceClients(t)
+	clients := resourcestest.NewMockResourceClients(t)
 	err := FullSync(ctx, repo, compare.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), workers, metrics, tracker, time.Second)
 	require.NoError(t, err)
 	require.Len(t, results, files)

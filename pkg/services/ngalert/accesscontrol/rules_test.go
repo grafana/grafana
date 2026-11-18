@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -120,9 +121,9 @@ func getShallowQueryDiffs(queries []models.AlertQuery) []cmputil.Diff {
 }
 
 func TestAuthorizeRuleChanges(t *testing.T) {
-	groupKey := models.GenerateGroupKey(rand.Int63())
+	groupKey := modelstest.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := folder.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	genWithGroupKey := gen.With(gen.WithGroupKey(groupKey))
 
 	testCases := []struct {
@@ -192,8 +193,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				updates := make([]rulestore.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
-					cp := models.CopyRule(rule)
-					cp.Data = []models.AlertQuery{models.GenerateAlertQuery()}
+					cp := modelstest.CopyRule(rule)
+					cp.Data = []models.AlertQuery{modelstest.GenerateAlertQuery()}
 					updates = append(updates, rulestore.RuleDelta{
 						Existing: rule,
 						New:      cp,
@@ -237,7 +238,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				updates := make([]rulestore.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
-					cp := models.CopyRule(rule)
+					cp := modelstest.CopyRule(rule)
 					cp.IsPaused = !rule.IsPaused
 					cp.Title = rule.Title + " updated"
 					updates = append(updates, rulestore.RuleDelta{
@@ -284,11 +285,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
 
-				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
+				targetGroupKey := modelstest.GenerateGroupKey(groupKey.OrgID)
 
 				updates := make([]rulestore.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
+					cp := modelstest.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
 
 					updates = append(updates, rulestore.RuleDelta{
 						Existing: rule,
@@ -349,7 +350,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
+					cp := modelstest.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
 
 					updates = append(updates, rulestore.RuleDelta{
 						Existing: rule,
@@ -411,7 +412,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
+					cp := modelstest.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(modelstest.GenerateAlertQuery()))
 
 					updates = append(updates, rulestore.RuleDelta{
 						Existing: rule,
@@ -494,15 +495,15 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 }
 
 func TestCheckDatasourcePermissionsForRule(t *testing.T) {
-	rule := models.RuleGen.GenerateRef()
+	rule := modelstest.RuleGen.GenerateRef()
 
-	expressionByUID := models.GenerateAlertQuery()
+	expressionByUID := modelstest.GenerateAlertQuery()
 	expressionByUID.DatasourceUID = expr.DatasourceUID
 
 	var data []models.AlertQuery
 	var scopes []string
 	for i := 0; i < rand.Intn(3)+2; i++ {
-		q := models.GenerateAlertQuery()
+		q := modelstest.GenerateAlertQuery()
 		scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(q.DatasourceUID))
 		data = append(data, q)
 	}
@@ -551,7 +552,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should succeed if user has access to all namespaces", func(t *testing.T) {
-		rules := models.RuleGen.GenerateManyRef(1, 5)
+		rules := modelstest.RuleGen.GenerateManyRef(1, 5)
 		namespaceScopes := make([]string, 0, len(rules))
 		for _, rule := range rules {
 			namespaceScopes = append(namespaceScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
@@ -571,7 +572,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 
 	t.Run("should fail if user does not have access to namespace", func(t *testing.T) {
 		f := &folder.Folder{UID: "test-folder"}
-		gen := models.RuleGen
+		gen := modelstest.RuleGen
 		genWithFolder := gen.With(gen.WithNamespace(f.ToFolderReference()))
 		rules := genWithFolder.GenerateManyRef(1, 5)
 

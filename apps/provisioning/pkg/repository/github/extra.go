@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 )
 
-//go:generate mockery --name WebhookURLBuilder --structname MockWebhookURLBuilder --inpackage --filename webhook_builder_mock.go --with-expecter
+//go:generate mockery --name WebhookURLBuilder --structname MockWebhookURLBuilder --outpkg githubtest --output ./githubtest/ --filename webhook_builder_mock.go --with-expecter
 type WebhookURLBuilder interface {
 	WebhookURL(ctx context.Context, r *provisioning.Repository) string
 }

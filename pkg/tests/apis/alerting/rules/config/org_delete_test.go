@@ -15,7 +15,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/setting"
 	unified "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -60,7 +60,7 @@ func TestIntegrationOrgDeletionCleansRulesAndConfigInTargetOrg(t *testing.T) {
 		ruleClient := &apis.TypedClient[model.AlertRule, model.AlertRuleList]{
 			Client: orgUsers.Admin.ResourceClient(t, model.AlertRuleKind().GroupVersionResource()).Namespace(namespace),
 		}
-		base := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithIntervalMatching(10 * time.Second)).Generate()
+		base := modelstest.RuleGen.With(modelstest.RuleMuts.WithIntervalMatching(10 * time.Second)).Generate()
 		_, err = ruleClient.Create(ctx, &model.AlertRule{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "org-rule", Namespace: namespace,

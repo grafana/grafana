@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/legacy_storagetest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +46,7 @@ func (n *nopTransactionManager) InTransaction(_ context.Context, work func(ctx c
 }
 
 func createServiceSut(
-	configStore *legacy_storage.AlertmanagerConfigStoreFake,
+	configStore *legacy_storagetest.AlertmanagerConfigStoreFake,
 	provStore *fakes.FakeProvisioningStore,
 	features featuremgmt.FeatureToggles,
 	routeAccess routeAccessControl,
@@ -120,7 +122,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 	t.Run("imported route preserves provenance and does not query provenance store", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -145,7 +147,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 	t.Run("grafana route uses provenance from store", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -170,7 +172,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 	t.Run("propagates provenance store error for grafana route", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -190,7 +192,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 	t.Run("imported route provenance is consistent between get and list", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -221,7 +223,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 	t.Run("returns not found for unknown route", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -236,7 +238,7 @@ func TestGetManagedRoute(t *testing.T) {
 	})
 
 	t.Run("returns authorization error when access is denied", func(t *testing.T) {
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
@@ -252,7 +254,7 @@ func TestGetManagedRoutes(t *testing.T) {
 
 	t.Run("returns authorization error when access is denied", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -267,7 +269,7 @@ func TestGetManagedRoutes(t *testing.T) {
 
 	t.Run("filters out routes the user does not have access to", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -302,7 +304,7 @@ func TestGetManagedRoutes(t *testing.T) {
 
 	t.Run("returns empty list when user has no access to any route", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -322,7 +324,7 @@ func TestGetManagedRoutes(t *testing.T) {
 
 	t.Run("returns all routes when user has access to everything", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -343,7 +345,7 @@ func TestCreateManagedRoute(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 
 	t.Run("returns authorization error when access is denied", func(t *testing.T) {
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
@@ -353,7 +355,7 @@ func TestCreateManagedRoute(t *testing.T) {
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
 		rev := configRevisionWithImportedRoute()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -380,7 +382,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 
 	t.Run("returns authorization error when access is denied", func(t *testing.T) {
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
@@ -395,7 +397,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 
 	t.Run("returns authorization error when access is denied", func(t *testing.T) {
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures()
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*v1.ManagedRoute]())
@@ -406,7 +408,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 
 	t.Run("deletes all permissions when delete", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -429,7 +431,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 
 	t.Run("does not delete permissions when reset the default route", func(t *testing.T) {
 		rev := configRevisionWithManagedRoutes()
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},
@@ -453,7 +455,7 @@ func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 
 	newSut := func(rev *legacy_storage.ConfigRevision, features featuremgmt.FeatureToggles, authz routeAccessControl) *Service {
-		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		configStore := &legacy_storagetest.AlertmanagerConfigStoreFake{
 			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
 				return rev, nil
 			},

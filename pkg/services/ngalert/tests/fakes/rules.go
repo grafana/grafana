@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,7 +55,7 @@ func (f *RuleStore) PutRule(_ context.Context, rules ...*models.AlertRule) {
 mainloop:
 	for _, r := range rules {
 		rgs := f.Rules[r.OrgID]
-		cp := models.CopyRule(r)
+		cp := modelstest.CopyRule(r)
 		f.History[r.GUID] = append(f.History[r.GUID], &models.AlertRuleVersion{
 			AlertRule: *cp,
 			Message:   "",
@@ -495,7 +496,7 @@ func (f *RuleStore) listAlertRules(q *models.ListAlertRulesQuery) (models.RulesG
 			}
 		}
 
-		copyR := models.CopyRule(r)
+		copyR := modelstest.CopyRule(r)
 		ruleList = append(ruleList, copyR)
 	}
 

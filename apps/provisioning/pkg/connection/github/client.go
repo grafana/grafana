@@ -22,7 +22,7 @@ var (
 	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )
 
-//go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
+//go:generate mockery --name Client --structname MockClient --outpkg githubtest --output ./githubtest/ --filename client_mock.go --with-expecter
 type Client interface {
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)

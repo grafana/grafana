@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -32,9 +32,9 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_NilProvider(t *testing.T) 
 		{folder: "populated", orgID: 1, path: "Parent/Populated"},
 		{folder: "other-org", orgID: 2},
 	} {
-		rule := createRule(t, store, models.RuleGen.With(
-			models.RuleGen.WithOrgID(tc.orgID),
-			models.RuleGen.WithNamespaceUID(tc.folder),
+		rule := createRule(t, store, modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(tc.orgID),
+			modelstest.RuleGen.WithNamespaceUID(tc.folder),
 		))
 		require.NoError(t, sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 			_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = ? WHERE id = ?", tc.path, rule.ID)
@@ -43,9 +43,9 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_NilProvider(t *testing.T) 
 	}
 
 	// Soft deletion retains a version with an empty rule UID, not an alert_rule row.
-	deleted, err := alertRuleFromModelsAlertRule(models.RuleGen.With(
-		models.RuleGen.WithOrgID(1),
-		models.RuleGen.WithNamespaceUID("deleted-only"),
+	deleted, err := alertRuleFromModelsAlertRule(modelstest.RuleGen.With(
+		modelstest.RuleGen.WithOrgID(1),
+		modelstest.RuleGen.WithNamespaceUID("deleted-only"),
 	).Generate())
 	require.NoError(t, err)
 	version := alertRuleToAlertRuleVersion(deleted)
@@ -73,7 +73,7 @@ func TestIntegration_GetFolderUIDsWithMissingFullpath_RoutedDatabaseAndTable(t *
 	require.NotSame(t, localDB.GetEngine().DB(), routedDB.GetEngine().DB())
 	ctx := context.Background()
 	store := &RuleStore{SQLStore: localDB}
-	createRule(t, store, models.RuleGen.With(models.RuleGen.WithOrgID(1), models.RuleGen.WithNamespaceUID("local-only")))
+	createRule(t, store, modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(1), modelstest.RuleGen.WithNamespaceUID("local-only")))
 	require.NoError(t, localDB.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("UPDATE alert_rule SET folder_fullpath = NULL")
 		return err

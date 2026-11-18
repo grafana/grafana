@@ -13,7 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth/authtest"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -58,19 +58,19 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 	}
 
 	t.Run("refs: repository writer (admin) is allowed without consulting jobs", func(t *testing.T) {
-		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker := authtest.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(nil)
 
-		b := &APIBuilder{accessWithAdmin: adminChecker, accessWithEditor: auth.NewMockAccessChecker(t)}
+		b := &APIBuilder{accessWithAdmin: adminChecker, accessWithEditor: authtest.NewMockAccessChecker(t)}
 		decision, _, err := b.authorizeRepositorySubresource(ctx, subresourceAttrs("refs", name, ns))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
 	t.Run("refs: editor who can create jobs is allowed", func(t *testing.T) {
-		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker := authtest.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(mockForbidden())
-		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker := authtest.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(nil)
 
 		b := &APIBuilder{accessWithAdmin: adminChecker, accessWithEditor: editorChecker}
@@ -80,9 +80,9 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 	})
 
 	t.Run("refs: viewer (neither repo write nor jobs create) is denied", func(t *testing.T) {
-		adminChecker := auth.NewMockAccessChecker(t)
+		adminChecker := authtest.NewMockAccessChecker(t)
 		adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(mockForbidden())
-		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker := authtest.NewMockAccessChecker(t)
 		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(mockForbidden())
 
 		b := &APIBuilder{accessWithAdmin: adminChecker, accessWithEditor: editorChecker}
@@ -93,7 +93,7 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 
 	for _, sub := range []string{"resources", "stats", "history", "status"} {
 		t.Run(sub+": admin (repositories:write) is allowed", func(t *testing.T) {
-			adminChecker := auth.NewMockAccessChecker(t)
+			adminChecker := authtest.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(nil)
 
 			b := &APIBuilder{accessWithAdmin: adminChecker}
@@ -103,7 +103,7 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 		})
 
 		t.Run(sub+": non-admin is denied", func(t *testing.T) {
-			adminChecker := auth.NewMockAccessChecker(t)
+			adminChecker := authtest.NewMockAccessChecker(t)
 			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(repoWriteReq), "").Return(mockForbidden())
 
 			b := &APIBuilder{accessWithAdmin: adminChecker}

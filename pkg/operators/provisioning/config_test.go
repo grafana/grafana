@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +39,7 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 		apisprovisioning.GithubConnectionType,
 		configuredType,
 	} {
-		extra := connection.NewMockExtra(t)
+		extra := connectiontest.NewMockExtra(t)
 		extra.On("Type").Return(connectionType)
 		extras = append(extras, extra)
 	}
@@ -62,7 +65,7 @@ func TestDefaultConnectionTypes(t *testing.T) {
 	}
 	extras := make([]connection.Extra, 0, len(registeredTypes))
 	for _, connectionType := range registeredTypes {
-		extra := connection.NewMockExtra(t)
+		extra := connectiontest.NewMockExtra(t)
 		extra.On("Type").Return(connectionType)
 		extras = append(extras, extra)
 	}
@@ -195,7 +198,7 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
 				cfg.tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
-				cfg.clients = resources.NewMockClientFactory(t)
+				cfg.clients = resourcestest.NewMockClientFactory(t)
 				// Empty resource lists must not access unified storage.
 				cfg.unified = &struct{ resources.ResourceStore }{}
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
@@ -276,7 +279,7 @@ func TestControllerConfigResourceLister(t *testing.T) {
 		// Injected so the only dependency left to resolve is the unified storage client.
 		return &ControllerConfig{
 			Settings: cfg,
-			clients:  resources.NewMockClientFactory(t),
+			clients:  resourcestest.NewMockClientFactory(t),
 			tracer:   tracing.NewNoopTracerService(),
 		}
 	}

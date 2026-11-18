@@ -8,6 +8,9 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,6 +24,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -28,7 +32,7 @@ import (
 
 // stubPreviewProgress allows the progress bookkeeping Evaluate does for every
 // change, so cases that only care about the comment don't have to expect it.
-func stubPreviewProgress(progress *jobs.MockJobProgressRecorder) {
+func stubPreviewProgress(progress *jobstest.MockJobProgressRecorder) {
 	progress.On("SetTotal", mock.Anything, mock.Anything).Return().Maybe()
 	progress.On("RecordDryRun", mock.Anything, mock.Anything).Return().Maybe()
 }
@@ -36,7 +40,7 @@ func stubPreviewProgress(progress *jobs.MockJobProgressRecorder) {
 func TestCalculateChanges(t *testing.T) {
 	tests := []struct {
 		name              string
-		setupMocks        func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
+		setupMocks        func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory)
 		changes           []repository.VersionedFileChange
 		expectedInfo      changeInfo
 		expectedError     string
@@ -45,7 +49,7 @@ func TestCalculateChanges(t *testing.T) {
 	}{
 		{
 			name: "with screenshot",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -120,7 +124,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "non-default org strips orgId from render callback but keeps it on comment links",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -200,7 +204,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name:              "screenshot uses ProvisioningPublicRootURL when set",
 			screenshotBaseURL: "https://public.example.com",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -275,7 +279,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "screenshot falls back to grafana base url when ProvisioningPublicRootURL empty",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -353,7 +357,7 @@ func TestCalculateChanges(t *testing.T) {
 			// The repo has webhook.baseUrl set, but ProvisioningPublicRootURL is empty,
 			// so screenshots must use the grafana base URL — not the webhook URL.
 			name: "screenshot ignores spec.webhook.baseUrl when ProvisioningPublicRootURL empty",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -431,7 +435,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "without screenshot",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -504,7 +508,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "non-default org pins orgId on links",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -577,7 +581,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "process all files",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -660,7 +664,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "parser factory error",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -678,7 +682,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "file read error",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -708,7 +712,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "parse error",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -746,7 +750,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "dry run error",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -825,7 +829,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "screenshot render error",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -901,7 +905,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "non-dashboard resource",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -974,7 +978,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "deleted file reads from previous ref",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "base-ref",
@@ -1039,7 +1043,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "deleted file pins orgId on links for non-default org",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "base-ref",
@@ -1104,7 +1108,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "deleted file with read error degrades gracefully",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -1135,7 +1139,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "deleted file with empty previous ref degrades gracefully",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -1166,7 +1170,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "invalid grafana url",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -1247,7 +1251,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name:           "malformed grafana url",
 			grafanaBaseURL: "ht tp://bad url/",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
 					Ref:  "ref",
@@ -1319,7 +1323,7 @@ func TestCalculateChanges(t *testing.T) {
 		},
 		{
 			name: "path with spaces",
-			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+			setupMocks: func(parser *resourcestest.MockParser, reader *repositorytest.MockReader, progress *jobstest.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resourcestest.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file with spaces.json",
 					Ref:  "ref",
@@ -1394,12 +1398,12 @@ func TestCalculateChanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := resources.NewMockParser(t)
-			reader := repository.NewMockReader(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			parser := resourcestest.NewMockParser(t)
+			reader := repositorytest.NewMockReader(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			stubPreviewProgress(progress)
 			renderer := NewMockScreenshotRenderer(t)
-			parserFactory := resources.NewMockParserFactory(t)
+			parserFactory := resourcestest.NewMockParserFactory(t)
 
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
@@ -1446,7 +1450,7 @@ func TestCalculateChanges(t *testing.T) {
 // readerWithURLs composes a MockReader with the RepositoryWithURLs methods so
 // the evaluator's optional type assertion succeeds in tests.
 type readerWithURLs struct {
-	*repository.MockReader
+	*repositorytest.MockReader
 	sourceURL string
 }
 
@@ -1478,7 +1482,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
@@ -1488,7 +1492,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info:           finfo,
 		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
@@ -1498,13 +1502,13 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 		DryRunResponse: obj,
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 
@@ -1542,7 +1546,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
@@ -1552,7 +1556,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info:           finfo,
 		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
@@ -1562,13 +1566,13 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 		DryRunResponse: obj,
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 
@@ -1616,7 +1620,7 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
@@ -1628,7 +1632,7 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 	// Updated files read the base branch to detect stripped metadata; not found is fine.
 	reader.On("Read", mock.Anything, "team/_folder.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info:           finfo,
 		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
@@ -1639,13 +1643,13 @@ func TestEvaluate_FolderGetsGrafanaAndSourceURL(t *testing.T) {
 		DryRunResponse: obj,
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
 
@@ -1703,7 +1707,7 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		folderGVR: "FolderList",
 	}, obj)
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
@@ -1713,7 +1717,7 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 	})
 	reader.On("Read", mock.Anything, "team/_folder.json", "base-ref").Return(finfo, nil)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	// Existing is intentionally nil: the real parser only populates it during
 	// DryRun/Run, which deletions skip. The evaluator must fetch it via Client.
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
@@ -1725,13 +1729,13 @@ func TestEvaluate_DeletedFilePopulatesSourceURL(t *testing.T) {
 		Meta:   meta,
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process team/_folder.json").Return()
 
@@ -1773,7 +1777,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	}
 	meta, _ := utils.MetaAccessor(obj)
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
@@ -1785,7 +1789,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	})
 	reader.On("Read", mock.Anything, "playlist.json", "ref").Return(finfo, nil)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info:           finfo,
 		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
@@ -1795,13 +1799,13 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 		DryRunResponse: obj,
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(true)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, "process playlist.json").Return()
 
@@ -1825,19 +1829,19 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 // panic. This guards against burning through a large PR's file list (and filling the
 // comment with spurious "context canceled" errors) once the job's context expires.
 func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
 	})
 
-	parserFactory := resources.NewMockParserFactory(t)
-	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resources.NewMockParser(t), nil)
+	parserFactory := resourcestest.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resourcestest.NewMockParser(t), nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 
 	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
@@ -1877,7 +1881,7 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
@@ -1893,7 +1897,7 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 
 	aMeta, _ := utils.MetaAccessor(obj("a"))
 	bMeta, _ := utils.MetaAccessor(obj("b"))
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, aInfo).Return(&resources.ParsedResource{
 		Info: aInfo, GVK: schema.GroupVersionKind{Kind: dashboardKind}, Obj: obj("a"), Meta: aMeta, DryRunResponse: obj("a"),
 	}, nil)
@@ -1901,13 +1905,13 @@ func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
 		Info: bInfo, GVK: schema.GroupVersionKind{Kind: dashboardKind}, Obj: obj("b"), Meta: bMeta, DryRunResponse: obj("b"),
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	stubPreviewProgress(progress)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
@@ -2270,7 +2274,7 @@ func TestOrgIDForLinks(t *testing.T) {
 
 // recordPreviewedResults captures every result Evaluate records, so tests can
 // assert on the job summary a pull request preview produces.
-func recordPreviewedResults(progress *jobs.MockJobProgressRecorder) *[]jobs.JobResourceResult {
+func recordPreviewedResults(progress *jobstest.MockJobProgressRecorder) *[]jobs.JobResourceResult {
 	recorded := &[]jobs.JobResourceResult{}
 	progress.On("SetTotal", mock.Anything, mock.Anything).Return()
 	progress.On("RecordDryRun", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -2294,13 +2298,13 @@ func dashboardObject(name string) *unstructured.Unstructured {
 // resources the pull request would create, update and delete — that count is
 // what the duration histogram buckets on.
 func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
 	})
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	for _, tc := range []struct {
 		path string
 		ref  string
@@ -2329,13 +2333,13 @@ func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
 	// The unreadable file is the one that cannot be previewed at all.
 	reader.On("Read", mock.Anything, "broken.json", "ref").Return(nil, repository.ErrFileNotFound)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	recorded := recordPreviewedResults(progress)
 
@@ -2380,7 +2384,7 @@ func TestEvaluate_RecordsWhatThePullRequestWouldChange(t *testing.T) {
 // it as Ignored (which would undercount the job summary as a Noop instead).
 // Only a file that was never parsed at all has a genuinely unknown action.
 func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
@@ -2392,7 +2396,7 @@ func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
 
 	reader.On("Read", mock.Anything, "invalid.json", "ref").Return(finfo, nil)
 
-	parser := resources.NewMockParser(t)
+	parser := resourcestest.NewMockParser(t)
 	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 		Info: finfo,
 		Repo: provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
@@ -2402,13 +2406,13 @@ func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
 		// No Client and no DryRunResponse: DryRun fails with "no client configured".
 	}, nil)
 
-	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory := resourcestest.NewMockParserFactory(t)
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	recorded := recordPreviewedResults(progress)
 
@@ -2434,7 +2438,7 @@ func TestEvaluate_RecordsRealActionWhenDryRunFails(t *testing.T) {
 // evaluates and records every file — so the resources-dryrun bucket reflects
 // the whole diff, not just what the comment displays.
 func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
-	reader := repository.NewMockReader(t)
+	reader := repositorytest.NewMockReader(t)
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
 		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
@@ -2442,13 +2446,13 @@ func TestEvaluate_RecordsEveryFileForJobSummary(t *testing.T) {
 	// Deletions we cannot read still describe a resource the merge would remove.
 	reader.On("Read", mock.Anything, mock.Anything, "base").Return(nil, repository.ErrFileNotFound)
 
-	parserFactory := resources.NewMockParserFactory(t)
-	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resources.NewMockParser(t), nil)
+	parserFactory := resourcestest.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resourcestest.NewMockParser(t), nil)
 
 	renderer := NewMockScreenshotRenderer(t)
 	renderer.On("IsAvailable", mock.Anything).Return(false)
 
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	recorded := recordPreviewedResults(progress)
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -22,11 +22,11 @@ import (
 // makeRecordingRuleSpec builds a minimal RecordingRule resource targeting the given folder.
 func makeRecordingRuleSpec(t *testing.T, folder, title string) *v0alpha1.RecordingRule {
 	t.Helper()
-	rule := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithNamespaceUID(folder),
-		ngmodels.RuleMuts.WithAllRecordingRules(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithNamespaceUID(folder),
+		modelstest.RuleMuts.WithAllRecordingRules(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 	return &v0alpha1.RecordingRule{
 		ObjectMeta: v1.ObjectMeta{
@@ -102,11 +102,11 @@ func TestIntegrationListHistory(t *testing.T) {
 	t.Run("history listing does not include alerting rules", func(t *testing.T) {
 		alertingClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
 
-		alertingRule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUniqueUID(),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithNamespaceUID("rec-history-folder"),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		alertingRule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueUID(),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithNamespaceUID("rec-history-folder"),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		alerting := &v0alpha1.AlertRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -250,11 +250,11 @@ func TestIntegrationListTrash(t *testing.T) {
 	t.Run("recording trash excludes deleted alerting rules", func(t *testing.T) {
 		// Cross-type isolation: deleting an alerting rule must not affect RecordingRule trash.
 		alertingClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
-		alertingRule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUniqueUID(),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithNamespaceUID("rec-trash-folder"),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		alertingRule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueUID(),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithNamespaceUID("rec-trash-folder"),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		alerting := &v0alpha1.AlertRule{
 			ObjectMeta: v1.ObjectMeta{

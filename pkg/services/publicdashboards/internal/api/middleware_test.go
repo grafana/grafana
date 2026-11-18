@@ -9,8 +9,8 @@ import (
 	"errors"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/service"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +73,7 @@ func TestRequiresExistingAccessToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			publicdashboardService := &publicdashboards.FakePublicDashboardService{}
+			publicdashboardService := &testhelpers.FakePublicDashboardService{}
 			publicdashboardService.On("ExistsEnabledByAccessToken", mock.Anything, mock.Anything).Return(tt.AccessTokenExists, tt.AccessTokenExistsErr)
 			params := map[string]string{":accessToken": tt.AccessToken}
 			mw := RequiresExistingAccessToken(publicdashboardService)
@@ -130,7 +130,7 @@ func TestSetPublicDashboardOrgIdOnContext(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			publicdashboardService := &publicdashboards.FakePublicDashboardService{}
+			publicdashboardService := &testhelpers.FakePublicDashboardService{}
 			publicdashboardService.On("GetOrgIdByAccessToken", mock.Anything, tt.AccessToken).Return(
 				tt.OrgIdResp,
 				tt.ErrorResp,

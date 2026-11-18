@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -34,10 +36,10 @@ func TestProvideFactory(t *testing.T) {
 		{
 			name: "should create factory with valid extras",
 			setupExtras: func(t *testing.T) []connection.Extra {
-				extra1 := connection.NewMockExtra(t)
+				extra1 := connectiontest.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
-				extra2 := connection.NewMockExtra(t)
+				extra2 := connectiontest.NewMockExtra(t)
 				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 
 				return []connection.Extra{extra1, extra2}
@@ -51,10 +53,10 @@ func TestProvideFactory(t *testing.T) {
 		{
 			name: "should return error when duplicate connection types",
 			setupExtras: func(t *testing.T) []connection.Extra {
-				extra1 := connection.NewMockExtra(t)
+				extra1 := connectiontest.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
-				extra2 := connection.NewMockExtra(t)
+				extra2 := connectiontest.NewMockExtra(t)
 				extra2.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
 				return []connection.Extra{extra1, extra2}
@@ -161,7 +163,7 @@ func TestFactory_Types(t *testing.T) {
 			// Setup extras based on the types specified
 			extras := make([]connection.Extra, 0, len(tt.extraTypes))
 			for _, connType := range tt.extraTypes {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(connType)
 				extras = append(extras, extra)
 			}
@@ -199,9 +201,9 @@ func TestFactory_Build(t *testing.T) {
 			name:           "should successfully build connection when type is enabled and has extra",
 			connectionType: provisioning.GithubConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
-				mockConnection := connection.NewMockConnection(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -221,7 +223,7 @@ func TestFactory_Build(t *testing.T) {
 			name:           "should return error when type is not enabled",
 			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 
 				return []connection.Extra{extra}, nil, nil
@@ -238,7 +240,7 @@ func TestFactory_Build(t *testing.T) {
 			name:           "should return error when type is not supported",
 			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
 				return []connection.Extra{extra}, nil, nil
@@ -256,7 +258,7 @@ func TestFactory_Build(t *testing.T) {
 			connectionType: provisioning.GithubConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				buildErr := errors.New("build error")
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -279,13 +281,13 @@ func TestFactory_Build(t *testing.T) {
 			name:           "should build with multiple extras registered",
 			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
-				mockConnection := connection.NewMockConnection(t)
+				mockConnection := connectiontest.NewMockConnection(t)
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
-				extra1 := connection.NewMockExtra(t)
+				extra1 := connectiontest.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
-				extra2 := connection.NewMockExtra(t)
+				extra2 := connectiontest.NewMockExtra(t)
 				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				extra2.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -344,8 +346,8 @@ func TestFactory_Build_EmitsSpan(t *testing.T) {
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
-	mockConnection := connection.NewMockConnection(t)
-	extra := connection.NewMockExtra(t)
+	mockConnection := connectiontest.NewMockConnection(t)
+	extra := connectiontest.NewMockExtra(t)
 	extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 	extra.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
 
@@ -390,7 +392,7 @@ func TestFactory_Mutate(t *testing.T) {
 		{
 			name: "should successfully mutate with single extra",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Mutate(ctx, obj).Return(nil)
 
@@ -410,7 +412,7 @@ func TestFactory_Mutate(t *testing.T) {
 		{
 			name: "should return error if extra returns error",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Mutate(ctx, obj).Return(assert.AnError)
 
@@ -430,11 +432,11 @@ func TestFactory_Mutate(t *testing.T) {
 		{
 			name: "should successfully mutate with multiple extras (all get called)",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
-				extra1 := connection.NewMockExtra(t)
+				extra1 := connectiontest.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra1.EXPECT().Mutate(ctx, obj).Return(nil)
 
-				extra2 := connection.NewMockExtra(t)
+				extra2 := connectiontest.NewMockExtra(t)
 				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				extra2.EXPECT().Mutate(ctx, obj).Return(nil)
 
@@ -471,7 +473,7 @@ func TestFactory_Mutate(t *testing.T) {
 		{
 			name: "should handle wrong object type (non-Connection)",
 			setupExtras: func(t *testing.T, ctx context.Context, obj runtime.Object) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				// Mutate should be called but handle non-Connection object gracefully
 				extra.EXPECT().Mutate(ctx, obj).Return(nil)
@@ -532,7 +534,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 				return []connection.Extra{extra}
@@ -550,7 +552,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				return []connection.Extra{extra}
 			},
@@ -574,7 +576,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				return []connection.Extra{extra}
 			},
@@ -598,7 +600,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				return []connection.Extra{extra}
 			},
@@ -625,7 +627,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{
 					field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"),
@@ -649,7 +651,7 @@ func TestFactory_Validate(t *testing.T) {
 			name:       "should return no errors when object is not a Connection",
 			connection: nil, // Will pass a Repository instead
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				return []connection.Extra{extra}
 			},
@@ -671,11 +673,11 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra1 := connection.NewMockExtra(t)
+				extra1 := connectiontest.NewMockExtra(t)
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				extra1.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
-				extra2 := connection.NewMockExtra(t)
+				extra2 := connectiontest.NewMockExtra(t)
 				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				extra2.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
@@ -695,7 +697,7 @@ func TestFactory_Validate(t *testing.T) {
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
-				extra := connection.NewMockExtra(t)
+				extra := connectiontest.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
 				return []connection.Extra{extra}
 			},

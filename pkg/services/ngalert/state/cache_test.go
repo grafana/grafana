@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -144,9 +145,9 @@ func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
 	result := eval.Result{Instance: data.Labels{}, EvaluatedAt: time.Now()}
 
 	newRule := func() *models.AlertRule {
-		return models.RuleGen.With(
-			models.RuleMuts.WithLabels(data.Labels{"big": strings.Repeat("a", 20)}),
-			models.RuleMuts.WithAnnotations(data.Labels{"summary": strings.Repeat("b", 20)}),
+		return modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithLabels(data.Labels{"big": strings.Repeat("a", 20)}),
+			modelstest.RuleMuts.WithAnnotations(data.Labels{"summary": strings.Repeat("b", 20)}),
 		).GenerateRef()
 	}
 
@@ -175,8 +176,8 @@ func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
 	})
 
 	t.Run("truncation does not split a multi-byte rune", func(t *testing.T) {
-		rule := models.RuleGen.With(
-			models.RuleMuts.WithLabels(data.Labels{"emoji": strings.Repeat("é", 10)}), // 2 bytes each
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithLabels(data.Labels{"emoji": strings.Repeat("é", 10)}), // 2 bytes each
 		).GenerateRef()
 
 		lbs, _ := expandAnnotationsAndLabels(ctx, logger, rule, result, nil, nil, 5, nil)
@@ -188,8 +189,8 @@ func Test_expandAnnotationsAndLabels_sizeCap(t *testing.T) {
 
 func Test_mergeLabels(t *testing.T) {
 	t.Run("merges two maps", func(t *testing.T) {
-		a := models.GenerateAlertLabels(5, "set1-")
-		b := models.GenerateAlertLabels(5, "set2-")
+		a := modelstest.GenerateAlertLabels(5, "set1-")
+		b := modelstest.GenerateAlertLabels(5, "set2-")
 
 		result := mergeLabels(a, b)
 		require.Len(t, result, len(a)+len(b))
@@ -201,8 +202,8 @@ func Test_mergeLabels(t *testing.T) {
 		}
 	})
 	t.Run("first set take precedence if conflict", func(t *testing.T) {
-		a := models.GenerateAlertLabels(5, "set1-")
-		b := models.GenerateAlertLabels(5, "set2-")
+		a := modelstest.GenerateAlertLabels(5, "set1-")
+		b := modelstest.GenerateAlertLabels(5, "set2-")
 		c := b.Copy()
 		for key, val := range a {
 			c[key] = "set2-" + val
@@ -608,8 +609,8 @@ func randomState(ruleKey models.AlertRuleKey) *State {
 			ID:    rand.Int63(),
 			Token: util.GenerateShortUID(),
 		},
-		Annotations: models.GenerateAlertLabels(2, "current-"),
-		Labels:      models.GenerateAlertLabels(2, "current-"),
+		Annotations: modelstest.GenerateAlertLabels(2, "current-"),
+		Labels:      modelstest.GenerateAlertLabels(2, "current-"),
 		Values: map[string]float64{
 			"A": rand.Float64(),
 		},

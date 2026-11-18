@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
@@ -130,7 +131,7 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	tick := time.Time{}
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	// create alert rule under main org with one second interval
 	alertRule1 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-1")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule1)
@@ -416,7 +417,7 @@ func TestProcessTicks(t *testing.T) {
 		require.True(t, ok, "status for a rule that just evaluated was not available")
 	})
 	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
-		newRule2 := models.CopyRule(alertRule2)
+		newRule2 := modelstest.CopyRule(alertRule2)
 		newRule2.Version++
 		expectedUpdated := models.AlertRuleKeyWithVersion{
 			Version:      newRule2.Version,
@@ -460,7 +461,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// Update the recording rule.
-	recordingRule1 = models.CopyRule(recordingRule1)
+	recordingRule1 = modelstest.CopyRule(recordingRule1)
 	recordingRule1.Version++
 	expectedUpdated := models.AlertRuleKeyWithVersion{
 		Version:      recordingRule1.Version,
@@ -493,7 +494,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// Convert an alerting rule to a recording rule.
-	models.ConvertToRecordingRule(alertRule3)
+	modelstest.ConvertToRecordingRule(alertRule3)
 	alertRule3.Version++
 	ruleStore.PutRule(ctx, alertRule3)
 
@@ -673,7 +674,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID), models.RuleGen.WithInterval(10*time.Second)).GenerateRef()
+		alertRule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(firstOrgID), modelstest.RuleGen.WithInterval(10*time.Second)).GenerateRef()
 		folderWithRuleGroup1 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule1.NamespaceUID), alertRule1.RuleGroup)
 		ruleStore.PutRule(ctx, alertRule1)
 
@@ -694,7 +695,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		})
 
 		// Add a new rule alertRule2 and check that it is reflected in the metrics
-		alertRule2 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID), models.RuleGen.WithInterval(2*time.Minute)).GenerateRef()
+		alertRule2 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(firstOrgID), modelstest.RuleGen.WithInterval(2*time.Minute)).GenerateRef()
 		folderWithRuleGroup2 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule2.NamespaceUID), alertRule2.RuleGroup)
 		ruleStore.PutRule(ctx, alertRule2)
 
@@ -752,20 +753,20 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		// The metric includes alert rules with either internal ConvertedPrometheusRuleLabel label,
 		// or when AlertRule.HasPrometheusRuleDefinition() returns true.
-		alertRule1 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+		alertRule1 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
 		).GenerateRef()
 
-		alertRule2 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
+		alertRule2 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithLabel(models.ConvertedPrometheusRuleLabel, "true"),
 		).GenerateRef()
 
-		alertRulePaused := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
-			models.RuleGen.WithIsPaused(true),
+		alertRulePaused := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+			modelstest.RuleGen.WithIsPaused(true),
 		).GenerateRef()
 
 		t.Run("it should show two imported rules in a single org", func(t *testing.T) {
@@ -782,9 +783,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule3 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(secondOrgID),
-			models.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
+		alertRule3 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(secondOrgID),
+			modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("1"),
 		).GenerateRef()
 
 		t.Run("it should show three imported rules in two orgs", func(t *testing.T) {
@@ -822,18 +823,18 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		})
 
 		// The metric only counts rules carrying the __grafana_origin label.
-		alertRule1 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		alertRule1 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
 		).GenerateRef()
 
-		alertRule2 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
+		alertRule2 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/grafana-slo-app"),
 		).GenerateRef()
 
-		alertRuleNoOrigin := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
+		alertRuleNoOrigin := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
 		).GenerateRef()
 
 		t.Run("it should show two rules for a single origin in a single org", func(t *testing.T) {
@@ -849,9 +850,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule3 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(secondOrgID),
-			models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/other-app"),
+		alertRule3 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(secondOrgID),
+			modelstest.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, "plugin/other-app"),
 		).GenerateRef()
 
 		t.Run("it should show rules split by origin across two orgs", func(t *testing.T) {
@@ -870,9 +871,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 		t.Run("it should strip control characters and truncate an overlong origin value", func(t *testing.T) {
 			dirtyOrigin := "plugin/😀weird!name_1-x\x00" + strings.Repeat("y", maxPluginOriginLabelLen)
-			alertRuleDirty := models.RuleGen.With(
-				models.RuleGen.WithOrgID(firstOrgID),
-				models.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, dirtyOrigin),
+			alertRuleDirty := modelstest.RuleGen.With(
+				modelstest.RuleGen.WithOrgID(firstOrgID),
+				modelstest.RuleGen.WithLabel(models.PluginGrafanaOriginLabel, dirtyOrigin),
 			).GenerateRef()
 
 			sch.updateRulesMetrics([]*models.AlertRule{alertRuleDirty})
@@ -910,7 +911,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
+		alertRule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
 
 		t.Run("it should show one rule group in a single org", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
@@ -925,7 +926,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule2 := models.RuleGen.With(models.RuleGen.WithOrgID(secondOrgID)).GenerateRef()
+		alertRule2 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(secondOrgID)).GenerateRef()
 
 		t.Run("it should show two rule groups in two orgs", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
@@ -960,9 +961,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		const secondOrgID int64 = 2
 
 		// Has no NotificationSettings, should not be in the metrics
-		alertRuleWithoutNotificationSettings := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithNoNotificationSettings(),
+		alertRuleWithoutNotificationSettings := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithNoNotificationSettings(),
 		).GenerateRef()
 
 		// Without any rules there are no metrics
@@ -974,9 +975,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule1 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+		alertRule1 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen()),
 		).GenerateRef()
 
 		t.Run("it should show one rule in a single org", func(t *testing.T) {
@@ -992,9 +993,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule2 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(secondOrgID),
-			models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+		alertRule2 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(secondOrgID),
+			modelstest.RuleGen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen()),
 		).GenerateRef()
 
 		t.Run("it should show two rules in two orgs", func(t *testing.T) {
@@ -1039,10 +1040,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		const firstOrgID int64 = 1
 		const secondOrgID int64 = 2
 
-		alertRuleWithAdvancedSettings := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
-			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
+		alertRuleWithAdvancedSettings := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
 		).GenerateRef()
 
 		// The rule does not have simplified editor enabled, should not be in the metrics
@@ -1054,10 +1055,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule1 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(firstOrgID),
-			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
-			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(true),
+		alertRule1 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(firstOrgID),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(true),
 		).GenerateRef()
 
 		t.Run("it should show one rule in a single org", func(t *testing.T) {
@@ -1074,10 +1075,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule2 := models.RuleGen.With(
-			models.RuleGen.WithOrgID(secondOrgID),
-			models.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
-			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		alertRule2 := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(secondOrgID),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedNotificationsSection(false),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		).GenerateRef()
 
 		t.Run("it should show two rules in two orgs", func(t *testing.T) {
@@ -1130,7 +1131,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
+		alertRule1 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
 
 		t.Run("it should show one rule group in a single org", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
@@ -1145,7 +1146,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		alertRule2 := models.RuleGen.With(models.RuleGen.WithOrgID(secondOrgID)).GenerateRef()
+		alertRule2 := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(secondOrgID)).GenerateRef()
 
 		t.Run("it should show two rule groups in two orgs", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
@@ -1192,7 +1193,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleStore := newFakeRulesStore()
 			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.RuleGen.GenerateRef()
+			rule := modelstest.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
@@ -1211,7 +1212,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleStore := newFakeRulesStore()
 			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.RuleGen.GenerateRef()
+			rule := modelstest.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
@@ -1234,7 +1235,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleStore := newFakeRulesStore()
 			sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, mockReasonProvider)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.RuleGen.GenerateRef()
+			rule := modelstest.RuleGen.GenerateRef()
 			ruleStore.PutRule(ctx, rule)
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
@@ -1258,7 +1259,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			// Don't create a ruleStore so that the rule will not be found in deleteAlertRule
 			sch := setupScheduler(t, nil, nil, nil, nil, nil, mockReasonProvider)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.RuleGen.GenerateRef()
+			rule := modelstest.RuleGen.GenerateRef()
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(ctx, ruleWithFolder{rule: rule, folderTitle: ""}, ruleFactory)
 
@@ -1277,7 +1278,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil, nil)
-			key := models.GenerateRuleKey(rand.Int63())
+			key := modelstest.GenerateRuleKey(rand.Int63())
 			sch.deleteAlertRule(ctx, key)
 		})
 	})
@@ -1419,7 +1420,7 @@ func setupScheduler(
 	return NewScheduler(schedCfg, st)
 }
 
-func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {
+func withQueryForState(t *testing.T, evalResult eval.State) modelstest.AlertRuleMutator {
 	var expression string
 	var forMultimplier int64 = 0
 	switch evalResult {

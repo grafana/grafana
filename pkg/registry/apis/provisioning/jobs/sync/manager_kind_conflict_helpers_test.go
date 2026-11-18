@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas/quotastest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,6 +21,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -70,8 +75,8 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
 			quotaTracker := quotas.NewInMemoryQuotaTracker(tt.usage, 10)
-			repoResources := resources.NewMockRepositoryResources(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			progress.On("TooManyErrors").Return(nil)
 			var resultsMu sync.Mutex
 			results := make(map[string]jobs.JobResourceResult)
@@ -97,7 +102,7 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 				firstStarted := make(chan struct{})
 				quotaBlocked := make(chan struct{})
 				var blockedOnce sync.Once
-				observedQuota := quotas.NewMockQuotaTracker(t)
+				observedQuota := quotastest.NewMockQuotaTracker(t)
 				syncQuota = observedQuota
 				observedQuota.On("TryAcquire").Return(func() bool {
 					acquired := quotaTracker.TryAcquire()
@@ -164,7 +169,7 @@ func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
 	tracker := quotas.NewInMemoryQuotaTracker(9, 10)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 	progress.On("TooManyErrors").Return(nil)
 	validWritten := make(chan struct{})
 	progress.On("HasDirPathFailedCreation", "valid.json").Return(false)
@@ -183,7 +188,7 @@ func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) 
 		result := args.Get(1).(jobs.JobResourceResult)
 		results[result.Path()] = result
 	}).Return().Times(2)
-	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
 	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
 	repoResources.On("WriteResourceFromFile", mock.Anything, "valid.json", "new-ref").Run(func(mock.Arguments) {
 		close(validWritten)
@@ -205,13 +210,13 @@ func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) 
 	require.False(t, tracker.TryAcquire(), "skipping a blocked file must not release another file's reservation")
 }
 
-func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {
+func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, changes []repository.VersionedFileChange, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder, tracker quotas.QuotaTracker) error {
 	t.Helper()
 	progress.On("SetTotal", mock.Anything, len(changes)).Return()
 	tracer := tracing.NewNoopTracerService()
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
 	if syncType == "full" {
-		repo := repository.NewMockRepository(t)
+		repo := repositorytest.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{})
 		fullChanges := make([]ResourceFileChange, len(changes))
 		for i, change := range changes {
@@ -219,9 +224,9 @@ func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, chan
 		}
 		compare := NewMockCompareFn(t)
 		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref").Return(fullChanges, nil, nil, nil)
-		return FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, 0)
+		return FullSync(ctx, repo, compare.Execute, resourcestest.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, 0)
 	}
-	repo := repository.NewMockVersioned(t)
+	repo := repositorytest.NewMockVersioned(t)
 	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 	progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 	progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()

@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -77,7 +77,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 			service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
@@ -169,8 +169,8 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
     }
 }`
 
-	setup := func(_ bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
-		service := publicdashboards.NewFakePublicDashboardService(t)
+	setup := func(_ bool) (*web.Mux, *testhelpers.FakePublicDashboardService) {
+		service := testhelpers.NewFakePublicDashboardService(t)
 		service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 
@@ -276,7 +276,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			service := publicdashboards.NewFakePublicDashboardService(t)
+			service := testhelpers.NewFakePublicDashboardService(t)
 
 			if test.ExpectedServiceCalled {
 				service.On("FindAnnotations", mock.Anything, mock.Anything, mock.AnythingOfType("string")).

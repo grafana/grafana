@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
@@ -26,9 +26,9 @@ func TestLivePush_AccessControl(t *testing.T) {
 	gLive, err := live.ProvideService(cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
-		&usagestats.UsageStatsMock{T: t},
+		&usagestatstest.UsageStatsMock{T: t},
 		featuremgmt.WithFeatures(),
-		&dashboards.FakeDashboardService{}, nil)
+		&dashboardstest.FakeDashboardService{}, nil)
 	require.NoError(t, err)
 	gateway := pushhttp.ProvideService(cfg, gLive)
 

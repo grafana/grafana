@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/connectiontest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioningcontroller "github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
@@ -30,7 +33,7 @@ func TestTestConnector_RequiresNewTokenWhenURLChanges(t *testing.T) {
 	}
 	oldRepo.cfg.Secure.Token = common.InlineSecureValue{Name: "old-token"}
 
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	connector := NewTestConnector(
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
@@ -61,7 +64,7 @@ func TestTestConnector_AllowsURLChangeWithNewToken(t *testing.T) {
 		rsp: &provisioningv0alpha1.TestResults{Success: true, Code: http.StatusOK},
 	}
 
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 		return cfg.URL() == "https://github.com/grafana/new" &&
 			cfg.Secure.Token.Create == common.RawSecureValue("new-token")
@@ -95,7 +98,7 @@ func TestTestConnector_AllowsUnchangedURLWithoutNewToken(t *testing.T) {
 		rsp: &provisioningv0alpha1.TestResults{Success: true, Code: http.StatusOK},
 	}
 
-	repoFactory := repository.NewMockFactory(t)
+	repoFactory := repositorytest.NewMockFactory(t)
 	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 		return cfg.URL() == "https://github.com/grafana/repo" &&
 			cfg.Secure.Token.Name == "old-token"
@@ -138,11 +141,11 @@ func TestTestConnector_URLChangeWithConnection(t *testing.T) {
 			updated.Secure.Token = tc.token
 			body, err := json.Marshal(updated)
 			require.NoError(t, err)
-			conn := connection.NewMockConnection(t)
+			conn := connectiontest.NewMockConnection(t)
 			conn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 				return cfg.URL() == updated.URL() && cfg.Secure.Token == (common.InlineSecureValue{Remove: true})
 			})).Return(&connection.ExpirableSecureValue{Token: "connection-token"}, tc.err).Once()
-			factory := repository.NewMockFactory(t)
+			factory := repositorytest.NewMockFactory(t)
 			if tc.err == nil {
 				factory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
 					return cfg.URL() == updated.URL() && cfg.Secure.Token == (common.InlineSecureValue{Create: "connection-token"})

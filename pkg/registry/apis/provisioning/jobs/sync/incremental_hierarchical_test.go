@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -48,7 +52,7 @@ AUTOMATIC TRACKING:
 func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 	tests := []struct {
 		name          string
-		setupMocks    func(*repository.MockVersioned, *resources.MockRepositoryResources, *jobs.MockJobProgressRecorder)
+		setupMocks    func(*repositorytest.MockVersioned, *resourcestest.MockRepositoryResources, *jobstest.MockJobProgressRecorder)
 		changes       []repository.VersionedFileChange
 		previousRef   string
 		currentRef    string
@@ -65,7 +69,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionCreated, Path: "unsupported/file.txt", Ref: "new-ref"},
 				{Action: repository.FileActionCreated, Path: "unsupported/nested/file2.txt", Ref: "new-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// First file triggers folder creation which fails
 				progress.On("HasDirPathFailedCreation", "unsupported/file.txt").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "unsupported/", Err: fmt.Errorf("permission denied")}
@@ -98,7 +102,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionCreated, Path: "folder1/file2.json", Ref: "new-ref"},
 				{Action: repository.FileActionCreated, Path: "folder1/nested/file3.json", Ref: "new-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// First file write fails with PathCreationError
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -132,7 +136,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 			changes: []repository.VersionedFileChange{
 				{Action: repository.FileActionDeleted, Path: "dashboards/file1.json", PreviousRef: "old-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// File deletion fails (deletions don't check HasDirPathFailedCreation)
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/file1.json", "old-ref").
 					Return("dashboard-1", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard"}, 0, fmt.Errorf("permission denied")).Once()
@@ -165,7 +169,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionCreated, Path: "folder1/new.json", Ref: "new-ref"},
 				{Action: repository.FileActionDeleted, Path: "folder1/old.json", PreviousRef: "old-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// Creation fails
 				progress.On("HasDirPathFailedCreation", "folder1/new.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -197,7 +201,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionCreated, Path: "level1/level2/file.txt", Ref: "new-ref"},
 				{Action: repository.FileActionCreated, Path: "level1/level2/level3/file.txt", Ref: "new-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// First file triggers level1/ failure
 				progress.On("HasDirPathFailedCreation", "level1/file.txt").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
@@ -227,7 +231,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionCreated, Path: "failure/file3.txt", Ref: "new-ref"},
 				{Action: repository.FileActionCreated, Path: "failure/nested/file4.txt", Ref: "new-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "new-ref").
@@ -272,7 +276,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 					PreviousRef:  "old-ref",
 				},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// Rename fails with PathCreationError for destination folder
 				progress.On("HasDirPathFailedCreation", "newfolder/file.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "newfolder/", Err: fmt.Errorf("permission denied")}
@@ -296,7 +300,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				{Action: repository.FileActionRenamed, Path: "folder1/file1.json", PreviousPath: "old/file1.json", Ref: "new-ref", PreviousRef: "old-ref"},
 				{Action: repository.FileActionCreated, Path: "folder1/file2.json", Ref: "new-ref"},
 			},
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			setupMocks: func(repo *repositorytest.MockVersioned, repoResources *resourcestest.MockRepositoryResources, progress *jobstest.MockJobProgressRecorder) {
 				// Rename is NOT skipped for creation failures (it's checking the destination path)
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -322,13 +326,13 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 }
 
 type compositeRepoForTest struct {
-	*repository.MockVersioned
-	*repository.MockReader
+	*repositorytest.MockVersioned
+	*repositorytest.MockReader
 }
 
 func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 	name          string
-	setupMocks    func(*repository.MockVersioned, *resources.MockRepositoryResources, *jobs.MockJobProgressRecorder)
+	setupMocks    func(*repositorytest.MockVersioned, *resourcestest.MockRepositoryResources, *jobstest.MockJobProgressRecorder)
 	changes       []repository.VersionedFileChange
 	previousRef   string
 	currentRef    string
@@ -337,13 +341,13 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 	errorContains string
 }) {
 	var repo repository.Versioned
-	mockVersioned := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	mockVersioned := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	// For tests that need cleanup (folder deletion), use composite repo
 	if tt.name == "file deletion fails, folder cleanup skipped" {
-		mockReader := repository.NewMockReader(t)
+		mockReader := repositorytest.NewMockReader(t)
 		mockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 		repo = &compositeRepoForTest{
@@ -383,9 +387,9 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 
 // TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation tests nested resource skipping
 func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "unsupported/file.txt", Ref: "new-ref"},
@@ -435,11 +439,11 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testi
 
 // TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion tests folder cleanup prevention
 func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing.T) {
-	mockVersioned := repository.NewMockVersioned(t)
-	mockReader := repository.NewMockReader(t)
+	mockVersioned := repositorytest.NewMockVersioned(t)
+	mockReader := repositorytest.NewMockReader(t)
 	repo := &compositeRepoForTest{MockVersioned: mockVersioned, MockReader: mockReader}
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionDeleted, Path: "dashboards/file1.json", PreviousRef: "old-ref"},
@@ -481,9 +485,9 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 
 // TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure tests deletions proceed despite creation failures
 func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreationFailure(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "folder1/file.json", Ref: "new-ref"},
@@ -521,9 +525,9 @@ func TestIncrementalSync_HierarchicalErrorHandling_DeletionNotAffectedByCreation
 
 // TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting tests multi-level cascade
 func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "level1/file.txt", Ref: "new-ref"},
@@ -565,9 +569,9 @@ func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.
 
 // TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure tests partial failures
 func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionCreated, Path: "success/file1.json", Ref: "new-ref"},
@@ -617,9 +621,9 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 
 // TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreation tests rename operations affected by folder failures
 func TestIncrementalSync_HierarchicalErrorHandling_RenameWithFailedFolderCreation(t *testing.T) {
-	repo := repository.NewMockVersioned(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
+	repo := repositorytest.NewMockVersioned(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
+	progress := jobstest.NewMockJobProgressRecorder(t)
 
 	changes := []repository.VersionedFileChange{
 		{Action: repository.FileActionRenamed, Path: "newfolder/file.json", PreviousPath: "oldfolder/file.json", Ref: "new-ref", PreviousRef: "old-ref"},

@@ -34,6 +34,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -336,7 +337,7 @@ func withLabels(labels data.Labels) forEachState {
 func TestRouteGetRuleStatuses(t *testing.T) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
-	gen := ngmodels.RuleGen
+	gen := modelstest.RuleGen
 	gen = gen.With(gen.WithOrgID(orgID))
 	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
 
@@ -707,7 +708,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a recovering alert", func(t *testing.T) {
-		gen := ngmodels.RuleGen
+		gen := modelstest.RuleGen
 
 		t.Run("when it is the only alert", func(t *testing.T) {
 			fakeStore, fakeAIM, api := setupAPI(t)
@@ -765,7 +766,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		t.Run("filtered by recovering state", func(t *testing.T) {
 			fakeStore, fakeAIM, api := setupAPI(t)
-			groupKey := ngmodels.GenerateGroupKey(orgID)
+			groupKey := modelstest.GenerateGroupKey(orgID)
 			recoveringRule := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), withClassicConditionSingleQuery()).GenerateRef()
 			alertingRule := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), withClassicConditionSingleQuery()).GenerateRef()
 			fakeAIM.GenerateAlertInstances(orgID, recoveringRule.UID, 1, withRecoveringState())
@@ -808,8 +809,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 			fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
-			groupKey := ngmodels.GenerateGroupKey(orgID)
-			gen := ngmodels.RuleGen
+			groupKey := modelstest.GenerateGroupKey(orgID)
+			gen := modelstest.RuleGen
 			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 			ruleStore.PutRule(context.Background(), rules...)
 
@@ -2264,7 +2265,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			RuleGroup:    "Rule-Group-1",
 			OrgID:        orgID,
 		}), gen.WithNotificationSettings(
-			ngmodels.NotificationSettingsGen(ngmodels.NSMuts.WithReceiver("webhook-a"), ngmodels.NSMuts.WithGroupBy("alertname"))(),
+			modelstest.NotificationSettingsGen(modelstest.NSMuts.WithReceiver("webhook-a"), modelstest.NSMuts.WithGroupBy("alertname"))(),
 		)).GenerateManyRef(1)
 		fakeStore.PutRule(context.Background(), rules...)
 
@@ -3492,7 +3493,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 
 		mutator := NewDBRuleMutator(counting)
 
-		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID), modelstest.RuleGen.WithUID(ruleUID)).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
 		mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
@@ -3508,7 +3509,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 
 		mutator := NewDBRuleMutator(fakeAIM)
 
-		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID), modelstest.RuleGen.WithUID(ruleUID)).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
 		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
@@ -3527,7 +3528,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 
 		mutator := NewDBRuleMutator(fakeAIM)
 
-		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID("no-states")).GenerateRef()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID), modelstest.RuleGen.WithUID("no-states")).GenerateRef()
 		alertingRule := apimodels.AlertingRule{State: "inactive"}
 
 		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
@@ -3545,7 +3546,7 @@ func TestNewDBRuleMutator(t *testing.T) {
 		defaultMutator := NewInMemoryRuleMutator(fakeSch, fakeAIM)
 		singleMutator := NewDBRuleMutator(fakeAIM)
 
-		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+		rule := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(orgID), modelstest.RuleGen.WithUID(ruleUID)).GenerateRef()
 
 		defaultRule := apimodels.AlertingRule{State: "inactive"}
 		singleRule := apimodels.AlertingRule{State: "inactive"}
@@ -3605,11 +3606,11 @@ func setupAPIFull(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Pr
 	return fakeStore, fakeAIM, api, fakeProvisioning
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator, additionalMutators ...ngmodels.AlertRuleMutator) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query modelstest.AlertRuleMutator, additionalMutators ...modelstest.AlertRuleMutator) {
 	t.Helper()
 
-	gen := ngmodels.RuleGen
-	r := gen.With(append([]ngmodels.AlertRuleMutator{gen.WithOrgID(orgID), asFixture(), query}, additionalMutators...)...).GenerateRef()
+	gen := modelstest.RuleGen
+	r := gen.With(append([]modelstest.AlertRuleMutator{gen.WithOrgID(orgID), asFixture(), query}, additionalMutators...)...).GenerateRef()
 
 	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{
@@ -3626,7 +3627,7 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 
 // asFixture removes variable values of the alert rule.
 // we're not too interested in variability of the rule in this scenario.
-func asFixture() ngmodels.AlertRuleMutator {
+func asFixture() modelstest.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		r.Title = "AlwaysFiring"
 		r.NamespaceUID = "namespaceUID"
@@ -3643,7 +3644,7 @@ func asFixture() ngmodels.AlertRuleMutator {
 	}
 }
 
-func withClassicConditionSingleQuery() ngmodels.AlertRuleMutator {
+func withClassicConditionSingleQuery() modelstest.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{
@@ -3665,7 +3666,7 @@ func withClassicConditionSingleQuery() ngmodels.AlertRuleMutator {
 	}
 }
 
-func withExpressionsMultiQuery() ngmodels.AlertRuleMutator {
+func withExpressionsMultiQuery() modelstest.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{
@@ -3729,7 +3730,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 	}
 
 	t.Run("is invoked with the page's rule UIDs", func(t *testing.T) {
-		gen := ngmodels.RuleGen
+		gen := modelstest.RuleGen
 		// Two rules in the same group so a single store fetch returns both.
 		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-a", NamespaceUID: nsUID, OrgID: orgID}
 		rule1 := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-1"), gen.WithTitle("rule-1")).GenerateRef()
@@ -3756,7 +3757,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 	})
 
 	t.Run("is invoked once per fetched store page", func(t *testing.T) {
-		gen := ngmodels.RuleGen
+		gen := modelstest.RuleGen
 		// Three rules, each in its own group, so group_limit=1 forces one store fetch per group.
 		rule1 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-1", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-1")).GenerateRef()
 		rule2 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-2", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-2")).GenerateRef()
@@ -3792,7 +3793,7 @@ func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
 	})
 
 	t.Run("nil StatusPreparer is a no-op", func(t *testing.T) {
-		gen := ngmodels.RuleGen
+		gen := modelstest.RuleGen
 		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-nil", NamespaceUID: nsUID, OrgID: orgID}
 		rule := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-nil"), gen.WithTitle("rule-nil")).GenerateRef()
 

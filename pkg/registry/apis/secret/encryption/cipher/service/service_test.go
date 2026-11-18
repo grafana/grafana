@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/provider"
 )
@@ -18,7 +18,7 @@ import (
 func newGcmService(t *testing.T) cipher.Cipher {
 	t.Helper()
 
-	usageStats := &usagestats.UsageStatsMock{}
+	usageStats := &usagestatstest.UsageStatsMock{}
 	svc, err := ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats)
 	require.NoError(t, err, "failed to set up encryption service")
 	return svc

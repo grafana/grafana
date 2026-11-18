@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
@@ -81,7 +82,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 }
 
 func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	initialRules := gen.GenerateManyRef(100)
 	init := make(map[models.AlertRuleKey]*models.AlertRule, len(initialRules))
 	for _, rule := range initialRules {
@@ -91,7 +92,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 	t.Run("should return empty diff if exactly the same rules", func(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		for _, rule := range initialRules {
-			newRules = append(newRules, models.CopyRule(rule))
+			newRules = append(newRules, modelstest.CopyRule(rule))
 		}
 		diff := r.set(newRules, map[models.FolderKey]string{}, nil)
 		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
@@ -116,7 +117,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		expectedUpdated := map[models.AlertRuleKey]struct{}{}
 		for i, rule := range initialRules {
-			cp := models.CopyRule(rule)
+			cp := modelstest.CopyRule(rule)
 			if i%2 == 0 {
 				cp.Version++
 				expectedUpdated[cp.GetKey()] = struct{}{}
@@ -316,18 +317,18 @@ func TestRuleSequencesNeedUpdate(t *testing.T) {
 }
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
-	rule := models.RuleGen.GenerateRef()
+	rule := modelstest.RuleGen.GenerateRef()
 	title := uuid.NewV4().String()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
 		require.NotEqual(t, 0, uint64(f))
 	})
 	t.Run("mirror copy should have the same fingerprint", func(t *testing.T) {
-		f2 := ruleWithFolder{rule: models.CopyRule(rule), folderTitle: title}.Fingerprint()
+		f2 := ruleWithFolder{rule: modelstest.CopyRule(rule), folderTitle: title}.Fingerprint()
 		require.Equal(t, f, f2)
 	})
 	t.Run("order of queries should not affect the fingerprint", func(t *testing.T) {
-		cp := models.CopyRule(rule)
+		cp := modelstest.CopyRule(rule)
 		rand.Shuffle(len(cp.Data), func(i, j int) {
 			cp.Data[i], cp.Data[j] = cp.Data[j], cp.Data[i]
 		})
@@ -339,7 +340,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.NotEqual(t, f, f2)
 	})
 	t.Run("Version, Updated, IntervalSeconds, GUID, Annotations and RuleGroupIndex should be excluded from fingerprint", func(t *testing.T) {
-		cp := models.CopyRule(rule)
+		cp := modelstest.CopyRule(rule)
 		cp.Version++
 		cp.Updated = cp.Updated.Add(1 * time.Second)
 		cp.IntervalSeconds++
@@ -353,7 +354,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 	})
 
 	t.Run("fields that cannot change the state cache ID should be excluded from fingerprint", func(t *testing.T) {
-		base := models.CopyRule(rule)
+		base := modelstest.CopyRule(rule)
 		base.Record = nil
 		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
 
@@ -367,22 +368,22 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		}
 		for name, mutate := range mutations {
 			t.Run(name, func(t *testing.T) {
-				cp := models.CopyRule(base)
+				cp := modelstest.CopyRule(base)
 				mutate(cp)
 				require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
 			})
 		}
 
 		t.Run("Record presence", func(t *testing.T) {
-			cp := models.CopyRule(base)
+			cp := modelstest.CopyRule(base)
 			cp.Record = &models.Record{Metric: "metric_a", From: "A"}
 			require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
 		})
 
 		t.Run("Record content", func(t *testing.T) {
-			a := models.CopyRule(base)
+			a := modelstest.CopyRule(base)
 			a.Record = &models.Record{Metric: "metric_a", From: "A"}
-			b := models.CopyRule(base)
+			b := modelstest.CopyRule(base)
 			b.Record = &models.Record{Metric: "metric_b", From: "B"}
 			require.Equal(t,
 				ruleWithFolder{rule: a, folderTitle: title}.Fingerprint(),
@@ -392,31 +393,31 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 	})
 
 	t.Run("NoDataState and ExecErrState should be used in fingerprint", func(t *testing.T) {
-		base := models.CopyRule(rule)
+		base := modelstest.CopyRule(rule)
 		base.NoDataState = models.NoData
 		base.ExecErrState = models.ErrorErrState
 		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
 
-		noData := models.CopyRule(base)
+		noData := modelstest.CopyRule(base)
 		noData.NoDataState = models.OK
 		require.NotEqual(t, fBase, ruleWithFolder{rule: noData, folderTitle: title}.Fingerprint())
 
-		execErr := models.CopyRule(base)
+		execErr := modelstest.CopyRule(base)
 		execErr.ExecErrState = models.OkErrState
 		require.NotEqual(t, fBase, ruleWithFolder{rule: execErr, folderTitle: title}.Fingerprint())
 	})
 
 	t.Run("DashboardUID and PanelID should be used in fingerprint", func(t *testing.T) {
-		base := models.CopyRule(rule)
+		base := modelstest.CopyRule(rule)
 		base.DashboardUID = new("dashboard")
 		base.PanelID = new(int64(1))
 		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
 
-		dashboard := models.CopyRule(base)
+		dashboard := modelstest.CopyRule(base)
 		dashboard.DashboardUID = new("dashboard-2")
 		require.NotEqual(t, fBase, ruleWithFolder{rule: dashboard, folderTitle: title}.Fingerprint())
 
-		panel := models.CopyRule(base)
+		panel := modelstest.CopyRule(base)
 		panel.PanelID = new(int64(2))
 		require.NotEqual(t, fBase, ruleWithFolder{rule: panel, folderTitle: title}.Fingerprint())
 	})
@@ -481,7 +482,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				uid := cmp.Or(tc.uid, expr.DatasourceUID)
 				condition := cmp.Or(tc.condition, "C")
 				fp := func(model string) fingerprint {
-					cp := models.CopyRule(rule)
+					cp := modelstest.CopyRule(rule)
 					cp.Condition = condition
 					cp.Data = []models.AlertQuery{{RefID: "C", DatasourceUID: uid, Model: json.RawMessage(model)}}
 					return ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint()
@@ -499,7 +500,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		// threshold expression: only the condition's own model is replaced, nothing else is skipped.
 		t.Run("other queries are still hashed normally", func(t *testing.T) {
 			build := func(bModel string) *models.AlertRule {
-				cp := models.CopyRule(rule)
+				cp := modelstest.CopyRule(rule)
 				cp.Condition = "C"
 				cp.Data = []models.AlertQuery{
 					{RefID: "A", DatasourceUID: "some-ds", Model: json.RawMessage(`{"expr":"up"}`)},
@@ -518,7 +519,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		// it in rule.Data would never get its RefID written into keys, dropping it from the hash.
 		t.Run("queries after the condition in rule.Data are still hashed", func(t *testing.T) {
 			build := func(bModel string) *models.AlertRule {
-				cp := models.CopyRule(rule)
+				cp := modelstest.CopyRule(rule)
 				cp.Condition = "C"
 				cp.Data = []models.AlertQuery{
 					{RefID: "C", DatasourceUID: expr.DatasourceUID, Model: json.RawMessage(base)},
@@ -572,7 +573,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label",
 			},
 			IsPaused:             false,
-			NotificationSettings: new(models.NotificationSettingsGen()()),
+			NotificationSettings: new(modelstest.NotificationSettingsGen()()),
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: false,
@@ -617,7 +618,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label23",
 			},
 			IsPaused:             true,
-			NotificationSettings: new(models.NotificationSettingsGen()()),
+			NotificationSettings: new(modelstest.NotificationSettingsGen()()),
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: true,
@@ -670,7 +671,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			if _, ok := excludedFields[tp.Field(i).Name]; ok {
 				continue
 			}
-			cp := models.CopyRule(r1)
+			cp := modelstest.CopyRule(r1)
 			v := reflect.ValueOf(cp).Elem()
 			vf := v.Field(i)
 			vf.Set(r2v.Field(i))

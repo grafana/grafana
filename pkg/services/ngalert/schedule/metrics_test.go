@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func TestHashUIDs(t *testing.T) {
@@ -42,12 +43,12 @@ func TestSchedule_resetMetricsOnStop(t *testing.T) {
 		realClock := clock.New()
 		sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil, withSchedulerClock(realClock))
 
-		alertRule := models.RuleGen.With(
-			models.RuleGen.WithOrgID(orgID),
-			models.RuleGen.WithInterval(time.Second),
-			models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
-			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
-			models.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
+		alertRule := modelstest.RuleGen.With(
+			modelstest.RuleGen.WithOrgID(orgID),
+			modelstest.RuleGen.WithInterval(time.Second),
+			modelstest.RuleGen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen()),
+			modelstest.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+			modelstest.RuleGen.WithPrometheusOriginalRuleDefinition("test"),
 		).GenerateRef()
 		ruleStore.PutRule(context.Background(), alertRule)
 

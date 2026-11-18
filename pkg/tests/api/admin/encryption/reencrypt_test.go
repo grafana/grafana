@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	alertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -174,7 +174,7 @@ next:
 
 func addAlertingConfig(t *testing.T, env *server.TestEnv) {
 	// Receiver has the secure field "password".
-	receiverWithSecrets := alertmodels.ReceiverGen(alertmodels.ReceiverMuts.WithName("receiver-1"), alertmodels.ReceiverMuts.WithValidIntegration(oncall.Type))()
+	receiverWithSecrets := modelstest.ReceiverGen(modelstest.ReceiverMuts.WithName("receiver-1"), modelstest.ReceiverMuts.WithValidIntegration(oncall.Type))()
 
 	u := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {accesscontrol.ActionAlertingReceiversCreate: nil},

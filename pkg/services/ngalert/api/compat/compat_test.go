@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func TestToModel(t *testing.T) {
@@ -116,17 +117,17 @@ func TestToModel(t *testing.T) {
 }
 
 func TestAlertRuleExportFromAlertRule(t *testing.T) {
-	alertingRule := models.RuleGen.With(
-		models.RuleGen.WithNotEmptyLabels(2, "lbl-"),
-		models.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
-		models.RuleGen.WithFor(2*time.Minute),
-		models.RuleGen.WithKeepFiringFor(5*time.Minute),
-		models.RuleGen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+	alertingRule := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithNotEmptyLabels(2, "lbl-"),
+		modelstest.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
+		modelstest.RuleGen.WithFor(2*time.Minute),
+		modelstest.RuleGen.WithKeepFiringFor(5*time.Minute),
+		modelstest.RuleGen.WithNotificationSettingsGen(modelstest.NotificationSettingsGen()),
 	).Generate()
-	recordingRule := models.RuleGen.With(
-		models.RuleGen.WithAllRecordingRules(),
-		models.RuleGen.WithNotEmptyLabels(2, "lbl-"),
-		models.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
+	recordingRule := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithAllRecordingRules(),
+		modelstest.RuleGen.WithNotEmptyLabels(2, "lbl-"),
+		modelstest.RuleGen.WithAnnotations(map[string]string{"ann-key": "ann-value"}),
 	).Generate()
 
 	// Build expected exported recording rule
@@ -196,9 +197,9 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 }
 
 func TestAlertRuleExportFromAlertRuleYearDurations(t *testing.T) {
-	rule := models.RuleGen.With(
-		models.RuleGen.WithFor(8760*time.Hour),
-		models.RuleGen.WithKeepFiringFor(17520*time.Hour),
+	rule := modelstest.RuleGen.With(
+		modelstest.RuleGen.WithFor(8760*time.Hour),
+		modelstest.RuleGen.WithKeepFiringFor(17520*time.Hour),
 	).Generate()
 
 	exported, err := AlertRuleExportFromAlertRule(rule)
@@ -208,7 +209,7 @@ func TestAlertRuleExportFromAlertRuleYearDurations(t *testing.T) {
 }
 
 func TestAlertQueryExportFromAlertQuery(t *testing.T) {
-	query := models.RuleGen.GenerateQuery()
+	query := modelstest.RuleGen.GenerateQuery()
 
 	exported, err := AlertQueryExportFromAlertQuery(query)
 	require.NoError(t, err)

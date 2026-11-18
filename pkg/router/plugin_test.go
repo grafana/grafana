@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 )
 
 func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
@@ -72,7 +72,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 					ContextProvider: struct {
 						appsettings.PluginContextWrapper
 					}{},
-					Unified:       &resource.MockResourceClient{},
+					Unified:       &resourcetest.MockResourceClient{},
 					AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
 					Features:      featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
 				},
@@ -171,7 +171,7 @@ func TestPluginBackendLoad(t *testing.T) {
 			require.Equal(t, plugin.JSONData.ID, id)
 			return nil, nil, nil
 		}, PluginDependencies{
-			Unified:       &resource.MockResourceClient{},
+			Unified:       &resourcetest.MockResourceClient{},
 			AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
 		})
 		require.NoError(t, err)
@@ -211,7 +211,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		backend, err := buildPluginBackend("", core.Manifests[0], func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 			return nil, struct{ appclientv3.Client }{}, nil
 		}, PluginDependencies{
-			Unified:        &resource.MockResourceClient{},
+			Unified:        &resourcetest.MockResourceClient{},
 			AccessControl:  &actest.FakeAccessControl{ExpectedEvaluate: true},
 			TokenExchanger: authn.NewStaticTokenExchanger("token"),
 		}, nil, true)
@@ -265,7 +265,7 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 			backend, err := testPluginBackend(t, plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 				return nil, nil, nil
 			}, PluginDependencies{
-				Cfg: cfg, Unified: &resource.MockResourceClient{},
+				Cfg: cfg, Unified: &resourcetest.MockResourceClient{},
 				AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
 			})
 			require.NoError(t, err)
@@ -297,7 +297,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		Manifests: []*app.ManifestData{{AppName: "test", Group: "test.ext.grafana.app", Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}},
 	}, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 		return nil, nil, nil
-	}, PluginDependencies{Unified: &resource.MockResourceClient{}, AccessControl: access})
+	}, PluginDependencies{Unified: &resourcetest.MockResourceClient{}, AccessControl: access})
 	require.NoError(t, err)
 	handler, err := backend.Load(t.Context())
 	require.NoError(t, err)
@@ -667,7 +667,7 @@ func TestPluginSettingsBackendLoad(t *testing.T) {
 		ContextProvider: struct {
 			appsettings.PluginContextWrapper
 		}{},
-		Unified:       &resource.MockResourceClient{},
+		Unified:       &resourcetest.MockResourceClient{},
 		AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	client := func(context.Context, string) (plugins.Client, appclientv3.Client, error) {

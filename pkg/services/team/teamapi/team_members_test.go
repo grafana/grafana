@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -48,7 +48,7 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 		cfg,
 		preftest.NewPreferenceServiceFake(),
 		nil, // preferenceK8sHandler not needed for these tests
-		dashboards.NewFakeDashboardService(t),
+		dashboardstest.NewFakeDashboardService(t),
 		featuremgmt.WithFeatures(),
 		nil, // resource client not needed by default; deletion tests inject a folder searcher
 		nil, // teamBindingClient not needed for these tests
@@ -429,7 +429,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				cfg,
 				preftest.NewPreferenceServiceFake(),
 				nil, // preferenceK8sHandler not needed for these tests
-				dashboards.NewFakeDashboardService(t),
+				dashboardstest.NewFakeDashboardService(t),
 				featuremgmt.WithFeatures(),
 				nil, // resource client not needed for this test
 				nil, // teamBindingClient not needed for these tests

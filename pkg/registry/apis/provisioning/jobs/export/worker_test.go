@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
@@ -15,8 +17,9 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 )
@@ -92,7 +95,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
 			// no write permissions
@@ -117,7 +120,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.LocalRepositoryType,
@@ -141,7 +144,7 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -152,13 +155,13 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 		},
 	})
 
-	mockClients := resources.NewMockClientFactory(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
 
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to create clients"))
 	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
 	r := NewExportWorker(mockClients, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create clients: failed to create clients")
@@ -172,7 +175,7 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockReader(t)
+	mockRepo := repositorytest.NewMockReader(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -183,10 +186,10 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 		},
 	})
 
-	resourceClients := resources.NewMockResourceClients(t)
-	mockClients := resources.NewMockClientFactory(t)
+	resourceClients := resourcestest.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -208,7 +211,7 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -219,14 +222,14 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 		},
 	})
 
-	resourceClients := resources.NewMockResourceClients(t)
-	mockClients := resources.NewMockClientFactory(t)
+	resourceClients := resourcestest.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
 	mockRepoResources.On("Client", mock.Anything, mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
@@ -248,7 +251,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -260,16 +263,16 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// No progress messages expected in current implementation
 
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
@@ -334,7 +337,7 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 				},
 			}
 
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-repo",
@@ -346,14 +349,14 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 				},
 			})
 
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
 			mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
-			mockClients := resources.NewMockClientFactory(t)
-			mockResourceClients := resources.NewMockResourceClients(t)
+			mockClients := resourcestest.NewMockClientFactory(t)
+			mockResourceClients := resourcestest.NewMockResourceClients(t)
 			mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-			mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+			mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+			mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 			mockExportFn := NewMockExportFn(t)
@@ -386,7 +389,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -397,13 +400,13 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
@@ -429,7 +432,7 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -440,12 +443,12 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 
-	mockClients := resources.NewMockClientFactory(t)
-	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resources.NewMockResourceClients(t), nil)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resourcestest.NewMockResourceClients(t), nil)
 	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
 	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -463,7 +466,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitHubRepositoryType,
@@ -471,7 +474,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 	// No progress messages expected in current implementation
 
@@ -488,7 +491,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -504,16 +507,16 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// No progress messages expected in current implementation
 
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
@@ -541,7 +544,7 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 		},
 	}
 
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-repo",
@@ -557,13 +560,13 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 		},
 	})
 
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
@@ -621,7 +624,7 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 				},
 			}
 
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
 				Spec: v0alpha1.RepositorySpec{
@@ -630,21 +633,21 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 				},
 			})
 
-			mockProgress := jobs.NewMockJobProgressRecorder(t)
+			mockProgress := jobstest.NewMockJobProgressRecorder(t)
 			mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 
-			mockClients := resources.NewMockClientFactory(t)
-			mockResourceClients := resources.NewMockResourceClients(t)
+			mockClients := resourcestest.NewMockClientFactory(t)
+			mockResourceClients := resourcestest.NewMockResourceClients(t)
 			mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-			mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-			mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+			mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+			mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 			mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 			mockExportFn := NewMockExportFn(t)
 			mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			mockReaderWriter := repository.NewMockReaderWriter(t)
+			mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 			mockStageFn := NewMockWrapWithStageFn(t)
 			mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
 				return opts.CommitOnlyOnceMessage == tt.wantMessage
@@ -672,7 +675,7 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	}
 
 	// Create a repository that implements both Repository and RepositoryWithURLs
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -694,23 +697,23 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	mockRepoWithURLs.On("RefURLs", mock.Anything, "feature-branch").Return(expectedRefURLs, nil)
 
 	// Mock progress recorder to expect SetRefURLs call
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetRefURLs", mock.Anything, expectedRefURLs).Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// Mock other dependencies
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Mock the ReaderWriter interface that the export function expects
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -739,7 +742,7 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 		},
 	}
 
-	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
+	mockRepoWithURLs := repositorytest.NewMockRepositoryWithURLs(t)
 
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -753,23 +756,23 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	})
 
 	// Mock progress recorder - SetRefURLs should NOT be called
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// Explicitly NOT expecting SetRefURLs call
 
 	// Mock other dependencies
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -797,7 +800,7 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	}
 
 	// Use a regular Repository that doesn't implement RepositoryWithURLs
-	mockRepo := repository.NewMockRepository(t)
+	mockRepo := repositorytest.NewMockRepository(t)
 
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
@@ -811,23 +814,23 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	})
 
 	// Mock progress recorder - SetRefURLs should NOT be called
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockProgress := jobstest.NewMockJobProgressRecorder(t)
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// Explicitly NOT expecting SetRefURLs call
 
 	// Mock other dependencies
-	mockClients := resources.NewMockClientFactory(t)
-	mockResourceClients := resources.NewMockResourceClients(t)
+	mockClients := resourcestest.NewMockClientFactory(t)
+	mockResourceClients := resourcestest.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
 
-	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
+	mockRepoResources := resourcestest.NewMockRepositoryResourcesFactory(t)
+	mockRepoResourcesClient := resourcestest.NewMockRepositoryResources(t)
 	mockRepoResources.On("Client", mock.Anything, mock.Anything).Return(mockRepoResourcesClient, nil)
 
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockReaderWriter := repository.NewMockReaderWriter(t)
+	mockReaderWriter := repositorytest.NewMockReaderWriter(t)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
 	mockStageFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
@@ -875,15 +878,15 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 
 			// Create export worker with minimal dependencies
 			worker := NewExportWorker(
-				resources.NewMockClientFactory(t),
-				resources.NewMockRepositoryResourcesFactory(t),
+				resourcestest.NewMockClientFactory(t),
+				resourcestest.NewMockRepositoryResourcesFactory(t),
 				ExportAll,
 				repository.WrapWithStageAndPushIfPossible,
 				metrics,
 			)
 
 			// Create a minimal mock repository
-			mockRepo := repository.NewMockRepository(t)
+			mockRepo := repositorytest.NewMockRepository(t)
 
 			// Config() is read to build the flag's evaluation context regardless of enabled state.
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
@@ -910,7 +913,7 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 			}
 
 			// Create mock progress recorder
-			progress := jobs.NewMockJobProgressRecorder(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 
 			// Process the job
 			err := worker.Process(context.Background(), mockRepo, job, progress)

@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,7 +31,7 @@ func TestListConnector_PagingParameters(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			lister := resources.NewMockResourceLister(t)
+			lister := resourcestest.NewMockResourceLister(t)
 			lister.EXPECT().List(mock.Anything, "default", "repo", tt.want).
 				Return(&provisioning.ResourceList{}, nil).Once()
 
@@ -49,7 +51,7 @@ func TestListConnector_RejectsAnInvalidLimit(t *testing.T) {
 	for _, limit := range []string{"ten", "-1", "1.5"} {
 		t.Run(limit, func(t *testing.T) {
 			// No expectation on the lister: a rejected limit must not reach storage.
-			lister := resources.NewMockResourceLister(t)
+			lister := resourcestest.NewMockResourceLister(t)
 			responder := &testResponder{}
 			ctx := request.WithNamespace(context.Background(), "default")
 			handler, err := NewListConnector(nil, lister).Connect(ctx, "repo", nil, responder)

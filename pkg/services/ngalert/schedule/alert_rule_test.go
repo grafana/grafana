@@ -36,13 +36,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRule(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	type evalResponse struct {
 		success     bool
 		droppedEval *Evaluation
@@ -50,7 +52,7 @@ func TestAlertRule(t *testing.T) {
 
 	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
 		t.Run("update should send to updateCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+			r := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 			resultCh := make(chan bool)
 			go func() {
 				resultCh <- r.Update(&Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()})
@@ -63,7 +65,7 @@ func TestAlertRule(t *testing.T) {
 			}
 		})
 		t.Run("update should drop any concurrent sending to updateCh", func(t *testing.T) {
-			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+			r := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 			version1 := &Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()}
 			version2 := &Evaluation{rule: gen.With(gen.WithIsPaused(false)).GenerateRef()}
 
@@ -183,7 +185,7 @@ func TestAlertRule(t *testing.T) {
 	})
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
-			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+			r := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 			r.Stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
 			require.False(t, r.Update(&Evaluation{rule: gen.GenerateRef()}))
@@ -202,19 +204,19 @@ func TestAlertRule(t *testing.T) {
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
 		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
-			r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+			r := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 			r.Stop(nil)
 			r.Stop(nil)
 		})
 		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
-			r := blankRuleForTests(ctx, models.GenerateRuleKeyWithGroup(1))
+			r := blankRuleForTests(ctx, modelstest.GenerateRuleKeyWithGroup(1))
 			cancelFn()
 			r.Stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
-		r := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+		r := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 		wg := sync.WaitGroup{}
 		go func() {
 			for {
@@ -259,7 +261,7 @@ func TestAlertRule(t *testing.T) {
 	})
 
 	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
-		rule := blankRuleForTests(context.Background(), models.GenerateRuleKeyWithGroup(1))
+		rule := blankRuleForTests(context.Background(), modelstest.GenerateRuleKeyWithGroup(1))
 		runResult := make(chan error)
 		go func() {
 			runResult <- rule.Run()
@@ -278,14 +280,14 @@ func TestAlertRule(t *testing.T) {
 
 func TestAlertRuleIdentifier(t *testing.T) {
 	t.Run("should return correct identifier", func(t *testing.T) {
-		key := models.GenerateRuleKeyWithGroup(1)
+		key := modelstest.GenerateRuleKeyWithGroup(1)
 		r := blankRuleForTests(context.Background(), key)
 		require.Equal(t, key, r.Identifier())
 	})
 }
 
 func TestAlertRuleAfterEval(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithOrgID(123))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(123))
 
 	type testContext struct {
 		rule         *models.AlertRule
@@ -501,7 +503,7 @@ func TestAlertRuleAfterEval(t *testing.T) {
 }
 
 func TestRuleRoutine_GatedUntilWarmed(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 
 	t.Run("results are not applied while the state cache is not warmed", func(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
@@ -560,7 +562,7 @@ func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *a
 }
 
 func TestRuleRoutine(t *testing.T) {
-	gen := models.RuleGen
+	gen := modelstest.RuleGen
 	createSchedule := func(
 		t *testing.T,
 		evalAppliedChan chan time.Time,
@@ -759,14 +761,14 @@ func TestRuleRoutine(t *testing.T) {
 	t.Run("should exit", func(t *testing.T) {
 		rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
 		genEvalResults := func(now time.Time) eval.Results {
-			return eval.GenerateResults(
+			return evaltest.GenerateResults(
 				rand.Intn(5)+1,
-				eval.ResultGen(
-					eval.WithEvaluatedAt(now),
+				evaltest.ResultGen(
+					evaltest.WithEvaluatedAt(now),
 					// State should be alerting to test resolved notifications in some cases.
 					// When the alert rule is firing and is deleted, we should send
 					// resolved notifications.
-					eval.WithState(eval.Alerting),
+					evaltest.WithState(eval.Alerting),
 				),
 			)
 		}
@@ -913,7 +915,7 @@ func TestRuleRoutine(t *testing.T) {
 			}
 
 			{
-				ruleInfo.Update(&Evaluation{rule: models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID())), folderTitle: folderTitle})
+				ruleInfo.Update(&Evaluation{rule: modelstest.CopyRule(rule, gen.WithTitle(util.GenerateShortUID())), folderTitle: folderTitle})
 
 				// Finish processing the rule change and sending its resolved alerts before inspecting state.
 				synctest.Wait()
@@ -1001,7 +1003,7 @@ func TestRuleRoutine(t *testing.T) {
 
 				// Send update before first eval, with a changed alert rule title.
 				// This should reset state and send resolved alerts
-				updatedRule := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+				updatedRule := modelstest.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
 				ruleInfo.Update(&Evaluation{rule: updatedRule, folderTitle: folderTitle})
 
 				// Wait for sender to be called (which happens when state is cleared and resolved alerts are sent)
@@ -1300,8 +1302,8 @@ func TestRuleRoutine(t *testing.T) {
 	t.Run("when there are resolved alerts they should keep sending until retention period is over", func(t *testing.T) {
 		rule := gen.With(
 			withQueryForState(t, eval.Normal),
-			models.RuleMuts.WithInterval(time.Second),
-			models.RuleMuts.WithKeepFiringFor(0),
+			modelstest.RuleMuts.WithInterval(time.Second),
+			modelstest.RuleMuts.WithKeepFiringFor(0),
 		).GenerateRef()
 
 		evalAppliedChan := make(chan time.Time)
@@ -1367,7 +1369,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		reg := prometheus.NewPedanticRegistry()
 
-		rule := models.RuleGen.With(withQueryForState(t, eval.Error)).GenerateRef()
+		rule := modelstest.RuleGen.With(withQueryForState(t, eval.Error)).GenerateRef()
 		rule.ExecErrState = models.ErrorErrState
 
 		sender := NewSyncAlertsSenderMock()
@@ -1494,7 +1496,7 @@ func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *s
 }
 
 func TestAlertRuleNoRetryOnNonRetryableError(t *testing.T) {
-	gen := models.RuleGen.With(models.RuleGen.WithOrgID(123), withQueryForState(t, eval.Error))
+	gen := modelstest.RuleGen.With(modelstest.RuleGen.WithOrgID(123), withQueryForState(t, eval.Error))
 	rule := gen.GenerateRef()
 	rule.ExecErrState = models.ErrorErrState
 

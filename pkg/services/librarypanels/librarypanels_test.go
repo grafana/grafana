@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -442,7 +443,7 @@ type scenarioContext struct {
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
 	lps            LibraryPanelService
-	mockDashboard  *dashboards.FakeDashboardService
+	mockDashboard  *dashboardstest.FakeDashboardService
 	mockFolder     *foldertest.FakeService
 }
 
@@ -572,7 +573,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		mockDashboardService := dashboards.NewFakeDashboardService(t)
+		mockDashboardService := dashboardstest.NewFakeDashboardService(t)
 		mockFolderService := foldertest.NewFakeService()
 		mockFolder := &folder.Folder{
 			ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.

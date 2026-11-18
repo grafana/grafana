@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/notifiertest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -76,7 +78,7 @@ func TestBroadcastAlerts(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockChannel := &MockBroadcastChannel{}
+			mockChannel := &notifiertest.MockBroadcastChannel{}
 
 			moa := &MultiOrgAlertmanager{
 				logger: log.NewNopLogger(),
@@ -276,48 +278,48 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 func TestInitAlertBroadcast(t *testing.T) {
 	testCases := []struct {
 		name            string
-		setupPeer       func() (alertingNotify.ClusterPeer, *MockBroadcastChannel)
+		setupPeer       func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel)
 		expectChannel   bool
 		needsMetrics    bool
 		customQueueSize int
 	}{
 		{
 			name: "does not initialize when peer is nil",
-			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
+			setupPeer: func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel) {
 				return nil, nil
 			},
 			expectChannel: false,
 		},
 		{
 			name: "does not initialize when peer is NilPeer",
-			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
+			setupPeer: func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel) {
 				return &NilPeer{}, nil
 			},
 			expectChannel: false,
 		},
 		{
 			name: "initializes when peer is not NilPeer",
-			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
-				ch := &MockBroadcastChannel{}
-				return &MockClusterPeer{Channel: ch}, ch
+			setupPeer: func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel) {
+				ch := &notifiertest.MockBroadcastChannel{}
+				return &notifiertest.MockClusterPeer{Channel: ch}, ch
 			},
 			expectChannel: true,
 			needsMetrics:  true,
 		},
 		{
 			name: "passes reliable delivery and queue size options",
-			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
-				ch := &MockBroadcastChannel{}
-				return &MockClusterPeer{Channel: ch}, ch
+			setupPeer: func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel) {
+				ch := &notifiertest.MockBroadcastChannel{}
+				return &notifiertest.MockClusterPeer{Channel: ch}, ch
 			},
 			expectChannel: true,
 			needsMetrics:  true,
 		},
 		{
 			name: "passes custom queue size from config",
-			setupPeer: func() (alertingNotify.ClusterPeer, *MockBroadcastChannel) {
-				ch := &MockBroadcastChannel{}
-				return &MockClusterPeer{Channel: ch}, ch
+			setupPeer: func() (alertingNotify.ClusterPeer, *notifiertest.MockBroadcastChannel) {
+				ch := &notifiertest.MockBroadcastChannel{}
+				return &notifiertest.MockClusterPeer{Channel: ch}, ch
 			},
 			expectChannel:   true,
 			needsMetrics:    true,
@@ -356,7 +358,7 @@ func TestInitAlertBroadcast(t *testing.T) {
 				require.Nil(t, moa.alertsBroadcastChannel)
 			}
 
-			if mockPeer, ok := peer.(*MockClusterPeer); ok {
+			if mockPeer, ok := peer.(*notifiertest.MockClusterPeer); ok {
 				require.Len(t, mockPeer.LastOptions, 2, "expected WithReliableDelivery and WithQueueSize options")
 				resolved := alertingCluster.ResolveOptions(mockPeer.LastOptions...)
 				require.True(t, resolved.ReliableDelivery)

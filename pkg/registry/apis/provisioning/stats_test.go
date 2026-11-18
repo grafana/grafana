@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -34,7 +36,7 @@ func TestStatsConnector_Connect(t *testing.T) {
 	}
 
 	t.Run("answers with the counts for the requested namespace and repository", func(t *testing.T) {
-		lister := resources.NewMockResourceLister(t)
+		lister := resourcestest.NewMockResourceLister(t)
 		lister.EXPECT().RepositoryStats(mock.Anything, "ns-1", "repo-1").Return(counts, nil).Once()
 
 		responder := serveStats(t, lister, "ns-1", "repo-1")
@@ -46,7 +48,7 @@ func TestStatsConnector_Connect(t *testing.T) {
 
 	t.Run("a repository the index counts nothing for is reported as not found", func(t *testing.T) {
 		notFound := apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, "repo-1")
-		lister := resources.NewMockResourceLister(t)
+		lister := resourcestest.NewMockResourceLister(t)
 		lister.EXPECT().RepositoryStats(mock.Anything, "ns-1", "repo-1").Return(nil, notFound).Once()
 
 		responder := serveStats(t, lister, "ns-1", "repo-1")
@@ -57,7 +59,7 @@ func TestStatsConnector_Connect(t *testing.T) {
 
 	// The namespace route reports every manager; this one must never widen to that.
 	t.Run("never asks for namespace-wide stats", func(t *testing.T) {
-		lister := resources.NewMockResourceLister(t)
+		lister := resourcestest.NewMockResourceLister(t)
 		lister.EXPECT().RepositoryStats(mock.Anything, mock.Anything, mock.Anything).Return(counts, nil).Once()
 
 		serveStats(t, lister, "ns-1", "repo-1")
@@ -67,7 +69,7 @@ func TestStatsConnector_Connect(t *testing.T) {
 }
 
 func TestStatsConnector_Metadata(t *testing.T) {
-	connector := NewStatsConnector(resources.NewMockResourceLister(t))
+	connector := NewStatsConnector(resourcestest.NewMockResourceLister(t))
 
 	assert.Equal(t, []string{http.MethodGet}, connector.ConnectMethods(), "read-only")
 	assert.Equal(t, &provisioning.ResourceCountList{}, connector.New())

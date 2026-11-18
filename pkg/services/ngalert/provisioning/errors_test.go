@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func ruleKeys(uids ...string) []models.AlertRuleKey {
@@ -92,14 +93,14 @@ func TestMakeErrTimeIntervalDependentResourcesProvenance(t *testing.T) {
 		{
 			name:                   "both specified",
 			usedByRoutes:           true,
-			rules:                  []models.AlertRuleKey{models.GenerateRuleKey(1)},
+			rules:                  []models.AlertRuleKey{modelstest.GenerateRuleKey(1)},
 			expectedPrivateMessage: "[alerting.notifications.time-intervals.usedProvisioned] Time interval cannot be renamed because it is used by provisioned alert rules and notification policies",
 			expectedPublicMessage:  "Time interval cannot be renamed because it is used by provisioned alert rules and notification policies. You must update those resources first using the original provision method.",
 		},
 		{
 			name:                   "rules specified",
 			usedByRoutes:           false,
-			rules:                  []models.AlertRuleKey{models.GenerateRuleKey(1)},
+			rules:                  []models.AlertRuleKey{modelstest.GenerateRuleKey(1)},
 			expectedPrivateMessage: "[alerting.notifications.time-intervals.usedProvisioned] Time interval cannot be renamed because it is used by provisioned alert rules",
 			expectedPublicMessage:  "Time interval cannot be renamed because it is used by provisioned alert rules. You must update those resources first using the original provision method.",
 		},

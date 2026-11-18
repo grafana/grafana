@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	rulescommon "github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -30,11 +30,11 @@ func TestIntegrationDeleteCollection(t *testing.T) {
 	common.CreateTestFolder(t, helper, "rdc-folder-beta")
 
 	makeRule := func(folder string) *v0alpha1.RecordingRule {
-		rule := ngmodels.RuleGen.With(
-			ngmodels.RuleMuts.WithUniqueUID(),
-			ngmodels.RuleMuts.WithUniqueTitle(),
-			ngmodels.RuleMuts.WithAllRecordingRules(),
-			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		rule := modelstest.RuleGen.With(
+			modelstest.RuleMuts.WithUniqueUID(),
+			modelstest.RuleMuts.WithUniqueTitle(),
+			modelstest.RuleMuts.WithAllRecordingRules(),
+			modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.RecordingRule{
 			ObjectMeta: v1.ObjectMeta{
@@ -77,10 +77,10 @@ func TestIntegrationDeleteCollection(t *testing.T) {
 	})
 
 	// An alert rule in the folder being deleted from must survive: the two kinds share a table and a folder.
-	alert := ngmodels.RuleGen.With(
-		ngmodels.RuleMuts.WithUniqueUID(),
-		ngmodels.RuleMuts.WithUniqueTitle(),
-		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	alert := modelstest.RuleGen.With(
+		modelstest.RuleMuts.WithUniqueUID(),
+		modelstest.RuleMuts.WithUniqueTitle(),
+		modelstest.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 	alertRule, err := alertClient.Create(ctx, &v0alpha1.AlertRule{
 		ObjectMeta: v1.ObjectMeta{

@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	folderapierrors "github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -309,7 +310,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 				id, err := identity.GetRequester(lookupCtx)
 				return err == nil && identity.IsProvisioningServiceIdentity(id) && id.GetNamespace() == cfg.Namespace
 			})
-			repo := repository.NewMockReaderWriter(t)
+			repo := repositorytest.NewMockReaderWriter(t)
 			repo.EXPECT().Config().Return(cfg)
 			for _, read := range tt.metadataReads {
 				var file *repository.FileInfo
@@ -392,7 +393,7 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 		{name: "configured UID at a different path", dir: "a/b/", sourcePath: "elsewhere/", metadataUID: "stable-uid", manager: owner, wantMissing: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockReaderWriter(t)
+			repo := repositorytest.NewMockReaderWriter(t)
 			repo.EXPECT().Config().Return(cfg)
 			folderID := cfg.Name
 			if tt.dir != "" {
@@ -454,7 +455,7 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 	ctx := context.Background()
 
-	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
+	newRepo := func(t *testing.T) (*repositorytest.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "repo-a",
@@ -467,7 +468,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			},
 		}
 
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
 		repo.On("Read", mock.Anything, mock.Anything, "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 		return repo, cfg
@@ -615,7 +616,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 	ctx := context.Background()
 
-	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
+	newRepo := func(t *testing.T) (*repositorytest.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "repo-a",
@@ -628,7 +629,7 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 			},
 		}
 
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
 		return repo, cfg
 	}
@@ -1063,7 +1064,7 @@ func TestEnsureFolderExists_DuplicateErrorCompatibility(t *testing.T) {
 				})},
 			} {
 				t.Run(owner.name, func(t *testing.T) {
-					repo := repository.NewMockReaderWriter(t)
+					repo := repositorytest.NewMockReaderWriter(t)
 					repo.On("Config").Return(&provisioning.Repository{
 						ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "default"},
 					})
@@ -1107,7 +1108,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 	const repoName = "repo-a"
 	const folderID = "folder-id"
 
-	newRepo := func(t *testing.T) *repository.MockReaderWriter {
+	newRepo := func(t *testing.T) *repositorytest.MockReaderWriter {
 		cfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      repoName,
@@ -1117,7 +1118,7 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
 		}
-		repo := repository.NewMockReaderWriter(t)
+		repo := repositorytest.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
 		return repo
 	}
@@ -1384,7 +1385,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		const stableUID = "my-top-level-uid"
 
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		mockClient := &MockDynamicResourceInterface{}
@@ -1406,7 +1407,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -1435,7 +1436,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 
@@ -1466,7 +1467,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		const stableParentUID = "stable-parent-uid"
 
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-parent-uid"},"spec":{"title":"parent"}}`)}, nil)
@@ -1495,7 +1496,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		const stableUID = "child-stable-uid"
 
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
@@ -1527,7 +1528,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 
 	t.Run("uses spec.title from _folder.json instead of directory name", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Custom Title"}}`)}, nil)
@@ -1556,7 +1557,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 
 	t.Run("falls back to directory name when spec.title is empty", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":""}}`)}, nil)
@@ -1584,7 +1585,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 
 	t.Run("uses directory name when no _folder.json exists", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
@@ -1612,7 +1613,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 
 	t.Run("uses spec.title from _folder.json inside walk for nested folders", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads leaf folder metadata — not found so we walk
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -1675,7 +1676,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("updates title when _folder.json title differs from Grafana", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"New Title"}}`)}, nil)
@@ -1707,7 +1708,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("no update when _folder.json title matches Grafana", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Same Title"}}`)}, nil)
@@ -1731,7 +1732,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("no API call when no _folder.json exists", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
@@ -1752,7 +1753,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("reconciles title inside walk for nested path", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads leaf folder metadata — not found so we walk
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -1799,7 +1800,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("no API call when _folder.json has empty spec.title", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":""}}`)}, nil)
@@ -1821,7 +1822,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("skips reconciliation when folder in tree and hash matches", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
@@ -1849,7 +1850,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("reconciles when folder in tree but hash differs", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
@@ -1887,7 +1888,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("reconciles when tree has empty hash (bootstrap)", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
@@ -1921,7 +1922,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("returns error when reconciliation fails", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"New Title"}}`)}, nil)
@@ -1947,7 +1948,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 	t.Run("returns PathCreationError when reconciliation fails inside walk", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads "parent/child/_folder.json" — not found, so we enter the walk.
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -2020,7 +2021,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 	t.Run("updates checksum when hash changed but title unchanged", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2059,7 +2060,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 	t.Run("updates source path and checksum when both differ", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2095,7 +2096,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 	t.Run("no update when both title and hash match", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2120,7 +2121,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 	t.Run("clears checksum when MetadataHash is empty and stored hash exists", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2193,7 +2194,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 	t.Run("updates parent when ParentID differs", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2227,7 +2228,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 	t.Run("skips parent update when ParentID matches", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2252,7 +2253,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 	t.Run("updates parent when ParentID empty and current parent is non-empty", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2286,7 +2287,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 	t.Run("skips update when both ParentID and current parent are empty", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -2316,7 +2317,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 
 	t.Run("flag ON + non-NotFound error at pre-walk site returns error", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, errors.New("connection refused"))
@@ -2332,7 +2333,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 
 	t.Run("flag ON + non-NotFound error inside walk returns error", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// pre-walk reads "parent/child/_folder.json" — file not found, proceed to walk
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -2352,7 +2353,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 
 	t.Run("flag ON + ErrFileNotFound silently ignored (hash-UID fallback)", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
@@ -2403,7 +2404,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 
 	t.Run("returns error when UID from _folder.json is already used by a different path", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Both the pre-walk check and the walk step read the same _folder.json.
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
@@ -2439,7 +2440,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 
 	t.Run("skips folder creation in walk when UID and metadata hash match tree entry", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads the leaf folder (parent/child) — not found, so we enter the walk.
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -2484,7 +2485,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 
 	t.Run("falls through to EnsureFolderExists when UID matches same path but hash differs", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads the leaf folder — not found, so we enter the walk.
 		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
@@ -2535,7 +2536,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 
 	t.Run("UID conflict error contains expected message format", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "team-a/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
@@ -2570,7 +2571,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 	t.Run("simultaneous parent and child relocation needs the full relocating set", func(t *testing.T) {
 		newManager := func() (*FolderManager, *fakeDynamicResourceClient) {
 			config := newTestRepoConfig("test-repo")
-			rw := repository.NewMockReaderWriter(t)
+			rw := repositorytest.NewMockReaderWriter(t)
 			rw.On("Config").Return(config)
 			rw.On("Read", mock.Anything, "newparent/newchild/_folder.json", "test-ref").
 				Return(&repository.FileInfo{Data: folderJSON("child-uid", "Child"), Hash: "child-hash"}, nil)
@@ -2624,7 +2625,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 	// binding the exemption to "newparent/" keeps the collision a hard error.
 	t.Run("relocation exemption does not leak to a child that reuses the parent UID", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "newparent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Parent"), Hash: "parent-hash"}, nil)
@@ -2726,7 +2727,7 @@ func TestEnsureFolderPathExist_NestedRelocations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			config := newTestRepoConfig("test-repo")
-			rw := repository.NewMockReaderWriter(t)
+			rw := repositorytest.NewMockReaderWriter(t)
 			rw.On("Config").Return(config)
 			tree := NewEmptyFolderTree()
 			storedFolders := make(map[string]*unstructured.Unstructured)
@@ -2828,8 +2829,8 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 	ctx := context.Background()
 	const ref = "main"
 
-	makeRepo := func(t *testing.T) *repository.MockReaderWriter {
-		return repository.NewMockReaderWriter(t)
+	makeRepo := func(t *testing.T) *repositorytest.MockReaderWriter {
+		return repositorytest.NewMockReaderWriter(t)
 	}
 
 	type fnCall struct {
@@ -3050,7 +3051,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("same stable UID returns empty string (no cleanup needed)", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
@@ -3079,7 +3080,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("same stable UID preserves folder and descendants in tree", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
@@ -3115,7 +3116,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("different UIDs returns old folder ID for cleanup", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		oldMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"old-uid"},"spec":{"title":"Old"}}`)
@@ -3144,7 +3145,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("no metadata uses hash-based IDs which always differ on rename", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
@@ -3170,7 +3171,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("error parsing old folder propagates", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "bad-folder/_folder.json", "ref").
 			Return(nil, fmt.Errorf("disk error"))
@@ -3183,7 +3184,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("error ensuring new path propagates", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
 			Return(nil, repository.ErrFileNotFound)
@@ -3205,7 +3206,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("ancestor relocation opts bypass UID conflict for parent folder", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
@@ -3243,7 +3244,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 	t.Run("nested folder rename without ancestor relocation opts fails on UID conflict", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		parentMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent"}}`)
@@ -3281,7 +3282,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 
 	t.Run("returns error when hash matches but folder is registered under a different path", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads "my-folder/_folder.json" — returns a stable UID and hash.
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
@@ -3317,7 +3318,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 
 	t.Run("returns folder ID without API calls when hash and path both match", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
+		rw := repositorytest.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{

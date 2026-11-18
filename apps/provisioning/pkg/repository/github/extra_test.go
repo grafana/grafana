@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github/githubtest"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
@@ -160,7 +162,7 @@ func TestExtra_Build(t *testing.T) {
 				}
 			},
 			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
-				mockWebhook := github.NewMockWebhookURLBuilder(t)
+				mockWebhook := githubtest.NewMockWebhookURLBuilder(t)
 				mockWebhook.EXPECT().WebhookURL(mock.Anything, repo).Return("https://example.com/webhook")
 				return mockWebhook
 			},
@@ -193,7 +195,7 @@ func TestExtra_Build(t *testing.T) {
 			},
 			// The builder must not be called when webhookDisabled is set, so no expectations.
 			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
-				return github.NewMockWebhookURLBuilder(t)
+				return githubtest.NewMockWebhookURLBuilder(t)
 			},
 			validateResult: func(t *testing.T, repo repository.Repository) {
 				assert.NotNil(t, repo)
@@ -230,7 +232,7 @@ func TestExtra_Build(t *testing.T) {
 			},
 			// No webhook URL needed for deletion — builder must not be called.
 			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
-				return github.NewMockWebhookURLBuilder(t)
+				return githubtest.NewMockWebhookURLBuilder(t)
 			},
 			validateResult: func(t *testing.T, repo repository.Repository) {
 				_, ok := repo.(github.GithubWebhookRepository)
@@ -260,7 +262,7 @@ func TestExtra_Build(t *testing.T) {
 				}
 			},
 			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
-				mockWebhook := github.NewMockWebhookURLBuilder(t)
+				mockWebhook := githubtest.NewMockWebhookURLBuilder(t)
 				mockWebhook.EXPECT().WebhookURL(mock.Anything, repo).Return("")
 				return mockWebhook
 			},
@@ -292,7 +294,7 @@ func TestExtra_Build(t *testing.T) {
 				}
 			},
 			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
-				mockWebhook := github.NewMockWebhookURLBuilder(t)
+				mockWebhook := githubtest.NewMockWebhookURLBuilder(t)
 				mockWebhook.EXPECT().WebhookURL(mock.Anything, repo).Return("https://example.com/webhook")
 				return mockWebhook
 			},

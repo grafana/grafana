@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -149,7 +150,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 }
 
 func Test_containsProvisionedAlerts(t *testing.T) {
-	gen := models2.RuleGen
+	gen := modelstest.RuleGen
 	t.Run("should return true if at least one rule is provisioned", func(t *testing.T) {
 		rules := gen.GenerateManyRef(2, 6)
 		provenance := map[string]models2.Provenance{

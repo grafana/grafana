@@ -4,7 +4,7 @@ import "sync"
 
 // QuotaTracker provides quota enforcement for resource creation and deletion.
 //
-//go:generate mockery --name QuotaTracker --structname MockQuotaTracker --inpackage --filename mock_quota_tracker.go --with-expecter
+//go:generate mockery --name QuotaTracker --structname MockQuotaTracker --outpkg quotastest --output ./quotastest/ --filename mock_quota_tracker.go --with-expecter
 type QuotaTracker interface {
 	// TryAcquire checks if creating one more resource would stay within the quota.
 	TryAcquire() bool

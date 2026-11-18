@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 )
 
 type fakeResolver struct {
@@ -379,7 +379,7 @@ func TestAccessPolicyDisplayWithoutSearchFallback(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			key := "access-policy:" + name
 			store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}
-			search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+			search := NewSearchDisplayProvider(resourcetest.NewMockResourceClient(t))
 			handler := NewDisplayHandler(NewLegacyDisplayProvider(store), search)
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "default"}
 			req := httptest.NewRequest(http.MethodGet, "/display?key="+key, nil)
@@ -420,7 +420,7 @@ func TestAccessPolicySelfDisplayName(t *testing.T) {
 				provider = "search"
 			}
 			t.Run(provider+"/"+tc.want, func(t *testing.T) {
-				search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+				search := NewSearchDisplayProvider(resourcetest.NewMockResourceClient(t))
 				handler := NewDisplayHandler(search)
 				if !searchOnly {
 					store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}

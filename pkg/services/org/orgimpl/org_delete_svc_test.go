@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,7 +63,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 			t.Cleanup(server.Close)
 			cfg := setting.NewCfg()
 			cfg.StackID = tc.stackID
-			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc := dashboardstest.NewFakeDashboardService(t)
 			dashSvc.On("DeleteAllDashboards", mock.Anything, int64(2)).Run(func(args mock.Arguments) {
 				ctx := args.Get(0).(context.Context)
 				require.True(t, identity.IsServiceIdentity(ctx))
@@ -125,7 +125,7 @@ func newFakeK8sResourceDeleter() *fakeK8sResourceDeleter {
 func TestDeletionService_Delete(t *testing.T) {
 	store := &FakeOrgStore{}
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	dashSvc := dashboards.NewFakeDashboardService(t)
+	dashSvc := dashboardstest.NewFakeDashboardService(t)
 	k8sDeleter := newFakeK8sResourceDeleter()
 	svc := &DeletionService{
 		store:      store,

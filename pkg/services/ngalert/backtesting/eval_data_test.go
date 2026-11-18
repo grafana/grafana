@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -22,7 +22,7 @@ func GenerateWideSeriesFrame(size int, resolution time.Duration) *data.Frame {
 	fields = append(fields, data.NewField("time", nil, make([]time.Time, size)))
 	for i := 1; i < cap(fields); i++ {
 		name := fmt.Sprintf("values-%d", i)
-		fields = append(fields, data.NewField(name, models.GenerateAlertLabels(rand.Intn(4)+1, name), make([]int64, size)))
+		fields = append(fields, data.NewField(name, modelstest.GenerateAlertLabels(rand.Intn(4)+1, name), make([]int64, size)))
 	}
 	frame := data.NewFrame("test", fields...)
 

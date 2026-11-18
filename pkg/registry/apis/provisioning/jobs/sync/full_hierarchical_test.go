@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,8 +18,9 @@ import (
 	k8testing "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas/quotastest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -50,7 +54,7 @@ AUTOMATIC TRACKING:
 func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 	tests := []struct {
 		name          string
-		setupMocks    func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *dynamicfake.FakeDynamicClient)
+		setupMocks    func(*repositorytest.MockRepository, *resourcestest.MockRepositoryResources, *resourcestest.MockResourceClients, *jobstest.MockJobProgressRecorder, *dynamicfake.FakeDynamicClient)
 		changes       []ResourceFileChange
 		description   string
 		expectError   bool
@@ -62,7 +66,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			changes: []ResourceFileChange{
 				{Path: "folder1/file.json", Action: repository.FileActionCreated},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First, check if nested under failed creation - not yet
 				progress.On("HasDirPathFailedCreation", "folder1/file.json").Return(false).Once()
 
@@ -85,7 +89,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "folder1/subfolder/file2.json", Action: repository.FileActionCreated},
 				{Path: "folder1/file3.json", Action: repository.FileActionCreated},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers folder creation failure
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -128,7 +132,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
 
@@ -164,7 +168,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 					},
 				},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				// Creation fails
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
@@ -200,7 +204,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "level1/level2/file2.json", Action: repository.FileActionCreated},
 				{Path: "level1/level2/level3/file3.json", Action: repository.FileActionCreated},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// First file triggers level1/ failure
 				progress.On("HasDirPathFailedCreation", "level1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
@@ -228,7 +232,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "failure/file2.json", Action: repository.FileActionCreated},
 				{Path: "failure/nested/file3.json", Action: repository.FileActionCreated},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "ref").
@@ -262,7 +266,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "folder1/file1.json", Action: repository.FileActionCreated},
 				{Path: "folder1/subfolder/file2.json", Action: repository.FileActionCreated},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				progress.On("HasDirPathFailedCreation", "folder1/").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
 				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/", "ref").Return("", folderErr).Once()
@@ -299,7 +303,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				},
 				{Path: "folder1/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "folder1", Group: "folder.grafana.app", Resource: "Folder"}},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
 
@@ -331,7 +335,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "folder2/file2.json", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "file2", Group: "dashboard.grafana.app", Resource: "dashboards"}},
 				{Path: "folder2/", Action: repository.FileActionDeleted},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
 				clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
@@ -366,7 +370,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				{Path: "parent/subfolder/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "subfolder", Group: "folder.grafana.app", Resource: "Folder"}},
 				{Path: "parent/", Action: repository.FileActionDeleted, Existing: &provisioning.ResourceListItem{Name: "parent", Group: "folder.grafana.app", Resource: "Folder"}},
 			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources, clients *resourcestest.MockResourceClients, progress *jobstest.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
 				gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Kind: "Dashboard", Version: "v1"}
 				gvr := schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards", Version: "v1"}
 				clients.On("ForResource", mock.Anything, mock.MatchedBy(func(gvr schema.GroupVersionResource) bool {
@@ -398,10 +402,10 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			scheme := runtime.NewScheme()
 			dynamicClient := dynamicfake.NewSimpleDynamicClient(scheme)
 
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
+			repo := repositorytest.NewMockRepository(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
+			clients := resourcestest.NewMockResourceClients(t)
+			progress := jobstest.NewMockJobProgressRecorder(t)
 			compareFn := NewMockCompareFn(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
@@ -415,7 +419,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			progress.On("TooManyErrors").Return(nil).Maybe()
 
-			quotaTracker := quotas.NewMockQuotaTracker(t)
+			quotaTracker := quotastest.NewMockQuotaTracker(t)
 			quotaTracker.EXPECT().TryAcquire().Return(true).Maybe()
 			quotaTracker.EXPECT().Release().Maybe()
 			quotaTracker.EXPECT().AllowOverLimit(mock.Anything).Maybe()

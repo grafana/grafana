@@ -69,7 +69,7 @@ func ProvideService(
 	return g
 }
 
-//go:generate mockery --name Service --structname FakeQueryService --inpackage --filename query_service_mock.go
+//go:generate mockery --name Service --structname FakeQueryService --outpkg querytest --output ./querytest/ --filename query_service_mock.go
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)

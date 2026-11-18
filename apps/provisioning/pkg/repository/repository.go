@@ -13,7 +13,8 @@ import (
 // FIXME: the name of the mock is different because there is another generated mock for Repository
 // I don't know how it got generated.
 //
-//go:generate mockery --name Repository --structname MockConfigRepository --inpackage --filename config_repository_mock.go --with-expecter
+//go:generate mockery --name Repository --structname MockConfigRepository --outpkg repositorytest --output ./repositorytest/ --filename config_repository_mock.go --with-expecter
+//go:generate mockery --name Repository --structname MockRepository --outpkg repositorytest --output ./repositorytest/ --filename repository_mock.go --with-expecter
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -138,7 +139,7 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
-//go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
+//go:generate mockery --name Reader --structname MockReader --outpkg repositorytest --output ./repositorytest/ --filename reader_mock.go --with-expecter
 type Reader interface {
 	Repository
 
@@ -178,7 +179,7 @@ type Writer interface {
 	Move(ctx context.Context, oldPath, newPath, ref, message string) error
 }
 
-//go:generate mockery --name ReaderWriter --structname MockReaderWriter --inpackage --filename reader_writer_mock.go --with-expecter
+//go:generate mockery --name ReaderWriter --structname MockReaderWriter --outpkg repositorytest --output ./repositorytest/ --filename reader_writer_mock.go --with-expecter
 type ReaderWriter interface {
 	Reader
 	Writer
@@ -194,7 +195,7 @@ type SizeLimitedReader interface {
 	WithMaxFileSize(maxBytes int64)
 }
 
-//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
+//go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --outpkg repositorytest --output ./repositorytest/ --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository
 
@@ -206,7 +207,7 @@ type RepositoryWithURLs interface {
 // WebhookRepository is implemented by repositories that can receive and handle
 // incoming webhook requests from their git provider.
 //
-//go:generate mockery --name WebhookRepository --structname MockWebhookRepository --inpackage --filename webhook_repository_mock.go --with-expecter
+//go:generate mockery --name WebhookRepository --structname MockWebhookRepository --outpkg repositorytest --output ./repositorytest/ --filename webhook_repository_mock.go --with-expecter
 type WebhookRepository interface {
 	Repository
 
@@ -249,7 +250,7 @@ type VersionedFileChange struct {
 // Versioned is a repository that supports versioning.
 // This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
 //
-//go:generate mockery --name Versioned --structname MockVersioned --inpackage --filename versioned_mock.go --with-expecter
+//go:generate mockery --name Versioned --structname MockVersioned --outpkg repositorytest --output ./repositorytest/ --filename versioned_mock.go --with-expecter
 type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
@@ -282,7 +283,7 @@ type RepoIDHandler interface {
 	ShouldUpdateRepoID() bool
 }
 
-//go:generate mockery --name PullRequestClient --structname MockPullRequestClient --inpackage --filename pull_request_client_mock.go --with-expecter
+//go:generate mockery --name PullRequestClient --structname MockPullRequestClient --outpkg repositorytest --output ./repositorytest/ --filename pull_request_client_mock.go --with-expecter
 type PullRequestClient interface {
 	CreatePullRequestComment(ctx context.Context, number int, body string) error
 	MergeBase(ctx context.Context, base, head string) (string, error)
@@ -291,7 +292,7 @@ type PullRequestClient interface {
 // PullRequestRepo is implemented by repositories that can be evaluated and
 // commented on as part of a pull request preview job.
 //
-//go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --inpackage --filename pull_request_repo_mock.go --with-expecter
+//go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --outpkg repositorytest --output ./repositorytest/ --filename pull_request_repo_mock.go --with-expecter
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)

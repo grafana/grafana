@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -54,7 +54,7 @@ func newTestRemoteCache(t *testing.T) *remotecache.RemoteCache {
 		RemoteCacheOptions: &setting.RemoteCacheSettings{Name: "database"},
 	}
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	cache, err := remotecache.ProvideService(cfg, sqlStore, &usagestats.UsageStatsMock{}, secretsfake.NewFakeSecretsService())
+	cache, err := remotecache.ProvideService(cfg, sqlStore, &usagestatstest.UsageStatsMock{}, secretsfake.NewFakeSecretsService())
 	require.NoError(t, err)
 	return cache
 }
@@ -101,7 +101,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 		routing.NewRouteRegister(),
 		featuremgmt.WithFeatures(),
 		secrets,
-		&usagestats.UsageStatsMock{},
+		&usagestatstest.UsageStatsMock{},
 		nil,
 		&setting.OSSImpl{Cfg: cfg},
 		&licensing.OSSLicensingService{},
@@ -115,7 +115,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 				tc.setup(t)
 			}
 
-			usageInsights := &usagestats.UsageStatsMock{}
+			usageInsights := &usagestatstest.UsageStatsMock{}
 			supportBundle := supportbundlestest.NewFakeBundleService()
 
 			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), usageInsights, supportBundle, newTestRemoteCache(t), nil, ssoSettingsSvc)
@@ -192,7 +192,7 @@ func TestSocialService_GetConnectorUsesCurrentSettings(t *testing.T) {
 		context.Background(),
 		cfgProvider,
 		featuremgmt.WithFeatures(),
-		&usagestats.UsageStatsMock{},
+		&usagestatstest.UsageStatsMock{},
 		supportbundlestest.NewFakeBundleService(),
 		newTestRemoteCache(t),
 		nil,
@@ -328,14 +328,14 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 				routing.NewRouteRegister(),
 				featuremgmt.WithFeatures(),
 				secrets,
-				&usagestats.UsageStatsMock{},
+				&usagestatstest.UsageStatsMock{},
 				nil,
 				nil,
 				&licensing.OSSLicensingService{},
 			)
 
 			ctx := context.Background()
-			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), newTestRemoteCache(t), nil, ssoSettingsSvc)
+			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), &usagestatstest.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), newTestRemoteCache(t), nil, ssoSettingsSvc)
 
 			// Create a custom comparison that treats nil slices as equal to empty slices for the tests
 			opts := cmp.Options{

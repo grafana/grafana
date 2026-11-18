@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -94,7 +95,7 @@ func TestRouteCreateSilence(t *testing.T) {
 	}{
 		{
 			name:    "new silence, role-based access control is enabled, not authorized",
-			silence: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId()),
+			silence: modelstest.SilenceGen(modelstest.SilenceMuts.WithEmptyId()),
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
@@ -102,7 +103,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
-			silence: ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId()),
+			silence: modelstest.SilenceGen(modelstest.SilenceMuts.WithEmptyId()),
 			permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingInstanceRead:   {},
@@ -113,7 +114,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		},
 		{
 			name:    "update silence, role-based access control is enabled, not authorized",
-			silence: ngmodels.SilenceGen(),
+			silence: modelstest.SilenceGen(),
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
@@ -121,7 +122,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",
-			silence: ngmodels.SilenceGen(),
+			silence: modelstest.SilenceGen(),
 			permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingInstanceRead:   {},

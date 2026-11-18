@@ -11,12 +11,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/evaltest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 )
 
 func BenchmarkCreateAndPatch(b *testing.B) {
 	cache := newCache()
-	rule := models.RuleGen.With(func(rule *models.AlertRule) {
+	rule := modelstest.RuleGen.With(func(rule *models.AlertRule) {
 		for range 2 {
 			rule.Labels = data.Labels{
 				"label-1": "{{ $value }}",
@@ -28,7 +30,7 @@ func BenchmarkCreateAndPatch(b *testing.B) {
 			}
 		}
 	}).GenerateRef()
-	result := eval.ResultGen(func(r *eval.Result) {
+	result := evaltest.ResultGen(func(r *eval.Result) {
 		r.Values = map[string]eval.NumberValueCapture{
 			"A": {
 				Var:    "A",

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/jobstest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,7 +29,7 @@ func TestExportedResourceCollector(t *testing.T) {
 		dash2 := jobs.NewGVKResult("dash-2", dashboardGVK).
 			WithAction(repository.FileActionCreated).Build()
 
-		inner := jobs.NewMockJobProgressRecorder(t)
+		inner := jobstest.NewMockJobProgressRecorder(t)
 		inner.EXPECT().Record(ctx, dash1)
 		inner.EXPECT().Record(ctx, dash2)
 
@@ -48,7 +50,7 @@ func TestExportedResourceCollector(t *testing.T) {
 			WithAction(repository.FileActionIgnored).
 			WithError(assert.AnError).Build()
 
-		inner := jobs.NewMockJobProgressRecorder(t)
+		inner := jobstest.NewMockJobProgressRecorder(t)
 		inner.EXPECT().Record(ctx, dash1)
 
 		collector := newExportedResourceCollector(inner)
@@ -63,7 +65,7 @@ func TestExportedResourceCollector(t *testing.T) {
 		dash1 := jobs.NewGVKResult("dash-1", dashboardGVK).
 			WithAction(repository.FileActionIgnored).Build()
 
-		inner := jobs.NewMockJobProgressRecorder(t)
+		inner := jobstest.NewMockJobProgressRecorder(t)
 		inner.EXPECT().Record(ctx, dash1)
 
 		collector := newExportedResourceCollector(inner)
@@ -78,7 +80,7 @@ func TestExportedResourceCollector(t *testing.T) {
 		noName := jobs.NewResourceResult().
 			WithAction(repository.FileActionCreated).Build()
 
-		inner := jobs.NewMockJobProgressRecorder(t)
+		inner := jobstest.NewMockJobProgressRecorder(t)
 		inner.EXPECT().Record(ctx, noName)
 
 		collector := newExportedResourceCollector(inner)

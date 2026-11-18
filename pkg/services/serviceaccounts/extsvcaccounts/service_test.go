@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest/actestfixtures"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -33,7 +33,7 @@ var (
 
 type TestEnv struct {
 	S        *ExtSvcAccountsService
-	AcStore  *actest.MockStore
+	AcStore  *actestfixtures.MockStore
 	SaSvc    *tests.MockServiceAccountService
 	SkvStore *kvstore.FakeSecretsKVStore
 }
@@ -46,7 +46,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 	env := &TestEnv{
-		AcStore:  &actest.MockStore{},
+		AcStore:  &actestfixtures.MockStore{},
 		SaSvc:    &tests.MockServiceAccountService{},
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}

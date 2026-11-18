@@ -12,6 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardstest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +22,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	c := gomock.NewController(t)
 	defer c.Finish()
 
-	d := dashboards.FakeDashboardService{}
+	d := dashboardstest.FakeDashboardService{}
 	r := rendering.NewMockService(c)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory = false

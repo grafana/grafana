@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models/modelstest"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -397,11 +398,11 @@ func randomTransition(from, to eval.State) StateTransition {
 }
 
 func TestAlertInstanceToState(t *testing.T) {
-	instance := ngModels.AlertInstanceGen(
-		ngModels.InstanceMuts.WithState(ngModels.InstanceStateFiring),
-		ngModels.InstanceMuts.WithResultFingerprint("deadbeef"),
-		ngModels.InstanceMuts.WithLastError("some error"),
-		ngModels.InstanceMuts.WithLastResult(ngModels.LastResult{
+	instance := modelstest.AlertInstanceGen(
+		modelstest.InstanceMuts.WithState(ngModels.InstanceStateFiring),
+		modelstest.InstanceMuts.WithResultFingerprint("deadbeef"),
+		modelstest.InstanceMuts.WithLastError("some error"),
+		modelstest.InstanceMuts.WithLastResult(ngModels.LastResult{
 			Values:    map[string]float64{"A": 1.5},
 			Condition: "A",
 		}),

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/client/clienttest"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,12 +33,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	searchMock := resource.NewMockResourceClient(tb)
+	searchMock := resourcetest.NewMockResourceClient(tb)
 	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 	return folderimpl.ProvideService(ac, nil,
@@ -73,10 +74,10 @@ func SetupDashboardService(tb testing.TB, sqlStore *sqlstore.SQLStore, cfg *sett
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			cfg,
-			client.MockTestRestConfig{},
+			clienttest.MockTestRestConfig{},
 			nil,
 			func() resource.ResourceClient {
-				m := resource.NewMockResourceClient(tb)
+				m := resourcetest.NewMockResourceClient(tb)
 				m.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
 				m.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 				return m

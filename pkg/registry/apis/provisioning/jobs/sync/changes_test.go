@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/resourcestest"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/repositorytest"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -769,7 +772,7 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 	t.Run("reparents orphan folder child before deferred folder cleanup", func(t *testing.T) {
 		repo := newMockRepositoryWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Blob: false},
@@ -819,7 +822,7 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("deletes duplicate orphan child when surviving child already matches source", func(t *testing.T) {
 		repo := newMockRepositoryWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Blob: false},
@@ -871,7 +874,7 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("prefers child under orphan folder UID over stale-hash child under surviving folder", func(t *testing.T) {
 		repo := newMockRepositoryWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Blob: false},
@@ -930,7 +933,7 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 
 	t.Run("invalid folder metadata suppresses duplicate folder orphan cleanup", func(t *testing.T) {
 		repo := newMockRepositoryWithConfig(t)
-		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources := resourcestest.NewMockRepositoryResources(t)
 
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Blob: false},
@@ -963,7 +966,7 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name            string
-		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
+		setupMocks      func(*repositorytest.MockRepository, *resourcestest.MockRepositoryResources)
 		expectedError   string
 		expectedChanges []ResourceFileChange
 		expectedMissing []string
@@ -972,7 +975,7 @@ func TestCompare(t *testing.T) {
 		{
 			name:        "error listing current resources",
 			description: "Should return error when listing current resources fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("List", mock.Anything).Return(nil, fmt.Errorf("listing failed"))
 			},
 			expectedError: "error listing current: listing failed",
@@ -980,7 +983,7 @@ func TestCompare(t *testing.T) {
 		{
 			name:        "error reading tree",
 			description: "Should return error when reading tree fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources) {
 				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				repo.On("ReadTree", mock.Anything, "current-ref").Return(nil, fmt.Errorf("read tree failed"))
 			},
@@ -989,7 +992,7 @@ func TestCompare(t *testing.T) {
 		{
 			name:        "no changes between source and target",
 			description: "Should return empty changes when source and target are identical",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources) {
 				target := &provisioning.ResourceList{
 					Items: []provisioning.ResourceListItem{
 						{Path: "dashboard.json", Hash: "xyz"},
@@ -1007,7 +1010,7 @@ func TestCompare(t *testing.T) {
 		{
 			name:        "compare function error",
 			description: "Should return error when comparing fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+			setupMocks: func(repo *repositorytest.MockRepository, repoResources *resourcestest.MockRepositoryResources) {
 				target := &provisioning.ResourceList{
 					Items: []provisioning.ResourceListItem{
 						// Empty path to trigger error
@@ -1027,7 +1030,7 @@ func TestCompare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockRepositoryWithConfig(t)
-			repoResources := resources.NewMockRepositoryResources(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
 
 			tt.setupMocks(repo, repoResources)
 
@@ -1066,7 +1069,7 @@ func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockRepositoryWithConfig(t)
-			repoResources := resources.NewMockRepositoryResources(t)
+			repoResources := resourcestest.NewMockRepositoryResources(t)
 
 			source := []repository.FileTreeEntry{
 				{Path: "my-folder/", Hash: "folder-hash", Blob: false},
@@ -1104,7 +1107,7 @@ func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
 
 func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *testing.T) {
 	repo := newMockRepositoryWithConfig(t)
-	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources := resourcestest.NewMockRepositoryResources(t)
 
 	source := []repository.FileTreeEntry{
 		{Path: "my-folder/", Hash: "folder-hash", Blob: false},
@@ -1153,7 +1156,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	}
 
 	t.Run("no-op when no deleted folders", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 
 		input := []ResourceFileChange{
 			{Action: repository.FileActionCreated, Path: "new-folder/"},
@@ -1166,7 +1169,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("no-op when no created folders", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 
 		input := []ResourceFileChange{
 			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
@@ -1179,7 +1182,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("no-op when deleted folder has no Existing item", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		// deletedFolders stays empty because nil Existing is not tracked,
 		// so the early-return fires and repo.Read is never called.
 
@@ -1194,7 +1197,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("simple folder move merges delete into update", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: folderMetaJSON("folder-uid")}, nil)
 
@@ -1214,7 +1217,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("non-matching UIDs produce no merge", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: folderMetaJSON("different-uid")}, nil)
 
@@ -1236,7 +1239,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("metadata read error is propagated", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(nil, fmt.Errorf("storage unavailable"))
 
@@ -1252,7 +1255,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("metadata file not found is skipped", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(nil, repository.ErrFileNotFound)
 
@@ -1267,7 +1270,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("invalid metadata leaves folder move as delete plus create", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"No UID"}}`)}, nil)
 
@@ -1289,7 +1292,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("non-folder paths are ignored", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: folderMetaJSON("folder-uid")}, nil)
 
@@ -1317,7 +1320,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("multiple independent folder moves", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-a/_folder.json", "main").
 			Return(&repository.FileInfo{Data: folderMetaJSON("uid-a")}, nil)
 		repo.On("Read", mock.Anything, "new-b/_folder.json", "main").
@@ -1347,7 +1350,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 
 	t.Run("result is sorted deepest path first", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
+		repo := repositorytest.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-top/_folder.json", "main").
 			Return(&repository.FileInfo{Data: folderMetaJSON("uid-top")}, nil)
 		repo.On("Read", mock.Anything, "a/new-nested/_folder.json", "main").
@@ -1972,14 +1975,14 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 	})
 }
 
-func newMockReaderWithConfig(t *testing.T) *repository.MockReader {
-	repo := repository.NewMockReader(t)
+func newMockReaderWithConfig(t *testing.T) *repositorytest.MockReader {
+	repo := repositorytest.NewMockReader(t)
 	repo.On("Config").Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}).Maybe()
 	return repo
 }
 
-func newMockRepositoryWithConfig(t *testing.T) *repository.MockRepository {
-	repo := repository.NewMockRepository(t)
+func newMockRepositoryWithConfig(t *testing.T) *repositorytest.MockRepository {
+	repo := repositorytest.NewMockRepository(t)
 	repo.On("Config").Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}).Maybe()
 	return repo
 }

@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"pgregory.net/rapid"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/usagestatstest"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	cipherService "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
@@ -414,7 +414,7 @@ func TestEncryptedValueMigration(t *testing.T) {
 
 		sut := testutils.Setup(t)
 		tracer := noop.NewTracerProvider().Tracer("test")
-		usageStats := &usagestats.UsageStatsMock{T: t}
+		usageStats := &usagestatstest.UsageStatsMock{T: t}
 		enc, err := cipherService.ProvideAESGCMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 

@@ -15,7 +15,7 @@ var ErrNothingToPush = errors.New("nothing to push")
 // ErrNothingToCommit indicates that there are no changes to commit
 var ErrNothingToCommit = errors.New("nothing to commit")
 
-//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
+//go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --outpkg repositorytest --output ./repositorytest/ --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo Repository, stageOptions StageOptions, fn func(repo Repository, staged bool) error) error
 
 // StageMode defines the staging and commit behavior
@@ -43,12 +43,12 @@ type StageOptions struct {
 	CommitOnlyOnceMessage string
 }
 
-//go:generate mockery --name StageableRepository --structname MockStageableRepository --inpackage --filename stageable_repository_mock.go --with-expecter
+//go:generate mockery --name StageableRepository --structname MockStageableRepository --outpkg repositorytest --output ./repositorytest/ --filename stageable_repository_mock.go --with-expecter
 type StageableRepository interface {
 	Stage(ctx context.Context, opts StageOptions) (StagedRepository, error)
 }
 
-//go:generate mockery --name StagedRepository --structname MockStagedRepository --inpackage --filename staged_repository_mock.go --with-expecter
+//go:generate mockery --name StagedRepository --structname MockStagedRepository --outpkg repositorytest --output ./repositorytest/ --filename staged_repository_mock.go --with-expecter
 type StagedRepository interface {
 	ReaderWriter
 	Push(ctx context.Context) error

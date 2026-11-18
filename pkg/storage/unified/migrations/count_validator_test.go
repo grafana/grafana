@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/resourcetest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	_ "github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -39,7 +40,7 @@ func TestCountValidatorStats(t *testing.T) {
 			_, err = eng.Exec("CREATE TABLE legacy_items (org_id INTEGER)")
 			require.NoError(t, err)
 
-			client := resource.NewMockResourceClient(t)
+			client := resourcetest.NewMockResourceClient(t)
 			client.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: "default", Kinds: []string{gr.Group + "/" + gr.Resource}}).
 				Return(tt.resp, tt.err).Once()
 			v := newCountValidator(client, gr, CountValidationOptions{Table: "legacy_items", Where: "org_id = ?"}, migrator.MySQL)
