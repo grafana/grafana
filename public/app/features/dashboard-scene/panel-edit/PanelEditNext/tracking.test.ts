@@ -11,6 +11,7 @@ import {
   isPanelEditorApp,
   trackQueryMenuAction,
   trackReorder,
+  trackTransformationSearch,
   trackTransformationToolAction,
 } from './tracking';
 
@@ -117,5 +118,33 @@ describe('isPanelEditorApp', () => {
     { app: CoreApp.UnifiedAlerting, expected: false },
   ])('returns $expected for $app', ({ app, expected }) => {
     expect(isPanelEditorApp(app)).toBe(expected);
+  });
+});
+
+describe('trackTransformationSearch', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it('reports that a search happened without the search text', () => {
+    trackTransformationSearch('customer revenue');
+    jest.advanceTimersByTime(300);
+
+    expect(mockReportInteraction).toHaveBeenCalledTimes(1);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+      action: 'search_transformations',
+    });
+  });
+
+  it('does not report a cleared search', () => {
+    trackTransformationSearch('');
+    jest.advanceTimersByTime(300);
+
+    expect(mockReportInteraction).not.toHaveBeenCalled();
   });
 });

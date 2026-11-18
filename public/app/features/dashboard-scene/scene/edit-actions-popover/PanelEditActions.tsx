@@ -61,25 +61,30 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const isRepeated = isRepeatCloneOrChildOf(panel);
 
   const onClickEdit = () => {
-    DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
+    DashboardInteractions.panelActionClicked(
+      'settings',
+      getPanelIdForVizPanel(panel),
+      'edit_popover',
+      panel.state.pluginId
+    );
     getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   };
 
   const onClickEditVisualization = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('configure', panelId, 'edit_popover', panel.state.pluginId);
     locationService.partial({ editPanel: panelId });
   };
 
   const onClickCopy = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('copy', panelId, 'edit_popover', panel.state.pluginId);
     getDashboardSceneLike(panel).copyPanel(panel);
   };
 
   const onClickDuplicate = () => {
     const panelId = getPanelIdForVizPanel(panel);
-    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
+    DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover', panel.state.pluginId);
     duplicatePanel(panel);
   };
 

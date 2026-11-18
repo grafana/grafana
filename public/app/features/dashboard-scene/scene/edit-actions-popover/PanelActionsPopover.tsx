@@ -207,8 +207,9 @@ function PanelActions({
   const showsPanelActions = canEdit || canExplore || canOpenSettings;
 
   const report = useCallback(
-    (item: PanelActionItem) => DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover'),
-    [panelId]
+    (item: PanelActionItem) =>
+      DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover', panel.state.pluginId),
+    [panel, panelId]
   );
 
   const onToggleExpand = () => {

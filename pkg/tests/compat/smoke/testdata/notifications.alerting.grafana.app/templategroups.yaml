@@ -1,0 +1,10 @@
+apiVersion: notifications.alerting.grafana.app/v1beta1
+kind: TemplateGroup
+metadata:
+  annotations:
+    # The server derives the name from the spec.
+    compat.grafana.app/server-named: "true"
+spec:
+  title: compat-smoke-template
+  content: '{{ define "compat-smoke" }}compat smoke{{ end }}'
+  kind: grafana

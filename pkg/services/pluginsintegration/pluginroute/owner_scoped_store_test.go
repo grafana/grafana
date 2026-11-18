@@ -11,6 +11,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -119,6 +120,38 @@ func TestOwnedListStoreList(t *testing.T) {
 		require.True(t, apierrors.IsBadRequest(err))
 	})
 
+	t.Run("a name selector returns only that object, if the caller may get it", func(t *testing.T) {
+		byName := func(name string) *metainternalversion.ListOptions {
+			return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
+		}
+		names := func(store *ownerScopedStore, name string) []string {
+			got, err := store.List(ctxFor(user), byName(name))
+			require.NoError(t, err)
+			items, err := meta.ExtractList(got)
+			require.NoError(t, err)
+			return namesOf(t, items)
+		}
+		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "user-other", "team-t1", "team-t2", "namespace")
+		require.Equal(t, []string{"namespace"}, names(store, "namespace"))
+		require.Equal(t, []string{"team-t1"}, names(store, "team-t1"))
+		require.Empty(t, names(store, "user-other"), "another user's object")
+		require.Empty(t, names(store, "team-t2"), "a team the caller is not in, without access to it")
+		require.Empty(t, names(store, "team-none"), "an object that does not exist")
+
+		parsed, err := fields.ParseSelector("metadata.name==team-t1")
+		require.NoError(t, err)
+		got, err := store.List(ctxFor(user), &metainternalversion.ListOptions{FieldSelector: parsed})
+		require.NoError(t, err, "== is the same selector as =")
+		items, err := meta.ExtractList(got)
+		require.NoError(t, err)
+		require.Equal(t, []string{"team-t1"}, namesOf(t, items))
+
+		other, err := fields.ParseSelector("spec.foo=bar")
+		require.NoError(t, err)
+		_, err = store.List(ctxFor(user), &metainternalversion.ListOptions{FieldSelector: other})
+		require.True(t, apierrors.IsBadRequest(err))
+	})
+
 	t.Run("a list without a requester fails", func(t *testing.T) {
 		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.List(context.Background(), nil)
@@ -144,14 +177,22 @@ func TestWithStoredResourceVersion(t *testing.T) {
 	}
 	update := func(t *testing.T, requested *unstructured.Unstructured, current *unstructured.Unstructured) string {
 		t.Helper()
-		got, err := withStoredResourceVersion{rest.DefaultUpdatedObjectInfo(requested)}.UpdatedObject(context.Background(), current)
+		got, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(requested)}.UpdatedObject(context.Background(), current)
 		require.NoError(t, err)
 		return got.(*unstructured.Unstructured).GetResourceVersion()
 	}
 
 	t.Run("an update without a resource version is made against the stored one", func(t *testing.T) {
 		require.Equal(t, "7", update(t, withRV(""), withRV("7")))
-		require.Equal(t, "7", update(t, withRV("0"), withRV("7")))
+	})
+
+	t.Run("version 0 asks for a create, so it conflicts with a stored object", func(t *testing.T) {
+		_, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(withRV("0"))}.UpdatedObject(context.Background(), withRV("7"))
+		require.True(t, apierrors.IsConflict(err))
+
+		got, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(withRV("0"))}.UpdatedObject(context.Background(), withRV(""))
+		require.NoError(t, err)
+		require.Equal(t, "", got.(*unstructured.Unstructured).GetResourceVersion())
 	})
 
 	t.Run("an update that names one keeps it", func(t *testing.T) {
@@ -160,7 +201,7 @@ func TestWithStoredResourceVersion(t *testing.T) {
 
 	t.Run("the update's own failure is returned", func(t *testing.T) {
 		boom := errors.New("boom")
-		_, err := withStoredResourceVersion{failingUpdate{boom}}.UpdatedObject(context.Background(), withRV("7"))
+		_, err := withStoredResourceVersion{UpdatedObjectInfo: failingUpdate{boom}}.UpdatedObject(context.Background(), withRV("7"))
 		require.ErrorIs(t, err, boom)
 	})
 }

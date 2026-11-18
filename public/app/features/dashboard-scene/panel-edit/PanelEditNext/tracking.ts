@@ -39,11 +39,11 @@ function reportQueryEditorInteraction(properties: Record<string, unknown>, optio
   );
 }
 
+// Reports that a search happened, never what was typed.
 export const trackTransformationSearch = debounce((query: string) => {
   if (query) {
     reportInteraction(EVENT_PANEL_EDIT_NEXT, {
       action: 'search_transformations',
-      query,
     });
   }
 }, 300);
