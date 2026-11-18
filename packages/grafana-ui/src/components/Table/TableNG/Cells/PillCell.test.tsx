@@ -53,20 +53,24 @@ describe('PillCell', () => {
     });
 
     it.each([
-      ['classic palette', FieldColorModeId.PaletteClassic, 'value1'],
-      ['classic palette by series name', FieldColorModeId.PaletteClassicByName, 'test'],
-      ['thresholds', FieldColorModeId.Thresholds, 'value1'],
-    ])('uses theme tag colors for %s', (_, colorMode, colorName) => {
+      ['classic palette', FieldColorModeId.PaletteClassic, 'rgb(222, 218, 247)', 'rgb(32, 34, 38)'],
+      [
+        'classic palette by series name',
+        FieldColorModeId.PaletteClassicByName,
+        'rgb(98, 158, 81)',
+        'rgb(247, 248, 250)',
+      ],
+      ['thresholds', FieldColorModeId.Thresholds, 'rgb(63, 43, 91)', 'rgb(247, 248, 250)'],
+    ])('preserves legacy colors for %s', (_, colorMode, backgroundColor, color) => {
       const mockField = fieldWithValues(['value1']);
       const field = {
         ...mockField,
         config: { ...mockField.config, color: { mode: colorMode } },
       } satisfies Field;
-      const { background, text } = getTagColorsFromName(colorName, theme);
 
       render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
 
-      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor, color });
     });
 
     it('empty string', () => {

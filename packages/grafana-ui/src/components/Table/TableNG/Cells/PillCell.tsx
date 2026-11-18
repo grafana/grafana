@@ -97,18 +97,21 @@ function getPillColors(
     return onBackground(theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR));
   }
 
-  if (cfg.color?.mode === FieldColorModeId.PaletteClassicByName) {
-    return getTagColorsFromName(field.name, theme);
-  }
+  if (theme.flags.visualDesignRefresh) {
+    if (cfg.color?.mode === FieldColorModeId.PaletteClassicByName) {
+      return getTagColorsFromName(field.name, theme);
+    }
 
-  if (cfg.color?.mode === FieldColorModeId.PaletteClassic || cfg.color?.mode === FieldColorModeId.Thresholds) {
-    return getTagColorsFromName(value, theme);
+    if (cfg.color?.mode === FieldColorModeId.PaletteClassic || cfg.color?.mode === FieldColorModeId.Thresholds) {
+      return getTagColorsFromName(value, theme);
+    }
   }
 
   // Modes that expose a palette can color each pill deterministically from its value.
   const mode = cfg.color && fieldColorModeRegistry.get(cfg.color.mode);
   if (typeof mode?.getColors === 'function') {
-    return onBackground(getColorByStringHash(mode.getColors(theme), value));
+    const colorName = mode.useSeriesName ? field.name : value;
+    return onBackground(getColorByStringHash(mode.getColors(theme), colorName));
   }
 
   if (theme.flags.visualDesignRefresh) {
