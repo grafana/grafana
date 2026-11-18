@@ -22,9 +22,10 @@ type PluginDefinition struct {
 	Manifests []*app.ManifestData `json:"manifests,omitempty"`
 
 	// Settings describes an app's settings API, served under the plugin ID: the
-	// app resource and the routes its proxy serves. Loading sets it for every
-	// app, from the routes a manifest declares or plugin.json's; see
-	// NewSettingsManifest.
+	// app resource and the routes of its resources and proxy subresources. The
+	// loader sets it to the app manifest whose group is the plugin ID, and
+	// LoadSettings completes it, with plugin.json's routes when that declares
+	// no proxy routes; see NewSettingsManifest.
 	Settings *app.ManifestData `json:"settings,omitempty"`
 }
 

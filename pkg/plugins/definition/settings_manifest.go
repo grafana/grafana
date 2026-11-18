@@ -109,7 +109,7 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 	if !declared {
 		converted, err := ProxyRoutesToOpenAPI(p.JSONData.Routes)
 		if err != nil {
-			return manifest, errors.Join(append(errs, err)...)
+			return manifest, errors.Join(append(errs, fmt.Errorf("proxy routes are left out: %w", err))...)
 		}
 		for path, props := range withTrailingSlashes(converted) {
 			proxy[SettingsProxyRoot+path] = props
