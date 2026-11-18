@@ -7,6 +7,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { FOLDER_PARENTS_URL, getRecordingRuleHandler } from '../mocks/handlers';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 
@@ -34,12 +35,14 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry
-          searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
-          showFolderPath
-        />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry
+            searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+            showFolderPath
+          />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Platform')).toBeInTheDocument();
@@ -58,12 +61,14 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry
-          searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
-          showFolderPath={false}
-        />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry
+            searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1' }}
+            showFolderPath={false}
+          />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
@@ -93,9 +98,11 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('Provisioned')).toBeInTheDocument();
@@ -109,9 +116,11 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
@@ -120,9 +129,11 @@ describe('RecordingRuleListEntry', () => {
 
   it('shows no badge when the full rule has no provenance and no plugin origin', async () => {
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
@@ -154,9 +165,11 @@ describe('RecordingRuleListEntry', () => {
     );
 
     render(
-      <ul>
-        <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath={false} />
-      </ul>
+      <RuleSequenceDrawerProvider>
+        <ul>
+          <RecordingRuleListEntry searchHit={{ uid: 'rule-1', title: 'cpu:usage:rate5m' }} showFolderPath={false} />
+        </ul>
+      </RuleSequenceDrawerProvider>
     );
 
     expect(await screen.findByRole('button', { name: 'More' })).toBeInTheDocument();

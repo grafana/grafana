@@ -1500,9 +1500,29 @@
         "records": "Registros",
         "to": "hasta"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "No se han encontrado reglas de registro",
@@ -1579,10 +1599,17 @@
         "view-list": "Lista",
         "wildcard-in-text": "El texto de búsqueda no puede contener * ni %."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1805,17 +1832,18 @@
         "autosync-rules-error-title": "Error en la importación de reglas",
         "autosync-rules-imported-note": "También se han importado las reglas de alerta seleccionadas.",
         "autosync-rules-note": "También se importarán las reglas de alerta seleccionadas.",
-        "autosync-success-body": "Sincronización automática habilitada. Redireccionando...",
+        "autosync-success-body": "",
         "autosync-success-title": "Sincronización automática habilitada",
         "autosync-title": "Confirmar sincronización automática",
         "body": "¿Seguro que quieres iniciar la importación? Esta acción creará nuevos recursos en Grafana Alerting.",
         "confirm": "Iniciar importación",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Error en la importación",
         "importing-body": "Importando recursos a Grafana Alerting. Espera, por favor…",
         "importing-title": "Importando...",
-        "success-body": "Recursos importados correctamente. Redirigiendo...",
+        "success-body": "",
         "success-title": "Importación realizada correctamente",
         "title": "Confirmar importación"
       },
@@ -2400,6 +2428,7 @@
       "contact-points": "Puntos de contacto",
       "notification-policies": "Políticas de notificación",
       "recently-deleted": "Eliminadas recientemente",
+      "recording-rules": "",
       "templates": "Plantillas",
       "time-intervals": "Intervalos de tiempo"
     },
@@ -6218,8 +6247,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -6414,9 +6442,6 @@
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
       "visualization-button-tooltip": "Opciones de búsqueda"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Las transformaciones «ad hoc» están deshabilitadas en el modo de edición"
     },
     "plan-building-overlay": {
       "quip-corners": "Puliendo las esquinas del panel…",
@@ -7702,11 +7727,7 @@
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
     "lifecycle": {
-      "applied": "Se han aplicado tus cambios a {{title}} ",
-      "apply": "Aplicar",
-      "apply-body": "Todos los que tengan acceso los verán. Puedes restaurar la versión anterior desde el historial de versiones.",
-      "apply-failed": "No se han podido aplicar los cambios. Inténtalo de nuevo o compáralos primero.",
-      "apply-needs-edit": "Para aplicar los cambios, se necesita acceso de edición a «{{title}}». Puedes previsualizar los cambios, pero no aplicarlos.",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Borrador",
       "breadcrumb-pending-changes": "Cambios pendientes",
       "change-added": "Añadido",
@@ -7738,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "Borrador",
       "edited-dashboard": "",
-      "highlight-changes": "Resaltar los cambios en el dashboard",
       "pending-body": "Se están previsualizando los cambios pendientes. Solo tú puedes verlos.",
       "pending-body-source": "Se están previsualizando los cambios pendientes {{source}}. Solo tú puedes verlos.",
       "pending-changes-changed": "",
@@ -7747,13 +7767,16 @@
       "pending-stale": "El dashboard se ha actualizado desde que se realizaron tus cambios",
       "pending-title": "Cambios pendientes",
       "preview-changes": "Previsualizar cambios",
-      "rebase": "Reaplicar cambios",
       "record-pending-change-failed": "",
       "save": "Guardar",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Mostrar el dashboard original",
-      "stop-highlighting-changes": "Dejar de resaltar los cambios",
-      "apply-title_one": "¿Aplicar {{count}} cambio a «{{title}}»?",
-      "apply-title_other": "¿Aplicar {{count}} cambios a «{{title}}»?"
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Añadir enlace",
@@ -8005,6 +8028,12 @@
       "confirmText-restore-version": "Sí, restaurar a la versión {{version}}",
       "title-restore-version": "Restaurar versión"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Permitir",
       "allow-tooltip": "Cargar contenido de las fuentes seleccionadas en los paneles indicados hasta que cierres esta pestaña.",
@@ -8200,6 +8229,12 @@
       "switch-options": "Opciones de cambio",
       "value-pair-type": "Tipo de par de valores",
       "value-pair-type-description": "Elige el tipo de valores para los estados del interruptor"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predeterminado"
@@ -13445,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
@@ -13460,14 +13520,6 @@
         "open-all": "Abrir asistentes de IA y aplicaciones de la barra lateral"
       },
       "floating-resize": "Cambiar el ancho de la barra lateral"
-    },
-    "fullscreen-workspace": {
-      "enter": "Entrar en el espacio de trabajo",
-      "error-exit": "Salir del espacio de trabajo",
-      "error-message": "No se ha podido cargar el espacio de trabajo de Grafana Assistant.",
-      "error-reload": "Recargar página",
-      "error-title": "Espacio de trabajo no disponible",
-      "workspace": "Espacio de trabajo"
     },
     "help": {
       "aria-label": "Ayuda",
@@ -13505,6 +13557,7 @@
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Cerrar menú",
       "customise": "Personalizar la navegación",
       "customise-cancel": "Cancelar",
@@ -13662,8 +13715,10 @@
       "drag-handle": "Arrastrar para reordenar",
       "duplicate": "Duplicar bloque",
       "frame": {
-        "aria-label-collapsed": "Bloque contraído: {{name}}",
-        "aria-label-panel": "Bloque de visualización: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13751,7 +13806,7 @@
       "submit": "Añadir al cuaderno",
       "success": "Panel añadido a {{title}}",
       "success-cells": "Añadido a {{title}}",
-      "success-link": "Ver cuaderno",
+      "success-open-link": "",
       "tag-placeholder": "Filtrar por etiqueta",
       "target-description": "Elige dónde añadir el panel.",
       "target-existing": "Cuaderno existente",
@@ -13923,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Elige un color, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Colorear series por"
+      "color-by-label": "Colorear series por",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Fuera de rango. {{range}}",
@@ -14429,6 +14485,9 @@
     },
     "empty-state": {
       "message": "No se ha encontrado ningún complemento"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Consulta la consola para obtener más detalles sobre el error.",
@@ -15555,6 +15614,8 @@
       "header-title": "Título",
       "header-type": "Tipo",
       "missing-folder-metadata": "Falta el archivo de metadatos de la carpeta.",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Buscar por ruta o título",
       "source": "Fuente",
       "status-filter-aria-label": "Filtrar por estado",

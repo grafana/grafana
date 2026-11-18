@@ -11,10 +11,10 @@ function baseHit(overrides: Partial<AlertRuleSearchHit> = {}): AlertRuleSearchHi
   return { uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1', ...overrides };
 }
 
-function renderRow(props: Parameters<typeof AlertRuleRow>[0]) {
+function renderRow(props: Omit<Parameters<typeof AlertRuleRow>[0], 'onSequenceClick'>) {
   return render(
     <ul>
-      <AlertRuleRow {...props} />
+      <AlertRuleRow {...props} onSequenceClick={jest.fn()} />
     </ul>
   );
 }
@@ -71,7 +71,7 @@ describe('AlertRuleRow', () => {
   it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
     renderRow({
       searchHit: baseHit({ interval: '5m' }),
-      sequence: { name: 'seq-1', interval: '2m' },
+      sequence: { uid: 'seq-1', interval: '2m' },
     });
 
     expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
