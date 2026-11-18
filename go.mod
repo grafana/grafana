@@ -710,6 +710,9 @@ require (
 )
 
 replace (
+	// v22.7.0 breaks builds for BSDs and Solaris (AIX), see: https://github.com/coreos/go-systemd/issues/512
+	github.com/coreos/go-systemd/v22 => github.com/coreos/go-systemd/v22 v22.6.0
+
 	// Use our fork of dolthub/go-mysql-server which makes non-cgo the default
 	// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana
