@@ -25,8 +25,34 @@
             ./flake.nix
             ./flake.lock
             ./nix
+            ./.github
+            ./contribute
           ]
         );
+      };
+      frontendSrc = lib.fileset.toSource {
+        root = ./.;
+        fileset = lib.fileset.unions [
+          ./.browserslistrc
+          ./.gitignore
+          ./.nxignore
+          ./conf/defaults.ini
+          ./e2e-playwright/test-plugins
+          ./LICENSE
+          ./nx.json
+          ./package.json
+          ./packages
+          ./patches
+          ./pnpm-lock.yaml
+          ./pnpm-workspace.yaml
+          ./project.json
+          ./public
+          ./scripts/build-frontend.sh
+          ./scripts/cli
+          ./scripts/rspack
+          ./scripts/tsconfig.base.json
+          ./tsconfig.json
+        ];
       };
       tarballSrc = lib.fileset.toSource {
         root = ./.;
@@ -42,7 +68,6 @@
         ];
       };
       catalogPlugins = builtins.fromJSON (builtins.readFile ./nix/catalog-plugins.json);
-      sourceDateEpoch = toString (self.lastModified or 1);
 
       targets = [
         {
@@ -88,22 +113,17 @@
           goarch = "arm64";
         }
       ];
-    in
-    {
-      # All release tarballs in CI share the frontend from the AMD64 build host.
-      ciJobs = lib.filterAttrs (
-        name: _: name == "frontend" || lib.hasPrefix "backend-" name
-      ) self.packages.x86_64-linux;
-
-      packages = lib.mapAttrs (
+      packageBuilders = lib.mapAttrs (
         system: nativeTarget:
+        { revision, sourceDateEpoch }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           pnpm = pkgs.pnpm_12;
 
           frontend = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
             pname = "grafana-frontend";
-            inherit src version;
+            inherit version;
+            src = frontendSrc;
             strictDeps = true;
             nativeBuildInputs = [
               pkgs.nodejs_26
@@ -174,7 +194,7 @@
                   runHook preBuild
                   GOMAXPROCS="$NIX_BUILD_CORES" make build-go OS=${goos} ARCH=${goarch} ARM=${goarm} \
                     BUILD_VERSION=${lib.escapeShellArg version} \
-                    COMMIT_SHA=${self.rev or self.dirtyRev or "unknown"} \
+                    COMMIT_SHA=${revision} \
                     SOURCE_DATE_EPOCH=${sourceDateEpoch}
                   runHook postBuild
                 '';
@@ -272,5 +292,22 @@
           };
         }
       ) systems;
+    in
+    {
+      packages = lib.mapAttrs (
+        _: buildPackages:
+        buildPackages {
+          revision = self.rev or self.dirtyRev or "unknown";
+          sourceDateEpoch = toString (self.lastModified or 1);
+        }
+      ) packageBuilders;
+      # CI builds can reuse the same binaries when only the checkout metadata changes.
+      ciPackages = packageBuilders.x86_64-linux {
+        revision = "unknown";
+        sourceDateEpoch = "1";
+      };
+      ciJobs = lib.filterAttrs (
+        name: _: name == "frontend" || lib.hasPrefix "backend-" name
+      ) self.ciPackages;
     };
 }

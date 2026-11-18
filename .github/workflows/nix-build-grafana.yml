@@ -42,7 +42,7 @@ jobs:
           upstream-cache-filter: 'true'
           filter-drv-closures: 'true'
       - name: Cache shared build inputs
-        run: nix build -L --no-link .#backend.goModules
+        run: nix build -L --no-link .#ciPackages.backend.goModules
       - id: matrix
         uses: Mic92/hestia/matrix@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
         with:
@@ -51,7 +51,7 @@ jobs:
       - name: List tarball packages
         id: tarballs
         run: |
-          targets=$(nix eval --json .#packages.x86_64-linux --apply '
+          targets=$(nix eval --json .#ciPackages --apply '
             packages: builtins.filter (name: builtins.match "tarball-.+" name != null)
               (builtins.attrNames packages)
           ')
@@ -122,7 +122,7 @@ jobs:
       - name: Build release tarball
         env:
           TARBALL: ${{ matrix.tarball }}
-        run: nix build -L ".#$TARBALL"
+        run: nix build -L ".#ciPackages.$TARBALL"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: grafana-nix-${{ matrix.tarball }}
