@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -65,6 +66,10 @@ func LegacyRuleUpdate[T resource.Object](
 		return old, false, err
 	}
 
+	if err := setUpdatePreconditions(new, domainModel); err != nil {
+		return nil, false, err
+	}
+
 	_, err = service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, false, ToAPIError(resourceInfo.GroupResource(), name, err)
@@ -81,4 +86,16 @@ func LegacyRuleUpdate[T resource.Object](
 	}
 
 	return rule, false, nil
+}
+
+func setUpdatePreconditions(meta metav1.Object, rule *ngmodels.AlertRule) error {
+	if version := meta.GetResourceVersion(); version != "" {
+		parsed, err := strconv.ParseInt(version, 10, 64)
+		if err != nil || parsed <= 0 {
+			return apierrors.NewBadRequest("metadata.resourceVersion must be a positive integer")
+		}
+		rule.Version = parsed
+	}
+	rule.GUID = string(meta.GetUID())
+	return nil
 }

@@ -503,6 +503,7 @@ func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user iden
 			if key.UID == rule.UID {
 				rule.ID = key.ID
 				rule.GUID = key.GUID
+				rule.Version = 1
 				fixed = true
 				break
 			}
@@ -555,7 +556,9 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 			return models.AlertRule{}, err
 		}
 		if delta.IsEmpty() {
-			// No changes to the rule.
+			if err := checkNoopUpdatePreconditions(rule, delta); err != nil {
+				return models.AlertRule{}, err
+			}
 			return rule, nil
 		}
 		changedNotificationSettings = delta.NewOrUpdatedNotificationSettings()
@@ -571,6 +574,9 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		if storedRule == nil { // this should not happen but we better catch it to avoid panic
 			return models.AlertRule{}, fmt.Errorf("cannot find rule in the delta")
 		}
+	}
+	if err := checkUpdatePreconditions(rule, storedRule); err != nil {
+		return models.AlertRule{}, err
 	}
 	storedManager, err := service.provenanceStore.GetManagerProperties(ctx, storedRule, storedRule.OrgID)
 	if err != nil {
@@ -624,9 +630,11 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		// Title conflict avoidance can mutate Existing, so retries must start from the same baseline.
+		existing := storedRule.Copy()
 		err := service.ruleStore.UpdateAlertRules(ctx, userUidOrFallback(user), []models.UpdateRule{
 			{
-				Existing: storedRule,
+				Existing: existing,
 				New:      rule,
 			},
 		})
@@ -639,6 +647,29 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		return models.AlertRule{}, err
 	}
 	return rule, err
+}
+
+func checkNoopUpdatePreconditions(rule models.AlertRule, delta *rulestore.GroupDelta) error {
+	for _, group := range delta.AffectedGroups {
+		for _, existing := range group {
+			if existing.GetKey() == rule.GetKey() {
+				if err := checkUpdatePreconditions(rule, existing); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func checkUpdatePreconditions(rule models.AlertRule, stored *models.AlertRule) error {
+	if rule.Version != 0 && rule.Version != stored.Version {
+		return fmt.Errorf("%w: alert rule UID %s version %d does not match %d", rulestore.ErrOptimisticLock, rule.UID, rule.Version, stored.Version)
+	}
+	if rule.GUID != "" && rule.GUID != stored.GUID {
+		return fmt.Errorf("%w: alert rule UID %s has been replaced", rulestore.ErrOptimisticLock, rule.UID)
+	}
+	return nil
 }
 
 func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user identity.Requester, ruleUID string, manager utils.ManagerProperties) error {

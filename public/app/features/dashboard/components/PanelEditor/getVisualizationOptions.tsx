@@ -24,6 +24,7 @@ import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/var
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -332,6 +333,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         ui: props.reportInteractionUI,
         option: path,
         value: JSON.stringify(value),
+        panel_type: plugin.meta.id,
+        panel_id: getPanelIdForVizPanel(panel),
       });
     },
   };
@@ -396,7 +399,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             DashboardInteractions.setVisualOption({
               ui: props.reportInteractionUI,
               option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              value: JSON.stringify(value),
+              value: JSON.stringify(v),
+              panel_type: plugin.meta.id,
+              panel_id: getPanelIdForVizPanel(panel),
             });
           };
 
