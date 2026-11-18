@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
@@ -296,6 +297,22 @@ func TestRecordingRuleStaleMarkerFailures(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestRecordingRuleStaleMarkerFailureLog(t *testing.T) {
+	h := newStaleHarness(t)
+	h.ev.resp = seriesResponse(map[string]string{"instance": "a"}, map[string]string{"instance": "b"})
+	h.tick()
+	h.rule.cfg.StaleMarkerMaxAge = time.Hour
+	h.failStale = true
+	h.staleErr = foreignError{"temporarily unavailable"}
+
+	logger := &logtest.Fake{}
+	for minute := 1; minute <= 3; minute++ {
+		h.rule.writeStale(context.Background(), h.now.Add(time.Duration(minute)*time.Minute), nil, logger)
+	}
+	require.Equal(t, 3, logger.WarnLogs.Calls, "every failing tick logs")
+	require.Contains(t, logger.WarnLogs.Ctx, markerReasonTransient)
 }
 
 func TestRecordingRuleStaleMarkerMetrics(t *testing.T) {

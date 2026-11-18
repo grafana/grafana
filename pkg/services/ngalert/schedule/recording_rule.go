@@ -62,9 +62,6 @@ type recordingRule struct {
 	budget  *state.SeriesBudget
 	// When a marker for a series in written first failed. Only series that are still retried are here.
 	failedAt map[seriesTarget]map[data.Fingerprint]time.Time
-	// Keeps a rule that fails every tick from logging every tick.
-	failureLog logThrottle
-	budgetLog  logThrottle
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -362,7 +359,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	))
 
 	if pointsErr == nil {
-		r.commitWritten(current.merge(unmarked), markerBefore(ev.scheduledAt), logger)
+		r.commitWritten(current.merge(unmarked), logger)
 	}
 
 	return nil
@@ -393,13 +390,13 @@ func (r *recordingRule) staleOnStop(ctx context.Context) {
 
 // markStale stales every remembered series and forgets the ones that were staled.
 func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logger log.Logger) {
-	r.commitWritten(r.writeStale(ctx, markerAt, nil, logger), markerAt, logger)
+	r.commitWritten(r.writeStale(ctx, markerAt, nil, logger), logger)
 }
 
 // commitWritten makes next the remembered series. Room goes back for the series that left
 // before new ones ask for it, so a series that replaces another fits in a full budget.
 // A new series that finds the budget full is not remembered, so it gets no marker later.
-func (r *recordingRule) commitWritten(next writtenSeries, at time.Time, logger log.Logger) {
+func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
 	var leaving writtenSeries
 	for target, set := range r.written {
 		for fp, labels := range set {
@@ -431,9 +428,7 @@ func (r *recordingRule) commitWritten(next writtenSeries, at time.Time, logger l
 
 	if untracked > 0 {
 		r.metrics.RecordingRuleUntrackedSeries.Add(float64(untracked))
-		if suppressed, ok := r.budgetLog.allow(at); ok {
-			logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held, "suppressed", suppressed)
-		}
+		logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held)
 	}
 	r.metrics.RecordingRuleTrackedSeries.Set(float64(r.budget.Used()))
 }
@@ -485,9 +480,7 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 
 		failure := classifyMarkerError(err)
 		r.metrics.StaleMarkerFailures.WithLabelValues(failure.reason).Add(float64(len(try)))
-		if suppressed, ok := r.failureLog.allow(markerAt); ok {
-			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "suppressed", suppressed, "error", err)
-		}
+		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "error", err)
 		if !failure.retry {
 			r.metrics.StaleMarkersDropped.WithLabelValues(failure.reason).Add(float64(len(try)))
 			dropped = dropped.merge(writtenSeries{target: try})

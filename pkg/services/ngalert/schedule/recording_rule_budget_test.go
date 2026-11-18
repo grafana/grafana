@@ -222,20 +222,19 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 		}
 	})
 
-	t.Run("the warning about a full budget is throttled", func(t *testing.T) {
+	t.Run("every evaluation that refuses a series warns", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.rule.budget = state.NewSeriesBudget(1)
 		logger := &logtest.Fake{}
 		target := seriesTarget{dsUID: "ds-1", orgID: 1, name: "m"}
-		h.rule.commitWritten(writtenSeries{target: {1: data.Labels{"i": "kept"}}}, h.now, logger)
+		h.rule.commitWritten(writtenSeries{target: {1: data.Labels{"i": "kept"}}}, logger)
+		require.Zero(t, logger.WarnLogs.Calls, "nothing was refused yet")
 
-		at := h.now
 		for i := range 4 {
-			at = at.Add(time.Minute)
 			next := writtenSeries{target: {1: data.Labels{"i": "kept"}, data.Fingerprint(100 + i): data.Labels{"i": "refused"}}}
-			h.rule.commitWritten(next, at, logger)
+			h.rule.commitWritten(next, logger)
 		}
-		require.Equal(t, 1, logger.WarnLogs.Calls, "four refusals inside the interval warn once")
+		require.Equal(t, 4, logger.WarnLogs.Calls)
 		require.EqualValues(t, 4, testutil.ToFloat64(h.rule.metrics.RecordingRuleUntrackedSeries))
 		h.assertAccounting()
 	})
