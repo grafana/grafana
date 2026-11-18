@@ -44,7 +44,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
 | `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
-| `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                      | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                              | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                           | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
@@ -80,6 +79,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
 | `grafana.mobileEditDeprecation`    | Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports                                    |
 | `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
+| `dashboardUndoRedo`                | Enables undo/redo in dynamic dashboards                                                                                        |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |

@@ -1590,10 +1590,17 @@
         "view-list": "목록",
         "wildcard-in-text": "검색어에는 * 또는 %를 포함할 수 없습니다."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1815,17 +1822,18 @@
         "autosync-rules-error-title": "규칙 가져오기 실패",
         "autosync-rules-imported-note": "선택한 경고 규칙도 가져왔습니다.",
         "autosync-rules-note": "선택한 경고 규칙도 함께 가져옵니다.",
-        "autosync-success-body": "자동 동기화가 활성화되었습니다. 리디렉션 중...",
+        "autosync-success-body": "",
         "autosync-success-title": "자동 동기화 활성화됨",
         "autosync-title": "자동 동기화 확인",
         "body": "정말 가져오기를 시작하시겠어요? 이 작업을 수행하면 Grafana Alerting에 새로운 리소스가 생성됩니다.",
         "confirm": "가져오기 시작",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "가져오기 실패",
         "importing-body": "Grafana Alerting으로 리소스를 가져오는 중. 잠시 기다려 주세요...",
         "importing-title": "가져오는 중...",
-        "success-body": "리소스가 성공적으로 가져오기되었습니다. 리디렉션 중...",
+        "success-body": "",
         "success-title": "가져오기 성공",
         "title": "가져오기 확인"
       },
@@ -7665,11 +7673,7 @@
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
     "lifecycle": {
-      "applied": "{{title}}에 변경 사항을 적용했습니다",
-      "apply": "적용",
-      "apply-body": "액세스 권한이 있는 모든 사용자에게 변경 사항이 표시됩니다. 버전 기록에서 이전 버전으로 복원할 수 있습니다.",
-      "apply-failed": "변경 사항을 적용하지 못했습니다. 다시 시도하거나 먼저 변경 사항을 비교하세요.",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "초안",
       "breadcrumb-pending-changes": "보류 중인 변경 사항",
       "change-added": "추가됨 ",
@@ -7701,7 +7705,6 @@
       "draft-discarded": "",
       "draft-title": "초안",
       "edited-dashboard": "",
-      "highlight-changes": "대시보드에서 변경 사항 강조 표시",
       "pending-body": "보류 중인 변경 사항을 미리 보는 중입니다. 본인에게만 표시됩니다.",
       "pending-body-source": "대기 중인 변경 사항 {{source}}을(를) 미리 보는 중입니다. 본인에게만 표시됩니다.",
       "pending-changes-changed": "",
@@ -7710,12 +7713,15 @@
       "pending-stale": "변경 사항이 적용된 후 대시보드가 업데이트되었습니다",
       "pending-title": "보류 중인 변경 사항",
       "preview-changes": "변경 사항 미리 보기",
-      "rebase": "리베이스",
       "record-pending-change-failed": "",
       "save": "저장",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "원래 대시보드 표시",
-      "stop-highlighting-changes": "변경 사항 강조 표시 중지",
-      "apply-title_other": "“{{title}}”에? {{count}}개의 변경 사항을 적용하시겠습니까?"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "링크 추가",
@@ -13369,6 +13375,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "브레드크럼"
     },
@@ -13384,14 +13415,6 @@
         "open-all": "AI 어시스턴트 및 사이드바 앱 열기"
       },
       "floating-resize": "사이드바 너비 크기 조정"
-    },
-    "fullscreen-workspace": {
-      "enter": "워크스페이스로 이동",
-      "error-exit": "워크스페이스에서 나가기",
-      "error-message": "Grafana Assistant 작업 공간을 로딩할 수 없습니다.",
-      "error-reload": "페이지 새로고침",
-      "error-title": "워크스페이스를 사용할 수 없음",
-      "workspace": "워크스페이스"
     },
     "help": {
       "aria-label": "도움말",
@@ -13429,6 +13452,7 @@
       "tv-alert": "키오스크 모드를 종료하려면 ESC 키를 누르세요."
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "메뉴 닫기",
       "customise": "탐색 맞춤 설정",
       "customise-cancel": "취소",
@@ -13581,8 +13605,10 @@
       "drag-handle": "드래그하여 순서 변경",
       "duplicate": "블록 복제",
       "frame": {
-        "aria-label-collapsed": "접힌 블록: {{name}}",
-        "aria-label-panel": "시각화 블록: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "마크다운",
@@ -13670,7 +13696,7 @@
       "submit": "노트북에 추가",
       "success": "{{title}}에 패널 추가됨",
       "success-cells": "{{title}}에 추가됨",
-      "success-link": "노트북 보기",
+      "success-open-link": "",
       "tag-placeholder": "태그로 필터링",
       "target-description": "패널을 추가할 위치를 선택합니다.",
       "target-existing": "기존 노트북",
@@ -13841,7 +13867,8 @@
       "swatch-placeholder-aria-label": "색상 선택, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "기준별 색상 시리즈"
+      "color-by-label": "기준별 색상 시리즈",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "범위를 벗어났습니다. {{range}}",
@@ -15458,6 +15485,8 @@
       "header-title": "제목",
       "header-type": "유형",
       "missing-folder-metadata": "폴더 메타데이터 파일 누락",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "경로 또는 제목으로 검색",
       "source": "소스",
       "status-filter-aria-label": "상태별 필터링",

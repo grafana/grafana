@@ -400,6 +400,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "folder.pendingDeletionWrites",
+			Description:  "Record durable pending folder deletions before sending folder deletes to storage",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "folder.asyncCascadeDeleteThroughController",
 			Description:  "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
 			Stage:        FeatureStageExperimental,
@@ -729,7 +738,7 @@ var (
 		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -1037,14 +1046,6 @@ var (
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",                                                      // enabled by default
-		},
-		{
-			Name:        "newSavedQueriesExperience",
-			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardLibrary",
@@ -2076,6 +2077,14 @@ var (
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dataviz.reverseColorScheme",
+			Description: "Enable the option to reverse by value color schemes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},
@@ -3223,6 +3232,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.navigationAdminSubNav",
+			Description: "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.exploreMetricsSidebar",
 			Description: "Enables the sidebar in Explore metrics (Metrics Drilldown)",
 			Stage:       FeatureStageExperimental,
@@ -3546,6 +3563,15 @@ var (
 			Description:  "Disables the ST fallback for multi-tenant plugin api calls",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.logsInfiniteScrollTop",
+			Description:  "Enable infinite scroll for logs when scrolling top",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaObservabilityLogsSquad,
 			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,

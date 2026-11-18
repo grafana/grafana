@@ -1792,12 +1792,15 @@
     {
       "metadata": {
         "name": "dashboardUndoRedo",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "resourceVersion": "1794996543111",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 10:09:03.111749511 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables undo/redo in dynamic dashboards",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2305,6 +2308,20 @@
     },
     {
       "metadata": {
+        "name": "dataviz.reverseColorScheme",
+        "resourceVersion": "1794465675116",
+        "creationTimestamp": "2026-11-12T06:41:15Z"
+      },
+      "spec": {
+        "description": "Enable the option to reverse by value color schemes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataviz.tabularNums",
         "resourceVersion": "1790951488017",
         "creationTimestamp": "2026-10-02T15:19:46Z",
@@ -2750,6 +2767,20 @@
       },
       "spec": {
         "description": "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "folder.pendingDeletionWrites",
+        "resourceVersion": "1794428269469",
+        "creationTimestamp": "2026-11-11T20:17:49Z"
+      },
+      "spec": {
+        "description": "Record durable pending folder deletions before sending folder deletes to storage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-search-and-storage",
         "hideFromDocs": true,
@@ -3360,6 +3391,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logsInfiniteScrollTop",
+        "resourceVersion": "1794950185352",
+        "creationTimestamp": "2026-11-17T21:16:25Z"
+      },
+      "spec": {
+        "description": "Enable infinite scroll for logs when scrolling top",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.megaMenuPeekAndDock",
         "resourceVersion": "1794924578516",
         "creationTimestamp": "2026-11-17T10:20:15Z",
@@ -3462,6 +3508,23 @@
         "codeowner": "@grafana/identity-access-team",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.navigationAdminSubNav",
+        "resourceVersion": "1793749728452",
+        "creationTimestamp": "2026-10-28T21:50:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-03 23:48:48.452052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -5036,7 +5099,8 @@
       "metadata": {
         "name": "newSavedQueriesExperience",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-16T19:48:14Z"
+        "creationTimestamp": "2026-03-16T19:48:14Z",
+        "deletionTimestamp": "2026-11-02T21:10:32Z"
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
