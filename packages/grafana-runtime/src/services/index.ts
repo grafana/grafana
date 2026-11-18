@@ -20,6 +20,12 @@ export * from './templateSrv';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
+export {
+  getEmbeddedKeybindings,
+  type EmbeddedKeybinding,
+  type EmbeddedKeybindingsSnapshot,
+  type EmbeddedKeybindingService,
+} from './embeddedKeybindings';
 
 export {
   setPluginComponentHook,

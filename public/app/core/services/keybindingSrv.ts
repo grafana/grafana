@@ -1,5 +1,12 @@
+import { BehaviorSubject, type Subscription } from 'rxjs';
+
 import { toggleAssistant, isAssistantAvailable } from '@grafana/assistant';
-import { type LocationService } from '@grafana/runtime';
+import {
+  type EmbeddedKeybinding,
+  type EmbeddedKeybindingService,
+  type EmbeddedKeybindingsSnapshot,
+  type LocationService,
+} from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 
@@ -18,27 +25,45 @@ import { type RouteDescriptor } from '../navigation/types';
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 
+const assistantKeybinding: EmbeddedKeybinding = { id: 'open-assistant', keys: 'mod+.', allowInEditable: false };
+
 export class KeybindingSrv {
   constructor(
     private locationService: LocationService,
     private chromeService: AppChromeService
   ) {}
 
-  private assistantSubscription: { unsubscribe: () => void } | null = null;
+  private assistantSubscription?: Subscription;
+  private readonly embeddedBindings = new Map<string, { binding: EmbeddedKeybinding; run: () => void }>();
+  private readonly embeddedSnapshots = new BehaviorSubject<EmbeddedKeybindingsSnapshot>({ revision: 0, bindings: [] });
+
+  readonly embeddedKeybindings: EmbeddedKeybindingService = {
+    snapshots: this.embeddedSnapshots.asObservable(),
+    invoke: (id, revision) => {
+      const entry = this.embeddedBindings.get(id);
+      if (!entry || revision !== this.embeddedSnapshots.value.revision) {
+        return false;
+      }
+      entry.run.call(this);
+      return true;
+    },
+  };
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
+    this.assistantSubscription?.unsubscribe();
+    this.assistantSubscription = undefined;
     mousetrap.reset();
+    this.embeddedBindings.clear();
 
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
       this.bind('?', this.showHelpModal);
 
       this.bind('g h', this.goToHome);
-      this.bind('g d', this.goToDashboards);
+      this.bindEmbedded({ id: 'go-to-dashboards', keys: 'g d', allowInEditable: false }, this.goToDashboards);
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
       this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
@@ -53,6 +78,7 @@ export class KeybindingSrv {
       // 'change pseudo locale'
       this.bind('c p l', () => togglePseudoLocale());
     }
+    this.publishEmbeddedKeybindings();
   }
 
   bindGlobalEsc() {
@@ -111,18 +137,38 @@ export class KeybindingSrv {
   }
 
   private bindAssistantShortcutIfAvailable() {
-    // Clean up any existing subscription
-    if (this.assistantSubscription) {
-      this.assistantSubscription.unsubscribe();
-    }
-    // Subscribe to assistant availability and bind/unbind shortcut accordingly
+    // Include an initial synchronous emission in the route's snapshot.
+    let initializing = true;
     this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
-      if (available) {
-        this.bind('mod+.', this.toggleAssistant);
-      } else {
-        // Unbind the shortcut if assistant becomes unavailable
-        mousetrap.unbind('mod+.');
+      if (available === this.embeddedBindings.has(assistantKeybinding.id)) {
+        return;
       }
+      if (available) {
+        this.bindEmbedded(assistantKeybinding, this.toggleAssistant);
+      } else {
+        this.unbind(assistantKeybinding.keys, 'keydown');
+        this.embeddedBindings.delete(assistantKeybinding.id);
+      }
+      if (!initializing) {
+        this.publishEmbeddedKeybindings();
+      }
+    });
+    initializing = false;
+  }
+
+  private bindEmbedded(binding: EmbeddedKeybinding, run: () => void) {
+    if (binding.allowInEditable) {
+      this.bindGlobal(binding.keys, run);
+    } else {
+      this.bind(binding.keys, run);
+    }
+    this.embeddedBindings.set(binding.id, { binding, run });
+  }
+
+  private publishEmbeddedKeybindings() {
+    this.embeddedSnapshots.next({
+      revision: this.embeddedSnapshots.value.revision + 1,
+      bindings: Array.from(this.embeddedBindings.values(), ({ binding }) => binding),
     });
   }
 
