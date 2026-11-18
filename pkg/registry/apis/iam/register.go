@@ -443,7 +443,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableGlobalRolesApi := b.features.GlobalRolesAPI
 	enableTeamLBACRuleApi := b.features.TeamLBACRulesAPI
 	enableTeamsApi := b.features.TeamsAPI
-	enableUserApi := b.isSingleOrgSetup() && b.features.UsersAPI
+	enableUserApi := b.isUsersAPIEnabled()
 	enableServiceAccountsApi := b.features.ServiceAccountsAPI
 	enableServiceAccountTokensApi := b.features.ServiceAccountTokensAPI
 	enableSsoSettingsApi := b.features.SSOSettingsAPI
@@ -1115,7 +1115,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
 	enableTeamsApi := b.features.TeamsAPI
-	enableUserApi := b.isSingleOrgSetup() && b.features.UsersAPI
+	enableUserApi := b.isUsersAPIEnabled()
 	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
 	enableUserPermissionsApi := b.features.UserPermissionsAPI
 	enableSsoSettingsApi := b.features.SSOSettingsAPI
@@ -1399,6 +1399,13 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)
 	return store, err
+}
+
+// isUsersAPIEnabled reports whether the users API should be served. Writes are only
+// supported in single organization setups until users are fully migrated to namespaces
+// (no global users), so the read-only API is the only variant allowed in multi-org setups.
+func (b *IdentityAccessManagementAPIBuilder) isUsersAPIEnabled() bool {
+	return b.features.UsersAPI && (b.isSingleOrgSetup() || b.features.UsersAPIReadOnly)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) isSingleOrgSetup() bool {
