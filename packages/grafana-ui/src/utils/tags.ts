@@ -1,3 +1,4 @@
+import memoize from 'micro-memoize';
 import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -29,8 +30,13 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
  */
 export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const { background, text } =
-    typeof index === 'string' ? getTonalTagColors(index, theme) : colors[Math.abs(index % colors.length)];
+  const tagColors =
+    typeof index === 'string'
+      ? tinycolor(index).getAlpha() === 0
+        ? { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' }
+        : getTonalTagColors(index, theme?.isDark ?? true)
+      : colors[Math.abs(index % colors.length)];
+  const { background, text } = tagColors;
 
   const result = { background, text };
 
@@ -41,29 +47,29 @@ export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
   return result;
 }
 
-function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
-  const base = tinycolor(color);
-  if (base.getAlpha() === 0) {
-    return { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' };
-  }
+const getTonalTagColors = memoize(
+  (color: string, isDark: boolean) => {
+    const base = tinycolor(color);
+    base.setAlpha(1);
+    const background = base.toRgb();
+    const source = rgbToOklch(base.toRgb());
+    const themeDirection = isDark ? 1 : -1;
+    // Keep the configured background exact. Bright colors can use dark text and dark colors light text,
+    // regardless of theme mode. Prefer the theme direction only when both shifts are equal.
+    const preferred = findTextColor(source, background, themeDirection);
+    const alternate = findTextColor(source, background, -themeDirection);
+    const text =
+      alternate.meetsContrast && (!preferred.meetsContrast || alternate.delta < preferred.delta)
+        ? alternate
+        : preferred;
 
-  base.setAlpha(1);
-  const isDark = theme?.isDark ?? true;
-  const background = base.toRgb();
-  const source = rgbToOklch(base.toRgb());
-  const themeDirection = isDark ? 1 : -1;
-  // Keep the configured background exact. Bright colors can use dark text and dark colors light text,
-  // regardless of theme mode. Prefer the theme direction only when both shifts are equal.
-  const preferred = findTextColor(source, background, themeDirection);
-  const alternate = findTextColor(source, background, -themeDirection);
-  const text =
-    alternate.meetsContrast && (!preferred.meetsContrast || alternate.delta < preferred.delta) ? alternate : preferred;
-
-  return {
-    background: base.toRgbString(),
-    text: tinycolor(text.color).toRgbString(),
-  };
-}
+    return {
+      background: base.toRgbString(),
+      text: tinycolor(text.color).toRgbString(),
+    };
+  },
+  { maxSize: 100 }
+);
 
 function findTextColor(source: OklchColor, background: RgbColor, direction: number) {
   let lowerDelta = 0;

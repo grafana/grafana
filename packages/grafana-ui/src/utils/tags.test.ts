@@ -6,14 +6,24 @@ import { getTagColor } from './tags';
 
 describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) => {
   const theme = createTheme({ colors: { mode } });
+  const edgeCases = [
+    '#ffffff',
+    '#000000',
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#00ffff',
+    '#ff00ff',
+    '#808080',
+    '#7f8081',
+  ];
+  const colors = [...theme.components.tag.colors.map(({ background }) => background), ...edgeCases];
 
-  it.each(['#73BF69', '#FF9830', '#F2495C', '#000000', '#ffffff', '#808080', '#0000ff', '#ffff00'])(
-    'provides at least 4.5:1 text contrast for %s',
-    (base) => {
-      const { background, text } = getTagColor(base, theme);
-      expect(tinycolor.readability(background, text)).toBeGreaterThanOrEqual(4.5);
-    }
-  );
+  it.each(colors)('provides at least 4.5:1 text contrast for %s', (base) => {
+    const { background, text } = getTagColor(base, theme);
+    expect(tinycolor.readability(background, text)).toBeGreaterThanOrEqual(4.5);
+  });
 
   it('keeps transparent mappings transparent with theme text', () => {
     expect(getTagColor('transparent', theme)).toEqual({
