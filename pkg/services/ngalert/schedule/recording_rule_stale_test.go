@@ -47,6 +47,9 @@ type staleCall struct {
 	t      time.Time
 	orgID  int64
 	series []map[string]string
+
+	ctxErr      error
+	hasDeadline bool
 }
 
 type staleHarness struct {
@@ -60,6 +63,8 @@ type staleHarness struct {
 	stale     []staleCall
 	failWrite bool
 	failStale bool
+
+	cancelParent context.CancelFunc
 }
 
 func newStaleHarness(t *testing.T) *staleHarness {
@@ -83,18 +88,23 @@ func newStaleHarness(t *testing.T) *staleHarness {
 			h.events = append(h.events, "data")
 			return nil
 		},
-		WriteStaleFunc: func(_ context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
+		WriteStaleFunc: func(ctx context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
 			if h.failStale {
 				return errors.New("stale write failed")
 			}
 			h.events = append(h.events, "stale")
-			h.stale = append(h.stale, staleCall{dsUID: dsUID, name: name, t: ts, orgID: orgID, series: series})
+			_, hasDeadline := ctx.Deadline()
+			h.stale = append(h.stale, staleCall{dsUID: dsUID, name: name, t: ts, orgID: orgID, series: series, ctxErr: ctx.Err(), hasDeadline: hasDeadline})
 			return nil
 		},
 	}
 
+	parent, cancel := context.WithCancel(context.Background())
+	h.cancelParent = cancel
+	t.Cleanup(cancel)
+
 	h.rule = newRecordingRule(
-		context.Background(),
+		parent,
 		models.AlertRuleKeyWithGroup{},
 		RetryConfig{MaxAttempts: 1},
 		clock.NewMock(),
@@ -425,5 +435,151 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		restarted.ev.resp = seriesResponse(a)
 		restarted.tick()
 		require.Empty(t, restarted.stale)
+	})
+}
+
+func (h *staleHarness) stop(reason error) {
+	h.t.Helper()
+	h.rule.Stop(reason)
+	require.NoError(h.t, h.rule.Run())
+}
+
+func TestRecordingRuleStaleMarkersOnStop(t *testing.T) {
+	a := map[string]string{"instance": "a"}
+	b := map[string]string{"instance": "b"}
+	withRuleLabels := func(m map[string]string) map[string]string {
+		return map[string]string{"instance": m["instance"], "rule": "label"}
+	}
+
+	for name, reason := range map[string]error{"deleted": errRuleDeleted, "restarted": errRuleRestarted} {
+		t.Run(name+" stales every remembered series one ms after the last tick", func(t *testing.T) {
+			h := newStaleHarness(t)
+			h.ev.resp = seriesResponse(a, b)
+			h.tick()
+			ts := h.tick()
+
+			h.stop(reason)
+
+			require.Len(t, h.stale, 1)
+			call := h.stale[0]
+			require.Equal(t, ts.Add(time.Millisecond), call.t)
+			require.Equal(t, "ds-1", call.dsUID)
+			require.Equal(t, "my_metric", call.name)
+			require.Equal(t, int64(123), call.orgID)
+			require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, call.series)
+			require.Empty(t, h.rule.written)
+		})
+
+		t.Run(name+" writes markers with a live context that has a deadline", func(t *testing.T) {
+			h := newStaleHarness(t)
+			h.ev.resp = seriesResponse(a)
+			h.tick()
+
+			h.stop(reason)
+
+			require.Len(t, h.stale, 1)
+			require.NoError(t, h.stale[0].ctxErr, "the rule's own context is cancelled at stop")
+			require.True(t, h.stale[0].hasDeadline)
+		})
+
+		t.Run(name+" after a failed data write is newer than the markers of that tick", func(t *testing.T) {
+			h := newStaleHarness(t)
+			h.ev.resp = seriesResponse(a, b)
+			h.tick()
+
+			h.ev.resp = seriesResponse(a)
+			h.failWrite = true
+			ts := h.tick()
+			require.Len(t, h.stale, 1)
+			require.Equal(t, markerBefore(ts), h.stale[0].t)
+
+			h.stop(reason)
+
+			require.Len(t, h.stale, 2)
+			require.Equal(t, ts.Add(time.Millisecond), h.stale[1].t, "an older marker would be rejected as out of order")
+			require.Greater(t, h.stale[1].t.UnixMilli(), h.stale[0].t.UnixMilli())
+			require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.stale[1].series)
+		})
+
+		t.Run(name+" after a failed query uses the tick of that evaluation", func(t *testing.T) {
+			h := newStaleHarness(t)
+			h.ev.resp = seriesResponse(a)
+			h.tick()
+
+			h.ev.resp = nil
+			h.ev.err = errors.New("query failed")
+			ts := h.tick()
+
+			h.stop(reason)
+
+			require.Len(t, h.stale, 1)
+			require.Equal(t, ts.Add(time.Millisecond), h.stale[0].t)
+		})
+	}
+
+	t.Run("other stop causes write no markers", func(t *testing.T) {
+		for name, reason := range map[string]error{
+			"group not owned": errors.New("replica does not own the rule group anymore"),
+			"no reason":       nil,
+		} {
+			t.Run(name, func(t *testing.T) {
+				h := newStaleHarness(t)
+				h.ev.resp = seriesResponse(a)
+				h.tick()
+
+				h.stop(reason)
+
+				require.Empty(t, h.stale)
+			})
+		}
+	})
+
+	t.Run("cancelling the parent context, as on shutdown, writes no markers", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.ev.resp = seriesResponse(a)
+		h.tick()
+
+		h.cancelParent()
+		require.NoError(t, h.rule.Run())
+
+		require.Empty(t, h.stale)
+	})
+
+	t.Run("a rule paused before it was deleted has nothing left to stale", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.ev.resp = seriesResponse(a)
+		h.tick()
+		h.model.IsPaused = true
+		h.tick()
+		require.Len(t, h.stale, 1)
+
+		h.stop(errRuleDeleted)
+
+		require.Len(t, h.stale, 1)
+	})
+
+	t.Run("a rule that never wrote a series writes no markers", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.stop(errRuleDeleted)
+		require.Empty(t, h.stale)
+
+		h = newStaleHarness(t)
+		h.ev.resp = seriesResponse()
+		h.ev.resp.Responses["A"] = backend.DataResponse{Frames: data.Frames{}}
+		h.tick()
+		h.stop(errRuleDeleted)
+		require.Empty(t, h.stale)
+	})
+
+	t.Run("a failed marker write is not an error and is not retried", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.ev.resp = seriesResponse(a)
+		h.tick()
+
+		h.failStale = true
+		h.stop(errRuleDeleted)
+
+		require.Empty(t, h.stale)
+		require.Equal(t, []string{"data"}, h.events)
 	})
 }

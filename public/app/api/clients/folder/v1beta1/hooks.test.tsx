@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, renderHook, getWrapper, waitFor, screen, within } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
@@ -102,6 +103,8 @@ const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | u
 
 const originalProvisioningEnabled = config.provisioningEnabled;
 const originalPermissions = contextSrv.user.permissions;
+
+testWithStarsUser();
 
 beforeEach(() => {
   config.provisioningEnabled = false;

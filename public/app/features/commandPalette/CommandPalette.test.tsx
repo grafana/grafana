@@ -346,7 +346,9 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
+      // Wait for the theme results to settle so the click doesn't land on a row that is about to be replaced
+      await screen.findByRole('option', { name: /^Change theme.*Dark$/ }, { timeout: 3000 });
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
@@ -484,5 +486,29 @@ describe('CommandPalette', () => {
         expect(performSecondAction).not.toHaveBeenCalled();
       }
     );
+
+    it('does not activate the highlighted item on Shift+Enter', async () => {
+      // Shift+Enter is reserved for the Ask Assistant shortcut; with it disabled the key must be a no-op
+      // instead of activating whatever row the (throttled) result list currently highlights.
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
+      const performAction = jest.fn();
+      render(
+        <KBarProvider actions={[{ id: 'shift-enter', name: 'zzshift', perform: performAction }]}>
+          <CommandPalette />
+        </KBarProvider>
+      );
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'zzshift');
+      await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
+      const option = await screen.findByRole('option', { name: 'zzshift' });
+      expect(option).toHaveAttribute('aria-selected', 'true');
+
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(performAction).not.toHaveBeenCalled();
+
+      await user.keyboard('{Enter}');
+      expect(performAction).toHaveBeenCalledTimes(1);
+    });
   });
 });

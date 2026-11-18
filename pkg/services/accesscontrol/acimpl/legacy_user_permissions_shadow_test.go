@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/authlib/types"
@@ -16,6 +17,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -24,6 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func newPermissionShadow(t *testing.T, reg prometheus.Registerer, maxConcurrent int) *LegacyUserPermissionsShadow {
+	t.Helper()
+	s, err := NewLegacyUserPermissionsShadow(reg, maxConcurrent)
+	require.NoError(t, err)
+	return s
+}
 
 type shadowLegacyClient struct {
 	legacyclient.Service
@@ -65,7 +75,7 @@ func TestPermissionSetDifference(t *testing.T) {
 
 func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 	registry := prometheus.NewRegistry()
-	s := NewLegacyUserPermissionsShadow(registry, 32)
+	s := newPermissionShadow(t, registry, 32)
 	type requestKey struct{}
 	ctx, cancel := context.WithCancel(context.WithValue(context.Background(), requestKey{}, "request state"))
 	defer cancel()
@@ -128,7 +138,7 @@ func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 func TestPermissionShadowFailures(t *testing.T) {
 	for _, mode := range []string{"mismatch", "shadow error", "primary error", "missing client", "panic"} {
 		t.Run(mode, func(t *testing.T) {
-			s := NewLegacyUserPermissionsShadow(prometheus.NewRegistry(), 32)
+			s := newPermissionShadow(t, prometheus.NewRegistry(), 32)
 			primaryErr := error(nil)
 			if mode == "primary error" {
 				primaryErr = errors.New("primary failed")
@@ -167,7 +177,7 @@ func TestPermissionShadowRouting(t *testing.T) {
 					cfg: setting.NewCfg(), features: featuremgmt.WithFeatures(),
 					store:          actest.FakeStore{},
 					actionResolver: resourcepermissions.NewActionSetService(),
-					legacyShadow:   NewLegacyUserPermissionsShadow(nil, 32),
+					legacyShadow:   newPermissionShadow(t, nil, 32),
 					legacyClient: shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 						return legacyclient.LegacyGetUserPermissionsResponse{}, nil
 					}},
@@ -199,34 +209,100 @@ func TestPermissionShadowRouting(t *testing.T) {
 }
 
 func TestPermissionShadowSkipsTransaction(t *testing.T) {
-	s := NewLegacyUserPermissionsShadow(nil, 1)
+	s := newPermissionShadow(t, nil, 1)
 	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
 	want := []ac.Permission{{Action: "read"}}
 	got, err := s.GetUserPermissions(ctx, nil, shadowRequester(), ac.Options{ReloadCache: true}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
 	require.NoError(t, err)
 	require.Equal(t, want, got)
 	require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
-	require.Empty(t, s.inFlight)
 	require.Zero(t, testutil.CollectAndCount(s.duration))
 }
 
 func TestPermissionShadowConcurrencyLimit(t *testing.T) {
 	for _, limit := range []int{1, 4, 32, 64, 0, -1} {
 		t.Run(fmt.Sprint(limit), func(t *testing.T) {
-			s := NewLegacyUserPermissionsShadow(nil, limit)
-			expected := limit
-			if expected < 1 {
-				expected = setting.DefaultLegacyUserPermissionsShadowMaxConcurrent
-			}
-			require.Equal(t, expected, cap(s.inFlight))
-			for range expected {
-				s.inFlight <- struct{}{}
-			}
-			want := []ac.Permission{{Action: "read"}}
-			got, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
-			require.NoError(t, err)
-			require.Equal(t, want, got)
-			require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
+			synctest.Test(t, func(t *testing.T) {
+				s := newPermissionShadow(t, nil, limit)
+				expected := limit
+				if expected < 1 {
+					expected = setting.DefaultLegacyUserPermissionsShadowMaxConcurrent
+				}
+				release := make(chan struct{})
+				client := shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+					<-release
+					return legacyclient.LegacyGetUserPermissionsResponse{}, nil
+				}}
+				primary := func() ([]ac.Permission, error) { return nil, nil }
+				for range expected {
+					_, err := s.GetUserPermissions(t.Context(), client, shadowRequester(), ac.Options{}, setting.NewCfg(), primary)
+					require.NoError(t, err)
+				}
+				synctest.Wait()
+				want := []ac.Permission{{Action: "read"}}
+				got, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
+				require.NoError(t, err)
+				require.Equal(t, want, got)
+				require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
+				close(release)
+				synctest.Wait()
+				_, err = s.GetUserPermissions(t.Context(), client, shadowRequester(), ac.Options{}, setting.NewCfg(), primary)
+				require.NoError(t, err)
+				synctest.Wait()
+				require.Equal(t, float64(expected+1), testutil.ToFloat64(s.results.WithLabelValues("ok")))
+			})
 		})
 	}
+}
+
+func TestPermissionShadowPrimaryPanicReleasesCapacity(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		s := newPermissionShadow(t, nil, 1)
+
+		require.PanicsWithValue(t, "primary", func() {
+			_, _ = s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) {
+				panic("primary")
+			})
+		})
+
+		_, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return nil, nil })
+		require.NoError(t, err)
+		synctest.Wait()
+
+		require.Zero(t, testutil.ToFloat64(s.skipped))
+		require.Equal(t, float64(1), testutil.ToFloat64(s.results.WithLabelValues("error")))
+	})
+}
+
+type permissionShadowLogger struct{ logtest.Fake }
+
+func (l *permissionShadowLogger) FromContext(context.Context) log.Logger { return l }
+
+func TestPermissionShadowMismatchLogs(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		s := newPermissionShadow(t, nil, 1)
+		logger := &permissionShadowLogger{}
+		s.logger = logger
+
+		client := shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+			return legacyclient.LegacyGetUserPermissionsResponse{Permissions: []types.Permission{{Action: "read", Scope: "new"}}}, nil
+		}}
+		want := []ac.Permission{{Action: "read", Scope: "old"}}
+
+		got, err := s.GetUserPermissions(t.Context(), client, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
+
+		require.NoError(t, err)
+		require.Equal(t, want, got)
+
+		synctest.Wait()
+
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Equal(t, "Permission shadow results differ", logger.WarnLogs.Message)
+		require.Equal(t, []any{
+			"namespace", types.OrgNamespaceFormatter(1), "subject", "user",
+			"missing", []permissionKey{{Action: "read", Scope: "old"}},
+			"gained", []permissionKey{{Action: "read", Scope: "new"}},
+		}, logger.WarnLogs.Ctx)
+		require.Equal(t, float64(1), testutil.ToFloat64(s.results.WithLabelValues("error")))
+	})
 }

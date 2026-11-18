@@ -242,7 +242,7 @@ func (c *ControllerConfig) ResourceLister() (resources.ResourceLister, error) {
 			return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
 		}
 	}
-	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI)
+	return resources.NewResourceListerForMode(mode, store, clients, supportedResources, provisioningAPI, c.Settings.ProvisioningResourceListerPageSize)
 }
 
 // SupportedResources is the configured provisionable set, which may name collections as wildcards.

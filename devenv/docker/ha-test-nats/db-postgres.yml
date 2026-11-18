@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17.12-alpine3.24
+    environment:
+      POSTGRES_DB: grafana
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: password
+    command: [postgres, -c, max_connections=300]
+    tmpfs:
+      - /var/lib/postgresql/data
+    # Check over TCP: the init server the entrypoint runs first only listens on the socket.
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "grafana", "-d", "grafana"]
+      interval: 3s
+      timeout: 10s
+      retries: 40

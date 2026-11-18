@@ -1131,6 +1131,52 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
+		name: "unified library panels are ignored while legacy reports library_elements",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 7},
+					{Group: "sql-fallback", Resource: "library_elements", Count: 0},
+				},
+			},
+		},
+	}, {
+		name: "legacy library elements still block the delete",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 5},
+					{Group: "sql-fallback", Resource: "library_elements", Count: 3},
+				},
+			},
+		},
+		expectedErr: "folder is not empty, contains 3 library_elements",
+	}, {
+		name: "unified library panels block the delete when legacy reports nothing",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 2},
+				},
+			},
+		},
+		expectedErr: "folder is not empty, contains 2 librarypanels",
+	}, {
 		name: "stats error - nil response without error",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{

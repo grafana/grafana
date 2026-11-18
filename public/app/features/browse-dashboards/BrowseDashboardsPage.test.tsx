@@ -3,6 +3,7 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
@@ -75,6 +76,8 @@ function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof
     ...options,
   });
 }
+
+testWithStarsUser();
 
 describe('browse-dashboards BrowseDashboardsPage', () => {
   const mockPermissions = {

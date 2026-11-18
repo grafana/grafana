@@ -11,7 +11,6 @@ import (
 // it keeps the index reader; what the setting has to leave working is asserted here, and the HTTP
 // reader is pointed at the same server by the test.
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithResourceLister(resources.ListerAPIs),
 )
 

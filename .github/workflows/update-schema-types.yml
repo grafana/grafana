@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - docs/sources/developers/plugins/plugin.schema.json
+  workflow_dispatch:
 
 permissions: {}
 

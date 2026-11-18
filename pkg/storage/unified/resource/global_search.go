@@ -184,7 +184,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 			excluded := map[schema.GroupResource]bool{}
 			for _, version := range m.Versions {
 				for _, kind := range version.Kinds {
-					gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+					gr := schema.GroupResource{Group: m.Group, Resource: kind.Resource}
 					if decided[gr] {
 						continue
 					}

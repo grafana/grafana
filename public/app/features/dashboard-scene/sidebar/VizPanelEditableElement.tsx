@@ -141,12 +141,22 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
+    DashboardInteractions.panelActionClicked(
+      'duplicate',
+      getPanelIdForVizPanel(this.panel),
+      source,
+      this.panel.state.pluginId
+    );
     duplicatePanel(this.panel);
   }
 
   public onCopy(source: EditActionSource = 'edit_pane') {
-    DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
+    DashboardInteractions.panelActionClicked(
+      'copy',
+      getPanelIdForVizPanel(this.panel),
+      source,
+      this.panel.state.pluginId
+    );
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
@@ -174,7 +184,7 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
       onClick={() => {
         const panelId = getPanelIdForVizPanel(panel);
         locationService.partial({ editPanel: panelId });
-        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
+        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane', panel.state.pluginId);
       }}
       icon="pen"
       variant="secondary"
