@@ -2775,6 +2775,20 @@
     },
     {
       "metadata": {
+        "name": "folder.pendingDeletionWrites",
+        "resourceVersion": "1794428269469",
+        "creationTimestamp": "2026-11-11T20:17:49Z"
+      },
+      "spec": {
+        "description": "Record durable pending folder deletions before sending folder deletes to storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "folderPickerCreatePermission",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-10-14T22:15:23Z",
@@ -3369,6 +3383,21 @@
       "spec": {
         "description": "Enables log level inference from log line contents when level is not defined as a field or a label",
         "stage": "deprecated",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.logsInfiniteScrollTop",
+        "resourceVersion": "1794950185352",
+        "creationTimestamp": "2026-11-17T21:16:25Z"
+      },
+      "spec": {
+        "description": "Enable infinite scroll for logs when scrolling top",
+        "stage": "preview",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
         "hideFromDocs": true,
