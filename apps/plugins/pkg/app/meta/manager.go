@@ -21,6 +21,7 @@ const (
 // cachedMeta represents a cached metadata entry with expiration time
 type cachedMeta struct {
 	meta      pluginsv0alpha1.MetaSpec
+	provider  string
 	ttl       time.Duration
 	expiresAt time.Time
 }
@@ -78,6 +79,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 	if exists && time.Now().Before(cached.expiresAt) {
 		metrics.MetaCacheLookupTotal.WithLabelValues("hit").Inc()
+		metrics.MetaResolutionsTotal.WithLabelValues(cached.provider, ref.ID).Inc()
 		return &Result{
 			Meta: cached.meta,
 			TTL:  cached.ttl,
@@ -95,6 +97,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 
 		if err == nil {
 			metrics.MetaFetchDurationSeconds.WithLabelValues(provider.Name(), "success").Observe(duration.Seconds())
+			metrics.MetaResolutionsTotal.WithLabelValues(provider.Name(), ref.ID).Inc()
 
 			// Don't cache results with a zero TTL
 			if result.TTL == 0 {
@@ -104,6 +107,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 			pm.cacheMu.Lock()
 			pm.cache[cacheKey] = &cachedMeta{
 				meta:      result.Meta,
+				provider:  provider.Name(),
 				ttl:       result.TTL,
 				expiresAt: time.Now().Add(result.TTL),
 			}
@@ -111,6 +115,11 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result,
 			pm.cacheMu.Unlock()
 
 			return result, nil
+		}
+
+		var fetchErr *FetchError
+		if errors.As(err, &fetchErr) {
+			metrics.MetaFetchErrorsTotal.WithLabelValues(provider.Name(), fetchErr.Reason, originCallerIdentity(ctx)).Inc()
 		}
 
 		// If not found, try next provider
@@ -154,12 +163,26 @@ func (pm *ProviderManager) cleanupExpired() {
 // callerIdentity returns the service identity of the caller (from its access token),
 // or "unknown" if the request carries no service identity (e.g. an end-user session).
 func callerIdentity(ctx context.Context) string {
+	return extraIdentity(ctx, authn.ServiceIdentityKey)
+}
+
+// originCallerIdentity returns the innermost service identity of the request, i.e. the first
+// service in the token chain. Only access-token auth info sets the innermost key, so it falls back
+// to callerIdentity for any other identity type: a caller that is not delegating is its own origin.
+func originCallerIdentity(ctx context.Context) string {
+	if id := extraIdentity(ctx, authn.InnermostServiceIdentityKey); id != "unknown" {
+		return id
+	}
+	return callerIdentity(ctx)
+}
+
+func extraIdentity(ctx context.Context, key string) string {
 	authInfo, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok || authInfo == nil {
 		return "unknown"
 	}
 
-	identities := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	identities := authInfo.GetExtra()[key]
 	if len(identities) == 0 {
 		return "unknown"
 	}

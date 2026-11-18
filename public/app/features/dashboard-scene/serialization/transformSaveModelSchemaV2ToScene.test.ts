@@ -1,6 +1,9 @@
+import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
-import { config } from '@grafana/runtime';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   behaviors,
   ConstantVariable,
@@ -15,6 +18,7 @@ import {
   type SceneDataTransformer,
   type SceneGridItem,
   SwitchVariable,
+  ScopesVariable,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import {
@@ -26,7 +30,6 @@ import {
   defaultDataQueryKind,
   type GridLayoutItemSpec,
   type GridLayoutSpec,
-  type GroupByVariableKind,
   type IntervalVariableKind,
   type QueryVariableKind,
   type SwitchVariableKind,
@@ -34,8 +37,9 @@ import {
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -85,18 +89,50 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
-  beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
-  });
+  it('should merge a default GroupByVariable into the default adhoc variable on the same datasource', () => {
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {
+      uid: 'dashboard-uid',
+      route: DashboardRoutes.Normal,
+      defaultVariables: [
+        {
+          kind: 'AdhocVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+          },
+        },
+        {
+          kind: 'GroupByVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    });
 
-  afterAll(() => {
-    config.featureToggles.groupByVariable = false;
+    const variables = scene.state.$variables!.state.variables;
+    const filter = variables.find((v) => v.state.name === 'defaultFilter') as AdHocFiltersVariable;
+    expect(filter.state.enableGroupBy).toBe(true);
+    expect(filter.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
+    expect(variables.find((v) => v.state.name === 'defaultGroupBy')).toBeUndefined();
   });
 
   it('should initialize the DashboardScene with the model state', () => {
@@ -143,7 +179,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     // Variables
     const variables = scene.state?.$variables;
-    expect(variables?.state.variables).toHaveLength(dash.variables.length);
+    // The GroupByVariable is migrated away on load; there is no adhoc variable on its datasource to merge into.
+    expect(variables?.state.variables).toHaveLength(dash.variables.length - 1);
+    expect(variables?.state.variables.find((v) => v instanceof GroupByVariable)).toBeUndefined();
 
     validateVariable({
       sceneVariable: variables?.state.variables[0],
@@ -195,14 +233,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
     validateVariable({
       sceneVariable: variables?.state.variables[6],
-      variableKind: dash.variables[6] as GroupByVariableKind,
-      scene: scene,
-      dashSpec: dash,
-      sceneVariableClass: GroupByVariable,
-      index: 6,
-    });
-    validateVariable({
-      sceneVariable: variables?.state.variables[7],
       variableKind: dash.variables[7] as AdhocVariableKind,
       scene: scene,
       dashSpec: dash,
@@ -210,7 +240,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       index: 7,
     });
     validateVariable({
-      sceneVariable: variables?.state.variables[8],
+      sceneVariable: variables?.state.variables[7],
       variableKind: dash.variables[8] as SwitchVariableKind,
       scene: scene,
       dashSpec: dash,
@@ -430,6 +460,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  describe('scopes variable', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('adds a ScopesVariable when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(true);
+    });
+
+    it('does not add a ScopesVariable when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+    });
+
+    it('does not add a ScopesVariable for public dashboards', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+        const variables = scene.state.$variables?.state.variables ?? [];
+        expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
+  });
+
   describe('query variables in public dashboard mode', () => {
     it('forces refresh to never when publicDashboardAccessToken is set, regardless of spec refresh', () => {
       const originalToken = config.publicDashboardAccessToken;
@@ -467,6 +535,20 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('adhoc variables', () => {
+    it('should resolve supportsMultiValueOperators from the datasource settings', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith({ type: adhocVar.group });
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+    });
+
     it('should convert empty defaultKeys array to undefined', () => {
       const dashboard = cloneDeep(defaultDashboard);
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
@@ -494,60 +576,32 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
     });
 
-    it('should set enableGroupBy to true when feature flag is on and enableGroupBy is true', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-      try {
-        const dashboard = cloneDeep(defaultDashboard);
-        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
-        adhocVar.spec.enableGroupBy = true;
-
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
-        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
-        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.enableGroupBy).toBe(true);
-      } finally {
-        config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      }
-    });
-
-    it('should set enableGroupBy to false when feature flag is on and enableGroupBy is false', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-      try {
-        const dashboard = cloneDeep(defaultDashboard);
-        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
-        adhocVar.spec.enableGroupBy = false;
-
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
-        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
-        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.enableGroupBy).toBe(false);
-      } finally {
-        config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      }
-    });
-
-    it('should default enableGroupBy to false when feature flag is on and enableGroupBy is not set', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-      try {
-        const dashboard = cloneDeep(defaultDashboard);
-        const scene = transformSaveModelSchemaV2ToScene(dashboard);
-
-        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
-        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.enableGroupBy).toBe(false);
-      } finally {
-        config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      }
-    });
-
-    it('should not set enableGroupBy when dashboardUnifiedDrilldownControls is disabled', () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    it('should set enableGroupBy to true when enableGroupBy is true', () => {
       const dashboard = cloneDeep(defaultDashboard);
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
       adhocVar.spec.enableGroupBy = true;
 
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+      expect(adhocVariable.state.enableGroupBy).toBe(true);
+    });
+
+    it('should set enableGroupBy to false when enableGroupBy is false', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.enableGroupBy = false;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+      expect(adhocVariable.state.enableGroupBy).toBe(false);
+    });
+
+    it('should default enableGroupBy to false when enableGroupBy is not set', () => {
+      const dashboard = cloneDeep(defaultDashboard);
       const scene = transformSaveModelSchemaV2ToScene(dashboard);
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
@@ -615,6 +669,27 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(dataLayers.state.annotationLayers).toHaveLength(0);
     });
 
+    it('should resolve supportsMultiValueOperators for adhoc variables', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+    });
+
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
       const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
         ...defaultDashboard,
@@ -639,6 +714,43 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
+  describe('when the perPanelNonApplicableDrilldowns flag is on', () => {
+    beforeEach(() => {
+      setTestFlags({ perPanelNonApplicableDrilldowns: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    // The standalone GroupByVariable in defaultDashboard is migrated away on load, so only the adhoc variable is checked
+    it('should enable applicability on adhoc variables', () => {
+      const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+      const variables = scene.state.$variables?.state.variables ?? [];
+
+      const adhocVariable = variables.find((v) => v instanceof AdHocFiltersVariable);
+
+      expect(adhocVariable?.state).toMatchObject({ applicabilityEnabled: true });
+    });
+
+    it('should enable applicability on adhoc variables in snapshots', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$variables?.getByName('adhocVar')?.state).toMatchObject({ applicabilityEnabled: true });
+    });
+  });
+
   describe('meta', () => {
     describe('initializes meta based on k8s resource', () => {
       it('handles undefined access values', () => {
@@ -660,6 +772,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
         expect(scene.state.meta.folderUid).toBe('folder-uid');
         expect(scene.state.meta.version).toBe(123);
+      });
+
+      it('carries libraryPanelRepeatUnresolved through from the DTO', () => {
+        expect(transformSaveModelSchemaV2ToScene(defaultDashboard).state.meta.libraryPanelRepeatUnresolved).toBe(
+          undefined
+        );
+
+        const resolved: DashboardWithLoadInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          libraryPanelRepeatUnresolved: true,
+        };
+        expect(transformSaveModelSchemaV2ToScene(resolved).state.meta.libraryPanelRepeatUnresolved).toBe(true);
       });
 
       it('handles access metadata values', () => {

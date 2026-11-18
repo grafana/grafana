@@ -8,7 +8,7 @@ import {
   type SelectableValue,
   getDataSourceRef,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

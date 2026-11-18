@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, logError, logWarning } from '@grafana/runtime';
+import { getDataSourceInstanceList, logError, logWarning } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -89,6 +89,7 @@ async function fetchGrafanaFolderNames(
       limitAlerts: 0,
       groupLimit: GROUP_FETCH_LIMIT + 1,
       searchFolder: searchFolder || undefined,
+      metadataOnly: true,
     }).unwrap();
     return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
   } catch (error) {
@@ -192,6 +193,7 @@ export function useNamespaceAndGroupOptions(): {
           limitAlerts: 0, // Lightweight - no alert data
           searchGroupName: trimmedInput, // Backend filtering via search.rule_group parameter
           groupLimit: GROUP_SEARCH_LIMIT, // Reasonable limit for dropdown results
+          metadataOnly: true,
         }).unwrap();
 
         // Deduplicate group names
@@ -256,7 +258,10 @@ export function useLabelOptions(): {
   const labelOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       // Fetch grafana groups and prefer cache when available
-      const response = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000 }, true).unwrap();
+      const response = await fetchGrafanaGroups(
+        { limitAlerts: 0, groupLimit: 1000, metadataOnly: true },
+        true
+      ).unwrap();
       const labelsMap = groupsToLabels(response.data.groups);
 
       const selectable = toOptions(labelsMap);
@@ -275,9 +280,8 @@ export function useLabelOptions(): {
 
 export function useAlertingDataSourceOptions(): (inputValue: string) => Promise<Array<ComboboxOption<string>>> {
   return useCallback(async (inputValue: string) => {
-    const options = getDataSourceSrv()
-      .getList({ alerting: true })
-      .map((ds: DataSourceInstanceSettings) => ({ label: ds.name, value: ds.name }));
+    const dataSources = await getDataSourceInstanceList({ alerting: true });
+    const options = dataSources.map((ds) => ({ label: ds.name, value: ds.name }));
     return filterBySearch(options, inputValue);
   }, []);
 }

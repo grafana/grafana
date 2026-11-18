@@ -841,7 +841,7 @@
       "get": {
         "tags": ["Connection"],
         "summary": "List external repositories",
-        "description": "List repositories available from the external git provider through this connection",
+        "description": "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories",
         "operationId": "getConnectionRepositories",
         "responses": {
           "200": {
@@ -3431,8 +3431,27 @@
     "/repositories/{name}/resources": {
       "get": {
         "tags": ["Repository"],
-        "description": "connect GET requests to resources of Repository",
+        "description": "Get the resources this repository manages",
         "operationId": "getRepositoryResources",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of items to return; omit for all of them",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "continue token from the metadata of the previous page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3457,6 +3476,44 @@
           "name": "name",
           "in": "path",
           "description": "name of the ResourceList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/stats": {
+      "get": {
+        "tags": ["Repository"],
+        "summary": "Repository resource stats",
+        "description": "Count the resources this repository manages",
+        "operationId": "getRepositoryStats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceCountList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "ResourceCountList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ResourceCountList",
           "required": true,
           "schema": {
             "type": "string",
@@ -4197,6 +4254,14 @@
             "description": "The connection description",
             "type": "string"
           },
+          "gitOAuth": {
+            "description": "Generic git OAuth app connection configuration Only applicable when provider is \"gitOAuth\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GitOAuthConnectionConfig"
+              }
+            ]
+          },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
             "allOf": [
@@ -4235,11 +4300,12 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucketOAuth",
+              "gitOAuth",
               "github",
               "githubEnterprise",
               "githubEnterpriseOAuth",
@@ -4655,6 +4721,30 @@
           "url": {
             "description": "The repository URL (e.g. `https://gitlab.com/example/test`).",
             "type": "string"
+          }
+        }
+      },
+      "GitOAuthConnectionConfig": {
+        "description": "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
+        "type": "object",
+        "required": ["authURL", "tokenURL"],
+        "properties": {
+          "authURL": {
+            "description": "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
+            "type": "string",
+            "default": ""
+          },
+          "scopes": {
+            "description": "The OAuth scopes to request, granting git read and write access.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenURL": {
+            "description": "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -5782,6 +5872,7 @@
               "type": "string",
               "enum": [
                 "bitbucketOAuth",
+                "gitOAuth",
                 "github",
                 "githubEnterprise",
                 "githubEnterpriseOAuth",
@@ -5850,6 +5941,47 @@
             "default": ""
           }
         }
+      },
+      "ResourceCountList": {
+        "description": "What a single manager manages.",
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ResourceCount"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceCountList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "ResourceList": {
         "description": "Information we can get just from the file listing",
@@ -6275,6 +6407,11 @@
             "description": "The ID for the job that ran this sync",
             "type": "string"
           },
+          "lastChecked": {
+            "description": "When the controller last attempted a sync or an interval check (Unix milliseconds).",
+            "type": "integer",
+            "format": "int64"
+          },
           "lastRef": {
             "description": "The repository ref when the last successful sync ran",
             "type": "string"
@@ -6658,7 +6795,7 @@
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6706,7 +6843,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }

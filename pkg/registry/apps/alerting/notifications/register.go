@@ -16,13 +16,13 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/config"
@@ -47,6 +47,10 @@ import (
 // the legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go)
 // so both validation paths accept the same set.
 var syncableAMImplementations = []string{"mimir", "cortex"}
+
+// defaultAMImplementation is what an alertmanager datasource without an "implementation" setting
+// counts as. It must match the one in the legacy admin_config HTTP API for the same reason.
+const defaultAMImplementation = "mimir"
 
 var (
 	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
@@ -100,6 +104,9 @@ func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSou
 			return fmt.Errorf("datasource must be of type alertmanager")
 		}
 		impl := strings.ToLower(got.JsonData.Get("implementation").MustString(""))
+		if impl == "" {
+			impl = defaultAMImplementation
+		}
 		if !slices.Contains(syncableAMImplementations, impl) {
 			return fmt.Errorf("%q implementation is not supported for sync (must be one of: %s); use the convert API for manual config import",
 				impl, strings.Join(syncableAMImplementations, ", "))

@@ -292,7 +292,50 @@ func TestReadClassicResource_TypeAssertions(t *testing.T) {
 	})
 }
 
+func TestReadClassicResource_EmptyInput(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		data []byte
+	}{
+		{name: "nil"},
+		{name: "empty", data: []byte{}},
+		{name: "UTF-8 BOM only", data: []byte{0xEF, 0xBB, 0xBF}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{Data: tt.data})
+			require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+			require.Nil(t, obj)
+			require.Nil(t, gvk)
+			require.Empty(t, classic)
+		})
+	}
+}
+
 func TestParseFileResource(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		data          []byte
+		emptyAfterBOM bool
+	}{
+		{name: "nil", emptyAfterBOM: true},
+		{name: "empty", data: []byte{}, emptyAfterBOM: true},
+		{name: "UTF-8 BOM only", data: []byte{0xEF, 0xBB, 0xBF}, emptyAfterBOM: true},
+		{name: "UTF-16 LE BOM only", data: []byte{0xFF, 0xFE}},
+		{name: "UTF-16 BE BOM only", data: []byte{0xFE, 0xFF}},
+	} {
+		t.Run(tt.name+" returns validation error", func(t *testing.T) {
+			obj, gvk, classic, err := ParseFileResource(context.Background(), &repository.FileInfo{Data: tt.data})
+			var validationErr *ResourceValidationError
+			require.ErrorAs(t, err, &validationErr)
+			if tt.emptyAfterBOM {
+				require.ErrorIs(t, err, ErrUnableToReadResourceBytes)
+			}
+			require.Nil(t, obj)
+			require.Nil(t, gvk)
+			require.Empty(t, classic)
+		})
+	}
+
 	t.Run("k8s resource parsed directly", func(t *testing.T) {
 		info := &repository.FileInfo{
 			Data: []byte(`{

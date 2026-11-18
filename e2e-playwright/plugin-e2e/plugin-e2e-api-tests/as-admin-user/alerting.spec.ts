@@ -3,8 +3,6 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 const QUERY_AND_EXPRESSION_STEP = '2';
 
-test.use({ featureToggles: { alertingNotificationsStepMode: false } });
-
 test.describe('plugin-e2e-api-tests admin', { tag: ['@plugins'] }, () => {
   test('should evaluate to false if entire request returns 200 but partial query result is invalid', async ({
     page,

@@ -59,6 +59,14 @@ export class Panels extends PageObject {
   }
 
   /**
+   * Returns the body of the first panel with this exact title
+   * @param scope container to search within, defaults to the whole page
+   */
+  getBody(panelTitle: string, scope?: Locator): Locator {
+    return this.getPanel(panelTitle, scope).getByTestId(this.selectors.components.Panels.Panel.content);
+  }
+
+  /**
    * Selects a panel by clicking its header; an array extends the selection via shift-clicks
    * @param panelTitle a string or RegExp to select one panel, an array of them to multi-select
    */
@@ -96,6 +104,18 @@ export class Panels extends PageObject {
         }
       });
     }
+  }
+
+  /** Returns the panel actions popover, portalled outside the panel (`grafana.panelActionsPopover`) */
+  getActionsPopover(): Locator {
+    return this.page.getByRole('toolbar', { name: 'Panel actions' });
+  }
+
+  /** Rests the pointer on the panel body, which opens its panel actions popover */
+  async openActionsPopover(panelTitle: string) {
+    await test.step(`Open the panel actions popover of panel "${panelTitle}"`, async () => {
+      await this.getBody(panelTitle).hover();
+    });
   }
 
   /**

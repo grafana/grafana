@@ -279,6 +279,51 @@ func TestCrud(t *testing.T) {
 		require.NotContains(t, names, owned2.Name)
 		require.Contains(t, names, shared.Name)
 	})
+
+	t.Run("reading with an empty namespace", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv, err := sut.SecureValueService.Read(t.Context(), "", "sv1")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNamespaceEmpty)
+		require.Nil(t, sv)
+	})
+
+	t.Run("reading with an empty name", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv, err := sut.SecureValueService.Read(t.Context(), "ns1", "")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNameEmpty)
+		require.Nil(t, sv)
+	})
+
+	t.Run("listing with an empty namespace", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		svList, err := sut.SecureValueService.List(t.Context(), "")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNamespaceEmpty)
+		require.Nil(t, svList)
+	})
+
+	t.Run("deleting with an empty namespace", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv, err := sut.SecureValueService.Delete(t.Context(), "", "sv1")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNamespaceEmpty)
+		require.Nil(t, sv)
+	})
+
+	t.Run("deleting with an empty name", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv, err := sut.SecureValueService.Delete(t.Context(), "ns1", "")
+		require.ErrorIs(t, err, contracts.ErrSecureValueNameEmpty)
+		require.Nil(t, sv)
+	})
 }
 
 func TestUpdateOwnerReferences(t *testing.T) {

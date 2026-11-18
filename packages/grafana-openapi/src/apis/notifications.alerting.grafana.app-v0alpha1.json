@@ -4916,6 +4916,10 @@
                 "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
                 "type": "string"
               },
+              "identifier": {
+                "description": "identifier is the name the synced configuration is imported under, and so\nthe name of the policy tree it becomes. Chosen once from the datasource\nname on the first sync for datasourceUid and kept from then on, so\nrenaming the datasource does not rename the tree. Empty for syncs that\nstarted before this field existed; those use datasourceUid instead.",
+                "type": "string"
+              },
               "origin": {
                 "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).",
                 "type": "string",
@@ -5953,7 +5957,7 @@
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6001,7 +6005,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }

@@ -149,7 +149,9 @@ type Reader interface {
 	// Read all file names from the tree.
 	// This data will be parsed and validated before it is shown.
 	//
-	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
+	// Excludes dot-prefixed files and directories, including their descendants,
+	// relative to the configured root. Retains .keep files in visible directories
+	// as folder markers.
 	// TODO: Test scale: do we want to stream entries instead somehow?
 	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
 }
@@ -253,6 +255,10 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
+	// CompareFiles applies the same hidden-path policy as Reader.ReadTree.
+	// Renames into ignored paths are deletions of the old path; renames out of
+	// ignored paths are creations at the new path. Renames between ignored paths
+	// are omitted.
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 
@@ -276,6 +282,12 @@ type RepoIDHandler interface {
 	ShouldUpdateRepoID() bool
 }
 
+//go:generate mockery --name PullRequestClient --structname MockPullRequestClient --inpackage --filename pull_request_client_mock.go --with-expecter
+type PullRequestClient interface {
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	MergeBase(ctx context.Context, base, head string) (string, error)
+}
+
 // PullRequestRepo is implemented by repositories that can be evaluated and
 // commented on as part of a pull request preview job.
 //
@@ -283,7 +295,6 @@ type RepoIDHandler interface {
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
-	MergeBase(ctx context.Context, headRef string) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
+	PullRequestClient() PullRequestClient
 }

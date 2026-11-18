@@ -50,6 +50,9 @@ type ConnectionFormDataBase = {
   clientID?: string;
   clientSecret?: string;
   workspace?: string;
+  authURL?: string;
+  tokenURL?: string;
+  scopes?: string[];
   webhookDisabled?: boolean;
 };
 
@@ -62,7 +65,12 @@ type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
 type OAuthConnectionFormData = ConnectionFormDataBase &
   Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
-export type OAuthConnectionType = 'githubOAuth' | 'githubEnterpriseOAuth' | 'gitlabOAuth' | 'bitbucketOAuth';
+export type OAuthConnectionType =
+  | 'githubOAuth'
+  | 'githubEnterpriseOAuth'
+  | 'gitlabOAuth'
+  | 'bitbucketOAuth'
+  | 'gitOAuth';
 
 export type ConnectionFormData =
   | GitHubConnectionFormData
@@ -129,10 +137,12 @@ export interface TreeItem {
   level: number;
   children: TreeItem[];
   resourceName?: string;
+  resource?: string;
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
   missingFolderMetadata?: boolean;
+  metadataPath?: string;
 }
 
 export interface FlatTreeItem {

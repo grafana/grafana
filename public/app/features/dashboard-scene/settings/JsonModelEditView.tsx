@@ -11,9 +11,11 @@ import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { type DashboardSceneState } from '../scene/types/dashboard';
+import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { buildDashboardResource, validateDashboardResourceEnvelope } from '../sidebar/dashboardResource';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditView, type DashboardEditViewState } from './utils';
@@ -103,7 +105,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       const api = await getDashboardAPI('v2');
       const dto = await api.getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-      const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
         key: dashboard.state.key,
       });
 
@@ -112,14 +114,16 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       this._updateTimeRangeInURL(dashboard, newState);
 
       dashboard.setState(newState);
+      resolveAdHocMultiValueOperators(dashboard);
     } else {
       jsonModel.version = result.version;
+      await resolveLegacyDatasourceNames(jsonModel);
       newDashboardScene = transformSaveModelToScene({
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
 
-      const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      const { loadingView, ...newState } = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
         key: dashboard.state.key,
       });
 
@@ -129,6 +133,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       this._updateTimeRangeInURL(dashboard, newState);
 
       dashboard.setState(newState);
+      resolveAdHocMultiValueOperators(dashboard);
     }
 
     this.setState({ jsonText: this.getJsonText() });

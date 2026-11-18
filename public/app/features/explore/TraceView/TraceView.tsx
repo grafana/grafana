@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -19,8 +19,13 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  config,
+  getTemplateSrv,
+  reportInteraction,
+  useAppPluginInstalled,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -126,12 +131,14 @@ export function TraceView(props: Props) {
   // Search next/prev re-applies the current match whenever the matches Set is rebuilt
   // (every filter keystroke). Reuse the object when the id is unchanged so the timeline
   // does not jump. Go to span always allocates a new object so a repeat click still scrolls.
-  const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string } | undefined>();
+  const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string; source?: 'link' } | undefined>();
   const focusSpanForSearch = useCallback((spanID: string) => {
-    setFocusedSpanForSearch((current) => (current?.spanID === spanID ? current : { spanID }));
+    setFocusedSpanForSearch((current) =>
+      current?.spanID === spanID && current.source !== 'link' ? current : { spanID }
+    );
   }, []);
-  const refocusSpanForSearch = useCallback((spanID: string) => {
-    setFocusedSpanForSearch({ spanID });
+  const refocusSpanForSearch = useCallback((spanID: string, fromLink = false) => {
+    setFocusedSpanForSearch({ spanID, source: fromLink ? 'link' : undefined });
   }, []);
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [headerHeight, setHeaderHeight] = useState(100);
@@ -153,7 +160,13 @@ export function TraceView(props: Props) {
   });
 
   const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
+  const focusedSpanForSearchToDisplay =
+    focusedSpanForSearch?.source === 'link' && focusedSpanForSearch.spanID !== focusedSpanId
+      ? undefined
+      : focusedSpanForSearch;
   const createFocusSpanLink = createFocusSpanLinkFromProps ?? createFocusSpanLinkExplore;
+  const expandSpan = useSelector((state) => state.explore.panes[exploreId!]?.panelsState.trace?.expandSpan === true);
+  const spanIdToExpand = expandSpan ? focusedSpanId : undefined;
 
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
@@ -273,7 +286,7 @@ export function TraceView(props: Props) {
   // expanded for its row to exist, its detail must be open, and the timeline must scroll to it.
   // A span hidden by the matches-only filter also has to be made visible first.
   const goToSpan = useCallback(
-    (spanID: string) => {
+    (spanID: string, fromLink = false) => {
       const span = traceProp?.spans.find((s) => s.spanID === spanID);
       if (!span) {
         return;
@@ -283,10 +296,30 @@ export function TraceView(props: Props) {
       if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanID)) {
         setSearch({ ...search, matchesOnly: false });
       }
-      refocusSpanForSearch(spanID);
+      refocusSpanForSearch(spanID, fromLink);
     },
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
+
+  const lastLinkedSpan = useRef<{ frame: DataFrame | undefined; spanId: string } | undefined>(undefined);
+  const frame = props.dataFrames[0];
+  useEffect(() => {
+    if (!spanIdToExpand) {
+      lastLinkedSpan.current = undefined;
+      return;
+    }
+
+    const linkedSpanId = spanIdToExpand;
+    const animationFrame = requestAnimationFrame(() => {
+      if (lastLinkedSpan.current?.frame === frame && lastLinkedSpan.current.spanId === linkedSpanId) {
+        return;
+      }
+      lastLinkedSpan.current = { frame, spanId: linkedSpanId };
+      goToSpan(linkedSpanId, true);
+    });
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [frame, goToSpan, spanIdToExpand]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
@@ -365,7 +398,7 @@ export function TraceView(props: Props) {
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanForSearch={focusedSpanForSearch}
+            focusedSpanForSearch={focusedSpanForSearchToDisplay}
             showSpanFilterMatchesOnly={search.matchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
@@ -408,6 +441,7 @@ function useFocusSpanLink(options: {
       changePanelState(options.exploreId, 'trace', {
         ...panelState,
         spanId,
+        expandSpan: undefined,
       })
     );
 

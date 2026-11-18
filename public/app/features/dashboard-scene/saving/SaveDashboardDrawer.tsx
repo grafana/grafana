@@ -1,15 +1,18 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { type SaveTarget, SaveTargetSwitch } from 'app/features/provisioning/components/Dashboards/SaveTargetSwitch';
+import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
+import { SavePendingChangesForm } from '../lifecycle/SavePendingChangesForm';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
   formatPredefinedVariablesAnnotationLabel,
@@ -22,6 +25,7 @@ import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { isNewDashboard } from './shared';
+import { useDashboardSaveChanges } from './useDashboardSaveChanges';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -34,6 +38,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  onDismiss?: () => void;
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
@@ -57,10 +62,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const dashboard = this.state.dashboardRef.resolve();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
     const shouldRestoreMeta = Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state);
-    dashboard.closeModal();
     dashboard.setState({
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
+    dashboard.closeModal();
+    this.state.onDismiss?.();
   };
 
   public onToggleSaveTimeRange = () => {
@@ -91,7 +97,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTarget,
   } = model.useState();
 
-  const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+  const changeInfo = useDashboardSaveChanges(
+    model.state.dashboardRef.resolve(),
+    saveTimeRange,
+    saveVariables,
+    saveRefresh
+  );
 
   const {
     changedSaveModel,
@@ -109,11 +120,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
   const view = useDashboardRepositoryView(dashboard, saveAsCopy);
   const { isNewSave } = view;
-  // The root of a folderless repository is the one place a new save can go either way. Every input is
-  // read off the settled view, so a folder pick still in flight cannot split the decision
-  const canChooseTarget = isNewSave && !view.folderUid && view.repository?.target === 'folderless';
-  const target: SaveTarget =
-    canChooseTarget && saveTarget ? saveTarget : view.isProvisioned ? 'repository' : 'database';
+  const target = getSaveTarget(view, saveTarget);
 
   const tabs = (
     <TabsBar>
@@ -122,7 +129,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {changesCount > 0 && !managedResourceCannotBeEdited && (
+      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -162,6 +169,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
+    // Pending changes are saved through the plugin that keeps them; a copy of them is a new dashboard.
+    if (!saveAsCopy && savesPendingChanges(dashboard)) {
+      return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+    }
+
     if (target === 'repository') {
       return (
         <SaveProvisionedDashboard
@@ -192,19 +204,37 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer
+      title={title}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      tabs={tabs}
+      scrollableContent={false}
+    >
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
-      <div style={{ display: showDiff ? 'none' : 'contents' }}>
-        <Stack direction="column" gap={2}>
-          {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-          {renderForm()}
-          {canChooseTarget && (
-            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
-          )}
-        </Stack>
-      </div>
-      {showDiff && (
+      <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
+        <ScrollContainer showScrollIndicators>
+          <Box padding={0.5}>
+            <Stack direction="column" gap={2}>
+              {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+              {renderForm()}
+              {view.canChooseTarget && (
+                <SaveTargetSwitch
+                  resource="dashboard"
+                  target={target}
+                  onChange={(saveTarget) => model.setState({ saveTarget })}
+                />
+              )}
+            </Stack>
+          </Box>
+        </ScrollContainer>
+      </Box>
+      {showDiff && changesCount === 0 && (
+        <EmptyState variant="completed" message={t('dashboard.review.no-changes', 'No changes to save')} />
+      )}
+      {showDiff && changesCount > 0 && (
         <SaveDashboardDiff
+          fillHeight
           diff={diffs}
           oldValue={initialSaveModel}
           newValue={changedSaveModel}

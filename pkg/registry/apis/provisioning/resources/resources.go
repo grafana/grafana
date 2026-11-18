@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 var (
@@ -157,7 +158,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// TODO: how should we handle this?
 	// Only treat it as already-in-repository when a repository manager owns it;
 	// matching on identity alone would misclassify other manager kinds.
-	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
+	if isManagedByRepository(manager, r.repo.Config().GetName()) {
 		// If it's already in the repository, we don't need to write it
 		return "", 0, ErrAlreadyInRepository
 	}
@@ -171,9 +172,11 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
 
-	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	// No folder (or the "general" sentinel the apistore writes for root) means
+	// the repository root: route the write there and stamp the meta folder with
+	// the repo's root id rather than the generic "general".
 	var fid Folder
-	if folder == "" {
+	if foldermodel.IsRootFolderUID(folder) {
 		fid = Folder{ID: rootFolder}
 		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
 	} else {
@@ -299,6 +302,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
+	}
+
+	if err := checkSecureValues(parsed); err != nil {
+		return "", parsed.GVK, err
 	}
 
 	// Check if the resource already exists
@@ -463,6 +470,13 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	// Before the identity-change delete below, not just at the write: rejecting
+	// the destination afterwards would leave the old resource deleted with no
+	// replacement.
+	if err := checkSecureValues(newParsed); err != nil {
+		return "", "", newParsed.GVK, size, err
 	}
 
 	if oldParseErr != nil {

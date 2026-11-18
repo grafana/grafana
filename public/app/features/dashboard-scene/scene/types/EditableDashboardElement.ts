@@ -5,6 +5,12 @@ import { type SceneObject } from '@grafana/scenes';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
+ * Where an edit action was triggered from, so tracking can tell the sidebar apart from the
+ * hover popover shown on the canvas.
+ */
+export type EditActionSource = 'edit_pane' | 'edit_popover';
+
+/**
  * Interface for elements that have options
  */
 export interface EditableDashboardElement {
@@ -32,6 +38,11 @@ export interface EditableDashboardElement {
   renderTopButton?(): ReactNode;
 
   /**
+   * When true, header actions that change or remove the element are hidden.
+   */
+  isReadOnly?: boolean;
+
+  /**
    * Supports delete action
    */
   onDelete?(): void;
@@ -40,6 +51,11 @@ export interface EditableDashboardElement {
    * Should confirm delete action
    */
   onConfirmDelete?(): void;
+
+  /**
+   * Opts a read-only element out of this dashboard. Shown as Remove.
+   */
+  onRemove?(): void;
 
   /**
    * Supports duplicate action

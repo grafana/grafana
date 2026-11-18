@@ -1,9 +1,15 @@
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 // Seeding the legacy service is part of this util's contract while DataSourceSrv still exists,
 // so reading it back is the only way to assert that half. Delete with the legacySrv option.
-// eslint-disable-next-line @grafana/no-get-data-source-srv
-import { getDataSourceSrv, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  // eslint-disable-next-line @grafana/no-get-data-source-srv
+  getDataSourceSrv,
+  setDataSourceSrv,
+  type DataSourceSrv,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
+import { setDatasourcePluginMetas } from '@grafana/runtime/internal';
 
 import { seedDataSources, watchDataSourceFallbacks } from './seedDataSources';
 
@@ -73,6 +79,20 @@ describe('seedDataSources', () => {
     await expect(getDataSourceInstance('missing-uid')).rejects.toThrow();
     expect(() => fallbacks.expectNoFallbacks(['instance', 'settings', 'list'])).not.toThrow();
   });
+
+  it('hands back each fixture when several share a plugin id and the plugin meta is a clone', async () => {
+    const lokiA = makeFixture('loki', 'loki-a');
+    const lokiB = makeFixture('loki', 'loki-b');
+    // Settings are keyed by name, so give the second instance of the plugin its own name.
+    lokiB.settings.name = 'Loki B';
+    seedDataSources([lokiA, lokiB], { legacySrv: 'none' });
+    // The loader imports with the meta from the plugin meta cache (keyed by the data source
+    // type), which is a clone of the settings meta.
+    setDatasourcePluginMetas({ [lokiA.settings.type]: structuredClone(lokiA.settings.meta) });
+
+    await expect(getDataSourceInstance('loki-a')).resolves.toBe(lokiA.api);
+    await expect(getDataSourceInstance('loki-b')).resolves.toBe(lokiB.api);
+  });
 });
 
 describe('watchDataSourceFallbacks', () => {
@@ -80,7 +100,9 @@ describe('watchDataSourceFallbacks', () => {
     const loki = makeFixture('loki', 'loki-uid');
     const legacyOnly: DataSourceSrv = {
       get: () => Promise.resolve(loki.api!),
-      getInstanceSettings: () => loki.settings,
+      // Missing here too, so the new path cannot resolve the settings, and only the legacy get()
+      // can resolve the instance.
+      getInstanceSettings: () => undefined,
       getList: () => [loki.settings],
       reload: jest.fn(),
       registerRuntimeDataSource: jest.fn(),

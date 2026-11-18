@@ -496,7 +496,17 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources`,
+          params: {
+            limit: queryArg.limit,
+            continue: queryArg['continue'],
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
+      getRepositoryStats: build.query<GetRepositoryStatsApiResponse, GetRepositoryStatsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/stats` }),
         providesTags: ['Repository'],
       }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
@@ -1257,6 +1267,15 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+  /** maximum number of items to return; omit for all of them */
+  limit?: number;
+  /** continue token from the metadata of the previous page */
+  continue?: string;
+};
+export type GetRepositoryStatsApiResponse = /** status 200 OK */ ResourceCountList;
+export type GetRepositoryStatsApiArg = {
+  /** name of the ResourceCountList */
+  name: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
@@ -1476,6 +1495,14 @@ export type BitbucketConnectionConfig = {
   /** The workspace the OAuth consumer belongs to */
   workspace: string;
 };
+export type GitOAuthConnectionConfig = {
+  /** The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`). */
+  authURL: string;
+  /** The OAuth scopes to request, granting git read and write access. */
+  scopes?: string[];
+  /** The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`). */
+  tokenURL: string;
+};
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
   appID: string;
@@ -1507,6 +1534,8 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
+  /** Generic git OAuth app connection configuration Only applicable when provider is "gitOAuth" */
+  gitOAuth?: GitOAuthConnectionConfig;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
@@ -1521,12 +1550,20 @@ export type ConnectionSpec = {
     
     Possible enum values:
      - `"bitbucketOAuth"`
+     - `"gitOAuth"`
      - `"github"`
      - `"githubEnterprise"`
      - `"githubEnterpriseOAuth"`
      - `"githubOAuth"`
      - `"gitlabOAuth"` */
-  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
+  type:
+    | 'bitbucketOAuth'
+    | 'gitOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -2085,6 +2122,8 @@ export type SyncStatus = {
   incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** When the controller last attempted a sync or an interval check (Unix milliseconds). */
+  lastChecked?: number;
   /** The repository ref when the last successful sync ran */
   lastRef?: string;
   /** Summary messages (will be shown to users) */
@@ -2249,6 +2288,14 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceCountList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: ResourceCount[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2328,6 +2375,7 @@ export type RepositoryViewList = {
   /** AvailableConnectionTypes is the list of connection types supported in this instance */
   availableConnectionTypes?: (
     | 'bitbucketOAuth'
+    | 'gitOAuth'
     | 'github'
     | 'githubEnterprise'
     | 'githubEnterpriseOAuth'
@@ -2424,6 +2472,8 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
+  useGetRepositoryStatsQuery,
+  useLazyGetRepositoryStatsQuery,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

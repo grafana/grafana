@@ -1,12 +1,15 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render } from '@testing-library/react';
 import { Suspense, type ComponentType } from 'react';
 
 import {
+  standardEditorsRegistry,
   standardTransformersRegistry,
   DataTransformerID,
   type TransformerRegistryItem,
   type TransformerUIProps,
 } from '@grafana/data';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -34,6 +37,7 @@ import { getStandardTransformers } from './standardTransformers';
 
 describe('getStandardTransformers', () => {
   beforeAll(() => {
+    standardEditorsRegistry.setInit(getAllOptionEditors);
     standardTransformersRegistry.setInit(getStandardTransformers);
   });
 
@@ -68,9 +72,11 @@ describe('getStandardTransformers', () => {
         const Editor = item.editor;
         await act(async () => {
           render(
-            <Suspense fallback={null}>
-              <Editor options={options} input={[]} onChange={() => {}} />
-            </Suspense>
+            <OpenFeatureProvider>
+              <Suspense fallback={null}>
+                <Editor options={options} input={[]} onChange={() => {}} />
+              </Suspense>
+            </OpenFeatureProvider>
           );
         });
       });

@@ -221,6 +221,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
   const handleChange = useCallback(
     (newValue: string | undefined) => {
       edit({
+        meta: { actionId: 'conditional-rendering.changeRule', scope: 'time-range-size' },
         description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
         source: model,
         perform: () => model.changeValue(newValue ?? ''),

@@ -1,4 +1,4 @@
-import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from '@grafana/scenes';
+import { type VizPanel, sceneGraph, behaviors, type SceneObject } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { VizPanelLinks } from '../scene/PanelLinks';
@@ -7,6 +7,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { type DashboardSceneLike } from '../scene/types/dashboard';
 
 import { getLayoutManagerFor } from './getLayoutManagerFor';
+import { getNextPanelId } from './getNextPanelId';
 import { getDashboardSceneFor } from './utils';
 import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils-panels';
 
@@ -30,28 +31,6 @@ function getPanelLinks(panel: VizPanel) {
 
 function getVizPanels(scene: DashboardSceneLike): VizPanel[] {
   return scene.state.body.getVizPanels();
-}
-
-/**
- * Will look for all panels in the entire scene starting from root
- * and find the next free panel id
- */
-export function getNextPanelId(scene: SceneObject): number {
-  let max = 0;
-
-  sceneGraph
-    .findAllObjects(
-      scene.getRoot(),
-      (obj) => (obj instanceof VizPanel || obj instanceof SceneGridRow) && !obj.state.repeatSourceKey
-    )
-    .forEach((panel) => {
-      const panelId = getPanelIdForVizPanel(panel);
-      if (panelId > max) {
-        max = panelId;
-      }
-    });
-
-  return max + 1;
 }
 
 export type PanelIdGenerator = () => number;

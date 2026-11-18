@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -45,7 +46,20 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
+	return ProvideServiceWithWatch(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, configProvider, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy user
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
+	orgService org.Service,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +153,7 @@ func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery)
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.Update(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.Update(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)

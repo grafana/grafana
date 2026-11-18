@@ -1,10 +1,6 @@
 import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
 import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';

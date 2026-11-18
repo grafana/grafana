@@ -13,8 +13,13 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  config,
+  locationService,
+  reportInteraction,
+  usePluginLinks,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 export const RelatedProfilesTitle = 'Related profiles';
@@ -244,7 +249,8 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   return (
     <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={setIsOpen}>
       <Button
-        variant="primary"
+        variant="secondary"
+        fill="outline"
         icon="link"
         size="sm"
         className={styles}

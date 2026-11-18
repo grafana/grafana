@@ -37,13 +37,7 @@ func parseKeys(req []string) dispKeys {
 
 			switch t {
 			case authlib.TypeAnonymous:
-				keys.disp = append(keys.disp, iam.Display{
-					Identity: iam.IdentityRef{
-						Type: t,
-					},
-					DisplayName: "Anonymous",
-					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
-				})
+				keys.disp = append(keys.disp, anonymousDisplay())
 				continue
 			case authlib.TypeAPIKey:
 				keys.disp = append(keys.disp, iam.Display{
@@ -52,6 +46,17 @@ func parseKeys(req []string) dispKeys {
 						Name: key,
 					},
 					DisplayName: "API Key",
+					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
+				})
+				continue
+			case authlib.TypeAccessPolicy:
+				// Access policies are not users or service accounts in either identity store.
+				keys.disp = append(keys.disp, iam.Display{
+					Identity: iam.IdentityRef{
+						Type: t,
+						Name: key,
+					},
+					DisplayName: "Access policy",
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
@@ -88,4 +93,12 @@ func parseKeys(req []string) dispKeys {
 		}
 	}
 	return keys
+}
+
+func anonymousDisplay() iam.Display {
+	return iam.Display{
+		Identity:    iam.IdentityRef{Type: authlib.TypeAnonymous},
+		DisplayName: "Anonymous",
+		AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(authlib.TypeAnonymous)),
+	}
 }

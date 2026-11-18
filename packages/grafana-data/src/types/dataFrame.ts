@@ -72,7 +72,8 @@ export interface FieldConfig<TOptions = any> {
   writeable?: boolean;
 
   /**
-   * True if data source field supports ad-hoc filters
+   * Enables viewers to update dashboard filters by interacting with this field in supported visualizations.
+   * Corresponds to the "Cross-filter" option in the panel editor. Requires data source support for dashboard filters.
    */
   filterable?: boolean;
 
@@ -116,6 +117,14 @@ export interface FieldConfig<TOptions = any> {
 
   // Calculate min max per field
   fieldMinMax?: boolean;
+
+  /**
+   * Variable expressions keyed by field config property id (e.g. `min`, `unit`, `custom.lineWidth`),
+   * resolved by `applyFieldOverrides` in place of the stored value. The stored value is the fallback
+   * when an expression doesn't resolve to a valid value for the property. Threshold steps keep
+   * their own `valueExpr`. Processed field configs don't carry `varMappings`.
+   */
+  varMappings?: Record<string, string>;
 }
 
 export interface FieldTypeConfig {

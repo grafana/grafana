@@ -307,10 +307,14 @@ func extractProducesFromResponses(responses *spec3.Responses) []string {
 		return nil
 	}
 
-	result := make([]string, 0, len(contentTypes))
+	result := make([]string, 0, len(contentTypes)+1)
 	for contentType := range contentTypes {
 		result = append(result, contentType)
 	}
+
+	// Handlers write their own responses, so leave the Accept header to them to
+	// validate, same as Consumes does for Content-Type.
+	result = append(result, "*/*")
 
 	return result
 }

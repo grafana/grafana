@@ -38,10 +38,10 @@ export function getAnnotationTooltip(
   }
 
   // Alerting specific
-  const alertId = annoVals.alertId?.[annoIdx];
+  const isAlert = Boolean(annoVals.alertUID?.[annoIdx]) || annoVals.alertId?.[annoIdx] !== undefined;
   const alertText = annoVals.data?.[annoIdx] ? alertDef.getAlertAnnotationText(annoVals.data[annoIdx]) : '';
   const newState = annoVals.newState?.[annoIdx];
-  const alertState = alertId !== undefined && newState ? newState : undefined;
+  const alertState = isAlert && newState ? newState : undefined;
 
   const title = !alertText ? annoVals.title?.[annoIdx] : undefined;
   const avatarImgSrc =

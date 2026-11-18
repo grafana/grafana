@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator/prometheus"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -233,7 +234,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 	}, nil)
 
 	// Standard tags declare facet capability so Bleve facets use their keyword-analyzed mapping.
-	const expected = "0f114ef8fa64163466eb9d3477163cfe964b5a626c37279d5e60a2586c18a064"
+	const expected = "9f0ffa45688f475d990a7d310b1cdd75295355f16c26b4de2170965595670860"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }
@@ -526,4 +527,17 @@ func TestSearchFieldsRegistry(t *testing.T) {
 		require.Equal(t, "hash-2", hash)
 		require.Nil(t, p)
 	})
+}
+
+// Indexes of kinds without fields of their own recorded no hash, so a change to
+// the standard fields never rebuilt them and they kept serving the old mapping.
+func TestSearchFieldsRegistryForKeyHashesKindsWithoutFields(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "example.test", Resource: "widgets"}
+	_, hash, _ := NewSearchFieldsRegistry(nil, nil, nil).ForKey(key)
+	require.NotEmpty(t, hash)
+	assert.Equal(t, StandardSearchFieldsHash(), hash)
+
+	// An index built before then is rebuilt once.
+	assert.True(t, shouldRebuildIndex(IndexBuildInfo{SearchFieldsHash: ""}, nil, nil, time.Time{}, time.Time{}, nil, hash, nil, nil))
+	assert.False(t, shouldRebuildIndex(IndexBuildInfo{SearchFieldsHash: hash}, nil, nil, time.Time{}, time.Time{}, nil, hash, nil, nil))
 }

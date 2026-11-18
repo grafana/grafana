@@ -163,7 +163,7 @@ func parseK8sDashboard(data *simplejson.Json) *Dashboard {
 	dash.Title = obj.FindTitle("")
 	dash.UpdateSlug()
 
-	dash.FolderUID = obj.GetFolder()
+	dash.FolderUID = folder.ToLegacyFolderUID(obj.GetFolder())
 	dash.Data.Set("uid", dash.UID)
 
 	generation := obj.GetGeneration()

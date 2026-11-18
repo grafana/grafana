@@ -1,0 +1,432 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Provenance-includes-location: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apiserver/pkg/storage/etcd3/watcher_test.go
+// Provenance-includes-license: Apache-2.0
+// Provenance-includes-copyright: The Kubernetes Authors.
+
+package restoptions_test
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	badger "github.com/dgraph-io/badger/v4"
+	"github.com/grafana/dskit/services"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/apitesting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/apis/example"
+	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
+	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
+)
+
+type StorageType string
+
+const (
+	StorageTypeFile StorageType = "file"
+	StorageTypeSQL  StorageType = "sql"
+	StorageTypeKV   StorageType = "kv"
+)
+
+var scheme = runtime.NewScheme()
+var codecs = serializer.NewCodecFactory(scheme)
+
+func init() {
+	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
+	utilruntime.Must(example.AddToScheme(scheme))
+	utilruntime.Must(examplev1.AddToScheme(scheme))
+}
+
+type setupOptions struct {
+	codec          runtime.Codec
+	newFunc        func() runtime.Object
+	newListFunc    func() runtime.Object
+	prefix         string
+	resourcePrefix string
+	groupResource  schema.GroupResource
+	storageType    StorageType
+}
+
+type setupOption func(*setupOptions, testing.TB)
+
+func withDefaults(options *setupOptions, t testing.TB) {
+	options.codec = apitesting.TestCodec(codecs, examplev1.SchemeGroupVersion)
+	options.newFunc = newPod
+	options.newListFunc = newPodList
+	options.prefix = t.TempDir()
+	options.resourcePrefix = storagetesting.KeyFunc("", "")
+	options.groupResource = schema.GroupResource{Resource: "pods"}
+	options.storageType = StorageTypeFile
+}
+func withStorageType(storageType StorageType) setupOption {
+	return func(options *setupOptions, t testing.TB) {
+		options.storageType = storageType
+	}
+}
+
+var _ setupOption = withDefaults
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Interface, factory.DestroyFunc, error) {
+	t.Helper()
+	setupOpts := setupOptions{}
+	opts = append([]setupOption{withDefaults}, opts...)
+	for _, opt := range opts {
+		opt(&setupOpts, t)
+	}
+
+	setupOpts.groupResource = schema.GroupResource{
+		Group:    "example.apiserver.k8s.io",
+		Resource: "pods",
+	}
+
+	ctx := storagetesting.NewContext()
+
+	var server resource.ResourceServer
+	switch setupOpts.storageType {
+	case StorageTypeFile:
+		// Create in-memory BadgerDB for testing
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+		kv := resource.NewBadgerKV(db)
+		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
+			KvStore: kv,
+			WatchOptions: resource.WatchOptions{
+				SettleDelay: 1 * time.Millisecond,
+			},
+		})
+		require.NoError(t, err)
+
+		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend:              backend,
+			SeededWatchesEnabled: true,
+		})
+		require.NoError(t, err)
+	case StorageTypeKV:
+		testutil.SkipIntegrationTestInShortMode(t)
+		dbstore := infraDB.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		cfg := setting.NewCfg()
+		cfg.EnableSQLKVBackend = true
+		cfg.NotifierSettleDelay = time.Millisecond
+
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
+		require.NoError(t, err)
+		kvStore, err := sql.ProvideKV(cfg, eDB)
+		require.NoError(t, err)
+		backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, kvStore, nil)
+		require.NoError(t, err)
+
+		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend:              backend,
+			SeededWatchesEnabled: true,
+		})
+		require.NoError(t, err)
+	case StorageTypeSQL:
+		testutil.SkipIntegrationTestInShortMode(t)
+		dbstore := infraDB.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		cfg := setting.NewCfg()
+
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
+		require.NoError(t, err)
+		require.NotNil(t, eDB)
+
+		ret, err := sql.NewBackend(sql.BackendOptions{
+			DBProvider:      eDB,
+			PollingInterval: time.Millisecond, // Keep this fast
+			DisablePruner:   infraDB.IsTestDbSQLite(),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, ret)
+		svc, ok := ret.(services.Service)
+		require.True(t, ok)
+		require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			require.NoError(t, services.StopAndAwaitTerminated(ctx, svc))
+		})
+
+		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend:     ret,
+			Diagnostics: ret,
+		})
+		require.NoError(t, err)
+	default:
+		t.Fatalf("unsupported storage type: %s", setupOpts.storageType)
+	}
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		require.NoError(t, server.(resource.ResourceServerStopper).Stop(ctx))
+	})
+	client := resource.NewLocalResourceClient(server)
+	if setupOpts.storageType == StorageTypeFile || setupOpts.storageType == StorageTypeKV {
+		waitForWatchReady(t, ctx, client, setupOpts.groupResource)
+	}
+
+	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
+	store, destroyFunc, err := apistore.NewStorage(
+		config.ForResource(setupOpts.groupResource),
+		client,
+		func(obj runtime.Object) (string, error) {
+			accessor, err := meta.Accessor(obj)
+			if err != nil {
+				return "", err
+			}
+			return storagetesting.KeyFunc(accessor.GetNamespace(), accessor.GetName()), nil
+		},
+		testKeyParser, // will fallback to hardcoded /pods/... keys
+		setupOpts.newFunc,
+		setupOpts.newListFunc,
+		storage.DefaultNamespaceScopedAttr,
+		make(map[string]storage.IndexerFunc, 0),
+		nil, nil,
+		apistore.StorageOptions{},
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return ctx, store, destroyFunc, nil
+}
+
+// Unlike a health check, an initial bookmark waits for asynchronous watch-cache
+// initialization without inserting objects into the otherwise empty test store.
+func waitForWatchReady(t testing.TB, ctx context.Context, client resourcepb.ResourceStoreClient, gr schema.GroupResource) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	stream, err := client.Watch(ctx, &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: gr.Group, Resource: gr.Resource,
+		}},
+		SendInitialEvents:   true,
+		AllowWatchBookmarks: true,
+	})
+	require.NoError(t, err)
+	event, err := stream.Recv()
+	require.NoError(t, err, "waiting for watch-cache initialization")
+	require.Equal(t, resourcepb.WatchEvent_BOOKMARK, event.Type)
+}
+
+func TestWatch(t *testing.T) {
+	runWatchTests(t, StorageTypeFile)
+}
+
+func TestIntegrationWatch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runWatchTests(t, StorageTypeSQL, StorageTypeKV)
+}
+
+func runWatchTests(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
+	for _, tt := range []struct {
+		name string
+		run  func(context.Context, *testing.T, storage.Interface)
+	}{
+		{name: "Watch", run: storagetesting.RunTestWatch},
+		{name: "ClusterScopedWatch", run: storagetesting.RunTestClusterScopedWatch},
+		{name: "NamespaceScopedWatch", run: storagetesting.RunTestNamespaceScopedWatch},
+		{name: "DeleteTriggerWatch", run: storagetesting.RunTestDeleteTriggerWatch},
+		{name: "WatchFromNonZero", run: storagetesting.RunTestWatchFromNonZero},
+		{name: "WatchContextCancel", run: storagetesting.RunTestWatchContextCancel},
+		{name: "WatcherTimeout", run: storagetesting.RunTestWatcherTimeout},
+		{name: "WatchDeleteEventObjectHaveLatestRV", run: storagetesting.RunTestWatchDeleteEventObjectHaveLatestRV},
+		{
+			name: "WatchDispatchBookmarkEvents",
+			run: func(ctx context.Context, t *testing.T, store storage.Interface) {
+				storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
+			},
+		},
+		{name: "SendInitialEventsBackwardCompatibility", run: storagetesting.RunSendInitialEventsBackwardCompatibility},
+		{name: "EtcdWatchSemantics", run: storagetesting.RunWatchSemantics},
+		{name: "EtcdWatchSemanticInitialEventsExtended", run: storagetesting.RunWatchSemanticInitialEventsExtended},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, s := range storageTypes {
+				t.Run(string(s), func(t *testing.T) {
+					ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
+					require.NoError(t, err)
+					defer destroyFunc()
+					tt.run(ctx, t, store)
+				})
+			}
+		})
+	}
+}
+
+// Not Supported by unistore because there is no way to differentiate between:
+// - SendInitialEvents=nil && resourceVersion=0
+// - sendInitialEvents=false && resourceVersion=0
+// This is a Legacy feature in k8s.io/apiserver/pkg/storage/etcd3/watcher_test.go#196
+// func TestWatchFromZero(t *testing.T) {
+// ctx, store, destroyFunc, err := testSetup(t)
+// defer destroyFunc()
+// assert.NoError(t, err)
+// storagetesting.RunTestWatchFromZero(ctx, t, store, nil)
+// }
+
+/*
+Only valid when using a cached storage
+func TestDelayedWatchDelivery(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestDelayedWatchDelivery(ctx, t, store)
+}
+/*
+
+/*
+func TestWatchError(t *testing.T) {
+	ctx, store, _ := testSetup(t)
+	storagetesting.RunTestWatchError(ctx, t, &storeWithPrefixTransformer{store})
+}
+*/
+
+// TODO: enable when we support flow control and priority fairness
+/* func TestWatchInitializationSignal(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestWatchInitializationSignal(ctx, t, store)
+} */
+
+/* func TestProgressNotify(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunOptionalTestProgressNotify(ctx, t, store)
+} */
+
+func TestKVWatchExpiredResourceVersion(t *testing.T) {
+	runKVWatchExpiredResourceVersion(t, StorageTypeFile)
+}
+
+func TestIntegrationKVWatchExpiredResourceVersion(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runKVWatchExpiredResourceVersion(t, StorageTypeKV)
+}
+
+func runKVWatchExpiredResourceVersion(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
+	for _, s := range storageTypes {
+		t.Run(string(s), func(t *testing.T) {
+			for _, allowBookmarks := range []bool{false, true} {
+				t.Run(fmt.Sprintf("allowWatchBookmarks=%t", allowBookmarks), func(t *testing.T) {
+					ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
+					require.NoError(t, err)
+					defer destroyFunc()
+					ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+					defer cancel()
+
+					opts := storage.ListOptions{
+						ResourceVersion:   "1",
+						Recursive:         true,
+						Predicate:         storage.Everything,
+						SendInitialEvents: new(false),
+					}
+					opts.Predicate.AllowWatchBookmarks = allowBookmarks
+					w, err := store.Watch(ctx, storagetesting.KeyFunc("expired", ""), opts)
+					require.NoError(t, err)
+					defer w.Stop()
+
+					select {
+					case event, ok := <-w.ResultChan():
+						require.True(t, ok, "watch closed without reporting expiry")
+						require.Equal(t, watch.Error, event.Type)
+						s, ok := event.Object.(*metav1.Status)
+						require.True(t, ok, "expected a status object, got %T", event.Object)
+						require.EqualValues(t, 410, s.Code)
+						require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+						require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+					case <-ctx.Done():
+						t.Fatal("watch did not report expiry")
+					}
+					select {
+					case _, ok := <-w.ResultChan():
+						require.False(t, ok, "expired watch must close without delivering more events")
+					case <-ctx.Done():
+						t.Fatal("expired watch did not close")
+					}
+				})
+			}
+		})
+	}
+}
+
+func newPod() runtime.Object {
+	return &example.Pod{}
+}
+
+func newPodList() runtime.Object {
+	return &example.PodList{}
+}
+
+func testKeyParser(val string) (*resourcepb.ResourceKey, error) {
+	k, err := grafanaregistry.ParseKey(val)
+	if err != nil {
+		if strings.HasPrefix(val, "pods/") {
+			parts := strings.Split(val, "/")
+			if len(parts) == 2 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource: parts[0], // pods
+					Name:     parts[1],
+				}
+			} else if len(parts) == 3 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource:  parts[0], // pods
+					Namespace: parts[1],
+					Name:      parts[2],
+				}
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if k.Group == "" {
+		k.Group = "example.apiserver.k8s.io"
+	}
+	if k.Resource == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
+	}
+	return &resourcepb.ResourceKey{
+		Namespace: k.Namespace,
+		Group:     k.Group,
+		Resource:  k.Resource,
+		Name:      k.Name,
+	}, err
+}

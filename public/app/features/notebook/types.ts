@@ -61,8 +61,8 @@ export const defaultSpec = generatedDefaultSpec;
  * notebook-authored visualization ends up on the same model as a panel added from a Dashboard or
  * Explore — see NotebookLayoutManager's buildCellFor. Starts with no datasource/query chosen
  * (buildVizPanelState seeds a single empty query) and defaults to a timeseries visualization,
- * matching the line-graph default the old Explore-style query cell used. Picking a different viz
- * type is future work.
+ * matching the line-graph default the old Explore-style query cell used. The user can change the
+ * visualization after adding the block.
  */
 export function defaultVisualizationPanelKind(): PanelKind {
   return {

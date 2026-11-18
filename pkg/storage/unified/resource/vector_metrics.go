@@ -11,6 +11,7 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	HybridSearchDuration         *prometheus.HistogramVec
+	HybridSearchPhaseDuration    *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
 	EmbedTokensTotal             *prometheus.CounterVec
 	EmbedSkippedVersionsTotal    *prometheus.CounterVec
@@ -55,6 +56,14 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status_code"}),
+		HybridSearchPhaseDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_vector_storage_hybrid_search_phase_duration_seconds",
+			Help:                            "Time (in seconds) spent in one HybridSearch database, embedding-provider, or reranking-provider call, labeled by phase and call status. Calls may overlap and are not additive parts of RPC duration.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"phase", "status"}),
 		EmbedDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_vector_storage_embed_duration_seconds",
 			Help:                            "Time (in seconds) spent in a single TextEmbedder call to the provider (Vertex/Bedrock), labeled by model, task, and status.",
@@ -97,11 +106,11 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 		}, []string{"group", "resource", "status"}),
 		ReconcilerPendingEvents: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_vector_storage_reconciler_pending_events",
-			Help: "Current number of events pending processing in the embedding reconciler dedup map.",
+			Help: "Current number of failed resources awaiting another embedding reconciler attempt.",
 		}),
 		ReconcilerRetriesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_vector_storage_reconciler_retries_total",
-			Help: "Total number of reconciler events re-queued after a failure.",
+			Help: "Total number of reconciler failures scheduled for another attempt.",
 		}, []string{"group", "resource"}),
 		ReconcilerEventsDroppedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_vector_storage_reconciler_events_dropped_total",

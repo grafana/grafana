@@ -157,7 +157,7 @@ Add a row to the layout. If the target is not a RowsLayout, the existing content
 }
 ```
 
-Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization.
+Row `spec` may include optional **`variables`**: an array of v2 `VariableKind` objects for section-scoped template variables on that row. Behavior matches dashboard deserialization, except that the deprecated `GroupByVariable` kind is rejected (see Variables).
 
 **Response:**
 
@@ -607,6 +607,16 @@ Remove one or more panels by element name.
 
 If some elements fail while others succeed, `success` is `true` and partial failures are reported in `warnings`.
 
+### `GET_PANEL_ERRORS`
+
+Read current errors on the open dashboard without returning panel specifications, queries, layout, or result data. This read-only command does not run queries, activate panels, or enter edit mode.
+
+```json
+{ "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1", "panel-5"] } }
+```
+
+Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured query/plugin/error-notice messages), separate `noDataPanels`, `panelsChecked`, and `uncheckedPanels` with reasons `loading`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+
 ### `LIST_PANELS`
 
 List elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.
@@ -778,6 +788,8 @@ Same `{ element, layoutItem }` shape as ADD_PANEL and UPDATE_PANEL. When moving 
 ## Variables
 
 Variable commands accept optional **`parentPath`** (layout path from `GET_LAYOUT`). Default **`"/"`** targets **dashboard-level** variables. Paths ending at a **row** or **tab** (for example `"/rows/0"` or `"/tabs/1/rows/0"`) target that section’s variable set. **`UPDATE_VARIABLE`** and **`REMOVE_VARIABLE`** require an explicit **`parentPath`** when the name does not exist on the dashboard but exists on a section.
+
+The deprecated **`GroupByVariable`** kind is rejected by every command that accepts variables (`ADD_VARIABLE`, `UPDATE_VARIABLE`, and row or tab `variables`) and by `APPLY_SPEC`, with an error that names the replacement. `APPLY_SPEC` rejects it with or without `validate`, and its error lists the path of every `GroupByVariable` in the dashboard and section variables; `GET_SPEC` never returns one, since loading a dashboard converts them. To let users pick group-by keys, use an `AdhocVariable` with `spec.enableGroupBy: true`; to apply a grouping, add a `{ "key": "<key>", "operator": "groupBy", "value": "" }` filter to it.
 
 ### `ADD_VARIABLE`
 

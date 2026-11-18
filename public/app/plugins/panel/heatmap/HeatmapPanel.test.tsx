@@ -1,14 +1,26 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type uPlot from 'uplot';
 
-import { type DataFrame, FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import {
+  type DataFrame,
+  DataFrameType,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TooltipDisplayMode } from '@grafana/schema';
+import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { defaultOptions as fullDefaultOptions } from './types';
+import * as heatmapUtils from './utils';
+
+const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
 
 /**
  * Generates a 2D array of heatmap bucket values for testing.
@@ -60,6 +72,18 @@ function createHeatmapRowsFrame(overrides?: {
   ];
 
   return toDataFrame({ fields });
+}
+
+function createSparseHeatmapCellsFrame() {
+  return toDataFrame({
+    meta: { type: DataFrameType.HeatmapCells },
+    fields: [
+      { name: 'xMax', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+      { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+      { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+      { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+    ],
+  });
 }
 
 /**
@@ -151,6 +175,46 @@ describe('HeatmapPanel', () => {
     renderHeatmapPanel({ series: [customFrame] });
 
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
+  });
+
+  describe('uPlot data updates', () => {
+    let plot: uPlot | undefined;
+
+    beforeEach(() => {
+      jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
+        const builder: UPlotConfigBuilder = realPrepConfig(opts);
+        builder.addHook('setData', (u: uPlot) => {
+          plot = u;
+        });
+        return builder;
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      plot = undefined;
+    });
+
+    it('sets new data on uPlot when a sparse frame object is reused with fewer cells', async () => {
+      const frame = createSparseHeatmapCellsFrame();
+      const initialProps = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [frame],
+          timeRange: getDefaultTimeRange(),
+        },
+      });
+      const { rerender } = render(<HeatmapPanel {...initialProps} />);
+
+      await waitFor(() => expect(plot?.data[1][0]).toHaveLength(4));
+
+      frame.fields.forEach((field) => {
+        field.values = field.values.slice(0, 2);
+      });
+      rerender(<HeatmapPanel {...initialProps} data={{ ...initialProps.data, series: [frame] }} />);
+
+      await waitFor(() => expect(plot?.data[1][0]).toHaveLength(2));
+    });
   });
 
   describe('Regression: negative values (PR #98887, #96741)', () => {

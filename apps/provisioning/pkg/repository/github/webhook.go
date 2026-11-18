@@ -154,13 +154,8 @@ func (r *githubWebhookRepository) SubscribedEvents() []string {
 	return subscribedEvents
 }
 
-// CommentPullRequest adds a comment to a pull request.
-func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
-}
-
-func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
-	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
+func (r *githubWebhookRepository) PullRequestClient() repository.PullRequestClient {
+	return r.Client()
 }
 
 // senderID formats the sender's numeric ID, or returns an empty string when

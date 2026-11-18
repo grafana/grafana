@@ -15,8 +15,7 @@ import {
   type DataSourceRef,
   preProcessPanelData,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getTemplateSrv, getDataSourceInstance } from '@grafana/runtime';
 
 import { getNextRequestId } from './PanelQueryRunner';
 import { setStructureRevision } from './processing/revision';

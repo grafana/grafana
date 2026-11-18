@@ -23,7 +23,6 @@ import {
   type ResourceClientRequestOptions,
   type ResourceClientWriteParams,
   type GroupVersionResource,
-  type TableResponse,
 } from './types';
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
@@ -125,16 +124,6 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
 
     return getBackendSrv().get<ResourceList<T, S, K>>(this.url, opts);
-  }
-
-  public async listAsTable(opts?: ListOptions): Promise<TableResponse> {
-    const finalOpts = opts || {};
-    finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);
-    finalOpts.fieldSelector = this.parseListOptionsSelector(finalOpts?.fieldSelector);
-
-    return getBackendSrv().get<TableResponse>(this.url, finalOpts, undefined, {
-      headers: { Accept: 'application/json;as=Table;g=meta.k8s.io;v=v1' },
-    });
   }
 
   public async create(

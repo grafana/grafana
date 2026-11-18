@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { type AdHocVariableModel, type DataSourceApi } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { adHocBuilder } from '../../shared/testing/builders';
 import { getPreloadedState } from '../../state/helpers';
@@ -11,8 +11,8 @@ import * as actions from '../actions';
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocPicker } from './AdHocPicker';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

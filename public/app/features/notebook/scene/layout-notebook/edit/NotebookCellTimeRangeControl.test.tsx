@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { Portal, PortalContainer } from '@grafana/ui';
@@ -38,7 +38,7 @@ describe('NotebookCellTimeRangeControl', () => {
     render(<NotebookCellTimeRangeControl cell={cell} />);
 
     expect(screen.getByText('Locked: Last 24 hours')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sync back to notebook time range' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove time lock' })).toBeInTheDocument();
   });
 
   it('opens the real time range picker content in one click, with no separate nested trigger', async () => {
@@ -66,7 +66,7 @@ describe('NotebookCellTimeRangeControl', () => {
     const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
 
-    await user.click(screen.getByRole('button', { name: 'Sync back to notebook time range' }));
+    await user.click(screen.getByRole('button', { name: 'Remove time lock' }));
 
     expect(cell.state.$timeRange).toBeUndefined();
     expect(screen.queryByRole('checkbox', { name: /Last/ })).not.toBeInTheDocument();
@@ -75,14 +75,38 @@ describe('NotebookCellTimeRangeControl', () => {
   it('closes the popover when the clear button is clicked while it is open', async () => {
     const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+    const clearButton = screen.getByRole('button', { name: 'Remove time lock' });
 
     await user.click(screen.getByRole('button', { name: 'Locked: Last 24 hours' }));
     expect(await screen.findByRole('checkbox', { name: 'Last 24 hours' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Sync back to notebook time range' }));
+    await user.click(clearButton);
 
     expect(cell.state.$timeRange).toBeUndefined();
     expect(screen.queryByRole('checkbox', { name: 'Last 24 hours' })).not.toBeInTheDocument();
+  });
+
+  it('removes the lock from the picker and seeds a new lock from notebook time', async () => {
+    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByRole('button', { name: 'Locked: Last 24 hours' }));
+    const picker = await screen.findByRole('dialog', { name: 'Panel time range' });
+    expect(within(picker).getByText('Locked: Last 24 hours')).toBeInTheDocument();
+    expect(within(picker).getByRole('textbox', { name: 'From' })).toHaveValue('now-24h');
+    await user.click(within(picker).getByRole('button', { name: 'Remove time lock' }));
+
+    expect(cell.state.$timeRange).toBeUndefined();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Update time range' }));
+    expect(await screen.findByRole('textbox', { name: 'From' })).toHaveValue('now-6h');
+    expect(screen.getByRole('textbox', { name: 'To' })).toHaveValue('now');
+    expect(screen.queryByRole('button', { name: 'Remove time lock' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+    expect(cell.state.$timeRange?.state.from).toBe('now-6h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    expect(screen.getByRole('button', { name: 'Locked: Last 6 hours' })).toBeInTheDocument();
   });
 
   it('closes on clicking the trigger again', async () => {
@@ -95,6 +119,29 @@ describe('NotebookCellTimeRangeControl', () => {
 
     await user.click(openButton);
     expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  });
+
+  it('opens outside the fading toolbar, hides its tooltip, and restores focus on Escape', async () => {
+    const cell = buildCell();
+    const { user } = render(
+      <div role="toolbar" aria-label="Panel actions">
+        <NotebookCellTimeRangeControl cell={cell} />
+      </div>
+    );
+    const trigger = screen.getByRole('button', { name: 'Update time range' });
+    await user.hover(trigger);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Lock panel time range');
+
+    await user.click(trigger);
+    const picker = await screen.findByRole('dialog', { name: 'Panel time range' });
+    expect(screen.getByRole('toolbar', { name: 'Panel actions' })).not.toContainElement(picker);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(trigger).toHaveFocus());
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(cell.state.$timeRange).toBeUndefined();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('closes when clicking outside the popover', async () => {

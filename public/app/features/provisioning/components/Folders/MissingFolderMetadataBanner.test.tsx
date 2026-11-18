@@ -1,21 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-
-import { type FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
-
-import { FolderPermissions, MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
-
-jest.mock('app/core/components/AccessControl/Permissions', () => ({
-  Permissions: ({ canSetPermissions, resourceId }: { canSetPermissions: boolean; resourceId: string }) => (
-    <div data-testid="permissions" data-can-set={canSetPermissions} data-resource-id={resourceId} />
-  ),
-}));
-
-jest.mock('../../hooks/useFolderMetadataStatus', () => ({
-  useFolderMetadataStatus: jest.fn(),
-}));
+import { MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
 
 jest.mock('./FixFolderMetadataDrawer', () => ({
   FixFolderMetadataDrawer: ({ repositoryName, onDismiss }: { repositoryName: string; onDismiss: () => void }) => (
@@ -24,9 +9,6 @@ jest.mock('./FixFolderMetadataDrawer', () => ({
     </div>
   ),
 }));
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { useFolderMetadataStatus } = require('../../hooks/useFolderMetadataStatus');
 
 describe('MissingFolderMetadataBanner', () => {
   it('renders warning alert with correct content', () => {
@@ -68,93 +50,5 @@ describe('MissingFolderMetadataBanner', () => {
 
     await user.click(screen.getByText('Close'));
     expect(screen.queryByTestId('fix-folder-metadata-drawer')).not.toBeInTheDocument();
-  });
-});
-
-describe('FolderPermissions', () => {
-  let originalProvisioningEnabled: boolean;
-
-  beforeEach(() => {
-    originalProvisioningEnabled = config.provisioningEnabled;
-    config.provisioningEnabled = true;
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    config.provisioningEnabled = originalProvisioningEnabled;
-  });
-
-  beforeEach(() => {
-    setTestFlags({ provisioningFolderMetadata: true });
-  });
-
-  it('renders permissions directly when folder is not provisioned', () => {
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={false} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
-    expect(useFolderMetadataStatus).not.toHaveBeenCalled();
-  });
-
-  it('renders permissions directly when feature toggles are disabled', () => {
-    config.provisioningEnabled = false;
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
-  });
-
-  it('renders loading state', () => {
-    useFolderMetadataStatus.mockReturnValue({
-      status: 'loading' as FolderMetadataStatus,
-      repositoryName: 'test-repo',
-    });
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('renders warning banner and read-only permissions when metadata is missing', () => {
-    useFolderMetadataStatus.mockReturnValue({
-      status: 'missing' as FolderMetadataStatus,
-      repositoryName: 'test-repo',
-    });
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('This folder is missing metadata.')).toBeInTheDocument();
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'false');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
-  });
-
-  it('renders error alert when metadata check fails', () => {
-    useFolderMetadataStatus.mockReturnValue({
-      status: 'error' as FolderMetadataStatus,
-      repositoryName: 'test-repo',
-    });
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText('Unable to check folder metadata status.')).toBeInTheDocument();
-  });
-
-  it('renders permissions with original canSetPermissions when metadata is ok', () => {
-    useFolderMetadataStatus.mockReturnValue({
-      status: 'ok' as FolderMetadataStatus,
-      repositoryName: 'test-repo',
-    });
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
   });
 });

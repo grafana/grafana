@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -59,6 +60,13 @@ func (p *countingLibraryElementProvider) GetLibraryElementInfo(_ context.Context
 
 func (p *countingLibraryElementProvider) getCallCount() int64 {
 	return p.callCount.Load()
+}
+
+func newCachingScheme(t *testing.T, dsProvider schemaversion.DataSourceIndexProvider, leProvider schemaversion.LibraryElementIndexProvider) *runtime.Scheme {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	require.NoError(t, RegisterConversions(scheme, dsProvider, leProvider))
+	return scheme
 }
 
 // createTestV0Dashboard creates a minimal v0 dashboard for testing
@@ -239,6 +247,7 @@ func TestConversionCaching_V0_to_V2alpha1(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	// Convert multiple dashboards in the same namespace
 	numDashboards := 5
@@ -248,8 +257,8 @@ func TestConversionCaching_V0_to_V2alpha1(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
-		require.NoError(t, err, "conversion %d should succeed", i)
+		require.NoError(t, scheme.Convert(source, target, nil))
+		require.False(t, target.Status.Conversion.Failed, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
@@ -280,6 +289,7 @@ func TestConversionCaching_V0_to_V2beta1(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	numDashboards := 5
 	namespace := "default"
@@ -288,8 +298,8 @@ func TestConversionCaching_V0_to_V2beta1(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V0_to_V2beta1(source, target, nil, cachedDS, cachedLE)
-		require.NoError(t, err, "conversion %d should succeed", i)
+		require.NoError(t, scheme.Convert(source, target, nil))
+		require.False(t, target.Status.Conversion.Failed, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
@@ -317,6 +327,7 @@ func TestConversionCaching_V1beta1_to_V2alpha1(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	numDashboards := 5
 	namespace := "default"
@@ -325,8 +336,8 @@ func TestConversionCaching_V1beta1_to_V2alpha1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V1_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
-		require.NoError(t, err, "conversion %d should succeed", i)
+		require.NoError(t, scheme.Convert(source, target, nil))
+		require.False(t, target.Status.Conversion.Failed, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
@@ -354,6 +365,7 @@ func TestConversionCaching_V1beta1_to_V2beta1(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	numDashboards := 5
 	namespace := "default"
@@ -362,8 +374,8 @@ func TestConversionCaching_V1beta1_to_V2beta1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1_to_V2beta1(source, target, nil, cachedDS, cachedLE)
-		require.NoError(t, err, "conversion %d should succeed", i)
+		require.NoError(t, scheme.Convert(source, target, nil))
+		require.False(t, target.Status.Conversion.Failed, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
 
@@ -391,6 +403,7 @@ func TestConversionCaching_MultipleNamespaces(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	namespaces := []string{"default", "org-2", "org-3"}
 	numDashboardsPerNs := 3
@@ -400,8 +413,8 @@ func TestConversionCaching_MultipleNamespaces(t *testing.T) {
 			source := createTestV0Dashboard(ns, "Dashboard "+string(rune('A'+i)))
 			target := &dashv2alpha1.Dashboard{}
 
-			err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
-			require.NoError(t, err, "conversion for namespace %s should succeed", ns)
+			require.NoError(t, scheme.Convert(source, target, nil))
+			require.False(t, target.Status.Conversion.Failed, "conversion for namespace %s should succeed", ns)
 		}
 	}
 
@@ -432,6 +445,7 @@ func TestConversionCaching_CacheDisabled(t *testing.T) {
 
 	migration.ResetForTesting()
 	migration.Initialize(cachedDS, cachedLE, migration.DefaultCacheTTL)
+	scheme := newCachingScheme(t, cachedDS, cachedLE)
 
 	numDashboards := 3
 	namespace := "default"
@@ -440,8 +454,8 @@ func TestConversionCaching_CacheDisabled(t *testing.T) {
 		source := createTestV0Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V0_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
-		require.NoError(t, err, "conversion %d should succeed", i)
+		require.NoError(t, scheme.Convert(source, target, nil))
+		require.False(t, target.Status.Conversion.Failed, "conversion %d should succeed", i)
 	}
 
 	// Without caching, each conversion calls the underlying provider multiple times

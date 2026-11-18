@@ -55,7 +55,7 @@ module.exports = createNoRestrictedSyntax(
     name: 'no-config-datasources',
     selector: 'MemberExpression[object.name="config"][property.name="datasources"]',
     message:
-      'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime/unstable instead',
+      'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime instead',
   },
   {
     name: 'no-config-feature-toggles',
@@ -81,11 +81,11 @@ module.exports = createNoRestrictedSyntax(
   {
     name: 'zod-import-namespace',
     selector: [
-      "ImportDeclaration[source.value=/^zod.+/]:not([source.value='zod'])",
-      "ImportDeclaration[source.value='zod']:not([specifiers.length=1]:has(> ImportNamespaceSpecifier[local.name='z']))",
+      // Escape `/` as `\x2f` in the regex as esquery cannot handle an escaped literal slash.
+      "ImportDeclaration[source.value=/^zod($|\\x2f)/]:not([source.value='zod/mini'])",
+      "ImportDeclaration[source.value='zod/mini']:not([specifiers.length=1]:has(> ImportNamespaceSpecifier[local.name='z']))",
     ].join(', '),
-    message:
-      "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.",
+    message: "Zod imports must use exactly `import * as z from 'zod/mini'` or `import type * as z from 'zod/mini'`.",
   },
   {
     name: 'no-get-data-source-srv',
@@ -94,6 +94,6 @@ module.exports = createNoRestrictedSyntax(
       'Program:has(ImportDeclaration[source.value="@grafana/runtime"] > ImportDefaultSpecifier, ImportDeclaration[source.value="@grafana/runtime"] > ImportNamespaceSpecifier) MemberExpression[property.name="getDataSourceSrv"]',
     ].join(', '),
     message:
-      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
+      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
   }
 );

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -38,7 +39,14 @@ func (s *Service) LegacySearchService() team.Service {
 }
 
 func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, tracer)
+	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy team
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
 	}
@@ -185,6 +193,16 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 	return s.legacyService.GetUserTeamMemberships(ctx, orgID, userID, external, bypassCache)
 }
 
+// GetUserTeamMembershipsByUID doesn't fall back on k8s errors: unified storage may be
+// authoritative, so legacy SQL can be stale and callers would act on the wrong memberships.
+func (s *Service) GetUserTeamMembershipsByUID(ctx context.Context, query *team.GetUserTeamMembershipsByUIDQuery) ([]team.UserTeamMembership, error) {
+	if s.isK8sRedirectFlagEnabled(ctx) {
+		return s.k8sService.GetUserTeamMembershipsByUID(ctx, query)
+	}
+
+	return s.legacyService.GetUserTeamMembershipsByUID(ctx, query)
+}
+
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.GetTeamMembers(ctx, query)
@@ -202,13 +220,15 @@ func (s *Service) RegisterDelete(renderer teamdelete.Renderer) {
 // isK8sRedirectEnabled gates team operations on the k8s apiserver path.
 // FIXME: drop the UsersApi requirement once teamk8s no longer needs the k8s users resource for enrichment.
 func (s *Service) isK8sRedirectEnabled(ctx context.Context) bool {
+	return s.isK8sRedirectFlagEnabled(ctx) && s.iamFeatures.UsersAPI
+}
+
+// isK8sRedirectFlagEnabled gates operations that teamk8s serves without the k8s users resource.
+func (s *Service) isK8sRedirectFlagEnabled(ctx context.Context) bool {
 	if s.openFeatureClient == nil {
 		return false
 	}
-	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
-		return false
-	}
-	return s.iamFeatures.UsersAPI
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
 }
 
 // shouldFallbackToLegacy determines whether to fallback to the legacy service for a given request.

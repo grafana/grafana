@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -361,52 +362,68 @@ func TestMode1_Update(t *testing.T) {
 	}
 }
 
-func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
+func TestUpdateMarksOnlyUnifiedReplayAsMirrored(t *testing.T) {
 	legacy := &fakeStorage{}
 	legacy.onUpdate(exampleObj, nil)
-
-	unified := &blockingUpdateStorage{
-		fakeStorage: &fakeStorage{},
-		started:     make(chan struct{}),
-		release:     make(chan struct{}),
-		result:      make(chan backgroundUpdateResult, 1),
+	unified := &fakeStorage{}
+	unified.onUpdate(exampleObj, nil)
+	dw := &dualWriter{
+		legacy:  legacy,
+		unified: unified,
+		getMode: func(context.Context) (bool, bool) { return false, false },
 	}
 
-	dw, err := newStorage(kind, rest.Mode1, legacy, unified)
+	_, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{}, nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
+	require.Len(t, legacy.updateCalls, 1)
+	require.Len(t, unified.updateCalls, 1)
+	require.False(t, IsMirroredUpdate(legacy.updateCalls[0].args[0].(context.Context)))
+	require.True(t, IsMirroredUpdate(unified.updateCalls[0].args[0].(context.Context)))
+}
 
-	requestCtx := context.WithValue(context.Background(), backgroundUpdateContextKey{}, "fake-request-value")
-	requestCtx, cancelRequest := context.WithCancel(requestCtx)
+func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
+	// A stalled background call fails as a deadlock, without wall-clock deadlines.
+	synctest.Test(t, func(t *testing.T) {
+		legacy := &fakeStorage{}
+		legacy.onUpdate(exampleObj, nil)
 
-	obj, _, err := dw.Update(
-		requestCtx,
-		"foo",
-		updatedObjInfoObj{},
-		func(context.Context, runtime.Object) error { return nil },
-		func(context.Context, runtime.Object, runtime.Object) error { return nil },
-		false,
-		&metav1.UpdateOptions{},
-	)
-	require.NoError(t, err)
-	require.Equal(t, exampleObj, obj)
+		unified := &blockingUpdateStorage{
+			fakeStorage: &fakeStorage{},
+			started:     make(chan struct{}),
+			release:     make(chan struct{}),
+			result:      make(chan backgroundUpdateResult, 1),
+		}
+		// Release the blocked call even if an assertion fails.
+		defer close(unified.release)
 
-	select {
-	case <-unified.started:
-	case <-time.After(time.Second):
-		t.Fatal("background unified update did not start")
-	}
+		dw, err := newStorage(kind, rest.Mode1, legacy, unified)
+		require.NoError(t, err)
 
-	cancelRequest()
-	close(unified.release)
+		requestCtx := context.WithValue(t.Context(), backgroundUpdateContextKey{}, "fake-request-value")
+		requestCtx, cancelRequest := context.WithCancel(requestCtx)
+		defer cancelRequest()
 
-	select {
-	case got := <-unified.result:
+		obj, _, err := dw.Update(
+			requestCtx,
+			"foo",
+			updatedObjInfoObj{},
+			func(context.Context, runtime.Object) error { return nil },
+			func(context.Context, runtime.Object, runtime.Object) error { return nil },
+			false,
+			&metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, exampleObj, obj)
+
+		<-unified.started
+		cancelRequest()
+		unified.release <- struct{}{}
+
+		got := <-unified.result
 		require.NoError(t, got.contextErr)
 		require.NoError(t, got.updateErr)
 		require.Equal(t, "fake-request-value", got.contextValue)
-	case <-time.After(time.Second):
-		t.Fatal("background unified update did not complete")
-	}
+	})
 }
 
 type backgroundUpdateContextKey struct{}

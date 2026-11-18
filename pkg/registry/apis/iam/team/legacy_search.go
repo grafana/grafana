@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
@@ -52,6 +53,11 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 	if err != nil {
 		return nil, err
 	}
+	// Service identities scoped to a namespace carry org ID 1, so the org must come from the namespace.
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return nil, err
+	}
 
 	if req.Limit > common.MaxListLimit {
 		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
@@ -78,9 +84,10 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		Page:         int(req.Page),
 		Query:        req.Query,
 		Name:         req.Title,
+		MemberUID:    req.Member,
 		UIDs:         req.UIDs,
 		TeamIds:      teamIDs,
-		OrgID:        signedInUser.GetOrgID(),
+		OrgID:        ns.OrgID,
 		SortOpts:     legacyTeamSortOptions(req.Sort),
 	}
 

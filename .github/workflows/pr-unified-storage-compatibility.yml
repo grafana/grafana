@@ -51,18 +51,26 @@ jobs:
               # (keep in sync with the negations in unified_storage below)
               - 'pkg/storage/unified/apistore/**'
               - 'pkg/storage/unified/federated/**'
+              - 'pkg/storage/unified/informer/**'
               - 'pkg/storage/unified/*.go'
+              # test-only files don't ship, so they can't break cross-version compatibility
+              - '!**/*_test.go'
+              - '!**/testdata/**'
             unified_storage:
               - 'pkg/storage/unified/**'
               # client-side code deployed with Grafana, not with the storage/search
               # server (keep in sync with the client-side block in api_layer above)
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
+              - '!pkg/storage/unified/informer/**'
               - '!pkg/storage/unified/*.go'
-              # migration test files and fixtures don't ship in the storage/search
-              # server binary, so they can't break cross-version compatibility
-              - '!pkg/storage/unified/migrations/**/*_test.go'
+              # test-only files don't ship, so they can't break cross-version compatibility
+              - '!**/*_test.go'
+              - '!**/testdata/**'
               - '!pkg/storage/unified/migrations/testcases/**'
+              - '!pkg/storage/unified/testing/**'
+              - '!pkg/storage/unified/sql/test/**'
+              - '!pkg/storage/unified/resource/kv/test/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.api_layer_any_changed == 'true' && steps.changed-files.outputs.unified_storage_any_changed == 'true'

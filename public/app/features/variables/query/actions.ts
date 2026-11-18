@@ -1,7 +1,6 @@
 import { Subscription } from 'rxjs';
 
-import { toDataQueryError } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { toDataQueryError, getDataSourceInstance } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 
 import { getVariable } from '../state/selectors';

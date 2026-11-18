@@ -4,7 +4,7 @@ import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
 import { type LogListContextData, type Props } from '../LogListContext';
-import { type LogListModel } from '../processing';
+import { logHasErrorAttributes, type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -160,6 +160,7 @@ export const LogListContextProvider = ({
   unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
+  const hasLogsWithErrorAttributes = logs.some(logHasErrorAttributes);
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
   const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
 
@@ -171,6 +172,7 @@ export const LogListContextProvider = ({
         dedupStrategy,
         displayedFields,
         downloadLogs: jest.fn(),
+        hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,
         filterLevels,

@@ -14,6 +14,7 @@ import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
+import { isDefaultQuery } from 'app/features/dashboard-scene/utils/queryRunnerState';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
 import { filterPluginList } from '../../state/util';
@@ -72,7 +73,16 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
 
-  const suggestions = result?.suggestions;
+  const { value: meta = [] } = useListedPanelPluginMetas();
+  const hasOnlyDefaultQuery = panel?.targets?.length === 1 && isDefaultQuery(panel.targets[0]);
+  const suggestions = useMemo(
+    () =>
+      result?.suggestions.filter(
+        (suggestion) =>
+          !hasOnlyDefaultQuery || !meta.find((plugin) => plugin.id === suggestion.pluginId)?.skipDefaultQuery
+      ),
+    [result, hasOnlyDefaultQuery, meta]
+  );
   const hasLoadingErrors = result?.hasErrors ?? false;
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
@@ -87,7 +97,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     return PANEL_STATES.EXISTING_PANEL;
   }, [isUnconfiguredPanel, isNewPanel]);
 
-  const { value: meta = [] } = useListedPanelPluginMetas();
   const suggestionsByVizType = useMemo(() => {
     const record: Record<string, PanelPluginMeta> = {};
     for (const m of meta) {

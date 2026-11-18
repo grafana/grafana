@@ -95,6 +95,7 @@ export const ImportDashboardFormV2 = ({
             <FolderPicker
               {...field}
               id="dashboard-import-folder"
+              permission="create"
               onChange={(uid, title) => {
                 onChange(uid, title);
                 if (uid) {

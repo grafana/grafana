@@ -3,12 +3,16 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand/v2"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/dataplane/examples"
+	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/metrics"
@@ -264,4 +268,136 @@ func TestHandleDataplaneTS(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSortNumericMetricRefsMatchesDataplane(t *testing.T) {
+	tests := []struct {
+		name   string
+		fields []*data.Field
+	}{
+		{name: "by metric name", fields: []*data.Field{
+			data.NewField("b", data.Labels{"host": "a"}, []float64{1}),
+			data.NewField("a", nil, []float64{1}),
+			data.NewField("c", data.Labels{"host": "a"}, []float64{1}),
+		}},
+		{name: "by label string", fields: []*data.Field{
+			data.NewField("value", data.Labels{"host": "b"}, []float64{1}),
+			data.NewField("value", data.Labels{"host": "a", "env": "prod"}, []float64{1}),
+			data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+		}},
+		{name: "nil, empty and set labels", fields: []*data.Field{
+			data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+			data.NewField("value", nil, []float64{1}),
+			data.NewField("value", data.Labels{}, []float64{1}),
+			data.NewField("value", nil, []float64{1}),
+		}},
+		{name: "missing value field", fields: []*data.Field{
+			data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+			nil,
+			data.NewField("", nil, []float64{1}),
+		}},
+		{name: "different labels with the same string", fields: []*data.Field{
+			data.NewField("value", data.Labels{"a": "b, c=d"}, []float64{1}),
+			data.NewField("value", data.Labels{"a": "a"}, []float64{1}),
+			data.NewField("value", data.Labels{"a": "b", "c": "d"}, []float64{1}),
+		}},
+		{name: "equal keys", fields: []*data.Field{
+			data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+			data.NewField("value", data.Labels{"host": "a"}, []float64{2}),
+			data.NewField("value", data.Labels{"host": "a"}, []float64{3}),
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requireSameOrderAsDataplane(t, tt.fields)
+		})
+	}
+	t.Run("random inputs", func(t *testing.T) {
+		rng := rand.New(rand.NewPCG(1, 2))
+		for range 500 {
+			requireSameOrderAsDataplane(t, randomNumericFields(rng, 1+rng.IntN(300)))
+		}
+	})
+}
+
+func TestSortNumericMetricRefsBuildsEachKeyOnce(t *testing.T) {
+	fields := randomNumericFields(rand.New(rand.NewPCG(1, 2)), 500)
+	refs := make([]numeric.MetricRef, len(fields))
+	for i, f := range fields {
+		refs[i] = numeric.MetricRef{ValueField: f}
+	}
+	keyLen := 0
+	keyAllocs := testing.AllocsPerRun(10, func() {
+		for _, r := range refs {
+			if l := r.GetLabels(); l != nil {
+				keyLen += len(l.String())
+			}
+		}
+	})
+	buf := make([]numeric.MetricRef, len(refs))
+	sortAllocs := testing.AllocsPerRun(10, func() {
+		copy(buf, refs)
+		sortNumericMetricRefs(buf)
+	})
+	require.Positive(t, keyLen)
+	require.LessOrEqual(t, sortAllocs, keyAllocs+10)
+}
+
+func BenchmarkSortNumericMetricRefs(b *testing.B) {
+	fields := randomNumericFields(rand.New(rand.NewPCG(1, 2)), 500)
+	refs := make([]numeric.MetricRef, len(fields))
+	for i, f := range fields {
+		refs[i] = numeric.MetricRef{ValueField: f}
+	}
+	sorts := []struct {
+		name string
+		sort func([]numeric.MetricRef)
+	}{
+		{name: "dataplane", sort: numeric.SortNumericMetricRef},
+		{name: "precomputed keys", sort: sortNumericMetricRefs},
+	}
+	buf := make([]numeric.MetricRef, len(refs))
+	for _, s := range sorts {
+		b.Run(s.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				copy(buf, refs)
+				s.sort(buf)
+			}
+		})
+	}
+}
+
+func requireSameOrderAsDataplane(t *testing.T, fields []*data.Field) {
+	t.Helper()
+	want := make([]numeric.MetricRef, len(fields))
+	for i, f := range fields {
+		want[i] = numeric.MetricRef{ValueField: f}
+	}
+	got := slices.Clone(want)
+	numeric.SortNumericMetricRef(want)
+	sortNumericMetricRefs(got)
+	for i := range want {
+		require.Same(t, want[i].ValueField, got[i].ValueField, "index %d", i)
+	}
+}
+
+func randomNumericFields(rng *rand.Rand, n int) []*data.Field {
+	names := []string{"value", "value", "cpu", "mem"}
+	fields := make([]*data.Field, n)
+	for i := range fields {
+		var labels data.Labels
+		switch rng.IntN(10) {
+		case 0:
+		case 1:
+			labels = data.Labels{}
+		default:
+			labels = data.Labels{}
+			for k := range 1 + rng.IntN(4) {
+				labels[fmt.Sprintf("k%d", k)] = fmt.Sprintf("v%d", rng.IntN(20))
+			}
+		}
+		fields[i] = data.NewField(names[rng.IntN(len(names))], labels, []float64{float64(i)})
+	}
+	return fields
 }

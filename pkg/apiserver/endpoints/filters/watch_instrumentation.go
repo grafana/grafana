@@ -72,6 +72,11 @@ func (t *firstByteTracker) mark() {
 	t.onFirstByte()
 }
 
+// skip ends tracking without recording. A watch that is refused was never
+// established, and its resource, taken from the path, may not exist: recording
+// it would let any caller that passes authorization add series.
+func (t *firstByteTracker) skip() { t.seen = true }
+
 // watchResponseWriter records the establishment duration the first time the watch
 // handler writes to the client. For a watch, the status header and first framed
 // event are flushed once the watch stream is ready, so the first write is a good
@@ -86,6 +91,9 @@ var _ responsewriter.UserProvidedDecorator = (*watchResponseWriter)(nil)
 func (w *watchResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
 func (w *watchResponseWriter) WriteHeader(code int) {
+	if code < http.StatusOK || code >= http.StatusMultipleChoices {
+		w.tracker.skip()
+	}
 	w.tracker.mark()
 	w.ResponseWriter.WriteHeader(code)
 }

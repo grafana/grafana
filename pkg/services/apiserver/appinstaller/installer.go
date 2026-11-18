@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,8 +16,8 @@ import (
 	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -291,12 +290,12 @@ func registerStorageOptions(
 	registered := make(map[schema.GroupResource]struct{})
 	for _, v := range md.Versions {
 		for _, k := range v.Kinds {
-			if k.Plural == "" {
+			if k.Resource == "" {
 				continue
 			}
 			gr := schema.GroupResource{
 				Group:    md.Group,
-				Resource: strings.ToLower(k.Plural),
+				Resource: k.Resource,
 			}
 			if versionedProvider != nil {
 				gvr := gr.WithVersion(v.Name)

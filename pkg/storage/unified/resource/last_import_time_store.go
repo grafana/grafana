@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -130,18 +131,21 @@ func (s *lastImportStore) GetLastImportTime(ctx context.Context, nsr NamespacedR
 func (s *lastImportStore) ListLastImportTimes(ctx context.Context, lastImportTimeMaxAge time.Duration) (valid map[NamespacedResource]LastImportTimeKey, toDelete []LastImportTimeKey, _ error) {
 	valid = map[NamespacedResource]LastImportTimeKey{}
 	now := time.Now()
+	var listErr error
 
 	for k, err := range s.kv.Keys(ctx, lastImportTimesSection, ListOptions{
 		Sort:  SortOrderAsc,
 		Limit: 0, // Get all.
 	}) {
 		if err != nil {
-			return nil, nil, err
+			return valid, toDelete, errors.Join(listErr, err)
 		}
 
 		key, err := ParseLastImportKey(k)
 		if err != nil {
-			return nil, nil, err
+			// One malformed key must not hide later imports from the scan.
+			listErr = errors.Join(listErr, err)
+			continue
 		}
 
 		if lastImportTimeMaxAge > 0 && now.Sub(key.LastImportTime) > lastImportTimeMaxAge {
@@ -161,7 +165,7 @@ func (s *lastImportStore) ListLastImportTimes(ctx context.Context, lastImportTim
 		}
 	}
 
-	return valid, toDelete, nil
+	return valid, toDelete, listErr
 }
 
 func (s *lastImportStore) CleanupLastImportTimes(ctx context.Context, lastImportTimeMaxAge time.Duration) (int, error) {

@@ -1,7 +1,7 @@
 import { of, Subject } from 'rxjs';
 
 import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
@@ -13,8 +13,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { applyQueryToPanel, getVizSuggestionForQuery } from './getVizSuggestionForQuery';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

@@ -120,22 +120,26 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) (out []secretv
 	}
 
 	if len(secureValuesWithError) > 0 {
-		ids := make([]string, 0, len(secureValuesWithError))
+		input := make([]contracts.SecureValueIdentifier, 0, len(secureValuesWithError))
 		for _, sv := range secureValuesWithError {
-			ids = append(ids, string(sv.UID))
+			input = append(input, contracts.SecureValueIdentifier{
+				Namespace: xkube.Namespace(sv.Namespace),
+				Name:      sv.Name,
+				Version:   sv.Status.Version,
+			})
 		}
 
-		counts, err := w.secureValueMetadataStorage.AddGCAttemptCount(ctx, ids)
+		counts, err := w.secureValueMetadataStorage.IncGCAttemptCount(ctx, input)
 		if err != nil {
 			return secureValues, errors.Join(append(errs, fmt.Errorf("incrementing gc retry count for secure values: %w", err))...)
 		}
 
 		if len(counts) > 0 {
 			// Delete secure values that exceeed max retries
-			deleteInput := make([]contracts.DeleteInput, 0, len(secureValuesWithError))
+			deleteInput := make([]contracts.SecureValueIdentifier, 0, len(secureValuesWithError))
 			for _, sv := range secureValuesWithError {
 				if counts[string(sv.UID)] >= w.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
-					deleteInput = append(deleteInput, contracts.DeleteInput{
+					deleteInput = append(deleteInput, contracts.SecureValueIdentifier{
 						Namespace: xkube.Namespace(sv.Namespace),
 						Name:      sv.Name,
 						Version:   sv.Status.Version,
@@ -186,7 +190,7 @@ func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) (er
 	}
 
 	// Metadata deletion is not idempotent but not found errors are ignored
-	if err := w.secureValueMetadataStorage.Delete(ctx, []contracts.DeleteInput{{
+	if err := w.secureValueMetadataStorage.Delete(ctx, []contracts.SecureValueIdentifier{{
 		Namespace: xkube.Namespace(sv.Namespace), Name: sv.Name, Version: sv.Status.Version,
 	}}); err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return fmt.Errorf("deleting secure value from metadata storage: %w", err)

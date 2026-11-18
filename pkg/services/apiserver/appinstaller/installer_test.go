@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,8 +13,17 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
+
+// apistore.RESTOptionsGetter.ForResource exists for exactly one caller: the
+// appsdk installer, which type-asserts the getter it is handed to this interface
+// and builds storage with the getter unchanged when the assertion fails. Nothing
+// else calls ForResource, so a drifted signature would not break the build -- it
+// would silently stop per-resource registrations from reaching storage, and each
+// resource would go back to sharing one answer across its versions.
+var _ appsdkapiserver.RESTOptionsGetterForResource = (*apistore.RESTOptionsGetter)(nil)
 
 func TestRegisterAuthorizers(t *testing.T) {
 	tests := []struct {
@@ -199,8 +207,8 @@ func TestRegisterStorageOptions(t *testing.T) {
 		installer := &mockAppInstallerWithStorageOpts{
 			mockAppInstaller: &mockAppInstaller{},
 			manifest: makeManifest("test.grafana.app",
-				app.ManifestVersionKind{Kind: "Foo", Plural: enabledResource},
-				app.ManifestVersionKind{Kind: "Bar", Plural: "bars"},
+				app.ManifestVersionKind{Kind: "Foo", Plural: enabledResource, Resource: enabledResource},
+				app.ManifestVersionKind{Kind: "Bar", Plural: "bars", Resource: "bars"},
 			),
 			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
 				called = append(called, gr)
@@ -226,8 +234,8 @@ func TestRegisterStorageOptions(t *testing.T) {
 				AppName: "test-app",
 				Group:   "test.grafana.app",
 				Versions: []app.ManifestVersion{
-					{Name: "v0alpha1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos"}}},
-					{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos"}}},
+					{Name: "v0alpha1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", Resource: "foos"}}},
+					{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", Resource: "foos"}}},
 				},
 			},
 			getOpts: func(gr schema.GroupResource) *apistore.StorageOptions {
@@ -296,8 +304,8 @@ func twoVersionManifest(group string) *app.ManifestData {
 		AppName: "test-app",
 		Group:   group,
 		Versions: []app.ManifestVersion{
-			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
-			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos"}}},
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos", Resource: "foos"}}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "Foos", Resource: "foos"}}},
 		},
 	}
 }

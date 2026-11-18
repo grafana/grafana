@@ -2,6 +2,7 @@ package httpclientprovider
 
 import (
 	"testing"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
@@ -92,4 +93,48 @@ func TestHTTPClientProvider(t *testing.T) {
 		require.Equal(t, HTTPLoggerMiddlewareName, o.Middlewares[8].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.ErrorSourceMiddlewareName, o.Middlewares[9].(sdkhttpclient.MiddlewareName).MiddlewareName())
 	})
+}
+
+func TestNewForConfigPreservesProcessTimeouts(t *testing.T) {
+	original := sdkhttpclient.DefaultTimeoutOptions
+	t.Cleanup(func() { sdkhttpclient.DefaultTimeoutOptions = original })
+	cfg := setting.NewCfg()
+	cfg.DataProxyTimeout = 30
+	tracer := tracing.InitializeTracerForTest()
+	processProvider := New(cfg, validations.ProvideURLValidator(), tracer)
+	processDefaults := sdkhttpclient.DefaultTimeoutOptions
+
+	for _, timeout := range []int{11, 37} {
+		tenantCfg := setting.NewCfg()
+		tenantCfg.DataProxyTimeout = timeout
+		provider := NewForConfig(tenantCfg, validations.ProvideURLValidator(), tracer)
+		client, err := provider.New()
+		require.NoError(t, err)
+		t.Cleanup(client.CloseIdleConnections)
+		require.Equal(t, 30*time.Second, client.Timeout)
+		require.Equal(t, processDefaults, sdkhttpclient.DefaultTimeoutOptions)
+
+		client, err = provider.New(sdkhttpclient.Options{Timeouts: &sdkhttpclient.TimeoutOptions{Timeout: 7 * time.Second}})
+		require.NoError(t, err)
+		t.Cleanup(client.CloseIdleConnections)
+		require.Equal(t, 7*time.Second, client.Timeout)
+	}
+	client, err := processProvider.New()
+	require.NoError(t, err)
+	t.Cleanup(client.CloseIdleConnections)
+	require.Equal(t, 30*time.Second, client.Timeout)
+}
+
+func TestSDKDefaultTimeoutOptionsSurvivesOverride(t *testing.T) {
+	original := sdkhttpclient.DefaultTimeoutOptions
+	t.Cleanup(func() { sdkhttpclient.DefaultTimeoutOptions = original })
+	sdkDefaults := SDKDefaultTimeoutOptions()
+
+	cfg := setting.NewCfg()
+	cfg.DataProxyTimeout = 175
+	New(cfg, validations.ProvideURLValidator(), tracing.InitializeTracerForTest())
+
+	require.Equal(t, 175*time.Second, sdkhttpclient.DefaultTimeoutOptions.Timeout)
+	require.Equal(t, sdkDefaults, SDKDefaultTimeoutOptions())
+	require.Equal(t, 30*time.Second, SDKDefaultTimeoutOptions().Timeout)
 }

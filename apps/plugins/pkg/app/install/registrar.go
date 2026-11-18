@@ -303,11 +303,12 @@ func outcomeForError(err error) string {
 const maxSyncNamespacePasses = 5
 
 // SyncNamespace reconciles the namespace's plugin installs from the given
-// source to match desired, unregistering records not in it. In-sync records
-// are skipped without a read, and because writes fire storage hooks that can
-// rewrite sibling records, passes repeat against a fresh list until one
-// writes nothing.
-func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall) error {
+// source to match desired. Records not in desired are unregistered unless their
+// ID is in retain or they were created at or after since. A zero since keeps
+// every record. In-sync records are skipped without a read, and because writes
+// fire storage hooks that can rewrite sibling records, passes repeat against a
+// fresh list until one writes nothing.
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string, since time.Time) error {
 	client, err := r.GetClient()
 	if err != nil {
 		return err
@@ -316,6 +317,10 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 	desiredIDs := make(map[string]struct{}, len(desired))
 	for i := range desired {
 		desiredIDs[desired[i].ID] = struct{}{}
+	}
+	retainIDs := make(map[string]struct{}, len(retain))
+	for _, id := range retain {
+		retainIDs[id] = struct{}{}
 	}
 
 	var written []string
@@ -338,12 +343,30 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 			if _, ok := desiredIDs[record.Spec.Id]; ok {
 				continue
 			}
+			if _, ok := retainIDs[record.Spec.Id]; ok {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping retained plugin install", "requestNamespace", namespace, "pluginId", record.Spec.Id)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
+				}
+				continue
+			}
 			if r.unregisterIsNoOp(record, source) {
 				if pass == 0 {
 					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped").Inc()
 				}
 				continue
 			}
+			if !record.CreationTimestamp.Time.Before(since) {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping plugin install created after the startup cutoff", "requestNamespace", namespace, "pluginId", record.Spec.Id, "createdAt", record.CreationTimestamp.Time, "since", since)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent").Inc()
+				}
+				continue
+			}
+			r.logger.WithContext(ctx).Info("Unregistering plugin install that is not in the plugin store",
+				"requestNamespace", namespace, "pluginId", record.Spec.Id,
+				"createdAt", record.CreationTimestamp.Time, "age", time.Since(record.CreationTimestamp.Time).Round(time.Second),
+				"cutoff", since, "storePlugins", len(desired), "storeFingerprint", storeFingerprint(desired))
 			changed, err := r.unregister(ctx, namespace, record.Spec.Id, source)
 			if err != nil {
 				return err
@@ -470,6 +493,8 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 		return false, err
 	}
+	createdAt := existing.CreationTimestamp.Time
+	logger.Info("Unregistered plugin install", "createdAt", createdAt, "age", time.Since(createdAt).Round(time.Second))
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 	return true, nil
 }

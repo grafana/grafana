@@ -2,8 +2,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 import { t } from '@grafana/i18n';
-import { config, type FetchError, isFetchError } from '@grafana/runtime';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { isFetchError } from '@grafana/runtime';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   type PublicDashboard,
@@ -18,10 +18,6 @@ import {
   type PublicDashboardListWithPagination,
   type PublicDashboardListWithPaginationResponse,
 } from 'app/features/manage-dashboards/types';
-
-function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
-  return typeof error === 'object' && error != null && 'error' in error;
-}
 
 export const getConfigError = (err: unknown) => ({
   error: isFetchError(err) && err.data.messageId !== 'publicdashboards.notFound' ? err : null,
@@ -39,15 +35,6 @@ export const publicDashboardApi = createApi({
         manageError: getConfigError,
         showErrorAlert: false,
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-        } catch (e) {
-          if (isFetchBaseQueryError(e) && isFetchError(e.error) && config.publicDashboardsEnabled) {
-            dispatch(notifyApp(createErrorNotification(e.error.data.message)));
-          }
-        }
-      },
       providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
     createPublicDashboard: builder.mutation<

@@ -1,9 +1,10 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type SolutionId } from './types';
+import { type SolutionId, type SolutionStats } from './types';
 
 /**
  * localStorage key of the current org's stored scope for a solution card (JSON of a
@@ -24,13 +25,19 @@ export const DatasourceBoundFilterSchema = z.object({
 
 export type DatasourceBoundFilter = z.infer<typeof DatasourceBoundFilterSchema>;
 
+/** Stored string lists: entries trimmed, blanks dropped (a blank regex alternative would match series lacking the label). */
+export const TrimmedValues = z.pipe(
+  z.array(z.string()),
+  z.transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''))
+);
+
 /**
  * Stored JSON → filter. Null for a missing/malformed value or one that selects nothing: both mean
  * the card runs unscoped.
  */
 export function parseStoredFilter<T extends DatasourceBoundFilter>(
   raw: string | undefined,
-  schema: z.ZodType<T>,
+  schema: z.ZodMiniType<T>,
   isEmpty: (filter: T) => boolean
 ): T | null {
   if (!raw) {
@@ -52,4 +59,16 @@ export function scopeFor<T extends DatasourceBoundFilter>(
   ds: Pick<DataSourceInstanceListItem, 'uid'>
 ): T | null {
   return filter && filter.datasourceUid === ds.uid ? filter : null;
+}
+
+/** Stats for a scoped query that matched nothing. Null when the card runs unscoped: an empty fleet stays blank. */
+export async function noMatchStats(
+  filter: DatasourceBoundFilter | null,
+  datasource: () => Promise<DataSourceInstanceListItem | null>,
+  primary: string
+): Promise<SolutionStats | null> {
+  const ds = await datasource();
+  return ds && scopeFor(filter, ds)
+    ? { primary, secondary: t('home.solutions.filter.no-match-hint', 'Adjust the filters') }
+    : null;
 }

@@ -29,6 +29,10 @@ func TestMain(m *testing.M) {
 		// Match both stack names: the compiler may inline startEventListener into newEventExecutor.
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.(*eventExecutor).startEventListener.func1.1"),
 		goleak.IgnoreTopFunction("github.com/open-feature/go-sdk/openfeature.newEventExecutor.(*eventExecutor).startEventListener.func1.1"),
+		// db.NewTestStore always starts a test tracer whose span processor is never shut down.
+		goleak.IgnoreTopFunction("go.opentelemetry.io/otel/sdk/trace.(*batchSpanProcessor).processQueue"),
+		// The Secrets Manager test links bleve, whose package init starts analysis workers that never stop.
+		goleak.IgnoreTopFunction("github.com/blevesearch/bleve_index_api.AnalysisWorker"),
 	)
 }
 
@@ -519,9 +523,7 @@ func TestConnectionRunning(t *testing.T) {
 				t.Run(stop, func(t *testing.T) {
 					srv := startTestServer(t)
 					c, svc, _ := newTestClient(t, role, newTestConfig(srv, setting.NATSSettings{Enabled: true}))
-					ctx, cancel := context.WithCancel(t.Context())
-					defer cancel()
-					startService(t, ctx, svc)
+					cancel := startService(t, t.Context(), svc)
 					switch stop {
 					case "service stop":
 						svc.StopAsync()

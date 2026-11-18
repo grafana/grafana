@@ -1,6 +1,5 @@
 // Package search serves the per-kind rule search routes,
-// POST .../namespaces/{ns}/alertrules/searchRules and
-// .../recordingrules/searchRules.
+// POST .../namespaces/{ns}/searchAlertRules and .../searchRecordingRules.
 //
 // The contract is search.grafana.app/v0alpha1 SearchQuery / SearchResults: the
 // same request and response bodies as the generic per-resource search API. It

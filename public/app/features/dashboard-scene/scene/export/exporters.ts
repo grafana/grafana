@@ -1,8 +1,8 @@
 import { defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, VariableRefresh } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Panel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,

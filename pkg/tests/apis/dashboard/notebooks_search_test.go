@@ -3,6 +3,7 @@ package dashboards
 import (
 	"context"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,6 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
-		EnableSearchAPI:      true,
 		// The notebooks authorizer denies every resource request when the flag is
 		// off, so without this the endpoint 403s before it reaches search.
 		EnableFeatureToggles: []string{featuremgmt.FlagDashboardNotebooks},
@@ -205,18 +205,31 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 			"CPU < Disk < Memory by title")
 	})
 
-	// created and updated are declared retrieve-only in StandardSearchFieldDefinitions,
-	// so asking to sort on them is rejected rather than silently ignored. A list page
-	// wanting "most recently updated first" is blocked on that capability, not on
-	// anything notebooks-specific — this pins the contract so a change there is
-	// deliberate.
-	t.Run("rejects sorting on a retrieve-only field", func(t *testing.T) {
+	// created and updated are sortable standard fields, so a list page can show
+	// the most recently updated first. Values, not names, are compared, because
+	// notebooks created within the same millisecond tie.
+	t.Run("sorts on created and updated", func(t *testing.T) {
 		for _, f := range []string{"updated", "created"} {
-			_, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
-				Sort:  []searchV0.SortField{{Field: f}},
-				Limit: 10,
-			})
-			assert.Equal(t, http.StatusUnprocessableEntity, code, "sorting on %q should be rejected", f)
+			for _, direction := range []string{"asc", "desc"} {
+				results, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+					Sort:   []searchV0.SortField{{Field: f, Direction: direction}},
+					Fields: []string{f},
+					Limit:  100,
+				})
+				require.Equal(t, http.StatusOK, code, "sorting on %q", f)
+				require.Greater(t, len(results.Items), 1)
+
+				values := make([]float64, 0, len(results.Items))
+				for _, item := range results.Items {
+					v, ok := item.Fields.Object[f].(float64)
+					require.True(t, ok, "%s of %s: %v", f, item.Resource.Name, item.Fields.Object[f])
+					values = append(values, v)
+				}
+				if direction == "desc" {
+					slices.Reverse(values)
+				}
+				assert.True(t, slices.IsSorted(values), "%s %s: %v", f, direction, values)
+			}
 		}
 	})
 
@@ -229,9 +242,8 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 	})
 }
 
-// The search route is mounted from searchroutes.allowed, which knows nothing about
-// FlagDashboardNotebooks — so the path exists whenever enable_search_api is on. What
-// gates it is newNotebookAuthorizer, which denies every notebooks resource request
+// The notebook manifest enables search independently of FlagDashboardNotebooks.
+// The feature is checked by newNotebookAuthorizer, which denies every notebooks resource request
 // while the flag is off. A search POST parses as a create on resource "notebooks"
 // (name "search"), so it dispatches to that authorizer like any other verb.
 //
@@ -246,7 +258,6 @@ func TestIntegrationNotebooksSearchRequiresFeatureFlag(t *testing.T) {
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
-		EnableSearchAPI:      true,
 	})
 	defer helper.Shutdown()
 

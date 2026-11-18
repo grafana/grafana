@@ -1,9 +1,12 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { standardEditorsRegistry } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { GraphDrawStyle, TableCellDisplayMode, type TableSparklineCellOptions } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { SparklineCellOptionsEditor } from './SparklineCellOptionsEditor';
@@ -37,6 +40,32 @@ describe('SparklineCellOptionsEditor', () => {
     const { onChange } = await setup({ lineWidth: 5 });
     await userEvent.click(screen.getByLabelText('Hide value'));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, hideValue: true }));
+  });
+
+  describe('Show hover tooltip', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it.each([false, undefined])('hides the option when the feature flag is %s', async (enabled) => {
+      setTestFlags(enabled === undefined ? {} : { [FlagKeys.TableRefreshNewFeatures]: enabled });
+      await setup();
+      expect(screen.getByLabelText('Hide value')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Show hover tooltip')).not.toBeInTheDocument();
+    });
+
+    it('shows the option when the feature flag is enabled', async () => {
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+      await setup();
+      expect(screen.getByLabelText('Show hover tooltip')).toBeInTheDocument();
+    });
+
+    it('forwards the toggle while preserving existing cell options', async () => {
+      setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+      const { onChange } = await setup({ lineWidth: 5 });
+      await userEvent.click(screen.getByLabelText('Show hover tooltip'));
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, showTooltip: true }));
+    });
   });
 
   // barAlignment only applies to the Bars draw style. Query by the field's label

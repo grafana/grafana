@@ -1,6 +1,11 @@
 import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
+import {
+  assertPluginIdFormat,
+  installPluginMeta,
+  logPluginMetaError,
+  uninstallPluginMeta,
+} from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
@@ -18,6 +23,8 @@ import {
 } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
+  assertPluginIdFormat(id);
+
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
@@ -65,6 +72,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getPluginInsights(id: string, version: string | undefined): Promise<CatalogPluginInsights> {
+  assertPluginIdFormat(id);
+
   if (!version) {
     throw new Error('Version is required');
   }
@@ -221,6 +230,8 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
+  assertPluginIdFormat(id);
+
   // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
@@ -246,6 +257,8 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
+  assertPluginIdFormat(id);
+
   // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
@@ -263,6 +276,8 @@ export async function uninstallPlugin(id: string) {
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {
+  assertPluginIdFormat(id);
+
   try {
     await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
     return true;

@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 
-	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -75,9 +74,8 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	// An empty version would collapse the URL below to the "list all versions"
 	// endpoint instead of "get this version"
 	if ref.Version == "" {
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "missing_version").Inc()
 		logger.Debug("Version is required to fetch plugin metadata from grafana.com API")
-		return nil, ErrMetaNotFound
+		return nil, &FetchError{Reason: "missing_version", Err: ErrMetaNotFound}
 	}
 
 	// Determine which plugin ID to use for the API request
@@ -105,8 +103,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		if errors.As(err, &netErr) && netErr.Timeout() {
 			errType = "timeout"
 		}
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), errType).Inc()
-		return nil, ErrMetaNotFound
+		return nil, &FetchError{Reason: errType, Err: ErrMetaNotFound}
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
@@ -115,29 +112,30 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), strconv.Itoa(resp.StatusCode)).Inc()
+		// Every non-200 maps to ErrMetaNotFound because that is the signal the manager uses to try the
+		// next provider. It does not mean the plugin is absent. Reason keeps the real status for metrics.
+		statusErr := &FetchError{Reason: strconv.Itoa(resp.StatusCode), Err: ErrMetaNotFound}
 		if resp.StatusCode == http.StatusNotFound {
 			logger.Debug("Plugin metadata not found", "pluginId", lookupID, "version", ref.Version, "url", catalogURL.String())
-			return nil, ErrMetaNotFound
+			return nil, statusErr
 		}
 		logger.Error(fmt.Sprintf("unexpected status code %d from grafana.com API", resp.StatusCode))
-		return nil, ErrMetaNotFound
+		return nil, statusErr
 	}
 
 	var gcomMeta grafanaComPluginVersionMeta
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
-		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "decode").Inc()
-		return nil, fmt.Errorf("failed to decode plugin version API response from %s: %w", p.grafanaComAPIURL, err)
+		return nil, &FetchError{Reason: "decode", Err: fmt.Errorf("failed to decode plugin version API response from %s: %w", p.grafanaComAPIURL, err)}
 	}
 
 	// If we're looking up a child plugin, filter for it in the children field
 	if ref.HasParent() {
-		return p.findChildMeta(ref.ID, gcomMeta, logger)
+		return p.findChildMeta(ref, gcomMeta, logger)
 	}
 
 	metaSpec, err := grafanaComPluginVersionMetaToMetaSpec(logger, gcomMeta, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert plugin metadata: %w", err)
+		return nil, convertError(logger, ref, fmt.Errorf("failed to convert plugin metadata: %w", err))
 	}
 	return &Result{
 		Meta: metaSpec,
@@ -146,12 +144,12 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 }
 
 // findChildMeta searches for a child plugin in the parent's children field.
-func (p *CatalogProvider) findChildMeta(childID string, parentMeta grafanaComPluginVersionMeta, logger logging.Logger) (*Result, error) {
+func (p *CatalogProvider) findChildMeta(childRef PluginRef, parentMeta grafanaComPluginVersionMeta, logger logging.Logger) (*Result, error) {
 	for _, child := range parentMeta.Children {
-		if child.JSON.Id == childID {
+		if child.JSON.Id == childRef.ID {
 			metaSpec, err := grafanaComChildPluginVersionToMetaSpec(logger, child, parentMeta)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert child plugin metadata: %w", err)
+				return nil, convertError(logger, childRef, fmt.Errorf("failed to convert child plugin metadata: %w", err))
 			}
 			return &Result{
 				Meta: metaSpec,
@@ -161,9 +159,18 @@ func (p *CatalogProvider) findChildMeta(childID string, parentMeta grafanaComPlu
 	}
 
 	logger.Debug("Child plugin not found in parent's children",
-		"childId", childID,
+		"childId", childRef.ID,
 		"parentId", parentMeta.PluginSlug,
 		"childrenCount", len(parentMeta.Children),
 	)
 	return nil, ErrMetaNotFound
+}
+
+// convertError classifies a conversion failure for the fetch error metric.
+func convertError(logger logging.Logger, ref PluginRef, err error) error {
+	if errors.Is(err, ErrMissingCDNURL) {
+		logger.Warn("grafana.com plugin version is missing cdnUrl", "pluginId", ref.ID, "version", ref.Version)
+		return &FetchError{Reason: "missing_cdn_url", Err: err}
+	}
+	return &FetchError{Reason: "conversion", Err: err}
 }

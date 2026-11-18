@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
@@ -485,7 +486,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
 	g, err := srv.alertRules.GetAlertRuleGroupWithFolderFullpath(c.Req.Context(), c.SignedInUser, folder, group)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule group", err)
+		return exportLookupError("failed to get alert rule group", err)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{g})
@@ -503,7 +504,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
+		return exportLookupError("failed to get alert rules", err)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{
@@ -514,6 +515,14 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 	}
 
 	return exportResponse(c, e)
+}
+
+// exportLookupError keeps a missing rule folder a 500; the folder error carries its own 404.
+func exportLookupError(message string, err error) response.Response {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Error(http.StatusInternalServerError, message, err)
+	}
+	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
@@ -597,7 +606,10 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		return exportHcl(params.Download, body)
 	}
 
-	body = escapeAlertingFileExport(body)
+	body, err := escapeAlertingFileExport(body)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to escape alerting file export")
+	}
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
@@ -621,17 +633,21 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 // Mute timings time intervals: muteTimes[].time_intervals[]
 // Notification template name: templates[].name
 // Notification template content: templates[].template
-func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.AlertingFileExport {
+func escapeAlertingFileExport(body definitions.AlertingFileExport) (definitions.AlertingFileExport, error) {
 	for i, group := range body.Groups {
 		body.Groups[i] = escapeRuleGroup(group)
 	}
 	for i, cp := range body.ContactPoints {
-		body.ContactPoints[i] = escapeContactPoint(cp)
+		escaped, err := escapeContactPoint(cp)
+		if err != nil {
+			return body, err
+		}
+		body.ContactPoints[i] = escaped
 	}
 	for i, np := range body.Policies {
 		body.Policies[i] = escapeNotificationPolicy(np)
 	}
-	return body
+	return body, nil
 }
 
 func escapeRouteExport(r *definitions.RouteExport) {
@@ -676,21 +692,19 @@ func escapeNotificationPolicy(np definitions.NotificationPolicyExport) definitio
 	return np
 }
 
-func escapeContactPoint(cp definitions.ContactPointExport) definitions.ContactPointExport {
+func escapeContactPoint(cp definitions.ContactPointExport) (definitions.ContactPointExport, error) {
 	cp.Name = addEscapeCharactersToString(cp.Name)
 	for i, receiver := range cp.Receivers {
 		settingsJson, err := receiver.Settings.MarshalJSON()
 		if err != nil {
-			// This should never happen, as the settings are already marshaled to JSON in the API
-			panic(fmt.Errorf("failed to marshal settings to JSON: %w", err))
+			return cp, fmt.Errorf("failed to marshal settings to JSON: %w", err)
 		}
 		settingsEscaped := []byte(addEscapeCharactersToString(string(settingsJson)))
 		if err := cp.Receivers[i].Settings.UnmarshalJSON(settingsEscaped); err != nil {
-			// This should never happen, as the settings are already marshaled to JSON in the API
-			panic(fmt.Errorf("failed to unmarshal settings from JSON: %w", err))
+			return cp, fmt.Errorf("failed to unmarshal settings from JSON: %w", err)
 		}
 	}
-	return cp
+	return cp, nil
 }
 
 // escape all strings except:

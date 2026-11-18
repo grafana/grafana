@@ -2,9 +2,13 @@ import { of } from 'rxjs';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { CoreApp, type LinkModel, toDataFrame, type TimeRange } from '@grafana/data';
-import { locationService, usePluginLinks } from '@grafana/runtime';
+import {
+  locationService,
+  usePluginLinks,
+  getDataSourceInstance,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SpanLinkType } from '../../types/links';
@@ -15,17 +19,12 @@ import { getProfileLinkButtonsContext, SpanDetailLinkButtons, RelatedProfilesTit
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
   useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
   // LogsLinkButton resolves the query datasource to check for logs; the links used
   // here have no interpolated query, so this is only a safety net against real calls.
   getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
 }));
-
 const span = {
   process: {
     serviceName: 'test-service',

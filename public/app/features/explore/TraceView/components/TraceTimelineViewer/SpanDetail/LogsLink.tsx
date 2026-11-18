@@ -35,13 +35,14 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
+  reportInteraction,
+  usePluginLinks,
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
@@ -292,13 +293,13 @@ function setStoredLokiDatasourceMatch(traceDatasourceUid: string | undefined, lo
   store.set(lokiDatasourceMatchStorageKey(traceDatasourceUid), logsDatasourceUid);
 }
 
-function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string): DataQuery[] {
+function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string, datasourceType?: string): DataQuery[] {
   return queries.map((q) => ({
     ...q,
     datasource: {
       ...(typeof q.datasource === 'object' ? q.datasource : {}),
       uid: datasourceUid,
-      type: 'loki',
+      ...(datasourceType ? { type: datasourceType } : {}),
     },
   }));
 }
@@ -378,7 +379,7 @@ function checkForLogsInQueries(
 
   return from(datasourcesToTry).pipe(
     concatMap((datasourceUid) => {
-      const dsQueries = remapQueriesToDatasource(queries, datasourceUid);
+      const dsQueries = remapQueriesToDatasource(queries, datasourceUid, 'loki');
       return probeForMatchingQuery(dsQueries, timeRange, datasourceUid, traceDatasourceUid).pipe(
         map((match) => (match ? { datasourceUid, query: match, refId: match.refId } : undefined)),
         catchError(() => of(undefined))
@@ -551,7 +552,7 @@ export function getLogsButtonTooltip(
   }
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
-    if (presence === 'present') {
+    if (presence !== 'absent') {
       return t('explore.span-detail-link-buttons.logs-for-this-trace.logs-found-tooltip', 'See related logs');
     }
     return type === 'trace'

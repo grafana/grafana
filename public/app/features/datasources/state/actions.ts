@@ -12,17 +12,18 @@ import {
   config,
   type DataSourceSrv,
   DataSourceWithBackend,
+  getPluginSettings,
   HealthCheckError,
   type HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getPluginSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -76,11 +77,16 @@ type parseDataSourceSaveResponse = {
   details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
 };
 
-const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
+const parseHealthCheckError = (errorResponse: unknown): parseDataSourceSaveResponse => {
   let message: string | undefined;
   let details: HealthCheckResultDetails;
 
-  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+  if (
+    errorResponse &&
+    typeof errorResponse === 'object' &&
+    'error' in errorResponse &&
+    errorResponse.error instanceof HealthCheckError
+  ) {
     message = errorResponse.error.message;
     details = errorResponse.error.details;
   } else if (isFetchError(errorResponse)) {
@@ -124,9 +130,7 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      if (err instanceof Error) {
-        dispatch(initDataSourceSettingsFailed(err));
-      }
+      dispatch(initDataSourceSettingsFailed(err instanceof Error ? err : new Error(getMessageFromError(err))));
     }
   };
 };

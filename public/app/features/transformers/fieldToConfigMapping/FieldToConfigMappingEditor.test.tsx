@@ -112,4 +112,10 @@ describe('FieldToConfigMappingEditor', () => {
     const select = screen.queryByText('Additional settings');
     expect(select).not.toBeInTheDocument();
   });
+
+  it('Does not show matcher-like field options when they are not needed', async () => {
+    setup({ withNameAndValue: false });
+
+    expect(screen.queryByText('Field Name')).not.toBeInTheDocument();
+  });
 });

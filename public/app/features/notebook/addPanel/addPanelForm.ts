@@ -6,6 +6,6 @@ export interface AddPanelFormValues {
   /** Which route the panel takes: a notebook that does not exist yet, or one that does. */
   saveTarget: 'new' | 'existing';
   title: string;
-  description: string;
-  tags: string[];
+  /** Whether the visualization keeps the window it was captured in instead of following the notebook's. */
+  lockTimeRange: boolean;
 }

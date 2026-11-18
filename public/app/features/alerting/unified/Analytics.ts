@@ -273,10 +273,6 @@ export function trackImportToGMAWizardStarted() {
   reportInteraction('grafana_alerting_import_to_gma_wizard_started');
 }
 
-export function trackImportToGMAWizardCancelled(payload: { cancelledAtStep: string; formDirty: boolean }) {
-  reportInteraction('grafana_alerting_import_to_gma_wizard_cancelled', payload);
-}
-
 export function trackImportToGMAWizardStepSkipped(payload: { step: 'notifications' | 'rules' }) {
   reportInteraction('grafana_alerting_import_to_gma_wizard_step_skipped', payload);
 }
@@ -436,4 +432,18 @@ export function trackViewExperienceToggleConfirmed(
  */
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
+}
+
+/**
+ * Track when user clicks the "Create a Watcher" CTA on the Watchers banner
+ */
+export function trackWatchersBannerClick() {
+  reportInteraction('grafana_alerting_watchers_banner_click');
+}
+
+/**
+ * Track when user dismisses the Watchers banner
+ */
+export function trackWatchersBannerDismiss() {
+  reportInteraction('grafana_alerting_watchers_banner_dismiss');
 }

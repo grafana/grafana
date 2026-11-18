@@ -4,55 +4,64 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/grafana/dskit/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestUnaryErrorResultInterceptor(t *testing.T) {
-	failure := &resourcepb.ErrorResult{
-		Code: http.StatusConflict, Reason: string(metav1.StatusReasonConflict), Message: "outdated version",
-		Details: &resourcepb.ErrorDetails{Name: "dashboard", Causes: []*resourcepb.ErrorCause{{Field: "metadata.resourceVersion", Message: "outdated"}}},
+type nativeBlobErrorServer struct {
+	resourcepb.UnimplementedBlobStoreStreamingServer
+	failure *resourcepb.ErrorResult
+}
+
+func (s *nativeBlobErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	if _, err := stream.Recv(); err != nil {
+		return err
 	}
-	transportErr := status.Error(codes.Unavailable, "transport failed")
-	for _, tc := range []struct {
-		name string
-		resp any
-		err  error
-		want codes.Code
-	}{
-		{"embedded", &resourcepb.UpdateResponse{Error: failure}, nil, codes.Aborted},
-		{"success", &resourcepb.ReadResponse{}, nil, codes.OK},
-		{"typed nil", (*resourcepb.ReadResponse)(nil), nil, codes.OK},
-		{"unrelated response", &resourcepb.HealthCheckResponse{}, nil, codes.OK},
-		{"transport wins", &resourcepb.UpdateResponse{Error: failure}, transportErr, codes.Unavailable},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			resp, err := UnaryErrorResultInterceptor()(t.Context(), nil, &grpc.UnaryServerInfo{}, func(context.Context, any) (any, error) {
-				return tc.resp, tc.err
-			})
-			require.Equal(t, tc.want, status.Code(err))
-			if tc.name == "embedded" {
-				require.Nil(t, resp)
-				details := status.Convert(err).Details()
-				require.Len(t, details, 1)
-				require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
-			} else {
-				require.Equal(t, tc.resp, resp)
-				require.Equal(t, tc.err, err)
-			}
-		})
+	return GRPCStatusError(s.failure)
+}
+
+func (s *nativeBlobErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, _ resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return GRPCStatusError(s.failure)
+}
+
+func TestBlobStreamNativeErrorsInProcess(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "denied"}
+	channel := &inprocgrpc.Channel{}
+	channel.RegisterService(&resourcepb.BlobStoreStreaming_ServiceDesc, &nativeBlobErrorServer{failure: failure})
+	client := resourcepb.NewBlobStoreStreamingClient(channel)
+	check := func(err error) {
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		require.Equal(t, failure.Message, status.Convert(err).Message())
+		details := status.Convert(err).Details()
+		require.Len(t, details, 1)
+		require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
 	}
+	put, err := client.PutBlobStream(t.Context())
+	require.NoError(t, err)
+	require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+	putResp, err := put.CloseAndRecv()
+	require.Nil(t, putResp)
+	check(err)
+	get, err := client.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+	require.NoError(t, err)
+	getResp, err := get.Recv()
+	require.Nil(t, getResp)
+	check(err)
 }
 
 func TestUnaryRequestDurationInterceptor(t *testing.T) {
@@ -65,18 +74,12 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 		{"success", &resourcepb.ReadResponse{}, nil, codes.OK},
 		{"nil response", nil, nil, codes.OK},
 		{"typed nil response", (*resourcepb.ReadResponse)(nil), nil, codes.OK},
-		{"unset error code", &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{}}, nil, codes.Internal},
-		{"successful error code", &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusOK}}, nil, codes.Internal},
-		{"reason with unset error code", &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Reason: "NotFound"}}, nil, codes.NotFound},
-		{"reason with successful error code", &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusOK, Reason: "Conflict"}}, nil, codes.Aborted},
-		{"vector search reason with unset error code", &resourcepb.VectorSearchResponse{Error: &resourcepb.ErrorResult{Reason: "NotFound"}}, nil, codes.NotFound},
-		{"vector search reason with successful error code", &resourcepb.VectorSearchResponse{Error: &resourcepb.ErrorResult{Code: http.StatusOK, Reason: "Conflict"}}, nil, codes.Aborted},
-		{"vector search unset error code", &resourcepb.VectorSearchResponse{Error: &resourcepb.ErrorResult{}}, nil, codes.Internal},
-		{"vector search successful error code", &resourcepb.VectorSearchResponse{Error: &resourcepb.ErrorResult{Code: http.StatusOK}}, nil, codes.Internal},
-		{"conflict", &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: "Conflict"}}, nil, codes.Aborted},
-		{"already exists", &resourcepb.CreateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict}}, nil, codes.AlreadyExists},
+		{"not found", nil, GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusNotFound}), codes.NotFound},
+		{"conflict", nil, GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusConflict, Reason: "Conflict"}), codes.Aborted},
+		{"already exists", nil, GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusConflict}), codes.AlreadyExists},
+		{"canceled", nil, status.Error(codes.Canceled, "canceled"), codes.Canceled},
+		{"deadline exceeded", nil, status.Error(codes.DeadlineExceeded, "expired"), codes.DeadlineExceeded},
 		{"transport error", nil, status.Error(codes.Unavailable, "unavailable"), codes.Unavailable},
-		{"transport error takes precedence", &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}, status.Error(codes.Unavailable, "unavailable"), codes.Unavailable},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -191,4 +194,34 @@ func TestPanicRecoveryInterceptor_Stream(t *testing.T) {
 	_, err = stream.Recv()
 	require.Error(t, err)
 	require.Equal(t, codes.Internal, status.Code(err), "panic in stream handler should surface as codes.Internal, got %v", err)
+}
+
+// Watches expire on purpose, so the gRPC request metric must not count the
+// expiry as an error the way it counts genuine failures.
+func TestWatchExpiryIsNotAGRPCErrorInRequestMetrics(t *testing.T) {
+	const route = "/resource.ResourceStore/Watch"
+	hist := prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "grpc_request_duration_seconds"}, []string{"method", "route", "status_code", "ws"})
+	instrument := middleware.StreamServerInstrumentInterceptor(hist)
+	observed := func(statusCode string) uint64 {
+		m := &dto.Metric{}
+		require.NoError(t, hist.WithLabelValues("gRPC", route, statusCode, "false").(prometheus.Metric).Write(m))
+		return m.GetHistogram().GetSampleCount()
+	}
+
+	srv := newWatchTestServer(t, watchTestServerOpts{NatsWatchMaxAge: 20 * time.Millisecond})
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource}}}
+	ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 5*time.Second)
+	defer cancel()
+	err := instrument(nil, newMockWatchServer(ctx), &grpc.StreamServerInfo{FullMethod: route}, func(_ any, ss grpc.ServerStream) error {
+		return srv.Watch(req, ss.(resourcepb.ResourceStore_WatchServer))
+	})
+	require.True(t, IsResourceVersionExpired(err), "expected the max age to expire the watch, got %v", err)
+	require.EqualValues(t, 1, observed("410"))
+	require.Zero(t, observed("error"))
+
+	err = instrument(nil, newMockWatchServer(ctx), &grpc.StreamServerInfo{FullMethod: route}, func(any, grpc.ServerStream) error {
+		return status.Error(codes.Internal, "storage failed")
+	})
+	require.Error(t, err)
+	require.EqualValues(t, 1, observed("error"), "genuine failures must still count as errors")
 }

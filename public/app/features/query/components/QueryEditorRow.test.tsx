@@ -11,9 +11,10 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
+import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
@@ -77,14 +78,9 @@ jest.mock('@grafana/runtime', () => ({
     updateTimeRange: () => {},
   }),
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn((...args: unknown[]) => mockGet(...args)),
   getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
 }));
-
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
   QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
@@ -543,6 +539,48 @@ describe('QueryEditorRow', () => {
       expect(onScrollIntoView).not.toHaveBeenCalled();
     });
 
+    it('reports back when the row unmounts mid-pin, so the owner flag is cleared', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+
+      // Switching data pane tabs unmounts the row while it is still pinned.
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report again on unmount once the pin has finished', async () => {
+      const onScrollIntoView = jest.fn();
+      const { unmount } = render(
+        <QueryEditorRow {...props(data)} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      fireEvent.wheel(window);
+      unmount();
+
+      expect(onScrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not report on unmount after the scroll was retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender, unmount } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      unmount();
+
+      // Reporting would clear the owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
     it('pins again if the row is retargeted later', async () => {
       const initialProps = props(data);
       const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
@@ -728,6 +766,53 @@ describe('QueryEditorRow', () => {
       );
 
       expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+    });
+  });
+
+  describe('query editor insertion', () => {
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    let receivedRegistrar: unknown;
+
+    function FakeQueryEditor(editorProps: InternalQueryEditorInsertionPropsV1) {
+      receivedRegistrar = editorProps.unstable_queryEditorInsertionV1;
+      return <div data-testid="fake-query-editor" />;
+    }
+
+    function resolveDatasourceAs(type: string) {
+      mockGet.mockImplementation(() =>
+        Promise.resolve({ ...mockDS, type, components: { QueryEditor: FakeQueryEditor } })
+      );
+    }
+
+    beforeEach(() => {
+      receivedRegistrar = undefined;
+    });
+
+    afterEach(() => {
+      mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+    });
+
+    it('hands the registrar to a Prometheus query editor', async () => {
+      resolveDatasourceAs('prometheus');
+      const registrar = { register: jest.fn() };
+
+      render(<QueryEditorRow {...props(data)} queryEditorInsertion={registrar} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(receivedRegistrar).toBe(registrar);
+    });
+
+    it('keeps the registrar from editors of other datasources', async () => {
+      resolveDatasourceAs('loki');
+
+      render(<QueryEditorRow {...props(data)} queryEditorInsertion={{ register: jest.fn() }} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(receivedRegistrar).toBeUndefined();
     });
   });
 
