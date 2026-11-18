@@ -52,8 +52,3 @@ legacy_storage:
   recordingrules.rules.alerting.grafana.app: stored in the legacy alert rule tables
 stale_writes_accepted:
   securevalues.secret.grafana.app: the secret store does not check the resourceVersion on update
-api_version_mismatch:
-  queries.queries.grafana.app:
-    version: v1beta1
-    read: list item
-    reason: listing through v1beta1 returns the items as v1
