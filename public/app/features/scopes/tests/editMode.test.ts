@@ -1,8 +1,10 @@
 import { act, cleanup } from '@testing-library/react';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -36,9 +38,7 @@ afterEach(() => {
 describe('Scope selector in edit mode', () => {
   let dashboardScene: DashboardScene;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const renderResult = await renderDashboard();
@@ -86,9 +86,7 @@ describe('setRedirectEnabled', () => {
   let dashboardScene: DashboardScene;
   let scopesSelectorService: ScopesSelectorService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const renderResult = await renderDashboard();

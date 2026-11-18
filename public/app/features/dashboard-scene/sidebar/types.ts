@@ -46,6 +46,8 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   redoAction(): void;
   redoLastAction(trigger?: string): void;
   pendingChangesHistory(): PendingChangesHistory | undefined;
+  /** Whether Undo and Redo step through the pending changes' history while the Assistant edits them. */
+  stepsPendingChangesHistory(): boolean;
   recordCompletedEdit(action: DashboardEditActionEventPayload): void;
   clearHistory(): void;
   goBackToPrevious(): void;

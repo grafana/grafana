@@ -1500,9 +1500,29 @@
         "records": "Records",
         "to": "tot"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Geen opnameregels gevonden",
@@ -1579,10 +1599,17 @@
         "view-list": "Lijst",
         "wildcard-in-text": "Zoektekst mag geen * of % bevatten."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1805,17 +1832,18 @@
         "autosync-rules-error-title": "Importeren van regels mislukt",
         "autosync-rules-imported-note": "Je geselecteerde waarschuwingsregels zijn ook geïmporteerd.",
         "autosync-rules-note": "Je geselecteerde waarschuwingsregels zullen ook worden geïmporteerd.",
-        "autosync-success-body": "Automatische synchronisatie is ingeschakeld. Doorsturen...",
+        "autosync-success-body": "",
         "autosync-success-title": "Automatische synchronisatie is ingeschakeld",
         "autosync-title": "Automatische synchronisatie bevestigen",
         "body": "Weet je zeker dat je de import wilt starten? Met deze actie worden nieuwe bronnen aangemaakt in Grafana Alerting.",
         "confirm": "Importeren starten",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Importeren mislukt",
         "importing-body": "Bronnen worden geïmporteerd naar Grafana Alerting. Een ogenblik geduld...",
         "importing-title": "Bezig met importeren...",
-        "success-body": "Bronnen zijn succesvol geïmporteerd. Wordt doorgestuurd...",
+        "success-body": "",
         "success-title": "Importeren succesvol",
         "title": "Importeren bevestigen"
       },
@@ -2400,6 +2428,7 @@
       "contact-points": "Contactpunten",
       "notification-policies": "Meldingsbeleid",
       "recently-deleted": "Onlangs verwijderd",
+      "recording-rules": "",
       "templates": "Sjablonen",
       "time-intervals": "Tijdsintervallen"
     },
@@ -6218,8 +6247,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Gegevens",
@@ -6414,9 +6442,6 @@
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad-hoctransformaties zijn uitgeschakeld in bewerkingsmodus"
     },
     "plan-building-overlay": {
       "quip-corners": "De hoekjes van de panelen worden opgepoetst...",
@@ -7702,11 +7727,7 @@
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
     "lifecycle": {
-      "applied": "Je wijzigingen toegepast op {{title}}",
-      "apply": "Toepassen",
-      "apply-body": "Iedereen met toegang zal ze zien. Je kunt de vorige versie herstellen vanuit de versiegeschiedenis.",
-      "apply-failed": "Kan de wijzigingen niet toepassen. Probeer het opnieuw of vergelijk ze eerst.",
-      "apply-needs-edit": "Voor het toepassen is bewerkingstoegang tot ‘{{title}}’ nodig. Je kunt een voorbeeld van deze wijzigingen bekijken, maar ze niet toepassen.",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Concept",
       "breadcrumb-pending-changes": "Openstaande wijzigingen",
       "change-added": "Toegevoegd",
@@ -7738,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "Concept",
       "edited-dashboard": "",
-      "highlight-changes": "Wijzigingen op het dashboard markeren",
       "pending-body": "Je bekijkt een voorbeeld van openstaande wijzigingen. Alleen jij kunt ze zien.",
       "pending-body-source": "Je bekijkt een voorbeeld van openstaande wijzigingen {{source}}. Alleen jij kunt ze zien.",
       "pending-changes-changed": "",
@@ -7747,13 +7767,16 @@
       "pending-stale": "Het dashboard is bijgewerkt sinds je wijzigingen zijn aangebracht",
       "pending-title": "Openstaande wijzigingen",
       "preview-changes": "Voorbeeld van wijzigingen bekijken",
-      "rebase": "Rebase",
       "record-pending-change-failed": "",
       "save": "Opslaan",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Origineel dashboard weergeven",
-      "stop-highlighting-changes": "Wijzigingen niet langer markeren",
-      "apply-title_one": "{{count}} wijziging toepassen op '{{title}}'?",
-      "apply-title_other": "{{count}} wijzigingen toepassen op '{{title}}'?"
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Link toevoegen",
@@ -8005,6 +8028,12 @@
       "confirmText-restore-version": "Herstellen naar versie {{version}}",
       "title-restore-version": "Versie herstellen"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Toestaan",
       "allow-tooltip": "Laad inhoud van de geselecteerde bronnen in de vermelde panelen, totdat je dit tabblad sluit.",
@@ -8200,6 +8229,12 @@
       "switch-options": "Schakelopties",
       "value-pair-type": "Type waardenpaar",
       "value-pair-type-description": "Kies het type waarden voor de schakelaarstatussen"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standaardwaarde"
@@ -13445,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Kruimelpad"
     },
@@ -13460,14 +13520,6 @@
         "open-all": "AI-assistenten en zijbalk-apps openen"
       },
       "floating-resize": "Breedte van zijbalk wijzigen"
-    },
-    "fullscreen-workspace": {
-      "enter": "Werkruimte openen",
-      "error-exit": "Werkruimte afsluiten",
-      "error-message": "De Grafana Assistant-werkruimte kon niet worden geladen.",
-      "error-reload": "Pagina opnieuw laden",
-      "error-title": "Werkruimte niet beschikbaar",
-      "workspace": "Werkruimte"
     },
     "help": {
       "aria-label": "Help",
@@ -13505,6 +13557,7 @@
       "tv-alert": "Druk op ESC om de kioskmodus te verlaten"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Menu sluiten",
       "customise": "Navigatie aanpassen",
       "customise-cancel": "Annuleren",
@@ -13662,8 +13715,10 @@
       "drag-handle": "Verslepen om de volgorde te wijzigen",
       "duplicate": "Blok dupliceren",
       "frame": {
-        "aria-label-collapsed": "Samengevouwen blok: {{name}}",
-        "aria-label-panel": "Visualisatieblok: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13751,7 +13806,7 @@
       "submit": "Aan notitieboek toevoegen",
       "success": "Paneel toegevoegd aan {{title}}",
       "success-cells": "Toegevoegd aan {{title}}",
-      "success-link": "Notitieboek bekijken",
+      "success-open-link": "",
       "tag-placeholder": "Filteren op tag",
       "target-description": "Kies waar je het paneel wilt toevoegen.",
       "target-existing": "Bestaand notitieboek",
@@ -13923,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Kies een kleur, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Kleurenseries op"
+      "color-by-label": "Kleurenseries op",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Buiten bereik. {{range}}",
@@ -14429,6 +14485,9 @@
     },
     "empty-state": {
       "message": "Geen plug-ins gevonden"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Controleer de console voor meer informatie over de fout.",
@@ -15555,6 +15614,8 @@
       "header-title": "Titel",
       "header-type": "Type",
       "missing-folder-metadata": "Ontbrekend mapmetadata-bestand",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Zoeken op pad of titel",
       "source": "Bron",
       "status-filter-aria-label": "Op status filteren",

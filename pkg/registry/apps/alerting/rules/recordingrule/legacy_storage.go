@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
@@ -253,68 +252,18 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 	rule, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
-		return nil, err
+		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
 
 	return convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
-	old, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return nil, false, err
-	}
-
-	obj, err := objInfo.UpdatedObject(ctx, old)
-	if err != nil {
-		return old, false, err
-	}
-	if updateValidation != nil {
-		if err := updateValidation(ctx, obj, old); err != nil {
-			return nil, false, err
-		}
-	}
-
-	new, err := convert.Hub[*v1beta1.RecordingRule](obj)
-	if err != nil {
-		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
-	}
-	// FIXME(@rwwiv): this shouldn't be necessary
-	if new.Name != "" {
-		new.UID = types.UID(new.Name)
-	}
-
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
-	if err != nil {
-		return nil, false, err
-	}
-
-	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
-	if err != nil {
-		return nil, false, err
-	}
-
-	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
-	if err != nil {
-		return nil, false, err
-	}
-
-	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return rule, true, nil
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return common.LegacyRuleUpdate(
+		ctx, name, objInfo, updateValidation,
+		&s.service, s.namespacer, ResourceInfo, s.Get,
+		convertToDomainModel, convertToK8sResource,
+	)
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -352,7 +301,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
 	if err != nil {
-		return old, false, err
+		return old, false, common.ToAPIError(ResourceInfo.GroupResource(), name, err)
 	}
 
 	return old, false, nil

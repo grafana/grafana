@@ -821,6 +821,10 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	b.blobGC.onDeleted = func(key kv.BlobKey) {
+		// Names and namespaces may contain customer data; the blob UID identifies the deletion.
+		b.log.Info("blob garbage collection delete succeeded", "uid", key.UID, "group", key.Group, "resource", key.Resource)
+	}
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
 	if err != nil && ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
 		b.blobGCMetrics.RecordInterrupted(count, dryRun)
@@ -1854,10 +1858,10 @@ func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, nil, fmt.Errorf("invalid continue token: %w", err)
+			return 0, nil, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		if token.Name == "" {
-			return 0, nil, fmt.Errorf("invalid continue token: name is required for list resources")
+			return 0, nil, apierrors.NewBadRequest("invalid continue token: name is required for list resources")
 		}
 		if !continueTokenMatchesListRequest(token, req) {
 			return 0, nil, apierrors.NewBadRequest("invalid continue token: list scope does not match request")

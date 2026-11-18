@@ -35,14 +35,22 @@ The new Grafana APIs track version history for resources. You can retrieve the h
 
 **Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`)**. Alpha or beta versions may not support it.
 
+## Requirements
+
+To read the history of a resource, you need permission to read that resource. For the permissions each resource requires, refer to the requirements on its API page, for example the [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#requirements).
+
 ## Endpoints
 
 These are the available endpoints:
 
-| Method | Summary                                                     | URI                                                                                                                                       |
-| ------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | [List resource history](#list-resource-history)             | `/apis/{group}/{version}/namespaces/{namespace}/{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>` |
-| GET    | [Retrieve a specific version](#retrieve-a-specific-version) | `/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}?resourceVersion=<RESOURCE_VERSION>`                                     |
+**Base path:** `/apis/{group}/{version}/namespaces/{namespace}/`
+
+Replace `{group}` with the API group of the resource, for example `dashboard.grafana.app`, and `{version}` with the API version of the resource, for example `v1`. Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                     | Path                                                                                       |
+| ------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| GET    | [List resource history](#list-resource-history)             | `{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>` |
+| GET    | [Retrieve a specific version](#retrieve-a-specific-version) | `{resource}/{name}?resourceVersion=<RESOURCE_VERSION>`                                     |
 
 ## List resource history
 
@@ -151,13 +159,6 @@ Each item in the `items` array represents a historical version of the resource. 
 - **`metadata.annotations.grafana.app/message`**: An optional commit message set during the update. You can set this annotation when [updating a resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard/#update-dashboard).
 - **`spec`**: The full resource spec as it existed at that version.
 
-### Status codes
-
-- **200:** OK
-- **400:** Bad request (missing `fieldSelector`, invalid `labelSelector`)
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Pagination
 
 You can paginate through history using `limit` and `continue`, the same way you paginate a standard List request.
@@ -205,13 +206,18 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 This returns the complete resource as it existed at that version. For an example of a dashboard response, refer to [Get Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#get-dashboard).
 
-### Status codes
+## Status codes
 
-- **200:** OK
-- **400:** The resource version is newer than the latest version
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Resource or version not found
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                      | Returned by                              |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `200` | OK.                                                                                                                                                                          | All endpoints                            |
+| `400` | Bad request (missing `fieldSelector`, invalid `labelSelector`).                                                                                                              | [List](#list-resource-history)           |
+| `400` | The resource version is newer than the latest version, when Grafana uses the SQLKV storage backend. The default SQL backend returns the latest available version with `200`. | [Retrieve](#retrieve-a-specific-version) |
+| `401` | Unauthorized.                                                                                                                                                                | All endpoints                            |
+| `403` | Access denied.                                                                                                                                                               | All endpoints                            |
+| `404` | Resource or version not found.                                                                                                                                               | [Retrieve](#retrieve-a-specific-version) |
 
 ## Migrate from the legacy Dashboard Versions API
 

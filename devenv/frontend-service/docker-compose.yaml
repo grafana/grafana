@@ -86,7 +86,7 @@ services:
         target: /flags/flags.yaml
 
   postgres:
-    image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
+    image: postgres:17.2-alpine3.19@sha256:d98de4f4959fb6b4531f3fb0cfe92aa49f799e5ebc7a086ae7775b59e7d534e7
     environment:
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD: grafana
@@ -126,7 +126,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki:3.7.9@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
+    image: grafana/loki:3.7.10@sha256:b43c257ccfc925d4a50b8717cac61a3b51df8c48d01847936057e5c4075a24a7
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
