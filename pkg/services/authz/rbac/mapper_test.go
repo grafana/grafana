@@ -168,6 +168,19 @@ func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 	assert.False(t, ok, "caching subresource must not resolve outside the datasource groups")
 }
 
+// Managed datasource grants can be stored only as action sets, and every
+// permission level includes datasources:query.
+func TestMapperRegistry_DatasourceQueryActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for _, group := range []string{"datasource.grafana.app", "prometheus.datasource.grafana.app"} {
+		mapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok)
+		assert.ElementsMatch(t, []string{"datasources:query", "datasources:edit", "datasources:admin"},
+			mapping.ActionSets(utils.VerbCreate), "group %q", group)
+	}
+}
+
 // Mapping :edit or :query here would grant caching to users who lack it.
 func TestMapperRegistry_DatasourceCachingActionSets(t *testing.T) {
 	reg := NewMapperRegistry()
