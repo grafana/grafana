@@ -2563,10 +2563,10 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `table.inspectDataTableNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.inspectDataTableNG", false, options).value;
+  return useFlag("table.inspectDataTableNG", true, options).value;
 };
 
 /**

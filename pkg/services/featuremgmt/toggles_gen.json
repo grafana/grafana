@@ -2745,12 +2745,15 @@
     {
       "metadata": {
         "name": "flameGraph.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T19:21:31Z"
+        "resourceVersion": "1795039264932",
+        "creationTimestamp": "2026-08-13T19:21:31Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:01:04.932465 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "expression": "false"
@@ -5866,12 +5869,15 @@
     {
       "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T20:46:09Z"
+        "resourceVersion": "1795039264932",
+        "creationTimestamp": "2026-08-13T20:46:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:01:04.932465 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "expression": "false"
@@ -6531,16 +6537,19 @@
     {
       "metadata": {
         "name": "table.inspectDataTableNG",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T18:20:19Z"
+        "resourceVersion": "1795039264932",
+        "creationTimestamp": "2026-08-12T18:20:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:01:04.932465 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

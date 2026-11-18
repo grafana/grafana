@@ -2595,7 +2595,7 @@ var (
 		{
 			Name:        "flameGraph.tableNg",
 			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
@@ -3029,10 +3029,10 @@ var (
 		{
 			Name:         "table.inspectDataTableNG",
 			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3317,7 +3317,7 @@ var (
 		{
 			Name:        "rawPrometheus.tableNg",
 			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{React: true},
 			Expression:  "false",
