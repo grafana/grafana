@@ -6,7 +6,6 @@ import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagTableInspectDataTableNG } from '@grafana/runtime/internal';
 import { defaultTimeZone, type TimeZone } from '@grafana/schema';
 import { TabbedContainer, type TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
@@ -44,7 +43,6 @@ export function ExploreQueryInspector(props: Props) {
     errors = [queryResponse.error];
   }
   const styles = useStyles2(getStyles);
-  const useTableNG = useFlagTableInspectDataTableNG();
 
   useEffect(() => {
     reportInteraction('grafana_explore_query_inspector_opened');
@@ -78,7 +76,6 @@ export function ExploreQueryInspector(props: Props) {
         app={CoreApp.Explore}
         formattedDataDescription="Matches the format in the panel"
         onOptionsChange={setDataOptions}
-        useTableNG={useTableNG}
       />
     ),
   };

@@ -2887,16 +2887,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/Logs/LogsTable.tsx": {
-    "react-hooks/preserve-manual-memoization": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/Logs/LogsTableWrap.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 3
-    }
-  },
   "public/app/features/explore/Logs/LogsVolumePanelList.tsx": {
     "react-hooks/immutability": {
       "count": 1

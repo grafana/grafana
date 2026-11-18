@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, store } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
-import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { type FieldNameMetaStore } from 'app/features/explore/Logs/utils/table/logsTable';
 import {
   FIELD_SELECTOR_MIN_WIDTH,
   type FieldWithStats,

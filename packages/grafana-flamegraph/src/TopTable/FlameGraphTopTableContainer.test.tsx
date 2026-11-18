@@ -20,79 +20,6 @@ function mockTableSize({ width, height }: { width: number; height: number } = { 
 }
 
 describe('FlameGraphTopTableContainer', () => {
-  const setup = (props?: { useTableNG?: boolean }) => {
-    const flameGraphData = createDataFrame(data);
-    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
-    const onSearch = jest.fn();
-    const onSandwich = jest.fn();
-
-    const renderResult = render(
-      <FlameGraphTopTableContainer
-        data={container}
-        onSymbolClick={jest.fn()}
-        onSearch={onSearch}
-        onSandwich={onSandwich}
-        colorScheme={ColorScheme.ValueBased}
-        useTableNG={props?.useTableNG}
-      />
-    );
-
-    return { renderResult, mocks: { onSearch, onSandwich } };
-  };
-
-  it('should render correctly', async () => {
-    mockTableSize();
-
-    setup();
-    const rows = await screen.findAllByRole('row');
-    expect(rows).toHaveLength(16);
-
-    const columnHeaders = screen.getAllByRole('columnheader');
-    expect(columnHeaders).toHaveLength(4);
-    expect(columnHeaders[1].textContent).toEqual('Symbol');
-    expect(columnHeaders[2].textContent).toEqual('Self');
-    expect(columnHeaders[3].textContent).toEqual('Total');
-
-    const cells = screen.getAllByRole('cell');
-    expect(cells).toHaveLength(60); // 16 rows
-    expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
-    expect(cells[2].textContent).toEqual('0.00%');
-    expect(cells[3].textContent).toEqual('33.90%');
-    expect(cells[5].textContent).toEqual('total');
-    expect(cells[6].textContent).toEqual('0.00%');
-    expect(cells[7].textContent).toEqual('100.00%');
-    expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
-    expect(cells[26].textContent).toEqual('0.00%');
-    expect(cells[27].textContent).toEqual('34.20%');
-  });
-
-  it('should render search and sandwich buttons', async () => {
-    // Needed for AutoSizer to work in test
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 500,
-        height: 500,
-        left: 0,
-      })),
-    });
-
-    const { mocks } = setup();
-
-    const searchButtons = await screen.findAllByLabelText(/Search for symbol/);
-    expect(searchButtons.length > 0).toBeTruthy();
-    await userEvents.click(searchButtons[0]);
-
-    expect(mocks.onSearch).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
-
-    const sandwichButtons = screen.getAllByLabelText(/Show in sandwich view/);
-    expect(sandwichButtons.length > 0).toBeTruthy();
-    await userEvents.click(sandwichButtons[0]);
-
-    expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
-  });
-});
-
-describe('FlameGraphTopTableContainer with useTableNG', () => {
   const setup = (props?: { tableRefreshEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
@@ -106,7 +33,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onSearch={onSearch}
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
-        useTableNG={true}
         tableRefreshEnabled={props?.tableRefreshEnabled}
       />
     );
@@ -256,7 +182,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onSandwich={jest.fn()}
         onTableSort={onTableSort}
         colorScheme={ColorScheme.ValueBased}
-        useTableNG={true}
       />
     );
 
@@ -281,7 +206,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         onSandwich={jest.fn()}
         onTableSort={onTableSort}
         colorScheme={ColorScheme.ValueBased}
-        useTableNG={true}
       />
     );
 
@@ -295,12 +219,11 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
 });
 
 interface PercentageTableOptions {
-  useTableNG: boolean;
   matchedLabels?: Set<string>;
   decimals?: number;
 }
 
-function renderPercentageTable({ useTableNG, matchedLabels, decimals }: PercentageTableOptions) {
+function renderPercentageTable({ matchedLabels, decimals }: PercentageTableOptions) {
   mockTableSize();
   const container = new FlameGraphDataContainer(
     createDataFrame({
@@ -321,25 +244,24 @@ function renderPercentageTable({ useTableNG, matchedLabels, decimals }: Percenta
       onSearch={jest.fn()}
       onSandwich={jest.fn()}
       colorScheme={ColorScheme.ValueBased}
-      useTableNG={useTableNG}
       matchedLabels={matchedLabels}
     />
   );
 }
 
-describe.each([false, true])('top-table percentages with useTableNG=%s', (useTableNG) => {
+describe('top-table percentages', () => {
   function getParentCells() {
     const row = within(screen.getByTestId('topTable'))
       .getByText('parent', { exact: true })
       .closest<HTMLElement>('[role="row"]')!;
-    return within(row).getAllByRole(useTableNG ? 'gridcell' : 'cell');
+    return within(row).getAllByRole('gridcell');
   }
 
   it.each([
     { column: 'Self', columnIndex: 2, value: '10.00%' },
     { column: 'Total', columnIndex: 3, value: '60.00%' },
   ])('should use the value field unit for row details when hovering $column', async ({ columnIndex, value }) => {
-    renderPercentageTable({ useTableNG });
+    renderPercentageTable({});
     await screen.findByText('parent', { exact: true });
     const trigger = within(getParentCells()[columnIndex]).getByText(value);
 
@@ -351,7 +273,7 @@ describe.each([false, true])('top-table percentages with useTableNG=%s', (useTab
   });
 
   it('should preserve value field precision in tooltip totals and self values', async () => {
-    renderPercentageTable({ useTableNG, decimals: 3 });
+    renderPercentageTable({ decimals: 3 });
     await screen.findByText('parent', { exact: true });
 
     await userEvents.hover(within(getParentCells()[2]).getByText('10.00%'));
@@ -361,7 +283,7 @@ describe.each([false, true])('top-table percentages with useTableNG=%s', (useTab
   });
 
   it('should expose the original value on focus', async () => {
-    renderPercentageTable({ useTableNG });
+    renderPercentageTable({});
     await screen.findByText('parent', { exact: true });
     const trigger = within(getParentCells()[2]).getByText('10.00%');
 
@@ -485,7 +407,7 @@ describe('buildFilteredTable', () => {
   });
 });
 
-describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
+describe('FlameGraphTopTableContainer column widths', () => {
   const GRID_WIDTH = 500;
   const SCROLLBAR_WIDTH = 11;
 
@@ -552,7 +474,6 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
           onSearch={jest.fn()}
           onSandwich={jest.fn()}
           colorScheme={ColorScheme.ValueBased}
-          useTableNG={true}
           contentAwareWidthsEnabled={contentAwareWidthsEnabled}
         />
       );

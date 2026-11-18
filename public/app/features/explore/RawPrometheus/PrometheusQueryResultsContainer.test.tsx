@@ -2,14 +2,14 @@ import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
 
 function getTable(): HTMLElement {
-  return screen.getAllByRole('table')[0];
+  return screen.getAllByRole('grid')[0];
 }
 
 function getTableToggle(): HTMLElement {
@@ -71,17 +71,9 @@ const renderContainer = (propOverrides = {}) =>
 
 describe('PrometheusQueryResultsContainer', () => {
   beforeAll(() => {
+    // JSDOM reports zero client dimensions, causing react-data-grid to virtualize away the text column.
+    mockClientSize({ width: 800, height: 600 });
     getTemplateSrv();
-  });
-
-  beforeEach(async () => {
-    // Keep the toggle at off so the legacy Table path (the one under test here) renders.
-    // See RawPrometheusContainerPure.test.tsx for the rawPrometheus.tableNg=true coverage.
-    // setTestFlags fires OpenFeature events that update React state; wrap in act() since a
-    // component from the previous test may still be mounted when this runs.
-    await act(async () => {
-      setTestFlags({ [FlagKeys.RawPrometheusTableNg]: false });
-    });
   });
 
   afterEach(async () => {
@@ -93,13 +85,10 @@ describe('PrometheusQueryResultsContainer', () => {
   it('should render table with data and toggle when showRawPrometheus is true', async () => {
     renderContainer({ showRawPrometheus: true });
 
-    // Wait for lazy-loaded component to render
+    // Starts in the Raw view, so wait for the toggle rather than the grid
     await waitFor(() => {
-      expect(screen.queryAllByRole('table').length).toBe(1);
+      expect(screen.queryAllByRole('radio').length).toBeGreaterThan(0);
     });
-
-    // Toggle should be visible
-    expect(screen.queryAllByRole('radio').length).toBeGreaterThan(0);
 
     fireEvent.click(getTableToggle());
 
@@ -120,7 +109,7 @@ describe('PrometheusQueryResultsContainer', () => {
 
     // Wait for lazy-loaded component to render
     await waitFor(() => {
-      expect(screen.queryAllByRole('table').length).toBe(1);
+      expect(screen.queryAllByRole('grid').length).toBe(1);
     });
 
     // Toggle should NOT be visible
@@ -168,7 +157,7 @@ describe('PrometheusQueryResultsContainer', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryAllByRole('table').length).toBe(1);
+      expect(screen.queryAllByRole('grid').length).toBe(1);
     });
   });
 

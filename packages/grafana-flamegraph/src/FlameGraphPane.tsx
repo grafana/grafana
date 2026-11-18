@@ -32,7 +32,6 @@ type FlameGraphPaneProps = {
   setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   sharedSandwichItem?: string;
   setSharedSandwichItem?: (item: string | undefined) => void;
-  useTableNG?: boolean;
   // Feature-toggle values for the top table's TableNG, passed in by the host. See FlameGraphContainer's props.
   tableRefreshEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
@@ -60,7 +59,6 @@ const FlameGraphPane = ({
   setFocusedItemIndexes,
   sharedSandwichItem,
   setSharedSandwichItem,
-  useTableNG,
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
   fillHeight,
@@ -250,7 +248,6 @@ const FlameGraphPane = ({
             onSearch={onTopTableSearch}
             onTableSort={onTableSort}
             colorScheme={colorScheme}
-            useTableNG={useTableNG}
             tableRefreshEnabled={tableRefreshEnabled}
             contentAwareWidthsEnabled={contentAwareWidthsEnabled}
           />

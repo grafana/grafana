@@ -258,7 +258,7 @@ describe('FlameGraphContainer', () => {
   });
 });
 
-describe('FlameGraphContainer with useTableNG', () => {
+describe('FlameGraphContainer top table', () => {
   mockTableSize();
 
   const getTheme = () => createTheme({ colors: { mode: 'dark' } });
@@ -269,14 +269,14 @@ describe('FlameGraphContainer with useTableNG', () => {
   };
 
   it('should update search when row selected in top table', async () => {
-    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} useTableNG={true} />);
+    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
 
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
   });
 
   it('keeps horizontal overflow inside the table', () => {
-    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} useTableNG={true} />);
+    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} />);
 
     const pane = screen.getByTestId('topTable').closest<HTMLElement>('[class*="horizontalPaneContainer"]');
     expect(pane).not.toBeNull();
@@ -298,7 +298,6 @@ describe('FlameGraphContainer with useTableNG', () => {
         <FlameGraphContainer
           data={makeFlameGraphData()}
           getTheme={getTheme}
-          useTableNG={true}
           tableRefreshEnabled={tableRefreshEnabled}
         />
       );

@@ -35,7 +35,7 @@ import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
-import { getLogsExtractFields } from '../explore/Logs/LogsTable';
+import { getLogsExtractFields } from '../explore/Logs/utils/table/logsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';

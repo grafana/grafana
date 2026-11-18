@@ -7,12 +7,10 @@ import { type ExploreLogsPanelState } from '@grafana/data';
  *
  * @param panelState
  * @param updatePanelState
- * @param newLogsTable
  */
 export const getDefaultDisplayedFieldsFromExploreState = (
   panelState: ExploreLogsPanelState | undefined,
-  updatePanelState: (panelState: ExploreLogsPanelState) => void,
-  newLogsTable: boolean
+  updatePanelState: (panelState: ExploreLogsPanelState) => void
 ): string[] => {
   // If there are already displayed fields set, use those.
   if (panelState?.displayedFields && panelState.displayedFields.length > 0) {
@@ -20,7 +18,7 @@ export const getDefaultDisplayedFieldsFromExploreState = (
   }
 
   // If the user was showing the table, and columns are defined in the URL, we need to migrate the columns to displayed fields
-  if (newLogsTable && panelState?.visualisationType === 'table' && panelState?.columns) {
+  if (panelState?.visualisationType === 'table' && panelState?.columns) {
     const columns = Object.values(panelState.columns);
     if (columns.length > 0) {
       updatePanelState({

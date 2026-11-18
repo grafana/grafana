@@ -9270,10 +9270,7 @@
     "logs-table": {
       "action-buttons": {
         "copy-link": "Copy link to log line",
-        "copy-to-clipboard": "Copy to Clipboard",
-        "inspect-value": "Inspect value",
-        "show-details": "Show details",
-        "view-log-line": "View log line"
+        "show-details": "Show details"
       },
       "error-attribute": {
         "error-fields-label": "Has error fields",
@@ -9291,11 +9288,6 @@
       "reset": "Reset",
       "selected-fields": "Selected fields",
       "suggested-fields": "Suggested"
-    },
-    "logs-table-wrap": {
-      "aria-label-select-query-by-name": "Select query by name",
-      "label-select-query": "Select query",
-      "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
     },
     "logs-volume-panel": {
       "content-streaming": "Streaming",

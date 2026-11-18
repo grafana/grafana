@@ -5,7 +5,7 @@ import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type InspectorStream } from 'app/core/services/backend_srv';
 
@@ -82,10 +82,9 @@ const setup = (propOverrides = {}) => {
 };
 
 describe('ExploreQueryInspector', () => {
-  beforeEach(async () => {
-    await act(async () => {
-      setTestFlags({ [FlagKeys.TableInspectDataTableNG]: false });
-    });
+  beforeAll(() => {
+    // JSDOM reports zero client dimensions, causing react-data-grid to virtualize away every column.
+    mockClientSize({ width: 1000, height: 1000 });
   });
 
   afterEach(async () => {

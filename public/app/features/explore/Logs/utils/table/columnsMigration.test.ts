@@ -10,8 +10,7 @@ describe('getDefaultDisplayedFieldsFromExploreState', () => {
       displayedFields: ['ts', 'line'],
     };
 
-    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState, true)).toEqual(['ts', 'line']);
-    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState, false)).toEqual(['ts', 'line']);
+    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState)).toEqual(['ts', 'line']);
   });
 
   it('returns displayed fields if logs panel', () => {
@@ -21,8 +20,7 @@ describe('getDefaultDisplayedFieldsFromExploreState', () => {
       visualisationType: 'logs',
     };
 
-    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState, true)).toEqual([]);
-    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState, false)).toEqual([]);
+    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState)).toEqual([]);
     expect(updatePanelState).toHaveBeenCalledTimes(0);
   });
 
@@ -33,10 +31,7 @@ describe('getDefaultDisplayedFieldsFromExploreState', () => {
       visualisationType: 'table',
     };
 
-    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState, true)).toEqual([
-      'timestamp',
-      'body',
-    ]);
+    expect(getDefaultDisplayedFieldsFromExploreState(panelState, updatePanelState)).toEqual(['timestamp', 'body']);
     expect(updatePanelState).toHaveBeenCalledTimes(1);
     expect(updatePanelState).toHaveBeenCalledWith({
       columns: [],

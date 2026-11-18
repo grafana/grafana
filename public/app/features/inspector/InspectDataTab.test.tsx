@@ -83,29 +83,37 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTa
   return Object.assign(defaultProps, propsOverride) as ComponentProps<typeof InspectDataTab>;
 };
 
+// CommonTableNG reads table.refresh via useFlagTableRefresh, which needs an OpenFeature client.
+const renderInspectDataTab = (props: ComponentProps<typeof InspectDataTab>) =>
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <InspectDataTab {...props} />
+    </OpenFeatureProvider>
+  );
+
 describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
     it('should render InspectDataTab', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
     });
     it('should render Data Option row', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       expect(screen.getByText(/Data options/i)).toBeInTheDocument();
     });
     it('should show available options', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
       expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
     it('should show available dataFrame options', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       const dataOptions = screen.getByText(/Data options/i);
       await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
@@ -129,8 +137,8 @@ describe('InspectDataTab', () => {
           },
         },
       ] as unknown as DataFrame[];
-      render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps({ data: dataWithLogs }));
+      await screen.findByRole('grid');
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
@@ -151,14 +159,14 @@ describe('InspectDataTab', () => {
           },
         },
       ] as unknown as DataFrame[];
-      render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps({ data: dataWithLogs }));
+      await screen.findByRole('grid');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
       config.exploreHideLogsDownload = oldConfig;
     });
     it('should not show download logs button if no logs data', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
     it('should show download traces button if traces data', async () => {
@@ -218,13 +226,13 @@ describe('InspectDataTab', () => {
           },
         },
       ] as unknown as DataFrame[];
-      render(<InspectDataTab {...createProps({ data: dataWithtraces })} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps({ data: dataWithtraces }));
+      await screen.findByRole('grid');
       expect(screen.getByText(/Download traces/i)).toBeInTheDocument();
     });
     it('should not show download traces button if no traces data', async () => {
-      render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
     });
     it('should show download service graph button', async () => {
@@ -246,25 +254,23 @@ describe('InspectDataTab', () => {
           config: {},
         },
       ] as unknown as DataFrame[];
-      render(
-        <InspectDataTab
-          {...createProps({
-            data: sgFrames,
-          })}
-        />
-      );
-      await screen.findByRole('table');
+      renderInspectDataTab(createProps({ data: sgFrames }));
+      await screen.findByRole('grid');
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
     it('should download the displayed data frame when the selected one no longer exists', async () => {
-      const { rerender } = render(<InspectDataTab {...createProps()} />);
-      await screen.findByRole('table');
+      const { rerender } = renderInspectDataTab(createProps());
+      await screen.findByRole('grid');
       await userEvent.click(screen.getByText(/Data options/i));
       await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
       await userEvent.click(screen.getByText('Second data frame (1)'));
 
       const [first] = createProps().data!;
-      rerender(<InspectDataTab {...createProps({ data: [first] })} />);
+      rerender(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ data: [first] })} />
+        </OpenFeatureProvider>
+      );
       await userEvent.click(screen.getByText(/Download CSV/i));
 
       expect(downloadDataFrameAsCsv).toHaveBeenCalledWith(
@@ -277,7 +283,7 @@ describe('InspectDataTab', () => {
     });
   });
 
-  describe('when useTableNG is true', () => {
+  describe('table rendering', () => {
     beforeAll(() => {
       mockTransformationsRegistry([joinByFieldTransformer]);
     });
@@ -290,18 +296,18 @@ describe('InspectDataTab', () => {
     it('passes inspector timezone to TableNG for value filtering', () => {
       render(
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab {...createProps({ useTableNG: true, timeZone: 'Pacific/Auckland' })} />
+          <InspectDataTab {...createProps({ timeZone: 'Pacific/Auckland' })} />
         </OpenFeatureProvider>
       );
       expect(screen.getByRole('grid')).toBeInTheDocument();
       expect(tableNGTimeZone).toBe('Pacific/Auckland');
     });
 
-    it('should render the data with TableNG instead of the legacy Table', () => {
+    it('should render the data with TableNG', () => {
       // CommonTableNG reads table.refresh via useFlagTableRefresh, which needs an OpenFeature client.
       render(
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab {...createProps({ useTableNG: true })} />
+          <InspectDataTab {...createProps()} />
         </OpenFeatureProvider>
       );
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
@@ -316,9 +322,7 @@ describe('InspectDataTab', () => {
       // not before, or the pre-cache never survives to the frame TableNG actually renders.
       render(
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab
-            {...createProps({ useTableNG: true, options: { withTransforms: false, withFieldConfig: true } })}
-          />
+          <InspectDataTab {...createProps({ options: { withTransforms: false, withFieldConfig: true } })} />
         </OpenFeatureProvider>
       );
 
@@ -328,7 +332,7 @@ describe('InspectDataTab', () => {
     it('should not prefix display names with the frame name when there are multiple frames', () => {
       render(
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab {...createProps({ useTableNG: true })} />
+          <InspectDataTab {...createProps()} />
         </OpenFeatureProvider>
       );
 
@@ -343,7 +347,7 @@ describe('InspectDataTab', () => {
       };
       const renderTab = (data?: DataFrame[]) => (
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab {...createProps({ useTableNG: true, ...(data && { data }) })} />
+          <InspectDataTab {...createProps({ ...(data && { data }) })} />
         </OpenFeatureProvider>
       );
 
@@ -372,9 +376,7 @@ describe('InspectDataTab', () => {
       const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
       render(
         <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <InspectDataTab
-            {...createProps({ useTableNG: true, options: { withTransforms: true, withFieldConfig: false } })}
-          />
+          <InspectDataTab {...createProps({ options: { withTransforms: true, withFieldConfig: false } })} />
         </OpenFeatureProvider>
       );
 

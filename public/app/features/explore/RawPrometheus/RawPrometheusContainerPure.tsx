@@ -3,9 +3,8 @@ import { memo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagRawPrometheusTableNg } from '@grafana/runtime/internal';
 import { type TimeZone } from '@grafana/schema';
-import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { CommonTableNG } from 'app/features/table/CommonTableNG';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
@@ -56,7 +55,6 @@ export const RawPrometheusContainerPure = memo(
     showRawPrometheus,
   }: RawPrometheusContainerPureProps) => {
     const styles = useStyles2(getStyles);
-    const useTableNG = useFlagRawPrometheusTableNg();
 
     // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     const [resultsStyle, setResultsStyle] = useState<TableResultsStyle | undefined>(
@@ -112,7 +110,7 @@ export const RawPrometheusContainerPure = memo(
       <PanelChrome title={title} actions={label} loadingState={loading}>
         {frames?.length && (
           <>
-            {renderTable && useTableNG && (
+            {renderTable && (
               // TableNG sizes its root grid via CSS (blockSize: 100%) rather than the height prop, so it
               // needs a definite-size ancestor to resolve against.
               <div style={{ width: tableWidth, height }}>
@@ -125,15 +123,6 @@ export const RawPrometheusContainerPure = memo(
                   onCellFilterAdded={onCellFilterAdded}
                 />
               </div>
-            )}
-            {renderTable && !useTableNG && (
-              <Table
-                ariaLabel={ariaLabel}
-                data={frames[0]}
-                width={tableWidth}
-                height={height}
-                onCellFilterAdded={onCellFilterAdded}
-              />
             )}
             {resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>

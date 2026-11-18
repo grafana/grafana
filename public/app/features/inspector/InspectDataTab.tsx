@@ -17,7 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
-import { Button, Spinner, Table, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -40,8 +40,6 @@ interface Props {
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
-  /** Renders the data with TableNG instead of the legacy Table (TableRT), gated by the table.inspectDataTableNG feature toggle */
-  useTableNG?: boolean;
 }
 
 const joinByFieldTransformer = {
@@ -61,7 +59,6 @@ export const InspectDataTab = memo(function InspectDataTab({
   hasTransformations,
   formattedDataDescription,
   onOptionsChange,
-  useTableNG,
 }: Props) {
   /** The string is joinByField transformation. Otherwise it is a dataframe index */
   const [selectedDataFrame, setSelectedDataFrame] = useState<number | DataTransformerID.joinByField>(0);
@@ -255,24 +252,20 @@ export const InspectDataTab = memo(function InspectDataTab({
               return null;
             }
 
-            if (useTableNG) {
-              // TableNG sizes its grid to its DOM container rather than to these props,
-              // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
-              return (
-                <div style={{ width, height }}>
-                  <CommonTableNG
-                    width={width}
-                    height={height}
-                    data={dataFrame}
-                    timeZone={timeZone}
-                    showTypeIcons={true}
-                    transparent={config.theme2.flags.visualDesignRefresh}
-                  />
-                </div>
-              );
-            }
-
-            return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
+            // TableNG sizes its grid to its DOM container rather than to these props,
+            // so it needs an explicitly-sized wrapper here.
+            return (
+              <div style={{ width, height }}>
+                <CommonTableNG
+                  width={width}
+                  height={height}
+                  data={dataFrame}
+                  timeZone={timeZone}
+                  showTypeIcons={true}
+                  transparent={config.theme2.flags.visualDesignRefresh}
+                />
+              </div>
+            );
           }}
         </AutoSizer>
       </div>

@@ -102,7 +102,7 @@ export type Props = {
   fillHeight?: boolean;
 
   /**
-   * Render the top table with TableNG instead of the legacy Table.
+   * @deprecated The top table always renders with TableNG now. This prop is ignored and will be removed.
    */
   useTableNG?: boolean;
 
@@ -131,7 +131,6 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   fillHeight,
-  useTableNG,
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
 }: Props) => {
@@ -216,7 +215,6 @@ const FlameGraphContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
-    useTableNG,
     tableRefreshEnabled,
     contentAwareWidthsEnabled,
     fillHeight,

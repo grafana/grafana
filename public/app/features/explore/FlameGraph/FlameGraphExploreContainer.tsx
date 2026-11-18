@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type DataFrame, type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
+import { useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface Props {
@@ -21,7 +21,6 @@ function interaction(name: string, context: Record<string, string | number> = {}
 export const FlameGraphExploreContainer = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const useTableNG = useFlagFlameGraphTableNg();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
@@ -31,7 +30,6 @@ export const FlameGraphExploreContainer = (props: Props) => {
         data={props.dataFrames[0]}
         stickyHeader={true}
         getTheme={() => theme}
-        useTableNG={useTableNG}
         tableRefreshEnabled={tableRefreshEnabled}
         contentAwareWidthsEnabled={contentAwareWidthsEnabled}
         onTableSymbolClick={() => interaction('table_item_selected')}

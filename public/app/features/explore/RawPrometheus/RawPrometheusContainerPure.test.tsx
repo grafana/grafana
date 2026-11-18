@@ -3,7 +3,6 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type TableNG } from '@grafana/ui/unstable';
@@ -59,19 +58,11 @@ const renderContainer = (propOverrides = {}) =>
     </OpenFeatureProvider>
   );
 
-describe('RawPrometheusContainerPure with rawPrometheus.tableNg', () => {
+describe('RawPrometheusContainerPure', () => {
   beforeAll(() => {
     // JSDOM reports zero client dimensions, causing react-data-grid to virtualize away the text column.
     mockClientSize({ width: 800, height: 600 });
     getTemplateSrv();
-  });
-
-  beforeEach(async () => {
-    // setTestFlags fires OpenFeature events that update React state; wrap in act() since a
-    // component from the previous test may still be mounted when this runs.
-    await act(async () => {
-      setTestFlags({ [FlagKeys.RawPrometheusTableNg]: true });
-    });
   });
 
   afterEach(async () => {

@@ -1,6 +1,5 @@
 import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagTableInspectDataTableNG } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   type SceneDataProvider,
@@ -56,7 +55,6 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   const { data: sourceData } = getQuerySourceOf(dataProvider).useState();
   const data = options.withTransforms ? transformedData : sourceData;
   const timeRange = sceneGraph.getTimeRange(panel);
-  const useTableNG = useFlagTableInspectDataTableNG();
 
   if (!data) {
     <div>
@@ -75,7 +73,6 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
       dataName={sceneGraph.interpolate(panel, panel.state.title)}
       fieldConfig={panel.state.fieldConfig}
       onOptionsChange={model.onOptionsChange}
-      useTableNG={useTableNG}
     />
   );
 }
