@@ -13,8 +13,17 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
+// TODO: move to a status type shared with Alert's AlertVariant, where 'danger' replaces 'destructive' here and 'error' there.
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success' | 'warning' | 'info';
+export const allButtonVariants: ButtonVariant[] = [
+  'primary',
+  'secondary',
+  'accent',
+  'destructive',
+  'success',
+  'warning',
+  'info',
+];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
@@ -433,6 +442,34 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
   };
 }
 
+function getWarningVariantStyles(theme: GrafanaTheme2, fill: ButtonFill) {
+  const color = theme.colors.warning;
+  const styles = getButtonVariantStyles(theme, color, fill);
+
+  if (!theme.flags.visualDesignRefresh || fill !== 'solid') {
+    return styles;
+  }
+
+  // The refresh themes' warning background is a muted amber. borderEmphasis is the brightest step both modes share.
+  const background = color.borderEmphasis;
+
+  return {
+    ...styles,
+    background,
+    color: theme.colors.getContrastText(background),
+
+    '&:hover': {
+      ...styles['&:hover'],
+      background: theme.colors.emphasize(background, theme.colors.tonalOffset),
+      color: theme.colors.getContrastText(background),
+    },
+
+    '&:active': {
+      background: color.main,
+    },
+  };
+}
+
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
@@ -444,6 +481,12 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);
+
+    case 'warning':
+      return getWarningVariantStyles(theme, fill);
+
+    case 'info':
+      return getButtonVariantStyles(theme, theme.colors.info, fill);
 
     case 'accent':
       return getButtonVariantStyles(theme, theme.colors.accent, fill);
