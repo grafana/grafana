@@ -19,7 +19,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { STARRED_KINDS } from 'app/features/stars/kinds';
-import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
+import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -80,6 +80,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
   async starred(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
+    }
+    // A user without a stars resource has nothing starred
+    if (!canUseStars()) {
+      return noDataResponse();
     }
     const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
