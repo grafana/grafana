@@ -4,8 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
@@ -16,19 +20,127 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	clientrest "k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func TestPendingClientCaptureAndRemove(t *testing.T) {
+	p := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "folder.grafana.app/v1alpha1", "kind": "PendingFolderDeletion",
+		"metadata": map[string]any{"name": "reports-folder-uid", "namespace": testNamespace, "uid": "entry-uid", "resourceVersion": "7"},
+		"spec":     map[string]any{"folderName": "reports", "folderUID": "folder-uid"},
+	}}
+	fake := newFake(p)
+	client := NewPendingClient(fake)
+	ctx := context.Background()
+	page, err := client.List(ctx, "", "")
+	require.NoError(t, err)
+	require.Len(t, page.Items, 1)
+	entry := &page.Items[0]
+	original := entry.DeepCopy()
+	stamp := metav1.Date(2026, 11, 11, 13, 0, 0, 123456789, time.FixedZone("UTC+1", 3600))
+	require.NoError(t, client.Capture(ctx, entry, stamp))
+	require.Equal(t, original, entry)
+	u, err := fake.Resource(pendingGVR).Namespace(testNamespace).Get(ctx, "reports-folder-uid", metav1.GetOptions{})
+	require.NoError(t, err)
+	value, _, err := unstructured.NestedString(u.Object, "spec", "deletionTimestamp")
+	require.NoError(t, err)
+	require.Equal(t, "2026-11-11T12:00:00.123456789Z", value)
+	require.Equal(t, "7", u.GetResourceVersion())
+	require.Equal(t, testNamespace, u.GetNamespace())
+	captured, err := client.Get(ctx, testNamespace, "reports-folder-uid")
+	require.NoError(t, err)
+	fake.ClearActions()
+	require.NoError(t, client.Capture(ctx, captured, metav1.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)))
+	require.Empty(t, fake.Actions())
+	require.Equal(t, value, *captured.Spec.DeletionTimestamp)
+	fake.PrependReactor("delete", "pendingfolderdeletions", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		opts := action.(k8stesting.DeleteAction).GetDeleteOptions()
+		require.NotNil(t, opts.Preconditions)
+		require.Equal(t, types.UID("entry-uid"), *opts.Preconditions.UID)
+		require.Equal(t, "7", *opts.Preconditions.ResourceVersion)
+		return false, nil, nil
+	})
+	require.NoError(t, client.Remove(ctx, entry))
+	_, err = fake.Resource(pendingGVR).Namespace(testNamespace).Get(ctx, "reports-folder-uid", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err))
+}
+
+func TestPendingClientListOptions(t *testing.T) {
+	for _, namespace := range []string{"", testNamespace} {
+		t.Run("namespace="+namespace, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				path := "/apis/folder.grafana.app/v1alpha1"
+				if namespace != "" {
+					path += "/namespaces/" + namespace
+				}
+				assert.Equal(t, path+"/pendingfolderdeletions", r.URL.Path)
+				assert.Equal(t, "100", r.URL.Query().Get("limit"))
+				assert.Equal(t, "previous-page", r.URL.Query().Get("continue"))
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"apiVersion":"folder.grafana.app/v1alpha1","kind":"PendingFolderDeletionList","metadata":{"continue":"next-page"},"items":[]}`))
+			}))
+			defer server.Close()
+			dyn, err := dynamic.NewForConfig(&clientrest.Config{Host: server.URL})
+			require.NoError(t, err)
+			page, err := NewPendingClient(dyn).List(t.Context(), namespace, "previous-page")
+			require.NoError(t, err)
+			require.Equal(t, "next-page", page.Continue)
+		})
+	}
+}
+
+func TestPendingClientRemoveRequiresPreconditions(t *testing.T) {
+	for _, metadata := range []metav1.ObjectMeta{
+		{Name: "reports-folder-uid", ResourceVersion: "7"},
+		{Name: "reports-folder-uid", UID: "entry-uid"},
+	} {
+		fake := newFake()
+		err := NewPendingClient(fake).Remove(t.Context(), &pending.PendingFolderDeletion{ObjectMeta: metadata, Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "folder-uid"}})
+		require.ErrorContains(t, err, "without UID and resource version")
+		require.Empty(t, fake.Actions())
+	}
+}
+
+func TestPendingClientPropagatesAPIErrors(t *testing.T) {
+	for _, verb := range []string{"get", "list", "update", "delete"} {
+		t.Run(verb, func(t *testing.T) {
+			fake := newFake()
+			want := apierrors.NewConflict(pendingGVR.GroupResource(), "reports-folder-uid", errors.New("changed"))
+			fake.PrependReactor(verb, "pendingfolderdeletions", func(k8stesting.Action) (bool, runtime.Object, error) {
+				return true, nil, want
+			})
+			client := NewPendingClient(fake)
+			entry := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-folder-uid", Namespace: testNamespace, UID: "entry-uid", ResourceVersion: "7"}, Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "folder-uid"}}
+			var err error
+			switch verb {
+			case "get":
+				_, err = client.Get(t.Context(), testNamespace, entry.Name)
+			case "list":
+				_, err = client.List(t.Context(), testNamespace, "")
+			case "update":
+				err = client.Capture(t.Context(), entry, metav1.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC))
+			case "delete":
+				err = client.Remove(t.Context(), entry)
+			}
+			require.Same(t, want, err)
+		})
+	}
+}
+
 func newFake(objs ...runtime.Object) *dynamicfake.FakeDynamicClient {
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{
-		folderGVR:    "FolderList",
+		folderGVR: "FolderList",
+		{Group: "folder.grafana.app", Version: "v1alpha1", Resource: "pendingfolderdeletions"}: "PendingFolderDeletionList",
 		dashboardGVR: "DashboardList",
 	}, objs...)
 }
