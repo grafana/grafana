@@ -75,8 +75,8 @@ type Builder struct {
 	// The settings API group is the plugin ID.
 	group           string
 	pluginJSON      plugins.JSONData
-	manifests       []*app.ManifestData // may declare the proxy routes
-	client          PluginClient        // will only ever be called with the same plugin id!
+	settings        *app.ManifestData // declares the proxy routes
+	client          PluginClient      // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService
@@ -118,7 +118,7 @@ func NewBuilder(
 	return &Builder{
 		group:           plugin.JSONData.ID,
 		pluginJSON:      plugin.JSONData,
-		manifests:       plugin.Manifests,
+		settings:        plugin.Settings,
 		client:          client,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
@@ -138,7 +138,7 @@ func (b *Builder) proxyRoutes() *proxyRoutes {
 		if !b.opts.RegisterProxy || !b.opts.OpenAPIProxyRoutes {
 			return
 		}
-		routes, err := compileProxyRoutes(b.group, definition.PluginDefinition{JSONData: b.pluginJSON, Manifests: b.manifests})
+		routes, err := compileProxyRoutes(b.settings)
 		if err != nil {
 			logger.Warn("plugin proxy routes are matched in the order plugin.json declares them", "plugin", b.pluginJSON.ID, "reason", err)
 			return

@@ -71,7 +71,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 }
 
 func (proxy *PluginProxy) HandleRequest() {
-	if route, path, hasPath := MatchRoute(proxy.pluginRoutes, proxy.req.Method, proxy.proxyPath); route != nil {
+	if route, path, hasPath := plugins.MatchRoute(proxy.pluginRoutes, proxy.req.Method, proxy.proxyPath); route != nil {
 		if !proxy.hasAccessToRoute(route) {
 			writeJSONErr(proxy.resp, proxy.req, http.StatusForbidden, "plugin proxy route access denied", nil)
 			return
@@ -126,27 +126,6 @@ func (proxy *PluginProxy) HandleRequest() {
 	proxy.tracer.Inject(ctx, proxy.req.Header, span)
 
 	reverseProxy.ServeHTTP(proxy.resp, proxy.req)
-}
-
-// MatchRoute returns the first of routes, in the order they are declared, that
-// serves method and proxyPath. path is what a final * in the route's path
-// matched, and hasPath is whether it has one.
-func MatchRoute(routes []*plugins.Route, method, proxyPath string) (route *plugins.Route, path string, hasPath bool) {
-	for _, route := range routes {
-		if route.Method != "" && route.Method != "*" && route.Method != method {
-			continue
-		}
-
-		t := web.NewTree()
-		t.Add(route.Path, nil)
-		_, params, isMatch := t.Match(proxyPath)
-		if !isMatch {
-			continue
-		}
-		path, hasPath = params["*"]
-		return route, path, hasPath
-	}
-	return nil, "", false
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {

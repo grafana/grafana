@@ -241,7 +241,7 @@ func TestPluginDefinitionProxyRoutes(t *testing.T) {
 		p := PluginDefinition{JSONData: plugins.JSONData{Routes: jsonRoutes}, Manifests: []*app.ManifestData{
 			manifest(version("v1", true, "/other"), version("v2", false, SettingsProxyPrefix+"unserved")),
 		}}
-		paths, declared, err := p.ProxyRoutes()
+		paths, declared, err := p.proxyRoutes()
 		require.NoError(t, err)
 		require.False(t, declared)
 		require.Contains(t, paths, "/api/{path:*}")
@@ -251,7 +251,7 @@ func TestPluginDefinitionProxyRoutes(t *testing.T) {
 		p := PluginDefinition{JSONData: plugins.JSONData{Routes: jsonRoutes}, Manifests: []*app.ManifestData{
 			manifest(version("v1", true, "/other", SettingsProxyPrefix+"a", SettingsProxyPrefix+"b/{path:*}")),
 		}}
-		paths, declared, err := p.ProxyRoutes()
+		paths, declared, err := p.proxyRoutes()
 		require.NoError(t, err)
 		require.True(t, declared)
 		require.ElementsMatch(t, []string{"/a", "/b/{path:*}"}, slices.Collect(maps.Keys(paths)))
@@ -261,7 +261,7 @@ func TestPluginDefinitionProxyRoutes(t *testing.T) {
 		p := PluginDefinition{Manifests: []*app.ManifestData{
 			manifest(version("v1", true, SettingsProxyPrefix+"a"), version("v2", true, SettingsProxyPrefix+"a")),
 		}}
-		_, declared, err := p.ProxyRoutes()
+		_, declared, err := p.proxyRoutes()
 		require.True(t, declared)
 		require.ErrorContains(t, err, "example.ext.grafana.app/v1 and example.ext.grafana.app/v2")
 	})

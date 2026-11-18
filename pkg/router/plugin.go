@@ -306,7 +306,6 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 // invalidate each other's handlers and active watches.
 func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
 	plugin.Manifests = nil
-	plugin.Manifest = nil //nolint:staticcheck
 	return json.Marshal(struct {
 		Definition definition.PluginDefinition
 		Manifest   *app.ManifestData
@@ -404,19 +403,6 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 	h := sha256.New()
 	_, _ = h.Write(key)
 	_, _ = h.Write([]byte(id))
-	// The key leaves out the manifests, but the settings API serves the proxy
-	// routes they declare.
-	if paths, declared, err := plugin.ProxyRoutes(); declared {
-		routes, merr := json.Marshal(paths)
-		switch {
-		case err != nil:
-			_, _ = h.Write([]byte(err.Error()))
-		case merr != nil:
-			return nil, fmt.Errorf("plugin %q: proxy routes: %w", id, merr)
-		default:
-			_, _ = h.Write(routes)
-		}
-	}
 
 	version := metav1.GroupVersionForDiscovery{GroupVersion: id + "/" + apppluginV0.VERSION, Version: apppluginV0.VERSION}
 	return &PluginBackend{

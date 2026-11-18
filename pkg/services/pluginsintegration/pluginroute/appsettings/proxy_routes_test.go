@@ -90,8 +90,16 @@ func exampleRoutes(url string) []*plugins.Route {
 	}
 }
 
+// pluginWithRoutes is an app as the loaders return it, with its settings
+// manifest. Proxy routes the settings manifest leaves out are matched in the
+// order plugin.json declares them.
 func pluginWithRoutes(routes []*plugins.Route, manifests ...*app.ManifestData) definition.PluginDefinition {
-	return definition.PluginDefinition{JSONData: plugins.JSONData{ID: exampleApp, Routes: routes}, Manifests: manifests}
+	p := definition.PluginDefinition{
+		JSONData:  plugins.JSONData{ID: exampleApp, Type: plugins.TypeApp, Routes: routes},
+		Manifests: manifests,
+	}
+	_ = p.LoadSettings()
+	return p
 }
 
 // manifestDeclaring is a manifest whose v1 declares paths.
@@ -151,18 +159,15 @@ func TestOpenAPIRoutesAnswerHeadAsGet(t *testing.T) {
 func TestRoutesMatchedDifferentlyKeepThePluginProxy(t *testing.T) {
 	// The plugin proxy never reaches the second route, since the first matches
 	// its requests, but ServeMux would choose it as the more specific path.
+	up := newUpstream(t)
 	routes := []*plugins.Route{
-		{Path: "api/*", URL: "https://api.example"},
-		{Path: "api/special", URL: "https://special.example"},
+		{Path: "api/*", URL: up.URL + "/api"},
+		{Path: "api/special", URL: up.URL + "/special"},
 	}
-	_, err := compileProxyRoutes(exampleApp, pluginWithRoutes(routes))
-	require.ErrorContains(t, err, `GET "api/special" would be forwarded with route "api/special", not route "api/*"`)
-
 	s := newProxyServer(t, pluginWithRoutes(routes), true)
 	require.Nil(t, s.builder.proxyRoutes())
-
-	_, err = compileProxyRoutes(exampleApp, pluginWithRoutes([]*plugins.Route{{Path: "ids/:id([0-9]+)"}}))
-	require.Error(t, err)
+	require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "api/special"))
+	require.Equal(t, []string{"GET /api/special"}, up.forwarded, "the plugin.json routes are matched as before")
 }
 
 func TestManifestDeclaredProxyRoutes(t *testing.T) {
@@ -202,9 +207,6 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 		broken := manifestDeclaring(map[string]spec3.PathProps{
 			definition.SettingsProxyPrefix + "v2": {Get: &spec3.Operation{}},
 		})
-		_, err := compileProxyRoutes(exampleApp, pluginWithRoutes(nil, broken))
-		require.ErrorContains(t, err, "must declare "+definition.ExtensionProxy)
-
 		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), broken), true)
 		require.Nil(t, s.builder.proxyRoutes(), "the plugin.json routes are matched as before")
 		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "health"))
@@ -214,7 +216,7 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	const item = "/apis/" + exampleApp + "/v0alpha1/namespaces/{namespace}/app/{name}"
 	publish := func(openAPIRoutes bool, plugin definition.PluginDefinition) map[string]*spec3.Path {
-		b := &Builder{group: exampleApp, pluginJSON: plugin.JSONData, manifests: plugin.Manifests,
+		b := &Builder{group: exampleApp, pluginJSON: plugin.JSONData, settings: plugin.Settings,
 			opts: Options{RegisterProxy: true, OpenAPIProxyRoutes: openAPIRoutes}}
 		oas := &spec3.OpenAPI{
 			Paths: &spec3.Paths{Paths: map[string]*spec3.Path{item: {PathProps: spec3.PathProps{
@@ -255,9 +257,4 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 		definition.SettingsProxyPrefix + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
 	})))
 	require.Contains(t, declared, item+"/proxy/v2/{path}")
-}
-
-func TestProxyProbesCoverEachRoute(t *testing.T) {
-	require.ElementsMatch(t, []string{"", "api/v/v", "api/v/v/", "api/v/v/v", "api/v/v/v/v", "api/v"},
-		proxyProbes([]*plugins.Route{{Path: "api/:id/*"}}))
 }

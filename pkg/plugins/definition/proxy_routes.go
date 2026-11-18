@@ -33,12 +33,12 @@ func IsSettingsProxyPath(path string) bool {
 	return strings.HasPrefix(path, SettingsProxyPrefix)
 }
 
-// ProxyRoutes returns the routes the app settings API's proxy serves, as OpenAPI
+// proxyRoutes returns the routes the app settings API's proxy serves, as OpenAPI
 // paths relative to the proxy root, and whether an app manifest declared them.
 // Routes a manifest declares replace the plugin.json routes, as a manifest's
 // OpenAPI paths replace its deprecated routes. Only one served version of one
 // manifest may declare them, since the settings API serves a single version.
-func (p PluginDefinition) ProxyRoutes() (paths map[string]spec3.PathProps, declared bool, err error) {
+func (p PluginDefinition) proxyRoutes() (paths map[string]spec3.PathProps, declared bool, err error) {
 	var from string
 	for _, manifest := range p.Manifests {
 		if manifest == nil {

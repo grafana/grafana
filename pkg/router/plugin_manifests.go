@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -360,24 +359,13 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 
-	// Move any deprecated singular manifest properties to the multiple flavor
-	// nolint:staticcheck
 	for i := range deployment.Plugins {
-		plugin := &deployment.Plugins[i]
-		if plugin.Definition.Manifest == nil {
-			continue // OK
-		}
-		// The plural entry is authoritative when both formats contain the same group.
-		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
-			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
-		}) {
-			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
-		}
-		plugin.Definition.Manifest = nil
-	}
-	for _, plugin := range deployment.Plugins {
-		for _, manifest := range plugin.Definition.Manifests {
+		plugin := &deployment.Plugins[i].Definition
+		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
+		}
+		if err := plugin.LoadSettings(); err != nil {
+			logging.FromContext(ctx).Warn("router: plugin proxy routes are matched in the order plugin.json declares them", "pluginId", plugin.JSONData.ID, "reason", err)
 		}
 	}
 
