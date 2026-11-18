@@ -25,12 +25,12 @@ func TestComputeSyncStatus_PreservesSiblingStatusFields(t *testing.T) {
 	}
 
 	t.Run("success path", func(t *testing.T) {
-		got := computeSyncStatus(prev, "ds1", originAPI, nil, time.Now(), "hash-1")
+		got := computeSyncStatus(prev, "ds1", originAPI, nil, time.Now(), "hash-1", "")
 		assertSiblingFieldsPreserved(t, prev, &got)
 	})
 
 	t.Run("failure path", func(t *testing.T) {
-		got := computeSyncStatus(prev, "ds1", originAPI, errors.New("boom"), time.Now(), "")
+		got := computeSyncStatus(prev, "ds1", originAPI, errors.New("boom"), time.Now(), "", "")
 		assertSiblingFieldsPreserved(t, prev, &got)
 	})
 }
@@ -89,6 +89,41 @@ func TestComputeUnchangedStatus_OnlyClearsFailuresFromBeforeTheApply(t *testing.
 			}
 			assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusFalse, cond.Status)
 			assert.Equal(t, tc.prev.Conditions[0].Reason, cond.Reason)
+		})
+	}
+}
+
+func TestComputeStatus_RootFolderUIDSurvivesSkipsAndDedupInvalidatingFailures(t *testing.T) {
+	recorded := func(reason SyncReason) *alertingrulesv0alpha1.ConfigStatus {
+		ds, root, hash := "ds1", "root-1", "old-hash"
+		return &alertingrulesv0alpha1.ConfigStatus{
+			ExternalRulerSync: &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
+				DatasourceUid:   &ds,
+				RootFolderUid:   &root,
+				LastAppliedHash: &hash,
+			},
+			Conditions: []alertingrulesv0alpha1.ConfigCondition{
+				{Type: conditionTypeExternalRulerSynced, Status: alertingrulesv0alpha1.ConfigConditionStatusFalse, Reason: reason.ConditionReason()},
+			},
+		}
+	}
+
+	t.Run("a skip that clears a pre-apply failure keeps the folder", func(t *testing.T) {
+		got := computeUnchangedStatus(recorded(ReasonRulerFetch), "ds1", originAPI, time.Now(), "42")
+
+		require.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, got.Conditions[0].Status)
+		require.NotNil(t, got.ExternalRulerSync.RootFolderUid)
+		assert.Equal(t, "root-1", *got.ExternalRulerSync.RootFolderUid)
+	})
+
+	for _, reason := range []SyncReason{ReasonSave, ReasonPrune, ReasonPanic} {
+		t.Run("a "+reason.Label()+" failure drops the hash but keeps the folder", func(t *testing.T) {
+			got := computeSyncStatus(recorded(ReasonRulerFetch), "ds1", originAPI, &SyncError{Reason: reason, Cause: errors.New("boom")}, time.Now(), "", "")
+
+			require.NotNil(t, got.ExternalRulerSync)
+			assert.Nil(t, got.ExternalRulerSync.LastAppliedHash, "the dedup hash must not survive a failed apply")
+			require.NotNil(t, got.ExternalRulerSync.RootFolderUid)
+			assert.Equal(t, "root-1", *got.ExternalRulerSync.RootFolderUid)
 		})
 	}
 }

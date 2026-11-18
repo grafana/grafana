@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
   LocalValueVariable,
+  type MultiValueVariable,
   SceneGridLayout,
   type SceneVariable,
   SceneVariableSet,
@@ -16,6 +17,7 @@ import {
 import { ElementSelectionContext } from '@grafana/ui';
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls, VariableValueSelectWrapper } from './VariableControls';
@@ -23,6 +25,8 @@ import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './edit-actions-popover/EditActi
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
+import { performRowRepeats } from './layout-rows/RowItemRepeater';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
 describe('VariableControls', () => {
   it('should not show scopes variable label but should mount its component', () => {
@@ -192,7 +196,7 @@ describe('VariableControls', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'View' }));
-    expect(selectObject).toHaveBeenCalledWith(variable);
+    expect(selectObject).toHaveBeenCalledWith(variable, { force: true });
     jest.useRealTimers();
   });
 
@@ -266,6 +270,22 @@ describe('VariableControls', () => {
     expect(screen.queryAllByText('custom0')).toHaveLength(1);
   });
 
+  it('when opening variable settings in a repeated row, the sidebar edits the source variable', async () => {
+    const { variable, sidebar, repeatedRow, deactivate } = buildSceneWithRepeatedRowVariable();
+    const { actions, unmount } = renderRepeatedRowVariableControls(repeatedRow);
+
+    try {
+      await actions.openSettings();
+
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: variable.state.key }]);
+      expect(sidebar.getSelectedObject()).toBe(variable);
+      expect(sidebar.state.openPane?.getId()).toBe('element');
+    } finally {
+      unmount();
+      deactivate();
+    }
+  });
+
   describe('element data attributes', () => {
     it('should expose element key and type on the default variable control', async () => {
       const dashboard = buildScene([new TextBoxVariable({ name: 'TextVar', key: 'text-var-key' })]);
@@ -327,4 +347,56 @@ function buildScene(variables: SceneVariable[] = []) {
     }),
   });
   return dashboard;
+}
+
+function buildSceneWithRepeatedRowVariable() {
+  const repeatVariable = new CustomVariable({
+    name: 'region',
+    query: 'east,west',
+    value: ['east', 'west'],
+    text: ['east', 'west'],
+    isMulti: true,
+  });
+  const variable = new TextBoxVariable({ name: 'service', value: 'api' });
+  const row = new RowItem({
+    key: 'row-1',
+    repeatByVariable: 'region',
+    $variables: new SceneVariableSet({ variables: [variable] }),
+  });
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    $variables: new SceneVariableSet({ variables: [repeatVariable] }),
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+  const deactivate = activateFullSceneTree(dashboard);
+  performRowRepeats(repeatVariable as unknown as MultiValueVariable, row, false);
+
+  return { variable, sidebar: dashboard.state.sidebar, repeatedRow: row.state.repeatedRows![0], deactivate };
+}
+
+function renderRepeatedRowVariableControls(row: RowItem) {
+  // JSDOM has no popover geometry, so moving the pointer during click would close it.
+  const user = userEvent.setup({ skipHover: true });
+  const result = render(
+    <ElementSelectionContext.Provider value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}>
+      <SectionVariableControls variableSet={row.state.$variables!} />
+    </ElementSelectionContext.Provider>
+  );
+
+  const elements = {
+    control: () => result.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItem),
+    settings: () => result.findByRole('button', { name: 'Variable settings' }),
+  };
+
+  return {
+    ...result,
+    user,
+    elements,
+    actions: {
+      async openSettings() {
+        await user.hover(elements.control());
+        await user.click(await elements.settings());
+      },
+    },
+  };
 }

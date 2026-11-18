@@ -702,7 +702,8 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 		storedRule = existing
 	} else {
-		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		// Provisioning updates treat IsPaused as authoritative, even when false, rather than inheriting the stored value.
+		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule, HasPause: true})
 		if err != nil {
 			return models.AlertRule{}, err
 		}

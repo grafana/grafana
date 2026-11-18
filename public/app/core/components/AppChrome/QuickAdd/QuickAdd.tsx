@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
@@ -14,7 +15,6 @@ import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/Da
 import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
 import { notebookNewEditHref } from 'app/features/notebook/urls';
-import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -29,7 +29,7 @@ import {
 export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const navBarTree = useNavTree();
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
@@ -41,10 +41,13 @@ export const QuickAdd = ({}: Props) => {
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
 
-    // Every current item in the "dashboards/browse" group (New dashboard, Import
-    // dashboard, Use template below) creates a dashboard
+    // New dashboard needs edit mode
     if (isMobileEditDeprecated) {
-      return groups.filter((g) => g.parentId !== 'dashboards/browse');
+      return groups
+        .map((g) =>
+          g.parentId === 'dashboards/browse' ? { ...g, items: g.items.filter((i) => i.id !== 'dashboards/new') } : g
+        )
+        .filter((g) => g.items.length > 0);
     }
 
     if (isTemplateDashboardsAvailable) {

@@ -23,6 +23,16 @@ const LabelKeyGetHistory = "grafana.app/get-history"
 // LabelKeyGetTrash is used to list objects that have been (soft) deleted
 const LabelKeyGetTrash = "grafana.app/get-trash"
 
+// LabelKeyLifecycle marks a dashboard's lifecycle state. A missing label means published.
+const LabelKeyLifecycle = "grafana.app/lifecycle"
+
+// LifecycleDraft is the LabelKeyLifecycle value for draft dashboards
+const LifecycleDraft = "draft"
+
+// LabelKeyIncludeDrafts is a request-only list flag (never stored) that includes drafts
+// in list results when drafts are hidden by default
+const LabelKeyIncludeDrafts = "grafana.app/include-drafts"
+
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
 
@@ -647,6 +657,11 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 			return title
 		}
 		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
+		if ok && title != "" {
+			return title
+		}
+		// Global variables store their logical name at spec.spec.name.
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "spec", "name")
 		if ok && title != "" {
 			return title
 		}

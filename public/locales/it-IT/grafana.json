@@ -1444,6 +1444,25 @@
       "title-error-saving-receiver": "Errore durante il salvataggio del destinatario"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "",
         "load-more-rules-in-folder": "",
@@ -1463,6 +1482,10 @@
         "count-unavailable": "",
         "expand": ""
       },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
+      },
       "instances": {
         "error": "",
         "firing": "",
@@ -1477,9 +1500,29 @@
         "records": "",
         "to": ""
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "",
@@ -1555,6 +1598,19 @@
         "view-folders": "",
         "view-list": "",
         "wildcard-in-text": ""
+      },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
+      "sequence-pill": {
+        "label-with-interval": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "",
@@ -1776,17 +1832,18 @@
         "autosync-rules-error-title": "Importazione delle regole non riuscita",
         "autosync-rules-imported-note": "Anche le regole di avviso selezionate sono state importate.",
         "autosync-rules-note": "Verranno importate anche le regole di avviso selezionate.",
-        "autosync-success-body": "Sincronizzazione automatica abilitata. Reindirizzamento in corso...",
+        "autosync-success-body": "",
         "autosync-success-title": "Sincronizzazione automatica abilitata",
         "autosync-title": "Conferma sincronizzazione automatica",
         "body": "Vuoi davvero avviare l'importazione? Questa operazione creerà nuove risorse in Grafana Alerting.",
         "confirm": "Avvia importazione",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Importazione non riuscita",
         "importing-body": "Importazione delle risorse in Grafana Alerting. Attendi...",
         "importing-title": "Importazione in corso...",
-        "success-body": "Risorse importate correttamente. Reindirizzamento in corso...",
+        "success-body": "",
         "success-title": "Importazione riuscita",
         "title": "Conferma importazione"
       },
@@ -2371,6 +2428,7 @@
       "contact-points": "Punti di contatto",
       "notification-policies": "Criteri di notifica",
       "recently-deleted": "Eliminati di recente",
+      "recording-rules": "",
       "templates": "Modelli",
       "time-intervals": "Intervalli di tempo"
     },
@@ -5328,6 +5386,7 @@
       "change-theme": "Modifica tema ",
       "dark-theme": "Scuro",
       "dashboard-from-template": "Dashboard da modello",
+      "experimental": "",
       "light-theme": "Chiaro",
       "open-saved-queries": "Apri query salvate",
       "scopes": "Ambiti di applicazione"
@@ -5779,11 +5838,21 @@
     },
     "composer": {
       "annotation-pin": "",
+      "annotation-pin-remove": "",
       "apply-undo-title": "",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
         "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "",
       "untitled-panel": "",
@@ -6071,6 +6140,7 @@
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "layout-default-hint": "Il layout selezionato verrà utilizzato anche come impostazione predefinita per tutte le nuove schede e righe. Puoi modificarlo in un secondo momento in Impostazioni dashboard > Generale.",
+      "mobile-not-available": "",
       "or-start-blank": "Oppure creala tu stesso",
       "select-layout-header": "Seleziona layout",
       "title": "Nuova dashboard"
@@ -6175,6 +6245,9 @@
         "title": "Titolo",
         "transparent-background": "Sfondo trasparente"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6369,9 +6442,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
     },
     "plan-building-overlay": {
       "quip-corners": "",
@@ -6698,7 +6768,6 @@
           "no-title": "<nessun titolo>"
         }
       },
-      "redo": "Ripeti",
       "row": {
         "header": {
           "hide": "Nascondi",
@@ -6715,7 +6784,6 @@
         "title": "Origine",
         "tooltip": "Apri la dashboard originale"
       },
-      "undo": "Annulla",
       "variable": {
         "change-type": "Modifica il tipo",
         "change-type-aria-label": "Modifica il tipo di variabile",
@@ -6752,8 +6820,6 @@
         "open-editor": "Apri l'editor delle variabili",
         "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
         "query-options": {
-          "close": "Chiudi",
-          "old-modal-title": "Query variabile",
           "preview": "Anteprima"
         },
         "remove": "",
@@ -6924,6 +6990,8 @@
       "playlist-next": "Vai al dashboard successivo",
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6942,6 +7010,8 @@
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
       "star-removed": "Elemento rimosso dai preferiti",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Scollega pannello della libreria",
       "unlink-library-panel-short": "Scollega"
     },
@@ -7657,11 +7727,7 @@
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
     "lifecycle": {
-      "applied": "",
-      "apply": "",
-      "apply-body": "",
-      "apply-failed": "",
-      "apply-needs-edit": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "",
       "breadcrumb-pending-changes": "",
       "change-added": "",
@@ -7693,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
-      "highlight-changes": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -7702,13 +7767,16 @@
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
-      "rebase": "",
       "record-pending-change-failed": "",
       "save": "",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "",
-      "stop-highlighting-changes": "",
-      "apply-title_one": "",
-      "apply-title_other": ""
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Aggiungi link",
@@ -7766,6 +7834,19 @@
       "aria-label-remove-option": "Rimuovi opzione",
       "title-drag-and-drop-to-reorder": "Trascina e rilascia per riordinare",
       "tooltip-remove-option": "Rimuovi opzione"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Avviso"
@@ -7946,6 +8027,12 @@
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "",
@@ -8142,6 +8229,12 @@
       "switch-options": "Opzioni del commutatore",
       "value-pair-type": "Tipo di coppia di valori",
       "value-pair-type-description": "Scegli il tipo di valori per gli stati del commutatore"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valore predefinito"
@@ -8482,7 +8575,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "Aggiungi nuova origine dati"
+      "label": "Aggiungi nuova origine dati",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "Nessuna origine dati trovata"
@@ -8614,6 +8711,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "Aggiungi a Preferiti",
+      "configure-with-assistant": "",
       "explore-data": "Esplora i dati",
       "open-in-explore": "Apri nella visualizzazione Esplora",
       "remove-favorite": "Rimuovi da Preferiti"
@@ -9759,6 +9857,9 @@
     "select-aria-label": "Filtro cartelle",
     "select-placeholder": "Filtra per cartella"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonimo",
@@ -10749,6 +10850,8 @@
       "tooltip": {
         "category": "Suggerimento",
         "description-hover-proximity": "Quanto deve essere vicino il cursore a un punto per attivare il suggerimento, in pixel",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tutti",
           "label-hidden": "Nascosto",
@@ -11251,6 +11354,8 @@
         "unbounded": ""
       },
       "reorder-column-label": "",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "",
       "sort-by-column": "Ordina per colonna {{column}}",
       "sort-by-column-ascending": "Ordina per colonna {{column}}, in ordine crescente",
@@ -13047,6 +13152,10 @@
       "subtitle": "Scegli come inviare le notifiche ai tuoi punti di contatto quando si attiva un'istanza di avviso",
       "title": "Punti di contatto"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Interrompi le notifiche da una o più regole di avviso",
       "title": "Silenzi"
@@ -13232,6 +13341,9 @@
     "new-folder": {
       "title": "Nuova cartella"
     },
+    "new-grafana-page": {
+      "title": ""
+    },
     "new-notebook": {
       "title": ""
     },
@@ -13368,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumb"
     },
@@ -13383,14 +13520,6 @@
         "open-all": "Apri gli assistenti IA e le app della barra laterale"
       },
       "floating-resize": ""
-    },
-    "fullscreen-workspace": {
-      "enter": "Entra nell'area di lavoro",
-      "error-exit": "Esci dall'area di lavoro",
-      "error-message": "Impossibile caricare l'area di lavoro di Grafana Assistant.",
-      "error-reload": "Ricarica la pagina",
-      "error-title": "Area di lavoro non disponibile",
-      "workspace": "Area di lavoro"
     },
     "help": {
       "aria-label": "Guida",
@@ -13428,6 +13557,7 @@
       "tv-alert": "Premi ESC per uscire dalla modalità kiosk"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Chiudi il menu",
       "customise": "Personalizza la navigazione",
       "customise-cancel": "Annulla",
@@ -13585,8 +13715,10 @@
       "drag-handle": "Trascina per riordinare",
       "duplicate": "Duplica blocco",
       "frame": {
-        "aria-label-collapsed": "Blocco compresso: {{name}}",
-        "aria-label-panel": "Blocco di visualizzazione: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13674,7 +13806,7 @@
       "submit": "Aggiungi al blocco appunti",
       "success": "Pannello aggiunto a {{title}}",
       "success-cells": "",
-      "success-link": "Visualizza blocco appunti",
+      "success-open-link": "",
       "tag-placeholder": "Filtra per tag",
       "target-description": "Scegli dove aggiungere il pannello.",
       "target-existing": "Blocco appunti esistente",
@@ -13846,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Scegli un colore, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Serie di colori per"
+      "color-by-label": "Serie di colori per",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Fuori intervallo. {{range}}",
@@ -13896,6 +14029,32 @@
     },
     "units": {
       "clear-tooltip": "Cancella selezione unità"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -13998,12 +14157,14 @@
     "header-menu": {
       "add-to-notebook": "Aggiungi al blocco appunti",
       "copy": "Copia",
+      "copy-repeated-panel": "",
       "copy-styles": "Copia stili",
       "download-diagnostics": "Scarica la diagnostica",
       "duplicate": "Duplica",
       "edit": "Modifica",
       "explore": "Esplora",
       "get-help": "Aiuto",
+      "group-by": "",
       "hide-legend": "Nascondi legenda",
       "inspect": "Ispeziona",
       "inspect-data": "Data",
@@ -14325,6 +14486,9 @@
     "empty-state": {
       "message": "Nessun plug-in trovato"
     },
+    "errors": {
+      "app-plugin-metas-error": ""
+    },
     "extensions": {
       "extension-error-alert-description": "Controlla la console per maggiori dettagli sull'errore.",
       "extension-error-alert-title": "Impossibile caricare l'estensione: \"{{pluginId}}/{{extensionTitle}}\""
@@ -14559,6 +14723,7 @@
       "description-filename": "Nome del file per la dashboard (.json o .yaml)",
       "description-folder": "Cartella all'interno del repository. Lascia vuoto per la cartella principale del repository.",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "",
       "info-branch-disabled": "L'invio al ramo configurato è disabilitato",
@@ -15076,6 +15241,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "Gestito da: provisioning dei file",
+      "file-provisioning": "",
       "kubectl": "Gestito da: Kubectl",
       "manage-repository": "Gestisci repository",
       "plugin": "Gestito da: plug-in {{id}}",
@@ -15263,6 +15429,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Precompila il titolo della richiesta di pull nelle finestre di dialogo di salvataggio utilizzando il modello qui sopra e rendilo di sola lettura.",
       "description-title-template": "Modello per il titolo della richiesta di pull aperto dal flusso di lavoro del ramo. Segnaposto disponibili: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lascia vuoto per utilizzare la prima riga del messaggio di commit.",
@@ -15294,7 +15462,7 @@
       "message-resource-onprem_other": "La tua istanza è limitata a {{count}} risorse sincronizzate per ogni repository."
     },
     "read-only-badge": {
-      "text": "Solo lettura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -15425,6 +15593,8 @@
       "pure-git-tooltip": "Si connette a qualsiasi repository Git utilizzando il protocollo Smart HTTP v2. Flusso di lavoro di sincronizzazione di base senza funzionalità specifiche del provider (webhook, commenti alle richieste di pull, deep link)."
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "dashboard",
       "dashboards": "Dashboard",
       "datasource": "",
@@ -15434,7 +15604,9 @@
       "library-panel": "pannello della libreria",
       "library-panels": "Pannelli della libreria",
       "playlist": "playlist",
-      "playlists": "Playlist"
+      "playlists": "Playlist",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -15442,6 +15614,8 @@
       "header-title": "Titolo",
       "header-type": "Tipo",
       "missing-folder-metadata": "File di metadati della cartella mancante",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Cerca per percorso o titolo",
       "source": "Origine",
       "status-filter-aria-label": "Filtra per stato",
@@ -16130,6 +16304,9 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17144,6 +17321,7 @@
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
     "description-page-size": "Numero di righe per pagina. Quando è vuoto, il formato della pagina si basa sull'altezza del pannello.",
     "description-show-columns-sidebar": "",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterna il colore di sfondo di ogni seconda riga",
@@ -17186,6 +17364,7 @@
     "name-min-column-width": "Larghezza minima colonna",
     "name-page-size": "Dimensione della pagina",
     "name-show-columns-sidebar": "",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "Stile dal campo",
@@ -17347,6 +17526,11 @@
     "code-view": {
       "aria-label-code-content": "Contenuto del codice"
     },
+    "consent-notice": {
+      "review": "",
+      "text_one": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "Contenuto del testo",
       "aria-label-mode": "Modalità testo: {{mode}}",
@@ -17396,6 +17580,17 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "",

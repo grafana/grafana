@@ -113,6 +113,9 @@ export const DASHBOARDS_TAB_NAV_IDS = [
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
 
+/** Id prefix of the Starred section's children, `starred/<kind>/<uid>`; the menu derives them from the stars query. */
+export const STARRED_ID_PREFIX = `${NavID.starred}/`;
+
 /**
  * A nav section that exists only to group app plugins, built on demand by the
  * first plugin that targets it rather than declared as a static entry.

@@ -562,6 +562,28 @@ func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	return newFolder.ToFolderReference(), true, nil
 }
 
+func (f *RuleStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.UID == uid {
+			return folder.ToFolderReference(), false, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:        rand.Int63(), // nolint:staticcheck
+		UID:       uid,
+		Title:     title,
+		ParentUID: parentUID,
+		Fullpath:  "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder.ToFolderReference(), true, nil
+}
+
 func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()

@@ -8,6 +8,7 @@ import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/u
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
@@ -185,6 +186,7 @@ it('renders with buttons disabled when repository is read-only', () => {
 
 it('renders with buttons disabled when blocked on mobile, even with canCreate true', () => {
   setTestFlags({ 'grafana.mobileEditDeprecation': true });
+  setMobileViewport();
 
   setup({ canCreate: true });
 
@@ -233,6 +235,7 @@ describe('new layouts empty state', () => {
 
   it('shows a message instead of the layout picker when blocked on mobile', () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const dashboard = setupScene({ isEditing: false });
 
@@ -247,6 +250,7 @@ describe('new layouts empty state', () => {
 
   it('keeps the layout picker and add pane for an edit session already in progress on mobile', async () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
 
     const dashboard = setupScene();
 
