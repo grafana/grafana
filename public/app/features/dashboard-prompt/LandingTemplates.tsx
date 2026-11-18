@@ -3,7 +3,7 @@ import { useId, useRef } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { Grid, useStyles2 } from '@grafana/ui';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
@@ -19,8 +19,9 @@ interface Props {
 const noop = () => {};
 
 /**
- * The templates under the new-dashboard prompt, as one list: the organization's custom templates first, then
- * the Grafana-provisioned ones. Picking a card attaches it to the prompt instead of opening it.
+ * The templates under the new-dashboard prompt, as one grid: the organization's custom templates first, then
+ * the Grafana-provisioned ones. Picking a card attaches it to the prompt instead of opening it. As pickers,
+ * both lists render bare cards, so they flow into this one grid.
  */
 export function LandingTemplates({
   testDataSource,
@@ -57,7 +58,7 @@ export function LandingTemplates({
       <h3 id={titleId} className={styles.title}>
         <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
       </h3>
-      <div className={styles.lists}>
+      <Grid gap={4} columns={{ xs: 1, sm: 2, lg: 3 }}>
         {renderCustomTemplates()}
         {showGrafanaTemplates && (
           <GrafanaTemplatesTab
@@ -69,7 +70,7 @@ export function LandingTemplates({
             selectedTemplateId={selectedTemplateId}
           />
         )}
-      </div>
+      </Grid>
     </section>
   );
 }
@@ -85,12 +86,6 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-    }),
-    lists: css({
-      display: 'flex',
-      flexDirection: 'column',
-      // Same gap as the card grids, so the two sources read as one list.
-      gap: theme.spacing(4),
     }),
   };
 }

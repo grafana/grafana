@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { createRef } from 'react';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
@@ -91,6 +91,14 @@ describe('GrafanaTemplatesTab', () => {
         }),
       });
       expect(locationService.push).not.toHaveBeenCalled();
+    });
+
+    it('renders nothing when there are no templates, to leave the shared grid alone', async () => {
+      server.use(http.get('/api/gnet/dashboards', () => HttpResponse.json({ page: 1, pages: 1, items: [] })));
+      const { container } = renderTab({ onSelectTemplate: jest.fn() });
+
+      // Skeletons show while loading, then nothing: no empty state taking a card's slot.
+      await waitFor(() => expect(container).toBeEmptyDOMElement());
     });
 
     it('marks the selected template', async () => {

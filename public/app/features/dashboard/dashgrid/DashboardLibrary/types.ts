@@ -70,7 +70,10 @@ export interface TemplateSelection {
   contextItem: ChatContextItem;
 }
 
-/** Turns template cards into a picker: clicking a card hands its template to the caller. */
+/**
+ * Turns template cards into a picker: clicking a card hands its template to the caller. A picker renders bare
+ * cards, without its own grid or empty state, so the caller can lay out several template sources in one grid.
+ */
 export interface TemplateSelectionProps {
   onSelectTemplate?: (selection: TemplateSelection) => void;
   /** The picked template's `TemplateSelection.id`, shown as selected. */

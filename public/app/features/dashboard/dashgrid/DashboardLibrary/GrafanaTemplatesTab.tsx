@@ -141,6 +141,10 @@ export const GrafanaTemplatesTab = ({
   }
 
   if (!loading && dashboards.length === 0) {
+    // A picker shares one grid with other template sources, where an empty state would take a card's slot.
+    if (onSelectTemplate) {
+      return null;
+    }
     return (
       <EmptyState
         variant="not-found"
@@ -152,6 +156,33 @@ export const GrafanaTemplatesTab = ({
     );
   }
 
+  const cards = loading
+    ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+    : dashboards?.map((dashboard) => {
+        const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
+        const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
+
+        return (
+          <DashboardCard
+            key={dashboard.id}
+            title={dashboard.name}
+            imageUrl={thumbnailUrl}
+            onClick={(customizeWithAssistant?: boolean) => onPreviewDashboardClick(dashboard, customizeWithAssistant)}
+            onClose={onClose}
+            dashboard={dashboard}
+            kind="template_dashboard"
+            showAssistantButton={isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled}
+            onSelect={onSelectTemplate ? () => selectTemplate(dashboard) : undefined}
+            selected={selectedTemplateId === getGrafanaTemplateSelectionId(dashboard)}
+          />
+        );
+      });
+
+  // A picker renders bare cards: the caller lays out every template source in one grid.
+  if (onSelectTemplate) {
+    return <>{cards}</>;
+  }
+
   return (
     <Grid
       gap={4}
@@ -161,31 +192,7 @@ export const GrafanaTemplatesTab = ({
         lg: 3,
       }}
     >
-      {loading
-        ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
-        : dashboards?.map((dashboard) => {
-            const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-            const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
-
-            return (
-              <DashboardCard
-                key={dashboard.id}
-                title={dashboard.name}
-                imageUrl={thumbnailUrl}
-                onClick={(customizeWithAssistant?: boolean) =>
-                  onPreviewDashboardClick(dashboard, customizeWithAssistant)
-                }
-                onClose={onClose}
-                dashboard={dashboard}
-                kind="template_dashboard"
-                showAssistantButton={
-                  isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
-                }
-                onSelect={onSelectTemplate ? () => selectTemplate(dashboard) : undefined}
-                selected={selectedTemplateId === getGrafanaTemplateSelectionId(dashboard)}
-              />
-            );
-          })}
+      {cards}
     </Grid>
   );
 };
