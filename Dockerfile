@@ -289,6 +289,7 @@ COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+CMD [ "grafana", "server" ]
 
 # Ubuntu final stage — use --target=final-ubuntu to select this variant
 FROM ubuntu-base AS final-ubuntu
@@ -351,6 +352,7 @@ COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
+CMD [ "grafana", "server" ]
 
 # Distroless final stage — use --target=final-distroless to select this variant.
 # No shell, no package manager, no OS utilities: significantly reduces CVE surface.

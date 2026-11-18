@@ -51,6 +51,16 @@ Where:
 - `--name` assign a logical name to the container (e.g. `grafana`). This allows you to refer to the container by name instead of by ID.
 - `grafana/grafana-enterprise` is the image to run
 
+### Run a custom command
+
+To run a custom command in an Alpine or Ubuntu Grafana image, append the command and its arguments after the image name.
+
+```bash
+docker run --rm grafana/grafana-enterprise whoami
+```
+
+To start Grafana with server arguments, use `grafana server` followed by the arguments. You can also pass server flags or `cfg:` overrides directly after the image name.
+
 ### Stop the Grafana container
 
 To stop the Grafana container, run the following command:
@@ -61,7 +71,7 @@ docker ps
 
 # This will display a list of containers that looks like the following:
 CONTAINER ID   IMAGE  COMMAND   CREATED  STATUS   PORTS    NAMES
-cd48d3994968   grafana/grafana-enterprise   "/run.sh"   8 seconds ago   Up 7 seconds   0.0.0.0:3000->3000/tcp   grafana
+cd48d3994968   grafana/grafana-enterprise   "/run.sh grafana ser…"   8 seconds ago   Up 7 seconds   0.0.0.0:3000->3000/tcp   grafana
 
 # To stop the grafana container run the command
 # docker stop CONTAINER-ID or use

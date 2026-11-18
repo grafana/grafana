@@ -2,6 +2,16 @@
 
 set -e
 
+# Keep accepting server flags and cfg: overrides passed directly to the image.
+case "${1:-}" in
+    ""|-*|cfg:*) set -- grafana server "$@" ;;
+esac
+
+if [ "$1" != grafana ] || [ "${2:-}" != server ]; then
+    exec "$@"
+fi
+shift 2
+
 PERMISSIONS_OK=0
 
 if [ ! -r "$GF_PATHS_CONFIG" ]; then
