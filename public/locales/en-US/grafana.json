@@ -14765,12 +14765,14 @@
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "commit-target-branch": "Once it's pushed, you'll open the pull request into {{branch}} from {{provider}}.",
+      "commit-target-direct": "This commit goes straight to {{branch}}, so everyone in your organization gets it once the sync runs.",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
       "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
-      "description-filename": "File name for the dashboard (.json or .yaml)",
+      "description-filename": "File name inside the repository (.json or .yaml)",
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-folder-with-path": "Folder inside the repository. Leave empty for the configured repository path ({{path}}).",
@@ -14899,6 +14901,22 @@
     },
     "commit-signing-info": {
       "description": "To enable verified commits, <2>set up commit signing</2> for your account."
+    },
+    "commit-success": {
+      "branch-body": "The rest of the Grafana users in your organization will still see the current version saved to the configured branch until this branch is merged.",
+      "committed-to": "Committed to {{branch}}.",
+      "configured-branch": "configured branch",
+      "direct-body": "Everyone in your organization will see this version once the sync runs.",
+      "last-commit": "Last commit",
+      "merges-into": "Merges into",
+      "open-branch": "Open {{branch}} in the repository",
+      "open-commit": "Open the committed file at {{hash}}",
+      "repository": "the repository",
+      "title-created": "A new resource has been created in a branch in {{provider}}.",
+      "title-deleted": "The resource has been deleted in a branch in {{provider}}.",
+      "title-moved": "The resource has been moved in a branch in {{provider}}.",
+      "title-updated": "The resource has been updated in a branch in {{provider}}.",
+      "your-branch": "Your branch"
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -15703,14 +15721,18 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
+      "button-commit-to-branch": "Commit to branch",
+      "button-commit-to-configured": "Commit to {{branch}}",
+      "button-committing": "Committing...",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "button-save": "Save",
-      "button-saving": "Saving...",
-      "drawer-title-delete": "Delete provisioned {{resource}}",
-      "drawer-title-save": "Save provisioned {{resource}}",
+      "drawer-title-delete": "Delete provisioned resource",
+      "drawer-title-save": "Save provisioned resource",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
+      "next-list": "Back to all {{resources}}",
+      "next-view": "View {{resource}}",
+      "open-pull-request": "Open pull request",
       "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "save-target-switch": {

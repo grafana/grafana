@@ -126,16 +126,16 @@ describe('SaveProvisionedResourceDrawer', () => {
   });
 
   describe('update', () => {
-    it('renders the drawer header, shared fields and save/cancel buttons', async () => {
+    it('renders the drawer header, shared fields and commit/cancel buttons', async () => {
       setup();
 
-      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /save provisioned resource/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^commit to/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    it('commits the resource body for the write workflow and navigates to the redirect URL', async () => {
+    it('commits the resource body for the write workflow and reports the commit in the drawer', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
@@ -144,7 +144,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -159,10 +159,11 @@ describe('SaveProvisionedResourceDrawer', () => {
         metadata: { name: 'playlist-uid' },
         spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
       });
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/redirect-target'));
+      expect(await screen.findByText(/committed to main/i)).toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
 
-    it('sends the ref and navigates to the redirect URL with the pull request params for the branch workflow', async () => {
+    it('sends the ref and offers the pull request in the drawer for the branch workflow', async () => {
       // workflows[0] === 'branch' makes the branch (PR) workflow the default.
       mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
       server.use(
@@ -178,17 +179,16 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
-      await waitFor(() =>
-        expect(mockNavigate).toHaveBeenCalledWith(
-          expect.stringMatching(
-            /^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1&repo_type=git&action=update/
-          )
-        )
+      expect(await screen.findByText(/updated in a branch/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /open pull request/i })).toHaveAttribute(
+        'href',
+        'https://example.com/pr/1'
       );
+      expect(screen.getByText('feature-branch')).toBeInTheDocument();
     });
 
     it('shows an error alert when the commit fails', async () => {
@@ -197,7 +197,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       );
 
       const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -210,7 +210,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         },
       });
 
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
@@ -219,14 +219,14 @@ describe('SaveProvisionedResourceDrawer', () => {
       mockRepoView({ isReadOnlyRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
     });
 
     it('shows the missing-repository banner when no repository resolves', () => {
       mockRepoView({ repository: undefined, isMissingRepo: true });
       setup();
 
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^commit to/i })).not.toBeInTheDocument();
     });
   });
 
@@ -250,7 +250,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         />
       );
 
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await user.click(await screen.findByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       const req = requireCapturedRequest(capturedRequest);
@@ -285,7 +285,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
       await user.clear(pathInput);
       await user.type(pathInput, 'custom/folder/my-file.json');
-      await user.click(screen.getByRole('button', { name: /^save$/i }));
+      await user.click(screen.getByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
@@ -298,7 +298,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     it('renders the delete drawer with a Delete button', async () => {
       setup({ action: 'delete' });
 
-      expect(await screen.findByRole('heading', { name: /delete provisioned playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /delete provisioned resource/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
     });
 
@@ -356,7 +356,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const branch = await screen.findByRole('textbox', { name: /branch/i });
       await waitFor(() => expect(branch).toHaveValue('grafana/enforced-branch'));
 
-      await user.click(screen.getByRole('button', { name: /^save$/i }));
+      await user.click(screen.getByRole('button', { name: /^commit to/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
