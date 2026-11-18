@@ -359,20 +359,41 @@ describe('PillCell', () => {
       );
     });
 
-    it('uses a continuous scale for numeric pill values', () => {
-      const field = fieldWithValues(['0,50,100']);
+    it('uses the numeric pill range for a continuous scale', () => {
+      const field = fieldWithValues(['10,20,30']);
       field.config.color = { mode: FieldColorModeId.ContinuousBlues };
-      field.config.min = 0;
-      field.config.max = 100;
 
       expectHTML(
         render(
           <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
         ),
         `
-        <span style="background-color: rgb(24, 27, 31); color: rgb(247, 248, 250);">0</span>
-        <span style="background-color: rgb(28, 62, 114); color: rgb(247, 248, 250);">50</span>
-        <span style="background-color: rgb(31, 96, 196); color: rgb(247, 248, 250);">100</span>
+        <span style="background-color: rgb(24, 27, 31); color: rgb(247, 248, 250);">10</span>
+        <span style="background-color: rgb(28, 62, 114); color: rgb(247, 248, 250);">20</span>
+        <span style="background-color: rgb(31, 96, 196); color: rgb(247, 248, 250);">30</span>
+        `
+      );
+    });
+
+    it('uses the numeric pill range for percentage thresholds', () => {
+      const field = fieldWithValues(['10,20,30']);
+      field.config.color = { mode: FieldColorModeId.Thresholds };
+      field.config.thresholds = {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'red' },
+        ],
+      };
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(115, 191, 105); color: rgb(247, 248, 250);">10</span>
+        <span style="background-color: rgb(242, 73, 92); color: rgb(247, 248, 250);">20</span>
+        <span style="background-color: rgb(242, 73, 92); color: rgb(247, 248, 250);">30</span>
         `
       );
     });

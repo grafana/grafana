@@ -554,7 +554,7 @@ export function getFieldColorPalette(field: Field, theme: GrafanaTheme2): string
     return getShadesOfColor(theme.visualization.getColorByName(color.fixedColor ?? FALLBACK_COLOR));
   }
 
-  return fieldColorModeRegistry.getIfExists(color.mode)?.getColors?.(theme);
+  return getFieldColorModeForField(field).getColors?.(theme);
 }
 
 export function getColorByStringHash(colors: string[], string: string) {
