@@ -88,11 +88,9 @@ export function DashboardTabs() {
   }, [initialLoading, selectableTabs, activeTab]);
 
   // Latch once loaded so a later per-source refetch can't flash the skeleton back.
-  useEffect(() => {
-    if (!initialLoading) {
-      setInitialLoadDone(true);
-    }
-  }, [initialLoading]);
+  if (!initialLoading && !initialLoadDone) {
+    setInitialLoadDone(true);
+  }
 
   // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
   // until then. The dashboard tabs link out.
