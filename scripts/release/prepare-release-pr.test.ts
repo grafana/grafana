@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IndependentPackage } from './lib/packages.mjs';
+import type { IndependentPackage } from './lib/independent-packages.mjs';
 import { prepareReleasePr, toVersionChanges, type Deps, type VersionChange } from './prepare-release-pr.mjs';
 
 const pluginCompat: IndependentPackage = {
-  group: 'plugin-compat',
   name: '@grafana/plugin-compat',
   root: 'packages/grafana-plugin-compat',
   manifestPath: 'packages/grafana-plugin-compat/package.json',
 };
 const other: IndependentPackage = {
-  group: 'plugin-compat',
   name: '@grafana/other',
   root: 'packages/grafana-other',
   manifestPath: 'packages/grafana-other/package.json',
 };
 const ui: IndependentPackage = {
-  group: 'ui',
   name: '@grafana/ui',
   root: 'packages/grafana-ui',
   manifestPath: 'packages/grafana-ui/package.json',
@@ -47,12 +44,12 @@ function createFakeDeps({
     packages,
     readVersion: (manifestPath) => versionOnDisk[manifestPath] ?? '0.11.0',
     tagExists: (tag) => existingTags.includes(tag),
-    releaseVersion: async (groups) => {
-      calls.push(`releaseVersion ${groups.join(',')}`);
+    releaseVersion: async (projects) => {
+      calls.push(`releaseVersion ${projects.join(',')}`);
       return versions;
     },
-    releaseChangelog: async (groups) => {
-      calls.push(`releaseChangelog ${groups.join(',')}`);
+    releaseChangelog: async (projects) => {
+      calls.push(`releaseChangelog ${projects.join(',')}`);
     },
     notice: (message) => messages.push(`notice: ${message}`),
     warning: (message) => messages.push(`warning: ${message}`),
@@ -93,10 +90,10 @@ describe('prepareReleasePr', () => {
 
     await prepareReleasePr(deps);
 
-    expect(calls).toEqual(['releaseVersion plugin-compat', 'releaseChangelog plugin-compat']);
+    expect(calls).toEqual(['releaseVersion @grafana/plugin-compat', 'releaseChangelog @grafana/plugin-compat']);
   });
 
-  it('does nothing instead of asking Nx to version every group when there are no independent packages', async () => {
+  it('does nothing instead of asking Nx to version every project when there are no independent packages', async () => {
     const { deps, calls, messages } = createFakeDeps({ packages: [] });
 
     await prepareReleasePr(deps);
@@ -105,7 +102,7 @@ describe('prepareReleasePr', () => {
     expect(messages).toEqual(['notice: There are no independent packages to release.']);
   });
 
-  it('versions each release group once and then writes the changelog for the same groups', async () => {
+  it('versions every independent package once and then writes the changelog for the same projects', async () => {
     const { deps, calls } = createFakeDeps({
       packages: [pluginCompat, other, ui],
       versions: {
@@ -117,10 +114,13 @@ describe('prepareReleasePr', () => {
 
     await prepareReleasePr(deps);
 
-    expect(calls).toEqual(['releaseVersion plugin-compat,ui', 'releaseChangelog plugin-compat,ui']);
+    expect(calls).toEqual([
+      'releaseVersion @grafana/plugin-compat,@grafana/other,@grafana/ui',
+      'releaseChangelog @grafana/plugin-compat,@grafana/other,@grafana/ui',
+    ]);
   });
 
-  it('writes the changelog when at least one package got a new version', async () => {
+  it('writes the changelog for every package when at least one of them got a new version', async () => {
     const { deps, calls } = createFakeDeps({
       packages: [pluginCompat, other],
       versions: { [pluginCompat.name]: bumpedToV12, [other.name]: notBumped },
@@ -128,7 +128,10 @@ describe('prepareReleasePr', () => {
 
     await prepareReleasePr(deps);
 
-    expect(calls).toEqual(['releaseVersion plugin-compat', 'releaseChangelog plugin-compat']);
+    expect(calls).toEqual([
+      'releaseVersion @grafana/plugin-compat,@grafana/other',
+      'releaseChangelog @grafana/plugin-compat,@grafana/other',
+    ]);
   });
 
   it('ignores projects that Nx returns but that are not independent packages', async () => {
@@ -138,7 +141,7 @@ describe('prepareReleasePr', () => {
 
     await prepareReleasePr(deps);
 
-    expect(calls).toEqual(['releaseVersion plugin-compat']);
+    expect(calls).toEqual(['releaseVersion @grafana/plugin-compat']);
     expect(messages).toEqual(['notice: No package has releasable commits since its last release.']);
   });
 
@@ -147,7 +150,7 @@ describe('prepareReleasePr', () => {
 
     await prepareReleasePr(deps);
 
-    expect(calls).toEqual(['releaseVersion plugin-compat']);
+    expect(calls).toEqual(['releaseVersion @grafana/plugin-compat']);
     expect(messages).toEqual(['notice: No package has releasable commits since its last release.']);
   });
 });

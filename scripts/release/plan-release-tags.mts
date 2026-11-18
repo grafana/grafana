@@ -3,16 +3,15 @@
 // create-release-tag.yml and then swaps the label, so this script only reads.
 //
 // Usage: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
-// Reads its input from the environment: INDEPENDENT_PACKAGES (the packages output of independent-packages.mts),
-// GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may read pull requests, and optionally
-// TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and reports them,
-// which is how a manual run publishes. Prints pr (the PR to finish, empty when there is none), tagged (a JSON
-// list of {name, version, tag, path, commit}), matrix (the same list in the form a job matrix reads),
-// release_created and sha to stdout.
+// Reads its input from the environment: GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may read pull requests,
+// and optionally TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and
+// reports them, which is how a manual run publishes. Prints pr (the PR to finish, empty when there is none),
+// tagged (a JSON list of {name, version, tag, path, commit}), matrix (the same list in the form a job matrix
+// reads), release_created and sha to stdout.
 
 import { requireEnv } from './lib/env.mts';
+import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
 import { isMainModule } from './lib/main.mts';
-import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import { run, stderrOf } from './lib/shell.mts';
 import { tagFor } from './lib/tags.mts';
 
@@ -196,11 +195,11 @@ function listMergedPendingPrs(repo: string): PendingPr[] {
   return selectPendingPrs(closed);
 }
 
-export function createPlanningDeps(): Deps {
+export async function createPlanningDeps(): Promise<Deps> {
   const repo = requireEnv(process.env, 'GITHUB_REPOSITORY');
 
   return {
-    packages: parsePackages(process.env.INDEPENDENT_PACKAGES),
+    packages: await getIndependentPackages(),
     sha: requireEnv(process.env, 'GITHUB_SHA'),
     listPendingPrs: () => listMergedPendingPrs(repo),
     parentOf: (commit) => run('git', ['rev-parse', `${commit}^1`]).trim(),
@@ -232,7 +231,7 @@ export function createPlanningDeps(): Deps {
 if (isMainModule(import.meta.url)) {
   try {
     const tags = readTags(process.env);
-    const deps = createPlanningDeps();
+    const deps = await createPlanningDeps();
     const outputs = formatOutputs(tags ? resolveDispatchTags(tags, deps) : planReleaseTags(deps));
     for (const [key, value] of Object.entries(outputs)) {
       console.log(`${key}=${value}`);
