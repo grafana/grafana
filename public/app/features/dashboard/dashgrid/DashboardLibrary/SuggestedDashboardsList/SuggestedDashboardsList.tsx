@@ -5,7 +5,8 @@ import { useAsyncFn, useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { isFetchError, locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { useFlagDashboardValidatorApp } from '@grafana/runtime/internal';
 import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -75,7 +76,7 @@ export const SuggestedDashboardsList = ({
   const [isCommunityLoading, setIsCommunityLoading] = useState(false);
   const hasTrackedLoaded = useRef(false);
   const hasAutoCheckedRef = useRef(false);
-  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+  const isCompatibilityAppEnabled = useFlagDashboardValidatorApp();
 
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
 
