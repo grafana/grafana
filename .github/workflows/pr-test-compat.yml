@@ -18,10 +18,16 @@ on:
       - pkg/apis/**
       - pkg/registry/apis/**
       - pkg/registry/apps/**
+      - pkg/services/accesscontrol/*.go
+      - pkg/services/accesscontrol/acimpl/**
+      - pkg/services/accesscontrol/database/**
       - pkg/services/accesscontrol/ossaccesscontrol/folder.go
+      - pkg/services/accesscontrol/permissioncache/**
+      - pkg/services/accesscontrol/permreg/**
       - pkg/services/accesscontrol/resourcepermissions/**
       - pkg/services/apiserver/**
       - pkg/services/authz/rbac/**
+      - pkg/services/dashboards/**
       - pkg/services/folder/**
       - pkg/services/sqlstore/migrations/**
       - pkg/storage/**
