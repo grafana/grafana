@@ -326,6 +326,9 @@ export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill, v
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  let outlineBorderColor = color.border;
+  let borderColor = 'transparent';
+  let hoverBorderColor = 'transparent';
 
   if (fill === 'outline') {
     return {
@@ -335,7 +338,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
 
       '&:hover': {
         background: visualRefreshEnabled ? color.subtleBackground : color.transparent,
-        borderColor: visualRefreshEnabled ? color.borderEmphasis : theme.colors.emphasize(color.border, 0.25),
+        borderColor: visualRefreshEnabled ? color.borderEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
 
@@ -364,26 +367,37 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     };
   }
 
-  return getSolidButtonStyles(theme, color);
-}
+  let backgroundColor = color.main;
+  let hoverBackgroundColor = color.shade;
+  let textColor = color.contrastText;
+  let hoverTextColor = color.contrastText;
 
-export function getSolidButtonStyles(theme: GrafanaTheme2, color: ThemeRichColor) {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const isSecondary = color.name === 'secondary';
+  if (visualRefreshEnabled) {
+    backgroundColor = color.background;
+    hoverBackgroundColor = color.backgroundEmphasis;
+  }
+
+  // Only exception right now is the secondary button which is the only solid button with a subtle border
+  if (color.name === 'secondary') {
+    borderColor = color.subtleBorder;
+    hoverBorderColor = color.border;
+  }
 
   return {
-    background: visualRefreshEnabled ? color.background : color.main,
-    color: color.contrastText,
-    border: `1px solid ${isSecondary ? color.subtleBorder : 'transparent'}`,
+    background: backgroundColor,
+    color: textColor,
+    border: `1px solid ${borderColor}`,
 
     '&:hover': {
-      background: visualRefreshEnabled ? color.backgroundEmphasis : color.shade,
-      color: color.contrastText,
+      background: hoverBackgroundColor,
+      color: hoverTextColor,
       boxShadow: theme.shadows.z1,
-      borderColor: isSecondary ? color.border : 'transparent',
+      borderColor: hoverBorderColor,
     },
 
-    '&:active': getActiveButtonStyles(color, 'solid', visualRefreshEnabled),
+    '&:active': {
+      ...getActiveButtonStyles(color, fill, visualRefreshEnabled),
+    },
   };
 }
 

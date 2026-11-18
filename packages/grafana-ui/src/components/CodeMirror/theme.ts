@@ -6,13 +6,14 @@ import { tags } from '@lezer/highlight';
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { getSolidButtonStyles } from '../Button/Button';
-import { getCheckboxIndicatorStyles, getSharedInputStyles } from '../Forms/commonStyles';
+import { getPropertiesForVariant } from '../Button/Button';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
   const background = options?.transparent ? 'transparent' : theme.components.input.background;
-  const checkbox = getCheckboxIndicatorStyles(theme);
-  const controlHeight = theme.spacing(theme.components.height.sm);
+  const button = getPropertiesForVariant(theme, 'secondary', 'solid');
+  const buttonHover = button['&:hover'];
+  const checkbox = theme.components.checkbox;
+  const visualRefresh = theme.flags.visualDesignRefresh;
   const selectionState = EditorView.editorAttributes.compute(
     ['selection'],
     (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
@@ -93,33 +94,68 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           display: 'inline-flex',
           alignItems: 'center',
           gap: theme.spacing(0.5),
-          height: controlHeight,
+          height: theme.spacing(theme.components.height.sm),
           marginLeft: theme.spacing(1),
           verticalAlign: 'middle',
           cursor: 'pointer',
         },
-        // CodeMirror has no sibling element to render the checkbox indicator into.
+        // Mirrors <Checkbox>, which hides the native input; CodeMirror gives us only the input to style.
         '& input[type=checkbox]': {
-          ...checkbox.box,
           appearance: 'none',
           position: 'relative',
+          width: theme.spacing(2),
+          height: theme.spacing(2),
           margin: 0,
+          borderRadius: theme.shape.radius.sm,
+          background: theme.components.input.background,
+          border: `1px solid ${theme.components.input.borderColor}`,
           cursor: 'pointer',
+          '&:hover': {
+            borderColor: theme.components.input.borderHover,
+          },
           // Global form styles add a native outline to every focused checkbox, even on mouse focus.
           '&:focus': getMouseFocusStyles(theme),
           '&:focus-visible': getFocusStyles(theme),
-          '&:checked': checkbox.checked,
-          '&:checked::after': checkbox.checkmark,
+          '&:checked': {
+            background: checkbox.activeBackground,
+            borderColor: checkbox.activeBorder,
+            '&:hover': {
+              background: checkbox.activeBackgroundHover,
+              borderColor: checkbox.activeBorderHover,
+            },
+          },
+          '&:checked::after': {
+            content: '""',
+            position: 'absolute',
+            border: `solid ${checkbox.checkmarkColor}`,
+            ...(visualRefresh
+              ? {
+                  left: theme.spacing(0.625),
+                  top: theme.spacing(0.125),
+                  width: theme.spacing(0.5),
+                  height: theme.spacing(1.25),
+                  borderWidth: '0 2px 2px 0',
+                  transform: 'rotate(50deg)',
+                }
+              : {
+                  left: theme.spacing(0.5),
+                  top: 0,
+                  width: theme.spacing(0.75),
+                  height: theme.spacing(1.5),
+                  borderWidth: '0 3px 3px 0',
+                  transform: 'rotate(45deg)',
+                }),
+          },
         },
       },
       '.cm-panel.cm-search [name=close], .cm-dialog-close': {
         top: theme.spacing(1),
         right: theme.spacing(1),
-        width: controlHeight,
-        height: controlHeight,
+        width: theme.spacing(theme.components.height.sm),
+        height: theme.spacing(theme.components.height.sm),
         borderRadius: theme.shape.radius.default,
         color: theme.colors.text.secondary,
-        fontSize: theme.typography.md.fontSize,
+        fontSize: theme.typography.h4.fontSize,
         lineHeight: 1,
         '&:hover': {
           color: theme.colors.text.primary,
@@ -128,20 +164,31 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
         '&:focus-visible': getFocusStyles(theme),
       },
       '.cm-textfield': {
-        ...getSharedInputStyles(theme),
-        ...theme.typography.sm,
-        height: controlHeight,
-        minHeight: controlHeight,
+        height: theme.spacing(theme.components.height.sm),
         padding: theme.spacing(0, 1),
         fontFamily: theme.typography.fontFamilyMonospace,
+        fontSize: theme.typography.sm.fontSize,
+        color: theme.components.input.text,
+        backgroundColor: theme.components.input.background,
+        border: `1px solid ${theme.components.input.borderColor}`,
         borderRadius: theme.shape.radius.default,
+        '&:hover': {
+          borderColor: theme.components.input.borderHover,
+        },
         '&:focus': getFocusStyles(theme),
       },
       '.cm-button': {
-        ...getSolidButtonStyles(theme, theme.colors.secondary),
-        ...theme.typography.sm,
-        height: controlHeight,
+        color: button.color,
+        background: button.background,
+        border: button.border,
+        '&:hover': {
+          ...buttonHover,
+          boxShadow: buttonHover?.boxShadow ?? null,
+        },
+        '&:active': button['&:active'],
+        height: theme.spacing(theme.components.height.sm),
         padding: theme.spacing(0, 1),
+        ...theme.typography.sm,
         fontWeight: theme.typography.fontWeightMedium,
         borderRadius: theme.shape.radius.default,
         '&:focus-visible': getFocusStyles(theme),
