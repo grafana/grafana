@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 
 import { EventBusSrv, getTimeZone } from '@grafana/data';
@@ -75,7 +75,10 @@ export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
 function useStopQueries(exploreId: string) {
   const paneSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
   const paneRef = useRef<ReturnType<typeof paneSelector>>(undefined);
-  paneRef.current = useSelector(paneSelector);
+  const pane = useSelector(paneSelector);
+  useLayoutEffect(() => {
+    paneRef.current = pane;
+  });
 
   useEffect(() => {
     return () => {

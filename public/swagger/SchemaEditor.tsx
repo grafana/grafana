@@ -1,6 +1,6 @@
 import { type EditorView, ViewPlugin } from '@codemirror/view';
 import { getJSONSchema, jsonSchema, updateSchema } from 'codemirror-json-schema';
-import { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
 
@@ -30,7 +30,9 @@ export default function SchemaEditor({ schema, ...props }: Props) {
   }
   const { onChange } = props;
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+  });
   const flush = useCallback((text: string) => onChangeRef.current({ target: { value: text } }), []);
   const annotations = useMemo(() => schemaAnnotations(namespace, flush), [namespace, flush]);
 
