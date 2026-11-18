@@ -15,7 +15,6 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { getSourcePanels, type SourcePanel } from '../prompts/sourcePanels';
 import { type ScenePrompt } from '../prompts/types';
 import { getPromptLabel, getPromptSelectionId } from '../prompts/utils';
-import { V2DashboardSerializer } from '../serialization/DashboardSceneSerializer';
 import { promptActions } from '../sidebar/prompts/actions';
 import { type PromptsOwnerKind } from '../sidebar/prompts/types';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -26,8 +25,9 @@ import { type DashboardScene } from './DashboardScene';
 import { isViewingDashboard } from './dashboardModes';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 import { PromptEditActions } from './edit-actions-popover/PromptEditActions';
-import { RowItem } from './layout-rows/RowItem';
-import { TabItem } from './layout-tabs/TabItem';
+import { type RowItem } from './layout-rows/RowItem';
+import { type TabItem } from './layout-tabs/TabItem';
+import { isRowItem, isTabItem } from './types/LayoutItemTypeGuards';
 import { type DashboardSceneState, isFullDashboardEditing } from './types/dashboard';
 
 const COMPONENTS_LIMIT_PER_PLUGIN = 1;
@@ -229,15 +229,15 @@ function getControlsMode(state: DashboardSceneState): 'view' | 'edit' | undefine
 }
 
 function getOwnerKind(owner: ControlsOwner): PromptsOwnerKind {
-  if (owner instanceof RowItem) {
+  if (isRowItem(owner)) {
     return 'row';
   }
-  return owner instanceof TabItem ? 'tab' : 'dashboard';
+  return isTabItem(owner) ? 'tab' : 'dashboard';
 }
 
 /** Whether the dashboard saves prompts: a v1 save drops them, and turns rows and tabs into v1 rows. */
 function savesPrompts(object: SceneObject): boolean {
-  return getDashboardSceneFor(object).serializer instanceof V2DashboardSerializer;
+  return getDashboardSceneFor(object).isV2();
 }
 
 function useDashboardControlsComponents() {
@@ -251,7 +251,7 @@ function useDashboardControlsComponents() {
  * Whether editors can save prompts: `grafana.dashboardPrompts` is on and a plugin adds a control
  * that offers them.
  */
-export function usePromptsEnabled(): boolean {
+function usePromptsEnabled(): boolean {
   const enabled = useFlagGrafanaDashboardPrompts();
   const { components } = useDashboardControlsComponents();
   return enabled && components.length > 0;
@@ -269,7 +269,7 @@ function toControlsPanel({ key, title, panel }: SourcePanel): PluginExtensionDas
 function getControlsContext(owner: ControlsOwner, saved: ScenePrompt[]): PluginExtensionDashboardControlsContext {
   const dashboard = getDashboardSceneFor(owner);
   const sources = getSourcePanels(dashboard);
-  const isSection = owner instanceof RowItem || owner instanceof TabItem;
+  const isSection = isRowItem(owner) || isTabItem(owner);
   // What a prompt without picked panels is answered from.
   const panels = (
     isSection ? sources.filter((source) => source.sections.some(({ object }) => object === owner)) : sources
@@ -294,7 +294,7 @@ function getControlsContext(owner: ControlsOwner, saved: ScenePrompt[]): PluginE
     return { scope: 'dashboard', ...shared };
   }
   return {
-    scope: owner instanceof TabItem ? 'tab' : 'row',
+    scope: isTabItem(owner) ? 'tab' : 'row',
     sectionLabel: sceneGraph.interpolate(owner, owner.state.title ?? '').trim() || undefined,
     ...shared,
   };

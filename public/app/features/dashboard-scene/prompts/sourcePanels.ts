@@ -1,8 +1,9 @@
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneGridRow, sceneGraph, type SceneObject, type VizPanel } from '@grafana/scenes';
 
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
+import { type RowItem } from '../scene/layout-rows/RowItem';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
+import { isRowItem, isTabItem } from '../scene/types/LayoutItemTypeGuards';
 import { type DashboardSceneLike } from '../scene/types/dashboard';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 
@@ -64,13 +65,23 @@ export function getSourcePanels(dashboard: DashboardSceneLike): SourcePanel[] {
 function getSections(panel: VizPanel): SourceSection[] {
   const sections: SourceSection[] = [];
   for (let parent: SceneObject | undefined = panel.parent; parent; parent = parent.parent) {
-    if (parent instanceof TabItem) {
+    if (isTab(parent)) {
       sections.unshift({ kind: 'tab', title: parent.state.title ?? '', object: parent });
-    } else if (parent instanceof RowItem || parent instanceof SceneGridRow) {
+    } else if (isRow(parent) || parent instanceof SceneGridRow) {
       sections.unshift({ kind: 'row', title: parent.state.title ?? '', object: parent });
     }
   }
   return sections;
+}
+
+// The guards check the type the classes declare, so the layouts that render the dashboard controls can use this
+// module without an import cycle.
+function isTab(object: SceneObject): object is TabItem {
+  return isTabItem(object);
+}
+
+function isRow(object: SceneObject): object is RowItem {
+  return isRowItem(object);
 }
 
 /** The section's title as the viewer sees it; empty when it has none. */

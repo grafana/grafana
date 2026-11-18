@@ -3,9 +3,8 @@ import { type Spec as DashboardV2Spec, type Prompt } from '@grafana/schema/apis/
 
 import { type ScenePrompt } from '../prompts/types';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
-import { getPanelIdForVizPanel } from '../utils/utils-panels';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 /**
  * The prompts on `owner` as saved, with each picked panel named by its element, as the layout names it. A picked
@@ -61,7 +60,10 @@ function getElementNamesByPanelId(owner: SceneObject): Map<number, string> {
   for (const panel of dashboard.state.body.getVizPanels()) {
     // Repeat clones share their source's ID, and a prompt only picks the source.
     if (!isRepeatCloneOrChildOf(panel)) {
-      names.set(getPanelIdForVizPanel(panel), dashboardSceneGraph.getElementIdentifierForVizPanel(panel));
+      const panelId = getPanelIdForVizPanel(panel);
+      // Named as dashboardSceneGraph.getElementIdentifierForVizPanel names it. Importing the scene graph here would
+      // add an import cycle through the layouts whose serializers save prompts.
+      names.set(panelId, dashboard.serializer.getElementIdForPanel(panelId) || getVizPanelKeyForPanelId(panelId));
     }
   }
   return names;

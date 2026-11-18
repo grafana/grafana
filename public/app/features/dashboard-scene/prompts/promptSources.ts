@@ -1,7 +1,8 @@
 import { sceneGraph, type SceneObject } from '@grafana/scenes';
 
-import { RowItem } from '../scene/layout-rows/RowItem';
-import { TabItem } from '../scene/layout-tabs/TabItem';
+import { type RowItem } from '../scene/layout-rows/RowItem';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
+import { isRowItem, isTabItem } from '../scene/types/LayoutItemTypeGuards';
 import { isDashboardSceneLike } from '../scene/types/dashboard';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -76,6 +77,7 @@ function getSections(object: SceneObject): Array<RowItem | TabItem> {
   return [object, ...sceneGraph.findAllObjects(object, isSection)].filter(isSection);
 }
 
+// The guards check the type the classes declare, so getNextPanelId can use this module without importing them.
 function isSection(object: SceneObject): object is RowItem | TabItem {
-  return object instanceof RowItem || object instanceof TabItem;
+  return isRowItem(object) || isTabItem(object);
 }

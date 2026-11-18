@@ -10,6 +10,6 @@ export interface ScenePrompt extends Omit<Prompt, 'sources'> {
 }
 
 /** A panel that a prompt is answered from. */
-export interface ScenePromptSource extends Omit<PromptSource, 'element'> {
+interface ScenePromptSource extends Omit<PromptSource, 'element'> {
   panelId: number;
 }
