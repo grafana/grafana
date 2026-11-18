@@ -141,7 +141,7 @@ export interface QueryEditorActions {
   startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
-  /** The data source's query editor changed the selected query. */
+  /** The data source's query editor changed a query. */
   onQueryEdited: () => void;
   addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;
   deleteTransformation: (transformId: string) => void;

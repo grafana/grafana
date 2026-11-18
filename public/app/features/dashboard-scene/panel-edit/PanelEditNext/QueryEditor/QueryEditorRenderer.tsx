@@ -1,6 +1,6 @@
 import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
 import { isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -110,15 +110,21 @@ export function QueryEditorPanel({
   });
 
   const { onChange: onTransactionChange, editorQuery } = proposalTransaction;
+  // Read through a ref so onChange stays stable: an editor that keeps its first onChange still compares
+  // with the current query.
+  const currentQueryRef = useRef(editorQuery ?? query);
+  useLayoutEffect(() => {
+    currentQueryRef.current = editorQuery ?? query;
+  });
   const onEditorChange = useCallback(
     (updatedQuery: DataQuery) => {
       // An editor echoing the query it was given (including an AI proposal on preview) isn't an edit.
-      if (!isEqual(updatedQuery, editorQuery ?? query)) {
+      if (!isEqual(updatedQuery, currentQueryRef.current)) {
         onQueryEdited?.();
       }
       onTransactionChange(updatedQuery);
     },
-    [editorQuery, onQueryEdited, onTransactionChange, query]
+    [onQueryEdited, onTransactionChange]
   );
 
   const coauthoringHost = useMemo(
