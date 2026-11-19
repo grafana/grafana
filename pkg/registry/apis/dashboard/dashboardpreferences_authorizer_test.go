@@ -85,6 +85,9 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		{name: "flag off denies a user", flagOff: true, requester: editor, verbs: []string{"get"}, resName: "namespace", wantReason: featureOff},
 		// Folder and user cleanup must still find and delete leftovers after the flag is turned off.
 		{name: "flag off lets the service identity read and delete", flagOff: true, requester: service, verbs: []string{"get", "list", "delete"}, resName: "folder-f1", wantAllow: true},
+		// Cleanup needs only the tiers themselves.
+		{name: "flag off denies merged, even to the service identity", flagOff: true, requester: service, verbs: []string{"get"}, resName: "merged", wantReason: featureOff},
+		{name: "flag off denies merged, even to provisioning", flagOff: true, requester: provisioning, verbs: []string{"get"}, resName: "merged", wantReason: featureOff},
 		// Storage serves neither.
 		{name: "flag off denies the service identity watch and deletecollection", flagOff: true, requester: service, verbs: []string{"watch", "deletecollection"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off denies service identity writes", flagOff: true, requester: service, verbs: []string{"create", "update", "patch"}, resName: "folder-f1", wantReason: featureOff},
@@ -115,6 +118,9 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		{name: "an org viewer gets merged", requester: viewer, verbs: []string{"get"}, resName: "merged", wantAllow: true},
 		{name: "a Grafana admin of another stack can't get merged", requester: grafanaAdmin, namespace: "stacks-2", verbs: []string{"get"}, resName: "merged", wantReason: notOrgMember},
 		{name: "merged is read-only", requester: admin, verbs: []string{"create", "update", "patch", "delete"}, resName: "merged", wantReason: mergedReadOnly},
+		// Non-user identities reach the merged handler too.
+		{name: "the service identity gets merged", requester: service, verbs: []string{"get"}, resName: "merged", wantAllow: true},
+		{name: "provisioning gets merged", requester: provisioning, verbs: []string{"get"}, resName: "merged", wantAllow: true},
 
 		{name: "a viewer reads the org tier", requester: viewer, verbs: []string{"get", "list"}, resName: "namespace", wantAllow: true},
 		{name: "an editor can't change the org tier", requester: editor, verbs: []string{"create", "update", "patch", "delete"}, resName: "namespace", wantReason: notOrgAdmin},

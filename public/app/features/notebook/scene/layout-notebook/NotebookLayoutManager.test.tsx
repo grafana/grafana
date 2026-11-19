@@ -33,7 +33,7 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-// Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
+// Real InternalCodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: useCodeMirrorSetup.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
 // would re-fire this stub's fake focus effect on every keystroke, stealing focus back from whatever
@@ -60,7 +60,7 @@ jest.mock('../../elementName', () => {
   };
 });
 
-jest.mock('@grafana/ui/unstable', () => {
+jest.mock('@grafana/ui/internal', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
@@ -76,8 +76,8 @@ jest.mock('@grafana/ui/unstable', () => {
   }
 
   return {
-    ...jest.requireActual('@grafana/ui/unstable'),
-    CodeMirrorEditor: ({
+    ...jest.requireActual('@grafana/ui/internal'),
+    InternalCodeMirrorEditor: ({
       value,
       readOnly,
       extensions,
@@ -108,7 +108,7 @@ jest.mock('@grafana/ui/unstable', () => {
           ref={ref}
           aria-label={ariaLabel}
           // Controlled: every markdown cell resets its own buffer via onChange -> setCellContent, and
-          // a real CodeMirrorEditor's `value` is genuinely controlled too — an uncontrolled stub would
+          // a real InternalCodeMirrorEditor's `value` is genuinely controlled too — an uncontrolled stub would
           // leave stale text in the DOM across that reset, which nothing in a real browser would ever do.
           value={value}
           readOnly={readOnly}
@@ -2672,7 +2672,7 @@ describe('NotebookLayoutManager', () => {
   });
 
   // A Markdown/Code cell's own boundary-aware ArrowUp/Down keymap lives inside a real CodeMirror
-  // keymap, which — same as onAdvance/Enter above — this file's mocked CodeMirrorEditor never
+  // keymap, which — same as onAdvance/Enter above — this file's mocked InternalCodeMirrorEditor never
   // actually runs (see navigationKeymap's own dedicated test in focusExtension.test.ts for that
   // part). A Collapsed cell has no editor at all, so its own frame is what ArrowUp/Down reaches
   // instead — real DOM/React the whole way, and so exercised here for the manager's own resolution
@@ -2769,7 +2769,7 @@ describe('NotebookLayoutManager', () => {
 
 // What NotebookLayoutManagerRenderer's onAdvance hands to insertCellAfter on Enter — pulled out here
 // since MarkdownCell's own Enter binding lives inside a real CodeMirror keymap, which this file's
-// mocked CodeMirrorEditor never actually runs (see the mock's own doc comment above).
+// mocked InternalCodeMirrorEditor never actually runs (see the mock's own doc comment above).
 describe('splitSeed', () => {
   it('defers to insertCellAfter’s own empty-paragraph default outside a list', () => {
     expect(splitSeed('', undefined)).toEqual({ text: undefined, caretOffset: 0 });

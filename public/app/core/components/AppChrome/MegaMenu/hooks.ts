@@ -8,7 +8,10 @@ import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaNavigationAdminSubNav,
+  useFlagGrafanaNavigationInfoArchRefresh,
+} from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavTree } from 'app/core/navtree/useNavTree';
@@ -22,6 +25,7 @@ import { contextSrv } from '../../../services/context_srv';
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
+  foldAdministration,
   getActiveItem,
   getPinnedEntries,
   HIDDEN_NAV_ITEMS,
@@ -301,6 +305,7 @@ export const useNavCustomization = () => {
 
   const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
   const navigationInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
+  const navigationAdminSubNav = useFlagGrafanaNavigationAdminSubNav();
   const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
 
   // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
@@ -332,7 +337,8 @@ export const useNavCustomization = () => {
       key.startsWith('/') ? `${config.appSubUrl}${key}` : key
     )
   );
-  const baseItems = removeHiddenItems(navTree, hiddenNavItems).filter(
+  const unfoldedItems = removeHiddenItems(navTree, hiddenNavItems);
+  const baseItems = (navigationAdminSubNav ? foldAdministration(unfoldedItems) : unfoldedItems).filter(
     (item) => !(canCustomise && item.id === 'bookmarks')
   );
 
@@ -374,7 +380,7 @@ export const useNavCustomization = () => {
 
   // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items
   // here; the main nav below is never pruned. Leaf items are enriched so clicks are tracked.
-  const pinnedEntries: PinnedEntry[] = (canCustomise ? getPinnedEntries(baseItems, effectivePinnedUrls) : []).map(
+  const pinnedEntries: PinnedEntry[] = (canCustomise ? getPinnedEntries(unfoldedItems, effectivePinnedUrls) : []).map(
     (entry) =>
       entry.section
         ? { url: entry.url, section: enrichWithInteractionTracking(entry.section, docked) }

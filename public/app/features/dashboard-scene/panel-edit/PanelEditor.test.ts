@@ -16,6 +16,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -48,10 +49,12 @@ import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataPane/PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryEditor/QueryEditorContext';
@@ -75,6 +78,7 @@ let pluginPromise: Promise<PanelPlugin> | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
@@ -522,6 +526,290 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe('Reporting query option changes', () => {
+    let panelSettingChanged: jest.SpyInstance;
+
+    beforeEach(() => {
+      panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
+    });
+
+    afterEach(() => {
+      panelSettingChanged.mockRestore();
+      setTestFlags({});
+    });
+
+    it('reports a query option changed in the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), maxDataPoints: 100 });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'change_query_option',
+        source: 'panel_editor',
+        panel_type: 'text',
+        panel_id: 1,
+        option: 'max_data_points',
+        editor: 'classic',
+      });
+    });
+
+    it('does not report hide time info that the classic query editor drops for lack of a time range', async () => {
+      const { panelEditor, panel } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), timeRange: { hide: true } });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(panelSettingChanged).not.toHaveBeenCalled();
+    });
+
+    it('reports a query option changed in the next query editor', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      if (!(dataPane instanceof PanelDataPaneNext)) {
+        throw new Error('Expected the next data pane');
+      }
+
+      dataPane.onQueryOptionsChange({
+        queries: [],
+        dataSource: { uid: 'ds1' },
+        maxDataPoints: 500,
+        timeRange: { from: '1h' },
+      });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ item: 'change_query_option', option: 'relative_time', editor: 'next' })
+      );
+    });
+  });
+
+  describe('Reporting the close and discard interactions', () => {
+    const NO_CHANGES = {
+      changed: false,
+      changed_options: false,
+      changed_field_config: false,
+      changed_overrides: false,
+      changed_queries: false,
+      changed_transformations: false,
+      changed_panel_info: false,
+      changed_repeat: false,
+      saved_in_editor: false,
+      panel_type: 'text',
+      panel_id: 1,
+      is_new_panel: false,
+      is_library_panel: false,
+      query_editor: 'classic',
+      isDynamicDashboard: true,
+    };
+
+    const reported = (name: string) =>
+      jest
+        .mocked(reportInteraction)
+        .mock.calls.filter(([interactionName]) => interactionName === name)
+        .map(([, properties, options]) => ({ properties, options }));
+
+    const closeEditor = () => {
+      deactivate!();
+      deactivate = undefined;
+    };
+
+    beforeEach(() => {
+      jest.mocked(reportInteraction).mockClear();
+    });
+
+    it('reports a non-silent close with no changed areas when nothing was edited', async () => {
+      await setup();
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...NO_CHANGES, outcome: 'kept' }, options: undefined },
+      ]);
+      expect(reported('panel_edit_discarded')).toEqual([]);
+    });
+
+    it('reports the areas the user changed when the editor closes', async () => {
+      const { panel } = await setup();
+
+      panel.setState({ title: 'changed title', options: { content: 'Hello' } });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        {
+          properties: {
+            ...NO_CHANGES,
+            changed: true,
+            changed_options: true,
+            changed_panel_info: true,
+            outcome: 'kept',
+          },
+          options: undefined,
+        },
+      ]);
+    });
+
+    it('does not count the default query the editor adds to a panel without data as a change', async () => {
+      const { panel } = await setup({ withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toHaveLength(1);
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...NO_CHANGES, outcome: 'kept' });
+    });
+
+    it('reports a discard with the discarded areas, then a close with the discarded outcome', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_queries: true };
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...discardedChanges, outcome: 'discarded' }, options: undefined },
+      ]);
+    });
+
+    it('keeps the areas changed before a save inside the editor in the close event', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_queries: true,
+        saved_in_editor: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports a discard after a save inside the editor with only the areas changed since the save', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_panel_info: true, saved_in_editor: true };
+      expect(getQueryRunnerFor(panel)?.state.maxDataPoints).toBe(123);
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...discardedChanges, outcome: 'discarded' });
+    });
+
+    it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
+      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      try {
+        const libraryPanel = new LibraryPanelBehavior({
+          uid: 'lib-uid',
+          name: 'Library panel',
+          isLoaded: true,
+          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+        });
+        const { panelEditor } = await setup({ libraryPanel });
+
+        panelEditor.onConfirmSaveLibraryPanel();
+        closeEditor();
+
+        expect(saveLibPanel).toHaveBeenCalledTimes(1);
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          saved_in_editor: true,
+          is_library_panel: true,
+          outcome: 'kept',
+        });
+      } finally {
+        saveLibPanel.mockRestore();
+      }
+    });
+
+    it('reports a discarded new panel as a new panel with the discarded outcome', async () => {
+      const { panelEditor } = await setup({ isNewPanel: true });
+
+      panelEditor.onDiscard();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        is_new_panel: true,
+        outcome: 'discarded',
+      });
+    });
+
+    it('reports a repeat change made in the editor', async () => {
+      const { gridItem } = await setup();
+
+      gridItem.setState({ variableName: 'server' });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_repeat: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports the next query editor when the panel was edited with it', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          query_editor: 'next',
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('reports a dashboard without dynamic layouts as not dynamic', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          isDynamicDashboard: false,
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+  });
+
   describe('When the scene is rebuilt underneath the editor', () => {
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
     function swapBody(dashboard: DashboardScene) {
@@ -676,6 +964,26 @@ describe('PanelEditor', () => {
 
       expect(panel.state.$behaviors?.length).toBe(1);
       expect(panel.state.$behaviors![0]).toBe(otherBehavior);
+    });
+
+    it('reports clicking Save and Unlink on a library panel from the panel editor', () => {
+      const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+      });
+      new DashboardGridItem({ body: panel });
+      const editScene = buildPanelEditScene(panel);
+
+      editScene.onSaveLibraryPanel();
+      editScene.onUnlinkLibraryPanel();
+
+      expect(track.mock.calls).toEqual([
+        ['save_library_panel', 1, 'panel_editor', 'text'],
+        ['unlink_library_panel', 1, 'panel_editor', 'text'],
+      ]);
+      track.mockRestore();
     });
   });
 

@@ -37,6 +37,7 @@ import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
+import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from '../queryOptionChanges';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
@@ -779,6 +780,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
+    const optionsBefore = getQueryOptionState(panel, queryRunner);
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const panelStateUpdate: Partial<VizPanel['state']> = {};
 
@@ -815,6 +817,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     panel.setState(panelStateUpdate);
     queryRunner.setState(dataObjStateUpdate);
     queryRunner.runQueries();
+    trackQueryOptionChanges(
+      panel,
+      getChangedQueryOptions(optionsBefore, getQueryOptionState(panel, queryRunner)),
+      'next'
+    );
   };
 
   public updateTransformation = (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => {
