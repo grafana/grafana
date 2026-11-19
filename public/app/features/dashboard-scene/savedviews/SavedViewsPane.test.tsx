@@ -414,6 +414,20 @@ describe('SavedViewsPane', () => {
       expect(screen.getByRole('textbox', { name: 'New view title' })).toBeInTheDocument();
     });
 
+    it('leaves the draft open and usable when saving fails, without an inline error', async () => {
+      // backendSrv's error toast reports the failure.
+      api.create.mockRejectedValueOnce({ status: 500, data: { message: 'storage unavailable' } });
+      renderPane([]);
+      await userEvent.click(screen.getByRole('button', { name: 'Save new' }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'New view title' }), 'Mine');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled());
+      expect(screen.getByRole('textbox', { name: 'New view title' })).toHaveValue('Mine');
+      expect(screen.queryByText(/storage unavailable|object Object/)).not.toBeInTheDocument();
+    });
+
     it('keeps Confirm disabled for a whitespace-only title', async () => {
       renderPane([]);
       await userEvent.click(screen.getByRole('button', { name: 'Save new' }));

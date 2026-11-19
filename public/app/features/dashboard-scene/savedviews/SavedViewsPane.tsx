@@ -26,8 +26,10 @@ import {
   Sidebar,
   Stack,
   Text,
+  clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -59,6 +61,7 @@ export class SavedViewsPane extends SceneObjectBase<SavedViewsPaneState> {
 
 function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) {
   const styles = useStyles2(getStyles);
+  const clearStyles = useStyles2(clearButtonStyles);
   const dashboard = getDashboardSceneFor(model);
   const { savedViews, viewFilter, uid, savedViewBaseline } = dashboard.useState();
   const { searchQuery } = model.useState();
@@ -75,7 +78,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [editingView, setEditingView] = useState<SavedDashboardView | undefined>();
   const [editName, setEditName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>();
   const [loadFailed, setLoadFailed] = useState(false);
   // Re-render on time range and variable changes so the selected view's save button tracks the dashboard.
   sceneGraph.getTimeRange(dashboard).useState();
@@ -130,11 +132,10 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
 
   async function withBusy(fn: () => Promise<void>) {
     setBusy(true);
-    setError(undefined);
     try {
       await fn();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch {
+      // backendSrv already shows the failed request's error, so the pane only needs to stay usable.
     } finally {
       setBusy(false);
     }
@@ -263,8 +264,6 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       <ScrollContainer showScrollIndicators>
         <Box padding={1}>
           <Stack direction="column" gap={1}>
-            {error && <Text color="error">{error}</Text>}
-
             {savedViews.length === 0 && !isDrafting ? (
               <EmptyState
                 variant="call-to-action"
@@ -315,14 +314,16 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                             />
                           </>
                         ) : (
-                          <Button
-                            variant={isSelected ? 'primary' : 'secondary'}
-                            fill="text"
-                            className={styles.nameButton}
+                          <button
+                            type="button"
+                            className={cx(clearStyles, styles.nameButton)}
+                            aria-pressed={isSelected}
                             onClick={() => handleSelect(view)}
                           >
-                            {view.spec.name || view.metadata.name}
-                          </Button>
+                            <Text truncate color={isSelected ? 'link' : 'primary'}>
+                              {view.spec.name || view.metadata.name}
+                            </Text>
+                          </button>
                         )}
 
                         {isSelected && !isEditingTitle && (
@@ -449,20 +450,14 @@ function getStyles(theme: GrafanaTheme2) {
     rowSelected: css({
       backgroundColor: theme.colors.action.selected,
     }),
+    // A plain button: the row is the hover target, and the title lines up with the search input.
     nameButton: css({
+      display: 'flex',
       flex: 1,
       minWidth: 0,
-      justifyContent: 'flex-start',
-      // Zeroed out so the title text lines up with the search input's left edge.
-      padding: 0,
-      // The row already highlights on hover, so drop the button's own hover background.
-      '&:hover, &:focus': {
-        background: 'transparent',
-      },
-      '& > span': {
-        minWidth: 0,
-        textOverflow: 'ellipsis',
-      },
+      textAlign: 'left',
+      cursor: 'pointer',
+      '&:focus-visible': getFocusStyles(theme),
     }),
   };
 }
