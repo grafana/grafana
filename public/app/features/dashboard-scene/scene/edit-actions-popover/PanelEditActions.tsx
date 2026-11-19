@@ -2,7 +2,7 @@ import { useMemo, type JSX } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardSidebarExplicitOpen, useFlagGrafanaPanelQuickEdits } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { Text, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -26,6 +26,7 @@ import {
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { PanelActionsWithQuickEdits } from './PanelQuickEditActions';
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
@@ -59,6 +60,9 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(panel);
+  const isQuickEditsEnabled = useFlagGrafanaPanelQuickEdits();
+  // A repeat clone takes its options from the source panel, so only the source offers quick edits.
+  const offersQuickEdits = isQuickEditsEnabled && !isRepeated && Boolean(panel.getPlugin()?.getQuickEdits().length);
 
   const onClickEdit = () => {
     DashboardInteractions.panelActionClicked(
@@ -94,7 +98,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
   };
 
-  return (
+  const actions = (
     <>
       <EditActionButton
         onClick={onClickEditVisualization}
@@ -137,6 +141,11 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
       />
     </>
   );
+
+  if (!offersQuickEdits) {
+    return actions;
+  }
+  return <PanelActionsWithQuickEdits panel={panel}>{actions}</PanelActionsWithQuickEdits>;
 }
 
 export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
