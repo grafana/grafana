@@ -152,7 +152,7 @@ function createPillColorResolver(field: Field, theme: GrafanaTheme2): PillColorR
     }
 
     if (palette?.length) {
-      const colorName = mode?.useSeriesName ? field.name : value;
+      const colorName = mode?.useSeriesName ? (field.state?.displayName ?? field.name) : value;
       return onBackground(getColorByStringHash(palette, colorName));
     }
 

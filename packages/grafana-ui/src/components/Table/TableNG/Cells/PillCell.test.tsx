@@ -85,6 +85,17 @@ describe('PillCell', () => {
       expect(screen.getByText('value1')).toHaveStyle({ backgroundColor, color });
     });
 
+    it('uses the display name for legacy series-name colors', () => {
+      const field = fieldWithValues(['value1']);
+      field.name = 'raw_name';
+      field.state = { displayName: 'test' };
+      field.config.color = { mode: FieldColorModeId.PaletteClassicByName };
+
+      render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
+
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: 'rgb(98, 158, 81)' });
+    });
+
     it('empty string', () => {
       expectHTML(
         render(
