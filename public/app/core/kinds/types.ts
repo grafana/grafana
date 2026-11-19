@@ -30,6 +30,8 @@ export interface KindInfo {
   resource: string;
   /** The kind string dashboard search rows carry. Absent when the kind is not in that index. */
   searchKind?: string;
+  /** Whether objects of this kind live in folders, carrying the folder annotation. */
+  folderScoped: boolean;
   /**
    * Translated name: "Dashboard", or "dashboard" as it reads mid-sentence with `upperFirst: false`.
    * The translation holds the mid-sentence form. Never lowercase a label: some languages, such as

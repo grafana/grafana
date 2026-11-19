@@ -7,6 +7,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
 import { type KindInfo } from 'app/core/kinds/types';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
@@ -72,20 +73,16 @@ type OnCoreKinds = {
 export const resourceKindInfos = {
   folder: {
     ...CORE_KINDS.folder,
-    folderScoped: true,
     list: () => listViaSearch(CORE_KINDS.folder.searchKind),
     alwaysAvailable: true,
   },
   dashboard: {
     ...CORE_KINDS.dashboard,
-    folderScoped: true,
     list: () => listViaSearch(CORE_KINDS.dashboard.searchKind),
     alwaysAvailable: true,
   },
   playlist: {
     ...CORE_KINDS.playlist,
-    // Playlists aren't folder-contained — they only have their own collection page.
-    folderScoped: false,
     // Playlists aren't in the unified search index; list them through their
     // generated apiserver client (which carries the v1→v0alpha1 fallback).
     list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch),
@@ -96,9 +93,6 @@ export const resourceKindInfos = {
   },
   librarypanel: {
     ...CORE_KINDS.librarypanel,
-    // Library panels live inside folders on the backend, but the dashboards folder browse doesn't
-    // list them, so the migrate table groups them under one row like a non-foldered kind.
-    folderScoped: false,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
     // default — they ship disabled and aren't in the static base — so this only
@@ -108,8 +102,6 @@ export const resourceKindInfos = {
   },
   repository: {
     ...CORE_KINDS.repository,
-    // Repositories are instance-scoped configuration, not folder-contained.
-    folderScoped: false,
     // Provisioning's own configuration is never a migration target: it is the mechanism that
     // moves resources into a repository, so it is not one of the resources moved.
     list: async () => [],
@@ -117,15 +109,12 @@ export const resourceKindInfos = {
   },
   connection: {
     ...CORE_KINDS.connection,
-    folderScoped: false,
     // Not a migration target, for the same reason as repositories.
     list: async () => [],
     alwaysAvailable: false,
   },
   datasource: {
     ...CORE_KINDS.datasource,
-    // Data sources are org-scoped, not folder-contained.
-    folderScoped: false,
     list: ({ availableResources }: ResourceListDeps) => {
       const { group, resource, kind } = CORE_KINDS.datasource;
       return listCollectionMembers(group, resource, kind, availableResources);
@@ -164,11 +153,6 @@ export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind
 export interface ResourceKindInfo extends KindInfo {
   /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
   kind: ResourceKindName;
-  /**
-   * Whether the migrate table nests resources of this kind under their parent folder (folders,
-   * dashboards). Other kinds (e.g. playlists) are grouped under one row per kind.
-   */
-  folderScoped: boolean;
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
@@ -413,15 +397,16 @@ interface ApiserverListItem {
  * Lists a kind through its apiserver collection — for kinds the unified search
  * index doesn't serve (e.g. playlists). Read directly (not via an RTK client) so
  * any kind can be listed from its group/version/resource without a bespoke
- * client. These kinds are org-scoped, so no parent folder is resolved.
+ * client.
  */
-/** Maps an apiserver list response into ListedResources: name as uid, spec title
- * (falling back to the name), manager presence; entries without a name dropped. */
+/** Maps an apiserver list response into ListedResources: name as uid, spec title (falling back to
+ * the name), parent folder, manager presence; entries without a name dropped. */
 function toListedResources(items: ApiserverListItem[] | undefined): ListedResource[] {
   return (items ?? [])
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
+      parentUid: readImmediateParent(item.metadata?.annotations?.[AnnoKeyFolder]),
       // Classic file provisioning marks a data source read-only without a manager annotation, so
       // the annotation alone would offer a resource no write can take over.
       managed: isManaged(item) || item.spec?.readOnly === true,
