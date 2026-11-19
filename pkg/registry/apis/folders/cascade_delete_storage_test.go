@@ -448,8 +448,7 @@ type fakeFolderStorage struct {
 	existing map[string]*foldersv1.Folder
 	deleted  []string
 	stamped  []string
-	// getErr makes Get of the named folder fail with the error.
-	getErr map[string]error
+	getErr   map[string]error
 }
 
 func (f *fakeFolderStorage) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -1509,8 +1508,7 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 }
 
 func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
-	// A forced collection delete can't cascade, and the registry would delete each item without going
-	// through the contents access check, so it is rejected with the cascade flag on or off.
+	// A forced collection delete skips the contents check, so it is rejected with the flag on or off.
 	for name, enabled := range map[string]bool{"cascade flag on": true, "cascade flag off": false} {
 		t.Run(name, func(t *testing.T) {
 			setKubernetesFolderCascadeDeleteToggle(t, enabled)
@@ -1634,8 +1632,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	})
 
 	t.Run("checks the requester even with the cascade flag off", func(t *testing.T) {
-		// validateOnDelete lets a finalizer folder be force-deleted whatever that flag says, and the
-		// controller then deletes its contents, so the check cannot depend on it.
+		// validateOnDelete allows a forced delete of a finalizer folder whatever the flag says.
 		setKubernetesFolderCascadeDeleteToggle(t, false)
 		store := newStore()
 		access := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}
@@ -1646,8 +1643,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		require.Empty(t, store.deleted)
 	})
 
-	// serviceCtx is the cascade controller's caller: an access policy, which holds no folder
-	// permissions, so its access checks all fail.
+	// serviceCtx is the cascade controller's caller: an access policy with no folder permissions.
 	serviceCtx := func() context.Context {
 		return identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"),
 			&identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "access-policy:grafana", Namespace: "default"})
@@ -1667,8 +1663,7 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 	}
 
 	t.Run("a service deleting a subfolder of a terminating folder is not checked", func(t *testing.T) {
-		// The controller deletes subfolders as the service, carrying out a delete that was authorized
-		// when the root was requested, and a service holds no folder permissions to check.
+		// The controller carries out a delete authorized at the root; a service has no permissions to check.
 		setKubernetesFolderCascadeDeleteToggle(t, false)
 		store := subfolderOf(true)
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}

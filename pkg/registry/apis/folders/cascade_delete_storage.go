@@ -81,11 +81,8 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 	return base
 }
 
-// cascadeCollectionDeleter rejects forced collection deletes and otherwise forwards to the wrapped
-// store. The registry deletes each item through its own Delete, not through cascadeDeleteStorage.Delete,
-// so a forced collection delete would skip the per-folder cascade (orphaning children and dashboards)
-// and the contents access check on folders carrying the cascade finalizer. It is rejected whether or
-// not the cascade flag is on, since validateOnDelete lets such folders be force-deleted either way.
+// cascadeCollectionDeleter rejects forced collection deletes, which the registry runs item by item
+// without going through cascadeDeleteStorage.Delete, skipping the cascade and the contents check.
 type cascadeCollectionDeleter struct {
 	inner rest.CollectionDeleter
 }
@@ -478,12 +475,9 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 	}
 }
 
-// isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a folder whose
-// cascade is under way, which is the cascade controller carrying out a delete that was authorized
-// when the root was requested. The service has no folder permissions of its own to check against,
-// so only this case is exempt; a service deleting any other folder is checked like a user. A failure
-// to read the parent is returned instead of treated as "not exempt", so a storage error is not
-// reported to the controller as a permission failure.
+// isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a terminating
+// cascade folder: the controller carrying out a delete authorized at the root. Only that is exempt
+// from the contents check. A failed parent read is returned so it is not reported as a 403.
 func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, user identity.Requester, parentUID string) (bool, error) {
 	if parentUID == "" || !user.IsIdentityType(authlib.TypeAccessPolicy) {
 		return false, nil
