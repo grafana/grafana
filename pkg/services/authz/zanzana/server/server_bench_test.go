@@ -995,6 +995,7 @@ func BenchmarkBatchCheckExactCount(b *testing.B) {
 						for _, item := range req.Checks {
 							result := res.Results[item.CorrelationId]
 							require.NotNil(b, result)
+							require.Empty(b, result.GetError())
 							require.Equal(b, slices.Contains(allowedFolders, item.Folder), result.GetAllowed())
 						}
 					}

@@ -1953,9 +1953,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			{name: "disabled", total: 80, wantTotal: 80},
 			{name: "negative disables", total: 80, threshold: -1, wantTotal: 80},
 			{name: "below threshold", total: 80, threshold: 100, wantTotal: 40, wantExact: true},
-			{name: "at threshold", total: 100, threshold: 100, wantTotal: 50, wantExact: true},
+			{name: "at threshold", total: 100, threshold: 100, maxCandidates: 25, wantTotal: 50, wantExact: true},
 			{name: "above threshold", total: 102, threshold: 100, wantTotal: 102},
-			{name: "independent count budget", total: 100, threshold: 100, maxCandidates: 25, wantTotal: 50, wantExact: true},
 			{name: "offset includes skipped hits", total: 80, threshold: 100, offset: 5, wantTotal: 40, wantExact: true},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -2345,7 +2344,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Page 2: still fills early -> unfiltered total.
 		q2 := listQuery(10)
 		q2.SearchAfter = r1.Rows[9].SortFields
+		checksBefore := ac.checked
 		p2, r2 := searchNames(t, index, ac, q2)
+		require.Less(t, ac.checked-checksBefore, 15, "a full cursor page must not count the entire remaining tail")
 		require.Len(t, p2, 10)
 		require.Equal(t, int64(n), r2.TotalHits)
 		require.False(t, r2.TotalHitsExact)
@@ -2896,10 +2897,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
 			"tags": {Field: "tags", Limit: 10},
 		}
-		_, res := searchNames(t, index, &countingAccessClient{
-			allowedFolders: map[string]bool{"allowed": true},
-		}, q)
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		_, res := searchNames(t, index, ac, q)
 
+		require.Less(t, ac.checked, 40, "the page scan must not repeat the complete facet counting scan")
 		require.Equal(t, int64(10), res.TotalHits)
 		require.True(t, res.TotalHitsExact, "the sample budget covered every match")
 		require.Equal(t, map[string]int64{"shared": 10}, facetTermCounts(res.Facet["tags"]))

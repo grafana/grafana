@@ -61,6 +61,12 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 	return c
 }
 
+// countSmallResultSet decides whether to keep authorizing after the page fills.
+// The initial pre-authorization total bounds the work needed for an exact count;
+// above the threshold, extra checks cannot guarantee one within that budget.
+// Cursor scans omit earlier matches, while count-only and facet requests have
+// their own counting policies. Eligibility alone does not prove an exact total:
+// the scan must still exhaust the matches. The caller excludes trash searches.
 func countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64, threshold int64) bool {
 	return req.Limit > 0 && len(req.Facet) == 0 &&
 		len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&

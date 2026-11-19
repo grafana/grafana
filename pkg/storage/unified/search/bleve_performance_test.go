@@ -64,6 +64,9 @@ func BenchmarkBlevePostRankExactCount(b *testing.B) {
 		for _, visible := range []int{0, 10, 50, 100} {
 			for _, limit := range []int64{10, 50} {
 				for _, exact := range []bool{false, true} {
+					if visible == 0 && exact {
+						continue // Both modes already exhaust every match when all access is denied.
+					}
 					b.Run(fmt.Sprintf("matches=%d/visible=%d/page=%d/exact=%t", total, visible, limit, exact), func(b *testing.B) {
 						benchmarkPostRankExactCount(b, total, visible, limit, exact)
 					})
