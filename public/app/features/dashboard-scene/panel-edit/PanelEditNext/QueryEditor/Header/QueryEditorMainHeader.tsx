@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
-import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { QueryOptionsBar } from './QueryOptionsBar';
 import { StackedViewToggle } from './StackedViewToggle';
@@ -13,7 +13,9 @@ export function QueryEditorMainHeader() {
   const styles = useStyles2(getStyles);
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
-  const count = queries.length + transformations.length;
+  const { stackedMode } = useQueryEditorUIContext();
+  // Outside stacked view only the selected item is rendered.
+  const count = stackedMode.enabled ? queries.length + transformations.length : 1;
 
   return (
     <div className={styles.container}>
