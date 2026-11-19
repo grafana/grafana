@@ -370,10 +370,6 @@ type KVBackendOptions struct {
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
-
-	// FastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup instead of scanning the resource's history.
-	FastLatestKeyLookup bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -393,7 +389,6 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 		WatchOptions:              WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep:   cfg.DashboardVersionsToKeep,
 		MigrationStatementTimeout: cfg.MigrationStatementTimeout,
-		FastLatestKeyLookup:       cfg.FastLatestKeyLookupEnabled,
 		TenantWatcherConfig:       NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:       NewTenantDeleterConfig(cfg),
 		// Callers that know better override this. Without a default, a wiring
@@ -470,7 +465,6 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	dataStore := newDataStore(kv)
-	dataStore.fastLatestKeyLookup = opts.FastLatestKeyLookup
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -1934,12 +1928,8 @@ type kvListKeyIterator struct {
 	clusterWide           bool
 	next                  func() (DataKey, error, bool)
 	stopFn                func()
-	started               bool
 	current               DataKey
-	nextKey               DataKey
 	err                   error
-	nextErr               error
-	hasMore               bool
 }
 
 func newKvListKeyIterator(keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListKeyIterator {
@@ -1961,20 +1951,12 @@ func (i *kvListKeyIterator) stop() {
 }
 
 func (i *kvListKeyIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextKey, i.nextErr, i.hasMore = i.next()
-	}
-	if !i.hasMore {
+	key, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	i.current, i.err = i.nextKey, i.nextErr
-	if i.err != nil {
-		return false
-	}
-	i.nextKey, i.nextErr, i.hasMore = i.next()
-	return true
+	i.current, i.err = key, err
+	return i.err == nil
 }
 
 func (i *kvListKeyIterator) Error() error {
@@ -1983,13 +1965,13 @@ func (i *kvListKeyIterator) Error() error {
 
 func (i *kvListKeyIterator) Item() BackendListKey {
 	token := ContinueToken{
-		Name:            i.nextKey.Name,
+		Name:            i.current.Name,
 		ResourceVersion: i.listRV,
 		KeysOnly:        i.keysOnly,
 		ClusterWide:     i.clusterWide,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextKey.Namespace
+		token.Namespace = i.current.Namespace
 	}
 	return BackendListKey{
 		Key: &resourcepb.ResourceKey{
@@ -2047,13 +2029,9 @@ type kvListIterator struct {
 	stopFn func()
 
 	// current item state
-	started        bool
 	currentDataObj DataObj
 	value          []byte
 	err            error
-	nextDataObj    DataObj
-	nextErr        error
-	hasMore        bool
 }
 
 // stop closes the underlying pull. Callers should defer this.
@@ -2064,16 +2042,12 @@ func (i *kvListIterator) stop() {
 }
 
 func (i *kvListIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextDataObj, i.nextErr, i.hasMore = i.next()
-	}
-
-	if !i.hasMore {
+	obj, err, ok := i.next()
+	if !ok {
 		return false
 	}
 
-	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+	i.currentDataObj, i.err = obj, err
 	if i.err != nil {
 		return false
 	}
@@ -2084,8 +2058,6 @@ func (i *kvListIterator) Next() bool {
 			return false
 		}
 	}
-
-	i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	return true
 }
 
@@ -2095,11 +2067,11 @@ func (i *kvListIterator) Error() error {
 
 func (i *kvListIterator) ContinueToken() string {
 	token := ContinueToken{
-		Name:            i.nextDataObj.Key.Name,
+		Name:            i.currentDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextDataObj.Key.Namespace
+		token.Namespace = i.currentDataObj.Key.Namespace
 	}
 	if i.keysOnly {
 		token.KeysOnly = true

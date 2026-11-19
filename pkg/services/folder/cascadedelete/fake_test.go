@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -166,7 +167,7 @@ func (m *memStore) getLocked(name string) *foldersv1.Folder {
 	if !ok {
 		return nil
 	}
-	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, Finalizers: slices.Clone(f.finalizers)}}
+	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, UID: types.UID(name + "-uid"), Finalizers: slices.Clone(f.finalizers)}}
 	if f.parent != "" {
 		out.Annotations = map[string]string{utils.AnnoKeyFolder: f.parent}
 	}

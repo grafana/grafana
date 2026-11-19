@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 
-import { toDataFrame } from '@grafana/data';
+import { textUtil, toDataFrame } from '@grafana/data';
 import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { TextMode } from '../panelcfg.gen';
@@ -113,4 +113,42 @@ it('silently tracks loading and runtime failures without a consumer', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByText('Content')).toBeVisible();
   }
+});
+
+it('reuses sanitization on height changes but sanitizes changed content and protection mode', () => {
+  const sanitize = jest.spyOn(textUtil, 'sanitizeTextPanelContent');
+  const html = '<img src="/image.png" onerror="alert(1)">';
+  try {
+    const { rerender } = render(<TextSandbox html={html} minHeight={100} />);
+    expect(sanitize).toHaveBeenCalledTimes(1);
+    expect(mount.mock.calls.at(-1)![0].html).toBe('<img src="/image.png">');
+    rerender(<TextSandbox html={html} minHeight={200} />);
+    expect(sanitize).toHaveBeenCalledTimes(1);
+    expect(mount.mock.calls.at(-1)![0].minHeight).toBe(200);
+    rerender(<TextSandbox html={html} hasData={false} minHeight={200} />);
+    expect(mount.mock.calls.at(-1)![0].html).toBe(html);
+    rerender(<TextSandbox html={html} hasData minHeight={200} />);
+    expect(sanitize).toHaveBeenCalledTimes(2);
+    expect(mount.mock.calls.at(-1)![0].html).toBe('<img src="/image.png">');
+    rerender(<TextSandbox html='<p onclick="alert(1)">Updated</p>' minHeight={200} />);
+    expect(sanitize).toHaveBeenCalledTimes(3);
+    expect(mount.mock.calls.at(-1)![0].html).toBe('<p>Updated</p>');
+  } finally {
+    sanitize.mockRestore();
+  }
+});
+
+it('does not rerender unchanged frame content when panel width changes', () => {
+  const props = createProps((content) => content, {
+    options: { mode: TextMode.HTML, content: '<p>Stable content</p>' },
+  });
+  const { rerender } = render(<TextNGPanel {...props} />);
+  expect(screen.getByText('Stable content')).toBeVisible();
+  mount.mockClear();
+  rerender(<TextNGPanel {...props} width={400} />);
+  rerender(<TextNGPanel {...props} width={600} />);
+  expect(mount).not.toHaveBeenCalled();
+  rerender(<TextNGPanel {...props} width={600} options={{ ...props.options, content: '<p>Updated content</p>' }} />);
+  expect(screen.getByText('Updated content')).toBeVisible();
+  expect(mount.mock.calls.at(-1)![0].html).toBe('<p>Updated content</p>');
 });

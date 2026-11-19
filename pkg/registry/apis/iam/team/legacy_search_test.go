@@ -72,6 +72,40 @@ func TestLegacyTeamSearch(t *testing.T) {
 	}
 }
 
+func TestLegacyTeamSearchMemberCount(t *testing.T) {
+	requester := &user.SignedInUser{OrgID: 1, UserID: 2, Namespace: "default"}
+	service := &searchTeamService{search: func(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+		return team.SearchTeamQueryResult{
+			Teams: []*team.TeamDTO{
+				{ID: 1, UID: "team-1", Name: "Engineering", MemberCount: 3},
+				{ID: 2, UID: "team-2", Name: "Empty"},
+			},
+			TotalCount: 2,
+		}, nil
+	}}
+	backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
+	ctx := identity.WithRequester(t.Context(), requester)
+
+	t.Run("requested - sets member counts from the search", func(t *testing.T) {
+		result, err := backend.Search(ctx, SearchQuery{Namespace: "default", MemberCount: true})
+		require.NoError(t, err)
+		require.Len(t, result.Hits, 2)
+		require.NotNil(t, result.Hits[0].MemberCount)
+		require.Equal(t, int64(3), *result.Hits[0].MemberCount)
+		require.NotNil(t, result.Hits[1].MemberCount)
+		require.Equal(t, int64(0), *result.Hits[1].MemberCount)
+	})
+
+	t.Run("not requested - leaves member counts unset", func(t *testing.T) {
+		result, err := backend.Search(ctx, SearchQuery{Namespace: "default"})
+		require.NoError(t, err)
+		require.Len(t, result.Hits, 2)
+		for _, hit := range result.Hits {
+			require.Nil(t, hit.MemberCount)
+		}
+	})
+}
+
 func TestLegacyTeamSearchErrors(t *testing.T) {
 	for _, tt := range []struct {
 		name  string

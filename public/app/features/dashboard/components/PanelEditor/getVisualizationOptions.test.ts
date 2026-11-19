@@ -523,6 +523,7 @@ describe('getVisualizationOptions', () => {
         ui: 'panel-edit',
         option: 'showThing',
         value: 'true',
+        value_type: 'boolean',
         panel_type: 'stat',
         panel_id: 12,
       });
@@ -549,6 +550,7 @@ describe('getVisualizationOptions', () => {
         ui: 'panel-edit',
         option: '?min',
         value: '42',
+        value_type: 'number',
         panel_type: 'stat',
         panel_id: 7,
       });
@@ -576,8 +578,140 @@ describe('getVisualizationOptions', () => {
         ui: 'view-panel',
         option: '?custom.lineWidth',
         value: '5',
+        value_type: 'number',
         panel_type: 'stat',
         panel_id: 3,
+      });
+    });
+
+    it('reports a typed panel option without its value', () => {
+      const plugin = getPanelPlugin({ id: 'text' }).setPanelOptions((builder) =>
+        builder.addTextInput({ path: 'content', name: 'Content' })
+      );
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'text', key: 'panel-5' });
+      jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: { content: '' },
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'my secret note');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: 'content',
+        value_type: 'string',
+        panel_type: 'text',
+        panel_id: 5,
+      });
+      expect(JSON.stringify(setVisualOption.mock.calls)).not.toContain('my secret note');
+    });
+
+    it('reports a panel option chosen from a fixed list with its value', () => {
+      const plugin = getPanelPlugin({ id: 'stat' }).setPanelOptions((builder) =>
+        builder.addRadio({
+          path: 'placement',
+          name: 'Placement',
+          settings: {
+            options: [
+              { value: 'bottom', label: 'Bottom' },
+              { value: 'right', label: 'Right' },
+            ],
+          },
+        })
+      );
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-6' });
+      jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: { placement: 'bottom' },
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'right');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: 'placement',
+        value: '"right"',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 6,
+      });
+    });
+
+    it('reports a typed field config default without its value', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({ id: 'displayName', path: 'displayName', name: 'Display name' }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-8' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'Revenue per customer');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?displayName',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 8,
+      });
+      expect(JSON.stringify(setVisualOption.mock.calls)).not.toContain('Revenue per customer');
+    });
+
+    it('reports a field config default chosen from a fixed list with its value', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({
+          id: 'color.mode',
+          path: 'color.mode',
+          name: 'Color scheme',
+          settings: {
+            options: [
+              { value: 'palette-classic', label: 'Classic palette' },
+              { value: 'thresholds', label: 'From thresholds' },
+            ],
+          },
+        }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-9' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'thresholds');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?color.mode',
+        value: '"thresholds"',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 9,
       });
     });
   });

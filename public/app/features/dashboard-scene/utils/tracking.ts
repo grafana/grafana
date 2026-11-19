@@ -44,6 +44,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 
   trackTextPanelUsage(dashboard);
+  trackTablePanelUsage(dashboard);
   trackPanelOptionVariableUsage(dashboard, 'load');
 }
 
@@ -148,6 +149,27 @@ function isTextV2WithNewFeatures() {
   return (
     flags.getBooleanValue(FlagKeys.GrafanaNewTextPanel, false) && flags.getBooleanValue(FlagKeys.TextNewFeatures, false)
   );
+}
+
+function trackTablePanelUsage(dashboard: DashboardScene) {
+  const flags = getFeatureFlagClient();
+
+  if (!flags.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)) {
+    return;
+  }
+
+  const tablePanelCount = dashboard.state.body
+    .getVizPanels()
+    .filter((panel) => panel.state.pluginId === 'table').length;
+
+  if (tablePanelCount === 0) {
+    return;
+  }
+
+  DashboardInteractions.tablePanelUsage({
+    dashboard_uid: dashboard.state.uid,
+    table_panel_count: tablePanelCount,
+  });
 }
 
 function getTextPanelUsage(panels: VizPanel[]) {
