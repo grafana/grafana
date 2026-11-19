@@ -15,10 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestResourceReferencesBlob(t *testing.T) {
@@ -416,44 +414,6 @@ func TestBlobGCPreservesProvisioningPreviewURL(t *testing.T) {
 	reader, err := store.Get(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
-}
-
-func TestCDKBlobGCStore(t *testing.T) {
-	bucket, err := OpenBlobBucket(t.Context(), "mem://")
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-	blobStore, err := NewCDKBlobSupport(t.Context(), CDKBlobSupportOptions{Bucket: bucket})
-	require.NoError(t, err)
-	resourceKey := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "snapshots", Namespace: "default", Name: "snap"}
-	response, err := blobStore.PutResourceBlob(t.Context(), &resourcepb.PutBlobRequest{Resource: resourceKey, ContentType: "image/png", Value: []byte("image")})
-	require.NoError(t, err)
-	store := NewCDKBlobGCStore(bucket, "")
-	gc := NewBlobGarbageCollector(store, 100, 0)
-	now := time.Now()
-	key := kv.BlobKey{Group: resourceKey.Group, Resource: resourceKey.Resource, Namespace: resourceKey.Namespace, Name: resourceKey.Name, UID: response.Uid}
-	count, err := gc.Collect(t.Context(), now, time.Hour, false, func(_ context.Context, got kv.BlobKey) (bool, error) {
-		require.Equal(t, key, got)
-		return false, nil
-	})
-	require.NoError(t, err)
-	require.Zero(t, count)
-	count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
-	require.NoError(t, err)
-	require.Equal(t, 1, count)
-	_, err = blobStore.GetResourceBlob(t.Context(), resourceKey, &utils.BlobInfo{UID: response.Uid, MimeType: "image/png"}, true)
-	require.Error(t, err)
-
-	preview := &resourcepb.ResourceKey{Group: "provisioning.grafana.app", Resource: "repositories", Namespace: "", Name: "repo"}
-	previewResponse, err := blobStore.PutResourceBlob(t.Context(), &resourcepb.PutBlobRequest{Resource: preview, ContentType: "image/png", Value: []byte("preview")})
-	require.NoError(t, err)
-	for _, at := range []time.Time{now.Add(3 * time.Hour), now.Add(48 * time.Hour)} {
-		count, err = gc.Collect(t.Context(), at, time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
-		require.NoError(t, err)
-		require.Zero(t, count)
-	}
-	value, err := blobStore.GetResourceBlob(t.Context(), preview, &utils.BlobInfo{UID: previewResponse.Uid, MimeType: "image/png"}, true)
-	require.NoError(t, err)
-	require.Equal(t, []byte("preview"), value.Value)
 }
 
 func TestBlobReferencedPreservesHistory(t *testing.T) {

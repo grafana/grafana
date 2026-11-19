@@ -3,9 +3,7 @@ package sql
 import (
 	"context"
 	"fmt"
-	"os"
 	"slices"
-	"strings"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
@@ -191,23 +189,18 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
-	if resourceOpts.Blob.URL == "" {
-		resourceOpts.Blob.Backend = opts.BlobBackend
+	if err := validateBlobURL(resourceOpts.Blob.URL); err != nil {
+		return err
 	}
-	var err error
-	resourceOpts.Blob.URL, err = resolvedBlobURL(resourceOpts.Blob.URL, opts.Cfg.DataPath)
-	return err
+	resourceOpts.Blob.Backend = opts.BlobBackend
+	return nil
 }
 
-func resolvedBlobURL(url, dataPath string) (string, error) {
-	if strings.HasPrefix(url, "./data/") {
-		dir := strings.Replace(url, "./data", dataPath, 1)
-		if err := os.MkdirAll(dir, 0700); err != nil {
-			return "", err
-		}
-		return "file:///" + dir, nil
+func validateBlobURL(url string) error {
+	if url != "" {
+		return fmt.Errorf("blob_url is no longer supported by unified storage")
 	}
-	return url, nil
+	return nil
 }
 
 func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
