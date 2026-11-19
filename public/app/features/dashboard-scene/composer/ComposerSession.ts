@@ -200,6 +200,14 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return TOOLS;
   }
 
+  /**
+   * Presses reach the dashboard while no pick is pending, so a consumer can offer a pointer mode (Select off)
+   * that drags panels, rows and tabs. A core without it blocks them for the whole session.
+   */
+  public get passthrough(): true {
+    return true;
+  }
+
   public get tool(): ComposerTool {
     return this.overlayState.tool;
   }

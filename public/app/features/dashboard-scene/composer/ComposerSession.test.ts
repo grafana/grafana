@@ -140,6 +140,12 @@ describe('entering and leaving Composer', () => {
     expect(getDashboardMode(scene.state)).toBe('view');
   });
 
+  it('tells a consumer that presses reach the dashboard while no pick is pending', () => {
+    const session = enter(setup());
+
+    expect(session.passthrough).toBe(true);
+  });
+
   it('requires edit permission and an active dashboard', () => {
     const scene = setup();
     scene.setState({ meta: { canEdit: false, canSave: false } });
