@@ -5,15 +5,15 @@ const mockSetItem = jest.fn();
 
 jest.mock('@grafana/runtime/internal', () => ({
   UserStorage: jest.fn().mockImplementation(() => ({
-    getItem: mockGetItem,
-    setItem: mockSetItem,
+    getItem: (key: string) => mockGetItem(key),
+    setItem: (key: string, value: string) => mockSetItem(key, value),
   })),
 }));
 
 const mockPublish = jest.fn();
 
 jest.mock('app/core/app_events', () => ({
-  appEvents: { publish: mockPublish },
+  appEvents: { publish: (event: NotebooksFeedbackEvent) => mockPublish(event) },
 }));
 
 import { NotebooksFeedbackEvent } from './notebooksFeedbackEvent';
