@@ -135,6 +135,7 @@ export const convertApi = convertApiWithRefetches.injectEndpoints({
               dryRun: true,
               // Force-replace so validation isn't blocked by a 409 from an existing identifier.
               forceReplace: true,
+              source: 'wizard',
             })
           ).unwrap();
           return { data };

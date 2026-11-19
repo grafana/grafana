@@ -279,7 +279,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 
@@ -1248,6 +1247,11 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
 	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		if resource.MigrationReadFromContext(ctx) {
+			if err := b.setMigrationStatementTimeout(ctx, tx); err != nil {
+				return err
+			}
+		}
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
 		if err != nil {

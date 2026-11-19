@@ -43,7 +43,7 @@ func TestNATSCaptureReadinessFailure(t *testing.T) {
 				if mode == "canceled" {
 					cancel()
 				}
-				require.False(t, n.trySubscribe(ctx, func(string, []byte) {}))
+				require.False(t, n.trySubscribe(ctx, func(string, []byte) {}, n.invalidate))
 				require.True(t, subscriber.wasUnsubscribed(), "failed readiness must release the subscription before retrying")
 			})
 		})

@@ -1,8 +1,8 @@
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor } from 'test/test-utils';
+import { FormProvider, type UseFormReturn, useForm, useFormContext } from 'react-hook-form';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
@@ -697,9 +697,14 @@ describe('Step2AlertRules', () => {
     });
 
     it.each([
-      ['has no groups', 'groups: []'],
-      ['has groups without rules', 'groups:\n  - name: empty\n    rules: []\n'],
-    ])('rejects a file that %s, since importing it would do nothing', async (_, content) => {
+      ['has no groups', 'groups: []', /no rules found in this file/i],
+      ['has groups without rules', 'groups:\n  - name: empty\n    rules: []\n', /no rules found in this file/i],
+      [
+        'has an empty group next to one with rules',
+        'groups:\n  - name: empty\n    rules: []\n  - name: full\n    rules:\n      - alert: A\n        expr: up == 0\n',
+        /the group "empty" has no rules/i,
+      ],
+    ])('rejects a file that %s, since importing it would do nothing', async (_, content, message) => {
       const { user } = render(
         <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
           <Step2Content step1Completed={false} canImport={true} />
@@ -711,7 +716,7 @@ describe('Step2AlertRules', () => {
         new File([content], 'empty.yaml', { type: 'text/yaml' })
       );
 
-      expect(await screen.findByText(/no rules found in this file/i)).toBeInTheDocument();
+      expect(await screen.findByText(message)).toBeInTheDocument();
     });
 
     it.each([
@@ -740,6 +745,34 @@ describe('Step2AlertRules', () => {
 
       expect(await screen.findByText(message)).toBeInTheDocument();
       await waitFor(() => expect(onResult).toHaveBeenLastCalledWith(false));
+    });
+
+    it('drops the namespace and group filters when switching to a YAML file', async () => {
+      const formRef: { current?: UseFormReturn<ImportFormValues> } = {};
+      function Spy() {
+        const form = useFormContext<ImportFormValues>();
+        useEffect(() => {
+          formRef.current = form;
+        }, [form]);
+        return null;
+      }
+      render(
+        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+          <Spy />
+        </TestWrapper>
+      );
+      // Set after mount: the datasource effect clears the filters on the first render.
+      act(() => {
+        formRef.current?.setValue('namespace', 'ns');
+        formRef.current?.setValue('ruleGroup', 'grp');
+      });
+
+      await userEvent.click(screen.getByRole('radio', { name: /yaml file/i }));
+
+      await waitFor(() => expect(formRef.current?.getValues('rulesSource')).toBe('yaml'));
+      expect(formRef.current?.getValues('namespace')).toBeUndefined();
+      expect(formRef.current?.getValues('ruleGroup')).toBeUndefined();
     });
 
     it('should clear YAML file when switching from yaml to datasource source', async () => {

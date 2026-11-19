@@ -104,6 +104,14 @@ func TestNATSManagedLifecycle(t *testing.T) {
 	}
 }
 
+func TestNATSModuleRejectsEmbedded(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded}
+	ms := &ModuleServer{cfg: cfg, registerer: prometheus.NewRegistry()}
+	_, err := ms.initNATSModule()
+	require.ErrorContains(t, err, "embedded NATS is not supported in module mode")
+}
+
 func TestManagedServiceFailure(t *testing.T) {
 	for _, mode := range []string{"module", "composite module"} {
 		t.Run(mode, func(t *testing.T) {

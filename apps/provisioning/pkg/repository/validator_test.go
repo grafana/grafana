@@ -1319,3 +1319,202 @@ func TestValidateCommitOptions(t *testing.T) {
 		})
 	}
 }
+
+// A repository whose path has stopped being permitted must still be able to turn its sync off.
+func TestAdmissionValidator_Validate_AllowsDisablingSyncWithoutRevalidatingTheSpec(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+
+	// No EXPECT() for Validate: the type validators, which are what would reject the path,
+	// must not run for a change that introduces no spec content.
+	mockFactory := NewMockFactory(t)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_StillValidatesChangesBundledWithDisablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	// Repointing the path while switching the sync off must not ride the exemption.
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Spec.Local = &provisioning.LocalRepositoryConfig{Path: "/somewhere/else"}
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
+		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/somewhere/else", "not permitted")}).Once()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not permitted")
+}
+
+func TestAdmissionValidator_Validate_StillValidatesWhenEnablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync:  provisioning.SyncOptions{Enabled: false, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = true
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
+		Return(field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"), "/no/longer/permitted", "not permitted")}).Once()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not permitted")
+}
+
+// Finalizers count as a change: remove-orphan and release-orphan are mutually exclusive.
+func TestAdmissionValidator_Validate_StillValidatesFinalizersBundledWithDisablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Finalizers = append(repo.Finalizers, ReleaseOrphanResourcesFinalizer)
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot have both remove and release orphan resources finalizers")
+}
+
+func TestAdmissionValidator_Validate_StillValidatesSecureValuesBundledWithDisablingSync(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "conf/provisioning/bootstrap"},
+			Sync:  provisioning.SyncOptions{Enabled: true, Target: provisioning.SyncTargetTypeFolderless},
+		},
+	}
+	// A new token riding along with the disable is content the validators have to see.
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Secure.Token = common.InlineSecureValue{Create: "new-token"}
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).
+		Return(field.ErrorList{field.Invalid(field.NewPath("secure", "token"), "", "rejected")}).Once()
+
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "rejected")
+}
+
+// The mutator clamps the interval before validation, so raising min_sync_interval in the same
+// restart would otherwise make the disable look like a second change.
+func TestAdmissionValidator_Validate_AllowsDisablingSyncAfterTheIntervalWasClamped(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "bootstrap",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Bootstrap",
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "/no/longer/permitted"},
+			Sync: provisioning.SyncOptions{
+				Enabled:         true,
+				Target:          provisioning.SyncTargetTypeFolderless,
+				IntervalSeconds: 10,
+			},
+		},
+	}
+	// What the mutator leaves behind once min_sync_interval has been raised to 60s.
+	repo := old.DeepCopy()
+	repo.Spec.Sync.Enabled = false
+	repo.Spec.Sync.IntervalSeconds = 60
+
+	// No EXPECT() for Validate: the type validators, which would reject the path, must not run.
+	mockFactory := NewMockFactory(t)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolderless},
+		NewValidator(false, mockFactory),
+	)
+
+	attr := newAdmissionValidatorTestAttributes(repo, old, admission.Update)
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}

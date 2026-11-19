@@ -239,6 +239,8 @@ func (MetaRole) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type MetaExtensions struct {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	Skills map[string]MetaV0alpha1ExtensionsSkills `json:"skills,omitempty"`
 	// +listType=atomic
 	AddedComponents []MetaV0alpha1ExtensionsAddedComponents `json:"addedComponents,omitempty"`
 	// +listType=atomic
@@ -570,6 +572,21 @@ func NewMetaV0alpha1RoleRole() *MetaV0alpha1RoleRole {
 // OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1RoleRole.
 func (MetaV0alpha1RoleRole) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1RoleRole"
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1ExtensionsSkills struct {
+	Path string `json:"path"`
+}
+
+// NewMetaV0alpha1ExtensionsSkills creates a new MetaV0alpha1ExtensionsSkills object.
+func NewMetaV0alpha1ExtensionsSkills() *MetaV0alpha1ExtensionsSkills {
+	return &MetaV0alpha1ExtensionsSkills{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaV0alpha1ExtensionsSkills.
+func (MetaV0alpha1ExtensionsSkills) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaV0alpha1ExtensionsSkills"
 }
 
 // +k8s:openapi-gen=true

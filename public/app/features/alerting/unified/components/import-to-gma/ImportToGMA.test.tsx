@@ -177,19 +177,22 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
 });
 // Most flows skip Rules, which needs the step left empty: its single button only skips while no rules
 // source is chosen. A test that completes the step instead turns mockSeedRulesSource on, so the import
-// (useRunImport) has the rulesDatasourceUID it needs to fire. The 'yaml' scenario seeds a rules YAML upload
+// (useImportJob) has the rulesDatasourceUID it needs to fire. The 'yaml' scenario seeds a rules YAML upload
 // instead, for tests that exercise the rules preview.
 let mockRulesScenario: 'datasource' | 'datasource-filtered' | 'yaml' = 'datasource';
 let mockSeedRulesSource = false;
+// The real step registers the file's validator on the form; the mock does it only when a test sets an error.
+let mockRulesFileError: string | undefined;
 
 jest.mock('./steps/Step2AlertRules', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
   return {
     Step2Content: function Step2Content() {
-      const { setValue } = useFormContext();
+      const { setValue, register } = useFormContext();
       useEffect(() => {
         if (mockRulesScenario === 'yaml') {
+          register('rulesYamlFile', { validate: () => mockRulesFileError ?? true });
           setValue('rulesSource', 'yaml');
           setValue('yamlImportTargetDatasourceUID', 'yaml-target-uid');
           setValue('yamlImportTargetDatasourceName', 'Yaml Target');
@@ -216,7 +219,7 @@ jest.mock('./steps/Step2AlertRules', () => {
         if (mockSeedRulesSource) {
           setValue('rulesDatasourceUID', 'prometheus-uid');
         }
-      }, [setValue]);
+      }, [setValue, register]);
       return null;
     },
     useStep2Validation: () => true,
@@ -263,6 +266,10 @@ beforeEach(() => {
  * Drives the wizard: complete the notifications step, skip the rules step, then open and accept the
  * confirm modal. Leaves the rest to the caller's assertions.
  */
+async function continueFromSuccess(user: ReturnType<typeof render>['user']) {
+  await user.click(await screen.findByRole('button', { name: /continue/i }));
+}
+
 async function importWith(user: ReturnType<typeof render>['user']) {
   await screen.findByRole('group', { name: /import notification configuration/i });
   // Notifications -> Rules: the stub triggers a dry-run; wait for it to pass so Next is enabled
@@ -331,9 +338,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
         expect.objectContaining({ notificationsSource: 'yaml' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'));
   });
 
   it('tracks an error when the import fails', async () => {
@@ -441,9 +447,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'));
     expect(Object.values(store.getState().appNotifications.byId).map((notification) => notification.title)).toContain(
       'Successfully imported resources to Grafana Alerting.'
     );
@@ -1069,9 +1074,8 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
         expect.objectContaining({ notificationsSource: 'datasource' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'));
   });
 
   it('enables auto-sync and imports rules together when Rules is completed instead of skipped', async () => {
@@ -1574,6 +1578,27 @@ describe('ImportToGMA wizard — rules from a YAML file', () => {
 
   afterEach(() => {
     mockRulesScenario = 'datasource';
+    mockRulesFileError = undefined;
+  });
+
+  it('stays on the rules step when the file fails its check', async () => {
+    mockRulesFileError = 'No rules found in this file';
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification configuration/i });
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await waitFor(() => expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toBeEnabled());
+    expect(screen.queryByText(/review import/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /import rules/i })).toBeInTheDocument();
   });
 
   it('imports them to the data source chosen for the file', async () => {
@@ -1604,6 +1629,6 @@ describe('ImportToGMA wizard — rules from a YAML file', () => {
     await navigateToReviewWithRulesCompleted(user);
 
     expect(await screen.findByText('Yaml Target')).toBeInTheDocument();
-    expect(screen.getByText(/will import 1 rules/i)).toBeInTheDocument();
+    expect(await screen.findByText(/will import 1 rules/i)).toBeInTheDocument();
   });
 });

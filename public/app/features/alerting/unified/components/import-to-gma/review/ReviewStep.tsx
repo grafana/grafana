@@ -221,6 +221,8 @@ interface ReviewStepProps {
   dryRunResult?: DryRunValidationResult;
   /** The rules the import will send, already filtered. Only set for a data source. */
   rulesToImport?: RulerCloudRulesConfigDTO;
+  /** The rules file is still being read, so the rules to send are not known yet. */
+  isLoadingRules?: boolean;
 }
 
 // True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
@@ -229,7 +231,7 @@ function hasYamlUpload(source: string, file: File | null): file is File {
   return source === 'yaml' && file !== null;
 }
 
-export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImport }: ReviewStepProps) {
+export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImport, isLoadingRules }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
 
@@ -386,7 +388,7 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImpor
             variant="primary"
             icon={willEnableAutoSync ? 'sync' : 'upload'}
             onClick={onStartImport}
-            disabled={nothingToImport}
+            disabled={nothingToImport || isLoadingRules}
           >
             {willEnableAutoSync
               ? t('alerting.import-to-gma.review.enable-autosync', 'Enable auto-sync')

@@ -141,6 +141,7 @@ const FlameGraph = ({
     focusedItemData,
     textAlign,
     onSandwich,
+    sandwichItem,
     colorScheme,
     totalProfileTicks,
     totalProfileTicksRight,

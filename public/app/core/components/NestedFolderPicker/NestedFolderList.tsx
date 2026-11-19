@@ -6,10 +6,11 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
+import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -153,7 +154,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     teamFolderOwnersByUid,
     canEdit,
   } = data;
-  const { item, isOpen, level, parentUID, disabled } = items[index];
+  const { item, isOpen, level, parentUID, disabled, readOnly } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
@@ -262,9 +263,17 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <span className={styles.folderButtonSpacer} />
         )}
 
-        <label className={styles.label} id={labelId}>
-          <Text truncate>{item.title}</Text>
-          {showRepoBadge && <FolderRepo folder={item} canEdit={canEdit} />}
+        <label className={cx(styles.label, { [styles.labelReadOnly]: readOnly })} id={labelId}>
+          <Text truncate color={readOnly ? 'secondary' : undefined}>
+            {item.title}
+          </Text>
+          {readOnly && (
+            <ReadOnlyBadge
+              compact
+              tooltip={t('folder-picker.read-only-folder-tooltip', "You can't create dashboards in this folder")}
+            />
+          )}
+          {showRepoBadge && <FolderRepo folder={item} canEdit={canEdit && !readOnly} />}
         </label>
         {teamOwner && (
           <div className={styles.teamOwner}>
@@ -350,6 +359,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         textDecoration: 'underline',
         cursor: 'pointer',
+      },
+    }),
+    labelReadOnly: css({
+      '&:hover': {
+        textDecoration: 'none',
+        cursor: 'default',
       },
     }),
     teamOwner: css({

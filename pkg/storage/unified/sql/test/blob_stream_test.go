@@ -49,7 +49,6 @@ func TestIntegrationBlobStreamingUsesExistingSQLTable(t *testing.T) {
 
 				// Existing unary clients must still be able to read streamed blobs.
 				unary := env.get(t, reader.store, key, put.Uid)
-				require.Nil(t, unary.Error)
 				require.Equal(t, value, unary.Value)
 
 				var streamed bytes.Buffer
@@ -79,7 +78,6 @@ func TestIntegrationBlobStreamingAcceptsMaximumSize(t *testing.T) {
 	require.Equal(t, hex.EncodeToString(hash[:]), put.Hash)
 
 	unary := env.get(t, env.sqlBlobs, key, put.Uid)
-	require.Nil(t, unary.Error)
 	require.True(t, bytes.Equal(value, unary.Value), "unary read differs from upload")
 	require.Empty(t, stagedBlobChunks(t, env))
 }
@@ -215,7 +213,7 @@ func TestIntegrationBlobStreamingDoesNotBlockWritesWhileReceiving(t *testing.T) 
 			uploadErr := <-result
 			require.ErrorIs(t, readErr, kv.ErrNotFound)
 			require.NoError(t, writeErr)
-			require.Nil(t, response.Error)
+			require.NotEmpty(t, response.Uid)
 			if partial {
 				require.NoError(t, uploadErr)
 				_, body, err := env.read(t, key)

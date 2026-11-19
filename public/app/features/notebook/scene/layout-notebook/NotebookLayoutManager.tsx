@@ -3,14 +3,8 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  AppEvents,
-  CoreApp,
-  filterFieldConfigOverrides,
-  type GrafanaTheme2,
-  isStandardFieldProp,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import { AppEvents, CoreApp, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -38,6 +32,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../../analytics/main';
 import { NOTEBOOK_BLOCK_INSERT_VIA, type NotebookBlockInsertVia } from '../../analytics/types';
+import { mintElementName } from '../../elementName';
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
@@ -247,6 +242,8 @@ export class NotebookLayoutManager
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
+        // Only sent once the server has given the cell one: an empty id would read as a new cell.
+        ...(cell.state.id ? { id: cell.state.id } : {}),
         source: cell.state.source,
         // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
@@ -672,10 +669,7 @@ export class NotebookLayoutManager
         before = panels.map(snapshotVisualization);
         const results = await Promise.allSettled(
           panels.map(async (panel) => {
-            const fieldConfig = {
-              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
-              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
-            };
+            const fieldConfig = clearCustomFieldConfig(panel.state.fieldConfig);
             const options = suggestion.options && structuredClone(suggestion.options);
             const nextFieldConfig = structuredClone({
               ...(suggestion.fieldConfig ?? fieldConfig),
@@ -1046,7 +1040,10 @@ export class NotebookLayoutManager
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
     const copy = cell.clone({
       key: undefined,
-      elementName: this.nextElementName(`${cell.state.elementName}-copy`),
+      // A copy is a new cell, so it must not share the original's identity.
+      id: undefined,
+      // From the block type, not the source's name: a copy of a copy would otherwise grow the name.
+      elementName: this.nextElementName(blockTypeOf(cell)),
       body: cell.state.body?.clone({
         key: getVizPanelKeyForPanelId(nextId()),
       }),
@@ -1190,20 +1187,11 @@ export class NotebookLayoutManager
     this.setState({ cells });
   }
 
-  /**
-   * `${base}-${n}` for the lowest n not yet taken. Checked against every cell rather than kept as a
-   * counter, because the names a saved notebook arrives with are arbitrary and a counter would
-   * eventually land on one of them.
-   */
+  /** `${base}-${random}`, retried until no cell has it. */
   private nextElementName(base: string): string {
     const taken = new Set(this.state.cells.map((current) => current.state.elementName));
 
-    let suffix = 1;
-    while (taken.has(`${base}-${suffix}`)) {
-      suffix++;
-    }
-
-    return `${base}-${suffix}`;
+    return mintElementName(base, (name) => taken.has(name));
   }
 
   public addPanel(): void {}
@@ -1220,6 +1208,8 @@ export class NotebookLayoutManager
     const cells = this.state.cells.map((cell) =>
       cell.clone({
         key: undefined,
+        // A copy of the layout is a copy of its cells, which are new cells with ids of their own.
+        id: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
         ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),

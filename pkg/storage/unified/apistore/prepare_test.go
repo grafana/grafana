@@ -569,20 +569,20 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			wantMessage string
 		}{
 			{
-				name:        "response error: not found",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}},
+				name:        "gRPC detail: not found",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "folder not found"}),
 				wantCode:    http.StatusNotFound,
 				wantMessage: "folder not found",
 			},
 			{
-				name:        "response error: not found without a message",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}},
+				name:        "gRPC detail: not found without a message",
+				err:         withErrorResult(grpccodes.NotFound, &resourcepb.ErrorResult{Code: http.StatusNotFound}),
 				wantCode:    http.StatusNotFound,
 				wantMessage: "failed to read folder some-folder",
 			},
 			{
-				name:        "response error: forbidden",
-				rsp:         &resourcepb.ReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}},
+				name:        "gRPC detail: forbidden",
+				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
 				wantCode:    http.StatusForbidden,
 				wantMessage: "not allowed to read folders",
 			},
@@ -595,12 +595,6 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			{
 				name:        "gRPC error: permission denied",
 				err:         grpcstatus.Error(grpccodes.PermissionDenied, "not allowed to read folders"),
-				wantCode:    http.StatusForbidden,
-				wantMessage: "not allowed to read folders",
-			},
-			{
-				name:        "gRPC error with an error result",
-				err:         withErrorResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "not allowed to read folders"}),
 				wantCode:    http.StatusForbidden,
 				wantMessage: "not allowed to read folders",
 			},
@@ -635,6 +629,43 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 				require.Contains(t, status.Message, tc.wantMessage)
 			})
 		}
+	})
+
+	t.Run("invalid folder responses fail closed", func(t *testing.T) {
+		for _, rsp := range []*resourcepb.ReadResponse{nil, {}, {Value: []byte(`invalid JSON`)}} {
+			s := &Storage{
+				opts: StorageOptions{EnableFolderSupport: true},
+				store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+					return rsp, nil
+				}},
+			}
+			err := s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+			require.ErrorContains(t, err, "failed to decode folder some-folder")
+		}
+	})
+
+	t.Run("preserves folder error details", func(t *testing.T) {
+		st, err := grpcstatus.New(grpccodes.InvalidArgument, "invalid folder").WithDetails(&resourcepb.ErrorResult{
+			Code: http.StatusUnprocessableEntity, Reason: string(v1.StatusReasonInvalid), Message: "invalid folder",
+			Details: &resourcepb.ErrorDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+				Causes: []*resourcepb.ErrorCause{{Reason: string(v1.CauseTypeFieldValueInvalid), Field: "metadata.name", Message: "invalid name"}}},
+		})
+		require.NoError(t, err)
+		s := &Storage{
+			opts: StorageOptions{EnableFolderSupport: true},
+			store: &folderReadStore{read: func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+				return nil, st.Err()
+			}},
+		}
+		err = s.ensureRepoManagedByParentFolder(context.Background(), makeDashboard(t, "some-folder", nil))
+		require.Error(t, err)
+		apiStatus, ok := err.(apierrors.APIStatus) //nolint:errorlint // the API server requires an unwrapped APIStatus
+		require.True(t, ok)
+		got := apiStatus.Status()
+		require.Equal(t, int32(http.StatusUnprocessableEntity), got.Code)
+		require.Equal(t, v1.StatusReasonInvalid, got.Reason)
+		require.Equal(t, &v1.StatusDetails{Group: folders.GROUP, Kind: "Folder", Name: "some-folder",
+			Causes: []v1.StatusCause{{Type: v1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid name"}}}, got.Details)
 	})
 
 	t.Run("create: dashboard in an unmanaged folder works", func(t *testing.T) {

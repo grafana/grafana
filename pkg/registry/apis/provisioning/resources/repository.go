@@ -42,16 +42,15 @@ type RepositoryResources interface {
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, int, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
 	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, beforeCreate BeforeCreate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
-	// Stats
-	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
+	// Stats returns the counts this repository manages.
+	Stats(ctx context.Context) ([]provisioning.ResourceCount, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
 type repositoryResourcesFactory struct {
-	parsers               ParserFactory
-	clients               ClientFactory
-	lister                ResourceLister
-	folderMetadataEnabled bool
+	parsers ParserFactory
+	clients ClientFactory
+	lister  ResourceLister
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -74,12 +73,12 @@ type repositoryResources struct {
 	repoName  string
 }
 
-func (r *repositoryResources) Stats(ctx context.Context) (*provisioning.ResourceStats, error) {
-	return r.lister.Stats(ctx, r.namespace, r.repoName)
+func (r *repositoryResources) Stats(ctx context.Context) ([]provisioning.ResourceCount, error) {
+	return r.lister.RepositoryStats(ctx, r.namespace, r.repoName)
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {
-	return r.lister.List(ctx, r.namespace, r.repoName)
+	return r.lister.List(ctx, r.namespace, r.repoName, ListOptions{})
 }
 
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
@@ -121,6 +120,10 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		sourcePath = sourcePath + "/"
 	}
 
+	if err := IsPathSupported(sourcePath); err != nil {
+		return "", fmt.Errorf("unsafe source path %q for resource %s/%s/%s: %w", sourcePath, gvr.Group, gvr.Resource, name, err)
+	}
+
 	return sourcePath, nil
 }
 
@@ -149,12 +152,11 @@ func provisioningAnnotationKeys(annotations map[string]string) []string {
 	return annotationKeys
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{
-		parsers:               parsers,
-		clients:               clients,
-		lister:                lister,
-		folderMetadataEnabled: folderMetadataEnabled,
+		parsers: parsers,
+		clients: clients,
+		lister:  lister,
 	}
 }
 
@@ -178,8 +180,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, cfg.folderManagerOptions...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

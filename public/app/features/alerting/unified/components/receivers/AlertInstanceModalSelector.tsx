@@ -19,7 +19,7 @@ import {
 import { type AlertmanagerAlert, type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { arrayLabelsToObject, labelsToTags, objectLabelsToArray } from '../../utils/labels';
 import { extractCommonLabels, omitLabels } from '../rules/state-history/common';
 

@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
-import { mockDataSource } from '../../mocks';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 
 import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
 

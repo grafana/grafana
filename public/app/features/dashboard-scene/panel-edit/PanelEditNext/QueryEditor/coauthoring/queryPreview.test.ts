@@ -35,7 +35,7 @@ setPluginImportUtils({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ get: mockGetDataSource }),
+  getDataSourceInstance: (...args: unknown[]) => mockGetDataSource(...args),
 }));
 
 function setupPreview(state = LoadingState.Done) {

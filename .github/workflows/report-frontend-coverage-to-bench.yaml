@@ -9,38 +9,50 @@ permissions: {}
 
 jobs:
   setup:
-    name: Setup opted-in teams
+    name: Discover codeowners with frontend tests
     runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
     outputs:
-      opted-in-teams: >-
-        [
-          "@grafana/access-squad",
-          "@grafana/alerting-squad",
-          "@grafana/app-o11y-visualizations",
-          "@grafana/dashboards-squad",
-          "@grafana/data-sources-plugins",
-          "@grafana/datapro",
-          "@grafana/dataviz-squad",
-          "@grafana/grafana-app-platform-squad",
-          "@grafana/grafana-catalog",
-          "@grafana/grafana-datasources-core-services",
-          "@grafana/grafana-frontend-navigation",
-          "@grafana/grafana-operator-experience-squad",
-          "@grafana/growth-engineering",
-          "@grafana/identity-access-team",
-          "@grafana/identity-squad",
-          "@grafana/observability-logs",
-          "@grafana/observability-metrics",
-          "@grafana/observability-traces-and-profiling",
-          "@grafana/sharing-squad"
-        ]
+      codeowners: ${{ steps.codeowners.outputs.codeowners }}
     steps:
-      - name: Define opted-in teams
-        run: echo "Opted-in teams defined in job outputs"
+      - name: Checkout main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      - name: Generate codeowners manifest
+        run: pnpm run codeowners-manifest
+
+      - name: List frontend tests
+        run: pnpm exec jest --listTests --json --runInBand --watch=false --testRegex='\.(test|spec)\..*\.(jsx?|tsx?)$|\.(test|spec)\.(jsx?|tsx?)$' > frontend-tests.json
+
+      - name: Discover codeowners with frontend tests
+        id: codeowners
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const manifest = require('./codeowners-manifest/filenames-by-team.json');
+          const tests = new Set(require('./frontend-tests.json').map(file => path.relative(process.cwd(), file)));
+          const codeowners = Object.keys(manifest)
+            .filter(owner => manifest[owner].some(file => tests.has(file)))
+            .sort();
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `codeowners=${JSON.stringify(codeowners)}\n`);
+          console.log(`Found ${codeowners.length} codeowners with frontend tests`);
+          NODE
 
   coverage-to-bench:
     name: Report coverage to Bench - ${{ matrix.codeowner }}
     needs: setup
+    if: needs.setup.outputs.codeowners != '[]'
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -48,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
+        codeowner: ${{ fromJSON(needs.setup.outputs.codeowners) }}
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v5

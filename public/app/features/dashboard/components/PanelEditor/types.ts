@@ -3,6 +3,8 @@ import { type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafa
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';
 
+export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
+
 export enum DisplayMode {
   Fill = 0,
   Fit = 1,
@@ -21,7 +23,7 @@ export interface OptionPaneRenderProps {
 }
 
 export interface OptionPaneItemOverrideInfo {
-  type: 'data' | 'rule';
+  type: 'data' | 'rule' | 'variable';
   onClick?: () => void;
   tooltip: string;
   description: string;

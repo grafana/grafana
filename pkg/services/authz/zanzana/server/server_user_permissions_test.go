@@ -157,9 +157,9 @@ func TestResolveUserPermissionsDeduplicatesFormattedActionScopes(t *testing.T) {
 	srv, _, store := newPermissionTestServer(t, nil)
 	enablePrincipalCache(srv)
 	grants := []permissionListResult{
-		{Entry: common.ActionListEntry{Action: "folders:read"}, List: &authzv1.ListResponse{Items: []string{"alpha", "zeta"}, Folders: []string{"alpha", "middle"}}},
-		{Entry: common.ActionListEntry{Action: "folders:write"}, List: &authzv1.ListResponse{Items: []string{"alpha"}}},
-		{Entry: common.ActionListEntry{Action: "dashboards:read"}, List: &authzv1.ListResponse{All: true}},
+		{Entry: common.TranslateActionToListParams("folders:read")[0], List: &authzv1.ListResponse{Items: []string{"alpha", "zeta"}, Folders: []string{"alpha", "middle"}}},
+		{Entry: common.TranslateActionToListParams("folders:write")[0], List: &authzv1.ListResponse{Items: []string{"alpha"}}},
+		{Entry: common.TranslateActionToListParams("dashboards:read")[0], List: &authzv1.ListResponse{All: true}},
 	}
 	cache := srv.principalCache()
 	cache.mu.Lock()

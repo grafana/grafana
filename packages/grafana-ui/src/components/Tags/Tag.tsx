@@ -1,15 +1,19 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef, type HTMLAttributes } from 'react';
+import { useMergeRefs } from '@floating-ui/react';
+import { type CSSProperties, forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
-import { getTagColor, getTagColorsFromName } from '../../utils/tags';
+import { getTagColorIndexFromName, getTagColorVariables } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 /**
  * @public
@@ -26,12 +30,22 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   /** Base CSS color for a tonal background and foreground pair. Takes precedence over colorIndex. */
   baseColor?: string;
   onClick?: OnTagClick;
+  /** Show a close button. The consumer owns removing the tag. */
+  onRemove?: OnTagClick;
+  /** Disable label and remove actions. Has no effect on static tags. */
+  disabled?: boolean;
 }
 
 const TagComponent = forwardRef<HTMLElement, Props>(
-  ({ name, onClick, icon, className, colorIndex, baseColor, ...rest }, ref) => {
+  ({ name, onClick, onRemove, disabled, icon, className, colorIndex, baseColor, style, ...rest }, ref) => {
+    const rootRef = useMergeRefs([ref]);
     const theme = useTheme2();
-    const styles = getTagStyles(theme, name, colorIndex, baseColor);
+    const styles = useStyles2(getTagStyles);
+    // Colors are inline custom properties so the class stays the same for every tag color.
+    const colorStyle: CSSProperties = {
+      ...getTagColorVariables(baseColor ?? colorIndex ?? getTagColorIndexFromName(name, theme), theme),
+      ...style,
+    };
 
     const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
       event.preventDefault();
@@ -40,15 +54,69 @@ const TagComponent = forwardRef<HTMLElement, Props>(
       onClick?.(name, event);
     };
 
-    const classes = cx(styles.wrapper, className, { [styles.hover]: onClick !== undefined });
+    const classes = cx(
+      styles.wrapper,
+      {
+        [styles.hover]: onClick !== undefined && !disabled && !onRemove,
+        [styles.disabled]: disabled && Boolean(onClick),
+        [styles.removable]: Boolean(onRemove),
+      },
+      className
+    );
+
+    if (onRemove) {
+      const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, ...wrapperProps } = rest;
+      return (
+        <span {...(onClick ? wrapperProps : rest)} className={classes} style={colorStyle} ref={rootRef}>
+          {onClick ? (
+            <button
+              type="button"
+              className={styles.labelButton}
+              onClick={onTagClick}
+              disabled={disabled}
+              aria-label={ariaLabel}
+              aria-labelledby={ariaLabelledBy}
+            >
+              {icon && <Icon name={icon} />}
+              {name}
+            </button>
+          ) : (
+            <span className={styles.label}>
+              {icon && <Icon name={icon} />}
+              {name}
+            </span>
+          )}
+          <IconButton
+            name="times"
+            size="lg"
+            aria-label={t('grafana-ui.tag.remove', 'Remove tag: {{name}}', { name })}
+            disabled={disabled}
+            className={styles.remove}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRemove(name, event);
+            }}
+          />
+        </span>
+      );
+    }
 
     return onClick ? (
-      <button {...rest} className={classes} onClick={onTagClick} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
+      <button
+        {...rest}
+        type="button"
+        disabled={disabled}
+        className={classes}
+        style={colorStyle}
+        onClick={onTagClick}
+        ref={rootRef}
+      >
         {icon && <Icon name={icon} />}
         {name}
       </button>
     ) : (
-      <span {...rest} className={classes} ref={ref}>
+      <span {...rest} className={classes} style={colorStyle} ref={rootRef}>
         {icon && <Icon name={icon} />}
         {name}
       </span>
@@ -63,7 +131,7 @@ const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
 };
 
 /**
- * Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+ * Use `Tag` to display a short metadata label, such as a category or environment in search results.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-tag--docs
  */
@@ -75,11 +143,44 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, baseColor?: string) => {
+const getTagStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const color = baseColor ?? colorIndex;
-  const { background, text } = color === undefined ? getTagColorsFromName(name, theme) : getTagColor(color, theme);
+  const label = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    // Preserve the existing 3px gap used by Tag's visual-refresh styles and TagsInput's TagItem.
+    gap: '3px',
+  };
   return {
+    removable: css({ display: 'inline-flex', alignItems: 'center', gap: theme.spacing(0.5), paddingBlock: 0 }),
+    label: css(label),
+    labelButton: css({
+      ...label,
+      justifyContent: 'center',
+      minWidth: theme.spacing(3),
+      minHeight: theme.spacing(3),
+      borderRadius: theme.shape.radius.sm,
+      '&:focus-visible': getFocusStyles(theme),
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+      '&:disabled': { cursor: 'not-allowed' },
+      '&:enabled:hover': { cursor: 'pointer', textDecoration: 'underline' },
+      appearance: 'none',
+      border: 'none',
+      background: 'transparent',
+      padding: 0,
+      font: 'inherit',
+      color: 'inherit',
+    }),
+    remove: css({
+      color: 'var(--tag-text)',
+      margin: 0,
+      minWidth: theme.spacing(3),
+      minHeight: theme.spacing(3),
+      '&::before': {
+        display: 'none',
+      },
+    }),
+    disabled: css({ color: theme.colors.text.disabled, cursor: 'not-allowed' }),
     wrapper: css(
       {
         appearance: 'none',
@@ -88,8 +189,8 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
         fontSize: theme.typography.size.sm,
         lineHeight: theme.typography.bodySmall.lineHeight,
         verticalAlign: 'baseline',
-        backgroundColor: background,
-        color: text,
+        backgroundColor: 'var(--tag-background)',
+        color: 'var(--tag-text)',
         whiteSpace: 'pre',
         textShadow: 'none',
         padding: '3px 6px',
@@ -108,7 +209,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
     ),
     hover: css({
       '&:hover': {
-        opacity: 0.85,
+        textDecoration: 'underline',
         cursor: 'pointer',
       },
     }),
