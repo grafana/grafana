@@ -102,14 +102,17 @@ export function ExtensionSidebar() {
     return null;
   }
 
-  // The extension sizes its floating surface with it; unset until the user resizes the height. A height remembered in
-  // a taller window is held to the room under the top bar.
+  // A height remembered in a taller window is held to the room under the top bar. The handles resize from it too, so
+  // a step or a release that changes nothing on screen keeps the remembered one.
+  const shownFloatingHeight =
+    floatingExtensionSidebarHeight === undefined
+      ? undefined
+      : Math.min(floatingExtensionSidebarHeight, floatingHeightRoom);
+  // The extension sizes its floating surface with it; unset until the user resizes the height.
   const floatingHeightStyle =
-    floating && floatingExtensionSidebarHeight !== undefined
+    floating && shownFloatingHeight !== undefined
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- CSSProperties has no custom properties
-        ({
-          [FLOATING_HEIGHT_VARIABLE]: `${Math.min(floatingExtensionSidebarHeight, floatingHeightRoom)}px`,
-        } as CSSProperties)
+        ({ [FLOATING_HEIGHT_VARIABLE]: `${shownFloatingHeight}px` } as CSSProperties)
       : undefined;
 
   return (
@@ -132,7 +135,7 @@ export function ExtensionSidebar() {
         <FloatingHeightHandle
           edge="top"
           options={floatingHeightOptions}
-          height={floatingExtensionSidebarHeight}
+          height={shownFloatingHeight}
           onHeightChange={setFloatingExtensionSidebarHeight}
           onWidthChange={setFloatingExtensionSidebarWidth}
         />
@@ -154,7 +157,7 @@ export function ExtensionSidebar() {
         <FloatingHeightHandle
           edge="corner"
           options={floatingHeightOptions}
-          height={floatingExtensionSidebarHeight}
+          height={shownFloatingHeight}
           onHeightChange={setFloatingExtensionSidebarHeight}
           onWidthChange={setFloatingExtensionSidebarWidth}
         />

@@ -69,7 +69,10 @@ interface FloatingHeightHandleProps {
   /** `top` resizes the height; `corner`, on the top-left corner, resizes the width with it. */
   edge: Edge;
   options: FloatingExtensionSidebarHeightOptions;
-  /** The height the user resized the sidebar to, or `undefined` while the extension's own height applies. */
+  /**
+   * The height the sidebar is shown at since the user resized it, held to the room under the top bar, or `undefined`
+   * while the extension's own height applies.
+   */
   height: number | undefined;
   onHeightChange: (height: number | undefined) => void;
   onWidthChange: (width: number) => void;
@@ -229,18 +232,19 @@ export function FloatingHeightHandle({
     }
     drag.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
-    // Let go level with where it was pressed, the edge resized nothing: a click must not lock the extension's own
-    // height, and a sideways corner drag only changed the width.
-    if (Math.round(event.clientY) === Math.round(active.startY)) {
+    const dragged = active.startHeight + (active.startY - event.clientY);
+    const from = clampHeight(dragged, active.floor, active.max);
+    const released = releasedFloatingHeight(dragged, active.options, active.max);
+    // Let go level with where it was pressed, or at the height it started from, the edge resized nothing: a click must
+    // not lock the extension's own height, a push against the top bar must not replace a height remembered in a
+    // taller window, and a sideways corner drag only changed the width.
+    if (Math.round(event.clientY) === Math.round(active.startY) || released === Math.round(active.startHeight)) {
       write(height);
       if (active.width !== active.startWidth) {
         reportResized(edge, 'drag', { width: active.width });
       }
       return;
     }
-    const dragged = active.startHeight + (active.startY - event.clientY);
-    const from = clampHeight(dragged, active.floor, active.max);
-    const released = releasedFloatingHeight(dragged, active.options, active.max);
     if (released === 'collapse') {
       const committed = height;
       settle(from, active.floor, () => {
@@ -281,8 +285,11 @@ export function FloatingHeightHandle({
     } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       const next = clampHeight(current + (event.key === 'ArrowUp' ? step : -step), options.minHeight, maxHeight());
-      onHeightChange(next);
-      reportResized(edge, 'keyboard', { height: next });
+      // At a bound the step changes nothing, and committing it would replace a height remembered in a taller window.
+      if (next !== Math.round(current)) {
+        onHeightChange(next);
+        reportResized(edge, 'keyboard', { height: next });
+      }
     } else if (event.key === 'Home') {
       event.preventDefault();
       reset();

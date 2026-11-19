@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { createTheme, type ExtensionInfo, PluginExtensionTypes, ThemeContext } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
@@ -280,6 +280,10 @@ describe('ExtensionSidebar', () => {
         const sidebar = container.querySelector<HTMLElement>('[data-extension-sidebar]');
         // 584 at the bottom, less the content's top at 48 and the 8px gutter.
         expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('528px');
+
+        // The handle steps from the height shown, not the one remembered.
+        fireEvent.keyDown(screen.getByRole('separator', { name: 'Resize sidebar height' }), { key: 'ArrowDown' });
+        expect(extensionSidebarContextMock.setFloatingExtensionSidebarHeight).toHaveBeenCalledWith(512);
       } finally {
         rect.mockRestore();
         page.remove();

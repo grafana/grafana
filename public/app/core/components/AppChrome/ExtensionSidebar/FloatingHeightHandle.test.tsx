@@ -167,6 +167,31 @@ describe('FloatingHeightHandle', () => {
       }
     });
 
+    it('keeps the remembered height when a drag or a key leaves the height where it was, at the top bar', () => {
+      const page = document.createElement('div');
+      page.id = 'pageContent';
+      page.getBoundingClientRect = () => ({ top: 100, left: 0, width: 1024, height: 668 }) as DOMRect;
+      document.body.appendChild(page);
+      try {
+        // Shown at the 600px room under the top bar: 708 at the bottom, less the content's top at 100 and the gutter.
+        const { handle, variable, onHeightChange } = renderHandle({
+          height: 600,
+          rendered: { width: 500, height: 600, bottom: 708 } as { width: number; height: number },
+        });
+
+        fireEvent.keyDown(handle, { key: 'ArrowUp' });
+        fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientY: 300 });
+        fireEvent.pointerMove(handle, { pointerId: 1, clientY: 100 });
+        fireEvent.pointerUp(handle, { pointerId: 1, clientY: 100 });
+        finishGlide();
+        expect(variable()).toBe('600px');
+        expect(onHeightChange).not.toHaveBeenCalled();
+        expect(reportInteraction).not.toHaveBeenCalled();
+      } finally {
+        page.remove();
+      }
+    });
+
     it('keeps the height under the window', () => {
       const { handle, variable, onHeightChange } = renderHandle();
 
