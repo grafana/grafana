@@ -234,6 +234,18 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
           borderRightWidth: 0,
           paddingRight: `calc(${tilePaddingInline} + 1px)`,
         },
+      },
+      {
+        // Background colours are overridden in forced-colors mode, so selection is shown with system colours
+        '@media (forced-colors: active)': {
+          [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart`]:
+            {
+              forcedColorAdjust: 'none',
+              color: 'HighlightText',
+              background: 'Highlight',
+              border: '1px solid HighlightText',
+            },
+        },
       }
     ),
   };
