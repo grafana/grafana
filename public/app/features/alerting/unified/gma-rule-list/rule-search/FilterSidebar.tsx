@@ -1,15 +1,41 @@
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { buildRoutingTreeOptions, isDefaultRoutingTreeName, useRoutingTrees } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Combobox, Input, MultiCombobox } from '@grafana/ui';
+import { Box, Collapse, Combobox, Divider, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { SidebarField, ToggleButtonGroup, type ToggleOption } from '../../rule-list/filter/RulesFilterSidebar';
 
 import { type HealthValue } from './sharedRuleFilter';
+
+/** The filter sidebar beside the rules, or folded above them on narrow screens so the rules keep the full width. */
+export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
+  const isWide = useMediaQueryMinWidth('lg');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // The rules keep their place in the tree across layouts, so resizing doesn't remount the list.
+  return (
+    <Stack direction={isWide ? 'row' : 'column'} gap={2}>
+      {isWide ? (
+        <Box width={32} shrink={0} paddingBottom={2}>
+          {sidebar}
+        </Box>
+      ) : (
+        <Collapse label={t('alerting.gma-rule-list.sidebar.filters', 'Filters')} isOpen={isOpen} onToggle={setIsOpen}>
+          {sidebar}
+        </Collapse>
+      )}
+      {isWide && <Divider direction="vertical" spacing={0} />}
+      <Box flex={1} minWidth={0}>
+        {children}
+      </Box>
+    </Stack>
+  );
+}
 
 /** One choice of a few, plus All for no filter. */
 export function ChoiceFilter<Value extends string>({

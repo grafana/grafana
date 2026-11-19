@@ -16,7 +16,14 @@ import AlertRulesPage from './AlertRulesPage';
 setupMswServer();
 setupDataSources(mockDataSource({ uid: 'prom-uid', name: 'Prometheus main' }, { alerting: true }));
 
+// The sidebar shows beside the rules from the lg breakpoint; jsdom's matchMedia never matches.
+const jsdomMatchMedia = window.matchMedia;
+function setWideScreen(isWide: boolean) {
+  jest.spyOn(window, 'matchMedia').mockImplementation((query) => ({ ...jsdomMatchMedia(query), matches: isWide }));
+}
+
 beforeEach(() => {
+  setWideScreen(true);
   setupRuleListBackend({
     folders: [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Alerts' } })],
     alertRules: [alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'CPU high load' } })],
@@ -40,6 +47,18 @@ function group(name: string) {
 }
 
 describe('AlertRulesFilterSidebar', () => {
+  it('folds the filters above the rules on a narrow screen, until opened', async () => {
+    setWideScreen(false);
+    const { user } = renderPage('cpu');
+
+    expect(await screen.findByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Rule name' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }));
+
+    expect(screen.getByRole('textbox', { name: 'Rule name' })).toHaveValue('cpu');
+  });
+
   it('shows each filter of the query in its control', async () => {
     renderPage('cpu state:firing label:team=api label:!env paused:true plugins:hide');
 
@@ -122,7 +141,7 @@ describe('AlertRulesFilterSidebar', () => {
     expect((await screen.findByTitle('Folder filter help')).closest('label')).toBeNull();
   });
 
-  it('moves a choice with the arrow keys, from a single tab stop on the checked option', async () => {
+  it('moves focus with the arrow keys and picks with Space, from a single tab stop on the checked option', async () => {
     const { user } = renderPage('cpu');
     const health = await screen.findByRole('radiogroup', { name: 'Health' });
     const radio = (name: string) => within(health).getByRole('radio', { name });
@@ -133,14 +152,16 @@ describe('AlertRulesFilterSidebar', () => {
     expect(tabStops()).toEqual([radio('All')]);
 
     radio('All').focus();
-    await user.keyboard('{ArrowDown}');
-    await waitFor(() => expect(searchParam()).toBe('cpu health:ok'));
-    expect(radio('OK')).toHaveFocus();
-    expect(tabStops()).toEqual([radio('OK')]);
-
-    await user.keyboard('{ArrowUp}{ArrowUp}');
-    await waitFor(() => expect(searchParam()).toBe('cpu health:unknown'));
+    await user.keyboard('{ArrowUp}');
     expect(radio('Unknown')).toHaveFocus();
+    expect(searchParam()).toBe('cpu');
+
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(radio('OK')).toHaveFocus();
+    await user.keyboard(' ');
+
+    await waitFor(() => expect(searchParam()).toBe('cpu health:ok'));
+    expect(tabStops()).toEqual([radio('OK')]);
   });
 
   it('applies the rule name on blur, replacing only the title text', async () => {

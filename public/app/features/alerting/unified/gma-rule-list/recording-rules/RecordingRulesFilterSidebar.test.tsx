@@ -17,7 +17,14 @@ setupDataSources(
   mockDataSource({ uid: 'loki-uid', name: 'Loki logs', type: 'loki' }, { alerting: true })
 );
 
+// The sidebar shows beside the rules from the lg breakpoint; jsdom's matchMedia never matches.
+const jsdomMatchMedia = window.matchMedia;
+function setWideScreen(isWide: boolean) {
+  jest.spyOn(window, 'matchMedia').mockImplementation((query) => ({ ...jsdomMatchMedia(query), matches: isWide }));
+}
+
 beforeEach(() => {
+  setWideScreen(true);
   setupRuleListBackend({
     folders: [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Metrics' } })],
     recordingRules: [recordingRuleFactory.inFolder('folder-1').build({ spec: { title: 'cpu:usage:rate5m' } })],
@@ -25,7 +32,9 @@ beforeEach(() => {
 });
 
 function renderPage(search: string) {
-  return render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });
+  return render(<RecordingRulesPage />, {
+    historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] },
+  });
 }
 
 function searchParam() {
@@ -39,7 +48,9 @@ describe('RecordingRulesFilterSidebar', () => {
     expect(await screen.findByRole('textbox', { name: 'Rule name' })).toHaveValue('cpu');
     expect(screen.getByRole('textbox', { name: 'Recorded metric' })).toHaveValue('cpu_usage');
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Target data source' })).toHaveValue('Mimir'));
-    expect(within(screen.getByRole('radiogroup', { name: 'Health' })).getByRole('radio', { name: 'Error' })).toBeChecked();
+    expect(
+      within(screen.getByRole('radiogroup', { name: 'Health' })).getByRole('radio', { name: 'Error' })
+    ).toBeChecked();
   });
 
   it('applies the recorded metric on blur', async () => {

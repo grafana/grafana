@@ -3,13 +3,14 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Divider, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useRecordingRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
@@ -47,15 +48,13 @@ function RecordingRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <Stack direction="row" gap={2}>
-            <RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />
-            <Divider direction="vertical" spacing={0} />
-            <Box flex={1} minWidth={0}>
-              <RuleSequenceDrawerProvider>
-                <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-              </RuleSequenceDrawerProvider>
-            </Box>
-          </Stack>
+          <FilterSidebarLayout
+            sidebar={<RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}
+          >
+            <RuleSequenceDrawerProvider>
+              <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </RuleSequenceDrawerProvider>
+          </FilterSidebarLayout>
         </Stack>
       </Box>
     </AlertingPageWrapper>

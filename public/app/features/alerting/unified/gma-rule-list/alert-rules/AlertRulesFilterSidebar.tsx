@@ -2,7 +2,7 @@ import { useId } from 'react';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
-import { Box, Divider, Stack } from '@grafana/ui';
+import { Divider, Stack } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
@@ -43,122 +43,120 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
     onApply(setFilters(query, alertRuleSearchSchema, changes));
 
   return (
-    <Box width={32} shrink={0} paddingBottom={2}>
-      <Stack direction="column" gap={2}>
-        <SidebarSection>
-          <TextFilter
-            label={t('alerting.gma-rule-list.sidebar.rule-name', 'Rule name')}
-            placeholder={t('alerting.gma-rule-list.sidebar.rule-name-placeholder', 'Filter by name')}
-            value={filter.text.join(' ')}
-            onApply={(text) => apply({ rule: [text] })}
-          />
-          <LabelMatchersFilter
-            labels={filter.labels}
-            onChange={(labels) => apply({ label: labels.map(formatLabelMatcher) })}
-          />
-          <ChoiceFilter
-            label={t('alerting.gma-rule-list.sidebar.state', 'Alert state')}
-            value={filter.state}
-            onChange={(state) => apply({ state: [state] })}
-            options={[
-              {
-                label: t('alerting.gma-rule-list.sidebar.state-firing', 'Firing'),
-                value: 'firing',
-                icon: 'exclamation-circle',
-                color: 'error',
-              },
-              {
-                label: t('alerting.gma-rule-list.sidebar.state-pending', 'Pending'),
-                value: 'pending',
-                icon: 'circle',
-                color: 'warning',
-              },
-              {
-                label: t('alerting.gma-rule-list.sidebar.state-recovering', 'Recovering'),
-                value: 'recovering',
-                icon: 'arrow-up',
-                color: 'info',
-              },
-              {
-                label: t('alerting.gma-rule-list.sidebar.state-normal', 'Normal'),
-                value: 'normal',
-                icon: 'check-circle',
-                color: 'success',
-              },
-            ]}
-          />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
-          <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          {canViewContactPoints && (
-            <SidebarField
-              htmlFor={contactPointId}
-              label={t('alerting.gma-rule-list.sidebar.contact-point', 'Contact point')}
-              tooltip={t(
-                'alerting.gma-rule-list.sidebar.contact-point-description',
-                'Rules that route straight to it, not through a notification policy'
-              )}
-              tooltipTitle={t('alerting.gma-rule-list.sidebar.contact-point-help', 'Contact point filter help')}
-            >
-              <ContactPointSelector
-                id={contactPointId}
-                placeholder={t('alerting.gma-rule-list.sidebar.contact-point-placeholder', 'Select contact point')}
-                value={filter.contactPoint}
-                isClearable
-                disabled={Boolean(filter.policy) && !filter.contactPoint}
-                onChange={(contactPoint) => apply({ contactPoint: [contactPoint?.spec.title] })}
-              />
-            </SidebarField>
-          )}
-          <PolicyFilter
-            policy={filter.policy}
-            disabled={Boolean(filter.contactPoint) && !filter.policy}
-            onChange={(policy) => apply({ policy: [policy] })}
-          />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          <SidebarField label={t('alerting.gma-rule-list.sidebar.dashboard', 'Dashboard')} htmlFor={dashboardId}>
-            <DashboardPicker
-              inputId={dashboardId}
-              // The picker keeps its own selection and ignores a cleared value, so a new value remounts it.
-              key={filter.dashboardUid ?? ''}
-              value={filter.dashboardUid}
+    <Stack direction="column" gap={2}>
+      <SidebarSection>
+        <TextFilter
+          label={t('alerting.gma-rule-list.sidebar.rule-name', 'Rule name')}
+          placeholder={t('alerting.gma-rule-list.sidebar.rule-name-placeholder', 'Filter by name')}
+          value={filter.text.join(' ')}
+          onApply={(text) => apply({ rule: [text] })}
+        />
+        <LabelMatchersFilter
+          labels={filter.labels}
+          onChange={(labels) => apply({ label: labels.map(formatLabelMatcher) })}
+        />
+        <ChoiceFilter
+          label={t('alerting.gma-rule-list.sidebar.state', 'Alert state')}
+          value={filter.state}
+          onChange={(state) => apply({ state: [state] })}
+          options={[
+            {
+              label: t('alerting.gma-rule-list.sidebar.state-firing', 'Firing'),
+              value: 'firing',
+              icon: 'exclamation-circle',
+              color: 'error',
+            },
+            {
+              label: t('alerting.gma-rule-list.sidebar.state-pending', 'Pending'),
+              value: 'pending',
+              icon: 'circle',
+              color: 'warning',
+            },
+            {
+              label: t('alerting.gma-rule-list.sidebar.state-recovering', 'Recovering'),
+              value: 'recovering',
+              icon: 'arrow-up',
+              color: 'info',
+            },
+            {
+              label: t('alerting.gma-rule-list.sidebar.state-normal', 'Normal'),
+              value: 'normal',
+              icon: 'check-circle',
+              color: 'success',
+            },
+          ]}
+        />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
+        <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        {canViewContactPoints && (
+          <SidebarField
+            htmlFor={contactPointId}
+            label={t('alerting.gma-rule-list.sidebar.contact-point', 'Contact point')}
+            tooltip={t(
+              'alerting.gma-rule-list.sidebar.contact-point-description',
+              'Rules that route straight to it, not through a notification policy'
+            )}
+            tooltipTitle={t('alerting.gma-rule-list.sidebar.contact-point-help', 'Contact point filter help')}
+          >
+            <ContactPointSelector
+              id={contactPointId}
+              placeholder={t('alerting.gma-rule-list.sidebar.contact-point-placeholder', 'Select contact point')}
+              value={filter.contactPoint}
               isClearable
-              showUnknown
-              // A panel ID means nothing outside its dashboard.
-              onChange={(dashboard) => apply({ dashboard: [dashboard?.uid], panelId: [] })}
+              disabled={Boolean(filter.policy) && !filter.contactPoint}
+              onChange={(contactPoint) => apply({ contactPoint: [contactPoint?.spec.title] })}
             />
           </SidebarField>
-          {(filter.dashboardUid || filter.panelId) && (
-            <TextFilter
-              label={t('alerting.gma-rule-list.sidebar.panel-id', 'Panel ID')}
-              value={filter.panelId ?? ''}
-              onApply={(panelId) => apply({ panelId: [panelId.trim()] })}
-            />
-          )}
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
-          <ChoiceFilter
-            label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
-            value={filter.paused}
-            onChange={(paused) => apply({ paused: [paused] })}
-            options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
-          />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <PluginRulesFilter
-          hide={filter.hidePluginRules}
-          onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
+        )}
+        <PolicyFilter
+          policy={filter.policy}
+          disabled={Boolean(filter.contactPoint) && !filter.policy}
+          onChange={(policy) => apply({ policy: [policy] })}
         />
-      </Stack>
-    </Box>
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        <SidebarField label={t('alerting.gma-rule-list.sidebar.dashboard', 'Dashboard')} htmlFor={dashboardId}>
+          <DashboardPicker
+            inputId={dashboardId}
+            // The picker keeps its own selection and ignores a cleared value, so a new value remounts it.
+            key={filter.dashboardUid ?? ''}
+            value={filter.dashboardUid}
+            isClearable
+            showUnknown
+            // A panel ID means nothing outside its dashboard.
+            onChange={(dashboard) => apply({ dashboard: [dashboard?.uid], panelId: [] })}
+          />
+        </SidebarField>
+        {(filter.dashboardUid || filter.panelId) && (
+          <TextFilter
+            label={t('alerting.gma-rule-list.sidebar.panel-id', 'Panel ID')}
+            value={filter.panelId ?? ''}
+            onApply={(panelId) => apply({ panelId: [panelId.trim()] })}
+          />
+        )}
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
+        <ChoiceFilter
+          label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
+          value={filter.paused}
+          onChange={(paused) => apply({ paused: [paused] })}
+          options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
+        />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <PluginRulesFilter
+        hide={filter.hidePluginRules}
+        onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
+      />
+    </Stack>
   );
 }

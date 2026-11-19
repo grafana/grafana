@@ -2,7 +2,7 @@ import { useId } from 'react';
 
 import { useDataSourcesWithValidRecordingTarget } from '@grafana/alerting/internal';
 import { t } from '@grafana/i18n';
-import { Box, Combobox, Divider, Stack } from '@grafana/ui';
+import { Combobox, Divider, Stack } from '@grafana/ui';
 
 import { SidebarField, SidebarSection } from '../../rule-list/filter/RulesFilterSidebar';
 import {
@@ -29,47 +29,45 @@ export function RecordingRulesFilterSidebar({ query, filter, onApply }: Recordin
     onApply(setFilters(query, recordingRuleSearchSchema, changes));
 
   return (
-    <Box width={32} shrink={0} paddingBottom={2}>
-      <Stack direction="column" gap={2}>
-        <SidebarSection>
-          <TextFilter
-            label={t('alerting.gma-rule-list.sidebar.rule-name', 'Rule name')}
-            placeholder={t('alerting.gma-rule-list.sidebar.rule-name-placeholder', 'Filter by name')}
-            value={filter.text.join(' ')}
-            onApply={(text) => apply({ rule: [text] })}
-          />
-          <LabelMatchersFilter
-            labels={filter.labels}
-            onChange={(labels) => apply({ label: labels.map(formatLabelMatcher) })}
-          />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
-          <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <SidebarSection>
-          <TextFilter
-            label={t('alerting.gma-rule-list.sidebar.metric', 'Recorded metric')}
-            placeholder={t('alerting.gma-rule-list.sidebar.metric-placeholder', 'Exact metric name')}
-            value={filter.metric ?? ''}
-            onApply={(metric) => apply({ metric: [metric.trim()] })}
-          />
-          <TargetDataSourceFilter
-            dataSourceUid={filter.targetDataSourceUid}
-            onChange={(uid) => apply({ targetDatasource: [uid] })}
-          />
-        </SidebarSection>
-        <Divider spacing={0} />
-        <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
-        <Divider spacing={0} />
-        <PluginRulesFilter
-          hide={filter.hidePluginRules}
-          onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
+    <Stack direction="column" gap={2}>
+      <SidebarSection>
+        <TextFilter
+          label={t('alerting.gma-rule-list.sidebar.rule-name', 'Rule name')}
+          placeholder={t('alerting.gma-rule-list.sidebar.rule-name-placeholder', 'Filter by name')}
+          value={filter.text.join(' ')}
+          onApply={(text) => apply({ rule: [text] })}
         />
-      </Stack>
-    </Box>
+        <LabelMatchersFilter
+          labels={filter.labels}
+          onChange={(labels) => apply({ label: labels.map(formatLabelMatcher) })}
+        />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
+        <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <SidebarSection>
+        <TextFilter
+          label={t('alerting.gma-rule-list.sidebar.metric', 'Recorded metric')}
+          placeholder={t('alerting.gma-rule-list.sidebar.metric-placeholder', 'Exact metric name')}
+          value={filter.metric ?? ''}
+          onApply={(metric) => apply({ metric: [metric.trim()] })}
+        />
+        <TargetDataSourceFilter
+          dataSourceUid={filter.targetDataSourceUid}
+          onChange={(uid) => apply({ targetDatasource: [uid] })}
+        />
+      </SidebarSection>
+      <Divider spacing={0} />
+      <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
+      <Divider spacing={0} />
+      <PluginRulesFilter
+        hide={filter.hidePluginRules}
+        onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
+      />
+    </Stack>
   );
 }
 
