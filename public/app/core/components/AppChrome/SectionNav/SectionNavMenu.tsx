@@ -6,6 +6,8 @@ import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
+import { sectionNavLinkKey } from './useSectionNav';
+
 interface Props {
   label: string;
   groups: NavModelItem[];
@@ -17,7 +19,7 @@ export function SectionNavMenu({ label, groups, activeId }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const active = groups
     .flatMap((group) => group.children ?? [])
-    .find((item) => activeId !== undefined && item.id === activeId);
+    .find((item) => activeId !== undefined && sectionNavLinkKey(item) === activeId);
 
   const menu = (
     <Menu ariaLabel={label}>
@@ -31,7 +33,7 @@ export function SectionNavMenu({ label, groups, activeId }: Props) {
                 url={item.url}
                 label={item.text}
                 icon={item.icon}
-                active={activeId !== undefined && item.id === activeId}
+                active={activeId !== undefined && sectionNavLinkKey(item) === activeId}
               />
             ))}
           </Menu.Group>
