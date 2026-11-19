@@ -5714,6 +5714,36 @@
       "view-json-diff": "View JSON diff to see all changes"
     }
   },
+  "core-kinds": {
+    "connection": {
+      "label": "connection",
+      "label-plural": "connections"
+    },
+    "dashboard": {
+      "label": "dashboard",
+      "label-plural": "dashboards"
+    },
+    "datasource": {
+      "label": "data source",
+      "label-plural": "data sources"
+    },
+    "folder": {
+      "label": "folder",
+      "label-plural": "folders"
+    },
+    "librarypanel": {
+      "label": "library panel",
+      "label-plural": "library panels"
+    },
+    "playlist": {
+      "label": "playlist",
+      "label-plural": "playlists"
+    },
+    "repository": {
+      "label": "repository",
+      "label-plural": "repositories"
+    }
+  },
   "correlations": {
     "add-new": "Add new",
     "alert": {
@@ -15700,22 +15730,6 @@
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
-    "resource-kind": {
-      "connection": "connection",
-      "connections": "Connections",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboards",
-      "datasource": "data source",
-      "datasources": "Data sources",
-      "folder": "folder",
-      "folders": "Folders",
-      "library-panel": "library panel",
-      "library-panels": "Library panels",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "Repositories",
-      "repository": "repository"
-    },
     "resource-tree": {
       "header-hash": "Hash",
       "header-status": "Status",
@@ -16657,8 +16671,6 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
       "type-header": "Type"
     },
     "search-input": {
