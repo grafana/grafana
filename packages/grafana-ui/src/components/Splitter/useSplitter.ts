@@ -160,7 +160,7 @@ export function useSplitter(options: UseSplitterOptions) {
         const newFlex = newSize / (containerPixels - handleSize);
         firstPane.style.flexGrow = `${newFlex}`;
         secondPane.style.flexGrow = `${1 - newFlex}`;
-        splitter.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
+        splitter.setAttribute('aria-valuenow', pixelAriaValue(newSize, containerPixels, handleSize));
         onResizing?.(newFlex, newSize, secondPanePixels - diff);
       }
     },
@@ -486,10 +486,6 @@ export function useSplitter(options: UseSplitterOptions) {
       className: dragHandleStyle,
     },
   };
-}
-
-function ariaValue(value: number, min: number, max: number) {
-  return `${clamp(((value - min) / (max - min)) * 100, 0, 100)}`;
 }
 
 /** The primary pane's share of the space beside the handle, as a whole percentage. */
