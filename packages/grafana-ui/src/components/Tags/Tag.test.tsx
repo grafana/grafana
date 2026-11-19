@@ -98,11 +98,11 @@ describe('Tag', () => {
     }
   );
 
-  it('uses theme disabled text without dimming the tag background', () => {
+  it('uses theme disabled text on a disabled label action without dimming the tag background', () => {
     const theme = createTheme();
     render(
       <ThemeContext.Provider value={theme}>
-        <Tag name="service" title="Disabled tag" colorIndex={0} disabled onRemove={jest.fn()} />
+        <Tag name="service" title="Disabled tag" colorIndex={0} disabled onClick={jest.fn()} onRemove={jest.fn()} />
       </ThemeContext.Provider>
     );
 

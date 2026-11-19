@@ -58,7 +58,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
       styles.wrapper,
       {
         [styles.hover]: onClick !== undefined && !disabled && !onRemove,
-        [styles.disabled]: disabled && Boolean(onClick || onRemove),
+        [styles.disabled]: disabled && Boolean(onClick),
         [styles.removable]: Boolean(onRemove),
       },
       className
@@ -71,7 +71,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
           {onClick ? (
             <button
               type="button"
-              className={cx(styles.labelButton, { [styles.hover]: !disabled })}
+              className={styles.labelButton}
               onClick={onTagClick}
               disabled={disabled}
               aria-label={ariaLabel}
@@ -163,6 +163,7 @@ const getTagStyles = (theme: GrafanaTheme2) => {
       '&:focus-visible': getFocusStyles(theme),
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
       '&:disabled': { cursor: 'not-allowed' },
+      '&:enabled:hover': { cursor: 'pointer', textDecoration: 'underline' },
       appearance: 'none',
       border: 'none',
       background: 'transparent',

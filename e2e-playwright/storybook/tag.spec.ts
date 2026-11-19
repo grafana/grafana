@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '@playwright/test';
 
 test('removable tags retain list semantics and focus through removal and reset', async ({ page }) => {
@@ -116,14 +117,31 @@ for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_da
     const remove = page.getByRole('button', { name: 'Remove tag: Both actions', exact: true });
     const tag = label.locator('..');
 
+    const tagBackground = await tag.evaluate((element) => getComputedStyle(element).backgroundColor);
+
     await label.hover();
-    await expect(label).toHaveCSS('opacity', '0.85');
+    await expect(label).toHaveCSS('text-decoration-line', 'underline');
+    await expect(tag).toHaveCSS('background-color', tagBackground);
     await expect(tag).toHaveCSS('opacity', '1');
     await expect(remove).toHaveCSS('opacity', '1');
 
     await remove.hover();
-    await expect(label).toHaveCSS('opacity', '1');
-    await expect(tag).toHaveCSS('opacity', '1');
-    await expect(remove).toHaveCSS('opacity', '1');
+    await expect(label).toHaveCSS('text-decoration-line', 'none');
+    await expect(remove).toHaveCSS('text-decoration-line', 'none');
+    await expect(tag).toHaveCSS('background-color', tagBackground);
+  });
+
+  test(`tag labels retain text contrast with one action hovered or disabled in ${theme}`, async ({ page }) => {
+    await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
+    await expect(page.getByRole('button', { name: 'Remove tag: Disabled removal', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: 'Both actions', exact: true }).hover();
+
+    const { violations } = await new AxeBuilder({ page })
+      .include('#storybook-root')
+      .withRules(['color-contrast'])
+      .analyze();
+    expect(
+      violations.flatMap(({ nodes }) => nodes.map(({ html, failureSummary }) => ({ html, failureSummary })))
+    ).toEqual([]);
   });
 }
