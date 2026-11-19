@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { createRef } from 'react';
 import * as uwrap from 'uwrap';
 
 import {
@@ -26,6 +27,7 @@ import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
+import { type TableNGApi } from './types';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -673,6 +675,162 @@ describe('TableNG', () => {
         expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       }
     );
+  });
+
+  describe('scroll API', () => {
+    let gridRows: string[];
+
+    beforeEach(() => {
+      gridRows = [];
+      window.HTMLElement.prototype.scrollIntoView = function scrollIntoView(this: HTMLElement) {
+        if (this.style.gridRow) {
+          gridRows.push(this.style.gridRow);
+        }
+      };
+    });
+
+    function lastTarget() {
+      const target = gridRows.at(-1);
+      if (target == null) {
+        throw new Error('scroll did not target a row');
+      }
+      return target;
+    }
+
+    function bodyRows(container: HTMLElement, role: 'grid' | 'treegrid') {
+      const grid = container.querySelector(`[role="${role}"]`);
+      if (!grid) {
+        throw new Error(`missing ${role}`);
+      }
+      // Direct children only. Nested sub-tables are their own grids inside a row.
+      return Array.from(grid.children).filter(
+        (row): row is HTMLElement =>
+          row instanceof HTMLElement &&
+          row.getAttribute('role') === 'row' &&
+          !row.className.includes('rdg-header-row') &&
+          !row.className.includes('rdg-summary-row')
+      );
+    }
+
+    it('scrolls to the first and last displayed rows without selecting a cell', () => {
+      const ref = createRef<TableNGApi>();
+      const { container } = render(<TableNG ref={ref} data={createBasicDataFrame()} width={800} height={100} />);
+
+      act(() => {
+        ref.current?.scrollToTop();
+      });
+      const top = lastTarget();
+      act(() => {
+        ref.current?.scrollToBottom();
+      });
+      const bottom = lastTarget();
+
+      expect(Number(bottom)).toBeGreaterThan(Number(top));
+      expect(Number(bottom) - Number(top)).toBe(bodyRows(container, 'grid').length - 1);
+      expect(container.querySelector('[aria-selected="true"][role="row"]')).not.toBeInTheDocument();
+
+      const calls = gridRows.length;
+      act(() => {
+        ref.current?.scrollToRow(-1);
+        ref.current?.scrollToRow(99);
+      });
+      expect(gridRows).toHaveLength(calls);
+    });
+
+    it('scrolls to displayed indexes after sorting, not raw data frame indexes', () => {
+      const ref = createRef<TableNGApi>();
+      render(
+        <TableNG
+          ref={ref}
+          sortBy={[{ displayName: 'Column B', desc: true }]}
+          data={createBasicDataFrame()}
+          width={800}
+          height={100}
+        />
+      );
+
+      act(() => {
+        ref.current?.scrollToTop();
+      });
+      const top = lastTarget();
+      act(() => {
+        ref.current?.scrollToBottom();
+      });
+      const bottom = lastTarget();
+      act(() => {
+        ref.current?.scrollToRow(0);
+      });
+
+      // Descending Column B puts data frame index 0 on the last displayed row.
+      expect(lastTarget()).toBe(top);
+      expect(top).not.toBe(bottom);
+    });
+
+    it('scrolls within the rows that remain after filtering', async () => {
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: true };
+      const ref = createRef<TableNGApi>();
+      render(<TableNG ref={ref} data={frame} width={800} height={600} tableRefreshEnabled />);
+
+      await user.click(screen.getByRole('button', { name: 'Column options for Column A' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+      await user.click(screen.getByRole('checkbox', { name: 'A2' }));
+      await user.click(screen.getByRole('button', { name: 'Ok' }));
+      expect(screen.getByText('A2')).toBeInTheDocument();
+      expect(screen.queryByText('A1')).not.toBeInTheDocument();
+
+      act(() => {
+        ref.current?.scrollToTop();
+      });
+      const top = lastTarget();
+      act(() => {
+        ref.current?.scrollToBottom();
+      });
+      expect(lastTarget()).toBe(top);
+    });
+
+    it('scrolls to the bottom of an expanded nested sub-table', () => {
+      const ref = createRef<TableNGApi>();
+      const { container } = render(
+        <TableNG ref={ref} data={createNestedDataFrame({ custom: { expandAllRows: true } })} width={800} height={200} />
+      );
+      const rows = bodyRows(container, 'treegrid');
+      expect(rows.length).toBeGreaterThan(2);
+      expect(rows[rows.length - 1]).toHaveTextContent('N2');
+
+      act(() => {
+        ref.current?.scrollToRow(0);
+      });
+      const first = Number(lastTarget());
+      act(() => {
+        ref.current?.scrollToBottom();
+      });
+      expect(Number(lastTarget()) - first).toBe(rows.length - 1);
+    });
+
+    it('scrolls a variable-height table to its last displayed row', () => {
+      const frame = createBasicDataFrame();
+      frame.fields[0].values[0] = 'short';
+      frame.fields[0].values[2] = 'wrapped '.repeat(30);
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        wrapText: true,
+        cellOptions: { type: TableCellDisplayMode.Auto, wrapText: true, dynamicHeight: true },
+      };
+      const ref = createRef<TableNGApi>();
+      const { container } = render(<TableNG ref={ref} data={frame} width={120} height={80} />);
+      const rows = bodyRows(container, 'grid');
+      expect(rows.length).toBe(3);
+
+      act(() => {
+        ref.current?.scrollToBottom();
+      });
+      act(() => {
+        ref.current?.scrollToRow(0);
+      });
+      const top = Number(lastTarget());
+      expect(Number(gridRows[gridRows.length - 2]) - top).toBe(rows.length - 1);
+    });
   });
 
   describe('TableNG::sortBy', () => {
