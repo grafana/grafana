@@ -72,6 +72,8 @@ type Manager struct {
 
 	// readiness gates whether evaluation results may be applied before the cache is warmed.
 	readiness ReadinessProbe
+
+	recording *RecordingSeriesManager
 }
 
 type ManagerCfg struct {
@@ -113,6 +115,9 @@ type ManagerCfg struct {
 	RequireWarm bool
 	// WarmGateTimeout is the grace window before gated evaluation proceeds anyway. 0 uses the default.
 	WarmGateTimeout time.Duration
+
+	// RecordingSeries configures the tracking of series written by recording rules.
+	RecordingSeries RecordingSeriesCfg
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -159,6 +164,12 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		readiness: readiness,
 	}
 
+	var seriesStore RecordingSeriesStore
+	if cfg.InstanceStore != nil {
+		seriesStore, _ = cfg.InstanceStore.(RecordingSeriesStore)
+	}
+	m.recording = newRecordingSeriesManager(cfg.RecordingSeries, seriesStore, readiness, cfg.Clock, cfg.Log)
+
 	return m
 }
 
@@ -167,13 +178,23 @@ func (st *Manager) Ready() Readiness {
 	return st.readiness.Ready()
 }
 
+// Recording returns the tracker for the series written by recording rules.
+func (st *Manager) Recording() *RecordingSeriesManager {
+	return st.recording
+}
+
 func (st *Manager) ClearCache() {
 	st.cache.reset()
+	st.recording.reset()
 	st.readiness.Reset()
 }
 
 func (st *Manager) Run(ctx context.Context) error {
-	st.persister.Async(ctx, st.cache)
+	var provider AlertInstancesProvider = st.cache
+	if st.recording.cfg.Enabled {
+		provider = seriesAwareProvider{AlertInstancesProvider: st.cache, series: st.recording}
+	}
+	st.persister.Async(ctx, provider)
 	return nil
 }
 
@@ -272,6 +293,12 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 
 			st.cache.set(state)
 			statesCount++
+		}
+
+		if st.recording.cfg.Enabled {
+			if _, ok := st.recording.warm(ctx, orgId, ruleByUID, logger); !ok {
+				success = false
+			}
 		}
 	}
 }
