@@ -262,6 +262,8 @@ export const FlagKeys = {
   GrafanaPanelOptionInterpolation: "grafana.panelOptionInterpolation",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode */
+  GrafanaPanelQuickEdits: "grafana.panelQuickEdits",
   /** Pass React elements in plugin extension props by reference */
   GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
@@ -1786,6 +1788,17 @@ export const useFlagGrafanaPanelOptionInterpolation = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelQuickEdits`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelQuickEdits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelQuickEdits", false, options).value;
 };
 
 /**
