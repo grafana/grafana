@@ -166,6 +166,48 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 	return modules, nil
 }
 
+// GetUsersAuthModules returns the distinct auth modules of each given user UID, ordered by most recently used first.
+func (s *Store) GetUsersAuthModules(ctx context.Context, userUIDs []string) (map[string][]string, error) {
+	result := make(map[string][]string, len(userUIDs))
+	if len(userUIDs) == 0 {
+		return result, nil
+	}
+
+	params := make([]any, 0, len(userUIDs))
+	for _, uid := range userUIDs {
+		params = append(params, uid)
+	}
+
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	rows := make([]struct {
+		UserUID    string `xorm:"user_uid"`
+		AuthModule string `xorm:"auth_module"`
+	}, 0, len(userUIDs))
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("user_auth")).In("user_uid", params).Desc("created").Cols("user_uid", "auth_module").Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]map[string]struct{}, len(userUIDs))
+	for _, r := range rows {
+		if _, ok := seen[r.UserUID]; !ok {
+			seen[r.UserUID] = map[string]struct{}{}
+		}
+		if _, dup := seen[r.UserUID][r.AuthModule]; dup {
+			continue
+		}
+		seen[r.UserUID][r.AuthModule] = struct{}{}
+		result[r.UserUID] = append(result[r.UserUID], r.AuthModule)
+	}
+	return result, nil
+}
+
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:      cmd.UserId,

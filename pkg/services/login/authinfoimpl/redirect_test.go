@@ -55,6 +55,16 @@ func TestRedirectStore(t *testing.T) {
 			},
 		},
 		{
+			name: "GetUsersAuthModules",
+			call: func(s login.Store) error {
+				_, err := s.GetUsersAuthModules(context.Background(), []string{"u1", "u2"})
+				return err
+			},
+			on: func(m *authinfotest.MockAuthInfoStore) {
+				m.On("GetUsersAuthModules", mock.Anything, []string{"u1", "u2"}).Return(map[string][]string{}, nil).Once()
+			},
+		},
+		{
 			name: "SetAuthInfo",
 			call: func(s login.Store) error { return s.SetAuthInfo(context.Background(), setAuthInfoCmd) },
 			on: func(m *authinfotest.MockAuthInfoStore) {

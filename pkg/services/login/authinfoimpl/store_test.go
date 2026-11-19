@@ -104,6 +104,33 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 		assert.Equal(t, "2", info.AuthId)
 	})
 
+	t.Run("should get all distinct auth modules per user, most recent first", func(t *testing.T) {
+		ctx := context.Background()
+		defer func() {
+			GetTime = time.Now
+		}()
+
+		base := time.Now()
+		setAt := func(offset time.Duration, cmd *login.SetAuthInfoCommand) {
+			GetTime = func() time.Time { return base.Add(offset) }
+			require.NoError(t, store.SetAuthInfo(ctx, cmd))
+		}
+		setAt(0, &login.SetAuthInfoCommand{AuthModule: login.LDAPAuthModule, AuthId: "a", UserId: 50, UserUID: "50"})
+		setAt(time.Hour, &login.SetAuthInfoCommand{AuthModule: login.AzureADAuthModule, AuthId: "b", UserId: 50, UserUID: "50"})
+		setAt(2*time.Hour, &login.SetAuthInfoCommand{AuthModule: login.GoogleAuthModule, AuthId: "c", UserId: 51, UserUID: "51"})
+
+		modules, err := store.GetUsersAuthModules(ctx, []string{"50", "51", "52"})
+		require.NoError(t, err)
+		require.Equal(t, map[string][]string{
+			"50": {login.AzureADAuthModule, login.LDAPAuthModule},
+			"51": {login.GoogleAuthModule},
+		}, modules, "user 52 has no auth info and must be absent")
+
+		modules, err = store.GetUsersAuthModules(ctx, nil)
+		require.NoError(t, err)
+		require.Empty(t, modules)
+	})
+
 	t.Run("should return error when userID and authID is zero value", func(t *testing.T) {
 		ctx := context.Background()
 		info, err := store.GetAuthInfo(ctx, &login.GetAuthInfoQuery{

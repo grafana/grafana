@@ -426,6 +426,31 @@ func TestStore_GetUserAuthModules(t *testing.T) {
 	}
 }
 
+func TestStore_GetUsersAuthModules(t *testing.T) {
+	created := time.Now()
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.URL.Path, "/authinfos") {
+			t.Fatalf("unexpected request (no user lookup expected when UIDs are given): %s %s", r.Method, r.URL.Path)
+		}
+		if strings.Contains(r.URL.Query().Get("fieldSelector"), "user-uid-1") {
+			writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+				authInfoItem("user-uid-1.ldap", "user-uid-1", "ldap", "ldap-1", created),
+				authInfoItem("user-uid-1.oauth-github", "user-uid-1", "oauth_github", "gh-1", created.Add(time.Hour)),
+				authInfoItem("user-uid-1.ldap-dup", "user-uid-1", "ldap", "ldap-2", created.Add(2*time.Hour)),
+			}})
+			return
+		}
+		writeJSON(t, w, iamv0alpha1.AuthInfoList{})
+	}
+
+	store := newTestStore(t, handler)
+	result, err := store.GetUsersAuthModules(contextWithReqContext(7), []string{"user-uid-1", "user-uid-2"})
+	require.NoError(t, err)
+	require.Len(t, result, 1, "users without auth info must be absent")
+	assert.Equal(t, []string{"ldap", "oauth_github"}, result["user-uid-1"], "most recent first, deduplicated")
+}
+
 func TestStore_GetUsersRecentlyUsedLabel(t *testing.T) {
 	created := time.Now()
 

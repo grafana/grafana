@@ -165,6 +165,40 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 	return modules, nil
 }
 
+// GetUsersAuthModules implements login.Store.
+func (s *Store) GetUsersAuthModules(ctx context.Context, userUIDs []string) (map[string][]string, error) {
+	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.GetUsersAuthModules")
+	defer span.End()
+
+	authClient, _, namespace, err := s.clients(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string][]string, len(userUIDs))
+	for _, userUID := range userUIDs {
+		items, err := s.listForUser(ctx, authClient, namespace, userUID)
+		if err != nil {
+			return nil, err
+		}
+		if len(items) == 0 {
+			continue
+		}
+		modules := make([]string, 0, len(items))
+		seen := make(map[string]struct{}, len(items))
+		for _, item := range items {
+			if _, dup := seen[item.Spec.AuthModule]; dup {
+				continue
+			}
+			seen[item.Spec.AuthModule] = struct{}{}
+			modules = append(modules, item.Spec.AuthModule)
+		}
+		result[userUID] = modules
+	}
+
+	return result, nil
+}
+
 // GetUsersRecentlyUsedLabel implements login.Store.
 func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.GetUsersRecentlyUsedLabel")

@@ -94,6 +94,13 @@ func (s *Service) GetUsersRecentlyUsedLabel(ctx context.Context, query login.Get
 	return s.authInfoStore.GetUsersRecentlyUsedLabel(ctx, query)
 }
 
+func (s *Service) GetUsersAuthModules(ctx context.Context, userUIDs []string) (map[string][]string, error) {
+	if len(userUIDs) == 0 {
+		return map[string][]string{}, nil
+	}
+	return s.authInfoStore.GetUsersAuthModules(ctx, userUIDs)
+}
+
 func (s *Service) setAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery, info *login.UserAuth) error {
 	cacheKey := generateCacheKey(query)
 	infoJSON, err := json.Marshal(info)
