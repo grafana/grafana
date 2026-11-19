@@ -130,6 +130,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	service10 "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	service7 "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	database3 "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
@@ -406,11 +407,12 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	userCleaner := dashboardpreferences.ProvideUserCleaner(eventualRestConfigProvider)
+	orgService, err := orgimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, cfg, quotaService, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	features, err := iam.ProvideFeatures(cfg)
 	if err != nil {
 		return nil, err
@@ -420,7 +422,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,11 +1211,12 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	userCleaner := dashboardpreferences.ProvideUserCleaner(eventualRestConfigProvider)
+	orgService, err := orgimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, cfg, quotaService, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	features, err := iam.ProvideFeatures(cfg)
 	if err != nil {
 		return nil, err
@@ -1223,7 +1226,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}
@@ -1922,11 +1925,12 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
-	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	userCleaner := dashboardpreferences.ProvideUserCleaner(eventualRestConfigProvider)
+	orgService, err := orgimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, cfg, quotaService, publisher, userCleaner)
 	if err != nil {
 		return server.Runner{}, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	features, err := iam.ProvideFeatures(cfg)
 	if err != nil {
 		return server.Runner{}, err
@@ -1937,7 +1941,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 		return server.Runner{}, err
 	}
 	cacheService := localcache.ProvideService()
-	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher, userCleaner)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2083,7 +2087,9 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
-	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	userCleaner := dashboardpreferences.ProvideUserCleaner(eventualRestConfigProvider)
+	orgService, err := orgimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, cfg, quotaService, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}
@@ -2098,7 +2104,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
@@ -2162,7 +2167,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithPreferencesCleanup(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher, userCleaner)
 	if err != nil {
 		return nil, err
 	}

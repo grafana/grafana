@@ -401,6 +401,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	_ "github.com/grafana/grafana/pkg/services/dashboards"
 	_ "github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	_ "github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	_ "github.com/grafana/grafana/pkg/services/dashboards/service"
 	_ "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	_ "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
