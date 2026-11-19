@@ -1,7 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type Resource } from 'app/features/apiserver/types';
+import { DeprecatedInternalId, type Resource } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import {
@@ -17,6 +17,7 @@ import {
   isV1ClassicDashboard,
   isV1DashboardCommand,
   isV2DashboardCommand,
+  restoreDashboardResource,
 } from './utils';
 
 // Test data constants
@@ -148,5 +149,58 @@ describe('getDashboardsApiVersion', () => {
   ])('with toggles %j and responseFormat %s returns %s', (toggles, responseFormat, expected) => {
     setTestFlags(toggles);
     expect(getDashboardsApiVersion(responseFormat as 'v1' | 'v2' | undefined)).toBe(expected);
+  });
+});
+
+describe('restoreDashboardResource', () => {
+  const resource = {
+    apiVersion: 'dashboard.grafana.app/v2',
+    kind: 'Dashboard',
+    metadata: {
+      name: 'dash-uid',
+      resourceVersion: '7',
+      creationTimestamp: '1',
+      labels: { [DeprecatedInternalId]: '42' },
+    },
+    spec: v2Spec,
+  } as Resource<DashboardV2Spec>;
+
+  // Shape the apiserver uses for a rejected write: a Status body on an HTTP error.
+  function statusError(reason: string, message: string) {
+    return { status: 409, data: { kind: 'Status', status: 'Failure', reason, message } };
+  }
+
+  it('keeps the legacy ID when the restore succeeds', async () => {
+    const created = { ...resource };
+    const create = jest.fn().mockResolvedValue(created);
+
+    await expect(restoreDashboardResource({ create }, resource)).resolves.toBe(created);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[0][0].metadata.labels).toEqual({ [DeprecatedInternalId]: '42' });
+  });
+
+  it('retries without the legacy ID when another dashboard holds it', async () => {
+    const created = { ...resource };
+    const conflict = statusError('Conflict', 'deprecatedInternalID=42 is already in use');
+    const create = jest.fn().mockRejectedValueOnce(conflict).mockResolvedValueOnce(created);
+
+    await expect(restoreDashboardResource({ create }, resource)).resolves.toBe(created);
+
+    expect(create).toHaveBeenCalledTimes(2);
+    const retryPayload = create.mock.calls[1][0];
+    expect(retryPayload.metadata.labels).toEqual({});
+    expect(retryPayload.metadata.resourceVersion).toBe('');
+    // The caller's resource must not be mutated by the retry.
+    expect(resource.metadata.labels).toEqual({ [DeprecatedInternalId]: '42' });
+    // BackendSrv raises a toast for any rejection that is not marked handled.
+    expect(conflict).toHaveProperty('isHandled', true);
+  });
+
+  it('does not retry when the name is still taken', async () => {
+    const alreadyExists = statusError('AlreadyExists', 'dashboards.dashboard.grafana.app "dash-uid" already exists');
+    const create = jest.fn().mockRejectedValue(alreadyExists);
+
+    await expect(restoreDashboardResource({ create }, resource)).rejects.toBe(alreadyExists);
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, renderHook, getWrapper, waitFor, screen, within } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
@@ -103,6 +104,8 @@ const expectChildrenRefetched = (store: Store<StoreState>, parentUID: string | u
 const originalProvisioningEnabled = config.provisioningEnabled;
 const originalPermissions = contextSrv.user.permissions;
 
+testWithStarsUser();
+
 beforeEach(() => {
   config.provisioningEnabled = false;
   // Browse-tree refetches skip the folder list without folders:read, which would leave the refresh assertions below
@@ -184,6 +187,28 @@ describe('useGetCombinedFolderQuery', () => {
     // The folder picker disables itself on a 403, as if the viewer had no access to the folder.
     expect(result.current.isError).toBe(false);
     expect(result.current.error).toBeUndefined();
+  });
+
+  it('stays loading on every render until the folder is ready', async () => {
+    const phases: string[] = [];
+    const { result } = renderHook(
+      () => {
+        const state = useGetCombinedFolderQuery(expectedUid);
+        if (state.isLoading) {
+          phases.push('loading');
+        } else if (state.isError) {
+          phases.push('error');
+        } else {
+          phases.push(state.data ? 'ready' : 'empty');
+        }
+        return state;
+      },
+      { wrapper: getWrapper({}) }
+    );
+    await waitFor(() => expect(result.current.data?.uid).toBe(expectedUid));
+
+    // Callers show a render that is neither loading nor an error, and has no folder, as a missing folder.
+    expect([...new Set(phases)]).toEqual(['loading', 'ready']);
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {

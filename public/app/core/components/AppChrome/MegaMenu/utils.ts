@@ -1,17 +1,19 @@
-import { useEffect } from 'react';
+import { createFocusManager } from '@react-aria/focus';
+import { useEffect, useEffectEvent } from 'react';
+import { usePrevious } from 'react-use';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { DASHBOARDS_TAB_NAV_IDS, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, NavID, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 
-import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, DOCKED_MENU_TOGGLE_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 import { getNavExperimentPayload } from './navExperiment';
 
 const emitOpenShortcutsModal = async () => {
@@ -350,6 +352,14 @@ export function removeEmptySavedSections(
   });
 }
 
+/**
+ * Folds the Administration section into a single row: its destinations stay in the nav tree for the
+ * section nav, breadcrumbs and routing, and only the mega menu stops listing them.
+ */
+export function foldAdministration(items: NavModelItem[]): NavModelItem[] {
+  return items.map((item) => (item.id === NavID.cfg ? { ...item, children: undefined } : item));
+}
+
 /** All descendant keys of an item. */
 function getDescendantKeys(item: NavModelItem): string[] {
   return (item.children ?? []).flatMap((child) => {
@@ -434,27 +444,58 @@ export function reorderSections(
   return next === ordered ? currentOrder : next;
 }
 
+/** The mega menu over the page, as opposed to the docked one. */
+export const MEGA_MENU_OVERLAY_ID = 'mega-menu-overlay';
+
+/** Moves focus to the first control in the mega menu over the page, where opening it with a click puts focus. */
+export function focusMegaMenuOverlay() {
+  const menu = document.getElementById(MEGA_MENU_OVERLAY_ID);
+  if (menu) {
+    createFocusManager({ current: menu }).focusFirst({ tabbable: true });
+  }
+}
+
 /**
  * helper to manage focus when opening/closing and docking/undocking the mega menu
  * @param isOpen whether the mega menu is open
  * @param isDocked whether mega menu is docked
+ * @param isPeek whether the pointer opened the mega menu, by resting on its toggle
  */
-export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean, isPeek = false) {
+  // Opening the menu by pointing at its toggle, and closing it by moving away, leave focus where it is.
+  const wasPeek = usePrevious(isPeek);
+  const openedOrClosedByPeek = isPeek || Boolean(wasPeek);
+
   // manage focus when opening/closing
-  useEffect(() => {
-    if (isOpen) {
+  const onOpenChange = useEffectEvent((open: boolean) => {
+    if (openedOrClosedByPeek) {
+      return;
+    }
+    if (open) {
       document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
-  }, [isOpen]);
+  });
 
   // manage focus when docking/undocking
-  useEffect(() => {
-    if (isDocked) {
-      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+  const onDockedChange = useEffectEvent((docked: boolean) => {
+    // A peek opens a docked menu the user closed undocked.
+    if (isPeek) {
+      return;
+    }
+    if (docked) {
+      (document.getElementById(DOCKED_MENU_TOGGLE_ID) ?? document.getElementById(DOCK_MENU_BUTTON_ID))?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
+  });
+
+  // Only an open or a close, and docking or undocking, move focus.
+  useEffect(() => {
+    onOpenChange(isOpen);
+  }, [isOpen]);
+  useEffect(() => {
+    onDockedChange(isDocked);
   }, [isDocked]);
 }

@@ -116,9 +116,14 @@ describe('PromoteConfirmModal', () => {
 
   it('previews the merge impact and renamed resources from the dry-run, then promotes on confirm', async () => {
     let promoted = false;
+    const importSources: Array<string | null> = [];
     server.use(
-      http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => {
+      http.post(CONVERT_URL, ({ request }) => {
+        importSources.push(request.headers.get('X-Grafana-Alerting-Import-Source'));
+        return fullDryRunResponse();
+      }),
+      http.post(PROMOTE_URL, ({ request }) => {
+        importSources.push(request.headers.get('X-Grafana-Alerting-Import-Source'));
         promoted = true;
         return HttpResponse.json(convertResponse());
       })
@@ -148,6 +153,8 @@ describe('PromoteConfirmModal', () => {
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
     expect(promoted).toBe(true);
+    // Both the preview dry run and the promote come from the settings page.
+    expect(importSources).toEqual(['import_settings', 'import_settings']);
   });
 
   it('clears the configured auto-sync datasource after promoting a sync-managed config', async () => {

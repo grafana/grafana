@@ -1500,9 +1500,29 @@
         "records": "Datensätze",
         "to": "zum"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Keine Aufzeichnungsregeln gefunden",
@@ -1578,6 +1598,19 @@
         "view-folders": "Ordner",
         "view-list": "Liste",
         "wildcard-in-text": "Der Suchtext darf nicht * oder % enthalten."
+      },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
+      "sequence-pill": {
+        "label-with-interval": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Mehr laden",
@@ -1799,17 +1832,18 @@
         "autosync-rules-error-title": "Import der Regeln fehlgeschlagen",
         "autosync-rules-imported-note": "Ihre ausgewählten Warnregeln wurden ebenfalls importiert.",
         "autosync-rules-note": "Ihre ausgewählten Warnregeln werden ebenfalls importiert.",
-        "autosync-success-body": "Automatische Synchronisierung aktiviert. Weiterleitung …",
+        "autosync-success-body": "",
         "autosync-success-title": "Automatische Synchronisierung aktiviert",
         "autosync-title": "Automatische Synchronisierung bestätigen",
         "body": "Möchten Sie den Import wirklich starten? Mit dieser Aktion werden neue Ressourcen in Grafana Alerting erstellt.",
         "confirm": "Import starten",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Import fehlgeschlagen",
         "importing-body": "Ressourcen werden in Grafana Alerting importiert. Bitte warten …",
         "importing-title": "Import läuft …",
-        "success-body": "Ressourcen erfolgreich importiert. Weiterleitung …",
+        "success-body": "",
         "success-title": "Import erfolgreich",
         "title": "Import bestätigen"
       },
@@ -2394,6 +2428,7 @@
       "contact-points": "Kontaktpunkte",
       "notification-policies": "Benachrichtigungsrichtlinien",
       "recently-deleted": "Kürzlich gelöscht",
+      "recording-rules": "",
       "templates": "Vorlagen",
       "time-intervals": "Zeitintervalle"
     },
@@ -2914,6 +2949,37 @@
           "description": "Dieses Feld ist geschützt und kann nur von Nutzern mit erweiterten Berechtigungen bearbeitet werden"
         }
       }
+    },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
     },
     "recording-rule": {
       "term": "Aufnahmeregel"
@@ -5351,6 +5417,7 @@
       "change-theme": "Thema ändern",
       "dark-theme": "Dunkel",
       "dashboard-from-template": "Dashboard aus Vorlage",
+      "experimental": "",
       "light-theme": "Hell",
       "open-saved-queries": "Gespeicherte Abfragen öffnen",
       "scopes": "Bereiche"
@@ -5809,7 +5876,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
         "hint-remove": "",
@@ -6211,8 +6278,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Daten",
@@ -6407,9 +6473,6 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad-hoc-Transformationen sind im Bearbeitungsmodus deaktiviert"
     },
     "plan-building-overlay": {
       "quip-corners": "Die Ecken des Panels werden verfeinert …",
@@ -6788,8 +6851,6 @@
         "open-editor": "Variablen-Editor öffnen",
         "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
         "query-options": {
-          "close": "Schließen",
-          "old-modal-title": "Abfragevariable",
           "preview": "Vorschau"
         },
         "remove": "Entfernen",
@@ -7697,11 +7758,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "lifecycle": {
-      "applied": "Ihre Änderungen wurden auf {{title}} angewendet",
-      "apply": "Anwenden",
-      "apply-body": "Alle Personen mit Zugriff werden sie sehen. Sie können die vorherige Version aus dem Versionsverlauf wiederherstellen.",
-      "apply-failed": "Die Änderungen konnten nicht übernommen werden. Versuchen Sie es erneut oder vergleichen Sie sie zuerst.",
-      "apply-needs-edit": "Zum Übernehmen ist Bearbeitungszugriff auf „{{title}}“ erforderlich. Sie können eine Vorschau dieser Änderungen anzeigen, sie aber nicht übernehmen.",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Entwurf",
       "breadcrumb-pending-changes": "Ausstehende Änderungen",
       "change-added": "Hinzugefügt",
@@ -7733,7 +7790,6 @@
       "draft-discarded": "",
       "draft-title": "Entwurf",
       "edited-dashboard": "",
-      "highlight-changes": "Änderungen im Dashboard hervorheben",
       "pending-body": "Vorschau ausstehender Änderungen. Nur Sie können sie sehen.",
       "pending-body-source": "Vorschau ausstehender Änderungen {{source}}. Nur Sie können sie sehen.",
       "pending-changes-changed": "",
@@ -7742,13 +7798,16 @@
       "pending-stale": "Das Dashboard wurde aktualisiert, seitdem Ihre Änderungen vorgenommen wurden",
       "pending-title": "Ausstehende Änderungen",
       "preview-changes": "Vorschau der Änderungen",
-      "rebase": "Basis aktualisieren",
       "record-pending-change-failed": "",
       "save": "Speichern",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Original-Dashboard anzeigen",
-      "stop-highlighting-changes": "Hervorhebung von Änderungen beenden",
-      "apply-title_one": " {{count}} Änderung für „{{title}}“ anwenden?",
-      "apply-title_other": " {{count}} Änderungen für „{{title}}“ anwenden?"
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Link hinzufügen",
@@ -8000,6 +8059,12 @@
       "confirmText-restore-version": "Ja, auf Version {{version}} zurücksetzen",
       "title-restore-version": "Version wiederherstellen"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Erlauben",
       "allow-tooltip": "Laden Sie Inhalte aus den ausgewählten Quellen in den aufgeführten Panels, bis Sie dieses Tab schließen.",
@@ -8195,6 +8260,12 @@
       "switch-options": "Switch-Optionen",
       "value-pair-type": "Wertepaartyp",
       "value-pair-type-description": "Wählen Sie den Wertetyp für die Switch-Zustände"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardwert"
@@ -9790,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Funktionssteuerung",
       "close-tooltip": "Funktionssteuerung schließen",
       "open-tooltip": "Funktionssteuerung öffnen"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Löschen",
     "description": "Überschreiben Sie für Test- und Entwicklungszwecke Frontend-Feature-Flags lokal.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Benutzeroberfläche und Symbolleistenschaltfläche entfernen",
       "tooltip": "Alle festgelegten Feature-Flag-Überschreibungen bleiben aktiv.<br/> Verwenden Sie <3>{{ param }}</3> in der URL zur erneuten Aktivierung der Benutzeroberfläche."
@@ -9806,11 +9881,18 @@
     "flag-type": "Flag-Typ",
     "flag-value": "Flag-Wert",
     "menu": "Menü öffnen",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP-Evaluierung",
     "ofrep-reason": "Grund: <2>{{reason}}</2>",
     "ofrep-variant": "Variante: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Speichern",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Funktionssteuerung"
   },
   "folder-filter": {
@@ -10810,6 +10892,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Wie nah der Cursor an einem Punkt sein muss, um den Tooltip auszulösen, in Pixeln",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alles",
           "label-hidden": "Ausgeblendet",
@@ -12421,7 +12505,7 @@
     },
     "description-allow-download": "Wenn Steuerelemente aktiviert sind, wird eine Option für den Download der gezeigten Logs angezeigt.",
     "description-enable-field-selector": "Experimentell. Eine Komponente anzeigen, um die angezeigten Felder aus den Logs zu verwalten.",
-    "description-enable-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Nutzen Sie ein vordefiniertes Farbschema, um relevante Teile der Logzeilen hervorzuheben.",
     "description-order": "Neueste oder älteste Logs zuerst anzeigen. Wenn „Älteste zuerst“ ausgewählt ist, scrollt die Ansicht automatisch zu den neuesten Logs am unteren Rand.",
     "description-prettify-json": "JSON-Log-Einträge mit Einrückung und Zeilenumbrüchen formatieren.",
@@ -13110,6 +13194,10 @@
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
@@ -13434,6 +13522,34 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
@@ -13449,14 +13565,6 @@
         "open-all": "Open-AI-Assistenten und Seitenleisten-Apps"
       },
       "floating-resize": "Breite der Seitenleiste ändern"
-    },
-    "fullscreen-workspace": {
-      "enter": "Workspace aufrufen",
-      "error-exit": "Workspace beenden",
-      "error-message": "Grafana Assistant Workspace konnte nicht geladen werden.",
-      "error-reload": "Seite neu laden",
-      "error-title": "Workspace nicht verfügbar",
-      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Hilfe",
@@ -13494,6 +13602,7 @@
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Menü schließen",
       "customise": "Navigation anpassen",
       "customise-cancel": "Abbrechen",
@@ -13528,7 +13637,10 @@
       "aria-label": "Neu",
       "new-template-dashboard-button": "Vorlage verwenden"
     },
-    "rss-button": "Das Neueste aus dem Blog"
+    "rss-button": "Das Neueste aus dem Blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Nachrichten",
@@ -13651,8 +13763,10 @@
       "drag-handle": "Zur Neuanordnung ziehen",
       "duplicate": "Block duplizieren",
       "frame": {
-        "aria-label-collapsed": "Eingeklappter Block: {{name}}",
-        "aria-label-panel": "Visualisierungsblock: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13740,7 +13854,7 @@
       "submit": "Zum Notizbuch hinzufügen",
       "success": "Panel hinzugefügt zu {{title}}",
       "success-cells": "Hinzugefügt zu {{title}}",
-      "success-link": "Notizbuch anzeigen",
+      "success-open-link": "",
       "tag-placeholder": "Filtern nach Tag",
       "target-description": "Wählen Sie, wo das Panel hinzugefügt werden soll.",
       "target-existing": "Vorhandenes Notizbuch",
@@ -13912,7 +14026,8 @@
       "swatch-placeholder-aria-label": "Wählen Sie eine Farbe, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Farbreihe nach"
+      "color-by-label": "Farbreihe nach",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Nicht im gültigen Bereich. {{range}}",
@@ -13962,6 +14077,32 @@
     },
     "units": {
       "clear-tooltip": "Einheitenauswahl löschen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14392,6 +14533,9 @@
     },
     "empty-state": {
       "message": "Keine Plugins gefunden"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Siehe Konsole für weitere Details zum Fehler.",
@@ -15518,6 +15662,8 @@
       "header-title": "Titel",
       "header-type": "Typ",
       "missing-folder-metadata": "Fehlende Ordner-Metadaten-Datei",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Nach Pfad oder Titel suchen",
       "source": "Quelle",
       "status-filter-aria-label": "Nach Status filtern",
