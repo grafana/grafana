@@ -29,7 +29,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
-import { getKindInfoByItemType, getKindInfoByResource } from '../utils/resourceKinds';
+import { getKindInfoByKind, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
   filterByStatusAndResources,
@@ -49,7 +49,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
+    return getKindInfoByKind(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }

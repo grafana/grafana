@@ -56,13 +56,13 @@ type OnCoreKinds = {
 
 /**
  * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
- * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
+ * the UI reads from instead of scattering per-kind knowledge across switch statements (tree labels,
  * count labels, resource-ref unions, how to enumerate each kind). Each entry builds on the kind's
  * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
  * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
- * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here and one in
+ * ({@link ResourceKindName}) are derived from this object: adding a kind is ONE entry here and one in
  * {@link CORE_KINDS} (plus, if needed, enabling it on the backend so it appears in the settings
  * endpoint's `availableResources`) — no parallel unions to keep in sync. Entries are validated
  * against {@link ResourceKindInfo} where `allKindInfos` is built below; `as const` is used instead of
@@ -72,21 +72,18 @@ type OnCoreKinds = {
 export const resourceKindInfos = {
   folder: {
     ...CORE_KINDS.folder,
-    itemType: 'Folder',
     folderScoped: true,
     list: () => listViaSearch('folder'),
     alwaysAvailable: true,
   },
   dashboard: {
     ...CORE_KINDS.dashboard,
-    itemType: 'Dashboard',
     folderScoped: true,
     list: () => listViaSearch('dashboard'),
     alwaysAvailable: true,
   },
   playlist: {
     ...CORE_KINDS.playlist,
-    itemType: 'Playlist',
     // Playlists aren't folder-contained — they only have their own collection page.
     folderScoped: false,
     // Playlists aren't in the unified search index; list them through their
@@ -99,7 +96,6 @@ export const resourceKindInfos = {
   },
   librarypanel: {
     ...CORE_KINDS.librarypanel,
-    itemType: 'LibraryPanel',
     // Library panels live inside folders on the backend, but the dashboards folder browse doesn't
     // list them, so the migrate table groups them under one row like a non-foldered kind.
     folderScoped: false,
@@ -112,7 +108,6 @@ export const resourceKindInfos = {
   },
   repository: {
     ...CORE_KINDS.repository,
-    itemType: 'Repository',
     // Repositories are instance-scoped configuration, not folder-contained.
     folderScoped: false,
     // Provisioning's own configuration is never a migration target: it is the mechanism that
@@ -122,7 +117,6 @@ export const resourceKindInfos = {
   },
   connection: {
     ...CORE_KINDS.connection,
-    itemType: 'Connection',
     folderScoped: false,
     // Not a migration target, for the same reason as repositories.
     list: async () => [],
@@ -132,7 +126,6 @@ export const resourceKindInfos = {
     ...CORE_KINDS.datasource,
     // The backend names the kind by its collection, as no single group serves it
     group: CORE_KINDS.datasource.collection,
-    itemType: 'DataSource',
     // Data sources are org-scoped, not folder-contained.
     folderScoped: false,
     list: ({ availableResources }: ResourceListDeps) => {
@@ -153,19 +146,19 @@ export type ResourceKindKey = keyof typeof resourceKindInfos;
 
 /**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
- * the registry's `itemType`s so the set stays in lockstep with the kinds above. The full tree
- * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
+ * the registry's `kind`s so the set stays in lockstep with the kinds above. The full tree
+ * {@link TreeItemKind} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind'];
 
 /**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
- * needs to know about it. `itemType` is typed as the derived union, so a {@link ResourceKindInfo}
+ * needs to know about it. `kind` is typed as the derived union, so a {@link ResourceKindInfo}
  * carries the kind's tree label without a separate lookup.
  *
  * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
- * across switch statements (item types, count labels, resource-ref unions, how to enumerate each
+ * across switch statements (tree labels, count labels, resource-ref unions, how to enumerate each
  * kind). Adding a new provisioning kind is one {@link resourceKindInfos} entry on top of its
  * {@link CORE_KINDS} one, plus (if needed) enabling it on the backend so it appears in the settings
  * `availableResources`.
@@ -183,8 +176,8 @@ export interface ResourceKindInfo extends KindInfo {
    * resource is not what the kind is called.
    */
   collection?: string;
-  /** Label shown for this kind in the combined files/resources tree. */
-  itemType: ResourceItemType;
+  /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
+  kind: ResourceKindName;
   /**
    * Whether the migrate table nests resources of this kind under their parent folder (folders,
    * dashboards). Other kinds (e.g. playlists) are grouped under one row per kind.
@@ -215,7 +208,7 @@ export interface ResourceKindInfo extends KindInfo {
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
+// each call site. The literal `key`/`kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
@@ -241,12 +234,12 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
 }
 
 /**
- * Look up a kind by its tree item type. Accepts any string (tree items can be the `File` fallback,
- * which has no backing kind and resolves to `undefined`) so callers don't depend on the `ItemType`
- * union and create an import cycle with `../types`.
+ * Look up a kind by its Kubernetes Kind, which is also its tree label. Accepts any string (tree
+ * items can be the `File` fallback, which has no backing kind and resolves to `undefined`) so
+ * callers don't depend on the `TreeItemKind` union and create an import cycle with `../types`.
  */
-export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.itemType === itemType);
+export function getKindInfoByKind(kind: string): ResourceKindInfo | undefined {
+  return allKindInfos.find((info) => info.kind === kind);
 }
 
 /**

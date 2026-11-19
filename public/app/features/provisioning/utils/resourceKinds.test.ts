@@ -9,7 +9,7 @@ import {
   resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByGroupKind,
-  getKindInfoByItemType,
+  getKindInfoByKind,
   getKindInfoByResource,
   getKindInfoByStat,
   getKindInfoByStatGroup,
@@ -26,44 +26,37 @@ describe('resourceKinds registry', () => {
       group: 'dashboard.grafana.app',
       kind: 'Dashboard',
       resource: 'dashboards',
-      itemType: 'Dashboard',
     });
     expect(resourceKindInfos.folder).toMatchObject({
       group: 'folder.grafana.app',
       kind: 'Folder',
       resource: 'folders',
-      itemType: 'Folder',
     });
     expect(resourceKindInfos.playlist).toMatchObject({
       group: 'playlist.grafana.app',
       kind: 'Playlist',
       resource: 'playlists',
-      itemType: 'Playlist',
     });
     expect(resourceKindInfos.librarypanel).toMatchObject({
       group: 'dashboard.grafana.app',
       kind: 'LibraryPanel',
       resource: 'librarypanels',
-      itemType: 'LibraryPanel',
     });
     expect(resourceKindInfos.datasource).toMatchObject({
       group: 'datasource.grafana.app',
       kind: 'DataSource',
       resource: 'datasources',
-      itemType: 'DataSource',
       collection: 'datasource.grafana.app',
     });
     expect(resourceKindInfos.repository).toMatchObject({
       group: 'provisioning.grafana.app',
       kind: 'Repository',
       resource: 'repositories',
-      itemType: 'Repository',
     });
     expect(resourceKindInfos.connection).toMatchObject({
       group: 'provisioning.grafana.app',
       kind: 'Connection',
       resource: 'connections',
-      itemType: 'Connection',
     });
   });
 
@@ -126,14 +119,14 @@ describe('getKindInfoByResource', () => {
   });
 });
 
-describe('getKindInfoByItemType', () => {
-  it('resolves by item type', () => {
-    expect(getKindInfoByItemType('Dashboard')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByItemType('Folder')).toBe(resourceKindInfos.folder);
+describe('getKindInfoByKind', () => {
+  it('resolves by kind', () => {
+    expect(getKindInfoByKind('Dashboard')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByKind('Folder')).toBe(resourceKindInfos.folder);
   });
 
   it('returns undefined for the non-resource File type', () => {
-    expect(getKindInfoByItemType('File')).toBeUndefined();
+    expect(getKindInfoByKind('File')).toBeUndefined();
   });
 });
 

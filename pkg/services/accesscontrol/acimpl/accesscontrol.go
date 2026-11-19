@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -47,6 +48,7 @@ type AccessControl struct {
 	skipScopeResolution bool
 	openFeatureClient   *openfeature.Client
 	legacyCheckClient   legacyclient.LegacyAccessClient
+	legacyCheckShadow   *legacyCheckShadow
 	useExternalGroups   bool
 	legacyNamespace     types.NamespaceFormatter
 }
@@ -71,11 +73,26 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	const defaultLegacyCheck = false
-	if a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, openfeature.TransactionContext(ctx)) {
+	const (
+		defaultLegacyCheck       = false
+		defaultLegacyCheckShadow = false
+	)
+	flagContext := openfeature.TransactionContext(ctx)
+	legacyEnabled := !shadow.IsShadow(ctx) &&
+		a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, flagContext)
+	shadowEnabled := legacyEnabled &&
+		a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheckShadow, defaultLegacyCheckShadow, flagContext)
+	if shadowEnabled {
+		return a.legacyCheckShadow.evaluate(ctx, a, user, evaluator)
+	}
+	if legacyEnabled {
 		return a.evaluateLegacyCheck(ctx, user, evaluator)
 	}
 
+	return a.evaluateLocal(ctx, user, evaluator)
+}
+
+func (a *AccessControl) evaluateLocal(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
 	permissions := user.GetPermissions()
 	if user.GetOrgID() == accesscontrol.NoOrgID {
@@ -116,6 +133,7 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 		skipScopeResolution: true,
 		openFeatureClient:   a.openFeatureClient,
 		legacyCheckClient:   a.legacyCheckClient,
+		legacyCheckShadow:   a.legacyCheckShadow,
 		useExternalGroups:   a.useExternalGroups,
 		legacyNamespace:     a.legacyNamespace,
 	}

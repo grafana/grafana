@@ -228,6 +228,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enable infinite scroll for logs when scrolling top */
+  GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
   GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
@@ -240,6 +242,8 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
   GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
+  /** Shows Administration as a single row in the mega menu, with its destinations in the section nav */
+  GrafanaNavigationAdminSubNav: "grafana.navigationAdminSubNav",
   /** Enables the refreshed information architecture for Grafana's navigation */
   GrafanaNavigationInfoArchRefresh: "grafana.navigationInfoArchRefresh",
   /** Enables a new UI for query errors and notices */
@@ -1598,6 +1602,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enable infinite scroll for logs when scrolling top
+ *
+ * **Details:**
+ * - flag key: `grafana.logsInfiniteScrollTop`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogsInfiniteScrollTop = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logsInfiniteScrollTop", false, options).value;
+};
+
+/**
  * Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button
  *
  * **Details:**
@@ -1661,6 +1676,17 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantUserPermissions", false, options).value;
+};
+
+/**
+ * Shows Administration as a single row in the mega menu, with its destinations in the section nav
+ *
+ * **Details:**
+ * - flag key: `grafana.navigationAdminSubNav`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNavigationAdminSubNav = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.navigationAdminSubNav", false, options).value;
 };
 
 /**
