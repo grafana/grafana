@@ -1,171 +1,156 @@
 name: Nix build Grafana
+run-name: Nix backend test benchmark
 
 on:
   push:
-    paths:
-      - .github/workflows/nix-build-grafana.yml
-      - flake.nix
-      - flake.lock
-      - 'nix/**'
-  workflow_dispatch: {}
+    branches:
+      - macabu/nix-test-benchmark
 
 permissions:
   contents: read
-  actions: read # Lets Hestia detect evicted cache entries before substituting them.
+  actions: read
+
+env:
+  CGO_ENABLED: '0'
 
 jobs:
-  eval:
-    name: Evaluate Nix build matrix
-    runs-on: ubuntu-x64-large
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-      any-jobs: ${{ steps.matrix.outputs.any-jobs }}
-      manifest-version: ${{ steps.matrix.outputs.manifest-version }}
-      tarballs: ${{ steps.tarballs.outputs.targets }}
-      go-toolchain: ${{ steps.go.outputs.toolchain }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-          filter: blob:none
-      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
-        with:
-          installer-version: '2.35.4'
-          # Hestia configures a local substituter and a post-build hook.
-          trust-runner-user: 'true'
-          extra-conf: |
-            sandbox = true
-            sandbox-fallback = false
-      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
-        with:
-          version: v3.1.0
-          upstream-cache-filter: 'true'
-          filter-drv-closures: 'true'
-      - name: Cache shared build inputs
-        id: go
-        run: |
-          nix build -L --no-link .#ciPackages.backend.goModules
-          toolchain=$(nix eval --raw .#ciPackages.backend.go.outPath)
-          printf 'toolchain=%s\n' "${toolchain##*/}" >> "$GITHUB_OUTPUT"
-      - id: matrix
-        uses: Mic92/hestia/matrix@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
-        with:
-          flake: .#ciJobs
-          nix-eval-jobs: nix run --inputs-from . nixpkgs#nix-eval-jobs --
-      - name: List tarball packages
-        id: tarballs
-        run: |
-          targets=$(nix eval --json .#ciPackages --apply '
-            packages: builtins.filter (name: builtins.match "tarball-.+" name != null)
-              (builtins.attrNames packages)
-          ')
-          printf 'targets=%s\n' "$targets" >> "$GITHUB_OUTPUT"
-
-  build:
-    needs: eval
-    if: needs.eval.outputs.any-jobs == 'true'
-    name: Build ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.eval.outputs.matrix) }}
-    steps:
-      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
-        with:
-          installer-version: '2.35.4'
-          trust-runner-user: 'true'
-          extra-conf: |
-            sandbox = true
-            sandbox-fallback = false
-      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
-        with:
-          version: v3.1.0
-          upstream-cache-filter: 'true'
-          wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
-      - name: Select Go compiler cache target
-        if: startsWith(matrix.name, 'backend-')
-        id: go-cache-target
-        env:
-          PACKAGE_NAME: ${{ matrix.name }}
-        run: printf 'target=%s\n' "${PACKAGE_NAME#backend-}" >> "$GITHUB_OUTPUT"
-      - name: Restore Go compiler cache
-        if: steps.go-cache-target.outputs.target != ''
-        id: go-cache
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
-        with:
-          path: ${{ runner.temp }}/grafana-go-cache
-          key: nix-gocache-v1-${{ steps.go-cache-target.outputs.target }}-${{ needs.eval.outputs.go-toolchain }}
-      - name: Build from cached derivation
-        env:
-          INSTALLABLES: ${{ matrix.installables }}
-          GO_CACHE_TARGET: ${{ steps.go-cache-target.outputs.target }}
-        run: |
-          read -r -a installables <<< "$INSTALLABLES"
-          "$HESTIA_BIN" prefetch "${installables[@]}"
-          sandbox_options=()
-          if [[ -n "$GO_CACHE_TARGET" ]]; then
-            cache="$RUNNER_TEMP/grafana-go-cache"
-            mkdir -p "$cache"
-            sudo chgrp -R nixbld "$cache"
-            sudo chmod -R g+rwX "$cache"
-            sandbox_options+=(--option extra-sandbox-paths "/grafana-go-cache=$cache")
-          fi
-          time nix build -L --no-link "${sandbox_options[@]}" "${installables[@]}"
-      - name: Verify warm Go cache rebuild
-        # Check each new cache scope once and allow a job rerun to benchmark a restore.
-        if: steps.go-cache-target.outputs.target != '' && (steps.go-cache.outputs.cache-hit != 'true' || github.run_attempt != '1')
-        env:
-          INSTALLABLES: ${{ matrix.installables }}
-        run: |
-          read -r -a installables <<< "$INSTALLABLES"
-          cache="$RUNNER_TEMP/grafana-go-cache"
-          test -n "$(find "$cache" -type f -name '*-d' -print -quit)"
-          sudo chmod -R g+rwX "$cache"
-          time nix build -L --no-link --rebuild \
-            --option extra-sandbox-paths "/grafana-go-cache=$cache" "${installables[@]}"
-
-  package:
-    needs: [eval, build]
-    # Publish tarballs even when Hestia skips every component build.
-    if: >-
-      !cancelled() && needs.eval.result == 'success' &&
-      (needs.build.result == 'success' ||
-      (needs.build.result == 'skipped' && needs.eval.outputs.any-jobs == 'false'))
-    name: Package ${{ matrix.tarball }}
-    runs-on: ubuntu-x64-large
+  native:
+    name: Native ${{ matrix.suite }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        tarball: ${{ fromJSON(needs.eval.outputs.tarballs) }}
+        include:
+          - suite: unit
+            runner: ubuntu-x64
+          - suite: mysql
+            runner: ubuntu-x64-large-io
+          - suite: postgres
+            runner: ubuntu-x64-large-io
     steps:
-      - uses: actions/checkout@v6
+      - &checkout
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
-          fetch-depth: 0
-          filter: blob:none
-      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+      - &setup-go
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Restore native Go cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: nix-bench-v1-native-${{ matrix.suite }}-${{ hashFiles('**/*.mod') }}
+      - name: Run native tests
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          if [[ "$SUITE" == unit ]]; then
+            bash .github/nix-test-benchmark.sh unit "$RUNNER_TEMP/summary.json"
+          else
+            bash .github/nix-test-benchmark.sh "$SUITE" native-sql "$RUNNER_TEMP/summary.json"
+          fi
+          cat "$RUNNER_TEMP/summary.json" >> "$GITHUB_STEP_SUMMARY"
+
+  nix-unit:
+    name: Nix unit
+    runs-on: ubuntu-x64
+    env:
+      SUITE: unit
+    steps:
+      - *checkout
+      - &install-nix
+        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
         with:
           installer-version: '2.35.4'
           trust-runner-user: 'true'
           extra-conf: |
             sandbox = true
             sandbox-fallback = false
-      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+      - &hestia
+        uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
         with:
           version: v3.1.0
           upstream-cache-filter: 'true'
-          wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
-          # Keep the cache available for component outputs. Archives go to the artifact store.
-          read-only: 'true'
-      - name: Build release tarball
-        env:
-          TARBALL: ${{ matrix.tarball }}
-        run: nix build -L ".#ciPackages.$TARBALL"
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - &substitute
+        name: Check for cached Nix output
+        id: cached
+        run: |
+          if path=$(nix build --no-link --print-out-paths --max-jobs 0 --option builders '' \
+              --file .github/nix-test-benchmark.nix "$SUITE" 2>"$RUNNER_TEMP/nix-cache-check.log"); then
+            printf 'path=%s\n' "$path" >> "$GITHUB_OUTPUT"
+            echo "Nix output cache hit"
+          else
+            echo "Nix output cache miss"
+          fi
+      - &restore-nix-go
+        name: Restore Nix Go compiler cache
+        if: steps.cached.outputs.path == ''
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          name: grafana-nix-${{ matrix.tarball }}
-          path: result/*.tar.gz
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
+          path: ${{ runner.temp }}/grafana-bench-go-cache
+          key: nix-bench-v1-go-${{ env.SUITE }}-${{ hashFiles('flake.lock', '**/*.mod') }}
+      - &build-nix-tests
+        name: Build Nix test derivation
+        id: built
+        if: steps.cached.outputs.path == ''
+        run: |
+          cache="$RUNNER_TEMP/grafana-bench-go-cache"
+          mkdir -p "$cache"
+          sudo chgrp -R nixbld "$cache"
+          sudo chmod -R g+rwX "$cache"
+          path=$(nix build -L --no-link --print-out-paths \
+            --option extra-sandbox-paths "/grafana-go-cache=$cache" \
+            --file .github/nix-test-benchmark.nix "$SUITE")
+          printf 'path=%s\n' "$path" >> "$GITHUB_OUTPUT"
+      - name: Report Nix unit coverage
+        env:
+          OUTPUT: ${{ steps.cached.outputs.path || steps.built.outputs.path }}
+        run: cat "$OUTPUT/summary.json" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  nix-sql-build:
+    name: Nix compile SQL tests
+    runs-on: ubuntu-x64-large-io
+    env:
+      SUITE: sql
+    outputs:
+      path: ${{ steps.cached.outputs.path || steps.built.outputs.path }}
+    steps:
+      - *checkout
+      - *install-nix
+      - *hestia
+      - *substitute
+      - *restore-nix-go
+      - *build-nix-tests
+
+  nix-sql:
+    name: Nix ${{ matrix.db }}
+    needs: nix-sql-build
+    runs-on: ubuntu-x64-large-io
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [mysql, postgres]
+    steps:
+      - *checkout
+      - *setup-go
+      - *install-nix
+      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          version: v3.1.0
+          read-only: 'true'
+          upstream-cache-filter: 'true'
+      - name: Fetch compiled SQL tests
+        env:
+          TEST_BINARIES: ${{ needs.nix-sql-build.outputs.path }}
+        run: nix build --no-link --max-jobs 0 --option builders '' "$TEST_BINARIES"
+      - name: Run compiled SQL tests
+        env:
+          DB: ${{ matrix.db }}
+          TEST_BINARIES: ${{ needs.nix-sql-build.outputs.path }}
+        run: |
+          bash .github/nix-test-benchmark.sh "$DB" compiled-sql "$TEST_BINARIES" "$RUNNER_TEMP/summary.json"
+          cat "$RUNNER_TEMP/summary.json" >> "$GITHUB_STEP_SUMMARY"
