@@ -794,10 +794,6 @@ function clampOffset(element: HTMLElement, current: Offset, next: Offset): Offse
 }
 
 /**
- * The page content's edges, or the window's when the page has no content element. The content element
- * reserves the docked menu as padding, so its padding box would put the container over the menu.
- */
-/**
  * The most height the floating sidebar `element` can take with its bottom edge where it is: up to the page content's
  * top, less the gutter the drag keeps, so growing it never covers the top bar.
  */
@@ -842,6 +838,10 @@ function getPlacedFloatingHeightRoom(element: HTMLElement): number {
   return Math.max(0, Math.floor(content.bottom - GUTTER - (content.top + Math.max(GUTTER, placement.y))));
 }
 
+/**
+ * The page content's edges, or the window's when the page has no content element. The content element
+ * reserves the docked menu as padding, so its padding box would put the container over the menu.
+ */
 function contentEdges(): { left: number; top: number; right: number; bottom: number } {
   const element = document.getElementById('pageContent');
   if (!element) {
