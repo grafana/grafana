@@ -13,7 +13,8 @@ import (
 )
 
 func TestGetAuthorizer(t *testing.T) {
-	resourceReq := authorizer.AttributesRecord{ResourceRequest: true, Verb: "list", Resource: "saveddashboardviews"}
+	resourceReq := authorizer.AttributesRecord{ResourceRequest: true, Verb: "list", Resource: "saveddashboardviews", Namespace: "default"}
+	clusterWideReq := authorizer.AttributesRecord{ResourceRequest: true, Verb: "list", Resource: "saveddashboardviews"}
 	nonResourceReq := authorizer.AttributesRecord{ResourceRequest: false, Path: "/apis"}
 
 	tests := []struct {
@@ -24,6 +25,7 @@ func TestGetAuthorizer(t *testing.T) {
 	}{
 		{name: "flag off denies resource requests", enabled: false, attr: resourceReq, expected: authorizer.DecisionDeny},
 		{name: "flag on allows resource requests", enabled: true, attr: resourceReq, expected: authorizer.DecisionAllow},
+		{name: "cluster-wide requests are denied", enabled: true, attr: clusterWideReq, expected: authorizer.DecisionDeny},
 		{name: "non-resource requests have no opinion", enabled: false, attr: nonResourceReq, expected: authorizer.DecisionNoOpinion},
 	}
 

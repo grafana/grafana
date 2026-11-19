@@ -39,6 +39,10 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 		if !attr.IsResourceRequest() {
 			return authorizer.DecisionNoOpinion, "", nil
 		}
+		// A cluster-wide request would scan every org only for the storage authorizer to drop it all.
+		if attr.GetNamespace() == "" {
+			return authorizer.DecisionDeny, "saved dashboard views are namespaced", nil
+		}
 		if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaSavedDashboardViews, false, openfeature.TransactionContext(ctx)) {
 			return authorizer.DecisionDeny, "saved dashboard views feature is not enabled", nil
 		}
