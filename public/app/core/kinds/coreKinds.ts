@@ -93,8 +93,9 @@ export const CORE_KINDS = {
     getRoute: page(CONNECTIONS_URL, '/edit'),
   },
   datasource: {
-    // Not a served group: each plugin serves its own `{plugin}.datasource.grafana.app`, and the
-    // backend reports every data source under this group, which all of those end in
+    // No API serves this group. Each plugin has its own, like `prometheus.datasource.grafana.app`.
+    // The backend still names the kind by this shared ending, so `group` holds it and
+    // `collectionGroup` makes it match every plugin's group.
     group: 'datasource.grafana.app',
     collectionGroup: true,
     kind: 'DataSource',
