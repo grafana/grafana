@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 )
 
 // These use real permission maps with direct grants; the folder-ancestry scope resolver is
@@ -114,6 +116,22 @@ func TestCheckAccess(t *testing.T) {
 		err := authz.checkAccess(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{})
 		require.ErrorIs(t, err, storewrapper.ErrUnexpectedType)
 	})
+
+	// Anonymous users and server admins pass the namespace authorizer for any org, but their grants
+	// belong to their own org, where another dashboard may share the same UID.
+	for name, requester := range map[string]*identity.StaticRequester{
+		"server admin": {OrgRole: identity.RoleViewer, IsGrafanaAdmin: true, UserID: 1, OrgID: 1},
+		"anonymous":    {Type: claims.TypeAnonymous, OrgRole: identity.RoleViewer, OrgID: 1},
+	} {
+		t.Run("denies a "+name+" acting in another org's namespace", func(t *testing.T) {
+			scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(testDashboardUID)
+			requester.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {scope}}}
+			ctx := withTestNamespace(identity.WithRequester(context.Background(), requester), 7)
+
+			require.ErrorIs(t, authz.checkAccess(ctx, viewWithDashboardUID(testDashboardUID)), storewrapper.ErrUnauthorized)
+			require.NoError(t, authz.checkAccess(withTestNamespace(ctx, 1), viewWithDashboardUID(testDashboardUID)))
+		})
+	}
 }
 
 func TestBeforeCreateUpdateDeleteAfterGet(t *testing.T) {
@@ -174,30 +192,6 @@ func TestCheckDashboardExists(t *testing.T) {
 
 		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
 		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
-	})
-
-	t.Run("resolves the dashboard against the request's namespace, not the requester's own org", func(t *testing.T) {
-		// The requester is in org 1 but the dashboard only exists in org 7.
-		svc := &dashboards.FakeDashboardService{}
-		svc.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
-			return q.OrgID == 7
-		})).Return(&dashboards.Dashboard{}, nil)
-		authz := newTestAuthorizerWithDashboardService(svc)
-
-		scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(testDashboardUID)
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			OrgRole:        identity.RoleViewer,
-			IsGrafanaAdmin: true,
-			UserID:         1,
-			OrgID:          1, // diverges from the namespace below on purpose
-			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionDashboardsRead: {scope}},
-			},
-		})
-		ctx = withTestNamespace(ctx, 7)
-
-		require.NoError(t, authz.BeforeCreate(ctx, viewWithDashboardUID(testDashboardUID)))
-		svc.AssertExpectations(t)
 	})
 
 	t.Run("looks the dashboard up as a service identity, not the caller", func(t *testing.T) {
@@ -273,4 +267,39 @@ func TestWatchFilterDeniesByDefault(t *testing.T) {
 	filter, err := authz.WatchFilter(context.Background())
 	require.NoError(t, err)
 	assert.Nil(t, filter, "WatchFilter must return the deny sentinel (nil) since Watch has no use case yet")
+}
+
+// A view whose dashboard was deleted makes the dashboard UID scope resolver fail.
+func TestOrphanedViews(t *testing.T) {
+	svc := &dashboards.FakeDashboardService{}
+	svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, dashboards.ErrDashboardNotFound)
+	ac := acimpl.ProvideAccessControl(nil)
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(svc, foldertest.NewFakeService()))
+	authz := &savedViewStorageAuthorizer{ac: ac, dashboardSvc: svc}
+
+	// A folder-level grant only matches after scope resolution, which is what fails here.
+	ctx := withTestNamespace(identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgRole: identity.RoleViewer,
+		UserID:  1,
+		OrgID:   1,
+		Permissions: map[int64]map[string][]string{
+			1: {dashboards.ActionDashboardsRead: {folder.ScopeFoldersProvider.GetResourceScopeUID("folder-1")}},
+		},
+	}), 1)
+
+	t.Run("get, delete and create are denied, not internal errors", func(t *testing.T) {
+		require.ErrorIs(t, authz.AfterGet(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
+		require.ErrorIs(t, authz.BeforeDelete(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
+		require.ErrorIs(t, authz.BeforeCreate(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
+	})
+
+	t.Run("list drops the orphan instead of failing", func(t *testing.T) {
+		result, err := authz.FilterList(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{
+			Items: []dashboardviewsv0alpha1.SavedDashboardView{*viewWithDashboardUID("deleted-dash")},
+		})
+		require.NoError(t, err)
+		filtered, ok := result.(*dashboardviewsv0alpha1.SavedDashboardViewList)
+		require.True(t, ok)
+		assert.Empty(t, filtered.Items)
+	})
 }

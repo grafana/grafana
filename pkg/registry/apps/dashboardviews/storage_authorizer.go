@@ -109,8 +109,19 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 		return storewrapper.ErrUnauthenticated
 	}
 
+	// Evaluate uses the requester's org permissions, but anonymous users and server admins pass the
+	// namespace authorizer for any org.
+	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil || nsInfo.OrgID != requester.GetOrgID() {
+		return storewrapper.ErrUnauthorized
+	}
+
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(view.Spec.DashboardUID)
 	allowed, err := s.ac.Evaluate(ctx, requester, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, scope))
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
+		// The scope resolver fails for a deleted dashboard; deny rather than 500.
+		return storewrapper.ErrUnauthorized
+	}
 	if err != nil {
 		return err
 	}
@@ -120,15 +131,14 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 	return nil
 }
 
-// checkDashboardExists runs on create only: a wildcard dashboards:read grant passes checkAccess
-// for any UID. It returns ErrUnauthorized rather than not-found so it can't probe for UIDs.
+// checkDashboardExists runs on create only: a wildcard dashboards:read grant skips scope
+// resolution, so checkAccess passes for any UID.
 func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, obj runtime.Object) error {
 	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
 	if !ok {
 		return storewrapper.ErrUnexpectedType
 	}
 
-	// Use the request's namespace org, not the caller's; they differ for admins and service identities.
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return storewrapper.ErrUnauthorized
