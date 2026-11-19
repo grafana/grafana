@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { Trans } from '@grafana/i18n';
@@ -45,7 +45,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
     showError: invalid,
   });
 
-  const fieldRef = useRef<HTMLDivElement>(null);
+  const [fieldElement, setFieldElement] = useState<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -103,7 +103,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         invalid={isInvalid}
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
-        ref={fieldRef}
+        ref={setFieldElement}
         className={styles.widthFitContent}
       >
         {React.cloneElement(
@@ -113,14 +113,14 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         )}
       </Field>
       {fieldState.isLoading && (
-        <InlineToast referenceElement={fieldRef.current} placement="right">
+        <InlineToast referenceElement={fieldElement} placement="right">
           <Trans i18nKey="grafana-ui.auto-save-field.saving">
             Saving <EllipsisAnimated />
           </Trans>
         </InlineToast>
       )}
       {fieldState.showSuccess && (
-        <InlineToast suffixIcon={'check'} referenceElement={fieldRef.current} placement="right">
+        <InlineToast suffixIcon={'check'} referenceElement={fieldElement} placement="right">
           <Trans i18nKey="grafana-ui.auto-save-field.saved">Saved!</Trans>
         </InlineToast>
       )}
