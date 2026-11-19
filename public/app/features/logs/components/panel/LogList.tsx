@@ -57,6 +57,8 @@ export interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   infiniteScrollMode?: InfiniteScrollMode;
+  /** Allows loading more logs when scrolling to the top of the list. Always enabled when infiniteScrollMode is "unlimited". */
+  infiniteScrollTop?: boolean;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loadingState?: LoadingState;
@@ -140,6 +142,7 @@ export const LogList = ({
   getRowContextQuery,
   grammar,
   infiniteScrollMode,
+  infiniteScrollTop,
   initialScrollPosition = 'top',
   isLabelFilterActive,
   loadingState,
@@ -244,6 +247,7 @@ export const LogList = ({
             grammar={grammar}
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
+            infiniteScrollTop={infiniteScrollTop}
             loadingState={loadingState}
             loadMore={loadMore}
             logs={logs}
@@ -266,6 +270,7 @@ const LogListComponent = ({
   grammar,
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
+  infiniteScrollTop,
   loadingState,
   loadMore,
   logs,
@@ -473,15 +478,15 @@ const LogListComponent = ({
     (log?: LogListModel) => {
       const scrollToUID = log ? log.uid : permalinkedLogId;
       if (scrollToUID) {
-        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        const index = filteredLogs.findIndex((log) => log.uid === scrollToUID);
         if (index >= 0) {
           listRef.current?.scrollToItem(index, 'start');
           return;
         }
       }
-      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : filteredLogs.length - 1);
     },
-    [initialScrollPosition, permalinkedLogId, processedLogs]
+    [filteredLogs, initialScrollPosition, permalinkedLogId]
   );
 
   const handleLogLineClick = useCallback(
@@ -575,6 +580,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          infiniteScrollTop={infiniteScrollTop}
           loadingState={loadingState}
           logs={filteredLogs}
           loadMore={loadMore}
