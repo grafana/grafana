@@ -156,7 +156,13 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 					*op = &tagged
 				}
 			}
-			oas.Paths.Paths[strings.TrimSuffix(item+"/"+subresource+"/"+specPath, "/")] = &spec3.Path{PathProps: props}
+			// A trailing slash is part of a declared route, so only the
+			// separator before an empty path is dropped.
+			published := item + "/" + subresource + "/" + specPath
+			if specPath == "" {
+				published = strings.TrimSuffix(published, "/")
+			}
+			oas.Paths.Paths[published] = &spec3.Path{PathProps: props}
 		}
 	}
 	publish("resources", routes.resources)

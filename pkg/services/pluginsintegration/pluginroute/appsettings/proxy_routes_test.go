@@ -354,6 +354,27 @@ func TestOpenAPIPublishesSettingsManifestComponents(t *testing.T) {
 	require.Same(t, generated, oas.Components.Schemas["Settings"], "a generated component is not replaced")
 }
 
+// A route declared with a trailing slash is published with it, so it does not
+// replace a route declared without one.
+func TestOpenAPIKeepsDeclaredTrailingSlashes(t *testing.T) {
+	const item = "/apis/" + exampleApp + "/v0alpha1/namespaces/{namespace}/app/{name}"
+	get := &spec3.Operation{OperationProps: spec3.OperationProps{Responses: &spec3.Responses{}}}
+	base := manifestDeclaring(map[string]spec3.PathProps{
+		declaredResources + "things/": {Get: get},
+		declaredResources + "things":  {Post: get},
+	})
+	plugin := pluginWithRoutes(nil, base)
+	b := &Builder{group: exampleApp, pluginJSON: plugin.JSONData, settings: plugin.Settings}
+	oas := &spec3.OpenAPI{
+		Paths:      &spec3.Paths{Paths: map[string]*spec3.Path{item: {}}},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	}
+
+	require.NoError(t, b.addSubresourcePaths(oas, item, apppluginV0.VERSION))
+	require.NotNil(t, oas.Paths.Paths[item+"/resources/things/"].Get)
+	require.NotNil(t, oas.Paths.Paths[item+"/resources/things"].Post)
+}
+
 // The definition module cannot import the settings API's types, so it repeats
 // their names.
 func TestSettingsManifestNamesMatchTheSettingsAPI(t *testing.T) {
