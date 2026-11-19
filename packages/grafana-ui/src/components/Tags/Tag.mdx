@@ -6,10 +6,38 @@ import * as TagStories from './Tag.story';
 
 # Tag
 
-Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+## When to use
+
+Use a `Tag` to label metadata, such as a category in search results. By default, the tag name selects a color pair from the theme's Tag palette.
+
+## Never use for
+
+Don't use a tag for navigation or for an action unrelated to its label. Use a link for navigation and a `Button` for other actions. Use `Badge` for labels such as release status.
+
+## Do's and don'ts
+
+- Use the default palette unless the color carries meaning from the data. Don't use color as the only way to convey that meaning.
+- Use `colorIndex` when several tags need to share the same color from the theme palette.
+- Use `baseColor` when a tag needs to match a configured data color. A visible color keeps its RGB channels and renders opaque. A fully transparent color uses the theme's primary text color without adding a visible boundary.
+
+## Usage
+
+```tsx
+import { Tag } from '@grafana/ui';
+
+<Tag name="production" />;
+```
+
+<Tag name="production" />
+
+Use `onClick` for an action tied to the tag, such as filtering by its label. This interactive example sets `colorIndex` explicitly rather than choosing a color from the name.
 
 <Canvas of={TagStories.Single} />
 
-### Props
+## Accessibility
+
+Without `onClick`, a tag is static text and isn't in the tab order. With `onClick`, it renders a button named by its label. Choose a label that makes sense without its color or icon.
+
+## Props
 
 <ArgTypes of={Tag} />

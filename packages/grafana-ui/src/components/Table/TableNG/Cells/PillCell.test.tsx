@@ -15,7 +15,7 @@ import { FieldColorModeId } from '@grafana/schema';
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 
-import { PillCell } from './PillCell';
+import { PillCell, getStyles } from './PillCell';
 
 // Refreshed pills are Tags, which take their colors from inline custom properties.
 const expectTagColors = (element: HTMLElement, background: string, text: string) => {
@@ -237,12 +237,21 @@ describe('PillCell', () => {
     const renderRefreshed = (field: Field) =>
       render(
         <ThemeContext.Provider value={refreshTheme}>
-          <PillCell
-            getTextColorForBackground={getTextColorForBackground}
-            field={field}
-            rowIdx={0}
-            theme={refreshTheme}
-          />
+          <div
+            className={getStyles(refreshTheme, {
+              textAlign: 'left',
+              textWrap: true,
+              shouldOverflow: false,
+              hoverOverflow: false,
+            })}
+          >
+            <PillCell
+              getTextColorForBackground={getTextColorForBackground}
+              field={field}
+              rowIdx={0}
+              theme={refreshTheme}
+            />
+          </div>
         </ThemeContext.Provider>
       );
 
@@ -253,6 +262,7 @@ describe('PillCell', () => {
         const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
         expectTagColors(pill, background, textColor);
         expect(pill).toHaveStyle({ borderRadius: refreshTheme.shape.radius.pill });
+        expect(getComputedStyle(pill).boxShadow).toBe('');
       }
     });
 
@@ -289,7 +299,7 @@ describe('PillCell', () => {
       const pill = screen.getByText('none');
       expectBaseColor(pill, 'rgba(255, 255, 255, 0)', refreshTheme);
       expect(pill).toHaveStyle({
-        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('var(--tag-background)', refreshTheme.colors.border.strong)}`,
       });
     });
 

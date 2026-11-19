@@ -15,6 +15,7 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTransparentOutlineColor } from '../../../../utils/tags';
+import { CustomColorTag } from '../../../Tags/CustomColorTag';
 import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
@@ -44,15 +45,12 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
   }
 
   return pills.map((pill) => {
-    // Under the visual refresh, pills are Tag components so they match the refreshed tags rendered
-    // everywhere else. Tag derives the text color, and without a base color it hashes the value
-    // over the theme tag palette.
     if (theme.flags.visualDesignRefresh) {
-      const outline =
-        pill.baseColor !== undefined
-          ? { boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor(pill.baseColor, theme.colors.border.strong)}` }
-          : undefined;
-      return <Tag key={pill.key} name={pill.value} baseColor={pill.baseColor} style={outline} />;
+      return pill.baseColor === undefined ? (
+        <Tag key={pill.key} name={pill.value} />
+      ) : (
+        <CustomColorTag key={pill.key} name={pill.value} color={pill.baseColor} />
+      );
     }
 
     const background = pill.baseColor ?? getColorByStringHash(classicColors, pill.value);
@@ -119,17 +117,23 @@ export const getStyles: TableCellStyles = memoize(
         },
       }),
 
-      // Under the visual refresh the pills are Tags, which carry their own shape and typography.
-      ...(!theme.flags.visualDesignRefresh && {
-        '> span': {
-          display: 'flex',
-          padding: theme.spacing(0.25, 0.75),
-          borderRadius: theme.shape.radius.default,
-          fontSize: theme.typography.bodySmall.fontSize,
-          lineHeight: theme.typography.bodySmall.lineHeight,
-          whiteSpace: 'nowrap',
-        },
-      }),
+      ...(theme.flags.visualDesignRefresh
+        ? {
+            '> [data-grafana-custom-color-tag]': {
+              // An inset shadow outlines a transparent fill without changing the pill's size.
+              boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('var(--tag-background)', theme.colors.border.strong)}`,
+            },
+          }
+        : {
+            '> span': {
+              display: 'flex',
+              padding: theme.spacing(0.25, 0.75),
+              borderRadius: theme.shape.radius.default,
+              fontSize: theme.typography.bodySmall.fontSize,
+              lineHeight: theme.typography.bodySmall.lineHeight,
+              whiteSpace: 'nowrap',
+            },
+          }),
     }),
   { isMatchingKey: isTableCellStylesKeyEqual }
 );
