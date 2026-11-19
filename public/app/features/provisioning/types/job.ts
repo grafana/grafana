@@ -1,8 +1,14 @@
 import { type ProvisioningResourceRef as GeneratedResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type KindInfo } from 'app/core/kinds/types';
 
 // Reuse the generated ResourceRef but require every field: a delete/move job needs a
 // fully-specified ref, whereas the generated fields are all optional.
 export type ResourceRef = Required<GeneratedResourceRef>;
+
+// Pass the group that serves the resource. No API serves a collection kind's registry group.
+export function toResourceRef(kind: Pick<KindInfo, 'group' | 'kind'>, name: string): ResourceRef {
+  return { name, group: kind.group, kind: kind.kind };
+}
 
 // Jobs name their targets as resource refs rather than file paths: the backend authorizes a ref
 // against the named resource, so a grant on that one dashboard suffices, whereas a path is only

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { urlUtil } from '@grafana/data';
+import { locationUtil, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
@@ -14,10 +14,12 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
-import { PROVISIONING_PREVIEW_URL, PROVISIONING_URL } from '../constants';
+import { PROVISIONING_PREVIEW_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { usePRBranch } from '../hooks/usePRBranch';
+import { getFileHistoryUrl, getFileStatusUrl } from '../utils/repository';
 
 enum TabSelection {
   File = 'file',
@@ -72,7 +74,7 @@ interface Props {
 }
 
 function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
-  const isDashboard = wrap.resource?.type?.kind === 'Dashboard';
+  const isDashboard = wrap.resource?.type?.kind === CORE_KINDS.dashboard.kind;
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();
@@ -119,19 +121,23 @@ function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
           </LinkButton>
         )}
         {isDashboard && existingName && (
-          <LinkButton target={'_blank'} href={`d/${wrap.resource.existing?.metadata.name}`} variant="secondary">
+          <LinkButton
+            target={'_blank'}
+            href={locationUtil.assureBaseUrl(CORE_KINDS.dashboard.getRoute(existingName))}
+            variant="secondary"
+          >
             <Trans i18nKey="provisioning.resource-view.existing-dashboard">Existing dashboard</Trans>
           </LinkButton>
         )}
-        <LinkButton href={`${PROVISIONING_URL}/${repo}`} variant="secondary">
+        <LinkButton href={CORE_KINDS.repository.getRoute(repo)} variant="secondary">
           <Trans i18nKey="provisioning.resource-view.repository">Repository</Trans>
         </LinkButton>
         {repoRef && (
-          <LinkButton href={`${PROVISIONING_URL}/${repo}/file/${wrap.path}`} variant="secondary">
+          <LinkButton href={getFileStatusUrl(repo, wrap.path ?? '')} variant="secondary">
             <Trans i18nKey="provisioning.resource-view.base">Base</Trans>
           </LinkButton>
         )}
-        <LinkButton href={`${PROVISIONING_URL}/${repo}/history/${wrap.path}`} variant="secondary">
+        <LinkButton href={getFileHistoryUrl(repo, wrap.path ?? '')} variant="secondary">
           <Trans i18nKey="provisioning.resource-view.history">History</Trans>
         </LinkButton>
       </Stack>

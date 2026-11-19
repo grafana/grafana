@@ -323,6 +323,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -346,6 +347,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -545,6 +547,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -563,6 +566,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -631,7 +635,8 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          true
+          true,
+          false
         )
       );
     });
@@ -650,6 +655,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -680,6 +686,102 @@ describe('AddPanelToNotebookModalBody', () => {
       await chooseExisting(user);
 
       expect(lockCheckbox()).not.toBeChecked();
+    });
+
+    describe('converting a relative range to an absolute one', () => {
+      const convertCheckbox = () => screen.getByRole('checkbox', { name: /^Convert to an absolute time range/ });
+      const queryConvertCheckbox = () => screen.queryByRole('checkbox', { name: /^Convert to an absolute/ });
+
+      it('is offered below the lock, and usable once the lock is on', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+
+        expect(convertCheckbox()).not.toBeChecked();
+        expect(convertCheckbox()).toBeDisabled();
+        expect(
+          lockCheckbox().compareDocumentPosition(convertCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeEnabled();
+      });
+
+      it('is not offered for an absolute capture', () => {
+        renderModal(undefined, false, ABSOLUTE_CAPTURE);
+
+        expect(queryConvertCheckbox()).not.toBeInTheDocument();
+      });
+
+      it('is disabled again when the lock is turned off', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeDisabled();
+      });
+
+      it('locks to the instants the range covers, not to the relative window', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        const [, [created]] = createWithContent.mock.calls[0];
+        if (created.kind !== 'panel' || created.panel.kind !== 'Panel') {
+          throw new Error('expected a panel cell');
+        }
+        const { timeFrom, timeTo } = created.panel.spec.data.spec.queryOptions;
+        const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+        expect(timeFrom).toMatch(iso);
+        expect(timeTo).toMatch(iso);
+        // Six hours, give or take the milliseconds between resolving the two ends.
+        expect(Math.abs(Date.parse(timeTo!) - Date.parse(timeFrom!) - 6 * 3600 * 1000)).toBeLessThan(1000);
+      });
+
+      it('does not carry the choice into an add that ends up unlocked', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+        await user.click(lockCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
+      });
+    });
+  });
+
+  describe('the text block', () => {
+    const noteBox = () => screen.getByRole('textbox', { name: /^Text above the panel/ });
+
+    it('is added as a markdown cell before the panel', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '  Latency spiked after the deploy  ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([
+        { kind: 'markdown', text: 'Latency spiked after the deploy' },
+        { kind: 'panel', panel: panel(), isLibraryPanel: false },
+      ]);
+      expect(createWithContent.mock.calls[0][4]).toBe(false);
+      expect(createWithContent.mock.calls[0][5]).toBe(true);
+    });
+
+    it('adds nothing when left blank', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '   ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
     });
   });
 
@@ -904,6 +1006,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'existing',
             reason: 'conflict',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -911,6 +1014,17 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     // Nothing was created, so there is no uid to send.
+    it('reports that text was typed when the add fails', async () => {
+      createWithContent.mockRejectedValue(new Error('notebook is too large'));
+      const { user } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /^Text above the panel/ }), 'Latency spiked');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(failures).toEqual([expect.objectContaining({ hasText: true })]));
+    });
+
     it('reports a failed create with no notebook uid', async () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
@@ -926,6 +1040,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'write_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -950,6 +1065,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'build_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -1010,6 +1126,7 @@ describe('AddPanelToNotebookModalBody', () => {
           ],
           'plugin',
           'assistant',
+          false,
           false
         )
       );

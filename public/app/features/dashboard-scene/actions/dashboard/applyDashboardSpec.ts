@@ -17,7 +17,6 @@ import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManage
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
-import { resolveAdHocMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { edit } from '../utils/edit';
 
@@ -104,8 +103,6 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyDashboardMode();
-
-      resolveAdHocMultiValueOperators(scene);
 
       // The spec never holds the global and folder variables an opted-in dashboard receives: they are
       // injected after a load, so the swap installed a variable set without them. Carry them over
@@ -194,7 +191,6 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
     isDirty: false,
   });
   scene.applyDashboardMode();
-  resolveAdHocMultiValueOperators(scene);
   scene.state.sidebar.refreshAfterRebuild();
   syncRebuiltChildrenFromUrl(scene, urlUpdates);
   // A dashboard without URL sync (an embedded one) keeps its open tabs only in the tree just replaced.

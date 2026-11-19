@@ -28,6 +28,7 @@ import {
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, type IconName, Menu, ToolbarButton, Tooltip, getPortalContainer, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -39,6 +40,7 @@ import {
   canPlaceExtensionSidebar,
   canPopOutExtensionSidebar,
   type ExtensionSidebarPlacement,
+  type ExtensionSidebarPlacementSource,
   getExtensionSidebarPlacement,
   isExtensionSidebarPoppedOut,
   popInExtensionSidebar,
@@ -60,6 +62,16 @@ type AssistantLayout = ExtensionSidebarPlacement;
  * Assistant shows wherever Move Assistant put it, so the presets that show it leave its placement as it is.
  */
 type ArrangePreset = 'with-navigation' | 'without-navigation' | 'page-only';
+
+/** A preset as `grafana_assistant_window_arranged` reports it, in snake_case like the event's other values. */
+const PRESET_ANALYTICS_NAMES: Record<ArrangePreset, string> = {
+  'with-navigation': 'with_navigation',
+  'without-navigation': 'without_navigation',
+  'page-only': 'page_only',
+};
+
+/** Where a layout or preset was chosen: the menu, or one of the keyboard shortcuts. */
+type ChoiceSource = Extract<ExtensionSidebarPlacementSource, 'chat_menu' | 'shortcut'>;
 
 /** A part of the window, as a preset's tile draws it. */
 type Pane = 'navigation' | 'page' | 'assistant';
@@ -194,12 +206,12 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     setDockedComponentId(undefined);
   };
 
-  const moveTo = (next: AssistantLayout) => {
+  const moveTo = (next: AssistantLayout, source: ChoiceSource) => {
     setMenuOpenedBy(undefined);
     if (poppedOut) {
       popInExtensionSidebar();
     }
-    setExtensionSidebarPlacement(next);
+    setExtensionSidebarPlacement(next, source);
     show();
   };
 
@@ -212,8 +224,9 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     popOutExtensionSidebar();
   };
 
-  const arrange = (preset: ArrangePreset) => {
+  const arrange = (preset: ArrangePreset, source: ChoiceSource) => {
     setMenuOpenedBy(undefined);
+    reportInteraction('grafana_assistant_window_arranged', { preset: PRESET_ANALYTICS_NAMES[preset], source });
     const withNavigation = preset === 'with-navigation';
     // Docked first, so opening it persists; undocked first, as the nav's own dock button does.
     chrome.setMegaMenuDocked(withNavigation);
@@ -239,7 +252,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
         (option) => PRESET_SHORTCUT_DIGITS[option.value] === digit
       );
       if (shortcutPreset) {
-        arrange(shortcutPreset.value);
+        arrange(shortcutPreset.value, 'shortcut');
       }
       return shortcutPreset !== undefined;
     }
@@ -262,7 +275,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     if (isOpen && !poppedOut && layout === shortcutLayout.value) {
       hide();
     } else {
-      moveTo(shortcutLayout.value);
+      moveTo(shortcutLayout.value, 'shortcut');
     }
     return true;
   };
@@ -392,7 +405,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                         !poppedOut && layout === option.value && styles.itemSelected
                       )}
                       component={getShortcutHint(LAYOUT_SHORTCUT_DIGITS[option.value])}
-                      onClick={() => moveTo(option.value)}
+                      onClick={() => moveTo(option.value, 'chat_menu')}
                     />
                   ))}
                   {(poppedOut || canPopOutExtensionSidebar()) && (
@@ -417,7 +430,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                         key={option.value}
                         option={option}
                         checked={preset === option.value}
-                        onClick={() => arrange(option.value)}
+                        onClick={() => arrange(option.value, 'chat_menu')}
                       />
                     ))}
                   </div>

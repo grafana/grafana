@@ -152,7 +152,6 @@ export class GrafanaJavascriptAgentBackend
           collectFonts: false,
           inlineImages: false,
           inlineStylesheet: false,
-          recordCanvas: false,
           recordCrossOriginIframes: false,
         })
       );
