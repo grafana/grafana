@@ -1,4 +1,3 @@
-import { upperFirst } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -172,7 +171,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
-          title: upperFirst(kind.getLabel({ plural: true })),
+          title: kind.getPluralLabel({ upperFirst: true }),
           path: [],
           resourceCount: unmanaged.length,
           directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),

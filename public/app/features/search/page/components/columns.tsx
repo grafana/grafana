@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { upperFirst } from 'lodash';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -15,7 +14,7 @@ import { config, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { findKindBySearchKind } from 'app/core/kinds/coreKinds';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
@@ -452,11 +451,11 @@ function makeTypeColumn(
       const kind = kindField?.values[i] ?? 'dashboard';
       let icon: IconName = 'apps';
       let txt = kind;
-      // Search rows carry the kind's key in the core kind table; a panel's name comes from its plugin,
-      // and anything else shows its kind
-      const coreKind = Object.entries(CORE_KINDS).find(([key]) => key === kind)?.[1];
+      // The kind table names the kinds in the search index; a panel's name comes from its plugin, and
+      // anything else shows its kind
+      const coreKind = findKindBySearchKind(kind);
       if (coreKind) {
-        txt = upperFirst(coreKind.getLabel());
+        txt = coreKind.getLabel({ upperFirst: true });
         icon = coreKind.icon;
       } else if (kind === 'panel') {
         icon = `${PluginIconName.panel}`;

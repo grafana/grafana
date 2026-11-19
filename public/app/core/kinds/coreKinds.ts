@@ -1,3 +1,5 @@
+import { upperFirst } from 'lodash';
+
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
@@ -5,11 +7,16 @@ import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/p
 import { t } from '@grafana/i18n';
 
 import { CONNECTIONS_ROUTE, PROVISIONING_ROUTE } from './routes';
-import { type CollectionKindInfo, type KindInfo } from './types';
+import { type KindInfo, type LabelOptions } from './types';
 
 // Every page path is built here, so the object name is encoded in one place
 function page(base: string, suffix = '') {
   return (name: string) => `${base}/${encodeURIComponent(name)}${suffix}`;
+}
+
+// Titles are derived from the mid-sentence label here, so no reader changes a label's case itself
+function label(translate: () => string) {
+  return (options: LabelOptions = {}) => (options.upperFirst ? upperFirst(translate()) : translate());
 }
 
 /**
@@ -21,8 +28,9 @@ export const CORE_KINDS = {
     group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
-    getLabel: ({ plural = false } = {}) =>
-      plural ? t('core-kinds.folder.label-plural', 'folders') : t('core-kinds.folder.label', 'folder'),
+    searchKind: 'folder',
+    getLabel: label(() => t('core-kinds.folder.label', 'folder')),
+    getPluralLabel: label(() => t('core-kinds.folder.label-plural', 'folders')),
     icon: 'folder',
     getRoute: page('/dashboards/f'),
   },
@@ -30,8 +38,9 @@ export const CORE_KINDS = {
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
-    getLabel: ({ plural = false } = {}) =>
-      plural ? t('core-kinds.dashboard.label-plural', 'dashboards') : t('core-kinds.dashboard.label', 'dashboard'),
+    searchKind: 'dashboard',
+    getLabel: label(() => t('core-kinds.dashboard.label', 'dashboard')),
+    getPluralLabel: label(() => t('core-kinds.dashboard.label-plural', 'dashboards')),
     icon: 'apps',
     getRoute: page('/d'),
   },
@@ -39,8 +48,8 @@ export const CORE_KINDS = {
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
-    getLabel: ({ plural = false } = {}) =>
-      plural ? t('core-kinds.playlist.label-plural', 'playlists') : t('core-kinds.playlist.label', 'playlist'),
+    getLabel: label(() => t('core-kinds.playlist.label', 'playlist')),
+    getPluralLabel: label(() => t('core-kinds.playlist.label-plural', 'playlists')),
     icon: 'presentation-play',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
@@ -51,18 +60,16 @@ export const CORE_KINDS = {
     group: DASHBOARD_API_GROUP,
     kind: 'LibraryPanel',
     resource: 'librarypanels',
-    getLabel: ({ plural = false } = {}) =>
-      plural
-        ? t('core-kinds.librarypanel.label-plural', 'library panels')
-        : t('core-kinds.librarypanel.label', 'library panel'),
+    getLabel: label(() => t('core-kinds.librarypanel.label', 'library panel')),
+    getPluralLabel: label(() => t('core-kinds.librarypanel.label-plural', 'library panels')),
     icon: 'library-panel',
   },
   repository: {
     group: PROVISIONING_API_GROUP,
     kind: 'Repository',
     resource: 'repositories',
-    getLabel: ({ plural = false } = {}) =>
-      plural ? t('core-kinds.repository.label-plural', 'repositories') : t('core-kinds.repository.label', 'repository'),
+    getLabel: label(() => t('core-kinds.repository.label', 'repository')),
+    getPluralLabel: label(() => t('core-kinds.repository.label-plural', 'repositories')),
     icon: 'code-branch',
     getRoute: page(PROVISIONING_ROUTE),
   },
@@ -70,21 +77,40 @@ export const CORE_KINDS = {
     group: PROVISIONING_API_GROUP,
     kind: 'Connection',
     resource: 'connections',
-    getLabel: ({ plural = false } = {}) =>
-      plural ? t('core-kinds.connection.label-plural', 'connections') : t('core-kinds.connection.label', 'connection'),
+    getLabel: label(() => t('core-kinds.connection.label', 'connection')),
+    getPluralLabel: label(() => t('core-kinds.connection.label-plural', 'connections')),
     icon: 'plug',
     getRoute: page(CONNECTIONS_ROUTE, '/edit'),
   },
   datasource: {
     // Each data source plugin serves its own `{plugin}.datasource.grafana.app`
-    collection: 'datasource.grafana.app',
+    group: 'datasource.grafana.app',
+    collectionGroup: true,
     kind: 'DataSource',
     resource: 'datasources',
-    getLabel: ({ plural = false } = {}) =>
-      plural
-        ? t('core-kinds.datasource.label-plural', 'data sources')
-        : t('core-kinds.datasource.label', 'data source'),
+    getLabel: label(() => t('core-kinds.datasource.label', 'data source')),
+    getPluralLabel: label(() => t('core-kinds.datasource.label-plural', 'data sources')),
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
   },
-} as const satisfies Record<string, KindInfo | CollectionKindInfo>;
+} as const satisfies Record<string, KindInfo>;
+
+const kinds: KindInfo[] = Object.values(CORE_KINDS);
+
+/**
+ * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
+ * collection, which is the group a single object carries.
+ */
+export function coversGroup(kind: KindInfo, group: string): boolean {
+  return kind.group === group || (kind.collectionGroup === true && group.endsWith(`.${kind.group}`));
+}
+
+/** The kind an object of this API group and Kubernetes kind belongs to. */
+export function findKind(group: string, kind: string): KindInfo | undefined {
+  return kinds.find((row) => row.kind === kind && coversGroup(row, group));
+}
+
+/** The kind behind a dashboard search row's kind string; undefined for rows such as panels. */
+export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
+  return kinds.find((row) => row.searchKind === searchKind);
+}

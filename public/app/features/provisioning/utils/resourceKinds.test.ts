@@ -15,7 +15,6 @@ import {
   getKindInfoByStatGroup,
   getMigratableKinds,
   getReportedGroup,
-  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -46,7 +45,7 @@ describe('resourceKinds registry', () => {
       group: 'datasource.grafana.app',
       kind: 'DataSource',
       resource: 'datasources',
-      collection: 'datasource.grafana.app',
+      collectionGroup: true,
     });
     expect(resourceKindInfos.repository).toMatchObject({
       group: 'provisioning.grafana.app',
@@ -88,7 +87,7 @@ describe('resourceKinds registry', () => {
 
   it('every kind exposes a translated plural label and a list function', () => {
     for (const info of Object.values(resourceKindInfos)) {
-      expect(info.getLabel({ plural: true })).toBeTruthy();
+      expect(info.getPluralLabel()).toBeTruthy();
       expect(typeof info.list).toBe('function');
     }
   });
@@ -306,21 +305,6 @@ describe('getMigratableKinds', () => {
 // reports for an individual resource, in availableResources and on a job result row.
 describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
-
-  it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
-  });
-
-  it('does not match a group that merely looks similar', () => {
-    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
-  });
-
-  it('leaves a kind served under its own group matching exactly', () => {
-    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
-  });
 
   it('resolves a resource reported under a served group back to the kind', () => {
     expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);

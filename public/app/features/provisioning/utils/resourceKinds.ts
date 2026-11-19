@@ -4,7 +4,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
-import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { CORE_KINDS, coversGroup } from 'app/core/kinds/coreKinds';
 import { type KindInfo } from 'app/core/kinds/types';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -73,13 +73,13 @@ export const resourceKindInfos = {
   folder: {
     ...CORE_KINDS.folder,
     folderScoped: true,
-    list: () => listViaSearch('folder'),
+    list: () => listViaSearch(CORE_KINDS.folder.searchKind),
     alwaysAvailable: true,
   },
   dashboard: {
     ...CORE_KINDS.dashboard,
     folderScoped: true,
-    list: () => listViaSearch('dashboard'),
+    list: () => listViaSearch(CORE_KINDS.dashboard.searchKind),
     alwaysAvailable: true,
   },
   playlist: {
@@ -124,13 +124,11 @@ export const resourceKindInfos = {
   },
   datasource: {
     ...CORE_KINDS.datasource,
-    // The backend names the kind by its collection, as no single group serves it
-    group: CORE_KINDS.datasource.collection,
     // Data sources are org-scoped, not folder-contained.
     folderScoped: false,
     list: ({ availableResources }: ResourceListDeps) => {
-      const { collection, resource, kind } = CORE_KINDS.datasource;
-      return listCollectionMembers(collection, resource, kind, availableResources);
+      const { group, resource, kind } = CORE_KINDS.datasource;
+      return listCollectionMembers(group, resource, kind, availableResources);
     },
     alwaysAvailable: false,
   },
@@ -164,18 +162,6 @@ export type ResourceKindName = (typeof resourceKindInfos)[ResourceKindKey]['kind
  * `availableResources`.
  */
 export interface ResourceKindInfo extends KindInfo {
-  /**
-   * The group the backend names the kind by. For a kind with a `collection` that is the collection,
-   * which no API serves, rather than the group that served a given resource.
-   */
-  group: string;
-  /**
-   * Set when one API group per member serves the kind rather than a group of its own. Data sources
-   * are the case: each plugin serves `{plugin}.datasource.grafana.app`. Such a kind covers any group
-   * inside the collection, and is reported to the user as the collection — the plugin that served a
-   * resource is not what the kind is called.
-   */
-  collection?: string;
   /** Kubernetes Kind, e.g. `Dashboard`. Also the label shown for this kind in the files/resources tree. */
   kind: ResourceKindName;
   /**
@@ -208,16 +194,8 @@ export interface ResourceKindInfo extends KindInfo {
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The literal `key`/`kind` values stay the source of truth for the unions above.
+// each call site. The registry keys and literal `kind` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
-
-/**
- * Whether `group` identifies this kind. A collection kind also covers the groups served inside the
- * collection, which is what the backend reports for an individual resource and for a job result.
- */
-export function coversGroup(info: ResourceKindInfo, group: string): boolean {
-  return info.group === group || (info.collection !== undefined && group.endsWith(`.${info.collection}`));
-}
 
 /**
  * The group a kind is named by: the collection rather than the member group that served a given
@@ -225,7 +203,7 @@ export function coversGroup(info: ResourceKindInfo, group: string): boolean {
  */
 export function getReportedGroup(group?: string, kind?: string): string | undefined {
   const info = getKindInfoByGroupKind(group, kind);
-  return info?.collection ?? group;
+  return info?.collectionGroup ? info.group : group;
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
