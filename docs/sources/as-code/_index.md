@@ -96,21 +96,21 @@ Explore the available as code tools. Most can be used with one another.
 
 {{< card-grid key="cards" type="simple" >}}
 
-## A new approach
+### Choose a tool
 
-Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward:
+Use the following table to find the tool that fits your workflow. You can combine tools, but give each resource a single owner so that one tool doesn't overwrite changes made by another.
 
-- This approach requires handling HTTP requests and responses but provides complete control over resource management.
-- `gcx`, Git Sync, and the Foundation SDK are all built on top of these APIs.
-- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
+| I want to                                                                               | Use                                                                                                                              | Why                                                                                                                                                         |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manage Grafana Cloud stacks and resources across Grafana products from one configuration | [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/)                                               | The Grafana Terraform provider supports the most Grafana resources, and fits Terraform workflows such as reviewing changes with `terraform plan` and applying them from CI/CD. |
+| Edit dashboards in the Grafana UI and store them in Git                                 | [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/)                                                 | Git Sync synchronizes dashboard files between a GitHub repository and Grafana, with version control, branching, and pull requests directly from Grafana.    |
+| Load dashboards and folders from files on the server that runs Grafana                  | [On-prem file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/)                     | Grafana reads the resources from a local file system, so you don't need external tooling.                                                                   |
+| Manage Grafana Cloud resources from Ansible playbooks                                   | [Ansible](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/ansible/)                                                   | The Grafana Ansible collection manages Grafana Cloud resources, including folders and cloud stacks, alongside the rest of your Ansible automation.           |
+| Run Grafana in Kubernetes and manage its resources as custom resources                  | [Grafana Operator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/)                                 | The Grafana Operator provisions and operates Grafana instances and manages their dashboards, folders, and data sources through Kubernetes custom resources. |
+| Define any Terraform-supported resource as a Kubernetes manifest                        | [Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/#grafana-crossplane-provider) | The Crossplane provider is built from the Terraform provider and supports all of its resources, so it fits GitOps pipelines built on tools like Argo CD.    |
+| Generate dashboards from code                                                           | [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)                                     | You define dashboards in Go, TypeScript, Python, Java, or PHP, and push the generated resources with `gcx`.                                                 |
+| Inspect, pull, and push resources from the command line or with an AI agent            | [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/)                                          | `gcx` manages resources across Grafana and Grafana Cloud with one set of commands, and works for both people and agents.                                    |
 
-In Grafana Cloud, you can create and manage dashboards via configuration files in source code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows. Infrastructure as code tools include Terraform, Ansible, the Grafana Operator, and Grizzly.
-
-## as code for Kubernetes: Grafana Operator and Grafana Crossplane provider
-
-The **Grafana Operator** is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. The Operator eases the administration of Grafana, including managing dashboards, data sources, and folders. To get started, refer to the [quickstart guides for the Grafana Operator](https://grafana.com/docs/grafana-cloud/as-code/grafana-operator) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/).
-
-For Grafana Crossplane, refer to [Use the Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator#use-the-grafana-crossplane-provider).
 
 ## Additional as code tools
 

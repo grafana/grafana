@@ -22,7 +22,7 @@ The resources you can manage depend on the permissions of the credentials you co
 
 ## Why use the Terraform provider
 
-To manage the entire Grafana ecosystem of resources on either Grafana Cloud or OSS deployments of Grafana, it's best to use the Grafana Terraform provider because it supports the most Grafana resources compared to Grafana's other as-code solutions.
+To manage the entire Grafana ecosystem of resources on either Grafana Cloud or OSS deployments of Grafana, the Grafana Terraform provider supports the most Grafana resources compared to other as-code solutions.
 
 The Terraform provider is a good fit when you want to:
 
@@ -31,12 +31,7 @@ The Terraform provider is a good fit when you want to:
 - **Manage Grafana alongside your infrastructure:** Provision Grafana resources in the same configuration as the cloud infrastructure they monitor, for example AWS accounts and Microsoft Azure credentials for Cloud Provider Observability.
 - **Use Kubernetes manifests instead of HCL:** The [Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/#grafana-crossplane-provider) is built from the Terraform provider and supports all of its resources as Kubernetes custom resources.
 
-Other as-code tools might suit you better in some cases:
-
-- **Interactive and agent workflows:** Use the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) to inspect, pull, and push resources from the command line.
-- **Dashboards edited in the Grafana UI and stored in Git:** Use [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/).
-- **Grafana instances running in Kubernetes:** Use the [Grafana Operator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/).
-- **Dashboards generated from code:** Use the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/).
+To compare Terraform with the other as-code tools, refer to [Choose a tool](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/#choose-a-tool).
 
 ## Best practices
 
