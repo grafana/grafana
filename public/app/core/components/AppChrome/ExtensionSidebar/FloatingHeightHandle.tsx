@@ -229,6 +229,15 @@ export function FloatingHeightHandle({
     }
     drag.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
+    // Let go level with where it was pressed, the edge resized nothing: a click must not lock the extension's own
+    // height, and a sideways corner drag only changed the width.
+    if (Math.round(event.clientY) === Math.round(active.startY)) {
+      write(height);
+      if (active.width !== active.startWidth) {
+        reportResized(edge, 'drag', { width: active.width });
+      }
+      return;
+    }
     const dragged = active.startHeight + (active.startY - event.clientY);
     const from = clampHeight(dragged, active.floor, active.max);
     const released = releasedFloatingHeight(dragged, active.options, active.max);

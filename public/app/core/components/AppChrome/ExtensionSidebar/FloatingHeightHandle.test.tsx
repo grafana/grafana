@@ -133,6 +133,19 @@ describe('FloatingHeightHandle', () => {
       });
     });
 
+    // Below halfway between the minimum and the collapsed height, a release would collapse it.
+    it.each([500, 200])("leaves the extension's own height alone on a click, %spx tall", (rendered) => {
+      const { handle, variable, onHeightChange } = renderHandle({ rendered: { width: 500, height: rendered } });
+
+      fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientY: 300 });
+      fireEvent.pointerUp(handle, { pointerId: 1, clientY: 300 });
+      finishGlide();
+      expect(variable()).toBe('');
+      expect(onHeightChange).not.toHaveBeenCalled();
+      expect(collapse).not.toHaveBeenCalled();
+      expect(reportInteraction).not.toHaveBeenCalled();
+    });
+
     it('keeps the top edge below the page content top, so it never covers the top bar', () => {
       const page = document.createElement('div');
       page.id = 'pageContent';
@@ -301,6 +314,23 @@ describe('FloatingHeightHandle', () => {
         method: 'drag',
         width: MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
         height: 580,
+      });
+    });
+
+    it('changes only the width when dragged sideways, leaving the height to the extension', () => {
+      const { handle, variable, onHeightChange, onWidthChange } = renderHandle({ edge: 'corner' });
+
+      fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientX: 300, clientY: 300 });
+      fireEvent.pointerMove(handle, { pointerId: 1, clientX: 250, clientY: 300 });
+      fireEvent.pointerUp(handle, { pointerId: 1, clientX: 250, clientY: 300 });
+      finishGlide();
+      expect(onWidthChange).toHaveBeenLastCalledWith(550);
+      expect(variable()).toBe('');
+      expect(onHeightChange).not.toHaveBeenCalled();
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_resized', {
+        edge: 'corner',
+        method: 'drag',
+        width: 550,
       });
     });
 
