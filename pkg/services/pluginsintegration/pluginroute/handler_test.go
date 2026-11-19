@@ -322,7 +322,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 			}
 		}, "storage provider returned no REST options getter"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
-			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
+			p.Manifests[0].Versions[0].Kinds[0].Kind = "Status"
 		}, "reserved kind name"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
