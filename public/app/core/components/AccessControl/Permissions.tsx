@@ -6,12 +6,13 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { Text, Box, Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
+import { PermissionsLoading } from './PermissionsLoading';
 import { PermissionTarget, type ResourcePermission, type SetPermission, type Description } from './types';
 
 const EMPTY_PERMISSION = '';
@@ -56,13 +57,19 @@ export const Permissions = ({
   const [isAdding, setIsAdding] = useState(false);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  const [permissions, fetchPermissions] = useAsyncFn(async () => {
-    let items = await getPermissions(resource, resourceId, queryParams);
-    if (getWarnings) {
-      items = getWarnings(items);
-    }
-    return items;
-  }, [resource, resourceId, queryParams, getWarnings]);
+  // Loading from the start: nothing is fetched until the description arrives, and until then an empty editor
+  // reads as a resource with no permissions.
+  const [permissions, fetchPermissions] = useAsyncFn(
+    async () => {
+      let items = await getPermissions(resource, resourceId, queryParams);
+      if (getWarnings) {
+        items = getWarnings(items);
+      }
+      return items;
+    },
+    [resource, resourceId, queryParams, getWarnings],
+    { loading: true }
+  );
 
   useEffect(() => {
     getDescription(resource, queryParams).then((r) => {
@@ -153,7 +160,7 @@ export const Permissions = ({
   const titleTeam = t('access-control.permissions.team', 'Team');
 
   if (permissions.loading) {
-    return <LoadingPlaceholder text={t('access-control.permissions.loading', 'Loading permissions...')} />;
+    return <PermissionsLoading />;
   }
 
   return (

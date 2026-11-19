@@ -94,7 +94,7 @@ describe('grafana/folder-permissions/v1', () => {
 
     rerender(<FolderPermissionsExposedComponentLazy folderUid={otherFolderUid} />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Loading permissions...')).toBeInTheDocument();
     expect(screen.queryByText(`Permissions for ${folderUid}, editable`)).not.toBeInTheDocument();
     expect(await screen.findByText(`Permissions for ${otherFolderUid}, read only`)).toBeInTheDocument();
     expect(mockRenderedEditors).not.toContain(`Permissions for ${otherFolderUid}, editable`);

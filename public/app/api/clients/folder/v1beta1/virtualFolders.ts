@@ -1,8 +1,8 @@
 import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config } from '@grafana/runtime';
-import { isRootFolderUID } from 'app/features/search/constants';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
-export const rootFolder: Folder = {
+const rootFolder: Folder = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
@@ -20,7 +20,7 @@ export const rootFolder: Folder = {
   },
 };
 
-export const sharedWithMeFolder: Folder = {
+const sharedWithMeFolder: Folder = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
@@ -38,7 +38,11 @@ export const sharedWithMeFolder: Folder = {
   },
 };
 
-/** True for the root and "shared with me" folders, which have no stored folder resource. */
-export function isVirtualFolderUID(uid?: string): boolean {
-  return Boolean(uid) && (isRootFolderUID(uid) || uid === config.sharedWithMeFolderUID);
+/** The synthetic folder for a uid with no stored folder resource: the root and "shared with me". */
+export function getVirtualFolder(uid?: string): Folder | undefined {
+  if (uid === GENERAL_FOLDER_UID) {
+    return rootFolder;
+  }
+  // sharedWithMeFolderUID can be unset, so an empty uid must not match it
+  return uid && uid === config.sharedWithMeFolderUID ? sharedWithMeFolder : undefined;
 }

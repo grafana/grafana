@@ -11,7 +11,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
-import { FolderPermissions } from 'app/features/provisioning/components/Folders/FolderPermissions';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -24,6 +23,7 @@ import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
+import { FolderPermissions } from './FolderPermissions';
 
 interface Props {
   folder: FolderDTO;
