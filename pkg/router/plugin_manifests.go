@@ -364,6 +364,7 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
+		definition.MigrateDeprecatedRoutes(plugin.Settings)
 		loadSettingsManifest(ctx, plugin)
 	}
 
