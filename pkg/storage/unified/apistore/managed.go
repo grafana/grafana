@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -67,16 +68,20 @@ func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error
 	return rest.RESTClientFor(cfg)
 }
 
-// The lookup runs as the provisioning identity because a caller may be allowed to write a resource without being allowed
-// to read repositories, and this is only an existence probe.
+// The lookup runs as the service identity of the namespace, because a caller may be allowed to write a resource
+// without being allowed to read repositories, and this is only an existence probe. The provisioning identity is
+// not used: it means that provisioning acts for itself, not that another service reads from provisioning.
 func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (exists bool, err error) {
 	if s.configProvider == nil || name == "" {
 		return true, nil
 	}
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+	ns, err := authtypes.ParseNamespace(namespace)
 	if err != nil {
 		return false, err
 	}
+	ctx, _ = identity.WithServiceIdentity(ctx, ns.OrgID, func(r *identity.StaticRequester) {
+		r.Namespace = ns.Value
+	})
 	client, err := s.provisioningClient(ctx)
 	if err != nil {
 		return false, err

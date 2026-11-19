@@ -125,7 +125,7 @@ func TestIsOrphanedRepositoryRootFolder(t *testing.T) {
 }
 
 func TestRepositoryExists(t *testing.T) {
-	t.Run("runs as the provisioning identity", func(t *testing.T) {
+	t.Run("runs as the service identity of the namespace", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"kind":"Repository","apiVersion":"provisioning.grafana.app/v0alpha1"}`))
@@ -136,11 +136,26 @@ func TestRepositoryExists(t *testing.T) {
 		s := &Storage{configProvider: provider}
 		callerCtx := identity.WithRequester(t.Context(), &identity.StaticRequester{Login: "caller", OrgRole: identity.RoleNone})
 
-		exists, err := s.repositoryExists(callerCtx, "default", "my-repo")
+		exists, err := s.repositoryExists(callerCtx, "org-2", "my-repo")
 
 		require.NoError(t, err)
 		require.True(t, exists)
-		require.True(t, provider.wasProvisioning, "the probe must not need the caller's repository read permission")
+		require.NotNil(t, provider.requester)
+		require.True(t, identity.IsServiceIdentityAuth(provider.requester), "the probe must not need the caller's repository read permission")
+		require.False(t, identity.IsProvisioningServiceIdentity(provider.requester), "the provisioning identity is for provisioning acting for itself")
+		require.Equal(t, "org-2", provider.requester.GetNamespace())
+		require.Equal(t, int64(2), provider.requester.GetOrgID())
+	})
+
+	t.Run("rejects a namespace that is not valid", func(t *testing.T) {
+		provider := &identityCapturingRestConfigProvider{fakeRestConfigProvider: fakeRestConfigProvider{host: "http://unused"}}
+		s := &Storage{configProvider: provider}
+
+		exists, err := s.repositoryExists(t.Context(), "org-abc", "my-repo")
+
+		require.ErrorContains(t, err, "invalid org id")
+		require.False(t, exists)
+		require.Nil(t, provider.requester, "no lookup is sent for a namespace that is not valid")
 	})
 
 	t.Run("assumes the repository exists when provisioning is not wired up", func(t *testing.T) {
@@ -153,16 +168,15 @@ func TestRepositoryExists(t *testing.T) {
 	})
 }
 
-// identityCapturingRestConfigProvider records whether the rest config was requested as the
-// provisioning identity.
+// identityCapturingRestConfigProvider records the identity that the rest config was requested as.
 type identityCapturingRestConfigProvider struct {
 	fakeRestConfigProvider
-	wasProvisioning bool
+	requester identity.Requester
 }
 
 func (p *identityCapturingRestConfigProvider) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	if requester, err := identity.GetRequester(ctx); err == nil {
-		p.wasProvisioning = identity.IsProvisioningServiceIdentity(requester)
+		p.requester = requester
 	}
 	return p.fakeRestConfigProvider.GetRestConfig(ctx)
 }
