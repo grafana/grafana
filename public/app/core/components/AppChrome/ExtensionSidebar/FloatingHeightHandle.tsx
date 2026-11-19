@@ -40,6 +40,12 @@ function clampHeight(
   return Math.round(Math.min(max, Math.max(min, height)));
 }
 
+/** The window caps the height, and so does the room above the sidebar where it is, so it never covers the top bar. */
+function getMaxHeight(sidebar: HTMLElement | null): number {
+  const windowMax = getMaxFloatingExtensionSidebarHeight(window.innerHeight);
+  return sidebar ? Math.min(windowMax, getFloatingHeightRoom(sidebar)) : windowMax;
+}
+
 /**
  * Where letting go at `height` leaves the floating sidebar: at that height within the bounds, or collapsed when it is
  * nearer the extension's collapsed height than its minimum.
@@ -109,23 +115,29 @@ export function FloatingHeightHandle({
     max: number;
   } | null>(null);
   const [renderedHeight, setRenderedHeight] = useState<number | undefined>(undefined);
+  const [renderedMax, setRenderedMax] = useState<number | undefined>(undefined);
 
   const sidebar = () => handleRef.current?.parentElement ?? null;
 
-  // The separator reports the rendered height, which the extension decides until the user resizes it.
+  // The separator reports the rendered height, which the extension decides until the user resizes it, and the most
+  // the handle can give it where it is. Moving the sidebar resizes nothing, so focusing the separator measures again.
   useLayoutEffect(() => {
     const element = handleRef.current?.parentElement;
     if (edge !== 'top' || !element) {
       return;
     }
-    const update = () => setRenderedHeight(Math.round(element.getBoundingClientRect().height));
+    const update = () => {
+      setRenderedHeight(Math.round(element.getBoundingClientRect().height));
+      setRenderedMax(getMaxHeight(element));
+    };
     update();
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => observer.disconnect();
+    window.addEventListener('resize', update);
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
+    observer?.observe(element);
+    return () => {
+      window.removeEventListener('resize', update);
+      observer?.disconnect();
+    };
   }, [edge]);
 
   // Writes skip React while dragging and gliding; React writes the committed height on the next render.
@@ -181,12 +193,7 @@ export function FloatingHeightHandle({
   const collapsibleOptions = (): FloatingExtensionSidebarHeightOptions =>
     canCollapseFloatingExtensionSidebar() ? options : { minHeight: options.minHeight };
 
-  // The window caps the height, and so does the room above the sidebar where it is, so it never covers the top bar.
-  const maxHeight = () => {
-    const element = sidebar();
-    const windowMax = getMaxFloatingExtensionSidebarHeight(window.innerHeight);
-    return element ? Math.min(windowMax, getFloatingHeightRoom(element)) : windowMax;
-  };
+  const maxHeight = () => getMaxHeight(sidebar());
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -333,10 +340,15 @@ export function FloatingHeightHandle({
       aria-label={t('navigation.extension-sidebar.floating-resize-height', 'Resize sidebar height')}
       aria-valuenow={renderedHeight}
       aria-valuemin={options.minHeight}
-      aria-valuemax={getMaxFloatingExtensionSidebarHeight(window.innerHeight)}
+      // Never below the minimum, so the range stays valid where the room is smaller than it.
+      aria-valuemax={Math.max(
+        options.minHeight,
+        renderedMax ?? getMaxFloatingExtensionSidebarHeight(window.innerHeight)
+      )}
       className={styles.top}
       {...pointerHandlers}
       onKeyDown={onKeyDown}
+      onFocus={() => setRenderedMax(maxHeight())}
       data-testid="extension-sidebar-floating-height-handle"
     />
   );

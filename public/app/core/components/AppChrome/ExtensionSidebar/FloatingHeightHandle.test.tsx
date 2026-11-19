@@ -167,6 +167,37 @@ describe('FloatingHeightHandle', () => {
       }
     });
 
+    it('reports the most it can resize to as the room under the top bar, measured again on focus and window resize', () => {
+      const page = document.createElement('div');
+      page.id = 'pageContent';
+      page.getBoundingClientRect = () => ({ top: 100, left: 0, width: 1024, height: 668 }) as DOMRect;
+      document.body.appendChild(page);
+      try {
+        const rendered = { width: 500, height: 500, bottom: 750 };
+        const { handle, sidebar } = renderHandle({ rendered });
+
+        act(() => handle.focus());
+        // 750 at the bottom, less the content's top at 100 and the 8px gutter.
+        expect(handle).toHaveAttribute('aria-valuemax', '642');
+
+        // Lower in a shorter window.
+        sidebar.getBoundingClientRect = () => ({ ...rendered, bottom: 650 }) as DOMRect;
+        act(() => {
+          window.dispatchEvent(new Event('resize'));
+        });
+        expect(handle).toHaveAttribute('aria-valuemax', '542');
+
+        // Never below the minimum.
+        sidebar.getBoundingClientRect = () => ({ ...rendered, bottom: 300 }) as DOMRect;
+        act(() => {
+          window.dispatchEvent(new Event('resize'));
+        });
+        expect(handle).toHaveAttribute('aria-valuemax', '400');
+      } finally {
+        page.remove();
+      }
+    });
+
     it('keeps the remembered height when a drag or a key leaves the height where it was, at the top bar', () => {
       const page = document.createElement('div');
       page.id = 'pageContent';
