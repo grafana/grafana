@@ -15,9 +15,14 @@ import {
   SEARCH_SELECTED_SORT,
 } from '../constants';
 import { SearchLayout } from '../types';
-import * as utils from '../utils';
+import { parseRouteParams } from '../utils';
 
 import { initialState, SearchStateManager } from './SearchStateManager';
+
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+  parseRouteParams: jest.fn(),
+}));
 
 jest.mock('lodash', () => {
   const orig = jest.requireActual('lodash');
@@ -42,6 +47,12 @@ const createSearchStateManager = () => new SearchStateManager({ ...initialState,
 
 describe('SearchStateManager', () => {
   beforeEach(() => {
+    jest
+      .mocked(parseRouteParams)
+      .mockReset()
+      .mockImplementation(
+        jest.requireActual<{ parseRouteParams: typeof parseRouteParams }>('../utils').parseRouteParams
+      );
     jest.useFakeTimers();
     server.use(getCustomSearchHandler([]));
   });
@@ -76,7 +87,7 @@ describe('SearchStateManager', () => {
     });
 
     it('should reset filters if state is updated and no URL params are present', () => {
-      const parseRouteParamsSpy = jest.spyOn(utils, 'parseRouteParams');
+      const parseRouteParamsSpy = jest.mocked(parseRouteParams);
       // Set initial values
       parseRouteParamsSpy.mockImplementation(() => ({
         query: 'hello',

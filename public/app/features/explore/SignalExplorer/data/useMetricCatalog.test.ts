@@ -8,6 +8,12 @@ import * as client from './metricResourceClient';
 import type { Catalog } from './metricResourceClient';
 import { SEARCH_DEBOUNCE_MS, useMetricCatalog } from './useMetricCatalog';
 
+jest.mock('./metricResourceClient', () => ({
+  ...jest.requireActual('./metricResourceClient'),
+  fetchCatalog: jest.fn(),
+  searchCatalog: jest.fn(),
+}));
+
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const rows: MetricInfo[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },
@@ -29,10 +35,10 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 }
 
 describe('useMetricCatalog', () => {
-  afterEach(() => jest.restoreAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('loads then exposes metrics', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -40,9 +46,9 @@ describe('useMetricCatalog', () => {
   });
 
   it('applies substring filter and type filter', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     // Answered with the whole catalog, so what narrows it is the hook's own filter.
-    jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
+    jest.mocked(client.searchCatalog).mockResolvedValue(rows);
     const { result } = renderHook(() =>
       useMetricCatalog({ uid: 'p1' }, range, { searchText: 'load', typeFilter: 'gauge' })
     );
@@ -51,7 +57,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('surfaces error without throwing when the client rejects', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockRejectedValue(new Error('boom'));
+    jest.mocked(client.fetchCatalog).mockRejectedValue(new Error('boom'));
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error?.message).toBe('boom');
@@ -59,16 +65,16 @@ describe('useMetricCatalog', () => {
   });
 
   it('filters case-insensitively on search text', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
-    jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
+    jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
+    jest.mocked(client.searchCatalog).mockResolvedValue(rows);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: 'LOAD' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
   });
 
   it('trims the search text, which otherwise matches no metric name at all', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
-    const search = jest.spyOn(client, 'searchCatalog').mockResolvedValue(rows);
+    jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
+    const search = jest.mocked(client.searchCatalog).mockResolvedValue(rows);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: '  load ' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'load');
@@ -76,7 +82,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('refetches when the datasource uid changes', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const spy = jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { uid: 'p1' } },
     });
@@ -90,7 +96,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('refetches when a type-only ref changes type, even though `uid` is undefined both times', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const spy = jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { type: 'prometheus' } },
     });
@@ -106,7 +112,7 @@ describe('useMetricCatalog', () => {
   it('refetches when a uid-only ref is swapped for a type-only ref of the same string', async () => {
     // The client keys these two apart (`u:prometheus` vs `t:prometheus`), so the hook must too —
     // otherwise it keeps painting the first one's catalog while the client holds a different entry.
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const spy = jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { uid: 'prometheus' } as { uid?: string; type?: string } },
     });
@@ -121,7 +127,7 @@ describe('useMetricCatalog', () => {
 
   it('refetches when the cache is invalidated, so a host refresh control reaches a mounted tree', async () => {
     // Expiry alone never gets here: a relative range is one request key for the life of the page.
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const spy = jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(spy).toHaveBeenCalledTimes(1);
@@ -132,7 +138,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('ignores an invalidation aimed at a different datasource', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
+    const spy = jest.mocked(client.fetchCatalog).mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -145,7 +151,7 @@ describe('useMetricCatalog', () => {
     const first = deferred<Catalog>();
     const second = deferred<Catalog>();
     const spy = jest
-      .spyOn(client, 'fetchCatalog')
+      .mocked(client.fetchCatalog)
       .mockImplementationOnce(() => first.promise)
       .mockImplementationOnce(() => second.promise);
 
@@ -180,7 +186,7 @@ describe('useMetricCatalog', () => {
 
   it('does not throw when unmounting mid-flight', async () => {
     const { promise, resolve } = deferred<Catalog>();
-    jest.spyOn(client, 'fetchCatalog').mockImplementation(() => promise);
+    jest.mocked(client.fetchCatalog).mockImplementation(() => promise);
     const { unmount } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     unmount();
     await act(async () => {
@@ -194,7 +200,7 @@ describe('useMetricCatalog', () => {
   it('raises `loading` and clears stale `metrics` in the render that starts a fetch for a new datasource, before the promise resolves', async () => {
     const pending = deferred<Catalog>();
     const spy = jest
-      .spyOn(client, 'fetchCatalog')
+      .mocked(client.fetchCatalog)
       .mockResolvedValueOnce(complete)
       .mockImplementationOnce(() => pending.promise);
 
@@ -218,8 +224,8 @@ describe('useMetricCatalog', () => {
     afterEach(() => jest.useRealTimers());
 
     const renderSearch = (catalog: Catalog) => {
-      jest.spyOn(client, 'fetchCatalog').mockResolvedValue(catalog);
-      const search = jest.spyOn(client, 'searchCatalog').mockResolvedValue(found);
+      jest.mocked(client.fetchCatalog).mockResolvedValue(catalog);
+      const search = jest.mocked(client.searchCatalog).mockResolvedValue(found);
       const hook = renderHook(({ searchText }) => useMetricCatalog({ uid: 'p1' }, range, { searchText }), {
         initialProps: { searchText: '' },
       });
@@ -433,8 +439,8 @@ describe('useMetricCatalog', () => {
     it('shows the catalog’s matches during a search started before the catalog arrived', async () => {
       const catalogPending = deferred<Catalog>();
       const searchPending = deferred<MetricInfo[]>();
-      jest.spyOn(client, 'fetchCatalog').mockReturnValue(catalogPending.promise);
-      const search = jest.spyOn(client, 'searchCatalog').mockReturnValue(searchPending.promise);
+      jest.mocked(client.fetchCatalog).mockReturnValue(catalogPending.promise);
+      const search = jest.mocked(client.searchCatalog).mockReturnValue(searchPending.promise);
       const { result, rerender } = renderHook(
         ({ searchText }) => useMetricCatalog({ uid: 'p1' }, range, { searchText }),
         { initialProps: { searchText: '' } }

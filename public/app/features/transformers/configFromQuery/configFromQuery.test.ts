@@ -9,7 +9,14 @@ import {
   getConfigFromDataTransformer,
   type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
-import * as importDynamic from './configFromQueryDynamic';
+import { extractConfigFromQueryDynamic } from './configFromQueryDynamic';
+
+jest.mock('./configFromQueryDynamic', () => ({
+  ...jest.requireActual('./configFromQueryDynamic'),
+  extractConfigFromQueryDynamic: jest.fn((...args) =>
+    jest.requireActual('./configFromQueryDynamic').extractConfigFromQueryDynamic(...args)
+  ),
+}));
 
 describe('config from data', () => {
   const config = toDataFrame({
@@ -241,8 +248,8 @@ describe('config from data', () => {
       },
     };
 
-    const mock = jest.spyOn(importDynamic, 'extractConfigFromQueryDynamic');
-    mock.mockReturnValue([]);
+    const mock = jest.mocked(extractConfigFromQueryDynamic);
+    mock.mockReturnValueOnce([]);
 
     extractConfigFromQuery(options, [config, seriesA]);
     expect(mock).toHaveBeenCalled();

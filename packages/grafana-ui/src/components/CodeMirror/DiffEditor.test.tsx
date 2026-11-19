@@ -9,6 +9,18 @@ import { createTheme, ThemeContext } from '@grafana/data';
 import { DiffEditor } from './DiffEditor';
 import * as languageLoader from './languageLoader';
 
+jest.mock('./languageLoader', () => ({
+  ...jest.requireActual('./languageLoader'),
+  loadLanguageExtension: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(languageLoader.loadLanguageExtension)
+    .mockReset()
+    .mockImplementation(jest.requireActual('./languageLoader').loadLanguageExtension);
+});
+
 function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): ReactElement {
   const [value, setValue] = useState('');
 
@@ -32,7 +44,7 @@ function DiffWithMountConfigurationChange(): ReactElement {
 describe('CodeMirror DiffEditor', () => {
   it('keeps the read-only diff and language error inside the requested height', async () => {
     const loadLanguage = jest
-      .spyOn(languageLoader, 'loadLanguageExtension')
+      .mocked(languageLoader.loadLanguageExtension)
       .mockRejectedValueOnce(new Error('Language chunk failed to load'));
 
     try {
@@ -46,7 +58,7 @@ describe('CodeMirror DiffEditor', () => {
       expect(EditorView.findFromDOM(editor)?.state.readOnly).toBe(true);
       expect(container.firstChild).toHaveStyle({ display: 'flex', flexDirection: 'column', height: '240px' });
     } finally {
-      loadLanguage.mockRestore();
+      loadLanguage.mockReset().mockImplementation(jest.requireActual('./languageLoader').loadLanguageExtension);
     }
   });
 

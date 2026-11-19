@@ -5,6 +5,11 @@ import type { InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
 import SchemaEditor from './SchemaEditor';
 import * as annotations from './schemaAnnotations';
 
+jest.mock('./schemaAnnotations', () => ({
+  ...jest.requireActual('./schemaAnnotations'),
+  schemaAnnotations: jest.fn((...args) => jest.requireActual('./schemaAnnotations').schemaAnnotations(...args)),
+}));
+
 // The schema package pulls ESM-only syntax highlighting into Jest; schema validation
 // is outside the draft/commit contract exercised here.
 jest.mock('codemirror-json-schema', () => ({
@@ -95,7 +100,7 @@ it.each(['disabled', 'readOnly'] as const)('keeps the draft when %s becomes true
 });
 
 it('retains annotation extensions across schema and callback rerenders while committing to the latest callback', () => {
-  const extensions = jest.spyOn(annotations, 'schemaAnnotations');
+  const extensions = jest.mocked(annotations.schemaAnnotations).mockClear();
   const original = jest.fn();
   const updated = jest.fn();
   try {
@@ -107,6 +112,6 @@ it('retains annotation extensions across schema and callback rerenders while com
     expect(updated).toHaveBeenCalledWith({ target: { value: '{"new":true}' } });
     expect(original).not.toHaveBeenCalled();
   } finally {
-    extensions.mockRestore();
+    extensions.mockClear();
   }
 });

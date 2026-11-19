@@ -15,6 +15,13 @@ import * as routeUtils from '../route.utils';
 import { type NotificationPolicyPreviewResult, useNotificationPolicyPreview } from './useNotificationPolicyPreview';
 import { useRoutingTrees } from './useRoutingTrees';
 
+jest.mock('../route.utils', () => ({
+  ...jest.requireActual('../route.utils'),
+  matchInstancesToRoute: jest.fn((...args: Parameters<typeof routeUtils.matchInstancesToRoute>) =>
+    jest.requireActual('../route.utils').matchInstancesToRoute(...args)
+  ),
+}));
+
 const server = setupMockServer();
 
 const instances = [[['severity', 'critical']]] as Array<Array<[string, string]>>;
@@ -128,7 +135,7 @@ describe('useNotificationPolicyPreview', () => {
   });
 
   it('does not match the tree when there are no instances to match', async () => {
-    const matchSpy = jest.spyOn(routeUtils, 'matchInstancesToRoute');
+    const matchSpy = jest.mocked(routeUtils.matchInstancesToRoute).mockClear();
     const { result } = renderHook(() => useNotificationPolicyPreview(namedTree.metadata.name, []), {
       wrapper: getDefaultWrapper(),
     });
@@ -136,6 +143,5 @@ describe('useNotificationPolicyPreview', () => {
     await waitFor(() => expect(result.current.status).toBe('found'));
     expect(result.current.results).toEqual([]);
     expect(matchSpy).not.toHaveBeenCalled();
-    matchSpy.mockRestore();
   });
 });

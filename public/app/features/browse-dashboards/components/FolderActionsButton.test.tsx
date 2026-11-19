@@ -8,11 +8,16 @@ import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteFolderMutation } from '../api/browseDashboardsAPI';
 import { mockFolderDTO } from '../fixtures/folder.fixture';
-import * as permissions from '../permissions';
+import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
 import { FolderActionsButton } from './FolderActionsButton';
+
+jest.mock('../permissions', () => ({
+  ...jest.requireActual('../permissions'),
+  getFolderPermissions: jest.fn(),
+}));
 
 // Mock out the Permissions component for now
 jest.mock('app/core/components/AccessControl/Permissions', () => ({
@@ -49,7 +54,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   };
 
   beforeEach(() => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.mocked(getFolderPermissions).mockImplementation(() => mockPermissions);
     (useDeleteFolderMutation as jest.Mock).mockReturnValue([jest.fn(), {}]);
   });
 
@@ -58,7 +63,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('does not render anything when the user has no permissions to do anything', () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: false,
@@ -86,7 +91,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('does not render the "Manage permissions" option if the user does not have permission to view permissions', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canViewPermissions: false,
@@ -101,7 +106,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('does not render the "Move" option if the user does not have permission to edit', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canEditFolders: false,
@@ -116,7 +121,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('does not render the "Delete" option if the user does not have permission to delete', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: false,
@@ -217,7 +222,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
   // Git sync related tests
   it('renders the "Manage permissions" option for a provisioned folder', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: true, // provisioned folder can be deleted too (if not repo root)
@@ -232,7 +237,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('renders only "Manage permissions" for a provisioned root repo folder', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
       };
@@ -252,7 +257,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('renders "Move" and "Delete" for a top-level folder of a folderless repository', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
       };
@@ -270,7 +275,7 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   it('does render the "Move" option if folder is provisioned and is NOT root repo folder', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canViewPermissions: false,

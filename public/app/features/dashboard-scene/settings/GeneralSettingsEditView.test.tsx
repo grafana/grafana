@@ -8,7 +8,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { changeDescription } from '../actions/dashboard/changeDescription';
 import { changeTitle } from '../actions/dashboard/changeTitle';
-import * as utils from '../pages/utils';
+import { updateNavModel } from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -16,6 +16,15 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
+
+jest.mock('../pages/utils', () => ({
+  ...jest.requireActual('../pages/utils'),
+  updateNavModel: jest.fn((...args) => jest.requireActual('../pages/utils').updateNavModel(...args)),
+}));
+
+afterEach(() => {
+  jest.mocked(updateNavModel).mockReset().mockImplementation(jest.requireActual('../pages/utils').updateNavModel);
+});
 
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
   LazyGenAIDashTitleButton: () => null,
@@ -29,7 +38,7 @@ describe('GeneralSettingsEditView', () => {
     let deactivate: () => void;
 
     beforeEach(() => {
-      jest.spyOn(utils, 'updateNavModel').mockResolvedValue();
+      jest.mocked(updateNavModel).mockResolvedValue();
       dashboard = new DashboardScene({
         $timeRange: new SceneTimeRange({ timeZone: 'UTC' }),
         $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
@@ -430,13 +439,13 @@ describe('GeneralSettingsEditView', () => {
     });
 
     it('A change to folder updates the dashboard state', async () => {
-      const updateNavModel = jest.spyOn(utils, 'updateNavModel').mockImplementation(jest.fn());
+      const updateNavModelMock = jest.mocked(updateNavModel).mockResolvedValue();
 
       await settings.onFolderChange('folder-2', 'folder 2');
 
       expect(dashboard.state.meta.folderUid).toBe('folder-2');
       expect(dashboard.state.meta.folderTitle).toBe('folder 2');
-      expect(updateNavModel).toHaveBeenCalledWith('folder-2');
+      expect(updateNavModelMock).toHaveBeenCalledWith('folder-2');
     });
 
     it('A change to tooltip settings updates the dashboard state', () => {

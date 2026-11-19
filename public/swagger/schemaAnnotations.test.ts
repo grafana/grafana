@@ -5,6 +5,15 @@ import { fireEvent, screen } from '@testing-library/react';
 import * as annotations from './annotationValue';
 import { schemaAnnotations } from './schemaAnnotations';
 
+jest.mock('./annotationValue', () => ({
+  ...jest.requireActual('./annotationValue'),
+  annotationValues: jest.fn((...args) => jest.requireActual('./annotationValue').annotationValues(...args)),
+}));
+
+beforeEach(() => {
+  jest.mocked(annotations.annotationValues).mockClear();
+});
+
 let view: EditorView;
 
 afterEach(() => {
@@ -13,7 +22,7 @@ afterEach(() => {
 });
 
 it('scans once for all annotations and reuses their positions for lookup results and folder selection', async () => {
-  const scan = jest.spyOn(annotations, 'annotationValues');
+  const scan = jest.mocked(annotations.annotationValues);
   const fetch = jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = String(input);
     if (url.includes('/display?')) {

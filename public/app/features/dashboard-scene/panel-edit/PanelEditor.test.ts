@@ -120,6 +120,11 @@ class RuntimeTestDataSource extends RuntimeDataSource {
 // Runtime datasources skip plugin loading, so query runners reach the mocked runRequest.
 registerRuntimeDataSource({ dataSource: new RuntimeTestDataSource('panel-editor-runtime-ds', RUNTIME_DS_UID) });
 
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  saveLibPanel: jest.fn((...args) => jest.requireActual('app/features/library-panels/state/api').saveLibPanel(...args)),
+}));
+
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
@@ -723,7 +728,7 @@ describe('PanelEditor', () => {
     });
 
     it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
-      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      const saveLibPanel = jest.mocked(libAPI.saveLibPanel).mockResolvedValueOnce(undefined);
       try {
         const libraryPanel = new LibraryPanelBehavior({
           uid: 'lib-uid',
@@ -744,7 +749,9 @@ describe('PanelEditor', () => {
           outcome: 'kept',
         });
       } finally {
-        saveLibPanel.mockRestore();
+        saveLibPanel
+          .mockReset()
+          .mockImplementation(jest.requireActual('app/features/library-panels/state/api').saveLibPanel);
       }
     });
 
@@ -951,7 +958,7 @@ describe('PanelEditor', () => {
       panel.setState({ title: 'changed title' });
       libPanelBehavior.setState({ name: 'changed name' });
 
-      jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
+      jest.mocked(libAPI.saveLibPanel).mockImplementationOnce(async (panel) => {
         const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
         libPanelBehavior.setPanelFromLibPanel(updatedPanel);
       });

@@ -16,7 +16,12 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
-import * as permissions from './permissions';
+import { getFolderPermissions } from './permissions';
+
+jest.mock('./permissions', () => ({
+  ...jest.requireActual('./permissions'),
+  getFolderPermissions: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -93,7 +98,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.mocked(getFolderPermissions).mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 

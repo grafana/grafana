@@ -14,7 +14,12 @@ import { mockBoundingClientRect } from '@grafana/test-utils';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 
 import { DataSourcePicker, type DataSourcePickerProps } from './DataSourcePicker';
-import * as utils from './utils';
+import { buildDataSourceComparator } from './utils';
+
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  buildDataSourceComparator: jest.fn((...args) => jest.requireActual('./utils').buildDataSourceComparator(...args)),
+}));
 
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },
@@ -183,7 +188,7 @@ describe('DataSourcePicker', () => {
     });
 
     it('builds the comparator with the current datasource, recently used uids, and variable uids', async () => {
-      const spy = jest.spyOn(utils, 'buildDataSourceComparator');
+      const spy = jest.mocked(buildDataSourceComparator);
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1 });
 
       expect(spy).toHaveBeenCalled();

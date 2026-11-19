@@ -19,6 +19,15 @@ import { ExposedComponentsRegistry } from '../extensions/registry/ExposedCompone
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
 
+jest.mock('./importPluginModule', () => ({
+  importPluginModule: jest.fn(),
+}));
+
+jest.mock('../components/restrictedGrafanaApis/restrictedGrafanaApis', () => ({
+  ...jest.requireActual('../components/restrictedGrafanaApis/restrictedGrafanaApis'),
+  getRestrictedGrafanaApisAtLoad: jest.fn(),
+}));
+
 jest.mock('../extensions/registry/setup', () => ({
   ...jest.requireActual('../extensions/registry/setup'),
   getPluginExtensionRegistries: jest.fn(),
@@ -35,6 +44,13 @@ describe('pluginImporter', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(importPluginModule.importPluginModule).mockReset();
+    jest.mocked(restrictedGrafanaApis.getRestrictedGrafanaApisAtLoad).mockReset();
+    jest
+      .mocked(restrictedGrafanaApis.getRestrictedGrafanaApisAtLoad)
+      .mockImplementation(
+        jest.requireActual('../components/restrictedGrafanaApis/restrictedGrafanaApis').getRestrictedGrafanaApisAtLoad
+      );
     clearCaches();
     addedComponentsRegistry = new AddedComponentsRegistry([]);
     addedFunctionsRegistry = new AddedFunctionsRegistry([]);
@@ -58,9 +74,7 @@ describe('pluginImporter', () => {
 
   describe('importPanel', () => {
     it('should import a panel plugin successfully with fallbackLoadingStrategy', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...panelPlugin } });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin: { ...panelPlugin } });
 
       const result = await pluginImporter.importPanel({ ...panelPlugin });
 
@@ -79,7 +93,7 @@ describe('pluginImporter', () => {
 
     it('should import a panel plugin returning a Promise<PanelPlugin> successfully', async () => {
       const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
+        .mocked(importPluginModule.importPluginModule)
         .mockResolvedValue({ plugin: Promise.resolve({ ...panelPlugin }) });
 
       const result = await pluginImporter.importPanel({ ...panelPlugin });
@@ -98,9 +112,7 @@ describe('pluginImporter', () => {
     });
 
     it('should set correct loading strategy', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...panelPlugin } });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin: { ...panelPlugin } });
       const meta = { ...panelPlugin, loadingStrategy: PluginLoadingStrategy.script };
 
       const result = await pluginImporter.importPanel({ ...meta });
@@ -120,7 +132,7 @@ describe('pluginImporter', () => {
 
     it('should log a warning and return a error component if module is missing exported plugin', async () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({});
 
       const result = await pluginImporter.importPanel({ ...panelPlugin });
 
@@ -147,7 +159,7 @@ describe('pluginImporter', () => {
   describe('importDataSource', () => {
     it('should import a data source plugin successfully with fallbackLoadingStrategy', async () => {
       const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
+        .mocked(importPluginModule.importPluginModule)
         .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
 
       const result = await pluginImporter.importDataSource({ ...dataSourcePlugin });
@@ -167,7 +179,7 @@ describe('pluginImporter', () => {
 
     it('should import a data source plugin with Datasource prop', async () => {
       const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
+        .mocked(importPluginModule.importPluginModule)
         .mockResolvedValue({ Datasource: { ...dataSourcePlugin } });
 
       const result = await pluginImporter.importDataSource({ ...dataSourcePlugin });
@@ -201,7 +213,7 @@ describe('pluginImporter', () => {
 
     it('should set correct loading strategy', async () => {
       const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
+        .mocked(importPluginModule.importPluginModule)
         .mockResolvedValue({ plugin: { ...dataSourcePlugin } });
       const meta = { ...dataSourcePlugin, loadingStrategy: PluginLoadingStrategy.script };
 
@@ -221,7 +233,7 @@ describe('pluginImporter', () => {
     });
 
     it('should throw error if module is missing exported plugin', async () => {
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({});
 
       await expect(pluginImporter.importDataSource({ ...dataSourcePlugin })).rejects.toThrow(
         new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export')
@@ -255,7 +267,7 @@ describe('pluginImporter', () => {
         },
       };
 
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ ...plugin });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ ...plugin });
 
       const result = await pluginImporter.importApp({ ...appPlugin });
 
@@ -316,7 +328,7 @@ describe('pluginImporter', () => {
         },
       };
 
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ ...plugin });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ ...plugin });
       const meta = { ...appPlugin, loadingStrategy: PluginLoadingStrategy.script };
 
       const result = await pluginImporter.importApp({ ...meta });
@@ -364,7 +376,7 @@ describe('pluginImporter', () => {
     });
 
     it('should import an empty app plugin if missing exported plugin', async () => {
-      const spy = jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({});
 
       const result = await pluginImporter.importApp({ ...appPlugin });
 
@@ -405,10 +417,10 @@ describe('pluginImporter', () => {
   describe('restricted APIs at load', () => {
     it('hands the module the APIs resolved for the id it was loaded for, once', async () => {
       const apis = { alertingAlertRuleFormSchema: { parse: jest.fn(), safeParse: jest.fn() } };
-      const resolve = jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad').mockReturnValue(apis);
+      const resolve = jest.mocked(restrictedGrafanaApis.getRestrictedGrafanaApisAtLoad).mockReturnValue(apis);
       const listener = jest.fn();
       const plugin = new AppPlugin().onRestrictedApis(listener);
-      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin });
+      jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin });
 
       await pluginImporter.importApp({ ...appPlugin });
       await pluginImporter.importApp({ ...appPlugin });
@@ -419,8 +431,8 @@ describe('pluginImporter', () => {
     });
 
     it('resolves nothing for a plugin that does not ask', async () => {
-      const resolve = jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad');
-      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin: new AppPlugin() });
+      const resolve = jest.mocked(restrictedGrafanaApis.getRestrictedGrafanaApisAtLoad);
+      jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin: new AppPlugin() });
 
       await expect(pluginImporter.importApp({ ...appPlugin })).resolves.toBeInstanceOf(AppPlugin);
 
@@ -428,11 +440,11 @@ describe('pluginImporter', () => {
     });
 
     it('still loads a plugin whose listener throws', async () => {
-      jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad').mockReturnValue({});
+      jest.mocked(restrictedGrafanaApis.getRestrictedGrafanaApisAtLoad).mockReturnValue({});
       const plugin = new AppPlugin().onRestrictedApis(() => {
         throw new Error('boom');
       });
-      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin });
+      jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin });
 
       await expect(pluginImporter.importApp({ ...appPlugin })).resolves.toBe(plugin);
     });
@@ -440,9 +452,7 @@ describe('pluginImporter', () => {
 
   describe('caches', () => {
     it('should return a cached plugin if it exsits', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...panelPlugin } });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin: { ...panelPlugin } });
 
       const original = await pluginImporter.importPanel({ ...panelPlugin });
       const cached = await pluginImporter.importPanel({ ...panelPlugin });
@@ -461,9 +471,7 @@ describe('pluginImporter', () => {
     });
 
     it('should return an inflight plugin load if it exsits', async () => {
-      const spy = jest
-        .spyOn(importPluginModule, 'importPluginModule')
-        .mockResolvedValue({ plugin: { ...panelPlugin } });
+      const spy = jest.mocked(importPluginModule.importPluginModule).mockResolvedValue({ plugin: { ...panelPlugin } });
 
       const original = pluginImporter.importPanel({ ...panelPlugin });
       const cached = pluginImporter.importPanel({ ...panelPlugin });

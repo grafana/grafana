@@ -33,6 +33,11 @@ import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  copyText: jest.fn((...args) => jest.requireActual('../../utils').copyText(...args)),
+}));
+
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 
@@ -171,7 +176,7 @@ describe('LogLineDetails', () => {
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
-    const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+    const copyTextSpy = jest.mocked(logsUtils.copyText).mockResolvedValueOnce(undefined);
 
     await setup(undefined, { labels: { svc: 'api' } });
 
@@ -188,7 +193,6 @@ describe('LogLineDetails', () => {
         timeEpochMs: expect.any(Number),
       });
     });
-    copyTextSpy.mockRestore();
   });
 
   describe('Toggleable filters', () => {

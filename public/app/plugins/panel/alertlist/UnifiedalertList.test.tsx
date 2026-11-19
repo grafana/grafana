@@ -39,6 +39,11 @@ import { UnifiedAlertListPanel } from './UnifiedAlertList';
 import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, type UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
+jest.mock('./util', () => ({
+  ...jest.requireActual('./util'),
+  filterAlerts: jest.fn((...args) => jest.requireActual('./util').filterAlerts(...args)),
+}));
+
 const grafanaRuleMock = {
   promRules: {
     grafana: {
@@ -191,7 +196,7 @@ describe('UnifiedAlertList', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
-    const filterAlertsSpy = jest.spyOn(utils, 'filterAlerts');
+    const filterAlertsSpy = jest.mocked(utils.filterAlerts).mockClear();
 
     const replaceVarsSpy = jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
 

@@ -26,7 +26,7 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardPlanChangedEvent, DashboardPlanningEvent } from '../../scene/planningEvents';
-import * as planningSampleData from '../../scene/planningSampleData';
+import { getPlanningPanelData } from '../../scene/planningSampleData';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
@@ -34,6 +34,20 @@ import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
+
+jest.mock('../../scene/planningSampleData', () => ({
+  ...jest.requireActual('../../scene/planningSampleData'),
+  getPlanningPanelData: jest.fn((...args) =>
+    jest.requireActual('../../scene/planningSampleData').getPlanningPanelData(...args)
+  ),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(getPlanningPanelData)
+    .mockReset()
+    .mockImplementation(jest.requireActual('../../scene/planningSampleData').getPlanningPanelData);
+});
 
 // A dashboard built from a spec carries the built-in annotation layer, which resolves its
 // datasource on activation.
@@ -113,7 +127,7 @@ describe('RENDER_PLAN', () => {
 
   it('generates sample data once per placeholder, with preview settings and no live query runner', async () => {
     const { scene, client } = setup();
-    const generateSample = jest.spyOn(planningSampleData, 'getPlanningPanelData');
+    const generateSample = jest.mocked(getPlanningPanelData);
 
     try {
       const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
@@ -152,7 +166,7 @@ describe('RENDER_PLAN', () => {
         expect(getQueryRunnerFor(panel)).toBeUndefined();
       }
     } finally {
-      generateSample.mockRestore();
+      generateSample.mockClear();
     }
   });
 

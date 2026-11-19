@@ -19,7 +19,12 @@ jest.mock('@grafana/assistant', () => ({
   useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
 }));
 
-jest.spyOn(analytics, 'logInfo');
+jest.mock('../../Analytics', () => ({
+  ...jest.requireActual('../../Analytics'),
+  logInfo: jest.fn((...args: Parameters<typeof analytics.logInfo>) =>
+    jest.requireActual('../../Analytics').logInfo(...args)
+  ),
+}));
 
 const ui = {
   grafanaRulesHeading: byRole('heading', { name: 'Grafana-managed' }),

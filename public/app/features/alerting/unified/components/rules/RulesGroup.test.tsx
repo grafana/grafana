@@ -11,7 +11,6 @@ import {
   type RulerDataSourceConfig,
 } from 'app/types/unified-alerting';
 
-import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { MERGED_UNGROUPED_GROUP_NAME } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
@@ -30,8 +29,6 @@ jest.mock('@grafana/assistant', () => ({
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-
-jest.spyOn(analytics, 'logInfo');
 
 const mocks = {
   useHasRuler: jest.mocked(useHasRuler),

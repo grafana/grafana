@@ -5,6 +5,11 @@ import type { TimeRange } from '@grafana/data';
 import * as client from './metricResourceClient';
 import { useLabelValues } from './useLabelValues';
 
+jest.mock('./metricResourceClient', () => ({
+  ...jest.requireActual('./metricResourceClient'),
+  fetchLabelValues: jest.fn(),
+}));
+
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
@@ -16,10 +21,10 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 }
 
 describe('useLabelValues', () => {
-  afterEach(() => jest.restoreAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('fetches values scoped to metric+label', async () => {
-    const spy = jest.spyOn(client, 'fetchLabelValues').mockResolvedValue(['prometheus', 'grafana']);
+    const spy = jest.mocked(client.fetchLabelValues).mockResolvedValue(['prometheus', 'grafana']);
     const { result } = renderHook(() => useLabelValues({ uid: 'p1' }, range, 'up', 'job'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.values).toEqual(['prometheus', 'grafana']);
@@ -27,7 +32,7 @@ describe('useLabelValues', () => {
   });
 
   it('surfaces error without throwing', async () => {
-    jest.spyOn(client, 'fetchLabelValues').mockRejectedValue(new Error('nope'));
+    jest.mocked(client.fetchLabelValues).mockRejectedValue(new Error('nope'));
     const { result } = renderHook(() => useLabelValues({ uid: 'p1' }, range, 'up', 'job'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error?.message).toBe('nope');
@@ -36,7 +41,7 @@ describe('useLabelValues', () => {
 
   it('refetches for the new label key when `labelKey` changes', async () => {
     const spy = jest
-      .spyOn(client, 'fetchLabelValues')
+      .mocked(client.fetchLabelValues)
       .mockImplementation((_dsRef, _timeRange, _metric, labelKey) =>
         Promise.resolve(labelKey === 'job' ? ['prometheus'] : ['us-east'])
       );
@@ -55,7 +60,7 @@ describe('useLabelValues', () => {
 
   it('refetches for the new metric when `metric` changes', async () => {
     const spy = jest
-      .spyOn(client, 'fetchLabelValues')
+      .mocked(client.fetchLabelValues)
       .mockImplementation((_dsRef, _timeRange, metric) =>
         Promise.resolve(metric === 'up' ? ['prometheus'] : ['grafana'])
       );
@@ -76,7 +81,7 @@ describe('useLabelValues', () => {
     const first = deferred<string[]>();
     const second = deferred<string[]>();
     const spy = jest
-      .spyOn(client, 'fetchLabelValues')
+      .mocked(client.fetchLabelValues)
       .mockImplementationOnce(() => first.promise)
       .mockImplementationOnce(() => second.promise);
 
@@ -104,7 +109,7 @@ describe('useLabelValues', () => {
   it('raises `loading` and clears stale `values` in the render that starts a new fetch, before the promise resolves', async () => {
     const pending = deferred<string[]>();
     const spy = jest
-      .spyOn(client, 'fetchLabelValues')
+      .mocked(client.fetchLabelValues)
       .mockResolvedValueOnce(['prometheus'])
       .mockImplementationOnce(() => pending.promise);
 
@@ -124,7 +129,7 @@ describe('useLabelValues', () => {
   });
 
   it('refetches when the cache is invalidated, so a host refresh control reaches an expanded label', async () => {
-    const spy = jest.spyOn(client, 'fetchLabelValues').mockResolvedValue(['web-1']);
+    const spy = jest.mocked(client.fetchLabelValues).mockResolvedValue(['web-1']);
     const { result } = renderHook(() => useLabelValues({ uid: 'p1' }, range, 'up', 'job'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(spy).toHaveBeenCalledTimes(1);

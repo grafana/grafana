@@ -35,6 +35,11 @@ jest.mock('@grafana/data', () => ({
   DefaultTimeZone: 'utc',
 }));
 
+jest.mock('./bars', () => ({
+  ...jest.requireActual('./bars'),
+  getConfig: jest.fn((...args) => jest.requireActual('./bars').getConfig(...args)),
+}));
+
 describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -950,21 +955,21 @@ function isAxisValuesCallback(v: unknown): v is (u: unknown, splits: string[], a
 }
 
 /**
- * Runs a test block with bars.getConfig spied on, allowing capture of BarsOptions passed to it.
- * Restores mocks after the callback.
+ * Runs a test block with bars.getConfig mocked, allowing capture of BarsOptions passed to it.
+ * Restores the real implementation after the callback.
  *
  * @param capture - Callback that receives the BarsOptions; store what you need in a closure/captured variable
  * @param testFn - Function that performs prepConfig and assertions
  */
 function withGetConfigSpy(capture: (opts: BarsOptions) => void, testFn: () => void): void {
   const { getConfig: originalGetConfig } = jest.requireActual<typeof barsModule>('./bars');
-  jest.spyOn(barsModule, 'getConfig').mockImplementation((opts: BarsOptions, theme) => {
+  jest.mocked(barsModule.getConfig).mockImplementation((opts: BarsOptions, theme) => {
     capture(opts);
     return originalGetConfig(opts, theme);
   });
   try {
     testFn();
   } finally {
-    jest.restoreAllMocks();
+    jest.mocked(barsModule.getConfig).mockReset().mockImplementation(originalGetConfig);
   }
 }

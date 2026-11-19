@@ -16,6 +16,17 @@ import { defaultSpec as defaultNotebookSpec, type Spec as NotebookSpec } from '.
 
 import { NotebookView, type DraftNotebookViewProps } from './NotebookView';
 
+jest.mock('../api/notebookResource', () => ({
+  ...jest.requireActual('../api/notebookResource'),
+  createNotebook: jest.fn((...args) => jest.requireActual('../api/notebookResource').createNotebook(...args)),
+  updateNotebook: jest.fn((...args) => jest.requireActual('../api/notebookResource').updateNotebook(...args)),
+}));
+
+jest.mock('../serialization/transformNotebookToScene', () => ({
+  ...jest.requireActual('../serialization/transformNotebookToScene'),
+  transformNotebookToScene: jest.fn(),
+}));
+
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
 /**
@@ -50,6 +61,14 @@ function aNotebookScene(title = 'Checkout latency investigation', uid = 'nb-1') 
 }
 
 describe('NotebookView', () => {
+  beforeEach(() => {
+    jest.mocked(notebookResource.createNotebook).mockClear();
+    jest.mocked(notebookResource.updateNotebook).mockClear();
+    jest.mocked(transformModule.transformNotebookToScene).mockReset();
+    jest
+      .mocked(transformModule.transformNotebookToScene)
+      .mockImplementation(jest.requireActual('../serialization/transformNotebookToScene').transformNotebookToScene);
+  });
   afterEach(async () => {
     await act(async () => {
       setTestFlags({});
@@ -348,8 +367,8 @@ describe('NotebookView', () => {
     /** The scene a draft builds for itself — there is no other handle on it. */
     function captureDraftScene() {
       const scenes: NotebookScene[] = [];
-      const real = transformModule.transformNotebookToScene;
-      jest.spyOn(transformModule, 'transformNotebookToScene').mockImplementation((resource) => {
+      const real = jest.requireActual('../serialization/transformNotebookToScene').transformNotebookToScene;
+      jest.mocked(transformModule.transformNotebookToScene).mockImplementation((resource) => {
         const scene = real(resource);
         scenes.push(scene);
         return scene;
@@ -360,8 +379,8 @@ describe('NotebookView', () => {
     it('creates no notebook resource, however long it is edited', async () => {
       jest.useFakeTimers();
       setTestFlags({ [NOTEBOOKS_FLAG]: true });
-      const createNotebook = jest.spyOn(notebookResource, 'createNotebook');
-      const updateNotebook = jest.spyOn(notebookResource, 'updateNotebook');
+      const createNotebook = jest.mocked(notebookResource.createNotebook);
+      const updateNotebook = jest.mocked(notebookResource.updateNotebook);
       const draftScene = captureDraftScene();
 
       await renderDraft(<NotebookView spec={aDraftSpec()} onChange={jest.fn()} />);

@@ -6,6 +6,12 @@ import { ExtensionsLog } from './logs/log';
 import { validateExtensionPoint } from './validateExtensionPoint';
 import * as validators from './validators';
 
+jest.mock('./validators', () => ({
+  ...jest.requireActual('./validators'),
+  isExtensionPointIdValid: jest.fn(),
+  isExtensionPointMetaInfoMissing: jest.fn(),
+}));
+
 jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
@@ -15,9 +21,9 @@ const setup = ({
   metaMissing = false,
   corePlugin = false,
 }: { pointValid?: boolean; metaMissing?: boolean; corePlugin?: boolean } = {}) => {
-  const spyIsExtensionPointIdValid = jest.spyOn(validators, 'isExtensionPointIdValid').mockReturnValue(pointValid);
+  const spyIsExtensionPointIdValid = jest.mocked(validators.isExtensionPointIdValid).mockReturnValue(pointValid);
   const spyisExtensionPointMetaInfoMissing = jest
-    .spyOn(validators, 'isExtensionPointMetaInfoMissing')
+    .mocked(validators.isExtensionPointMetaInfoMissing)
     .mockReturnValue(metaMissing);
   const pluginId = 'myorg-extensions-app';
   const extensionPointId = `${pluginId}/extension-point/v1`;

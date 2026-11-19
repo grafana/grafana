@@ -10,7 +10,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseFolderLibraryPanelsPage from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
-import * as permissions from './permissions';
+import { getFolderPermissions } from './permissions';
+
+jest.mock('./permissions', () => ({
+  ...jest.requireActual('./permissions'),
+  getFolderPermissions: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -50,7 +55,7 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
       })
     );
 
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.mocked(getFolderPermissions).mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
@@ -69,7 +74,7 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   });
 
   it('does not display the "Folder actions" button if the user does not have permissions', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: false,

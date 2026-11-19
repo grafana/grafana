@@ -32,6 +32,11 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { type Options } from './panelcfg.gen';
 
+jest.mock('app/core/components/TimeSeries/utils', () => ({
+  ...jest.requireActual('app/core/components/TimeSeries/utils'),
+  preparePlotConfigBuilder: jest.fn(),
+}));
+
 // uPlot builds series area fills via the Path2D copy constructor, which jest-canvas-mock drops; this shim
 // preserves it so fills, gradient bands, and markers land in the captured draw calls.
 installCanvasPath2DShim();
@@ -191,23 +196,23 @@ let axisBoundary = 0;
 export const getUPlotInstance = () => uPlotInstance;
 
 /**
- * Registers the beforeEach/afterEach that spy uPlot's config builder and apply the deterministic axis
+ * Registers the beforeEach/afterEach that mock uPlot's config builder and apply the deterministic axis
  * measureText widths. Capture is non-clearing: reset events at the start of each frame (drawClear), record
  * the axis/series boundary at drawAxes WITHOUT clearing, and grab the instance at frame end. The sibling
  * canvas suites (heatmap/xychart/timeline) clear at drawAxes instead; that drops this panel's series fill
  * pass, so keep the boundary-index approach here. Call once inside each canvas test's top describe.
  */
 export function setupCanvasCapture(): void {
-  let prepConfigSpy: jest.SpyInstance;
+  const prepConfigMock = jest.mocked(timeSeriesUtils.preparePlotConfigBuilder);
   const { preparePlotConfigBuilder: realPreparePlotConfigBuilder } = jest.requireActual(
     'app/core/components/TimeSeries/utils'
   );
 
   beforeEach(() => {
     applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
-    prepConfigSpy = jest
-      .spyOn(timeSeriesUtils, 'preparePlotConfigBuilder')
-      .mockImplementation((...args: Parameters<typeof realPreparePlotConfigBuilder>) => {
+    prepConfigMock
+      .mockReset()
+      .mockImplementation((...args: Parameters<typeof timeSeriesUtils.preparePlotConfigBuilder>) => {
         const builder: UPlotConfigBuilder = realPreparePlotConfigBuilder(...args);
 
         builder.addHook('drawClear', (u: uPlot) => {
@@ -228,7 +233,7 @@ export function setupCanvasCapture(): void {
   });
 
   afterEach(() => {
-    prepConfigSpy.mockRestore();
+    prepConfigMock.mockReset().mockImplementation(realPreparePlotConfigBuilder);
   });
 }
 

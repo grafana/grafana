@@ -14,6 +14,11 @@ import { LogListContextProvider } from './LogListContext';
 import { defaultProps, defaultValue } from './__mocks__/LogListContext';
 import { type LogListModel } from './processing';
 
+jest.mock('../../utils', () => ({
+  ...jest.requireActual('../../utils'),
+  copyText: jest.fn((...args) => jest.requireActual('../../utils').copyText(...args)),
+}));
+
 jest.mock('./LogListContext');
 
 jest.mock('@grafana/assistant', () => ({
@@ -77,7 +82,7 @@ describe('LogLineMenu', () => {
     });
 
     test('Copy log line as JSON copies structured JSON from the log', async () => {
-      const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+      const copyTextSpy = jest.mocked(logsUtils.copyText).mockResolvedValueOnce(undefined);
 
       render(
         <LogListContextProvider {...contextProps}>
@@ -98,7 +103,6 @@ describe('LogLineMenu', () => {
           labels: expect.objectContaining({ place: 'luna' }),
         });
       });
-      copyTextSpy.mockRestore();
     });
 
     test('Renders custom log line menu items', async () => {

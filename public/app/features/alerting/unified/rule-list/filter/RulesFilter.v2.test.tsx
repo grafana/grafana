@@ -86,8 +86,15 @@ jest.mock('../../hooks/useFilteredRules', () => ({
 
 const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
 
-jest.spyOn(analytics, 'trackAlertRuleFilterEvent');
-jest.spyOn(analytics, 'trackRulesSearchInputCleared');
+jest.mock('../../Analytics', () => ({
+  ...jest.requireActual('../../Analytics'),
+  trackAlertRuleFilterEvent: jest.fn((...args) =>
+    jest.requireActual('../../Analytics').trackAlertRuleFilterEvent(...args)
+  ),
+  trackRulesSearchInputCleared: jest.fn((...args) =>
+    jest.requireActual('../../Analytics').trackRulesSearchInputCleared(...args)
+  ),
+}));
 
 // Set up MSW server with UserStorage handlers (also sets up beforeAll/afterEach Jest hooks)
 // eslint-disable-next-line @typescript-eslint/no-unused-expressions

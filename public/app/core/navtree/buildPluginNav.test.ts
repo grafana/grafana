@@ -19,6 +19,12 @@ import {
 } from './test-utils';
 import { findNavById as findById, pruneEmptyNavSections } from './utils';
 
+jest.mock('./appNavConfig', () => ({
+  ...jest.requireActual('./appNavConfig'),
+  appNavConfigFor: jest.fn(),
+  appNavPathConfigFor: jest.fn(),
+}));
+
 setupMockServer();
 
 const setup = ({ permissions = [], openFeatureFlags = {}, ...rest }: NavTestState = {}) =>
@@ -42,6 +48,9 @@ const childTexts = (tree: NavModelItem[], appId: string) =>
 
 describe('applyPluginNav', () => {
   beforeEach(() => {
+    const actual = jest.requireActual('./appNavConfig');
+    jest.mocked(appNavConfig.appNavConfigFor).mockReset().mockImplementation(actual.appNavConfigFor);
+    jest.mocked(appNavConfig.appNavPathConfigFor).mockReset().mockImplementation(actual.appNavPathConfigFor);
     setup();
   });
 
@@ -152,7 +161,7 @@ describe('applyPluginNav', () => {
       // buildAppLink reads the config first, to lift the page; the throw has to
       // come after that, where the app itself is placed
       let assistantLookups = 0;
-      jest.spyOn(appNavConfig, 'appNavConfigFor').mockImplementation((appId) => {
+      jest.mocked(appNavConfig.appNavConfigFor).mockImplementation((appId) => {
         if (appId === 'grafana-assistant-app' && assistantLookups++ > 0) {
           throw new Error('boom');
         }
@@ -731,7 +740,7 @@ describe('applyPluginNav', () => {
     // not the weight the app link was built with
     it('places an app whose config gives no weight at its appended position', () => {
       setup({ permissions: ['datasources:read', 'datasources:create'] });
-      jest.spyOn(appNavConfig, 'appNavConfigFor').mockReturnValue({ sectionId: NavID.connections });
+      jest.mocked(appNavConfig.appNavConfigFor).mockReturnValue({ sectionId: NavID.connections });
 
       const merged = merge(app('some-app', 'Some app', [page('Page', '/a/some-app/page')]));
 
@@ -779,7 +788,7 @@ describe('applyPluginNav', () => {
     // Hiding an app leaves its individually placed pages alone, which is how
     // Cloud lists Collector's pages without the Collector app itself
     it('keeps a hidden app out of the nav while still placing its configured page', () => {
-      jest.spyOn(appNavConfig, 'appNavConfigFor').mockReturnValue({
+      jest.mocked(appNavConfig.appNavConfigFor).mockReturnValue({
         sectionId: NavID.apps,
         sortWeight: 0,
         hidden: true,
@@ -814,7 +823,7 @@ describe('applyPluginNav', () => {
 
     it('keeps a hidden page out of the nav entirely', () => {
       jest
-        .spyOn(appNavConfig, 'appNavPathConfigFor')
+        .mocked(appNavConfig.appNavPathConfigFor)
         .mockImplementation((includePath) =>
           includePath === '/a/some-app/hidden' ? { sectionId: NavID.cfgAccess, sortWeight: 0, hidden: true } : undefined
         );

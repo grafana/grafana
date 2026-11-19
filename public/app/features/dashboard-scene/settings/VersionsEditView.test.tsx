@@ -14,6 +14,22 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { VersionsEditView } from './VersionsEditView';
 import * as DashboardTemplateExtensionModule from './enterprise-components/DashboardTemplateExtension';
 
+jest.mock('./enterprise-components/DashboardTemplateExtension', () => ({
+  ...jest.requireActual('./enterprise-components/DashboardTemplateExtension'),
+  getDashboardTemplateExtension: jest.fn(() =>
+    jest.requireActual('./enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension()
+  ),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('./enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension
+    );
+});
+
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
 }
@@ -289,7 +305,7 @@ describe('VersionsEditView', () => {
       mockRestore.mockReset();
       mockLoadTemplate.mockReset();
       mockListDashboardHistory.mockReset();
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: mockLoadTemplate,
         listHistory: mockListHistory,
         restore: mockRestore,

@@ -29,6 +29,11 @@ import {
 
 import PluginDetailsPage from './PluginDetails';
 
+jest.mock('../api', () => ({
+  ...jest.requireActual('../api'),
+  uninstallPlugin: jest.fn((...args) => jest.requireActual('../api').uninstallPlugin(...args)),
+}));
+
 jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
   runtime.config.buildInfo.version = 'v8.1.0';
@@ -397,8 +402,7 @@ describe('Plugin details page', () => {
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {
-      // @ts-ignore
-      api.uninstallPlugin = jest.fn();
+      jest.mocked(api.uninstallPlugin).mockResolvedValueOnce(undefined);
 
       const frontendSettings = { panels: {}, datasources: {}, defaultDatasource: '' };
       const get = jest.fn().mockResolvedValue(frontendSettings);

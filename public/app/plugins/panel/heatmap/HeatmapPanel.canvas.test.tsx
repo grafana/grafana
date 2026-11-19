@@ -39,6 +39,11 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
 );
 
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  prepConfig: jest.fn(),
+}));
+
 /**
  * Generates a 2D array of heatmap bucket values for testing.
  * Each row corresponds to a bucket (y-axis), each column to a time point (x-axis).
@@ -213,7 +218,7 @@ function createTinyDenseHeatmapFrameWithOrdinalY() {
 }
 
 describe('HeatmapPanel (canvas)', () => {
-  let prepConfigSpy: jest.SpyInstance;
+  const prepConfigSpy = jest.mocked(heatmapUtils.prepConfig);
   const { prepConfig: realPrepConfig } = jest.requireActual('./utils');
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
@@ -242,7 +247,7 @@ describe('HeatmapPanel (canvas)', () => {
   beforeEach(() => {
     applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
-    prepConfigSpy = jest.spyOn(heatmapUtils, 'prepConfig').mockImplementation((opts) => {
+    prepConfigSpy.mockReset().mockImplementation((opts) => {
       const builder: UPlotConfigBuilder = realPrepConfig(opts);
 
       builder.addHook('drawAxes', (u: uPlot) => {
@@ -260,7 +265,7 @@ describe('HeatmapPanel (canvas)', () => {
   });
 
   afterEach(() => {
-    prepConfigSpy.mockRestore();
+    prepConfigSpy.mockReset().mockImplementation(realPrepConfig);
   });
 
   describe('Dense', () => {

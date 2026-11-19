@@ -11,9 +11,13 @@ import {
 } from '@grafana/data';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 
-import * as logUtils from '../../logs/utils';
+import { getLogsVisibleRange } from '../../logs/utils';
 
 import { LogsVolumePanelList } from './LogsVolumePanelList';
+jest.mock('../../logs/utils', () => ({
+  ...jest.requireActual('../../logs/utils'),
+  getLogsVisibleRange: jest.fn((...args) => jest.requireActual('../../logs/utils').getLogsVisibleRange(...args)),
+}));
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
@@ -104,7 +108,7 @@ describe('LogsVolumePanelList', () => {
 
   describe('Visible range', () => {
     it('computes the visible range when logs are passed', async () => {
-      const spy = jest.spyOn(logUtils, 'getLogsVisibleRange');
+      const spy = jest.mocked(getLogsVisibleRange);
       spy.mockClear();
 
       renderPanel({ state: LoadingState.Streaming, data: [] });
@@ -119,7 +123,7 @@ describe('LogsVolumePanelList', () => {
     });
 
     it('does not compute the visible range when an annotation frame is present', async () => {
-      const spy = jest.spyOn(logUtils, 'getLogsVisibleRange');
+      const spy = jest.mocked(getLogsVisibleRange);
       spy.mockClear();
       const logs = [createLogLine({ timeEpochMs: 1 }), createLogLine({ timeEpochMs: 2 })];
       const loadingFrame = arrayToDataFrame([

@@ -9,7 +9,12 @@ import { alertingFactory } from '../alerting/unified/mocks/server/db';
 import { DEFAULT_FOLDERS } from '../alerting/unified/mocks/server/handlers/folders';
 
 import BrowseFolderAlertingPage from './BrowseFolderAlertingPage';
-import * as permissions from './permissions';
+import { getFolderPermissions } from './permissions';
+
+jest.mock('./permissions', () => ({
+  ...jest.requireActual('./permissions'),
+  getFolderPermissions: jest.fn(),
+}));
 
 // Use the folder and rules from the mocks
 const folder = DEFAULT_FOLDERS[0];
@@ -37,7 +42,7 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   };
 
   beforeEach(() => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.mocked(getFolderPermissions).mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
@@ -56,7 +61,7 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   });
 
   it('does not display the "Folder actions" button if the user does not have permissions', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: false,

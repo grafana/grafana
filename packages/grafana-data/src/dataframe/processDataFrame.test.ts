@@ -17,6 +17,13 @@ import {
   preProcessPanelData,
 } from './processDataFrame';
 
+jest.mock('./guessFieldType', () => ({
+  ...jest.requireActual('./guessFieldType'),
+  guessFieldTypes: jest.fn((...args: Parameters<typeof guessFieldTypeModule.guessFieldTypes>) =>
+    jest.requireActual('./guessFieldType').guessFieldTypes(...args)
+  ),
+}));
+
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
     const input1 = {
@@ -488,14 +495,13 @@ describe('getProcessedDataFrames', () => {
   });
 
   it('calls guessFieldTypes once per frame to infer field types', () => {
-    const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
+    const spy = jest.mocked(guessFieldTypeModule.guessFieldTypes).mockClear();
     const frames = [
       { fields: [{ name: 'value', values: [1, 2] }] },
       { fields: [{ name: 'label', values: ['a', 'b'] }] },
     ] as unknown as DataFrameDTO[];
     getProcessedDataFrames(frames);
     expect(spy).toHaveBeenCalledTimes(frames.length);
-    spy.mockRestore();
   });
 
   it('infers untyped fields via guessFieldTypes (time from timestamps, number from numeric values)', () => {

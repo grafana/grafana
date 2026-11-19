@@ -11,14 +11,28 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
-import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
-import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
+import { useFolderDocs, type UseFolderDocsResult } from 'app/features/provisioning/hooks/useFolderDocs';
+import { useFolderReadme } from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 
 import { BrowseView } from './BrowseView';
+
+jest.mock('app/features/provisioning/hooks/useFolderDocs', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useFolderDocs'),
+  useFolderDocs: jest.fn((...args) =>
+    jest.requireActual('app/features/provisioning/hooks/useFolderDocs').useFolderDocs(...args)
+  ),
+}));
+
+jest.mock('app/features/provisioning/hooks/useFolderReadme', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useFolderReadme'),
+  useFolderReadme: jest.fn((...args) =>
+    jest.requireActual('app/features/provisioning/hooks/useFolderReadme').useFolderReadme(...args)
+  ),
+}));
 
 const [
   mockTree,
@@ -39,6 +53,14 @@ describe('browse-dashboards BrowseView', () => {
   };
 
   beforeEach(() => {
+    jest
+      .mocked(useFolderDocs)
+      .mockReset()
+      .mockImplementation(jest.requireActual('app/features/provisioning/hooks/useFolderDocs').useFolderDocs);
+    jest
+      .mocked(useFolderReadme)
+      .mockReset()
+      .mockImplementation(jest.requireActual('app/features/provisioning/hooks/useFolderReadme').useFolderReadme);
     jest.spyOn(contextSrv, 'hasPermission').mockImplementation((permission: string) => {
       if (permission === AccessControlAction.FoldersRead) {
         return true;
@@ -291,8 +313,8 @@ describe('browse-dashboards BrowseView', () => {
     const readmeDoc = { key: 'readme' as const, path: 'README.md', fileName: 'README.md' };
 
     // useFolderDocs always lists a README tab first, synthesized when the file is absent.
-    function mockDocs(docs: useFolderDocsModule.UseFolderDocsResult['docs'] = [readmeDoc]) {
-      jest.spyOn(useFolderDocsModule, 'useFolderDocs').mockReturnValue({
+    function mockDocs(docs: UseFolderDocsResult['docs'] = [readmeDoc]) {
+      jest.mocked(useFolderDocs).mockReturnValue({
         repository: mockRepository,
         folder: undefined,
         docs,
@@ -302,7 +324,7 @@ describe('browse-dashboards BrowseView', () => {
 
     function mockReadme(markdownContent = '# README\n\nbody') {
       mockDocs();
-      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+      jest.mocked(useFolderReadme).mockReturnValue({
         status: 'ok',
         markdownContent,
         refetch: jest.fn(),
@@ -312,7 +334,7 @@ describe('browse-dashboards BrowseView', () => {
 
     function mockReadmeMissing() {
       mockDocs();
-      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+      jest.mocked(useFolderReadme).mockReturnValue({
         status: 'missing',
         markdownContent: undefined,
         refetch: jest.fn(),
@@ -402,7 +424,7 @@ describe('browse-dashboards BrowseView', () => {
 
     it('keeps a ?docTab= deep link when navigating from one folder to another', async () => {
       mockDocs([readmeDoc, { key: 'security', path: 'SECURITY.md', fileName: 'SECURITY.md' }]);
-      const readmeSpy = jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+      const readmeSpy = jest.mocked(useFolderReadme).mockReturnValue({
         status: 'ok',
         markdownContent: '# README',
         refetch: jest.fn(),

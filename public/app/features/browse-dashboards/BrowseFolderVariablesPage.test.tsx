@@ -13,7 +13,12 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
-import * as permissions from './permissions';
+import { getFolderPermissions } from './permissions';
+
+jest.mock('./permissions', () => ({
+  ...jest.requireActual('./permissions'),
+  getFolderPermissions: jest.fn(),
+}));
 
 const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
@@ -69,7 +74,7 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
       })
     );
 
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.mocked(getFolderPermissions).mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
@@ -93,7 +98,7 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
   });
 
   it('does not display the "Folder actions" button if the user does not have permissions', async () => {
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+    jest.mocked(getFolderPermissions).mockImplementation(() => {
       return {
         ...mockPermissions,
         canDeleteFolders: false,

@@ -31,6 +31,12 @@ import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import * as analytics from './notificationPolicyAnalytics';
 
+jest.mock('./notificationPolicyAnalytics', () => ({
+  ...jest.requireActual('./notificationPolicyAnalytics'),
+  trackNotificationPolicyExported: jest.fn(),
+  trackNotificationPoliciesToggledAll: jest.fn(),
+}));
+
 jest.mock('../../useRouteGroupsMatcher');
 
 // The export drawer uses IntersectionObserver which is not available in JSDOM.
@@ -112,6 +118,11 @@ describe('PoliciesList', () => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
     jest.resetAllMocks();
+    const actual = jest.requireActual<typeof analytics>('./notificationPolicyAnalytics');
+    jest.mocked(analytics.trackNotificationPolicyExported).mockImplementation(actual.trackNotificationPolicyExported);
+    jest
+      .mocked(analytics.trackNotificationPoliciesToggledAll)
+      .mockImplementation(actual.trackNotificationPoliciesToggledAll);
 
     // MultiCombobox uses canvas measureText which isn't available in jsdom.
     // Must be re-applied after jest.resetAllMocks() clears mock return values.
@@ -310,8 +321,6 @@ describe('PoliciesList', () => {
   describe('Analytics', () => {
     beforeEach(() => {
       setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
-      jest.spyOn(analytics, 'trackNotificationPolicyExported');
-      jest.spyOn(analytics, 'trackNotificationPoliciesToggledAll');
       // Add a handler for the export API to prevent unhandled request errors
       server.use(http.get('/api/v1/provisioning/policies/export', () => HttpResponse.text('')));
       // The measureText utility in @grafana/ui caches the canvas context at module level.

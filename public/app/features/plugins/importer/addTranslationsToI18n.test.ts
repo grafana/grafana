@@ -8,6 +8,11 @@ import { type SystemJSWithLoaderHooks } from '../loader/types';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
 
+jest.mock('@grafana/i18n/internal', () => ({
+  ...jest.requireActual('@grafana/i18n/internal'),
+  addResourceBundle: jest.fn(),
+}));
+
 describe('addTranslationsToI18n', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
   const originalFetch = systemJSPrototype.fetch;
@@ -24,9 +29,7 @@ describe('addTranslationsToI18n', () => {
   });
 
   beforeEach(() => {
-    addResourceBundleSpy = jest
-      .spyOn(i18nModule, 'addResourceBundle')
-      .mockImplementation(() => ({}) as unknown as i18n);
+    addResourceBundleSpy = jest.mocked(i18nModule.addResourceBundle).mockImplementation(() => ({}) as unknown as i18n);
   });
 
   afterEach(() => {

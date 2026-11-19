@@ -10,6 +10,18 @@ import { FilterOperator } from '../types';
 import { FilterList } from './FilterList';
 import { operatorSelectableValues } from './utils';
 
+jest.mock('../../../../utils/measureText', () => ({
+  ...jest.requireActual('../../../../utils/measureText'),
+  measureText: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(textMeasurement.measureText)
+    .mockReset()
+    .mockImplementation(jest.requireActual('../../../../utils/measureText').measureText);
+});
+
 const ops = operatorSelectableValues();
 
 function containsOp(): SelectableValue<FilterOperator> {
@@ -309,7 +321,7 @@ describe('FilterList', () => {
 
 it('sizes from the widest available label and keeps that width while searching', () => {
   const measurement = jest
-    .spyOn(textMeasurement, 'measureText')
+    .mocked(textMeasurement.measureText)
     .mockImplementation((text) => ({ width: text === 'WWWW' ? 250 : 120 }) as TextMetrics);
   const options = [
     { value: 'wide', label: 'WWWW' },
@@ -325,12 +337,12 @@ it('sizes from the widest available label and keeps that width while searching',
     expect(screen.getByRole('checkbox', { name: 'iiiiiiii' })).toBeInTheDocument();
     expect(onWidthChange).not.toHaveBeenCalled();
   } finally {
-    measurement.mockRestore();
+    measurement.mockReset().mockImplementation(jest.requireActual('../../../../utils/measureText').measureText);
   }
 });
 
 it('does not measure labels when dynamic width is disabled', () => {
-  const measurement = jest.spyOn(textMeasurement, 'measureText');
+  const measurement = jest.mocked(textMeasurement.measureText);
   try {
     render(
       <FilterList
@@ -343,13 +355,13 @@ it('does not measure labels when dynamic width is disabled', () => {
     );
     expect(measurement).not.toHaveBeenCalled();
   } finally {
-    measurement.mockRestore();
+    measurement.mockReset().mockImplementation(jest.requireActual('../../../../utils/measureText').measureText);
   }
 });
 
 it('measures at most 100 of the longest labels', () => {
   const measurement = jest
-    .spyOn(textMeasurement, 'measureText')
+    .mocked(textMeasurement.measureText)
     .mockImplementation((text) => ({ width: text.length }) as TextMetrics);
   const options = Array.from({ length: 150 }, (_, index) => ({
     value: String(index),
@@ -370,6 +382,6 @@ it('measures at most 100 of the longest labels', () => {
     expect(measurement).toHaveBeenCalledWith('x'.repeat(150), expect.any(Number));
     expect(measurement).not.toHaveBeenCalledWith('x', expect.any(Number));
   } finally {
-    measurement.mockRestore();
+    measurement.mockReset().mockImplementation(jest.requireActual('../../../../utils/measureText').measureText);
   }
 });

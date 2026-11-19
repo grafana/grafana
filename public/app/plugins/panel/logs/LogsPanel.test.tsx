@@ -25,6 +25,25 @@ import { configureStore } from 'app/store/configureStore';
 import { LogsPanel } from './LogsPanel';
 import * as useDatasourcesFromTargetsModule from './useDatasourcesFromTargets';
 
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  usePanelContext: jest.fn(),
+}));
+
+jest.mock('./useDatasourcesFromTargets', () => ({
+  ...jest.requireActual('./useDatasourcesFromTargets'),
+  useDatasourcesFromTargets: jest.fn((...args) =>
+    jest.requireActual('./useDatasourcesFromTargets').useDatasourcesFromTargets(...args)
+  ),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(grafanaUI.usePanelContext)
+    .mockReset()
+    .mockImplementation(jest.requireActual<typeof grafanaUI>('@grafana/ui').usePanelContext);
+});
+
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogLineContextProps = ComponentProps<typeof LogLineContext>;
 
@@ -254,27 +273,30 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
   });
 
   describe('log context', () => {
-    let useDatasourcesSpy: jest.SpyInstance;
+    const useDatasourcesMock = jest.mocked(useDatasourcesFromTargetsModule.useDatasourcesFromTargets);
 
     beforeEach(() => {
-      useDatasourcesSpy = jest
-        .spyOn(useDatasourcesFromTargetsModule, 'useDatasourcesFromTargets')
-        .mockImplementation((targets) => {
-          const map = new Map<string, MockDataSourceApi>();
-          const target = targets?.[0];
-          if (target?.refId && target.datasource?.uid) {
-            if (target.datasource.uid === 'show-context') {
-              map.set(target.refId, showContextDs);
-            } else if (target.datasource.uid === 'no-show-context') {
-              map.set(target.refId, noShowContextDs);
-            }
+      useDatasourcesMock.mockReset().mockImplementation((targets) => {
+        const map = new Map<string, MockDataSourceApi>();
+        const target = targets?.[0];
+        if (target?.refId && target.datasource?.uid) {
+          if (target.datasource.uid === 'show-context') {
+            map.set(target.refId, showContextDs);
+          } else if (target.datasource.uid === 'no-show-context') {
+            map.set(target.refId, noShowContextDs);
           }
-          return map;
-        });
+        }
+        return map;
+      });
     });
 
     afterEach(() => {
-      useDatasourcesSpy.mockRestore();
+      useDatasourcesMock
+        .mockReset()
+        .mockImplementation(
+          jest.requireActual<typeof useDatasourcesFromTargetsModule>('./useDatasourcesFromTargets')
+            .useDatasourcesFromTargets
+        );
     });
 
     const series = [
@@ -622,7 +644,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
 
     describe('invalid handlers', () => {
       it('does not show the controls if onAddAdHocFilter is not defined', async () => {
-        jest.spyOn(grafanaUI, 'usePanelContext').mockReturnValue({
+        jest.mocked(grafanaUI.usePanelContext).mockReturnValue({
           eventsScope: 'global',
           eventBus: new EventBusSrv(),
         });
@@ -649,7 +671,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
       });
       it('shows the controls if onAddAdHocFilter is defined', async () => {
-        jest.spyOn(grafanaUI, 'usePanelContext').mockReturnValue({
+        jest.mocked(grafanaUI.usePanelContext).mockReturnValue({
           eventsScope: 'global',
           eventBus: new EventBusSrv(),
           onAddAdHocFilter: jest.fn(),

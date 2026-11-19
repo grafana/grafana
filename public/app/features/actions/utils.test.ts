@@ -26,6 +26,11 @@ import {
   INFINITY_DATASOURCE_TYPE,
 } from './utils';
 
+jest.mock('./analytics', () => ({
+  ...jest.requireActual('./analytics'),
+  reportActionTrigger: jest.fn(),
+}));
+
 jest.mock('../query/state/PanelQueryRunner', () => ({
   getNextRequestId: jest.fn(() => 'test-request-id-123'),
 }));
@@ -454,13 +459,13 @@ describe('getActions onClick', () => {
     fetchMock = jest.fn().mockReturnValue(of({}));
     jest.mocked(getBackendSrv).mockReturnValue({ fetch: fetchMock } as unknown as ReturnType<typeof getBackendSrv>);
     appEventsEmitSpy = jest.spyOn(appEvents, 'emit').mockImplementation();
-    reportActionTriggerSpy = jest.spyOn(analytics, 'reportActionTrigger').mockImplementation();
+    reportActionTriggerSpy = jest.mocked(analytics.reportActionTrigger).mockReset().mockImplementation();
   });
 
   afterEach(() => {
     jest.mocked(getBackendSrv).mockReset();
     appEventsEmitSpy.mockRestore();
-    reportActionTriggerSpy.mockRestore();
+    jest.mocked(analytics.reportActionTrigger).mockReset();
   });
 
   it('reports the action trigger when a visualization type is provided', () => {

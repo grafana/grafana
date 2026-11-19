@@ -25,6 +25,11 @@ import { ShareExportTab } from './ShareExportTab';
 
 jest.mock('file-saver', () => jest.fn());
 jest.mock('app/features/dashboard/api/dashboard_api');
+jest.mock('../scene/export/exporters', () => ({
+  ...jest.requireActual('../scene/export/exporters'),
+  makeExportableV1: jest.fn(),
+  makeExportableV2: jest.fn(),
+}));
 
 const mockV1Spec: DashboardDataDTO = {
   title: 'Test Dashboard V1',
@@ -153,14 +158,14 @@ function mockGetDashboardAPI(v1Spec: DashboardDataDTO, v2Response: DashboardWith
 }
 
 describe('ShareExportTab', () => {
-  let makeExportableV1Spy: jest.SpyInstance;
-  let makeExportableV2Spy: jest.SpyInstance;
+  const makeExportableV1Spy = jest.mocked(exporters.makeExportableV1);
+  const makeExportableV2Spy = jest.mocked(exporters.makeExportableV2);
 
   beforeEach(() => {
     setTestFlags({ dashboardNewLayouts: false });
 
-    makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
-    makeExportableV2Spy = jest.spyOn(exporters, 'makeExportableV2').mockImplementation(async (spec) => spec);
+    makeExportableV1Spy.mockReset().mockImplementation(async (dashboard) => dashboard);
+    makeExportableV2Spy.mockReset().mockImplementation(async (spec) => spec);
 
     mockGetDashboardAPI(mockV1Spec, mockV2ResourceResponse);
   });

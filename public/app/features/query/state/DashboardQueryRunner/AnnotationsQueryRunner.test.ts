@@ -12,6 +12,15 @@ import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { toAsyncOfResult } from './testHelpers';
 import { type AnnotationQueryRunnerOptions } from './types';
 
+jest.mock('../../../../store/store', () => ({
+  ...jest.requireActual('../../../../store/store'),
+  dispatch: jest.fn((...args) => jest.requireActual('../../../../store/store').dispatch(...args)),
+}));
+
+jest.mock('../../../annotations/executeAnnotationQuery', () => ({
+  executeAnnotationQuery: jest.fn(),
+}));
+
 function getDefaultOptions(): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;
   const dashboard = createDashboardModelFixture();
@@ -26,9 +35,9 @@ function getDefaultOptions(): AnnotationQueryRunnerOptions {
 
 function getTestContext(result: Observable<AnnotationQueryResponse> = toAsyncOfResult({ events: [{ id: '1' }] })) {
   jest.clearAllMocks();
-  const dispatchMock = jest.spyOn(store, 'dispatch');
+  const dispatchMock = jest.mocked(store.dispatch);
   const options = getDefaultOptions();
-  const executeAnnotationQueryMock = jest.spyOn(annotationsSrv, 'executeAnnotationQuery').mockReturnValue(result);
+  const executeAnnotationQueryMock = jest.mocked(annotationsSrv.executeAnnotationQuery).mockReturnValue(result);
 
   return { options, dispatchMock, executeAnnotationQueryMock };
 }

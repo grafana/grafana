@@ -1,13 +1,19 @@
-import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { configureStore } from 'app/store/configureStore';
 
 import { updateNavModel } from './utils';
+jest.mock('app/api/clients/folder/v1beta1/hooks', () => ({
+  ...jest.requireActual('app/api/clients/folder/v1beta1/hooks'),
+  getCombinedFolder: jest.fn((...args) =>
+    jest.requireActual('app/api/clients/folder/v1beta1/hooks').getCombinedFolder(...args)
+  ),
+}));
 
 describe('utils', () => {
   it('Should update nav model', async () => {
     const reduxStore = configureStore();
 
-    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValue({
+    jest.mocked(getCombinedFolder).mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'NewFolder',

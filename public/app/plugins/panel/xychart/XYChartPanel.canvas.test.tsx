@@ -37,6 +37,11 @@ jest.mock('@grafana/ui/src/utils/measureText', () =>
   require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() => uPlotInstance)
 );
 
+jest.mock('./scatter', () => ({
+  ...jest.requireActual('./scatter'),
+  prepConfig: jest.fn(),
+}));
+
 const height = 400;
 const width = 600;
 const onOptionsChange = jest.fn();
@@ -268,7 +273,7 @@ const setUp = (propsOverrides?: PanelOverrides, seriesOverride?: DataFrame[], ti
 };
 
 describe('XYChartPanel2', () => {
-  let prepConfigSpy: jest.SpyInstance;
+  const prepConfigSpy = jest.mocked(utils.prepConfig);
   const { prepConfig: realPrepConfig } = jest.requireActual('./scatter');
   let uPlotAxisEvents: CanvasRenderingContext2DEvent[] | null = null;
   let clearAxisEvents = true;
@@ -292,7 +297,7 @@ describe('XYChartPanel2', () => {
   beforeEach(() => {
     applyDefaultUPlotAxisMeasureTextMock(jest.mocked(uPlotAxisMeasureText));
     // VizLayout always calls `useMeasure`; when legend is hidden the result is unused. Zeros match an unmeasured rect.
-    prepConfigSpy = jest.spyOn(utils, 'prepConfig').mockImplementation((opts, theme) => {
+    prepConfigSpy.mockReset().mockImplementation((opts, theme) => {
       const result = realPrepConfig(opts, theme);
       if (result.builder) {
         const builder: UPlotConfigBuilder = result.builder;
@@ -311,7 +316,7 @@ describe('XYChartPanel2', () => {
   });
 
   afterEach(() => {
-    prepConfigSpy.mockRestore();
+    prepConfigSpy.mockReset().mockImplementation(realPrepConfig);
   });
 
   it('renders no data', async () => {

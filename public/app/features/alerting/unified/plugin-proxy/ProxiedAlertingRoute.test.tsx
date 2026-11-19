@@ -2,7 +2,7 @@ import { useLocation } from 'react-use';
 import { act, render, screen } from 'test/test-utils';
 
 import { setLogger } from '@grafana/runtime/unstable';
-import * as appNotification from 'app/core/copy/appNotification';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { setupMswServer } from '../mockApi';
@@ -13,6 +13,13 @@ import { SupportedPlugin } from '../types/pluginBridges';
 import { withRouteProxy } from './ProxiedAlertingRoute';
 import { routeProxies } from './proxies';
 import { type RouteProxy } from './types';
+
+jest.mock('app/core/copy/appNotification', () => ({
+  ...jest.requireActual('app/core/copy/appNotification'),
+  useAppNotification: jest.fn((...args) =>
+    jest.requireActual('app/core/copy/appNotification').useAppNotification(...args)
+  ),
+}));
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
@@ -45,6 +52,10 @@ const logError = jest.fn();
 const corePageRendered = jest.fn();
 
 beforeEach(() => {
+  jest
+    .mocked(useAppNotification)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/core/copy/appNotification').useAppNotification);
   setupDataSources(mockDataSource({ name: MIMIR_NAME, uid: MIMIR_UID, type: 'prometheus' }));
 
   logError.mockClear();
@@ -66,7 +77,7 @@ afterEach(() => {
 /** The notification goes into the redux store, which nothing renders here — so watch the call instead. */
 function mockAppNotifications() {
   const info = jest.fn();
-  jest.spyOn(appNotification, 'useAppNotification').mockReturnValue({
+  jest.mocked(useAppNotification).mockReturnValue({
     success: jest.fn(),
     warning: jest.fn(),
     error: jest.fn(),

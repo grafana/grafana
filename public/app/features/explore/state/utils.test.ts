@@ -4,6 +4,13 @@ import * as exploreUtils from 'app/core/utils/explore';
 
 import { loadAndInitDatasource, getRange, fromURLRange, MAX_HISTORY_AUTOCOMPLETE_ITEMS } from './utils';
 
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  setLastUsedDatasourceUID: jest.fn((...args) =>
+    jest.requireActual('app/core/utils/explore').setLastUsedDatasourceUID(...args)
+  ),
+}));
+
 const mockGetDataSourceInstance = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -30,12 +37,8 @@ describe('loadAndInitDatasource', () => {
     jest.clearAllMocks();
   });
 
-  afterAll(() => {
-    jest.restoreAllMocks();
-  });
-
   it('falls back to default datasource if the provided one was not found', async () => {
-    setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
+    setLastUsedDatasourceUIDSpy = jest.mocked(exploreUtils.setLastUsedDatasourceUID);
     mockGetDataSourceInstance.mockRejectedValueOnce(new Error('Datasource not found'));
     mockGetDataSourceInstance.mockResolvedValue(DEFAULT_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValue({ total: 0, richHistory: [] });
@@ -50,7 +53,7 @@ describe('loadAndInitDatasource', () => {
   });
 
   it('saves last loaded data source uid', async () => {
-    setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
+    setLastUsedDatasourceUIDSpy = jest.mocked(exploreUtils.setLastUsedDatasourceUID);
     mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValue({
       total: 0,
@@ -68,7 +71,7 @@ describe('loadAndInitDatasource', () => {
   });
 
   it('pulls history data and returns the history by query', async () => {
-    setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
+    setLastUsedDatasourceUIDSpy = jest.mocked(exploreUtils.setLastUsedDatasourceUID);
     mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,
@@ -91,7 +94,7 @@ describe('loadAndInitDatasource', () => {
   });
 
   it('pulls history data and returns the history by query with Mixed results', async () => {
-    setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
+    setLastUsedDatasourceUIDSpy = jest.mocked(exploreUtils.setLastUsedDatasourceUID);
     mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,
@@ -136,7 +139,7 @@ describe('loadAndInitDatasource', () => {
       return { refId: `ref-${i}` };
     });
 
-    setLastUsedDatasourceUIDSpy = jest.spyOn(exploreUtils, 'setLastUsedDatasourceUID');
+    setLastUsedDatasourceUIDSpy = jest.mocked(exploreUtils.setLastUsedDatasourceUID);
     mockGetDataSourceInstance.mockResolvedValue(TEST_DATASOURCE);
     mockLocalDataStorage.getRichHistory.mockResolvedValueOnce({
       total: 1,

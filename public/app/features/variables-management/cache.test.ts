@@ -8,11 +8,18 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import * as dashboardSceneCaches from 'app/features/dashboard-scene/utils/cache';
+import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/cache';
 import { setStore } from 'app/store/store';
 
 import { variablesManagementAPI } from './api';
 import { invalidateVariablesAfterFolderDelete } from './cache';
+
+jest.mock('app/features/dashboard-scene/utils/cache', () => ({
+  ...jest.requireActual('app/features/dashboard-scene/utils/cache'),
+  clearPredefinedVariablesCache: jest.fn((...args) =>
+    jest.requireActual('app/features/dashboard-scene/utils/cache').clearPredefinedVariablesCache(...args)
+  ),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -29,7 +36,7 @@ describe('invalidateVariablesAfterFolderDelete', () => {
 
     const listSpy = jest.fn();
     const clearSceneCache = jest.spyOn(getDashboardScenePageStateManager(), 'clearSceneCache');
-    const clearPredefinedVariablesCache = jest.spyOn(dashboardSceneCaches, 'clearPredefinedVariablesCache');
+    jest.mocked(clearPredefinedVariablesCache).mockClear();
 
     try {
       server.use(
@@ -54,7 +61,6 @@ describe('invalidateVariablesAfterFolderDelete', () => {
       subscription.unsubscribe();
     } finally {
       clearSceneCache.mockRestore();
-      clearPredefinedVariablesCache.mockRestore();
     }
   });
 });

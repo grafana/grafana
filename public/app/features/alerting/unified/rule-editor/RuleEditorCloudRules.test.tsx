@@ -4,7 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as runtime from '@grafana/runtime';
+import { getPluginSettings } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -17,6 +17,11 @@ import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupPluginsExtensionsHook } from '../testSetup/plugins';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from '../utils/rule-form';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginSettings: jest.fn(),
+}));
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -56,7 +61,7 @@ describe('RuleEditor cloud', () => {
 
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
-    jest.spyOn(runtime, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+    jest.mocked(getPluginSettings).mockRejectedValue(new Error('Plugin not found'));
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,

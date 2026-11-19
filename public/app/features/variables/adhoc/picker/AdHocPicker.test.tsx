@@ -6,7 +6,7 @@ import { getDataSourceInstance } from '@grafana/runtime';
 
 import { adHocBuilder } from '../../shared/testing/builders';
 import { getPreloadedState } from '../../state/helpers';
-import * as actions from '../actions';
+import { addFilter, changeFilter, removeFilter } from '../actions';
 
 import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocPicker } from './AdHocPicker';
@@ -14,6 +14,13 @@ import { AdHocPicker } from './AdHocPicker';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
+}));
+
+jest.mock('../actions', () => ({
+  ...jest.requireActual('../actions'),
+  addFilter: jest.fn(),
+  removeFilter: jest.fn(),
+  changeFilter: jest.fn(),
 }));
 
 const mockGetDataSourceInstance = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
@@ -55,20 +62,16 @@ function getButtonFromTestId(testid: string) {
 }
 
 describe('AdHocPicker', () => {
-  let addFilterSpy: jest.SpyInstance;
-  let removeFilterSpy: jest.SpyInstance;
-  let changeFilterSpy: jest.SpyInstance;
+  const addFilterSpy = jest.mocked(addFilter);
+  const removeFilterSpy = jest.mocked(removeFilter);
+  const changeFilterSpy = jest.mocked(changeFilter);
 
   beforeEach(() => {
     // Return no-op thunks to prevent real redux side effects (registry lookups, variableUpdated, etc.)
     const noopThunk = () => async () => {};
-    addFilterSpy = jest.spyOn(actions, 'addFilter').mockImplementation(noopThunk);
-    removeFilterSpy = jest.spyOn(actions, 'removeFilter').mockImplementation(noopThunk);
-    changeFilterSpy = jest.spyOn(actions, 'changeFilter').mockImplementation(noopThunk);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
+    addFilterSpy.mockReset().mockImplementation(noopThunk);
+    removeFilterSpy.mockReset().mockImplementation(noopThunk);
+    changeFilterSpy.mockReset().mockImplementation(noopThunk);
   });
 
   it('renders correct AdHocFilter', () => {

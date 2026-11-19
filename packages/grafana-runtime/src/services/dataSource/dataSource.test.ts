@@ -8,9 +8,11 @@ import {
   type TestDataSourceResponse,
 } from '@grafana/data';
 
+import { mockBackendSrv } from '../../test/mockBackendSrv';
 import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setAppEvents } from '../appEvents';
+import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
 import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
@@ -671,12 +673,14 @@ describe('plugin', () => {
       expect(mockImport).toHaveBeenCalledTimes(1);
 
       // Simulate a reload — backend returns the same settings for simplicity.
-      jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
-        get: jest.fn().mockResolvedValue({
-          datasources: { [settings.name]: settings },
-          defaultDatasource: settings.name,
-        }),
-      });
+      setBackendSrv(
+        mockBackendSrv({
+          get: jest.fn().mockResolvedValue({
+            datasources: { [settings.name]: settings },
+            defaultDatasource: settings.name,
+          }),
+        })
+      );
       await reloadDataSourceInstanceSettings();
 
       // The importer must be called again because the cache was cleared.
@@ -783,9 +787,11 @@ describe('plugin', () => {
       const runtime = new TestRuntime('plugin-id', 'runtime-uid');
       registerRuntimeDataSourceInstance({ dataSource: runtime });
 
-      jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
-        get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
-      });
+      setBackendSrv(
+        mockBackendSrv({
+          get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
+        })
+      );
       await reloadDataSourceInstanceSettings();
 
       const result = await getDataSourceInstance('runtime-uid');
@@ -853,9 +859,11 @@ describe('plugin', () => {
       setDataSourceInstanceSettings({}, '');
       const expr = registerExpression();
 
-      jest.spyOn(require('../../services/backendSrv'), 'getBackendSrv').mockReturnValue({
-        get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
-      });
+      setBackendSrv(
+        mockBackendSrv({
+          get: jest.fn().mockResolvedValue({ datasources: {}, defaultDatasource: '' }),
+        })
+      );
       await reloadDataSourceInstanceSettings();
 
       expect(await getDataSourceInstance('__expr__')).toBe(expr);

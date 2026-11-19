@@ -7,7 +7,18 @@ import * as analytics from '../../Analytics';
 
 import { MatcherFilter } from './MatcherFilter';
 
-const logInfoSpy = jest.spyOn(analytics, 'logInfo');
+jest.mock('../../Analytics', () => ({
+  ...jest.requireActual('../../Analytics'),
+  logInfo: jest.fn((...args: Parameters<typeof analytics.logInfo>) =>
+    jest.requireActual('../../Analytics').logInfo(...args)
+  ),
+}));
+
+beforeEach(() => {
+  jest.mocked(analytics.logInfo).mockClear();
+});
+
+const logInfoSpy = jest.mocked(analytics.logInfo);
 
 describe('Analytics', () => {
   it('Sends log info when filtering alert instances by label', async () => {

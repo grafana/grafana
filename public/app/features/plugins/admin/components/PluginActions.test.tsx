@@ -9,18 +9,30 @@ import { type CatalogPlugin, PluginStatus, type ReducerState, type Version } fro
 
 import { getInstallControlsDisabled, getPluginStatus, PluginActions } from './PluginActions';
 
+jest.mock('../helpers', () => ({
+  ...jest.requireActual('../helpers'),
+  isInstallControlsEnabled: jest.fn(),
+  hasInstallControlWarning: jest.fn(),
+  getLatestCompatibleVersion: jest.fn(),
+}));
+
+jest.mock('../state/hooks', () => ({
+  ...jest.requireActual('../state/hooks'),
+  useIsRemotePluginsAvailable: jest.fn(),
+}));
+
 describe('PluginActions', () => {
   let plugins: ReducerState;
 
   beforeEach(() => {
     plugins = { ...initialState };
-    jest.spyOn(helpers, 'isInstallControlsEnabled').mockReturnValue(true);
-    jest.spyOn(helpers, 'hasInstallControlWarning').mockReturnValue(false);
-    jest.spyOn(hooks, 'useIsRemotePluginsAvailable').mockReturnValue(true);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
+    jest.mocked(helpers.getLatestCompatibleVersion).mockReset();
+    jest
+      .mocked(helpers.getLatestCompatibleVersion)
+      .mockImplementation(jest.requireActual('../helpers').getLatestCompatibleVersion);
+    jest.mocked(helpers.isInstallControlsEnabled).mockReturnValue(true);
+    jest.mocked(helpers.hasInstallControlWarning).mockReturnValue(false);
+    jest.mocked(hooks.useIsRemotePluginsAvailable).mockReturnValue(true);
   });
 
   describe('render', () => {
@@ -74,14 +86,14 @@ describe('PluginActions', () => {
     });
 
     it('should not render install controls when install controls are disabled', () => {
-      jest.spyOn(helpers, 'isInstallControlsEnabled').mockReturnValue(false);
+      jest.mocked(helpers.isInstallControlsEnabled).mockReturnValue(false);
       render(<PluginActions plugin={createPluginStub()} />, { preloadedState: { plugins } });
 
       expect(screen.queryByRole('button', { name: /install|uninstall|update/i })).not.toBeInTheDocument();
     });
 
     it('should render install controls when there is an installed disabled angular plugin with a non-angular version available', async () => {
-      jest.spyOn(helpers, 'getLatestCompatibleVersion').mockReturnValue(createVersion({ angularDetected: false }));
+      jest.mocked(helpers.getLatestCompatibleVersion).mockReturnValue(createVersion({ angularDetected: false }));
       const disabledAngularPlugin = createPluginStub({
         isInstalled: true,
         isDisabled: true,
@@ -95,7 +107,7 @@ describe('PluginActions', () => {
     });
 
     it('should not render install controls when there is an installed disabled angular plugin with no non-angular version available', () => {
-      jest.spyOn(helpers, 'getLatestCompatibleVersion').mockReturnValue(createVersion({ angularDetected: true }));
+      jest.mocked(helpers.getLatestCompatibleVersion).mockReturnValue(createVersion({ angularDetected: true }));
       const disabledAngularPlugin = createPluginStub({
         isInstalled: true,
         isDisabled: true,
@@ -223,7 +235,7 @@ describe('PluginActions', () => {
     });
 
     it('should return true when install controls are not enabled', () => {
-      jest.spyOn(helpers, 'isInstallControlsEnabled').mockReturnValue(false);
+      jest.mocked(helpers.isInstallControlsEnabled).mockReturnValue(false);
       const plugin = createPluginStub({});
 
       expect(getInstallControlsDisabled(plugin, undefined)).toBe(true);

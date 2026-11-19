@@ -6,6 +6,11 @@ import { createTheme, dateTime, type FieldSparkline, FieldType, makeTimeRange } 
 import { Sparkline } from './Sparkline';
 import * as sparklineUtils from './utils';
 
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  prepareConfig: jest.fn(),
+}));
+
 const WIDTH = 800;
 const HEIGHT = 600;
 
@@ -42,21 +47,24 @@ describe('Sparkline', () => {
   // real builder to read back the chart that was actually mounted.
   let plotInstance: uPlot | undefined;
   let prepareConfigSpy: jest.SpyInstance;
-  const realPrepareConfig = sparklineUtils.prepareConfig;
+  const { prepareConfig: realPrepareConfig } = jest.requireActual('./utils');
 
   beforeEach(() => {
     plotInstance = undefined;
-    prepareConfigSpy = jest.spyOn(sparklineUtils, 'prepareConfig').mockImplementation((...args) => {
-      const builder = realPrepareConfig(...args);
-      builder.addHook('ready', (u: uPlot) => {
-        plotInstance = u;
+    prepareConfigSpy = jest
+      .mocked(sparklineUtils.prepareConfig)
+      .mockReset()
+      .mockImplementation((...args) => {
+        const builder = realPrepareConfig(...args);
+        builder.addHook('ready', (u: uPlot) => {
+          plotInstance = u;
+        });
+        return builder;
       });
-      return builder;
-    });
   });
 
   afterEach(() => {
-    prepareConfigSpy.mockRestore();
+    jest.mocked(sparklineUtils.prepareConfig).mockReset();
   });
 
   async function mountAndGetPlot(sparkline: FieldSparkline) {

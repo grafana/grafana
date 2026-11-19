@@ -3,7 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
+import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -18,7 +18,7 @@ import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
 import { invalidateStarredSearch } from 'app/features/stars/api';
 import { userStarsFieldSelector } from 'app/features/stars/utils';
-import * as variablesManagementCache from 'app/features/variables-management/cache';
+import { invalidateVariablesAfterFolderDelete } from 'app/features/variables-management/cache';
 import { addExtraMiddleware, configureStore } from 'app/store/configureStore';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -26,6 +26,33 @@ import { refetchChildren } from '../state/actions';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 import { PAGE_SIZE } from './constants';
+
+jest.mock('@grafana/api-clients/rtkq/quotas/v0alpha1', () => ({
+  ...jest.requireActual('@grafana/api-clients/rtkq/quotas/v0alpha1'),
+  invalidateQuotaUsage: jest.fn((...args) =>
+    jest.requireActual('@grafana/api-clients/rtkq/quotas/v0alpha1').invalidateQuotaUsage(...args)
+  ),
+}));
+
+jest.mock('app/features/variables-management/cache', () => ({
+  ...jest.requireActual('app/features/variables-management/cache'),
+  invalidateVariablesAfterFolderDelete: jest.fn((...args) =>
+    jest.requireActual('app/features/variables-management/cache').invalidateVariablesAfterFolderDelete(...args)
+  ),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(invalidateQuotaUsage)
+    .mockReset()
+    .mockImplementation(jest.requireActual('@grafana/api-clients/rtkq/quotas/v0alpha1').invalidateQuotaUsage);
+  jest
+    .mocked(invalidateVariablesAfterFolderDelete)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('app/features/variables-management/cache').invalidateVariablesAfterFolderDelete
+    );
+});
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -136,7 +163,7 @@ describe('browseDashboardsAPI', () => {
 
   it('invalidates quota usage after deleting a folder', async () => {
     const store = createTestStore();
-    const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
+    const invalidateQuotaUsageSpy = jest.mocked(invalidateQuotaUsage);
 
     try {
       server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
@@ -147,7 +174,7 @@ describe('browseDashboardsAPI', () => {
 
       expect(invalidateQuotaUsageSpy).toHaveBeenCalledTimes(1);
     } finally {
-      invalidateQuotaUsageSpy.mockRestore();
+      invalidateQuotaUsageSpy.mockClear();
     }
   });
 
@@ -204,7 +231,7 @@ describe('browseDashboardsAPI', () => {
 
   it('invalidates the variables list after deleting a folder', async () => {
     const store = createTestStore();
-    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+    const invalidateVariablesSpy = jest.mocked(invalidateVariablesAfterFolderDelete);
 
     try {
       server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
@@ -217,13 +244,13 @@ describe('browseDashboardsAPI', () => {
         expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
       });
     } finally {
-      invalidateVariablesSpy.mockRestore();
+      invalidateVariablesSpy.mockClear();
     }
   });
 
   it('invalidates the variables list even when deleting a folder fails', async () => {
     const store = createTestStore();
-    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+    const invalidateVariablesSpy = jest.mocked(invalidateVariablesAfterFolderDelete);
 
     try {
       server.use(
@@ -240,7 +267,7 @@ describe('browseDashboardsAPI', () => {
         expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
       });
     } finally {
-      invalidateVariablesSpy.mockRestore();
+      invalidateVariablesSpy.mockClear();
     }
   });
 
@@ -286,7 +313,7 @@ describe('browseDashboardsAPI', () => {
     it('clears caches and invalidates quota usage when bulk delete yields no successes', async () => {
       const store = createTestStore();
       const clearDeletedDashboardsCacheSpy = jest.spyOn(deletedDashboardsCache, 'clear');
-      const invalidateQuotaUsageSpy = jest.spyOn(quotasAPI, 'invalidateQuotaUsage');
+      const invalidateQuotaUsageSpy = jest.mocked(invalidateQuotaUsage);
 
       try {
         server.use(
@@ -308,7 +335,7 @@ describe('browseDashboardsAPI', () => {
         });
       } finally {
         clearDeletedDashboardsCacheSpy.mockRestore();
-        invalidateQuotaUsageSpy.mockRestore();
+        invalidateQuotaUsageSpy.mockClear();
       }
     });
 
@@ -378,7 +405,7 @@ describe('browseDashboardsAPI', () => {
 
     it('invalidates the variables list after bulk-deleting folders', async () => {
       const store = createTestStore();
-      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+      const invalidateVariablesSpy = jest.mocked(invalidateVariablesAfterFolderDelete);
 
       try {
         server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
@@ -391,13 +418,13 @@ describe('browseDashboardsAPI', () => {
           expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
         });
       } finally {
-        invalidateVariablesSpy.mockRestore();
+        invalidateVariablesSpy.mockClear();
       }
     });
 
     it('invalidates the variables list when bulk delete yields no successes', async () => {
       const store = createTestStore();
-      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+      const invalidateVariablesSpy = jest.mocked(invalidateVariablesAfterFolderDelete);
 
       try {
         server.use(
@@ -417,14 +444,14 @@ describe('browseDashboardsAPI', () => {
           expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
         });
       } finally {
-        invalidateVariablesSpy.mockRestore();
+        invalidateVariablesSpy.mockClear();
       }
     });
 
     it('does not invalidate the variables list when bulk delete skips every folder as provisioned', async () => {
       const store = createTestStore();
       config.provisioningEnabled = true;
-      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+      const invalidateVariablesSpy = jest.mocked(invalidateVariablesAfterFolderDelete);
 
       try {
         server.use(
@@ -449,7 +476,7 @@ describe('browseDashboardsAPI', () => {
 
         expect(invalidateVariablesSpy).not.toHaveBeenCalled();
       } finally {
-        invalidateVariablesSpy.mockRestore();
+        invalidateVariablesSpy.mockClear();
       }
     });
 

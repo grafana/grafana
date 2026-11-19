@@ -8,7 +8,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
-import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { setupMswServer } from '../mockApi';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
@@ -16,6 +16,19 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { type AlertManagerDataSource } from '../utils/datasource';
 
 import { AlertmanagerProvider, getOrgAlertmanagerLocalStorageKey, useAlertmanager } from './AlertmanagerContext';
+
+jest.mock('../hooks/useAlertManagerSources', () => ({
+  useAlertManagersByPermission: jest.fn((...args) =>
+    jest.requireActual('../hooks/useAlertManagerSources').useAlertManagersByPermission(...args)
+  ),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(useAlertManagersByPermission)
+    .mockReset()
+    .mockImplementation(jest.requireActual('../hooks/useAlertManagerSources').useAlertManagersByPermission);
+});
 
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
@@ -39,7 +52,7 @@ function getProviderWrapper() {
 describe('useAlertmanager', () => {
   it('Should return undefined alert manager name when there are no available alert managers', () => {
     jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
+      .mocked(useAlertManagersByPermission)
       .mockReturnValueOnce({ availableExternalDataSources: [], availableInternalDataSources: [] });
     const wrapper = getProviderWrapper();
 
@@ -48,7 +61,7 @@ describe('useAlertmanager', () => {
   });
 
   it('Should return Grafana AM when it is available and no alert manager query param exists', () => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+    jest.mocked(useAlertManagersByPermission).mockReturnValueOnce({
       availableExternalDataSources: [],
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
     });
@@ -61,7 +74,7 @@ describe('useAlertmanager', () => {
 
   it('Should return alert manager included in the query param when available', () => {
     jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
+      .mocked(useAlertManagersByPermission)
       .mockReturnValueOnce({ availableExternalDataSources: [externalAmProm], availableInternalDataSources: [] });
 
     locationService.push({ search: `alertmanager=${externalAmProm.name}` });
@@ -74,7 +87,7 @@ describe('useAlertmanager', () => {
 
   it('Should return undefined if alert manager included in the query is not available', () => {
     jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
+      .mocked(useAlertManagersByPermission)
       .mockReturnValueOnce({ availableExternalDataSources: [], availableInternalDataSources: [] });
 
     locationService.push({ search: `alertmanager=Not available external AM` });
@@ -87,7 +100,7 @@ describe('useAlertmanager', () => {
 
   it('Should return alert manager from store if available and query is empty', () => {
     jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
+      .mocked(useAlertManagersByPermission)
       .mockReturnValueOnce({ availableExternalDataSources: [externalAmProm], availableInternalDataSources: [] });
 
     const wrapper = getProviderWrapper();
@@ -99,7 +112,7 @@ describe('useAlertmanager', () => {
   });
 
   it('Should prioritize the alert manager from query over store', () => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+    jest.mocked(useAlertManagersByPermission).mockReturnValueOnce({
       availableExternalDataSources: [externalAmProm, externalAmMimir],
       availableInternalDataSources: [],
     });
@@ -115,7 +128,7 @@ describe('useAlertmanager', () => {
   });
 
   it('Should fall back to Grafana AM when stored AM is not available', () => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+    jest.mocked(useAlertManagersByPermission).mockReturnValueOnce({
       availableExternalDataSources: [],
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
     });
@@ -131,7 +144,7 @@ describe('useAlertmanager', () => {
   });
 
   it('Should clean up stale localStorage entry when stored AM is not available', () => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+    jest.mocked(useAlertManagersByPermission).mockReturnValueOnce({
       availableExternalDataSources: [],
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
     });
@@ -147,7 +160,7 @@ describe('useAlertmanager', () => {
   });
 
   it('Should not read localStorage from a different org', () => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+    jest.mocked(useAlertManagersByPermission).mockReturnValueOnce({
       availableExternalDataSources: [externalAmProm],
       availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
     });
@@ -170,7 +183,7 @@ describe('useAlertmanager and the hand-over to the Prometheus Alerting plugin', 
   setupMswServer();
 
   beforeEach(() => {
-    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValue({
+    jest.mocked(useAlertManagersByPermission).mockReturnValue({
       availableExternalDataSources: [externalAmProm],
       availableInternalDataSources: [grafanaAm],
     });

@@ -3,10 +3,15 @@ import { type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import * as libpanels from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  getLibraryPanel: jest.fn(),
+}));
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -59,7 +64,7 @@ const libraryPanel: LibraryPanel = {
   version: 1,
 };
 
-jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue(libraryPanel);
+jest.mocked(getLibraryPanel).mockResolvedValue(libraryPanel);
 
 describe('V2 Transformers', () => {
   it('should match original V2 Schema when transforming to scene and back to V2 Schema', async () => {

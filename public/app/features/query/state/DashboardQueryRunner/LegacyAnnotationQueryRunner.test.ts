@@ -2,10 +2,15 @@ import { type AnnotationQuery, type DataSourceApi, getDefaultTimeRange } from '@
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
-import * as store from '../../../../store/store';
+import { dispatch } from '../../../../store/store';
 
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { type AnnotationQueryRunnerOptions } from './types';
+
+jest.mock('../../../../store/store', () => ({
+  ...jest.requireActual('../../../../store/store'),
+  dispatch: jest.fn((...args) => jest.requireActual('../../../../store/store').dispatch(...args)),
+}));
 
 function getDefaultOptions(annotationQuery?: jest.Mock): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;
@@ -20,7 +25,7 @@ function getDefaultOptions(annotationQuery?: jest.Mock): AnnotationQueryRunnerOp
 
 function getTestContext(annotationQuery?: jest.Mock) {
   jest.clearAllMocks();
-  const dispatchMock = jest.spyOn(store, 'dispatch');
+  const dispatchMock = jest.mocked(dispatch);
   const options = getDefaultOptions(annotationQuery);
   const annotationQueryMock = options.datasource!.annotationQuery;
 

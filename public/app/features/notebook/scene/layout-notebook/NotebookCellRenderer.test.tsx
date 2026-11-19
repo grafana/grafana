@@ -20,7 +20,6 @@ import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/Library
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { NotebookScene } from '../NotebookScene';
@@ -37,11 +36,14 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue({
-  uid: 'lp-1',
-  name: 'Shared panel',
-  model: { type: 'timeseries' },
-} as never);
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  getLibraryPanel: jest.fn().mockResolvedValue({
+    uid: 'lp-1',
+    name: 'Shared panel',
+    model: { type: 'timeseries' },
+  }),
+}));
 
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: jest.fn(),
