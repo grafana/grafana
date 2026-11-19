@@ -15382,6 +15382,7 @@
       "actions": "Managed resource actions",
       "classic-file-provisioning": "Managed by: File provisioning",
       "file-provisioning": "Managed by: Grafana configuration",
+      "grafana-cloud": "Managed by: Grafana Cloud",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",

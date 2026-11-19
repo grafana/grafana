@@ -174,6 +174,9 @@ function getBadgeDisplay({ managerKind, name, isOrphaned }: ManagedBadgeProps): 
     case ManagerKind.ClassicFP:
       tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
       break;
+    case ManagerKind.GrafanaCloud:
+      tooltip = t('provisioning.managed-badge.grafana-cloud', 'Managed by: Grafana Cloud');
+      break;
     case ManagerKind.Repo:
       if (isOrphaned) {
         color = 'orange';

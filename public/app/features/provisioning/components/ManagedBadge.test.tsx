@@ -92,6 +92,7 @@ describe('ManagedBadge', () => {
       [ManagerKind.Terraform, 'Managed by: Terraform'],
       [ManagerKind.Kubectl, 'Managed by: Kubectl'],
       [ManagerKind.ClassicFP, 'Managed by: File provisioning'],
+      [ManagerKind.GrafanaCloud, 'Managed by: Grafana Cloud'],
     ])('renders the %s variant', async (managerKind, expectedTooltip) => {
       const { user } = render(<ManagedBadge managerKind={managerKind} />);
 
