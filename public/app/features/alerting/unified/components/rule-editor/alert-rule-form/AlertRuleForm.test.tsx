@@ -265,6 +265,11 @@ describe('AlertRuleForm — alerting.gmaOnlyListView off (ruler API)', () => {
     mockPreviewApiResponse(server, []);
     setCreateGrafanaRuleResolver(failWith('k8s rules API was used'));
     setReplaceGrafanaRuleResolver(failWith('k8s rules API was used'));
+    setUpdateGrafanaRulerRuleNamespaceResolver(({ params }) =>
+      params.folderUid === folderA.uid
+        ? HttpResponse.json({ message: 'updated', updated: [] })
+        : HttpResponse.json({ message: `saved to folder ${params.folderUid}` }, { status: 500 })
+    );
   });
 
   it('shows the evaluation group picker without a mode switch', async () => {
