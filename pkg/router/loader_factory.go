@@ -9,6 +9,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -43,7 +44,14 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps [
 	}
 	// In grafana cloud, each stack *may* aggregate a multi-tenant upstream service
 	if MiddlewareEnabled(cfg, deps.Features) {
-		return newRemoteServicesLoader(context.Background(), cfg, loader)
+		remote, err := newRemoteServicesLoader(context.Background(), cfg, loader)
+		if err != nil {
+			// A bad remote services config must not stop Grafana from starting;
+			// the base groups keep serving without the remote ones.
+			logging.DefaultLogger.Warn("router: remote services not mounted", "err", err)
+			return loader, nil
+		}
+		return remote, nil
 	}
 	return loader, nil
 }

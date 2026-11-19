@@ -30,6 +30,7 @@ import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import {
   type AdHocTransformationsByPanelKey,
@@ -37,6 +38,7 @@ import {
   restoreAdHocTransformations,
 } from '../scene/panel-actions/adHocTransformations';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
+import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
@@ -44,7 +46,7 @@ import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
-import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, isInV2Dashboard } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -117,6 +119,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItemAdHocTransformations?: AdHocTransformationsByPanelKey;
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
+  private _reloadBaseline!: ReturnType<PanelEditor['getReloadModel']>;
   private _changesHaveBeenMade = false;
   // Analytics only: the baseline excludes what the editor itself sets up (default query, plugin defaults),
   // unlike _originalSaveModel, so it can tell which areas the user changed.
@@ -305,9 +308,48 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.gotPanelPlugin(plugin);
   }
 
-  private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
+  public hasUnsavedChangesForReload(): boolean {
+    const { subtitle, ...current } = this.getReloadModel(this.getPanel());
+    const { subtitle: originalSubtitle, ...original } = this._reloadBaseline;
+    return !deepEqual(original, current) || (isInV2Dashboard(this._layoutItem) && subtitle !== originalSubtitle);
+  }
+
+  private getReloadModel(panel: VizPanel) {
+    const gridItem = this._layoutItem instanceof DashboardGridItem ? this._layoutItem : undefined;
+    const library = getLibraryPanelBehavior(panel);
+    // The dashboard serializer only emits a reference for a linked panel. Reload also loses its shared draft.
+    const libraryContent = library ? vizPanelToPanel(panel.clone({ $behaviors: undefined })) : undefined;
+    if (libraryContent && !getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)) {
+      delete libraryContent.title;
+    }
+    return {
+      panel: vizPanelToPanel(panel, undefined, false, gridItem),
+      libraryContent,
+      subtitle: library ? undefined : panel.state.subtitle,
+      layout: this._layoutItem instanceof AutoGridItem ? serializeAutoGridItem(this._layoutItem) : undefined,
+      repeat:
+        library && gridItem?.state.variableName
+          ? {
+              variable: gridItem.state.variableName,
+              direction: gridItem.state.repeatDirection,
+              maxPerRow: gridItem.state.maxPerRow,
+            }
+          : undefined,
+    };
+  }
+
+  private setOriginalState(panelRef: SceneObjectRef<VizPanel>, dashboardSaved = false) {
     const panel = panelRef.resolve();
 
+    const reloadModel = this.getReloadModel(panel);
+    // Saving the dashboard leaves shared library edits unpublished.
+    if (dashboardSaved && reloadModel.libraryContent) {
+      reloadModel.libraryContent = this._reloadBaseline.libraryContent;
+      if (!isInV2Dashboard(this._layoutItem)) {
+        reloadModel.repeat = this._reloadBaseline.repeat;
+      }
+    }
+    this._reloadBaseline = reloadModel;
     this._originalSaveModel = vizPanelToPanel(panel);
     this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
     this._layoutItemAdHocTransformations = collectAdHocTransformations(this._layoutItem);
@@ -353,6 +395,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
+      // The editor may install a default query while opening an untouched panel.
+      this._reloadBaseline = this.getReloadModel(panel);
       this.resetChangeBaseline();
 
       // Setup options pane
@@ -479,7 +523,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this._savedInEditor = true;
     this._savedBaseline = takePanelEditSnapshot(this.getPanel(), this._layoutItem);
-    this.setOriginalState(this.state.panelRef);
+    this.setOriginalState(this.state.panelRef, true);
     this.setState({ isDirty: false });
 
     // Remember that we have done changes
