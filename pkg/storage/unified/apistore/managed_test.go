@@ -1125,6 +1125,44 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 	}
 }
 
+// A write that is rerouted to a repository that no longer exists is a conflict with the stored resource.
+// The caller must not see the not-found of a repository it never asked for.
+func TestHandleManagedResourceRouting_RepositoryGone(t *testing.T) {
+	for name, action := range map[string]resourcepb.WatchEvent_Type{
+		"MODIFIED": resourcepb.WatchEvent_MODIFIED,
+		"ADDED":    resourcepb.WatchEvent_ADDED,
+	} {
+		t.Run(name, func(t *testing.T) {
+			s, _ := repositoryServer(t, http.StatusNotFound)
+			obj := &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "dash-uid",
+					Namespace: "default",
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+						utils.AnnoKeySourcePath:      "dashboards/dash.json",
+					},
+				},
+			}
+
+			cleanupSafe, err := s.handleManagedResourceRouting(
+				context.Background(), errResourceIsManagedInRepository, action, "/default/dashboards/dash-uid", obj, &dashboard.Dashboard{})
+
+			require.True(t, apierrors.IsConflict(err), "got %v", err)
+			require.ErrorContains(t, err, errManagerGone.Error())
+			require.True(t, cleanupSafe, "the repository is gone, so nothing was written")
+		})
+	}
+}
+
+// A lookup that fails must not count as a deleted repository.
+func TestManagerRepositoryGone_LookupFails(t *testing.T) {
+	s, _ := repositoryServer(t, http.StatusInternalServerError)
+
+	require.False(t, s.managerRepositoryGone(t.Context(), managedObject(t, repoManager, "dashboards/d.json", nil)))
+}
+
 // rereadClient returns a higher resource version on every read, as if the resource changed between reads.
 type rereadClient struct {
 	resourceclient.ResourceClient

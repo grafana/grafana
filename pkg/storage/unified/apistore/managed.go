@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -96,6 +97,12 @@ func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) 
 	}
 }
 
+// repositoryGoneError tells a caller that the write conflicts with the stored resource, which names a repository
+// that no longer exists.
+func repositoryGoneError(name string) error {
+	return apierrors.NewConflict(schema.GroupResource{Group: provisioningGroup, Resource: repositoriesResource}, name, errManagerGone)
+}
+
 func isRepositoryNotFound(err error, name string) bool {
 	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
 	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
@@ -124,7 +131,13 @@ func (s *Storage) managerRepositoryGone(ctx context.Context, obj utils.GrafanaMe
 		return false
 	}
 	exists, err := s.repositoryExists(ctx, obj.GetNamespace(), manager.Identity)
-	return err == nil && !exists
+	if err != nil {
+		// A failed lookup must not count as a deleted repository, but it must not be silent either.
+		logging.FromContext(ctx).Warn("unable to check that the repository of a managed resource exists",
+			"namespace", obj.GetNamespace(), "repository", manager.Identity, "err", err)
+		return false
+	}
+	return !exists
 }
 
 // The root folder stands for the repository itself rather than a
@@ -303,6 +316,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
 	if err = result.Error(); err != nil {
+		if isRepositoryNotFound(err, repo.Identity) {
+			return true, repositoryGoneError(repo.Identity)
+		}
 		// The files endpoint may commit the repository file before returning an error
 		// (e.g. a 409 after the write), so any post-send failure is ambiguous: keep the
 		// secret rather than orphan a committed reference.
