@@ -1,0 +1,31 @@
+name: Save Jest cache
+description: Saves a Jest cache that .github/actions/restore-jest-cache restored.
+
+inputs:
+  path:
+    description: The `path` output of restore-jest-cache.
+    required: true
+  key:
+    description: The `key` output of restore-jest-cache.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # Jest never deletes cache entries, and each save starts from the previous cache. Remove
+    # entries written more than 7 days ago so the cache does not grow without limit. Jest
+    # writes them again the next time a test needs them.
+    - name: Remove old Jest cache entries
+      shell: bash
+      env:
+        CACHE_PATH: ${{ inputs.path }}
+      run: |
+        if [ -d "$CACHE_PATH" ]; then
+          find "$CACHE_PATH" -type f -mtime +7 -delete
+        fi
+
+    - name: Save Jest cache
+      uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.key }}
