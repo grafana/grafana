@@ -37,3 +37,33 @@ export function trackRestoreSuccess() {
 export function trackRestoreFailure(reason: 'conflict' | 'error') {
   reportInteraction('grafana_alerting_gma_recently_deleted_restore_failure', { reason });
 }
+
+export function useTrackDeletedRecordingRulesPageView(apiRowCount: number | undefined) {
+  useEffect(() => {
+    if (apiRowCount === undefined) {
+      return;
+    }
+    reportInteraction('grafana_alerting_gma_recently_deleted_recording_viewed', { row_count: apiRowCount });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiRowCount === undefined]);
+}
+
+export function trackRecordingRuleReviewOpened() {
+  reportInteraction('grafana_alerting_gma_recently_deleted_recording_review_opened');
+}
+
+export function trackRecordingRuleJsonOpened() {
+  reportInteraction('grafana_alerting_gma_recently_deleted_recording_json_opened');
+}
+
+export function trackRecordingRuleRestoreAttempt() {
+  reportInteraction('grafana_alerting_gma_recently_deleted_recording_restore_attempt');
+}
+
+export function trackRecordingRuleRestoreSuccess() {
+  reportInteraction('grafana_alerting_gma_recently_deleted_recording_restore_success');
+}
+
+export function trackRecordingRuleRestoreFailure(reason: 'conflict' | 'error') {
+  reportInteraction('grafana_alerting_gma_recently_deleted_recording_restore_failure', { reason });
+}

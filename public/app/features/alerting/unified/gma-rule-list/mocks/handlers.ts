@@ -1,7 +1,12 @@
 import { HttpResponse, http } from 'msw';
 
 import { getAPIBaseURL } from '@grafana/api-clients';
-import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import {
+  API_GROUP,
+  API_VERSION,
+  type AlertRule,
+  type RecordingRule,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import server from '@grafana/test-utils/server';
 
 import { mockK8sAlertRule } from '../../mocks/server/handlers/k8s/alertRules.k8s';
@@ -97,6 +102,55 @@ export function makeDeletedRule(overrides: Partial<AlertRule> = {}): AlertRule {
         'grafana.app/updatedBy': 'user-uid-123',
       },
       ...overrides.metadata,
+    },
+    ...overrides,
+  };
+}
+
+export const TRASH_RECORDING_RULES_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/recordingrules`;
+
+export function mockTrashRecordingRules(rules: RecordingRule[], continueToken?: string) {
+  server.use(
+    http.get<{ namespace: string }>(TRASH_RECORDING_RULES_URL, ({ request }) => {
+      const url = new URL(request.url);
+      if (url.searchParams.get('labelSelector')?.includes('get-trash')) {
+        return HttpResponse.json({
+          kind: 'RecordingRuleList',
+          apiVersion: `${API_GROUP}/${API_VERSION}`,
+          metadata: continueToken ? { continue: continueToken } : {},
+          items: rules,
+        });
+      }
+      return HttpResponse.json({
+        kind: 'RecordingRuleList',
+        apiVersion: `${API_GROUP}/${API_VERSION}`,
+        metadata: {},
+        items: [],
+      });
+    })
+  );
+}
+
+export function makeDeletedRecordingRule(overrides: Partial<RecordingRule> = {}): RecordingRule {
+  return {
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    kind: 'RecordingRule',
+    metadata: {
+      name: 'deleted-recording-rule-uid',
+      deletionTimestamp: '2026-11-10T10:00:00Z',
+      annotations: {
+        'grafana.app/folder': 'folder-uid',
+        'grafana.app/updatedBy': 'user-uid-123',
+      },
+      ...overrides.metadata,
+    },
+    spec: {
+      title: 'Deleted recording rule',
+      metric: 'my_metric',
+      expressions: {},
+      targetDatasourceUID: 'ds-uid',
+      trigger: { interval: '1m' },
+      ...overrides.spec,
     },
     ...overrides,
   };
