@@ -75,37 +75,17 @@ runs:
             echo "::error::$pkg did not pass $TEST: it is missing, skipped, or failed"
             failed=1
           fi
-          # The watchdog of a phase writes its owners to a file shortly before the test timeout, and a
-          # phase that ends in time removes it. One left behind may also come from a crash, so the
-          # summary only gets it when Go reported the timeout.
-          entry="$GRAFANA_COMPAT_DIR/timeout-$pkg-$TEST.md"
-          reported=0
-          reason="failed without a report"
-          marker="[compat-owner]"
-          # TestMain emits this after database cleanup, even when m.Run reports a test failure.
-          # An earlier assertion report cannot account for a process that died before this point.
-          if ! jq -e 'select(.Action == "output" and .Output == "[compat-phase-complete]\n")' "$events" > /dev/null; then
-            echo "::error::$pkg did not complete $TEST"
-            failed=1
-            reason="terminated before completing"
-            marker="[compat-panic-owner]"
+          if [ "$failed" -eq 1 ]; then
+            rc=1
+            reason="failed"
             if jq -e 'select(.Action == "output" and (.Output | startswith("panic: test timed out after ")))' "$events" > /dev/null; then
               reason="timed out"
-              if [ -f "$entry" ]; then
-                cat "$entry" >> "$GITHUB_STEP_SUMMARY"
-                reported=1
-              fi
             fi
-          fi
-          rm -f "$entry"
-          if [ "$failed" -eq 1 ]; then rc=1; fi
-          # The newer binary resolves package owners in a separate process, using the CODEOWNERS
-          # in review. This also covers crashes before the test can run its cleanup callbacks.
-          if [ "$failed" -eq 1 ] && [ "$reported" -eq 0 ] \
-            && ! jq -e --arg marker "$marker" 'select(.Action == "output" and (.Output | contains($marker + " owned by ")))' "$events" > /dev/null; then
+            # Report the package once per failed phase, even if some resources already reported.
+            # Resolve its owners from the CODEOWNERS in review, independently of the phase process.
             owners="$(cd "$NEWER_CHECKOUT/pkg/tests/compat/$pkg" && GRAFANA_COMPAT_PRINT_OWNERS=1 "$newer" 2> /dev/null)" || owners=""
             if [ -n "$owners" ]; then
-              echo "- \`$pkg/$TEST\` ($role, $(basename "$GRAFANA_COMPAT_DIR")) $reason, owned by $owners" >> "$GITHUB_STEP_SUMMARY"
+              echo "- \`$pkg/$TEST\` ($role, $(basename "$GRAFANA_COMPAT_DIR")) $reason, package owned by $owners" >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
         done

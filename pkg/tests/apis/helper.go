@@ -299,16 +299,6 @@ func (c *K8sTestHelper) Shutdown() {
 	require.NoError(c.t, err)
 }
 
-// ShutdownErr stops the server and returns the error, for callers that report it
-// themselves. Unlike Shutdown it also returns the failure of a background service while
-// stopping, which the server only logs.
-func (c *K8sTestHelper) ShutdownErr() error {
-	if err := c.env.Server.Shutdown(context.Background(), "done"); err != nil {
-		return err
-	}
-	return c.env.Server.ServicesShutdownErr()
-}
-
 type ResourceClientArgs struct {
 	// Provide either a user or a service account token
 	User                User

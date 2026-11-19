@@ -78,10 +78,8 @@ GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' "${pkgs[@]}
 For rollback then re-upgrade, swap the directories.
 For Enterprise, overlay grafana-enterprise onto both checkouts with its `build.sh` and set `GOFLAGS=-tags=enterprise`.
 
-A failing test logs its owners from CODEOWNERS, and in GitHub Actions also lists them in the job summary, with the version and the round trip it ran in.
-`compat.NewHelper` also lists the owners of the package when a phase fails outside any resource, and when a phase hits the test timeout.
-If the phase process dies before database cleanup finishes, the phase runner adds the package owners to the job summary unless the crash itself already has an owner report.
-An earlier resource failure still reaches its own owners when a separate crash interrupts the phase.
+Smoke resource assertion failures log their owners from CODEOWNERS and add a resource entry to the GitHub Actions job summary.
+For every failed phase, including a crash or timeout, the phase runner adds a package-owner entry with the version role and round trip. A crash can leave only the package entry.
 Update and Verify change and delete the data, so each round trip needs a new `GRAFANA_COMPAT_DIR`.
 Without `GRAFANA_COMPAT_DIR` every test skips, so these tests never run as part of the unit or integration suites.
 Only SQLite is supported for now.

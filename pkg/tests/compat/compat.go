@@ -32,8 +32,8 @@ import (
 const EnvDir = "GRAFANA_COMPAT_DIR"
 
 // EnvPrintOwners makes a test binary print the CODEOWNERS owners of its package and exit,
-// without running any test. The phase runner uses it to name a team when a phase died before
-// the test could, because it asks a fresh process and so does not depend on the crashed one.
+// without running any test. The phase runner uses it to report the package owners
+// of a failed phase independently of the phase process.
 const EnvPrintOwners = "GRAFANA_COMPAT_PRINT_OWNERS"
 
 // EnvRole tells a phase which side of the round trip it runs on: "older" or "newer".
@@ -59,20 +59,13 @@ func Main(m *testing.M) {
 		fmt.Println(owners)
 		os.Exit(0)
 	}
-	dir := os.Getenv(EnvDir)
-	if dir != "" {
+	if dir := os.Getenv(EnvDir); dir != "" {
 		if err := setupDB(dir); err != nil {
 			fmt.Fprintf(os.Stderr, "compat: %v\n", err)
 			os.Exit(1)
 		}
 	}
-	code := testsuite.RunWithDB(m)
-	if dir != "" {
-		// The phase runner uses this to distinguish test failures from a process that
-		// died before finishing, including during database cleanup after m.Run.
-		fmt.Println("[compat-phase-complete]")
-	}
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func setupDB(dir string) error {
@@ -113,11 +106,6 @@ func Dir(t *testing.T) string {
 func NewHelper(t *testing.T) *apis.K8sTestHelper {
 	t.Helper()
 	Dir(t)
-	// Every phase of every package starts here, so a failure that no resource reports still
-	// reaches the owners of its package.
-	if !strings.Contains(t.Name(), "/") {
-		ReportOwners(t, PackagePath(t))
-	}
 	h := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 		GrafanaOpts: testinfra.GrafanaOpts{
 			DisableAnonymous:   true,
@@ -126,18 +114,8 @@ func NewHelper(t *testing.T) *apis.K8sTestHelper {
 		},
 		ReuseExistingUsers: true,
 	})
-	t.Cleanup(func() { shutDown(t, h.ShutdownErr) })
+	t.Cleanup(h.Shutdown)
 	return h
-}
-
-// shutDown stops the server of a phase and fails the phase when that fails.
-func shutDown(t *testing.T, shutdown func() error) {
-	t.Helper()
-	if err := shutdown(); err != nil {
-		// A resource that failed before has reported itself, and this failure is the package's.
-		ReportOwnersNow(t, PackagePath(t))
-		t.Errorf("shut down Grafana: %v", err)
-	}
 }
 
 // Resource is a namespaced resource this server can create, read, update and delete.

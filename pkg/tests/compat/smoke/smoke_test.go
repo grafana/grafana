@@ -65,7 +65,6 @@ const (
 
 // TestCompatSetup creates one object per resource.
 func TestCompatSetup(t *testing.T) {
-	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	h := compat.NewHelper(t)
 	f := readSkipFile(t)
@@ -73,12 +72,8 @@ func TestCompatSetup(t *testing.T) {
 	served := compat.Served(t, h)
 	ctx := context.Background()
 
-	// Not a subtest, so a run filtered to one resource still validates skip.yaml.
-	if unserved := unservedSkipEntries(f, served, extensions.IsEnterprise); len(unserved) > 0 {
-		compat.ReportOwnersNow(t, compat.PackagePath(t))
-		for _, entry := range unserved {
-			t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
-		}
+	for _, entry := range unservedSkipEntries(f, served, extensions.IsEnterprise) {
+		t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
 	}
 
 	for gr, flag := range stale {
@@ -117,7 +112,6 @@ func TestCompatSetup(t *testing.T) {
 // TestCompatUpdate runs on the other version: it reads every object, rewrites it with
 // an update and a patch, and checks that stale writes are rejected.
 func TestCompatUpdate(t *testing.T) {
-	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	entries := readManifest(t, dir)
 	h := compat.NewHelper(t)
@@ -191,7 +185,6 @@ func TestCompatUpdate(t *testing.T) {
 // every object: the spec must read back exactly as it was written. Then it deletes
 // everything and checks the objects are gone.
 func TestCompatVerify(t *testing.T) {
-	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	entries := readManifest(t, dir)
 	h := compat.NewHelper(t)
@@ -489,11 +482,7 @@ func writeManifest(t *testing.T, dir string, entries []written) {
 	t.Helper()
 	raw, err := json.MarshalIndent(entries, "", "  ")
 	require.NoError(t, err)
-	if err := os.WriteFile(manifestPath(dir), raw, 0o600); err != nil {
-		// The phase runs this outside any subtest, so a filtered run still writes the manifest.
-		compat.ReportOwnersNow(t, compat.PackagePath(t))
-		t.Fatalf("write the manifest: %v", err)
-	}
+	require.NoError(t, os.WriteFile(manifestPath(dir), raw, 0o600))
 }
 
 func readManifest(t *testing.T, dir string) []written {
@@ -533,19 +522,12 @@ func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res
 	return obj
 }
 
-// reportPhaseOwners sends a failure outside any resource, like a stale skip.yaml entry
-// or a missing manifest, to the owners of this package.
-func reportPhaseOwners(t *testing.T) {
-	t.Helper()
-	compat.ReportOwners(t, compat.PackagePath(t))
-}
-
 // reportOwners sends a failure to the owners of the group's fixtures when they have a
 // CODEOWNERS entry, else to the owners of the app (apps/<app> for <x>.<app>.grafana.app),
 // else to the owners of this package.
 func reportOwners(t *testing.T, gr schema.GroupResource) {
 	t.Helper()
-	pkg := compat.PackagePath(t)
+	pkg := compat.PackagePath()
 	group := strings.TrimSuffix(gr.Group, ".grafana.app")
 	app := group[strings.LastIndex(group, ".")+1:]
 	compat.ReportOwners(t, pkg+"/testdata/"+gr.Group, "apps/"+app, pkg)
