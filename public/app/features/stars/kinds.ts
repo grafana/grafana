@@ -6,7 +6,10 @@ import { type KindInfo } from 'app/core/kinds/types';
  * those names are shown and where their rows come from: every kind here is in the dashboard search index.
  */
 export interface StarredKind extends Pick<KindInfo, 'group' | 'kind' | 'icon'> {
-  /** The kind string search rows carry. */
+  /**
+   * The kind string search rows carry. Optional on a core kind, required here: the rows of every starred kind come
+   * from the dashboard search index.
+   */
   searchKind: string;
   /** Starred lists group by this rank, alphabetical within it. */
   sortWeight: number;
