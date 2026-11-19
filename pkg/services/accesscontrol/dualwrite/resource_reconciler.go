@@ -29,6 +29,17 @@ type resourceReconciler struct {
 	client             zanzana.Client
 	orphanObjectPrefix string
 	orphanRelations    []string
+	// protected collect the tuples other reconcilers write to the same objects
+	// and relations. This reconciler never deletes one of them, or each
+	// reconciler would delete what the other wrote on every cycle.
+	protected []legacyTupleCollector
+}
+
+// withProtected returns r, never deleting a tuple that one of collectors
+// returns.
+func (r resourceReconciler) withProtected(collectors ...legacyTupleCollector) resourceReconciler {
+	r.protected = append(append([]legacyTupleCollector{}, r.protected...), collectors...)
+	return r
 }
 
 func newResourceReconciler(name string, legacy legacyTupleCollector, zanzanaCollector zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
@@ -135,6 +146,11 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 	deletes = append(deletes, orphans...)
 
+	deletes, err = r.withoutProtected(ctx, info.OrgID, deletes, writes)
+	if err != nil {
+		return fmt.Errorf("failed to collect protected tuples for %s: %w", r.name, err)
+	}
+
 	if len(writes) == 0 && len(deletes) == 0 {
 		return nil
 	}
@@ -166,6 +182,49 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 
 	return nil
+}
+
+// withoutProtected drops the deletes of tuples another reconciler writes. A
+// delete this reconciler pairs with a write of the same tuple, to replace its
+// subresources, is kept, since the write would otherwise conflict.
+func (r resourceReconciler) withoutProtected(
+	ctx context.Context,
+	orgID int64,
+	deletes []*openfgav1.TupleKeyWithoutCondition,
+	writes []*openfgav1.TupleKey,
+) ([]*openfgav1.TupleKeyWithoutCondition, error) {
+	if len(deletes) == 0 || len(r.protected) == 0 {
+		return deletes, nil
+	}
+
+	key := func(user, relation, object string) string {
+		return user + "|" + relation + "|" + object
+	}
+
+	protected := map[string]struct{}{}
+	for _, collect := range r.protected {
+		res, err := collect(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+		for _, tuples := range res {
+			for _, t := range tuples {
+				protected[key(t.User, t.Relation, t.Object)] = struct{}{}
+			}
+		}
+	}
+	for _, t := range writes {
+		delete(protected, key(t.User, t.Relation, t.Object))
+	}
+
+	out := deletes[:0]
+	for _, d := range deletes {
+		if _, ok := protected[key(d.User, d.Relation, d.Object)]; ok {
+			continue
+		}
+		out = append(out, d)
+	}
+	return out, nil
 }
 
 // collectOrphanDeletes collects tuples that are no longer present in the legacy results

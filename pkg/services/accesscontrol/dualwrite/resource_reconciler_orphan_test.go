@@ -115,3 +115,40 @@ func TestResourceReconciler_OrphanedManagedDashboardTuplesAreDeleted(t *testing.
 	require.Equal(t, relAllowed, del.Relation)
 	require.Equal(t, objAllowed, del.Object)
 }
+
+// The basic roles' grants on the root folder are written by the role
+// permissions reconciler. The managed folder permissions reconciler sees no
+// managed permission on folder:general, so without protection it deleted them
+// as orphans on every cycle, and users were denied until role permissions wrote
+// them back.
+func TestResourceReconciler_ProtectedTuplesAreNotDeleted(t *testing.T) {
+	noManaged := func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		return map[string]map[string]*openfgav1.TupleKey{}, nil
+	}
+	rootCreate := &openfgav1.TupleKey{User: "role:basic_editor#assignee", Relation: zanzana.RelationCreate, Object: "folder:general"}
+	rolePermissions := func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		return map[string]map[string]*openfgav1.TupleKey{
+			rootCreate.Object: {rootCreate.String(): rootCreate},
+		}, nil
+	}
+	zCollector := func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error) {
+		return map[string]*openfgav1.TupleKey{}, nil
+	}
+
+	fake := &fakeZanzanaClient{readTuples: []*authzextv1.Tuple{
+		// written by role permissions: must stay
+		{Key: &authzextv1.TupleKey{User: rootCreate.User, Relation: rootCreate.Relation, Object: rootCreate.Object}},
+		// no collector returns it: an orphan, so it is still deleted
+		{Key: &authzextv1.TupleKey{User: "user:1", Relation: zanzana.RelationCreate, Object: "folder:removed"}},
+	}}
+
+	r := newResourceReconciler("managed folder permissions", noManaged, zCollector, fake).withProtected(rolePermissions)
+	require.NoError(t, r.reconcile(context.Background(), authlib.OrgNamespaceFormatter(1)))
+
+	require.Len(t, fake.writeReqs, 1)
+	require.NotNil(t, fake.writeReqs[0].Deletes)
+	deletes := fake.writeReqs[0].Deletes.TupleKeys
+	require.Len(t, deletes, 1)
+	require.Equal(t, "user:1", deletes[0].User)
+	require.Equal(t, "folder:removed", deletes[0].Object)
+}
