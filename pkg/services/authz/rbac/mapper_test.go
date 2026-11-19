@@ -734,6 +734,24 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 	}
 }
 
+func TestMapperRegistry_Banners(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("banners.grafana.app", "announcement-banners", "")
+	require.True(t, ok, "announcement-banners should be registered in the mapper")
+
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch,
+		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "banners:write", action, "verb %q", verb)
+		assert.True(t, mapping.SkipScope(verb), "verb %q", verb)
+	}
+	assert.False(t, mapping.HasFolderSupport())
+}
+
 func TestMapperRegistry_Settings(t *testing.T) {
 	reg := NewMapperRegistry()
 
