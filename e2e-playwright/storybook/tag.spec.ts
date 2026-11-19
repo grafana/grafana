@@ -130,7 +130,18 @@ for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_da
     await expect(remove).toHaveCSS('text-decoration-line', 'none');
     await expect(tag).toHaveCSS('background-color', tagBackground);
   });
+}
 
+for (const theme of [
+  'light',
+  'dark',
+  'deut_prot_light',
+  'deut_prot_dark',
+  'tritanopia_light',
+  'tritanopia_dark',
+  'visual_refresh_light',
+  'visual_refresh_dark',
+]) {
   test(`tag labels retain text contrast with one action hovered or disabled in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
     await expect(page.getByRole('button', { name: 'Remove tag: Disabled removal', exact: true })).toBeDisabled();
