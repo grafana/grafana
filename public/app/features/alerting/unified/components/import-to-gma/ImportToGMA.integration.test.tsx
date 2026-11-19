@@ -184,7 +184,7 @@ describe('ImportToGMA wizard — real steps', () => {
 
     // Review and import
     await screen.findByText(/review import/i);
-    expect(screen.getByText(/will import 1 rules/i)).toBeInTheDocument();
+    expect(await screen.findByText(/will import 1 rules/i)).toBeInTheDocument();
     expect(screen.getByText('Prometheus')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: /start import/i }));
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /start import/i }));

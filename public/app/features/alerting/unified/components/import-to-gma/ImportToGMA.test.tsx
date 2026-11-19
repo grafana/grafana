@@ -1629,6 +1629,6 @@ describe('ImportToGMA wizard — rules from a YAML file', () => {
     await navigateToReviewWithRulesCompleted(user);
 
     expect(await screen.findByText('Yaml Target')).toBeInTheDocument();
-    expect(screen.getByText(/will import 1 rules/i)).toBeInTheDocument();
+    expect(await screen.findByText(/will import 1 rules/i)).toBeInTheDocument();
   });
 });
