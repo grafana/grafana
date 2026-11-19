@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	provenancestore "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -24,7 +25,7 @@ import (
 )
 
 type ruleAccessControlService interface {
-	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error
 	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
@@ -450,7 +451,7 @@ func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user iden
 			return models.AlertRule{}, err
 		}
 	} else {
-		delta, err := rulestore.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+		delta, err := ngrulesvc.CalculateRuleCreate(ctx, service.ruleStore, &rule)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
 		}
@@ -548,7 +549,7 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		}
 		storedRule = existing
 	} else {
-		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		delta, err := ngrulesvc.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
 		if err != nil {
 			return models.AlertRule{}, err
 		}
@@ -649,7 +650,7 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 	return rule, err
 }
 
-func checkNoopUpdatePreconditions(rule models.AlertRule, delta *rulestore.GroupDelta) error {
+func checkNoopUpdatePreconditions(rule models.AlertRule, delta *ngrulesvc.GroupDelta) error {
 	for _, group := range delta.AffectedGroups {
 		for _, existing := range group {
 			if existing.GetKey() == rule.GetKey() {
@@ -751,7 +752,7 @@ func (service *LegacyRuleService) authorizeDelete(ctx context.Context, user iden
 	if canWriteAll {
 		return true, nil
 	}
-	delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
+	delta, err := ngrulesvc.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 	if err != nil {
 		if errors.Is(err, models.ErrAlertRuleNotFound) {
 			return false, nil
