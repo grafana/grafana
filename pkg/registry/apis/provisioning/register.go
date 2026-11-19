@@ -112,7 +112,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  resources.SupportedResourceProvider
+	supportedResourceProvider  resources.SupportedResourceProvider
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
@@ -224,7 +224,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources resources.SupportedResourceProvider,
+	supportedResourceProvider resources.SupportedResourceProvider,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -240,7 +240,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResources)
+		clients = resources.NewClientFactory(configProvider, supportedResourceProvider)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -267,7 +267,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		supportedResources:                  supportedResources,
+		supportedResourceProvider:                  supportedResourceProvider,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -289,7 +289,7 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources.Get()))
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -312,7 +312,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources.Get()))
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResourceProvider.Get()))
 	return nil
 }
 
@@ -394,10 +394,10 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
-	supportedResources := resources.NewSupportedResourceProvider(configured)
+	supportedResourceProvider := resources.NewSupportedResourceProvider(configured)
 	// The router always publishes the manifests, but it serves their groups only as middleware.
 	if router.MiddlewareEnabled(cfg, features) {
-		manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, cfg.Logger)
+		manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResourceProvider.Update, cfg.Logger)
 		if err := manifestWatcher.StartAsync(ctx); err != nil {
 			return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
 		}
@@ -441,7 +441,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -495,7 +495,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -1082,7 +1082,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) jobSupportedResources() []provisioning.SupportedResource {
-	supported := b.supportedResources.Get()
+	supported := b.supportedResourceProvider.Get()
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(supported))
 	for _, r := range supported {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{

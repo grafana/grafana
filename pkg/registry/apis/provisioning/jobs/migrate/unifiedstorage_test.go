@@ -925,8 +925,8 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 // A kind that a manifest adds after the export has no copy in the repository, so the cleanup
 // must not see it.
 func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
-	provider := resources.NewSupportedResourceProvider(nil)
-	factory := resources.NewClientFactory(nil, provider)
+	supportedResourceProvider := resources.NewSupportedResourceProvider(nil)
+	factory := resources.NewClientFactory(nil, supportedResourceProvider)
 	supported := func(ctx context.Context) []resources.SupportedResource {
 		clients, err := factory.Clients(ctx, "test-ns")
 		require.NoError(t, err)
@@ -960,7 +960,7 @@ func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	var exported, cleaned []resources.SupportedResource
 	exportWorker.On("Process", mock.Anything, repo, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		exported = supported(args.Get(0).(context.Context))
-		provider.Update(widgetManifest)
+		supportedResourceProvider.Update(widgetManifest)
 	}).Return(nil)
 	nc.On("Clean", mock.Anything, "test-ns", pr).Run(func(args mock.Arguments) {
 		cleaned = supported(args.Get(0).(context.Context))
@@ -973,5 +973,5 @@ func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, exported, cleaned)
-	require.Len(t, provider.Get(), len(exported)+1, "the provider did get the new kind")
+	require.Len(t, supportedResourceProvider.Get(), len(exported)+1, "the provider did get the new kind")
 }

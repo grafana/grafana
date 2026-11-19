@@ -256,6 +256,14 @@ func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, 
 	return supported, nil
 }
 
+func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedResourceProvider, error) {
+	configured, err := c.SupportedResources()
+	if err != nil {
+		return nil, err
+	}
+	return resources.NewSupportedResourceProvider(configured), nil
+}
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -292,7 +300,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources, err := c.SupportedResources()
+	supportedResourceProvider, err := c.NewSupportedResourceProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +310,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	// "no clients provider for group" at request time. A collection is registered under the
 	// collection group, not its members: those cannot be discovered before there is a client to
 	// discover through.
-	for _, r := range supportedResources {
+	for _, r := range supportedResourceProvider.Configured() {
 		if !r.IsActive() {
 			continue
 		}
@@ -358,8 +366,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	supported := resources.NewSupportedResourceProvider(supportedResources)
-	c.manifestWatcher, err = newManifestWatcher(supported, resource.ManifestWatcherConfig{
+	c.manifestWatcher, err = newManifestWatcher(supportedResourceProvider, resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: provisioning.GROUP,
 		Exchanger:         tokenExchangeClient,
@@ -370,18 +377,18 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supported)
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
 	c.clients = clients
 	return clients, nil
 }
 
-// newManifestWatcher returns the service that adds to supported the kinds that the app manifests
+// newManifestWatcher returns the service that adds to supportedResourceProvider the kinds that the app manifests
 // of the router enable. Without a router URL, the service does nothing.
-func newManifestWatcher(supported resources.SupportedResourceProvider, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+func newManifestWatcher(supportedResourceProvider resources.SupportedResourceProvider, cfg resource.ManifestWatcherConfig) (services.Service, error) {
 	if cfg.DiscoveryURL == "" {
 		return services.NewIdleService(nil, nil), nil
 	}
-	return resource.NewManifestWatcher(cfg, nil, supported.Update)
+	return resource.NewManifestWatcher(cfg, nil, supportedResourceProvider.Update)
 }
 
 func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {

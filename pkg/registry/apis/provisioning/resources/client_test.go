@@ -472,7 +472,7 @@ func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &flakyClientsProvider{err: errors.New("apis unreachable")}
-	factory := &clientFactory{clientsProvider: provider, provider: NewSupportedResourceProvider(configured)}
+	factory := &clientFactory{clientsProvider: provider, supportedResourceProvider: NewSupportedResourceProvider(configured)}
 
 	_, err = factory.supportedResources(t.Context())
 	require.ErrorContains(t, err, "apis unreachable")
@@ -526,7 +526,7 @@ func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
 
 	factory := &clientFactory{
 		clientsProvider: &flakyClientsProvider{discovery: servedDiscoveryClient{}},
-		provider:        NewSupportedResourceProvider(configured),
+		supportedResourceProvider:        NewSupportedResourceProvider(configured),
 	}
 
 	supported, err := factory.supportedResources(t.Context())
@@ -593,7 +593,7 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
 		return &clientFactory{
 			clientsProvider: &flakyClientsProvider{discovery: discovery},
-			provider:        NewSupportedResourceProvider(configured),
+			supportedResourceProvider:        NewSupportedResourceProvider(configured),
 			storageGroup:    api,
 		}
 	}
@@ -633,75 +633,75 @@ func TestSupportedResourceProvider(t *testing.T) {
 	})
 
 	t.Run("adds the kinds of an update, one time each", func(t *testing.T) {
-		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
 
-		set.Update(testManifests(widget, gadget, widget))
+		supportedResourceProvider.Update(testManifests(widget, gadget, widget))
 
-		require.Equal(t, []SupportedResource{folder, widget, gadget}, set.Get())
+		require.Equal(t, []SupportedResource{folder, widget, gadget}, supportedResourceProvider.Get())
 	})
 
 	t.Run("follows the updates", func(t *testing.T) {
-		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
 
-		set.Update(testManifests(widget, gadget))
-		set.Update(testManifests(widget))
+		supportedResourceProvider.Update(testManifests(widget, gadget))
+		supportedResourceProvider.Update(testManifests(widget))
 
-		require.Equal(t, []SupportedResource{folder, widget}, set.Get())
+		require.Equal(t, []SupportedResource{folder, widget}, supportedResourceProvider.Get())
 	})
 
 	t.Run("keeps a configured resource over the same kind of an update", func(t *testing.T) {
 		configured := SupportedResource{GroupKind: widget.GroupKind, Capabilities: sets.New(CapabilityDisabled)}
-		set := NewSupportedResourceProvider([]SupportedResource{configured})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{configured})
 
-		set.Update(testManifests(widget))
+		supportedResourceProvider.Update(testManifests(widget))
 
-		require.Equal(t, []SupportedResource{configured}, set.Get())
+		require.Equal(t, []SupportedResource{configured}, supportedResourceProvider.Get())
 	})
 
 	t.Run("keeps a configured collection over a kind that it covers", func(t *testing.T) {
 		collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
-		set := NewSupportedResourceProvider([]SupportedResource{collection})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{collection})
 
-		set.Update(testManifests(widget))
+		supportedResourceProvider.Update(testManifests(widget))
 
-		require.Equal(t, []SupportedResource{collection}, set.Get())
+		require.Equal(t, []SupportedResource{collection}, supportedResourceProvider.Get())
 	})
 
 	t.Run("keeps the default set when none is configured", func(t *testing.T) {
-		set := NewSupportedResourceProvider(nil)
+		supportedResourceProvider := NewSupportedResourceProvider(nil)
 
-		set.Update(testManifests(widget))
+		supportedResourceProvider.Update(testManifests(widget))
 
-		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), set.Get())
+		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), supportedResourceProvider.Get())
 	})
 
 	t.Run("skips a kind that is cluster-scoped or that does not opt in", func(t *testing.T) {
-		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
 		manifests := testManifests(widget, gadget, SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Other"}})
 		kinds := manifests[0].Versions[0].Kinds
 		kinds[1].Scope = "Cluster"
 		kinds[2].Extensions = nil
 
-		set.Update(manifests)
+		supportedResourceProvider.Update(manifests)
 
-		require.Equal(t, []SupportedResource{folder, widget}, set.Get())
+		require.Equal(t, []SupportedResource{folder, widget}, supportedResourceProvider.Get())
 	})
 
 	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
-		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
 		manifests := testManifests(widget)
 		manifests[0].Versions[0].Served = false
 
-		set.Update(manifests)
+		supportedResourceProvider.Update(manifests)
 
-		require.Equal(t, []SupportedResource{folder}, set.Get())
+		require.Equal(t, []SupportedResource{folder}, supportedResourceProvider.Get())
 	})
 
 	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
-		set := NewSupportedResourceProvider([]SupportedResource{folder})
-		factory := NewClientFactory(nil, set)
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+		factory := NewClientFactory(nil, supportedResourceProvider)
 
-		set.Update(testManifests(widget))
+		supportedResourceProvider.Update(testManifests(widget))
 
 		clients, err := factory.Clients(t.Context(), "default")
 		require.NoError(t, err)

@@ -200,9 +200,9 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// provider gives the supported resources. Its configured ones may still name collections rather
+	// supportedResourceProvider gives the supported resources. Its configured ones may still name collections rather
 	// than served groups.
-	provider SupportedResourceProvider
+	supportedResourceProvider SupportedResourceProvider
 	// storageGroup is the group this factory's API server holds, empty for a single server that
 	// holds everything. It decides which collections are expanded here.
 	storageGroup string
@@ -230,7 +230,7 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
 	// excluded even when an active collection covers it. Discovery sees only the active ones, so
 	// a failure in a collection nobody acts on cannot fail the expansion.
-	configured := defaultSupportedResources(f.provider.Configured())
+	configured := defaultSupportedResources(f.supportedResourceProvider.Configured())
 	active := activeResources(configured)
 	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), configured, f.holds)
 	if err != nil {
@@ -332,13 +332,13 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, provider SupportedResourceProvider) ClientFactory {
-	if provider == nil {
-		provider = NewSupportedResourceProvider(nil)
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+	if supportedResourceProvider == nil {
+		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	return &clientFactory{
 		clientsProvider: newSingleAPIClients(configProvider),
-		provider:        provider,
+		supportedResourceProvider:        supportedResourceProvider,
 	}
 }
 
@@ -349,20 +349,20 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, provider Supp
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, provider SupportedResourceProvider) ClientFactory {
-	if provider == nil {
-		provider = NewSupportedResourceProvider(nil)
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supportedResourceProvider SupportedResourceProvider) ClientFactory {
+	if supportedResourceProvider == nil {
+		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
 			clientsProvider: newSingleAPIClients(configProvider),
-			provider:        provider,
+			supportedResourceProvider:        supportedResourceProvider,
 			storageGroup:    api,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(provider.Configured())}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supportedResourceProvider.Configured())}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -527,7 +527,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	if err != nil {
 		return nil, err
 	}
-	added := f.provider.Added()
+	added := f.supportedResourceProvider.Added()
 	if pinned, ok := ctx.Value(pinnedKindsKey{}).(*atomic.Pointer[[]SupportedResource]); ok {
 		pinned.CompareAndSwap(nil, &added)
 		added = *pinned.Load()
