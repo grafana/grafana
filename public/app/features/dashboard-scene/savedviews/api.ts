@@ -30,10 +30,6 @@ export const savedDashboardViewsApi = {
     return result.items;
   },
 
-  get(name: string): Promise<SavedDashboardView> {
-    return client().get(name);
-  },
-
   create(spec: SavedDashboardViewSpec): Promise<SavedDashboardView> {
     const obj: ResourceForCreate<SavedDashboardViewSpec, typeof SAVED_DASHBOARD_VIEW_KIND> = {
       metadata: {},

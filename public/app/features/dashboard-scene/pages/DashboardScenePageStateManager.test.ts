@@ -37,7 +37,7 @@ import {
   type PendingChangesHistory,
 } from '../lifecycle/pendingChangePreview';
 import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
-import { applyDefaultSavedViewToUrl } from '../savedviews/loadSavedViews';
+import { applyDefaultSavedViewToUrl, loadSavedViews } from '../savedviews/loadSavedViews';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -289,12 +289,32 @@ describe('DashboardScenePageStateManager v1', () => {
       setTestFlags({});
       playlistSrv.state.isPlaying = false;
       jest.mocked(applyDefaultSavedViewToUrl).mockReset();
+      jest.mocked(loadSavedViews).mockReset();
     });
 
     it('writes the viewer default on a normal load', async () => {
       await load();
 
       expect(applyDefaultSavedViewToUrl).toHaveBeenCalled();
+    });
+
+    it('does not fetch the views again once the default has loaded them', async () => {
+      jest.mocked(applyDefaultSavedViewToUrl).mockImplementation(async (scene) => {
+        scene.setState({ savedViews: [] });
+        locationService.getSearchObject = jest.fn().mockReturnValue({ viewFilter: 'view-1' });
+      });
+
+      await load();
+
+      expect(loadSavedViews).not.toHaveBeenCalled();
+    });
+
+    it('fetches the views for an explicit ?viewFilter= link', async () => {
+      locationService.getSearchObject = jest.fn().mockReturnValue({ viewFilter: 'view-1' });
+
+      await load();
+
+      expect(loadSavedViews).toHaveBeenCalledTimes(1);
     });
 
     it('skips the viewer default while a playlist is playing', async () => {

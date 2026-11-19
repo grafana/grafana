@@ -12,7 +12,6 @@ import { applyDefaultSavedViewToUrl, loadSavedViews } from './loadSavedViews';
 jest.mock('./api', () => ({
   savedDashboardViewsApi: {
     listForDashboard: jest.fn(),
-    get: jest.fn(),
   },
 }));
 
@@ -21,8 +20,7 @@ jest.mock('./defaultView', () => ({
   setDefaultSavedView: jest.fn(),
 }));
 
-const listForDashboardMock = savedDashboardViewsApi.listForDashboard as jest.Mock;
-const getMock = savedDashboardViewsApi.get as jest.Mock;
+const listForDashboardMock = jest.mocked(savedDashboardViewsApi.listForDashboard);
 const mockGetDefaultSavedView = jest.mocked(getDefaultSavedView);
 const mockSetDefaultSavedView = jest.mocked(setDefaultSavedView);
 
@@ -105,13 +103,16 @@ describe('applyDefaultSavedViewToUrl', () => {
     partialSpy.mockRestore();
   });
 
-  it('writes ?viewFilter= for a stored default when the url has none, replacing rather than pushing', async () => {
+  it('writes ?viewFilter= for a stored default with a single list request, replacing rather than pushing', async () => {
     mockGetDefaultSavedView.mockResolvedValue('view-1');
-    getMock.mockResolvedValue(buildView('view-1'));
+    listForDashboardMock.mockResolvedValue([buildView('view-1')]);
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 
     await applyDefaultSavedViewToUrl(scene);
 
+    expect(listForDashboardMock).toHaveBeenCalledTimes(1);
+    expect(listForDashboardMock).toHaveBeenCalledWith('dash-1');
+    expect(scene.state.savedViews).toEqual([buildView('view-1')]);
     // Replace, not push: this is initialization, not a navigation.
     expect(partialSpy).toHaveBeenCalledWith({ viewFilter: 'view-1' }, true);
   });
@@ -143,40 +144,31 @@ describe('applyDefaultSavedViewToUrl', () => {
     expect(mockGetDefaultSavedView).not.toHaveBeenCalled();
   });
 
-  it.each([404, 401, 403])(
-    'self-heals a stored default on a terminal %i failure, and never writes it to the url',
-    async (status) => {
-      mockGetDefaultSavedView.mockResolvedValue('view-deleted');
-      getMock.mockRejectedValue({ status, data: {}, config: {} });
-      const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
-
-      await applyDefaultSavedViewToUrl(scene);
-
-      expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined);
-      expect(partialSpy).not.toHaveBeenCalled();
-    }
-  );
-
-  it('does not self-heal on a transient failure (no status, or a 5xx) -- leaves the stored default intact', async () => {
-    mockGetDefaultSavedView.mockResolvedValue('view-1');
-    getMock.mockRejectedValue({ status: 503, data: {}, config: {} });
+  it('clears a stored default whose view is no longer listed for this dashboard, and never writes it to the url', async () => {
+    mockGetDefaultSavedView.mockResolvedValue('view-deleted');
+    listForDashboardMock.mockResolvedValue([buildView('view-1')]);
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 
     await applyDefaultSavedViewToUrl(scene);
 
-    expect(mockSetDefaultSavedView).not.toHaveBeenCalled();
+    expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined);
     expect(partialSpy).not.toHaveBeenCalled();
   });
 
-  it('does not self-heal on a plain network error with no status at all', async () => {
+  it.each([
+    ['a 5xx', { status: 503, data: {}, config: {} }],
+    ['a network error', new TypeError('Failed to fetch')],
+  ])('keeps the stored default when listing fails with %s', async (_, error) => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockGetDefaultSavedView.mockResolvedValue('view-1');
-    getMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    listForDashboardMock.mockRejectedValue(error);
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 
     await applyDefaultSavedViewToUrl(scene);
 
     expect(mockSetDefaultSavedView).not.toHaveBeenCalled();
     expect(partialSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('does not write viewFilter if the viewer navigated to a different dashboard while the default lookup was in flight', async () => {
@@ -188,7 +180,7 @@ describe('applyDefaultSavedViewToUrl', () => {
 
     await applyDefaultSavedViewToUrl(scene);
 
-    expect(getMock).not.toHaveBeenCalled();
+    expect(listForDashboardMock).not.toHaveBeenCalled();
     expect(partialSpy).not.toHaveBeenCalled();
   });
 
@@ -201,15 +193,15 @@ describe('applyDefaultSavedViewToUrl', () => {
 
     await applyDefaultSavedViewToUrl(scene);
 
-    expect(getMock).not.toHaveBeenCalled();
+    expect(listForDashboardMock).not.toHaveBeenCalled();
     expect(partialSpy).not.toHaveBeenCalled();
   });
 
-  it('does not write viewFilter if the viewer navigated away while the view fetch was in flight', async () => {
+  it('does not write viewFilter if the viewer navigated away while the list was in flight', async () => {
     mockGetDefaultSavedView.mockResolvedValue('view-1');
-    getMock.mockImplementation(async () => {
+    listForDashboardMock.mockImplementation(async () => {
       currentPathname = '/d/dash-2/a-different-dashboard'; // navigated away mid-await
-      return buildView('view-1');
+      return [buildView('view-1')];
     });
     const scene = new DashboardScene({ title: 'hello', uid: 'dash-1' });
 

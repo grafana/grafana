@@ -607,9 +607,14 @@ abstract class DashboardScenePageStateManagerBase<T>
       await applyDefaultSavedViewToUrl(scene);
     }
 
-    // Fetched eagerly only for ?viewFilter= links (including one set by a stored default above),
-    // which URL sync needs resolved; the pane fetches lazily.
-    if (scene && savedViewsEnabled && typeof locationService.getSearchObject().viewFilter === 'string') {
+    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches
+    // lazily. A stored default above has already loaded them.
+    if (
+      scene &&
+      savedViewsEnabled &&
+      !scene.state.savedViews &&
+      typeof locationService.getSearchObject().viewFilter === 'string'
+    ) {
       await loadSavedViews(scene);
     }
 

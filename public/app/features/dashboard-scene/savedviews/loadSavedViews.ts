@@ -1,5 +1,4 @@
 import { locationService } from '@grafana/runtime';
-import { getStatusFromError } from 'app/core/utils/errors';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -55,15 +54,15 @@ export async function applyDefaultSavedViewToUrl(dashboard: DashboardScene): Pro
     return;
   }
 
-  let view;
-  try {
-    view = await savedDashboardViewsApi.get(defaultViewName);
-  } catch (err) {
-    // Only clear the default when the view is gone or inaccessible, not on transient errors.
-    const status = getStatusFromError(err);
-    if (status === 404 || status === 401 || status === 403) {
-      setDefaultSavedView(uid, undefined).catch(() => {});
-    }
+  // A list rather than a fetch by name: URL sync needs the list anyway, and a default someone else
+  // deleted is simply missing instead of a 404 toast on dashboard load.
+  if (!(await loadSavedViews(dashboard))) {
+    // Possibly transient, so keep the default.
+    return;
+  }
+  const view = dashboard.state.savedViews?.find((v) => v.metadata.name === defaultViewName);
+  if (!view) {
+    setDefaultSavedView(uid, undefined).catch(() => {});
     return;
   }
 
