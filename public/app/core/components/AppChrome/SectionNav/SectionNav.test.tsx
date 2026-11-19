@@ -31,4 +31,11 @@ describe('SectionNav', () => {
     expect(screen.getByRole('link', { name: 'Logs' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Traces' })).not.toHaveAttribute('aria-current');
   });
+
+  it('marks a link without an id by its url', () => {
+    render(<SectionNav label="Administration" groups={groups} activeId="/a/dbconfig/logs" />);
+
+    expect(screen.getByRole('link', { name: 'Logs', current: 'page' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Traces' })).not.toHaveAttribute('aria-current');
+  });
 });
