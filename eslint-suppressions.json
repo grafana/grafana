@@ -450,11 +450,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/AutoSaveField/AutoSaveField.tsx": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -807,17 +802,11 @@
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "react-hooks/refs": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/FilterPopup.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "react-hooks/refs": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/FooterRow.tsx": {
@@ -991,11 +980,6 @@
   "packages/grafana-ui/src/utils/useComponetInstanceId.ts": {
     "react-hooks/refs": {
       "count": 2
-    }
-  },
-  "public/app/AppWrapper.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
     }
   },
   "public/app/app.ts": {
@@ -1522,11 +1506,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaFolderAndLabelsStep.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1990,11 +1969,6 @@
       "count": 2
     }
   },
-  "public/app/features/correlations/Forms/ConfigureCorrelationSourceForm.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -2454,11 +2428,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/sharing/ShareDrawer/ShareDrawerConfirmAction.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/panel-share/SharePanelPreview.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -2564,9 +2533,6 @@
   "public/app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
-    },
-    "react-hooks/static-components": {
-      "count": 5
     }
   },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsList/SuggestedDashboardsList.tsx": {
@@ -2690,11 +2656,6 @@
       "count": 1
     }
   },
-  "public/app/features/datasources/components/picker/DataSourceModal.tsx": {
-    "react-hooks/static-components": {
-      "count": 2
-    }
-  },
   "public/app/features/datasources/components/picker/DataSourcePicker.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -2736,9 +2697,6 @@
   },
   "public/app/features/dimensions/editors/FileUploader.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    },
-    "react-hooks/static-components": {
       "count": 1
     }
   },
@@ -2852,11 +2810,6 @@
     },
     "react-hooks/set-state-in-effect": {
       "count": 2
-    }
-  },
-  "public/app/features/explore/Logs/LogsSamplePanel.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
     }
   },
   "public/app/features/explore/Logs/LogsTable.tsx": {
@@ -3002,11 +2955,6 @@
   "public/app/features/expressions/ExpressionDatasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/expressions/components/QueryToolbox.tsx": {
-    "react-hooks/refs": {
-      "count": 1
     }
   },
   "public/app/features/expressions/components/SqlExpressions/SqlExpr.tsx": {
@@ -3371,9 +3319,6 @@
   "public/app/features/plugins/components/AppRootPage.tsx": {
     "react-hooks/immutability": {
       "count": 1
-    },
-    "react-hooks/static-components": {
-      "count": 1
     }
   },
   "public/app/features/plugins/datasource_srv.ts": {
@@ -3520,11 +3465,6 @@
   },
   "public/app/features/scopes/dashboards/ScopesDashboardsTreeSearch.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/scopes/selector/ScopesTreeItem.tsx": {
-    "react-hooks/static-components": {
       "count": 1
     }
   },

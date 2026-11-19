@@ -50,10 +50,11 @@ func DefaultRateLimiter() workqueue.TypedRateLimiter[string] {
 // The folder initial list is not a source of work. When pending recovery is enabled,
 // a separate startup and periodic scan supplies interrupted deletions.
 type Controller struct {
-	folders    FolderGetter
-	reconciler *Reconciler
-	queue      workqueue.TypedRateLimitingInterface[string]
-	pending    PendingStore
+	folders        FolderGetter
+	reconciler     *Reconciler
+	queue          workqueue.TypedRateLimitingInterface[string]
+	pending        PendingStore
+	pendingMetrics *pendingMetrics
 
 	mu sync.Mutex
 	// seen lets a resync that repeats a folder's last version be dropped without reading it.
@@ -231,7 +232,7 @@ func (c *Controller) Run(ctx context.Context, workers int) {
 		})
 	}
 	<-ctx.Done()
-	c.queue.ShutDown()
+	c.ShutDown()
 	wg.Wait()
 }
 

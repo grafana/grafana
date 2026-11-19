@@ -1,9 +1,11 @@
 package cascadedelete
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"strings"
 	"sync"
@@ -11,6 +13,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +23,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	pendingv1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -58,6 +63,99 @@ func pendingObject(name, uid string) *unstructured.Unstructured {
 		"metadata": map[string]any{"name": pendingv1alpha1.PendingDeletionName(name, uid), "namespace": testNamespace, "uid": "entry-" + name, "resourceVersion": "7"},
 		"spec":     map[string]any{"folderName": name, "folderUID": uid},
 	}}
+}
+
+func TestController_PendingCompletionMetrics(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		stamp          string
+		replacement    bool
+		removeDelay    time.Duration
+		removeNotFound bool
+		count          uint64
+		sum            float64
+		skipped        float64
+	}{
+		{name: "captured start includes scan delay", stamp: "1999-12-31T23:55:00Z", count: 1, sum: 300},
+		{name: "replacement UID", stamp: "1999-12-31T23:55:00Z", replacement: true, count: 1, sum: 300},
+		{name: "cleanup latency excluded", stamp: "1999-12-31T23:55:00Z", removeDelay: 10 * time.Second, count: 1, sum: 300},
+		{name: "removed elsewhere", stamp: "1999-12-31T23:55:00Z", removeNotFound: true},
+		{name: "absent start", skipped: 1},
+		{name: "invalid start", stamp: "invalid", skipped: 1},
+		{name: "future start", stamp: "2000-01-01T00:01:00Z", count: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				m := newMemStore()
+				if tc.replacement {
+					m.addFolder("a", "")
+				}
+				obj := pendingObject("a", "old-uid")
+				if tc.stamp != "" {
+					require.NoError(t, unstructured.SetNestedField(obj.Object, tc.stamp, "spec", "deletionTimestamp"))
+				}
+				pending := NewPendingClient(newFake(obj))
+				reg := prometheus.NewPedanticRegistry()
+				store := retryPendingStore{PendingStore: pending, remove: func(ctx context.Context, entry *pendingv1alpha1.PendingFolderDeletion) error {
+					time.Sleep(tc.removeDelay)
+					if err := pending.Remove(ctx, entry); err != nil {
+						return err
+					}
+					if tc.removeNotFound {
+						return apierrors.NewNotFound(pendingGVR.GroupResource(), entry.Name)
+					}
+					return nil
+				}}
+				c := NewController(m, nil, nil, WithPendingRecovery(store), WithPendingMetrics(reg))
+				defer c.queue.ShutDown()
+				require.NoError(t, c.reconcilePending(context.Background(), pendingQueuePrefix+testNamespace+"/"+obj.GetName()))
+				_, err := pending.Get(context.Background(), testNamespace, obj.GetName())
+				require.True(t, apierrors.IsNotFound(err), "timing must not block cleanup")
+				families, err := reg.Gather()
+				require.NoError(t, err)
+				require.Len(t, families, 2)
+				for _, family := range families {
+					require.Len(t, family.Metric, 1)
+					metric := family.Metric[0]
+					require.Empty(t, metric.Label)
+					switch family.GetName() {
+					case "grafana_folder_deletion_observed_duration_seconds":
+						require.Equal(t, "HISTOGRAM", family.GetType().String())
+						require.Equal(t, "Time from folder deletion timestamp until reconciliation observes completion, including scan delay. Samples are best effort.", family.GetHelp())
+						require.NotNil(t, metric.GetHistogram().Schema, "native histograms must be enabled")
+						require.Equal(t, tc.count, metric.GetHistogram().GetSampleCount())
+						require.Equal(t, tc.sum, metric.GetHistogram().GetSampleSum())
+						bounds := make([]float64, 0, len(metric.GetHistogram().Bucket))
+						for _, bucket := range metric.GetHistogram().Bucket {
+							bounds = append(bounds, bucket.GetUpperBound())
+						}
+						require.Equal(t, []float64{1, 10, 30, 60, 300, 600, 1800, 3600, 21600, 86400}, bounds)
+					case "grafana_folder_deletion_duration_skipped_total":
+						require.Equal(t, "COUNTER", family.GetType().String())
+						require.Equal(t, tc.skipped, metric.GetCounter().GetValue())
+					default:
+						t.Fatalf("unexpected metric %s", family.GetName())
+					}
+				}
+			})
+		})
+	}
+}
+
+func TestController_PendingMetricsRegistration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	WithPendingMetrics(reg)(&Controller{})
+	missing, err := testutil.GatherAndCount(reg, "grafana_folder_deletion_pending_missing_total")
+	require.NoError(t, err)
+	require.Zero(t, missing, "missing-intent observations must not be registered")
+	require.Panics(t, func() { WithPendingMetrics(reg)(&Controller{}) }, "duplicate wiring must not silently reuse collectors")
+	require.NotPanics(t, func() { WithPendingMetrics(prometheus.NewPedanticRegistry())(&Controller{}) })
+	before, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+	WithPendingMetrics(nil)(&Controller{})
+	after, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+	require.Len(t, after, len(before), "nil registerer must not register globally")
 }
 
 func TestController_PendingStartupRecovery(t *testing.T) {
@@ -116,15 +214,45 @@ func TestController_PendingRetainsAmbiguousAndCleansOldIdentity(t *testing.T) {
 func TestController_PendingMissingDoesNotBlockOrRepair(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		m := newMemStore()
-		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
-		pending := NewPendingClient(newFake())
-		c := NewController(m, newTestReconciler(m, 100), nil, WithPendingRecovery(pending))
+		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer, otherFinalizer)
+		m.addDashboards("a", "d1", "d2", "d3")
+		fake := newFake()
+		pending := NewPendingClient(fake)
+		reg := prometheus.NewPedanticRegistry()
+		c := NewController(m, newTestReconciler(m, 1), nil, WithPendingRecovery(pending), WithPendingMetrics(reg))
 		m.handler = c.Handler()
-		stop := run(c)
-		defer stop()
+		var logs bytes.Buffer
+		ctx, cancel := context.WithCancel(logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil))))
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			c.Run(ctx, 1)
+		}()
+		defer func() {
+			cancel()
+			<-done
+		}()
+		c.queue.Add(testNamespace + "/a")
+		synctest.Wait()
+		const missingMessage = "Terminating folder has no pending deletion entry"
+		require.NotContains(t, logs.String(), missingMessage, "ordinary events must not log a missing intent")
 		m.userDelete("a")
 		synctest.Wait()
-		require.False(t, m.exists("a"))
+		require.Equal(t, []string{otherFinalizer}, m.get("a").Finalizers)
+		require.Greater(t, m.getCount("a"), 2, "multiple cascade batches must still progress")
+		before := len(fake.Actions())
+		c.queue.Add(testNamespace + "/a")
+		synctest.Wait()
+		require.Greater(t, len(fake.Actions()), before, "continue checking pending entries after cascade release")
+		require.NotContains(t, logs.String(), missingMessage, "missing intent must not produce an error log")
+		logs.Reset()
+		m.mu.Lock()
+		delete(m.folders, "a")
+		m.notify("a", true)
+		m.mu.Unlock()
+		c.queue.Add(testNamespace + "/a")
+		synctest.Wait()
+		require.NotContains(t, logs.String(), missingMessage, "already-deleted events must not log a missing intent")
 		page, err := pending.List(context.Background(), "", "")
 		require.NoError(t, err)
 		require.Empty(t, page.Items)
@@ -228,6 +356,7 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 		store := retryPendingStore{PendingStore: pending, remove: func(ctx context.Context, entry *pendingv1alpha1.PendingFolderDeletion) error {
 			removals++
 			if removals == 1 {
+				require.NoError(t, pending.Capture(ctx, entry, metav1.NewTime(time.Now().Add(-time.Minute))))
 				return apierrors.NewConflict(pendingGVR.GroupResource(), entry.Name, errors.New("concurrent capture"))
 			}
 			if removals == 2 {
@@ -235,7 +364,8 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 			}
 			return pending.Remove(ctx, entry)
 		}}
-		c := NewController(getter, nil, nil, WithPendingRecovery(store))
+		reg := prometheus.NewPedanticRegistry()
+		c := NewController(getter, nil, nil, WithPendingRecovery(store), WithPendingMetrics(reg))
 		stop := run(c)
 		defer stop()
 		synctest.Wait()
@@ -245,6 +375,14 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err))
 		require.Equal(t, 4, reads)
 		require.Equal(t, 3, removals)
+		require.Zero(t, testutil.ToFloat64(c.pendingMetrics.skipped), "failed cleanup before timestamp capture must not count as skipped")
+		families, err := reg.Gather()
+		require.NoError(t, err)
+		for _, family := range families {
+			if family.GetName() == "grafana_folder_deletion_observed_duration_seconds" {
+				require.EqualValues(t, 1, family.Metric[0].GetHistogram().GetSampleCount(), "cleanup retries must produce only one observation")
+			}
+		}
 	})
 }
 
