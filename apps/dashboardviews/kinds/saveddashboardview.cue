@@ -8,6 +8,12 @@ saveddashboardviewv0alpha1: {
 	search: {
 		endpoint: false
 	}
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		spec: {
 			// dashboardUID is the dashboard this view belongs to.

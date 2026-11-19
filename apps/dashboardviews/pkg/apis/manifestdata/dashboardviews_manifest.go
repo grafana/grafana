@@ -45,6 +45,14 @@ var appManifestData = app.ManifestData{
 					Search: &app.ManifestVersionKindSearch{
 						Endpoint: new(false),
 					},
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
 					Schema: &versionSchemaSavedDashboardViewv0alpha1,
 					SelectableFields: []string{
 						"spec.dashboardUID",

@@ -26,7 +26,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: dashboardviewsv0alpha1.SavedDashboardViewKind(),
+				Kind:      dashboardviewsv0alpha1.SavedDashboardViewKind(),
+				Validator: &simple.Validator{ValidateFunc: validateSavedDashboardView},
 			},
 		},
 	}
