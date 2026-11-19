@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math"
@@ -271,9 +272,12 @@ func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, err
 }
 
 func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
-	// Match the SQL's ROW_NUMBER() OVER (ORDER BY created ASC)
+	// Match the candidate query's order, including equal creation timestamps.
 	slices.SortStableFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
-		return a.created.Compare(b.created)
+		if order := a.created.Compare(b.created); order != 0 {
+			return order
+		}
+		return cmp.Compare(a.UID, b.UID)
 	})
 
 	out := make([]*ModelSecureValue, 0)

@@ -310,16 +310,26 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueLeaseInactiveCandidates: {
+				{
+					Name: "lease inactive candidates",
+					Data: &listLeaseInactiveCandidates{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						Now:          10,
+						MaxBatchSize: 10,
+						MinAge:       int64((300 * time.Second).Seconds()),
+					},
+				},
+			},
 			sqlSecureValueLeaseInactive: {
 				{
 					Name: "lease inactive",
 					Data: &leaseInactiveSecureValues{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						Now:          10,
-						LeaseToken:   "token",
-						LeaseTTL:     int64((30 * time.Second).Seconds()),
-						MaxBatchSize: 10,
-						MinAge:       int64((300 * time.Second).Seconds()),
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						SecureValueIDs: []string{"1", "2"},
+						Now:            10,
+						LeaseToken:     "token",
+						LeaseTTL:       int64((30 * time.Second).Seconds()),
 					},
 				},
 			},
