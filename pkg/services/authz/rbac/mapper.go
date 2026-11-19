@@ -589,6 +589,34 @@ func newSettingsTranslation() translation {
 	}
 }
 
+// newBannersTranslation maps banners.grafana.app/announcement-banners to the
+// enterprise banners:write action, which is granted without a scope: banners
+// apply to the whole namespace.
+//
+// Reads map to banners:write too. Storage authorizes a read as the caller only
+// for writers: an update or delete reads the current object as the caller
+// first. Everyone else reads banners through the router, which serves the
+// kind's reads as the service (pluginroute hardcodedNamespaceReadable), so no
+// read action is needed and none is open to every identity.
+func newBannersTranslation() translation {
+	verbs := []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch,
+		utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	}
+	t := translation{
+		resource:        "banners",
+		attribute:       "uid",
+		verbMapping:     map[string]string{},
+		skipScopeOnVerb: map[string]bool{},
+		folderSupport:   false,
+	}
+	for _, verb := range verbs {
+		t.verbMapping[verb] = "banners:write"
+		t.skipScopeOnVerb[verb] = true
+	}
+	return t
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -865,6 +893,9 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"setting.grafana.app": {
 			"settings": newSettingsTranslation(),
+		},
+		"banners.grafana.app": {
+			"announcement-banners": newBannersTranslation(),
 		},
 	})
 
