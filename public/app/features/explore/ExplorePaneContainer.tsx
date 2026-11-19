@@ -34,20 +34,19 @@ interface Props {
 */
 function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   useStopQueries(exploreId);
-  const eventBus = useRef(new EventBusSrv());
+  const [eventBus] = useState(() => new EventBusSrv());
   const ref = useRef(null);
   const [showQueryInspector, setShowQueryInspector] = useState(false);
 
   useEffect(() => {
-    const bus = eventBus.current;
-    return () => bus.removeAllListeners();
-  }, []);
+    return () => eventBus.removeAllListeners();
+  }, [eventBus]);
 
   return (
     <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
       <Explore
         exploreId={exploreId}
-        eventBus={eventBus.current}
+        eventBus={eventBus}
         showQueryInspector={showQueryInspector}
         setShowQueryInspector={setShowQueryInspector}
       />

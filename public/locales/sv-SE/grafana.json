@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Registreringsregel"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Funktionskontroll",
       "close-tooltip": "Stäng funktionskontroll",
       "open-tooltip": "Öppna funktionskontroll"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Ta bort",
     "description": "Åsidosätt funktionsflaggor i frontend lokalt för testning och utveckling.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Ta bort knapp från gränssnitt och verktygsfält",
       "tooltip": "Alla definierade åsidosättanden av funktionsflaggor kommer att förbli aktiva.<br/> Använd <3>{{ param }}</3> i webbadressen för att aktivera användargränssnittet på nytt."
@@ -9846,11 +9881,18 @@
     "flag-type": "Flaggtyp",
     "flag-value": "Flaggvärde",
     "menu": "Öppna meny",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP-utvärdering",
     "ofrep-reason": "Orsak: <2>{{reason}}</2>",
     "ofrep-variant": "Variant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Spara",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Funktionskontroll"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "När kontroller är aktiverade visas ett alternativ för att ladda ner loggarna som visas.",
     "description-enable-field-selector": "Experimentellt. Visa en komponent för att hantera de visade fälten från loggarna.",
-    "description-enable-infinite-scrolling": "Experimentellt. Begär fler resultat genom att bläddra till längst ner i logglistan.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Använd ett fördefinierat färgschema för att markera relevanta delar av loggraderna.",
     "description-order": "Visa de senaste eller äldsta loggarna först. När Äldsta först har valts bläddrar vyn automatiskt till de senaste loggarna längst ner.",
     "description-prettify-json": "Formatera JSON-loggposter med indrag och radbrytningar.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Nyhet",
       "new-template-dashboard-button": "Använd mall"
     },
-    "rss-button": "Senaste från bloggen"
+    "rss-button": "Senaste från bloggen",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Nyheter",

@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Opnameregel"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Functiebeheer",
       "close-tooltip": "Functiebeheer sluiten",
       "open-tooltip": "Functiebeheer openen"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Verwijderen",
     "description": "Overschrijf frontend-functievlaggen lokaal voor test- en ontwikkelingsdoeleinden.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "UI en werkbalkknop verwijderen",
       "tooltip": "Alle gedefinieerde overschrijvingen van functievlaggen blijven actief.<br/> Gebruik <3>{{ param }}</3> in de URL om de gebruikersinterface opnieuw in te schakelen."
@@ -9846,11 +9881,18 @@
     "flag-type": "Vlagtype",
     "flag-value": "Vlagwaarde",
     "menu": "Menu openen",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP-evaluatie",
     "ofrep-reason": "Reden: <2>{{reason}}</2>",
     "ofrep-variant": "Variant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Opslaan",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Functiebeheer"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Wanneer bedieningselementen zijn ingeschakeld, geef een optie weer om de logs op het scherm te downloaden.",
     "description-enable-field-selector": "Experimenteel. Toon een onderdeel om de weergegeven velden uit de logs te beheren.",
-    "description-enable-infinite-scrolling": "Experimenteel. Vraag meer resultaten op door naar de onderkant van de loglijst te scrollen.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Gebruik een vooraf gedefinieerd kleurenschema om relevante delen van de logregels te markeren.",
     "description-order": "Nieuwste of oudste logboeken eerst weergeven. Als 'Oudste eerst' is geselecteerd, scrolt de weergave automatisch naar de nieuwste logboeken onderaan.",
     "description-prettify-json": "JSON-logboekvermeldingen opmaken met inspringing en regelafbrekingen.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Nieuw",
       "new-template-dashboard-button": "Sjabloon gebruiken"
     },
-    "rss-button": "Laatste blogberichten"
+    "rss-button": "Laatste blogberichten",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Nieuws",
