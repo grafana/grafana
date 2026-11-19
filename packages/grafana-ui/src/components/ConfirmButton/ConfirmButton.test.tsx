@@ -91,6 +91,20 @@ describe('ConfirmButton', () => {
     expect(screen.getByRole('button', { name: 'Edit' })).toHaveAttribute('data-analytics-id', 'settings_value_edited');
   });
 
+  it('does not forward non-data props that arrive through an object spread', () => {
+    const spreadProps = { 'aria-label': 'Overridden', 'data-analytics-id': 'settings_value_edited' };
+
+    render(
+      <ConfirmButton onConfirm={() => {}} {...spreadProps}>
+        <Button aria-label="Edit value">Edit</Button>
+      </ConfirmButton>
+    );
+
+    const button = screen.getByRole('button', { name: 'Edit value' });
+    expect(button).toHaveAttribute('data-analytics-id', 'settings_value_edited');
+    expect(button).toHaveAttribute('aria-label', 'Edit value');
+  });
+
   it('forwards data attributes through DeleteButton to its delete button', () => {
     render(<DeleteButton onConfirm={() => {}} aria-label="Delete row" data-analytics-id="row_deleted" />);
 

@@ -33,6 +33,11 @@ export interface Props {
   [key: `data-${string}`]: string | undefined;
 }
 
+// The `data-*` index signature does not stop other props from arriving through an object spread, so keep only `data-*`.
+function pickDataAttributes(props: Record<string, string | undefined>): Record<`data-${string}`, string | undefined> {
+  return Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
+}
+
 /**
  * The ConfirmButton is an interactive component that adds a double-confirm option to a clickable action. When clicked, the action is replaced by an inline confirmation with the option to cancel. In Grafana, this is used, for example, for editing values in settings tables.
  *
@@ -49,8 +54,9 @@ export const ConfirmButton = ({
   onClick,
   onConfirm,
   size = 'md',
-  ...dataAttributes
+  ...restProps
 }: Props) => {
+  const dataAttributes = pickDataAttributes(restProps);
   const mainButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
