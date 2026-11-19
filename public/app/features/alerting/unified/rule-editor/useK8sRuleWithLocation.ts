@@ -9,7 +9,8 @@ import {
   useGetAlertRuleQuery,
   useGetRecordingRuleQuery,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionDatasourceUID, type ExpressionQuery } from 'app/features/expressions/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
   type AlertQuery,
@@ -23,6 +24,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { K8sAnnotations } from '../utils/k8s/constants';
 import { NO_GROUP_PREFIX } from '../utils/rules';
 import { parsePrometheusDuration } from '../utils/time';
+
+import { areQueriesTransformableToSimpleCondition } from './formProcessing';
 
 const FOLDER_ANNOTATION = 'grafana.app/folder';
 const GROUP_LABEL = 'grafana.com/group';
@@ -70,16 +73,28 @@ export function k8sRuleToRuleWithLocation(resource: AlertRule | RecordingRule): 
   const { expressions, trigger, title, labels, paused } = resource.spec;
   const condition = Object.keys(expressions).find((refId) => expressions[refId].source) ?? '';
 
+  const data = Object.entries(expressions).map(([refId, expression]) => toAlertQuery(refId, expression));
+
   const definition: GrafanaRuleDefinition = {
     uid,
     title,
     namespace_uid: folderUid,
     rule_group: groupName,
     condition,
-    data: Object.entries(expressions).map(([refId, expression]) => toAlertQuery(refId, expression)),
+    data,
     is_paused: Boolean(paused),
     intervalSeconds: parsePrometheusDuration(trigger.interval) / 1000,
     provenance: resource.metadata.annotations?.[K8sAnnotations.Provenance],
+    // The rules API doesn't store which editor mode the rule was built in, so pick the mode the rule fits.
+    metadata: {
+      editor_settings: {
+        simplified_query_and_expressions_section: areQueriesTransformableToSimpleCondition(
+          data.filter((query) => !isExpressionQuery(query.model)),
+          data.filter((query): query is AlertQuery<ExpressionQuery> => isExpressionQuery(query.model))
+        ),
+        simplified_notifications_section: !isRecordingRule(resource) && Boolean(resource.spec.notificationSettings),
+      },
+    },
   };
 
   const rule: RulerGrafanaRuleDTO = isRecordingRule(resource)

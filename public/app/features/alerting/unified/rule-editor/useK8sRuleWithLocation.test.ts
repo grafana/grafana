@@ -5,13 +5,16 @@ import {
   buildAlertRuleResource,
   buildRecordingRuleResource,
 } from '../components/rule-editor/alert-rule-form/formValuesToAppPlatform';
-import { mockDataQuery, mockReduceExpression, mockThresholdExpression } from '../mocks';
+import { mockDataQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { getDefaultFormValues } from './formDefaults';
 import { k8sRuleToRuleWithLocation } from './useK8sRuleWithLocation';
+
+setupDataSources(mockDataSource({ uid: 'abc123', type: 'prometheus' }));
 
 const folder = { title: 'folder-uid', uid: 'folder-uid' };
 
@@ -22,8 +25,8 @@ const alertValues: RuleFormValues = {
   folder,
   queries: [
     { ...mockDataQuery(), relativeTimeRange: { from: 600, to: 0 } },
-    mockReduceExpression(),
-    mockThresholdExpression(),
+    mockReduceExpression({ expression: 'A' }),
+    mockThresholdExpression({ expression: 'B' }),
   ],
   condition: 'C',
   evaluateEvery: '2m',
@@ -105,6 +108,26 @@ describe('k8sRuleToRuleWithLocation', () => {
       targetDatasourceUid: 'prom-uid',
     });
     expect(formValues.labels).toEqual(expect.arrayContaining(recordingValues.labels));
+  });
+
+  it('opens queries that fit the simple editor in the simple editor', () => {
+    const resource = asSaved(buildAlertRuleResource(alertValues, 'rule-uid', 'v0alpha1') as AlertRule);
+
+    const { editorSettings } = rulerRuleToFormValues(k8sRuleToRuleWithLocation(resource));
+
+    expect(editorSettings?.simplifiedQueryEditor).toBe(true);
+  });
+
+  it('opens queries that do not fit the simple editor in the advanced editor', () => {
+    const twoDataQueries = {
+      ...alertValues,
+      queries: [mockDataQuery(), mockDataQuery({ refId: 'D' }), ...alertValues.queries.slice(1)],
+    };
+    const resource = asSaved(buildAlertRuleResource(twoDataQueries, 'rule-uid', 'v0alpha1') as AlertRule);
+
+    const { editorSettings } = rulerRuleToFormValues(k8sRuleToRuleWithLocation(resource));
+
+    expect(editorSettings?.simplifiedQueryEditor).toBe(false);
   });
 
   it("keeps a grouped rule's group so the editor can warn before ungrouping it", () => {
