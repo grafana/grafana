@@ -248,7 +248,7 @@ If `metadata.continue` is empty or missing, there are no more results. Otherwise
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`
 
-Lists the tags used by annotations, with the number of annotations that use each tag.
+Lists the tags used by annotations, with the number of annotations that use each tag. Tags are organization-wide, so the list and counts cover every annotation in the organization.
 
 **Path parameters**:
 
