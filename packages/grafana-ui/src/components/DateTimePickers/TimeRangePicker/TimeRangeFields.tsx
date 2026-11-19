@@ -90,10 +90,9 @@ export function TimeRangeFields({
         {...draft}
         onChange={(from, to) => setDraft({ from, to })}
         onClose={closeCalendar}
-        onApply={(event) => {
+        onUpdateInputs={() => {
           calendar.onChange(draft.from, draft.to);
           closeCalendar();
-          calendar.onApply?.(event);
         }}
       />
     );

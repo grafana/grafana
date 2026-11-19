@@ -100,15 +100,26 @@ it('discards inline calendar edits on Cancel', async () => {
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it('applies the inline calendar draft', async () => {
+it('updates inputs from the calendar and allows editing times before applying the range', async () => {
   const { open, user, onChange } = setup({ defaultTab: 'absolute' });
   await open();
   await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
   await user.click(screen.getByLabelText('June 10, 2021'));
   await user.click(screen.getByLabelText('June 11, 2021'));
+  await user.click(screen.getByRole('button', { name: 'Update inputs' }));
+  expect(screen.getByLabelText('From')).toHaveValue('2021-06-10 00:00:00');
+  expect(screen.getByLabelText('To')).toHaveValue('2021-06-11 23:59:59');
+  expect(screen.getByLabelText('From')).toHaveFocus();
+  expect(onChange).not.toHaveBeenCalled();
+
+  await user.clear(screen.getByLabelText('From'));
+  await user.type(screen.getByLabelText('From'), '2021-06-10 10:30:00');
+  await user.clear(screen.getByLabelText('To'));
+  await user.type(screen.getByLabelText('To'), '2021-06-11 11:45:00');
   await user.click(screen.getByRole('button', { name: 'Apply time range' }));
-  expect(onChange.mock.calls[0][0].from.toISOString()).toBe('2021-06-10T00:00:00.000Z');
-  expect(onChange.mock.calls[0][0].to.toISOString()).toBe('2021-06-11T23:59:59.000Z');
+  expect(onChange).toHaveBeenCalledTimes(1);
+  expect(onChange.mock.calls[0][0].from.toISOString()).toBe('2021-06-10T10:30:00.000Z');
+  expect(onChange.mock.calls[0][0].to.toISOString()).toBe('2021-06-11T11:45:00.000Z');
 });
 
 it('validates absolute input before applying', async () => {
