@@ -110,7 +110,7 @@ func readInt32Value(d *jsontext.Decoder) (int32, error) {
 		return 0, err
 	}
 	if val.Kind() != '0' {
-		return 0, fmt.Errorf("expected number")
+		return 0, fmt.Errorf("expected number (offset:%d)", d.InputOffset())
 	}
 	n, err := val.Int()
 	if err != nil {
