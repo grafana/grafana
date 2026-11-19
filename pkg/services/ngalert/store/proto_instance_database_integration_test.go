@@ -196,6 +196,22 @@ func TestIntegration_SaveAlertInstancesForRule_DoesNotBlockOnOtherRulesMySQL(t *
 	case <-time.After(10 * time.Second):
 		require.Fail(t, "saving the state of one rule is blocked by an open write of another rule")
 	}
+
+	// updated_at has second precision, so saves of identical state in the same second change no row.
+	// The test connection string has no clientFoundRows, so they report 0 affected rows.
+	unchanged := instancesFor(rule2.UID)
+	for range 5 {
+		unchangedDone := make(chan error, 1)
+		go func() {
+			unchangedDone <- ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), unchanged)
+		}()
+		select {
+		case err := <-unchangedDone:
+			require.NoError(t, err)
+		case <-time.After(10 * time.Second):
+			require.Fail(t, "saving unchanged state is blocked by an open write of another rule")
+		}
+	}
 }
 
 // containsHash is a helper function to check if an instance with
