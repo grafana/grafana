@@ -11,6 +11,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { edit } from '../../actions/utils/edit';
 import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type DashboardGridItem } from './DashboardGridItem';
 
@@ -106,6 +107,9 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
           perform: () => gridItem.setRepeatDirection(value),
           undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
         });
+        if (value !== (repeatDirection ?? 'h')) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat_direction');
+        }
       }}
     />
   );
@@ -131,6 +135,9 @@ function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string 
           perform: () => gridItem.setMaxPerRow(value.value),
           undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
         });
+        if (value.value !== (maxPerRow ?? 4)) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_max_per_row');
+        }
       }}
     />
   );
@@ -162,6 +169,7 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
           perform: () => handleStateChange(value),
           undo: () => handleStateChange(variableName),
         });
+        trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat');
       }
     },
     [gridItem, handleStateChange, variableName]

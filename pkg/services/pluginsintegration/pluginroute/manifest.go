@@ -144,6 +144,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					}
 					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, admission, conversion, kindstore.Options{
 						StorageOptsGetter: opts.StorageOptsGetter,
+						NamespaceReadable: hardcodedNamespaceReadable(b.group, kind.Resource),
 					}, defs)
 					if err != nil {
 						return err
