@@ -2,16 +2,10 @@ module github.com/grafana/grafana/pkg/legacyapi
 
 go 1.27.4
 
-replace (
-	github.com/grafana/grafana/apps/dashboard => ../../apps/dashboard
-	github.com/grafana/grafana/pkg/apimachinery => ../apimachinery
-	github.com/grafana/grafana/pkg/infra/slugify => ../infra/slugify
-)
-
 require (
-	github.com/grafana/grafana/apps/dashboard v0.0.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0
-	github.com/grafana/grafana/pkg/infra/slugify v0.0.0
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20261128003348-6fbc80550339
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261128003348-6fbc80550339
+	github.com/grafana/grafana/pkg/infra/slugify v0.0.0-20261128003348-6fbc80550339
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.2
 )

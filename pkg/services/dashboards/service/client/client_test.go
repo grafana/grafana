@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -263,6 +265,32 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		require.Equal(t, fallbackResult, result)
 		setup.mockClientV2Beta1.AssertExpectations(t)
 		setup.mockClientV1.AssertExpectations(t)
+	})
+
+	t.Run("preferred Get error records the default Get on the span", func(t *testing.T) {
+		setup := setupTest(t)
+		recorder := tracetest.NewSpanRecorder()
+		ctx, parent := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder)).Tracer("test").Start(t.Context(), "test")
+		defer parent.End()
+		name := "d-fallback-err-span"
+		orgID := int64(1)
+		options := metav1.GetOptions{}
+		fallbackResult := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, errors.New("preferred get failed")).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(fallbackResult, nil).Once()
+
+		_, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
+		require.NoError(t, err)
+
+		var events []string
+		for _, s := range recorder.Ended() {
+			if s.Name() == "K8sClientWithFallback.GetWithPreferredAPIVersion" {
+				for _, e := range s.Events() {
+					events = append(events, e.Name)
+				}
+			}
+		}
+		require.Equal(t, []string{v0alpha1.VERSION + " Get"}, events)
 	})
 
 	t.Run("fallback on conversion failure", func(t *testing.T) {
@@ -673,165 +701,4 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
-}
-
-func TestGetConversionStatus(t *testing.T) {
-	tests := []struct {
-		name                  string
-		obj                   *unstructured.Unstructured
-		expectedFailed        bool
-		expectedStoredVersion string
-		expectedError         string
-	}{
-		{
-			name: "No status field",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-		{
-			name: "Status field, but no conversion field",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status":   map[string]interface{}{"someOtherStatus": "ok"},
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-		{
-			name: "Conversion field, failed=true, with storedVersion and error",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        true,
-						"storedVersion": v2alpha1.VERSION,
-						"error":         "conversion failed",
-					},
-				},
-			}},
-			expectedFailed:        true,
-			expectedStoredVersion: "v2alpha1",
-			expectedError:         "conversion failed",
-		},
-		{
-			name: "Conversion field, failed=false",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        false,
-						"storedVersion": "v1alpha1",
-						"error":         "",
-					},
-				},
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "v1alpha1",
-			expectedError:         "",
-		},
-		{
-			name: "Conversion field, missing failed (defaults to false)",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-
-						"storedVersion": "v1alpha1",
-						"error":         "",
-					},
-				},
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "v1alpha1",
-			expectedError:         "",
-		},
-		{
-			name: "Conversion field, failed=true, missing storedVersion",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed": true,
-
-						"error": "conversion failed",
-					},
-				},
-			}},
-			expectedFailed:        true,
-			expectedStoredVersion: "",
-			expectedError:         "conversion failed",
-		},
-		{
-			name: "Conversion field, failed=true, missing error",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": map[string]interface{}{
-						"failed":        true,
-						"storedVersion": v2alpha1.VERSION,
-					},
-				},
-			}},
-			expectedFailed:        true,
-			expectedStoredVersion: "v2alpha1",
-			expectedError:         "",
-		},
-		{
-			name:                  "Empty object",
-			obj:                   &unstructured.Unstructured{Object: map[string]interface{}{}},
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-		{
-			name:                  "Nil object",
-			obj:                   nil,
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-		{
-			name: "Status not a map",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status":   "not a map",
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-		{
-			name: "Conversion not a map",
-			obj: &unstructured.Unstructured{Object: map[string]interface{}{
-				"metadata": map[string]interface{}{"name": "test"},
-				"status": map[string]interface{}{
-					"conversion": "not a map",
-				},
-			}},
-			expectedFailed:        false,
-			expectedStoredVersion: "",
-			expectedError:         "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var input *unstructured.Unstructured
-			if tt.obj != nil {
-				input = tt.obj.DeepCopy()
-			} else {
-				input = &unstructured.Unstructured{Object: map[string]interface{}{}}
-			}
-
-			failed, storedVersion, conversionErr := getConversionStatus(input)
-			require.Equal(t, tt.expectedFailed, failed, "failed mismatch")
-			require.Equal(t, tt.expectedStoredVersion, storedVersion, "storedVersion mismatch")
-			require.Equal(t, tt.expectedError, conversionErr, "conversionErr mismatch")
-		})
-	}
 }

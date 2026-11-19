@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,6 +15,7 @@ import (
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	legacydashboards "github.com/grafana/grafana/pkg/legacyapi/dashboards"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -104,28 +106,7 @@ func (h *K8sClientWithFallback) Get(
 	)
 
 	span.AddEvent("v0alpha1 Get")
-	result, err := h.K8sHandler.Get(spanCtx, name, orgID, options, subresources...)
-	if err != nil {
-		return nil, tracing.Error(span, err)
-	}
-
-	failed, storedVersion, conversionErr := getConversionStatus(result)
-	if !failed {
-		// if the conversion did not fail, there is no need to fallback.
-		return result, nil
-	}
-
-	h.log.Info("falling back to stored version", "name", name, "storedVersion", storedVersion, "conversionErr", conversionErr)
-	h.metrics.fallbackCounter.WithLabelValues(storedVersion).Inc()
-
-	span.SetAttributes(
-		attribute.Bool("fallback", true),
-		attribute.String("fallback.stored_version", storedVersion),
-		attribute.String("fallback.conversion_error", conversionErr),
-	)
-
-	span.AddEvent(fmt.Sprintf("%s Get", storedVersion))
-	return h.newClientFunc(spanCtx, storedVersion).Get(spanCtx, name, orgID, options, subresources...)
+	return h.getWithFallback(spanCtx, span, name, orgID, options, "", subresources...)
 }
 
 // GetWithPreferredAPIVersion loads using the requested API version first. When preferredVersion is empty, delegates to Get.
@@ -146,28 +127,43 @@ func (h *K8sClientWithFallback) GetWithPreferredAPIVersion(
 		attribute.Bool("fallback", false),
 	)
 
-	result, err := h.newClientFunc(spanCtx, preferredVersion).Get(spanCtx, name, orgID, options, subresources...)
+	return h.getWithFallback(spanCtx, span, name, orgID, options, preferredVersion, subresources...)
+}
+
+func (h *K8sClientWithFallback) getWithFallback(
+	ctx context.Context, span trace.Span, name string, orgID int64, options metav1.GetOptions, preferredVersion string, subresources ...string,
+) (*unstructured.Unstructured, error) {
+	get := func(ctx context.Context, version string) (*unstructured.Unstructured, error) {
+		if version == legacydashboards.DefaultAPIVersion {
+			return h.K8sHandler.Get(ctx, name, orgID, options, subresources...)
+		}
+		return h.newClientFunc(ctx, version).Get(ctx, name, orgID, options, subresources...)
+	}
+
+	onFallback := func(f legacydashboards.Fallback) {
+		if f.Err != nil {
+			h.log.Info("falling back to default API version after preferred get failed", "name", name, "preferredVersion", preferredVersion, "err", f.Err)
+			span.SetAttributes(attribute.Bool("preferred_get_failed", true))
+			span.AddEvent(fmt.Sprintf("%s Get", f.Version))
+			return
+		}
+
+		h.log.Info("falling back to stored version", "name", name, "storedVersion", f.Version, "conversionErr", f.ConversionError)
+		h.metrics.fallbackCounter.WithLabelValues(f.Version).Inc()
+
+		span.SetAttributes(
+			attribute.Bool("fallback", true),
+			attribute.String("fallback.stored_version", f.Version),
+			attribute.String("fallback.conversion_error", f.ConversionError),
+		)
+		span.AddEvent(fmt.Sprintf("%s Get", f.Version))
+	}
+
+	result, err := legacydashboards.GetWithFallback(ctx, preferredVersion, get, onFallback)
 	if err != nil {
-		h.log.Info("falling back to default API version after preferred get failed", "name", name, "preferredVersion", preferredVersion, "err", err)
-		span.SetAttributes(attribute.Bool("preferred_get_failed", true))
-		return h.Get(ctx, name, orgID, options, subresources...)
+		return nil, tracing.Error(span, err)
 	}
-
-	failed, storedVersion, conversionErr := getConversionStatus(result)
-	if !failed {
-		return result, nil
-	}
-
-	h.log.Info("falling back to stored version", "name", name, "storedVersion", storedVersion, "conversionErr", conversionErr)
-	h.metrics.fallbackCounter.WithLabelValues(storedVersion).Inc()
-
-	span.SetAttributes(
-		attribute.Bool("fallback", true),
-		attribute.String("fallback.stored_version", storedVersion),
-		attribute.String("fallback.conversion_error", conversionErr),
-	)
-
-	return h.newClientFunc(spanCtx, storedVersion).Get(spanCtx, name, orgID, options, subresources...)
+	return result, nil
 }
 
 type nameAndResourceVersion struct {
@@ -201,7 +197,7 @@ func (h *K8sClientWithFallback) List(
 	toFetch := make(map[string][]nameAndResourceVersion)
 
 	for _, item := range initial.Items {
-		failed, storedVersion, conversionErr := getConversionStatus(&item)
+		failed, storedVersion, conversionErr := legacydashboards.ConversionStatus(&item)
 		if !failed {
 			res.Items = append(res.Items, item)
 			continue
@@ -324,21 +320,6 @@ func (h *K8sClientWithFallback) fetchWithVersion(
 	}
 
 	return res, nil
-}
-
-func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVersion string, conversionErr string) {
-	status, found, _ := unstructured.NestedMap(obj.Object, "status")
-	if !found {
-		return false, "", ""
-	}
-	conversionStatus, found, _ := unstructured.NestedMap(status, "conversion")
-	if !found {
-		return false, "", ""
-	}
-	failed, _, _ = unstructured.NestedBool(conversionStatus, "failed")
-	storedVersion, _, _ = unstructured.NestedString(conversionStatus, "storedVersion")
-	conversionErr, _, _ = unstructured.NestedString(conversionStatus, "error")
-	return failed, storedVersion, conversionErr
 }
 
 func newK8sClientFactory(
