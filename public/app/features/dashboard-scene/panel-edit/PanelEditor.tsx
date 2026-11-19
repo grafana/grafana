@@ -395,6 +395,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
+      // The editor may install a default query while opening an untouched panel.
+      this._reloadBaseline = this.getReloadModel(panel);
       this.resetChangeBaseline();
 
       // Setup options pane
