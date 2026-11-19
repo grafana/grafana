@@ -3,11 +3,14 @@ package dualwrite
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -30,13 +33,14 @@ type resourceReconciler struct {
 	orphanObjectPrefix string
 	orphanRelations    []string
 	// protected collect the tuples other reconcilers write to the same objects
-	// and relations. This reconciler never deletes one of them, or each
-	// reconciler would delete what the other wrote on every cycle.
+	// and relations. This reconciler never deletes one of them, and merges their
+	// subresource filters into its own folder resource tuples, or each
+	// reconciler would undo what the other wrote on every cycle.
 	protected []legacyTupleCollector
 }
 
 // withProtected returns r, never deleting a tuple that one of collectors
-// returns.
+// returns, and writing folder resource tuples with the filters of both.
 func (r resourceReconciler) withProtected(collectors ...legacyTupleCollector) resourceReconciler {
 	r.protected = append(append([]legacyTupleCollector{}, r.protected...), collectors...)
 	return r
@@ -92,6 +96,12 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		return fmt.Errorf("failed to collect legacy tuples for %s: %w", r.name, err)
 	}
 
+	protected, err := r.collectProtected(ctx, info.OrgID)
+	if err != nil {
+		return fmt.Errorf("failed to collect protected tuples for %s: %w", r.name, err)
+	}
+	mergeProtectedFilters(res, protected)
+
 	var (
 		writes  = []*openfgav1.TupleKey{}
 		deletes = []*openfgav1.TupleKeyWithoutCondition{}
@@ -146,10 +156,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	}
 	deletes = append(deletes, orphans...)
 
-	deletes, err = r.withoutProtected(ctx, info.OrgID, deletes, writes)
-	if err != nil {
-		return fmt.Errorf("failed to collect protected tuples for %s: %w", r.name, err)
-	}
+	deletes = withoutProtected(deletes, writes, protected)
 
 	if len(writes) == 0 && len(deletes) == 0 {
 		return nil
@@ -184,24 +191,20 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 	return nil
 }
 
-// withoutProtected drops the deletes of tuples another reconciler writes. A
-// delete this reconciler pairs with a write of the same tuple, to replace its
-// subresources, is kept, since the write would otherwise conflict.
-func (r resourceReconciler) withoutProtected(
-	ctx context.Context,
-	orgID int64,
-	deletes []*openfgav1.TupleKeyWithoutCondition,
-	writes []*openfgav1.TupleKey,
-) ([]*openfgav1.TupleKeyWithoutCondition, error) {
-	if len(deletes) == 0 || len(r.protected) == 0 {
-		return deletes, nil
-	}
+// tupleKey identifies a tuple by subject, relation and object, which is how
+// Zanzana stores it: one tuple per key, whatever its condition.
+func tupleKey(user, relation, object string) string {
+	return user + "|" + relation + "|" + object
+}
 
-	key := func(user, relation, object string) string {
-		return user + "|" + relation + "|" + object
+// collectProtected returns the tuples the protected collectors return, by
+// tupleKey. Folder resource tuples for the same key are merged into one, with
+// both filters. It returns nil when nothing is protected.
+func (r resourceReconciler) collectProtected(ctx context.Context, orgID int64) (map[string]*openfgav1.TupleKey, error) {
+	if len(r.protected) == 0 {
+		return nil, nil
 	}
-
-	protected := map[string]struct{}{}
+	out := map[string]*openfgav1.TupleKey{}
 	for _, collect := range r.protected {
 		res, err := collect(ctx, orgID)
 		if err != nil {
@@ -209,22 +212,92 @@ func (r resourceReconciler) withoutProtected(
 		}
 		for _, tuples := range res {
 			for _, t := range tuples {
-				protected[key(t.User, t.Relation, t.Object)] = struct{}{}
+				k := tupleKey(t.User, t.Relation, t.Object)
+				if seen, ok := out[k]; ok && zanzana.IsFolderResourceTuple(t) && zanzana.IsFolderResourceTuple(seen) {
+					zanzana.MergeFolderResourceTuples(seen, t)
+					continue
+				}
+				out[k] = proto.Clone(t).(*openfgav1.TupleKey)
 			}
 		}
 	}
-	for _, t := range writes {
-		delete(protected, key(t.User, t.Relation, t.Object))
-	}
+	return out, nil
+}
 
+// mergeProtectedFilters gives each of res's folder resource tuples the
+// subresource filters of the protected tuple with the same key, sorted and
+// without duplicates. Every reconciler sharing the tuple then writes the same
+// one, instead of replacing the others' filters with its own on each cycle.
+func mergeProtectedFilters(res map[string]map[string]*openfgav1.TupleKey, protected map[string]*openfgav1.TupleKey) {
+	if protected == nil {
+		return
+	}
+	for _, tuples := range res {
+		for key, t := range tuples {
+			if !zanzana.IsFolderResourceTuple(t) {
+				continue
+			}
+			merged := proto.Clone(t).(*openfgav1.TupleKey)
+			if p, ok := protected[tupleKey(t.User, t.Relation, t.Object)]; ok && zanzana.IsFolderResourceTuple(p) {
+				zanzana.MergeFolderResourceTuples(merged, p)
+			}
+			normalizeSubresources(merged)
+			tuples[key] = merged
+		}
+	}
+}
+
+// normalizeSubresources sorts a folder resource tuple's subresource filter and
+// drops duplicates, so tuples merged in a different order compare equal.
+func normalizeSubresources(t *openfgav1.TupleKey) {
+	if t.Condition == nil || t.Condition.Context == nil {
+		return
+	}
+	list := t.Condition.Context.Fields["subresources"].GetListValue()
+	if list == nil {
+		return
+	}
+	seen := map[string]struct{}{}
+	values := make([]*structpb.Value, 0, len(list.Values))
+	for _, v := range list.Values {
+		if _, ok := seen[v.GetStringValue()]; ok {
+			continue
+		}
+		seen[v.GetStringValue()] = struct{}{}
+		values = append(values, v)
+	}
+	slices.SortFunc(values, func(a, b *structpb.Value) int {
+		return strings.Compare(a.GetStringValue(), b.GetStringValue())
+	})
+	list.Values = values
+}
+
+// withoutProtected drops the deletes of tuples another reconciler writes. A
+// delete this reconciler pairs with a write of the same tuple, to replace its
+// subresources, is kept, since the write would otherwise conflict.
+func withoutProtected(
+	deletes []*openfgav1.TupleKeyWithoutCondition,
+	writes []*openfgav1.TupleKey,
+	protected map[string]*openfgav1.TupleKey,
+) []*openfgav1.TupleKeyWithoutCondition {
+	if len(deletes) == 0 || len(protected) == 0 {
+		return deletes
+	}
+	written := map[string]struct{}{}
+	for _, t := range writes {
+		written[tupleKey(t.User, t.Relation, t.Object)] = struct{}{}
+	}
 	out := deletes[:0]
 	for _, d := range deletes {
-		if _, ok := protected[key(d.User, d.Relation, d.Object)]; ok {
-			continue
+		k := tupleKey(d.User, d.Relation, d.Object)
+		if _, ok := protected[k]; ok {
+			if _, rewritten := written[k]; !rewritten {
+				continue
+			}
 		}
 		out = append(out, d)
 	}
-	return out, nil
+	return out
 }
 
 // collectOrphanDeletes collects tuples that are no longer present in the legacy results
