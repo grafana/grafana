@@ -311,8 +311,8 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-runtime
       '@grafana/scenes':
-        specifier: 9.2.2
-        version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.3.0
+        version: 9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/scenes-react':
         specifier: 9.2.2
         version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -3926,6 +3926,20 @@ packages:
 
   '@grafana/scenes@9.2.2':
     resolution: {integrity: sha512-+mW1t7B8FjV/94oXyBMBmnTksAWzMjToLevOSDT7FwKN38GCC+0/89bD1yk4Pp+kemwh8CTj00APpyichi7zJA==}
+    peerDependencies:
+      '@grafana/data': '>=12.4'
+      '@grafana/e2e-selectors': workspace:*
+      '@grafana/i18n': '>=12.4'
+      '@grafana/runtime': '>=12.4'
+      '@grafana/schema': '>=12.4'
+      '@grafana/ui': '>=12.4'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+      react-router-dom: ^6.28.0
+      rxjs: ^7.8.1
+
+  '@grafana/scenes@9.3.0':
+    resolution: {integrity: sha512-FFEq4s65ujXA9kDuhH2fygUVlD16ksPdhl22h3TkNqU/qxkq7sWW7ewKa4igDcxecnNPsfvXoTza1GGIOhgbvA==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -16707,6 +16721,35 @@ snapshots:
       - supports-color
 
   '@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+    dependencies:
+      '@emotion/css': 11.13.5(supports-color@7.2.0)
+      '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
+      '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@grafana/data': link:packages/grafana-data
+      '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
+      '@grafana/i18n': link:packages/grafana-i18n
+      '@grafana/plugin-compat': link:packages/grafana-plugin-compat
+      '@grafana/runtime': link:packages/grafana-runtime
+      '@grafana/schema': link:packages/grafana-schema
+      '@grafana/ui': link:packages/grafana-ui
+      '@leeoniya/ufuzzy': 1.0.19
+      '@tanstack/react-virtual': 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      history: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
+      lodash: 4.18.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-grid-layout: 1.4.4(patch_hash=f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-router-dom: 5.3.4(react@19.2.8)
+      react-select: 5.10.2(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+      react-use: 17.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-virtualized-auto-sizer: 1.0.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      rxjs: 7.8.2
+      uuid: 11.1.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - supports-color
+
+  '@grafana/scenes@9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
