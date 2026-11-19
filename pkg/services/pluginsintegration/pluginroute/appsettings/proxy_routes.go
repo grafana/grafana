@@ -94,13 +94,11 @@ func compileSettingsRoutes(settings *app.ManifestData) (*settingsRoutes, error) 
 			}
 			proxy.routes[r.Declared] = byMethod
 			proxied = append(proxied, r)
-			if !definition.IsTrailingSlashCopy(version, r.Declared) {
-				proxy.paths[relativeSpecPath(r.SpecPath, definition.SettingsProxyRoot)] = definition.WithoutProxyExtension(r.Operations)
-			}
+			proxy.paths[relativeSpecPath(r.SpecPath, definition.SettingsProxyRoot)] = definition.WithoutProxyExtension(r.Operations)
 		}
 	}
 	if len(proxied) > 0 {
-		proxy.version = routemux.Version{Name: version.Name, Routes: proxied}
+		proxy.version = routemux.Version{Name: version.Name, Routes: definition.WithTrailingSlashes(proxied)}
 		compiled.proxy = proxy
 	}
 	return compiled, nil

@@ -3,6 +3,7 @@ package definition
 import (
 	"maps"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 	"testing"
@@ -74,11 +75,19 @@ func TestNewSettingsManifest(t *testing.T) {
 		require.Contains(t, paths, SettingsProxyRoot+"/api/{path:*}")
 		require.Contains(t, paths, SettingsProxyRoot+"/rooted", "the plugin proxy ignores a leading slash")
 
+		require.Len(t, paths, 3, "a route is declared once, though it is also matched with a trailing slash")
+
 		// The plugin proxy also matches a route's path with a trailing slash.
-		require.Contains(t, paths, SettingsProxyRoot+"/api/items/{id}/")
-		require.True(t, IsTrailingSlashCopy(manifest.Versions[0], SettingsProxyRoot+"/api/items/{id}/"))
-		require.False(t, IsTrailingSlashCopy(manifest.Versions[0], SettingsProxyRoot+"/api/items/{id}"))
-		require.NotContains(t, paths, SettingsProxyRoot+"/api/{path:*}/")
+		mux, err := settingsRouteMux(manifest.Versions[0])
+		require.NoError(t, err)
+		root := "/namespaces/default/app/instance/proxy/"
+		for _, path := range []string{"api/items/1", "api/items/1/", "rooted", "rooted/"} {
+			h, _ := mux.Handler(&http.Request{Method: http.MethodGet, URL: &url.URL{Path: root + path}})
+			require.IsType(t, matchedRoute{}, h, path)
+		}
+		h, _ := mux.Handler(&http.Request{Method: http.MethodGet, URL: &url.URL{Path: root + "rooted/more"}})
+		_, matched := h.(matchedRoute)
+		require.False(t, matched, "the copy does not match below the path")
 	})
 
 	t.Run("plugin.json routes matched differently are left out", func(t *testing.T) {

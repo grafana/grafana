@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -119,7 +120,7 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 		if err != nil {
 			return manifest, errors.Join(append(errs, fmt.Errorf("proxy routes are left out: %w", err))...)
 		}
-		for path, props := range withTrailingSlashes(converted) {
+		for path, props := range converted {
 			proxy[SettingsProxyRoot+path] = props
 		}
 	}
@@ -214,40 +215,29 @@ func ProxyRouteFor(route manifestroutes.Route, method string, op *spec3.Operatio
 	return forwarded, nil
 }
 
-// withTrailingSlashes also declares each path that does not match the rest of
-// the path with a trailing slash, which the plugin proxy matches too.
-func withTrailingSlashes(paths map[string]spec3.PathProps) map[string]spec3.PathProps {
-	out := make(map[string]spec3.PathProps, 2*len(paths))
-	for path, props := range paths {
-		out[path] = props
-		if !strings.HasSuffix(path, ":*}") {
-			out[path+"/"] = props
+// WithTrailingSlashes returns routes with a copy of each proxy route that does
+// not match the rest of the path, which matches its path with a trailing
+// slash, as the plugin proxy does. A copy keeps the route's Declared path, so it
+// is served and published as that route. A path a route already matches is not
+// copied.
+func WithTrailingSlashes(routes []manifestroutes.Route) []manifestroutes.Route {
+	patterns := make(map[string]bool, len(routes))
+	for _, r := range routes {
+		patterns[r.Pattern] = true
+	}
+	out := slices.Clone(routes)
+	for _, r := range routes {
+		if !IsBelow(r.Declared, SettingsProxyRoot) || strings.HasSuffix(r.Pattern, "...}") || strings.HasSuffix(r.Pattern, "{$}") {
+			continue
+		}
+		copied := r
+		copied.Pattern += "/{$}"
+		if !patterns[copied.Pattern] {
+			patterns[copied.Pattern] = true
+			out = append(out, copied)
 		}
 	}
 	return out
-}
-
-// IsTrailingSlashCopy reports whether a settings version path is the copy
-// withTrailingSlashes declared for a plugin.json route, which is not published.
-// A copy shares its operations with the path it copies; paths a manifest
-// declares never do.
-func IsTrailingSlashCopy(version app.ManifestVersion, path string) bool {
-	trimmed, ok := strings.CutSuffix(path, "/")
-	if !ok {
-		return false
-	}
-	original, ok := version.OpenAPI.Paths[trimmed]
-	if !ok {
-		return false
-	}
-	copied := version.OpenAPI.Paths[path]
-	ops := manifestroutes.Operations(&copied)
-	for method, op := range manifestroutes.Operations(&original) {
-		if ops[method] != op {
-			return false
-		}
-	}
-	return len(ops) > 0
 }
 
 // matchedRoute is the handler a probed route is registered with, so a match
@@ -269,7 +259,7 @@ func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
 		return nil, errors.Join(errs...)
 	}
 	mux := http.NewServeMux()
-	for _, r := range parsed {
+	for _, r := range WithTrailingSlashes(parsed) {
 		if !IsBelow(r.Declared, SettingsProxyRoot) {
 			continue
 		}
