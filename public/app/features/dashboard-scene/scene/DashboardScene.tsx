@@ -321,7 +321,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       assistantChanges: false,
       manualEdits: new Map(),
       aiEdits: new Map(),
-      composerUsed: false,
+      // A save ends a period without leaving Composer, so the next one can start with Composer already open.
+      composerUsed: this.getComposerSession() !== undefined,
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -1021,7 +1022,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   }
 
-  /** Over Viewing there is no edit period yet: it starts when Composer switches to Editing, and is marked then. */
+  /** Marks the period already running when Composer opens. One that starts while Composer is open is marked as it starts. */
   private markComposerUsed() {
     if (this._editSession) {
       this._editSession.composerUsed = true;
@@ -1071,7 +1072,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('user', 'picker')) {
         return;
       }
-      this.markComposerUsed();
       this.setState({ composerEditing: true });
       return;
     }
@@ -1114,7 +1114,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('assistant', 'assistant')) {
         return false;
       }
-      this.markComposerUsed();
       this.setState({ composerEditing: true });
     }
     return true;
