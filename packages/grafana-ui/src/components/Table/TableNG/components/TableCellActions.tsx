@@ -122,7 +122,7 @@ export const TableCellActions = memo(
           <Dropdown
             placement="bottom-end"
             overlay={
-              <Menu ariaLabel={menuLabel}>
+              <Menu size="sm" ariaLabel={menuLabel}>
                 {availableGroups.map((group, index) => (
                   <Fragment key={index}>
                     {index > 0 && <Menu.Divider />}

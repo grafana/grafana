@@ -6,6 +6,7 @@ import { Menu } from '../Menu/Menu';
 export function DataLinkMenuItems({ links }: { links: LinkModel[] }) {
   return links.map((link, index) => (
     <Menu.Item
+      size="sm"
       key={index}
       label={link.title?.trim() ? link.title : t('grafana-ui.data-link-menu-items.link', 'Link')}
       url={link.href}

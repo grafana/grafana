@@ -136,6 +136,7 @@ export const VizTooltipFooter = ({
           </div>
         ) : (
           <Menu
+            size="sm"
             autoFocus={false}
             {...context?.menuProps}
             onKeyDownCapture={(event) => {

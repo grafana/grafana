@@ -11,11 +11,14 @@ import { Box, type BoxProps } from '../Layout/Box/Box';
 import { MenuDivider } from './MenuDivider';
 import { MenuGroup } from './MenuGroup';
 import { MenuItem } from './MenuItem';
+import { MenuSizeContext } from './MenuSizeContext';
 import { useMenuFocus } from './hooks';
 
 export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   /** React element rendered at the top of the menu */
   header?: React.ReactNode;
+  /** Controls menu item density. */
+  size?: 'sm' | 'md';
   children: React.ReactNode;
   ariaLabel?: string;
   /** Whether to focus the first item when the menu opens. Defaults to true. */
@@ -29,7 +32,10 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-menu--docs
  */
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
-  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, autoFocus = true, ...otherProps }, forwardedRef) => {
+  (
+    { header, children, ariaLabel, onOpen, onClose, onKeyDown, autoFocus = true, size = 'md', ...otherProps },
+    forwardedRef
+  ) => {
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -46,32 +52,34 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     };
 
     return (
-      <Box
-        {...otherProps}
-        aria-label={ariaLabel}
-        backgroundColor="elevated"
-        borderRadius={componentTokens.borderRadius}
-        boxShadow="z3"
-        display="inline-block"
-        onKeyDown={handleKeys}
-        padding={componentTokens.padding}
-        ref={localRef}
-        role="menu"
-        tabIndex={-1}
-        {...(visualRefreshEnabled && visualRefreshProps)}
-      >
-        {header && (
-          <div
-            className={clsx(
-              styles.header,
-              Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
-            )}
-          >
-            {header}
-          </div>
-        )}
-        {children}
-      </Box>
+      <MenuSizeContext.Provider value={size}>
+        <Box
+          {...otherProps}
+          aria-label={ariaLabel}
+          backgroundColor="elevated"
+          borderRadius={componentTokens.borderRadius}
+          boxShadow="z3"
+          display="inline-block"
+          onKeyDown={handleKeys}
+          padding={componentTokens.padding}
+          ref={localRef}
+          role="menu"
+          tabIndex={-1}
+          {...(visualRefreshEnabled && visualRefreshProps)}
+        >
+          {header && (
+            <div
+              className={clsx(
+                styles.header,
+                Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
+              )}
+            >
+              {header}
+            </div>
+          )}
+          {children}
+        </Box>
+      </MenuSizeContext.Provider>
     );
   }
 );

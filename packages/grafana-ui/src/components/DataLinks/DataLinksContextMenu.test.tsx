@@ -35,7 +35,7 @@ describe('DataLinksContextMenu', () => {
 
     expect(screen.queryByText('Data links')).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Link1' })).toHaveStyle({
-      fontSize: createTheme().typography.body.fontSize,
+      fontSize: createTheme().typography.bodySmall.fontSize,
     });
     expect(screen.getByRole('menuitem', { name: 'Link2' })).toBeInTheDocument();
   });

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Menu } from './Menu';
@@ -42,5 +43,27 @@ describe('Menu', () => {
     expect(screen.getByLabelText(selectors.components.Menu.MenuComponent('Test'))).toBeInTheDocument();
     expect(screen.getByLabelText(selectors.components.Menu.MenuGroup('Test'))).toBeInTheDocument();
     expect(screen.getAllByLabelText(selectors.components.Menu.MenuItem('Test'))).toHaveLength(2);
+  });
+});
+
+it('applies compact density to grouped menu items while allowing an item override', () => {
+  render(
+    <Menu size="sm">
+      <MenuGroup label="Actions">
+        <MenuItem label="Compact" />
+        <MenuItem label="Regular" size="md" />
+      </MenuGroup>
+    </Menu>
+  );
+
+  expect(screen.getByRole('menuitem', { name: 'Compact' })).toHaveStyle({
+    fontSize: createTheme().typography.bodySmall.fontSize,
+    padding: '4px 4px',
+    minHeight: '24px',
+  });
+  expect(screen.getByRole('menuitem', { name: 'Regular' })).toHaveStyle({
+    fontSize: createTheme().typography.body.fontSize,
+    padding: '4px 12px',
+    minHeight: '32px',
   });
 });
