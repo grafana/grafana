@@ -104,6 +104,8 @@ type K8sTestHelper struct {
 	orgSvc  org.Service
 	teamSvc team.Service
 	userSvc user.Service
+
+	reuseExistingUsers bool
 }
 
 type K8sTestHelperOpts struct {
@@ -114,6 +116,11 @@ type K8sTestHelperOpts struct {
 	// CustomHTTPClient replaces the shared HTTP client for this helper only.
 	// When nil, the shared default client is used.
 	CustomHTTPClient *http.Client
+	// ReuseExistingUsers looks up the default test users by login instead of failing when
+	// they already exist, so a new process can start against a database provisioned by
+	// another process. Service accounts and teams are not created in this mode, because
+	// their tokens cannot be recovered from the database.
+	ReuseExistingUsers bool
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -192,6 +199,8 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
 		httpClient:      httpClient,
+
+		reuseExistingUsers: opts.ReuseExistingUsers,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
@@ -208,7 +217,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -823,6 +832,9 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
 	users.OrgID = users.Admin.Identity.GetOrgID()
+	if c.reuseExistingUsers {
+		return users
+	}
 
 	// Create service accounts
 	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
@@ -883,19 +895,32 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
 	}
 
-	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
-		DefaultOrgRole: string(basicRole),
-		Password:       user.Password(name),
-		Login:          login,
-		OrgID:          orgId,
-		IsAdmin:        isGrafanaAdmin,
-		Name:           name,
-		Email:          fmt.Sprintf("%s@example.com", login),
-	})
-	require.NoError(c.t, err)
+	var u *user.User
+	var err error
+	if c.reuseExistingUsers {
+		u, err = c.userSvc.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: login})
+		if goerrors.Is(err, user.ErrUserNotFound) {
+			u = nil
+		} else {
+			require.NoError(c.t, err)
+		}
+	}
+	created := u == nil
+	if created {
+		u, err = c.userSvc.Create(context.Background(), &user.CreateUserCommand{
+			DefaultOrgRole: string(basicRole),
+			Password:       user.Password(name),
+			Login:          login,
+			OrgID:          orgId,
+			IsAdmin:        isGrafanaAdmin,
+			Name:           name,
+			Email:          fmt.Sprintf("%s@example.com", login),
+		})
+		require.NoError(c.t, err)
+	}
 
 	// for tests to work we need to add grafana admins to every org
-	if isGrafanaAdmin {
+	if isGrafanaAdmin && created {
 		orgs, err := c.orgSvc.Search(context.Background(), &org.SearchOrgsQuery{})
 		require.NoError(c.t, err)
 		for _, o := range orgs {

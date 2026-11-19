@@ -18,6 +18,7 @@ import {
   type ComposerApplyOptions,
   type ComposerDashboardSpec,
   type ComposerElement,
+  type ComposerExitReason,
   type ComposerExitResult,
   type ComposerSessionAPI,
   type ComposerTarget,
@@ -128,6 +129,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   public readonly retrySave?: () => Promise<ComposerExitResult>;
 
   private readonly controller = new AbortController();
+  private exitReason?: ComposerExitReason;
   private resolveClosed!: (result: ComposerExitResult) => void;
   private ended = false;
   private pendingPick?: (pick: PickResult) => void;
@@ -262,7 +264,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     const client = getFeatureFlagClient();
     const onFlagsChanged = () => {
       if (!this.document.isEnabled()) {
-        this.exit();
+        this.exit('flag_off');
       }
     };
     client.addHandler(ClientProviderEvents.ConfigurationChanged, onFlagsChanged);
@@ -542,13 +544,20 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     return stop;
   }
 
-  public exit(): void | Promise<ComposerExitResult> {
+  /** Without a reason, the caller is the plugin: core's own paths name theirs. */
+  public exit(reason: ComposerExitReason = 'plugin_exit'): void | Promise<ComposerExitResult> {
     if (!this.ended) {
+      this.noteExitReason(reason);
       this.document.detach();
       // The scene closes the session when it leaves Composer; this covers a scene already out of it.
       this.close();
     }
     return this.document.reportsSave ? this.closed : undefined;
+  }
+
+  /** @internal The first reason noted wins, so the path that started the exit is the one reported. */
+  public noteExitReason(reason: ComposerExitReason): void {
+    this.exitReason ??= reason;
   }
 
   /** @internal Called by the scene when it leaves Composer, and by `exit`. */
@@ -558,7 +567,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     }
     this.ended = true;
     this.cancelPick();
-    this.controller.abort();
+    this.controller.abort(this.exitReason);
     this.cleanups.splice(0).forEach((cleanup) => cleanup());
     this.anchors.forEach((anchor) => anchor.remove());
     this.anchors.clear();

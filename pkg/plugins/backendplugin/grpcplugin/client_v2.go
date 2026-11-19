@@ -128,7 +128,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	if err != nil {
 		return nil, err
 	}
-	return backend.FromProto().QueryDataResponse(protoResp)
+	return backend.FromProto().ConsumeQueryDataResponse(protoResp)
 }
 
 func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
@@ -189,14 +189,22 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 	}
 
 	sizes := responsesize.FromContext(ctx)
+	received := false
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
+			// A server stream reports the status of the plugin at the first Recv, not when it opens.
+			// The fallback is safe only before a chunk reached the writer.
+			if !received && status.Code(err) == codes.Unimplemented {
+				c.chunkUnimplemented.Store(true)
+				return c.queryChunkedDataFacade(ctx, req, w)
+			}
 			return err
 		}
+		received = true
 		sizes.AddChunk(chunk)
 
 		if isRaw {
@@ -245,7 +253,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 	}
 
 	// Send the responses as individual chunks
-	rsp, err := backend.FromProto().QueryDataResponse(protoResp)
+	rsp, err := backend.FromProto().ConsumeQueryDataResponse(protoResp)
 	if err != nil {
 		return err
 	}

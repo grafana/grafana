@@ -1590,10 +1590,17 @@
         "view-list": "リスト",
         "wildcard-in-text": "検索文字列に*または%を含めることはできません。"
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1815,17 +1822,18 @@
         "autosync-rules-error-title": "ルールのインポートに失敗しました",
         "autosync-rules-imported-note": "選択したアラートルールもインポートされました。",
         "autosync-rules-note": "選択したアラートルールもインポートされます。",
-        "autosync-success-body": "自動同期が有効になりました。リダイレクトしています...",
+        "autosync-success-body": "",
         "autosync-success-title": "自動同期が有効になりました",
         "autosync-title": "自動同期を確認",
         "body": "本当にインポートを開始してもよろしいですか？この操作により、Grafanaアラートに新しいリソースが作成されます。",
         "confirm": "インポートを開始",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "インポートに失敗しました",
         "importing-body": "Grafanaアラートにリソースをインポートしています。しばらくお待ちください…",
         "importing-title": "インポート中…",
-        "success-body": "リソースが正常にインポートされました。リダイレクトしています…",
+        "success-body": "",
         "success-title": "インポート成功",
         "title": "インポートを確認"
       },
@@ -2917,6 +2925,37 @@
           "description": "このフィールドは保護されており、昇格された権限を持つユーザーのみが編集できます"
         }
       }
+    },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
     },
     "recording-rule": {
       "term": "記録ルール"
@@ -7665,11 +7704,7 @@
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
     },
     "lifecycle": {
-      "applied": "{{title}}に変更を適用しました",
-      "apply": "適用",
-      "apply-body": "アクセス権を持つ全員に表示されます。バージョン履歴から以前のバージョンに戻すことができます。",
-      "apply-failed": "変更を適用できませんでした。もう一度お試しください。または、適用前に変更内容を比較してください。",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "下書き",
       "breadcrumb-pending-changes": "未適用の変更",
       "change-added": "追加済み",
@@ -7701,7 +7736,6 @@
       "draft-discarded": "",
       "draft-title": "下書き",
       "edited-dashboard": "",
-      "highlight-changes": "ダッシュボード上で変更箇所を強調表示",
       "pending-body": "未適用の変更をプレビューしています。これらの変更は自分だけに表示されます。",
       "pending-body-source": "未適用の変更{{source}}をプレビューしています。これらの変更は自分だけに表示されます。",
       "pending-changes-changed": "",
@@ -7710,12 +7744,15 @@
       "pending-stale": "変更後にダッシュボードが更新されています",
       "pending-title": "未適用の変更",
       "preview-changes": "変更をプレビュー",
-      "rebase": "最新の変更を取り込む",
       "record-pending-change-failed": "",
       "save": "保存",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "元のダッシュボードを表示",
-      "stop-highlighting-changes": "変更箇所の強調表示を終了",
-      "apply-title_other": "「{{title}}」に{{count}}件の変更を適用しますか？"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "リンクを追加",
@@ -9752,13 +9789,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "機能コントロール",
       "close-tooltip": "機能コントロールを閉じる",
       "open-tooltip": "機能コントロール"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "削除",
     "description": "テストおよび開発目的で、フロントエンドの機能フラグをローカルで上書きします。",
+    "disable-overrides": "",
     "dismiss": {
       "label": "UIとツールバーボタンを削除",
       "tooltip": "定義した機能フラグのオーバーライドはすべて有効なままになります。<br/>UIを再度有効にするには、URLで<3>{{ param }}</3>を使用してください。"
@@ -9768,11 +9809,18 @@
     "flag-type": "フラグタイプ",
     "flag-value": "フラグ値",
     "menu": "メニューを開く",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP評価",
     "ofrep-reason": "理由：<2>{{reason}}</2>",
     "ofrep-variant": "バリアント：<2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "保存",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "機能コントロール"
   },
   "folder-filter": {
@@ -12355,7 +12403,7 @@
     },
     "description-allow-download": "コントロールが有効になっている場合、表示されているログをダウンロードするオプションを表示します。",
     "description-enable-field-selector": "実験的機能。ログから表示フィールドを管理するためのコンポーネントを表示します。",
-    "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "事前定義された配色スキームを使い、ログ行の関連部分をハイライト表示します。",
     "description-order": "最新のログまたは最も古いログを最初に表示します。「最も古いログを最初に表示」を選択すると、ビューは自動的に下部にある最新のログまでスクロールします。",
     "description-prettify-json": "JSONログエントリをインデントと改行で整形します。",
@@ -13369,6 +13417,34 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "パンくずリスト"
     },
@@ -13384,14 +13460,6 @@
         "open-all": "AIアシスタントとサイドバーアプリを開く"
       },
       "floating-resize": "サイドバーの幅を変更"
-    },
-    "fullscreen-workspace": {
-      "enter": "ワークスペースに入る",
-      "error-exit": "ワークスペースを終了",
-      "error-message": "Grafana Assistantワークスペースを読み込めませんでした。",
-      "error-reload": "ページを再読み込み",
-      "error-title": "ワークスペースを利用できません",
-      "workspace": "ワークスペース"
     },
     "help": {
       "aria-label": "ヘルプ",
@@ -13429,6 +13497,7 @@
       "tv-alert": "ESCを押してキオスクモードを終了します"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "メニューを閉じる",
       "customise": "ナビゲーションをカスタマイズ",
       "customise-cancel": "キャンセル",
@@ -13463,7 +13532,10 @@
       "aria-label": "新規",
       "new-template-dashboard-button": "テンプレートを使用"
     },
-    "rss-button": "最新ブログから"
+    "rss-button": "最新ブログから",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "ニュース",
@@ -13581,8 +13653,10 @@
       "drag-handle": "ドラッグして順序を変更",
       "duplicate": "ブロックを複製",
       "frame": {
-        "aria-label-collapsed": "折りたたみ済みのブロック：{{name}}",
-        "aria-label-panel": "可視化ブロック：{{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "マークダウン",
@@ -13670,7 +13744,7 @@
       "submit": "ノートブックに追加",
       "success": "{{title}}にパネルが追加されました",
       "success-cells": "{{title}}に追加しました",
-      "success-link": "ノートブックを表示",
+      "success-open-link": "",
       "tag-placeholder": "タグで絞り込む",
       "target-description": "パネルを追加する場所を選択してください。",
       "target-existing": "既存のノートブック",
@@ -13841,7 +13915,8 @@
       "swatch-placeholder-aria-label": "色を選択してください。{{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "色分けの基準"
+      "color-by-label": "色分けの基準",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "範囲外。{{range}}",
@@ -15458,6 +15533,8 @@
       "header-title": "タイトル",
       "header-type": "タイプ",
       "missing-folder-metadata": "フォルダのメタデータファイルが不足しています",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "パスまたはタイトルで検索",
       "source": "ソース",
       "status-filter-aria-label": "ステータスで絞り込む",

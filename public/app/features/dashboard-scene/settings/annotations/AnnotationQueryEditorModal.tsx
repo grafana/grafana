@@ -121,7 +121,13 @@ function AnnotationDataSourcePicker({ layer, onBeforeChange, onAfterChange }: An
 
   return (
     <Field label={t('dashboard.sidebar.annotation.data-source', 'Data source')} noMargin>
-      <DataSourcePicker annotations variables current={query?.datasource} onChange={onDataSourceChange} />
+      <DataSourcePicker
+        annotations
+        variables
+        journeySurface="annotation_editor"
+        current={query?.datasource}
+        onChange={onDataSourceChange}
+      />
     </Field>
   );
 }

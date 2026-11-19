@@ -28,6 +28,7 @@ import {
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, type IconName, Menu, ToolbarButton, Tooltip, getPortalContainer, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -39,6 +40,7 @@ import {
   canPlaceExtensionSidebar,
   canPopOutExtensionSidebar,
   type ExtensionSidebarPlacement,
+  type ExtensionSidebarPlacementSource,
   getExtensionSidebarPlacement,
   isExtensionSidebarPoppedOut,
   popInExtensionSidebar,
@@ -61,6 +63,16 @@ type AssistantLayout = ExtensionSidebarPlacement;
  */
 type ArrangePreset = 'with-navigation' | 'without-navigation' | 'page-only';
 
+/** A preset as `grafana_assistant_window_arranged` reports it, in snake_case like the event's other values. */
+const PRESET_ANALYTICS_NAMES: Record<ArrangePreset, string> = {
+  'with-navigation': 'with_navigation',
+  'without-navigation': 'without_navigation',
+  'page-only': 'page_only',
+};
+
+/** Where a layout or preset was chosen: the menu, or one of the keyboard shortcuts. */
+type ChoiceSource = Extract<ExtensionSidebarPlacementSource, 'chat_menu' | 'shortcut'>;
+
 /** A part of the window, as a preset's tile draws it. */
 type Pane = 'navigation' | 'page' | 'assistant';
 
@@ -75,7 +87,8 @@ interface PresetDrawing {
 }
 
 /**
- * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. The
+ * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. Pressed
+ * while the Assistant already shows there, a shortcut hides it, and the next press shows it there again. The
  * browser's own ⌘1-9 switches tabs, so the shortcuts add ⌥.
  */
 const LAYOUT_SHORTCUT_DIGITS: Record<AssistantLayout, number> = { left: 1, right: 2, bottom: 3, floating: 4 };
@@ -139,7 +152,7 @@ interface Props {
  * floating's flag are on, hovering the button, or pressing Down arrow on it, opens a menu that moves the Assistant to the left,
  * right or bottom of the page, floats it, or, while the Assistant can, opens it in a new window, and presets that
  * arrange the nav and the Assistant together. Choosing a layout, or a preset that shows the Assistant, shows it if it
- * is hidden.
+ * is hidden. A layout's shortcut, pressed while the Assistant already shows in that layout, hides it instead.
  */
 export function AssistantChatButton({ assistantComponentId, isOpen, icon, className }: Props) {
   const styles = useStyles2(getStyles);
@@ -187,12 +200,18 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     }
   };
 
-  const moveTo = (next: AssistantLayout) => {
+  // Closed as the Chat button closes it, its own window included.
+  const hide = () => {
+    setMenuOpenedBy(undefined);
+    setDockedComponentId(undefined);
+  };
+
+  const moveTo = (next: AssistantLayout, source: ChoiceSource) => {
     setMenuOpenedBy(undefined);
     if (poppedOut) {
       popInExtensionSidebar();
     }
-    setExtensionSidebarPlacement(next);
+    setExtensionSidebarPlacement(next, source);
     show();
   };
 
@@ -205,8 +224,9 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     popOutExtensionSidebar();
   };
 
-  const arrange = (preset: ArrangePreset) => {
+  const arrange = (preset: ArrangePreset, source: ChoiceSource) => {
     setMenuOpenedBy(undefined);
+    reportInteraction('grafana_assistant_window_arranged', { preset: PRESET_ANALYTICS_NAMES[preset], source });
     const withNavigation = preset === 'with-navigation';
     // Docked first, so opening it persists; undocked first, as the nav's own dock button does.
     chrome.setMegaMenuDocked(withNavigation);
@@ -232,11 +252,15 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
         (option) => PRESET_SHORTCUT_DIGITS[option.value] === digit
       );
       if (shortcutPreset) {
-        arrange(shortcutPreset.value);
+        arrange(shortcutPreset.value, 'shortcut');
       }
       return shortcutPreset !== undefined;
     }
     if (digit === POP_UP_SHORTCUT_DIGIT) {
+      if (poppedOut && isOpen) {
+        hide();
+        return true;
+      }
       if (!canPopOutExtensionSidebar()) {
         return false;
       }
@@ -244,10 +268,16 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
       return true;
     }
     const shortcutLayout = getLayoutOptions().find((option) => LAYOUT_SHORTCUT_DIGITS[option.value] === digit);
-    if (shortcutLayout) {
-      moveTo(shortcutLayout.value);
+    if (!shortcutLayout) {
+      return false;
     }
-    return shortcutLayout !== undefined;
+    // In its own window the Assistant is in none of the page's layouts, so its layout's shortcut brings it back.
+    if (isOpen && !poppedOut && layout === shortcutLayout.value) {
+      hide();
+    } else {
+      moveTo(shortcutLayout.value, 'shortcut');
+    }
+    return true;
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -375,7 +405,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                         !poppedOut && layout === option.value && styles.itemSelected
                       )}
                       component={getShortcutHint(LAYOUT_SHORTCUT_DIGITS[option.value])}
-                      onClick={() => moveTo(option.value)}
+                      onClick={() => moveTo(option.value, 'chat_menu')}
                     />
                   ))}
                   {(poppedOut || canPopOutExtensionSidebar()) && (
@@ -400,7 +430,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                         key={option.value}
                         option={option}
                         checked={preset === option.value}
-                        onClick={() => arrange(option.value)}
+                        onClick={() => arrange(option.value, 'chat_menu')}
                       />
                     ))}
                   </div>
