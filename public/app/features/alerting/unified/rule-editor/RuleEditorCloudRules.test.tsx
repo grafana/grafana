@@ -4,7 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as pluginSettings from '@grafana/runtime/unstable';
+import * as runtime from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,7 +56,7 @@ describe('RuleEditor cloud', () => {
 
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
-    jest.spyOn(pluginSettings, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
+    jest.spyOn(runtime, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
 
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
@@ -78,7 +78,7 @@ describe('RuleEditor cloud', () => {
     await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
@@ -94,7 +94,10 @@ describe('RuleEditor cloud', () => {
 
     expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
 
+    // the switch carries over the data source of the query
     const dataSourceSelect = await ui.inputs.dataSource.find();
+    expect(dataSourceSelect).toHaveAttribute('placeholder', MIMIR_DATASOURCE_UID);
+
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 
@@ -123,7 +126,7 @@ describe('RuleEditor cloud', () => {
     await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for feature discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();

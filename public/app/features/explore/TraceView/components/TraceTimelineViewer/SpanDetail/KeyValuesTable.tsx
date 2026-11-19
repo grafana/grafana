@@ -31,7 +31,6 @@ import { config, reportInteraction, useReturnToPrevious } from '@grafana/runtime
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { getTraceViewLinkAttrs, openTraceViewHref } from '../../../utils/openTraceViewHref';
-import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 
 import jsonMarkup from './jsonMarkup';
@@ -44,7 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css({
       label: 'KeyValueTable',
-      background: autoColor(theme, '#fff'),
+      background: theme.colors.background.primary,
       maxHeight: '450px',
       overflow: 'auto',
       color: theme.colors.text.primary,
@@ -63,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         verticalAlign: 'middle',
       },
       '&:nth-child(2n) > td': {
-        background: autoColor(theme, '#f5f5f5'),
+        background: theme.colors.background.secondary,
       },
       '& > td:last-child button': {
         visibility: 'hidden',

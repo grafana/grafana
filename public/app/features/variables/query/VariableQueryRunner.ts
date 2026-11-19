@@ -33,7 +33,7 @@ interface UpdateOptionsArgs {
 export interface UpdateOptionsResults {
   state: LoadingState;
   identifier: KeyedVariableIdentifier;
-  error?: any;
+  error?: unknown;
   cancelled?: boolean;
 }
 

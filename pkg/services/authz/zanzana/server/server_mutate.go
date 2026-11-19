@@ -190,6 +190,8 @@ func (s *Server) writeTuples(ctx context.Context, store *zanzana.StoreInfo, writ
 		}
 	}
 
+	s.invalidatePermissionPrincipals(store, writeTuples, deleteTuples)
+	defer s.invalidatePermissionPrincipals(store, writeTuples, deleteTuples)
 	_, err := s.openFGAClient.Write(ctx, writeReq)
 	return err
 }

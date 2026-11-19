@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -14,6 +15,10 @@ import (
 )
 
 func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.User) error {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
+		return err
+	}
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -38,12 +43,22 @@ func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBack
 	if err != nil {
 		return err
 	}
-	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
+	if err := validateEmail(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
 		return err
 	}
 
-	if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
+	if err := validateLogin(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
+		return apierrors.NewBadRequest("name must not be a number")
 	}
 
 	return nil
@@ -122,13 +137,13 @@ func ValidateOnUpdate(ctx context.Context, search *dualwrite.Selector[SearchBack
 	}
 
 	if newObj.Spec.Email != oldObj.Spec.Email {
-		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
+		if err := validateEmail(ctx, userSearchClient, newObj.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
 			return err
 		}
 	}
 
 	if newObj.Spec.Login != oldObj.Spec.Login {
-		if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Login); err != nil {
+		if err := validateLogin(ctx, userSearchClient, newObj.GetNamespace(), newObj.Name, newObj.Spec.Login); err != nil {
 			return err
 		}
 	}

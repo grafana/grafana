@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,6 +54,8 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	lifecycleExtras DashboardLifecycleExtras
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -100,6 +103,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "lifecycle",
+										In:          "query",
+										Description: "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("draft", "all"),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "type",
 										In:          "query",
 										Description: "search dashboards or folders.  When empty, this will search both",
@@ -114,6 +126,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "search/list within a folder (not recursive)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "name",
+										In:          "query",
+										Description: "only include resources with these names (UIDs)",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
 									},
 								},
 								{
@@ -174,9 +195,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (view, edit, admin)",
+										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
 									},
 								},
 								{
@@ -214,6 +235,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "limit",
 										In:          "query",
 										Description: "number of results to return",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "number of results to skip",
 										Required:    false,
 										Schema:      spec.Int64Property(),
 									},
@@ -403,103 +433,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			},
 			Handler: s.DoVectorSearch,
 		})
-
-		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-			Path: "search/hybrid",
-			Spec: &spec3.PathProps{
-				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "hybridSearchDashboards",
-						Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "query string, used for both search legs",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "semanticQuery",
-									In:          "query",
-									Description: "optional richer phrasing embedded for the semantic leg instead of query",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "minRelevance",
-									In:          "query",
-									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "skipRerank",
-									In:          "query",
-									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
-									Required:    false,
-									Schema:      spec.BooleanProperty(),
-								},
-							},
-						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			Handler: s.DoHybridSearch,
-		})
 	}
 
 	return routes
@@ -532,6 +465,9 @@ func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction stri
 		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
 		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_CREATE:
+		// dashboards:create is granted on folder scopes, so it is read as the folder action.
+		return dashboards.ActionDashboardsCreate, dashboards.ActionDashboardsCreate
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
@@ -547,9 +483,20 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 		return dashboardaccess.PERMISSION_VIEW
 	case "admin":
 		return dashboardaccess.PERMISSION_ADMIN
+	case "create":
+		return dashboardaccess.PERMISSION_CREATE
 	default:
 		return 0
 	}
+}
+
+// effectivePermission treats create as edit while folderPickerCreatePermission is off.
+func effectivePermission(ctx context.Context, p dashboardaccess.PermissionType) dashboardaccess.PermissionType {
+	if p == dashboardaccess.PERMISSION_CREATE &&
+		!openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx)) {
+		return dashboardaccess.PERMISSION_EDIT
+	}
+	return p
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
@@ -568,7 +515,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(ctx, queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
@@ -582,9 +529,19 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.client.Search(ctx, searchRequest)
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+	hideDrafts := s.lifecycleExtras != nil && s.lifecycleExtras.HideDraftsByDefault(ctx)
+	req, err := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts)
+	if err != nil {
 		errhttp.Write(ctx, err, w)
+		return
+	}
+	if req != nil {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, req)
+	}
+
+	result, err := s.client.Search(ctx, searchRequest)
+	if err != nil {
+		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
 		return
 	}
 
@@ -662,11 +619,7 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
-		return
-	}
-	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 
@@ -692,123 +645,6 @@ func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse)
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
 			Field:    field,
-		})
-	}
-
-	out := &dashboardv0alpha1.SearchResults{Hits: hits, TotalHits: int64(len(hits))}
-	if len(hits) > 0 {
-		out.MaxScore = hits[0].Score
-	}
-	return out
-}
-
-// errHybridSearchNotConfigured is returned (HTTP 501) when the hybrid search
-// endpoint is enabled by feature toggle but the unified storage backend has no
-// embedder/vector store configured (or predates the HybridSearch RPC).
-var errHybridSearchNotConfigured = errutil.NotImplemented("dashboard.hybridSearchNotConfigured")
-
-// DoHybridSearch serves the hybrid (lexical + semantic, RRF-fused) search
-// endpoint. Registered only when the dashboardVectorSearch feature toggle is
-// enabled. Like DoVectorSearch it does not fall back on Unimplemented.
-func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
-	ctx, span := s.tracer.Start(r.Context(), "dashboard.hybridSearch")
-	defer span.End()
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	queryParams, err := url.ParseQuery(r.URL.RawQuery)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	key, err := asResourceKey(user.GetNamespace(), dashboardv0alpha1.DASHBOARD_RESOURCE)
-	if err != nil {
-		errhttp.Write(ctx, err, w)
-		return
-	}
-
-	limit := 50
-	if queryParams.Has("limit") {
-		if l, parseErr := strconv.Atoi(queryParams.Get("limit")); parseErr == nil && l > 0 {
-			limit = l
-		}
-	}
-
-	req := &resourcepb.HybridSearchRequest{
-		Key:           key,
-		Query:         queryParams.Get("query"),
-		SemanticQuery: queryParams.Get("semanticQuery"),
-		Limit:         int64(limit),
-		// Both validated server-side; an unknown min_relevance or the
-		// min_relevance+skip_rerank combination surfaces as InvalidArgument.
-		MinRelevance: queryParams.Get("minRelevance"),
-		SkipRerank:   queryParams.Get("skipRerank") == "true",
-	}
-	if folder := queryParams.Get("folder"); folder != "" {
-		folder = foldermodel.ToLegacyFolderUID(folder)
-		req.Filters = append(req.Filters, &resourcepb.Requirement{
-			Key:      "folder",
-			Operator: string(selection.In),
-			Values:   []string{folder},
-		})
-	}
-
-	result, err := s.client.HybridSearch(ctx, req)
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
-			return
-		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
-		return
-	}
-
-	s.write(w, hybridSearchResultsToSearchResults(result))
-}
-
-// One hit per dashboard, in fused order. Score is opaque (higher = better),
-// unlike the vector endpoint's cosine distance. The best chunk's content is
-// surfaced as "snippet"/"subresource" for parity with the vector endpoint;
-// the full chunk list rides along under "chunks".
-func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchResponse) *dashboardv0alpha1.SearchResults {
-	results := response.GetResults()
-	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(results))
-	for _, r := range results {
-		field := &commonv0.Unstructured{}
-		field.Set("score", r.GetScore())
-		resultChunks := r.GetChunks()
-		chunks := make([]any, 0, len(resultChunks))
-		for _, c := range resultChunks {
-			chunks = append(chunks, map[string]any{
-				"subresource": c.GetSubresource(),
-				"snippet":     c.GetContent(),
-			})
-		}
-		field.Set("chunks", chunks)
-		if len(resultChunks) > 0 {
-			field.Set("subresource", resultChunks[0].GetSubresource())
-			field.Set("snippet", resultChunks[0].GetContent())
-		}
-		if r.GetFolderTitle() != "" {
-			field.Set("folderTitle", r.GetFolderTitle())
-		}
-
-		hits = append(hits, dashboardv0alpha1.DashboardHit{
-			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
-			Name:     r.GetKey().GetName(),
-			Title:    r.GetTitle(),
-			Folder:   r.GetFolder(),
-			Score:    r.GetScore(),
-			ManagedBy: dashboardv0alpha1.ManagedBy{
-				Kind: utils.ManagerKind(r.GetManagedByKind()),
-				ID:   r.GetManagedById(),
-			},
-			Field: field,
 		})
 	}
 
@@ -854,7 +690,7 @@ func isDashboardSearchResponseField(field string) bool {
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(ctx context.Context, queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -891,7 +727,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 	searchRequest.Fields = fields
-	accessPermission := permissionFromQueryParams(queryParams)
+	requestedPermission := permissionFromQueryParams(queryParams)
+	accessPermission := effectivePermission(ctx, requestedPermission)
 	if accessPermission > 0 {
 		searchRequest.Permission = int64(accessPermission)
 	}
@@ -900,6 +737,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
+		return nil, apierrors.NewBadRequest("permission=create is only supported with type=folder")
+	}
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
 	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
@@ -1175,17 +1015,23 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
+		// Federated folders are authorized as read, which would drop create-only folders.
+		dashboardSearchRequest = nameLookupRequest(folderKey, dashboardUids, requestedPermission)
+	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1199,24 +1045,11 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-		Limit:        int64(len(allFolders)),
-		Permission:   int64(requestedPermission),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Options: &resourcepb.ListOptions{
-			Key: folderKey,
-			Fields: []*resourcepb.Requirement{{
-				Key:      "name",
-				Operator: "in",
-				Values:   allFolders,
-			}},
-		},
-	}
+	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
@@ -1238,13 +1071,39 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	return sharedDashboards, nil
 }
 
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
+// nameLookupRequest finds resources of one type by name, returning their parent folder.
+func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission dashboardaccess.PermissionType) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(names)),
+		Permission:   int64(permission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Options: &resourcepb.ListOptions{
+			Key: key,
+			Fields: []*resourcepb.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   names,
+			}},
+		},
 	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
+}
+
+// draftSearchRequirement maps the `lifecycle` query param to a label requirement:
+// "draft" returns only drafts, "all" returns everything, and no value hides drafts when hideDrafts is set.
+// Any other value is rejected so a typo cannot silently hide drafts.
+func draftSearchRequirement(lifecycle string, hideDrafts bool) (*resourcepb.Requirement, error) {
+	switch lifecycle {
+	case utils.LifecycleDraft:
+		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}, nil
+	case "all":
+		return nil, nil
+	case "":
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("lifecycle must be %q or %q", utils.LifecycleDraft, "all"))
+	}
+	if !hideDrafts {
+		return nil, nil
+	}
+	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}, nil
 }

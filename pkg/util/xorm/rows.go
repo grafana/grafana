@@ -74,6 +74,15 @@ func (rows *Rows) Err() error {
 	return rows.lastError
 }
 
+// IterationErr returns the real error from the underlying sql.Rows, unlike Err, which always
+// reports sql.ErrNoRows once Next is exhausted regardless of whether iteration actually failed.
+func (rows *Rows) IterationErr() error {
+	if rows.rows != nil {
+		return rows.rows.Err()
+	}
+	return rows.lastError
+}
+
 // Scan row record to bean properties
 func (rows *Rows) Scan(bean any) error {
 	if rows.lastError != nil {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -68,6 +69,9 @@ type fakeStorage struct {
 	// honours req.Limit to simulate pagination + peek-for-more.
 	listItems []listItem
 	listErr   error
+	// rejectedTokens are refused the way the storage backend refuses a token
+	// it no longer accepts.
+	rejectedTokens map[string]bool
 	// listCalls records each ListIterator invocation's NextPageToken so
 	// tests can assert the backfiller actually paginated rather than
 	// pulling everything in a single call.
@@ -175,6 +179,9 @@ func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListReques
 	f.mu.Unlock()
 	if f.listErr != nil {
 		return 0, f.listErr
+	}
+	if f.rejectedTokens[req.NextPageToken] {
+		return 0, apierrors.NewBadRequest("invalid continue token: name is required for list resources")
 	}
 	start := 0
 	if req.NextPageToken != "" {
@@ -339,6 +346,10 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 		return collection, found, nil
 	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
+func (f *fakeVector) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
 }
 
 func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {

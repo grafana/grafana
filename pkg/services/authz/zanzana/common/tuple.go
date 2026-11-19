@@ -8,6 +8,8 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -44,6 +46,8 @@ const (
 )
 
 var (
+	KindAnnotations     string = annotationv0.AnnotationKind().GroupVersionResource().Resource
+	KindSnapshots       string = dashv0.SnapshotResourceInfo.GroupResource().Resource
 	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
 	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
@@ -69,11 +73,17 @@ const (
 	RelationSetPermissions string = "set_permissions"
 
 	RelationCanGet            string = "can_get"
-	RelationCanCreate         string = "can_create"
 	RelationCanUpdate         string = "can_update"
 	RelationCanDelete         string = "can_delete"
 	RelationCanGetPermissions string = "can_get_permissions"
 	RelationCanSetPermissions string = "can_set_permissions"
+
+	RelationCanReadContents           string = "can_read_contents"
+	RelationCanCreateContents         string = "can_create_contents"
+	RelationCanUpdateContents         string = "can_update_contents"
+	RelationCanDeleteContents         string = "can_delete_contents"
+	RelationCanGetContentsPermissions string = "can_get_contents_permissions"
+	RelationCanSetContentsPermissions string = "can_set_contents_permissions"
 
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
@@ -87,7 +97,6 @@ const (
 	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
 
 	RelationCanSubresourceGet            string = "can_resource_" + RelationGet
-	RelationCanSubresourceCreate         string = "can_resource_" + RelationCreate
 	RelationCanSubresourceUpdate         string = "can_resource_" + RelationUpdate
 	RelationCanSubresourceDelete         string = "can_resource_" + RelationDelete
 	RelationCanSubresourceGetPermissions string = "can_resource_" + RelationGetPermissions
@@ -166,11 +175,13 @@ var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
 )
 
 // RelationsServiceAccount are the relations valid on type "service-account":
-// no per-object `create`, and no get_permissions / set_permissions.
+// no per-object `create`.
 var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
@@ -202,8 +213,6 @@ func FolderPermissionRelation(relation string) string {
 	switch relation {
 	case RelationGet:
 		return RelationCanGet
-	case RelationCreate:
-		return RelationCanCreate
 	case RelationUpdate:
 		return RelationCanUpdate
 	case RelationDelete:
@@ -217,13 +226,31 @@ func FolderPermissionRelation(relation string) string {
 	}
 }
 
+// FolderContentPermissionRelation keeps folder-only grants from authorizing contained resources.
+func FolderContentPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanReadContents
+	case RelationCreate:
+		return RelationCanCreateContents
+	case RelationUpdate:
+		return RelationCanUpdateContents
+	case RelationDelete:
+		return RelationCanDeleteContents
+	case RelationGetPermissions:
+		return RelationCanGetContentsPermissions
+	case RelationSetPermissions:
+		return RelationCanSetContentsPermissions
+	default:
+		return relation
+	}
+}
+
 // SubresourcePermissionRelation returns computed subresource relations that include escalation.
 func SubresourcePermissionRelation(relation string) string {
 	switch relation {
 	case RelationSubresourceGet:
 		return RelationCanSubresourceGet
-	case RelationSubresourceCreate:
-		return RelationCanSubresourceCreate
 	case RelationSubresourceUpdate:
 		return RelationCanSubresourceUpdate
 	case RelationSubresourceDelete:
@@ -332,32 +359,78 @@ func lookupActionMapping(kind, action string) (resourceTranslation, actionMappin
 	return resourceTranslation{}, actionMapping{}, false
 }
 
+// TranslateToResourceTuples keeps action sets compact, adding only creation
+// grants that cannot be inferred from a generic Edit/Admin relation.
+func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1.TupleKey, bool) {
+	translation, m, ok := lookupActionMapping(kind, action)
+	if !ok {
+		return nil, false
+	}
+	tuples := []*openfgav1.TupleKey{translateResourceTuple(subject, translation, m, name)}
+
+	var relations []string
+	switch action {
+	case "folders:edit", "folders:admin":
+		relations = []string{RelationCreate}
+	case "dashboards:view", "dashboards:edit", "dashboards:admin":
+		m.subresource = annotationsSubresource
+		relations = DashboardAnnotationRelations(strings.TrimPrefix(action, "dashboards:"), translation.typ == TypeFolder)
+	}
+	for _, relation := range relations {
+		m.relation = relation
+		tuples = append(tuples, translateResourceTuple(subject, translation, m, name))
+	}
+	return tuples, true
+}
+
+// DashboardAnnotationRelations returns the relations to grant on a dashboard's annotations
+// subresource alongside a dashboards view/edit/admin action set.
+func DashboardAnnotationRelations(actionSet string, onFolder bool) []string {
+	switch actionSet {
+	case RelationSetView:
+		if onFolder {
+			return nil
+		}
+		return []string{RelationGet}
+	case RelationSetEdit, RelationSetAdmin:
+		if onFolder {
+			return []string{RelationCreate}
+		}
+		return []string{RelationCreate, RelationGet, RelationUpdate, RelationDelete}
+	}
+	return nil
+}
+
+// TranslateToResourceTuple translates only the base action. Permission writers
+// must use TranslateToResourceTuples to include action-set creation grants.
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false
 	}
+	return translateResourceTuple(subject, translation, m, name), true
+}
 
+func translateResourceTuple(subject string, translation resourceTranslation, m actionMapping, name string) *openfgav1.TupleKey {
 	if m.skipScope || name == "*" {
 		if m.group != "" && m.resource != "" {
-			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource)
 		}
-		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
+		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource)
 	}
 
 	if translation.typ == TypeResource {
-		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
+		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name)
 	}
 
 	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
-			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
+			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name)
 		}
-
-		return NewFolderTuple(subject, m.relation, name), true
+		return NewFolderTuple(subject, m.relation, name)
 	}
 
-	return NewTypedTuple(translation.typ, subject, m.relation, name), true
+	return NewTypedTuple(translation.typ, subject, m.relation, name)
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {

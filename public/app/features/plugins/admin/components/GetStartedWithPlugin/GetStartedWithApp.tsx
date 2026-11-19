@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { type PluginMeta } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { updateAppPluginSettings } from '@grafana/runtime/unstable';
+import { updateAppPluginSettings } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,32 @@ import (
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
+	discovered, err := discoverGroupResources(ctx, client, baseURL)
+	if err != nil {
+		return nil, err
+	}
+	groups := make([]metav1.APIGroup, len(discovered))
+	for i, d := range discovered {
+		groups[i] = d.group
+	}
+	return groups, nil
+}
+
+func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
+	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport)
+}
+
+// proxyBackend serves group by proxying to rawURL.
+func proxyBackend(t *testing.T, group, rawURL string, transport http.RoundTripper) Backend {
+	t.Helper()
+	base, err := url.Parse(rawURL)
+	require.NoError(t, err)
+	backend, err := newAggregateBackend("test", metav1.APIGroup{Name: group}, base, transport)
+	require.NoError(t, err)
+	return backend
+}
 
 func TestDiscoverGroups(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

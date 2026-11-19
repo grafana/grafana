@@ -91,7 +91,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen: selectedIndex !== null, onClose: closePreview }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('grafana-ui.carousel.dialog-label', 'Image preview') }, ref);
 
   if (validImages.length === 0) {
     return (

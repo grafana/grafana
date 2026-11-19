@@ -21,6 +21,10 @@ type BuilderProvider interface {
 	Validate() error
 	Snapshot() BuilderSnapshot
 	Has(group, resource string) bool
+	// Allowed lists every type that may be enrolled, whatever the manifests
+	// declare. Snapshot never holds a type outside it, and it does not change
+	// at runtime.
+	Allowed() []schema.GroupResource
 }
 
 // BuilderSnapshot keeps builder selection and membership on the same manifest

@@ -3,8 +3,8 @@ import { type Dispatch, type SetStateAction } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, Input, Label, useStyles2 } from '@grafana/ui';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { Field, Input, Label, Stack, useStyles2 } from '@grafana/ui';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { MediaType } from '../types';
@@ -27,12 +27,12 @@ export const URLPickerTab = (props: Props) => {
   }
 
   return (
-    <>
-      <Field>
+    <Stack direction="column" gap={2}>
+      <Field noMargin>
         <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
       </Field>
       <div className={styles.iconContainer}>
-        <Field label={t('dimensions.urlpicker-tab.label-preview', 'Preview')}>
+        <Field noMargin label={t('dimensions.urlpicker-tab.label-preview', 'Preview')}>
           <div className={styles.iconPreview}>
             {mediaType === MediaType.Icon && <SanitizedSVG src={imgSrc} className={styles.img} />}
             {mediaType === MediaType.Image && newValue && (
@@ -42,7 +42,7 @@ export const URLPickerTab = (props: Props) => {
         </Field>
         <Label>{shortName}</Label>
       </div>
-    </>
+    </Stack>
   );
 };
 
@@ -53,6 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '80%',
     alignItems: 'center',
     alignSelf: 'center',
+    gap: theme.spacing(2),
   }),
   iconPreview: css({
     width: '238px',

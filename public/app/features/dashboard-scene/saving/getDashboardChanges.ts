@@ -1,5 +1,4 @@
 import type { AdHocVariableModel, TextBoxVariableModel, TypedVariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type Dashboard, type VariableOption } from '@grafana/schema';
 import {
   type AdHocFilterWithLabels,
@@ -301,12 +300,8 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.dashboardUnifiedDrilldownControls
-          ? variable.spec.filters.filter((f) => !f.origin)
-          : variable.spec.filters,
-        config.featureToggles.dashboardUnifiedDrilldownControls
-          ? original.spec.filters.filter((f) => !f.origin)
-          : original.spec.filters
+        variable.spec.filters.filter((f) => !f.origin),
+        original.spec.filters.filter((f) => !f.origin)
       )
     ) {
       hasChanges = true;
@@ -322,13 +317,9 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-          const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
-          const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
-          variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
-        } else {
-          variable.spec.filters = original.spec.filters;
-        }
+        const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
+        const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
+        variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
       } else if (variable.kind === 'TextVariable' && original.kind === 'TextVariable') {
         variable.spec.query = original.spec.query;
       }
@@ -429,19 +420,14 @@ function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const changedFilters = (typed as AdHocVariableModel).filters ?? [];
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const originalFilters = (original as AdHocVariableModel).filters ?? [];
-          const originFilters = changedFilters.filter((f) => f.origin);
-          const originalRuntimeFilters = originalFilters.filter((f) => !f.origin);
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (typed as AdHocVariableModel).filters = [...originFilters, ...originalRuntimeFilters];
-        } else {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (typed as AdHocVariableModel).filters = (original as AdHocVariableModel).filters;
-        }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const changedFilters = (typed as AdHocVariableModel).filters ?? [];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const originalFilters = (original as AdHocVariableModel).filters ?? [];
+        const originFilters = changedFilters.filter((f) => f.origin);
+        const originalRuntimeFilters = originalFilters.filter((f) => !f.origin);
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        (typed as AdHocVariableModel).filters = [...originFilters, ...originalRuntimeFilters];
       } else if (typed.type === 'textbox') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         typed.query = (original as TextBoxVariableModel).query;

@@ -1,9 +1,5 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   type AnnotationQueryKind,
   type PanelKind,
@@ -35,8 +31,8 @@ import {
   type DatasourceMappings,
 } from './inputs';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
@@ -1581,8 +1577,7 @@ describe('applyV2Inputs', () => {
     const updatedPanel = result.elements.panel as PanelKind;
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
     const updatedQuery = queries[0];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const querySpec = updatedQuery?.spec as any;
+    const querySpec = updatedQuery?.spec;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
 
     // export-only labels must be stripped after applying inputs
@@ -1649,10 +1644,8 @@ describe('applyV2Inputs', () => {
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
     const firstQuery = queries[0];
     const secondQuery = queries[1];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const firstSpec = firstQuery?.spec as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const secondSpec = secondQuery?.spec as any;
+    const firstSpec = firstQuery?.spec;
+    const secondSpec = secondQuery?.spec;
     expect(firstSpec?.query?.datasource?.name).toBe('ds-uid-1');
     expect(secondSpec?.query?.datasource?.name).toBe('ds-uid-2');
   });

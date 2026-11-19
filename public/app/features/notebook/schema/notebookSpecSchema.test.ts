@@ -50,6 +50,26 @@ const PANEL: NotebookElement = {
 };
 
 describe('validateNotebookSpec', () => {
+  it('keeps the id the server gave a cell, which a non-strict parse would otherwise drop', () => {
+    const base = spec();
+    const withId = spec({
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: base.layout.spec.cells.map((item) => ({
+            ...item,
+            spec: { ...item.spec, id: '00000000-0000-4000-8000-000000000001' },
+          })),
+        },
+      },
+    });
+
+    const result = validateNotebookSpec(withId);
+
+    expect(result.data?.layout.spec.cells[0].spec.id).toBe('00000000-0000-4000-8000-000000000001');
+    expect(validateNotebookSpec(base).data?.layout.spec.cells[0].spec).not.toHaveProperty('id');
+  });
+
   it('accepts a minimal notebook', () => {
     expect(validateNotebookSpec(spec())).toMatchObject({ success: true, errors: [], warnings: [] });
   });
@@ -116,6 +136,46 @@ describe('validateNotebookSpec', () => {
       throw new Error('expected a Panel element');
     }
     expect(parsed.spec.data.spec.transformations[0].spec.refId).toBe('T1');
+  });
+
+  it("keeps both ends of a cell's own time range on a panel element", () => {
+    const result = validateNotebookSpec({
+      ...spec(),
+      elements: {
+        panel: {
+          ...PANEL,
+          spec: {
+            ...PANEL.spec,
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: { timeFrom: 'now-6h', timeTo: 'now' },
+              },
+            },
+          },
+        },
+      },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'panel' }, source: 'user' },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const parsed = result.data?.elements.panel;
+    if (parsed?.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(parsed.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
   });
 
   it('rejects the retired v2beta1 transformation shape', () => {

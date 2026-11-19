@@ -879,3 +879,131 @@ func setupTestEnv(t *testing.T) *RBACSync {
 	}
 	return s
 }
+
+func TestRBACSync_DatasourceTokenPermissions(t *testing.T) {
+	allActions := []string{
+		"datasources:create", "datasources:read", "datasources:write", "datasources:delete",
+		"datasources:query", "datasources.permissions:read", "datasources.permissions:write",
+		"datasources.caching:read", "datasources.caching:write",
+	}
+	for _, tc := range []struct {
+		grant   string
+		actions []string
+	}{
+		{"loki.datasource.grafana.app:get", []string{"datasources:read", "datasources.caching:read"}},
+		{"loki.datasource.grafana.app:*", allActions},
+		{"query.grafana.app:*", []string{"datasources:query"}},
+		{"query.grafana.app:create", []string{"datasources:query"}},
+		{"query.grafana.app:get", nil},
+		{"query.grafana.app:update", nil},
+		{"loki.datasource.grafana.app/datasources:get", []string{"datasources:read"}},
+		{"query.grafana.app/query:create", []string{"datasources:query"}},
+		{"datasource.grafana.app/query:*", []string{"datasources:query"}},
+		{"query.grafana.app/query:get", nil},
+		{"foo.bar.datasource.grafana.app:*", nil},
+	} {
+		for _, delegated := range []bool{false, true} {
+			name := tc.grant
+			if delegated {
+				name += "/delegated"
+			}
+			t.Run(name, func(t *testing.T) {
+				s := setupTestEnv(t)
+				for _, action := range allActions {
+					scope := "datasources:uid:"
+					if action == "datasources:create" {
+						scope = ""
+					}
+					require.NoError(t, s.permRegistry.RegisterPermission(action, scope))
+				}
+				params := authn.FetchPermissionsParams{K8s: []string{tc.grant}}
+				if delegated {
+					params = authn.FetchPermissionsParams{
+						AllowedActions:       allActions,
+						K8sRestrictedActions: []string{tc.grant},
+					}
+				}
+				ident := &authn.Identity{
+					ID: "datasource-token", Type: claims.TypeAccessPolicy, OrgID: 1,
+					ClientParams: authn.ClientParams{SyncPermissions: true, FetchPermissionsParams: params},
+				}
+				require.NoError(t, s.SyncPermissionsHook(context.Background(), ident, &authn.Request{}))
+				expected := map[string][]string{}
+				for _, action := range tc.actions {
+					scope := "datasources:uid:*"
+					if action == "datasources:create" {
+						scope = ""
+					}
+					expected[action] = []string{scope}
+				}
+				// Exact equality also ensures query aliases cannot grant configuration or caching access.
+				assert.Equal(t, expected, ident.Permissions[1])
+				if delegated {
+					assert.Equal(t, []string{tc.grant}, ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
+				} else {
+					assert.Equal(t, []string{tc.grant}, ident.ClientParams.FetchPermissionsParams.K8s)
+				}
+			})
+		}
+	}
+}
+
+// Model a plugin-specific resource using a real mapping, without changing the
+// production registry to add a resource that does not exist yet.
+type pluginResourceMapper struct {
+	rbac.MapperRegistry
+	custom rbac.Mapping
+}
+
+func (m pluginResourceMapper) GetAll(group string) []rbac.Mapping {
+	mappings := m.MapperRegistry.GetAll(group)
+	if group == "loki.datasource.grafana.app" {
+		mappings = append(mappings, m.custom)
+	}
+	return mappings
+}
+
+func (m pluginResourceMapper) Get(group, resource, subresource string) (rbac.Mapping, bool) {
+	if group == "loki.datasource.grafana.app" && resource == "custom" && subresource == "" {
+		return m.custom, true
+	}
+	return m.MapperRegistry.Get(group, resource, subresource)
+}
+
+func TestRBACSync_DatasourceGroupWithCustomResource(t *testing.T) {
+	for _, tc := range []struct {
+		grant    string
+		expected map[string][]string
+	}{
+		{"loki.datasource.grafana.app:get", map[string][]string{
+			"datasources:read":         {"datasources:uid:*"},
+			"datasources.caching:read": {"datasources:uid:*"},
+			"folders:read":             {"folders:uid:*"},
+		}},
+		{"loki.datasource.grafana.app/custom:get", map[string][]string{
+			"folders:read": {"folders:uid:*"},
+		}},
+		{"loki.datasource.grafana.app/datasources:get", map[string][]string{
+			"datasources:read": {"datasources:uid:*"},
+		}},
+	} {
+		t.Run(tc.grant, func(t *testing.T) {
+			s := setupTestEnv(t)
+			for _, action := range []string{"datasources:read", "datasources.caching:read"} {
+				require.NoError(t, s.permRegistry.RegisterPermission(action, "datasources:uid:"))
+			}
+			custom, ok := s.mapper.Get("folder.grafana.app", "folders", "")
+			require.True(t, ok)
+			s.mapper = pluginResourceMapper{MapperRegistry: s.mapper, custom: custom}
+			ident := &authn.Identity{
+				ID: "datasource-token", Type: claims.TypeAccessPolicy, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{K8s: []string{tc.grant}},
+				},
+			}
+			require.NoError(t, s.SyncPermissionsHook(context.Background(), ident, &authn.Request{}))
+			assert.Equal(t, tc.expected, ident.Permissions[1])
+		})
+	}
+}

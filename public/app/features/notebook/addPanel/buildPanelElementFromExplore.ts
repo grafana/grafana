@@ -11,7 +11,7 @@ import { type ExplorePanelData } from 'app/types/explore';
 import { type PanelElement } from '../types';
 
 /**
- * The id only has to be free within this throwaway panel — appendPanelToNotebook mints the one the
+ * The id only has to be free within this throwaway panel — appendElementsToNotebook mints the one the
  * notebook actually stores.
  */
 const TRANSIENT_PANEL_ID = 1;

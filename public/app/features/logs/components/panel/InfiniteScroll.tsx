@@ -1,8 +1,18 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  type ComponentType,
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -11,6 +21,8 @@ import {
   canScrollBottom,
   canScrollTop,
   getVisibleRange,
+  type InfiniteScrollTimeRange,
+  loadMoreRangeFromVisible,
   ScrollDirection,
   shouldLoadMore,
 } from '../infiniteScrollUtils';
@@ -20,11 +32,30 @@ import { LogLineMessage } from './LogLineMessage';
 import { type LogListModel } from './processing';
 import { type LogLineVirtualization } from './virtualization';
 
+// The data every LogLine needs
+interface LogData {
+  displayedFields: string[];
+  handleOverflow: (index: number, id: string, height?: number) => void;
+  infiniteLoaderState: InfiniteLoaderState;
+  lastLogOfPage: string[];
+  loadMoreBottom: () => void;
+  logs: LogListModel[];
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
+  showTime: boolean;
+  sortOrder: LogsSortOrder;
+  styles: ReturnType<typeof getStyles>;
+  timeRange: TimeRange;
+  timeZone: string;
+  virtualization: LogLineVirtualization;
+  wrapLogMessage: boolean;
+}
+
 interface ChildrenProps {
   itemCount: number;
+  itemData: LogData;
   getItemKey: (index: number) => string;
   onItemsRendered: (props: ListOnItemsRenderedProps) => void;
-  Renderer: (props: ListChildComponentProps) => ReactNode;
+  Log: ComponentType<ListChildComponentProps<LogData>>;
 }
 
 export interface Props {
@@ -32,6 +63,8 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
+  // Load more when scrollng in the top direction. Always enabled in unlimited mode
+  infiniteScrollTop?: boolean;
   loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
@@ -49,14 +82,15 @@ export interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
-  | ((range: AbsoluteTimeRange) => void)
-  | ((range: AbsoluteTimeRange, scrollDirection: ScrollDirection) => void);
+  | ((range: InfiniteScrollTimeRange) => void)
+  | ((range: InfiniteScrollTimeRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
+  infiniteScrollTop = false,
   loadingState,
   loadMore,
   logs,
@@ -71,6 +105,7 @@ export const InfiniteScroll = ({
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
+  const [loadDirection, setLoadDirection] = useState<ScrollDirection>(ScrollDirection.Bottom);
   const [autoScroll, setAutoScroll] = useState(false);
   const prevLogs = usePrevious(logs);
   const prevSortOrder = usePrevious(sortOrder);
@@ -84,15 +119,19 @@ export const InfiniteScroll = ({
   const noScrollRef = useRef<undefined | boolean>(undefined);
   const loadMoreCountRef = useRef<number | null>(null);
   const settledRef = useRef(false);
+  const topScrollEnabled = infiniteScrollTop || infiniteScrollMode === 'unlimited';
   // The request backing a load-more is in flight while its state is Loading or Streaming.
   const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const prevInFlight = usePrevious(requestInFlight);
+  // Fresh logs from a new query (not infinite scrolling).
+  const isFreshQuery = Boolean(prevLogs) && prevLogs !== logs && infiniteLoaderState !== 'loading';
 
   useEffect(() => {
-    // Fresh logs from a new query (not infinite scrolling): reset paging, scroll, and clear a stale
-    // 'out-of-bounds' so re-running the query re-enables scrolling instead of latching end-of-range.
-    if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
+    // Reset paging and scroll, and clear a stale 'out-of-bounds' so re-running the query re-enables scrolling
+    // instead of latching end-of-range.
+    if (isFreshQuery) {
       lastLogOfPage.current = [];
+      scrollToLogLineRef.current = undefined;
       setAutoScroll(true);
       if (infiniteLoaderState !== 'idle') {
         setInfiniteLoaderState('idle');
@@ -110,6 +149,7 @@ export const InfiniteScroll = ({
       if (loadingState === LoadingState.Error) {
         settledRef.current = false;
         loadMoreCountRef.current = null;
+        scrollToLogLineRef.current = undefined;
         setInfiniteLoaderState('idle');
         return;
       }
@@ -121,11 +161,25 @@ export const InfiniteScroll = ({
         const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
         setInfiniteLoaderState(outOfBounds ? 'out-of-bounds' : 'idle');
         if (scrollToLogLineRef.current) {
+          // The new page ends right before the line that was first, which is where the page divider goes.
+          const index = logs.findIndex((log) => log.uid === scrollToLogLineRef.current?.uid);
+          if (index > 0) {
+            lastLogOfPage.current.push(logs[index - 1].uid);
+          }
           setAutoScroll(true);
         }
       }
     }
-  }, [infiniteLoaderState, infiniteScrollMode, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
+  }, [
+    infiniteLoaderState,
+    infiniteScrollMode,
+    isFreshQuery,
+    loadingState,
+    requestInFlight,
+    prevInFlight,
+    logs,
+    prevLogs,
+  ]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -143,24 +197,27 @@ export const InfiniteScroll = ({
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
+      const visibleRange = getVisibleRange(logs);
       const newRange =
         scrollDirection === ScrollDirection.Bottom
-          ? canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder)
-          : canScrollTop(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+          ? canScrollBottom(visibleRange, timeRange, timeZone, sortOrder)
+          : canScrollTop(visibleRange, timeRange, timeZone, sortOrder);
+      setLoadDirection(scrollDirection);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
       }
       if (scrollDirection === ScrollDirection.Bottom) {
+        scrollToLogLineRef.current = undefined;
         lastLogOfPage.current.push(logs[logs.length - 1].uid);
       } else {
+        // New logs are prepended, keep the current first line in view.
         scrollToLogLineRef.current = logs[0];
-        lastLogOfPage.current.push(logs[0].uid);
       }
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
-      loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
+      loadMore?.(newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder), scrollDirection);
 
       reportInteraction('grafana_logs_infinite_scrolling', {
         direction: scrollDirection,
@@ -189,7 +246,13 @@ export const InfiniteScroll = ({
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
-        if (infiniteScrollMode === 'unlimited' && scrollDirection === ScrollDirection.Top) {
+        const topEndOfRange = infiniteLoaderState === 'out-of-bounds' && loadDirection === ScrollDirection.Top;
+        if (
+          topScrollEnabled &&
+          scrollDirection === ScrollDirection.Top &&
+          infiniteLoaderState !== 'loading' &&
+          !topEndOfRange
+        ) {
           setInfiniteLoaderState('pre-scroll-top');
           resetStateTimeout.current = setTimeout(() => {
             setInfiniteLoaderState((state) => (state === 'pre-scroll-top' ? 'idle' : state));
@@ -198,9 +261,13 @@ export const InfiniteScroll = ({
         }
         return;
       }
-      if (scrollDirection !== ScrollDirection.NoScroll) {
-        onLoadMore(scrollDirection);
+      if (scrollDirection === ScrollDirection.NoScroll) {
+        return;
       }
+      if (scrollDirection === ScrollDirection.Top && !topScrollEnabled) {
+        return;
+      }
+      onLoadMore(scrollDirection);
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -210,7 +277,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
+  }, [infiniteLoaderState, loadDirection, loadMore, logs.length, onLoadMore, scrollElement, topScrollEnabled]);
 
   useEffect(() => {
     return () => {
@@ -231,42 +298,28 @@ export const InfiniteScroll = ({
     onLoadMore(ScrollDirection.Bottom);
   }, [onLoadMore]);
 
-  const Renderer = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
-      if (!logs[index] && infiniteLoaderState !== 'idle') {
-        return (
-          <LogLineMessage
-            style={style}
-            styles={styles}
-            onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
-          >
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
-          </LogLineMessage>
-        );
-      }
-      return (
-        <LogLine
-          displayedFields={displayedFields}
-          index={index}
-          log={logs[index]}
-          logs={logs}
-          onClick={onClick}
-          showTime={showTime}
-          style={style}
-          styles={styles}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
-          virtualization={virtualization}
-          wrapLogMessage={wrapLogMessage}
-          onOverflow={handleOverflow}
-        />
-      );
-    },
+  const itemData = useMemo<LogData>(
+    () => ({
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      lastLogOfPage: isFreshQuery ? [] : lastLogOfPage.current,
+      loadMoreBottom,
+      logs,
+      onClick,
+      showTime,
+      sortOrder,
+      styles,
+      timeRange,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }),
     [
       displayedFields,
       handleOverflow,
       infiniteLoaderState,
+      isFreshQuery,
       loadMoreBottom,
       logs,
       onClick,
@@ -292,7 +345,12 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
         return;
       }
-      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (infiniteLoaderState === 'loading') {
+        return;
+      }
+      // The end of the range at the top overlays the first line, so it is dismissed once the user scrolls away.
+      const topEndOfRange = infiniteLoaderState === 'out-of-bounds' && loadDirection === ScrollDirection.Top;
+      if (infiniteLoaderState === 'out-of-bounds' && !(topEndOfRange && props.visibleStartIndex > 0)) {
         return;
       }
       const lastLogIndex = logs.length - 1;
@@ -303,46 +361,116 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, logs, scrollElement]
+    [infiniteLoaderState, loadDirection, logs, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
-  const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
+  // Messages related to the bottom direction are rendered as an extra line at the end of the list.
+  const showBottomMessage =
+    infiniteLoaderState === 'pre-scroll-bottom' ||
+    ((infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') &&
+      loadDirection === ScrollDirection.Bottom);
+  const itemCount = logs.length && loadMore && showBottomMessage ? logs.length + 1 : logs.length;
+
+  const showTopMessage =
+    infiniteLoaderState === 'pre-scroll-top' ||
+    ((infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') &&
+      loadDirection === ScrollDirection.Top);
 
   return (
     <>
-      {infiniteLoaderState === 'pre-scroll-top' && (
+      {showTopMessage && (
         <div className={styles.loadMoreTopContainer}>
-          <LogLineMessage style={{}} styles={styles} onClick={loadMoreTop}>
-            {t('logs.infinite-scroll.load-more', 'Scroll to load more')}
+          <LogLineMessage
+            style={{}}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll-top' ? loadMoreTop : undefined}
+          >
+            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder, ScrollDirection.Top)}
           </LogLineMessage>
         </div>
       )}
-      {children({ getItemKey, itemCount, onItemsRendered, Renderer })}
+      {children({ getItemKey, itemCount, itemData, onItemsRendered, Log })}
     </>
   );
 };
 
-function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
+function getMessageFromInfiniteLoaderState(
+  state: InfiniteLoaderState,
+  order: LogsSortOrder,
+  direction: ScrollDirection = ScrollDirection.Bottom
+) {
   switch (state) {
     case 'out-of-bounds':
       return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');
     case 'loading':
+      // Scrolling to the bottom loads older logs in descending order, and newer logs in ascending order. Top is the opposite.
       return (
         <>
-          {order === LogsSortOrder.Ascending
+          {(direction === ScrollDirection.Bottom) === (order === LogsSortOrder.Ascending)
             ? t('logs.infinite-scroll.load-newer', 'Loading newer logs...')
             : t('logs.infinite-scroll.load-older', 'Loading older logs...')}{' '}
           <Spinner inline />
         </>
       );
     case 'pre-scroll-bottom':
+    case 'pre-scroll-top':
       return t('logs.infinite-scroll.load-more', 'Scroll to load more');
     default:
       return null;
   }
 }
+
+const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
+  const {
+    displayedFields,
+    handleOverflow,
+    infiniteLoaderState,
+    lastLogOfPage,
+    loadMoreBottom,
+    logs,
+    onClick,
+    showTime,
+    sortOrder,
+    styles,
+    timeRange,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  } = data;
+
+  if (!logs[index] && infiniteLoaderState !== 'idle') {
+    return (
+      <LogLineMessage
+        style={style}
+        styles={styles}
+        onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
+      >
+        {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
+      </LogLineMessage>
+    );
+  }
+  return (
+    <LogLine
+      displayedFields={displayedFields}
+      index={index}
+      log={logs[index]}
+      logs={logs}
+      onClick={onClick}
+      showTime={showTime}
+      style={style}
+      styles={styles}
+      timeRange={timeRange}
+      timeZone={timeZone}
+      variant={getLogLineVariant(logs, index, lastLogOfPage)}
+      virtualization={virtualization}
+      wrapLogMessage={wrapLogMessage}
+      onOverflow={handleOverflow}
+    />
+  );
+});
+Log.displayName = 'InfiniteScrollLog';
 
 function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
   if (!lastLogOfPage.length || !logs[index - 1]) {

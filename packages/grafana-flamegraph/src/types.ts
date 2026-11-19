@@ -1,3 +1,5 @@
+import { type DisplayValue } from '@grafana/data';
+
 import { type LevelItem } from './FlameGraph/dataTransform';
 
 export type ClickedItemData = {
@@ -53,4 +55,30 @@ export enum FrameType {
 export enum DataSourceType {
   PprofPyroscope = 'pprof-pyroscope',
   Unknown = 'unknown',
+} 
+
+export interface ProfileTooltipData {
+  percentValue: number;
+  percentSelf: number;
+  unitTitle: string;
+  unitValue: string;
+  unitSelf: string;
+  samples: string;
+}
+
+export interface ProfileTooltipDataOptions {
+  displayValue: DisplayValue;
+  displaySelf: DisplayValue;
+  unitTitle: string;
+  totalTicks: number;
+}
+
+export interface ProfileValueDataOptions {
+  displayValue: DisplayValue;
+  totalTicks: number;
+}
+
+export interface ProfileValueData {
+  unitValue: string;
+  percentage: number;
 }

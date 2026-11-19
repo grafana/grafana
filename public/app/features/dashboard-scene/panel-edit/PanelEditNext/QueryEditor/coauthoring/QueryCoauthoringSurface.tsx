@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { Component, type MouseEvent, type ReactNode, useSyncExternalStore } from 'react';
+import { Component, type MouseEvent, type ReactNode, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type PanelData, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
@@ -14,6 +14,8 @@ import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { trackQueryCoauthoringSelectionPromptShown } from './queryCoauthoringTracking';
+import { type QueryPreviewSelection } from './queryPreview';
 
 interface Props {
   adapter: QueryEditorCoauthoringAdapterV1;
@@ -24,8 +26,12 @@ interface Props {
 interface QueryCoauthoringHost {
   datasourceType: string;
   previewPhase: 'idle' | 'pending' | 'running' | 'complete';
+  previewData?: PanelData;
+  readPreviewData?(): PanelData | undefined;
   timeRange?: { from: number; to: number };
-  preview(query: DataQuery): boolean;
+  preview(query: DataQuery, options?: QueryPreviewSelection): boolean;
+  peek?(query: DataQuery): boolean;
+  stopPeek?(): void;
   accept(query: DataQuery): boolean;
   revert(): void;
 }
@@ -99,30 +105,22 @@ function QueryCoauthoringAdapterSurface({
   onBaseline,
   snapshot,
 }: Props & { snapshot: QueryEditorCoauthoringSnapshotV1 }) {
-  const styles = useStyles2(getStyles);
+  const wasSelectionVisible = useRef(false);
+
+  useEffect(() => {
+    const isSelectionVisible = snapshot.mode === 'selection';
+    if (isSelectionVisible && !wasSelectionVisible.current) {
+      trackQueryCoauthoringSelectionPromptShown({ datasourceType: host.datasourceType });
+    }
+    wasSelectionVisible.current = isSelectionVisible;
+  }, [snapshot.mode, host.datasourceType]);
 
   if (snapshot.mode === 'hidden') {
     return null;
   }
 
   if (snapshot.mode === 'selection') {
-    const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
-    return createPortal(
-      <div className={styles.toolbarSurface} data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}>
-        <Button
-          fill="text"
-          icon="ai-sparkle"
-          onClick={adapter.invoke}
-          onMouseDown={preserveSelection}
-          size="sm"
-          variant="secondary"
-        >
-          {t('query-editor-coauthoring.explain-or-modify', 'Explain or modify')}
-          <span className={styles.shortcut}>{getModKey()}+.</span>
-        </Button>
-      </div>,
-      snapshot.portalTarget
-    );
+    return <QueryCoauthoringEntry adapter={adapter} portalTarget={snapshot.portalTarget} />;
   }
 
   return (
@@ -135,15 +133,85 @@ function QueryCoauthoringAdapterSurface({
       datasourceType={host.datasourceType}
       onAccept={host.accept}
       onPreview={host.preview}
+      onPeek={host.peek}
+      onStopPeek={host.stopPeek}
       onRevertPreview={host.revert}
+      previewData={host.previewData}
+      readPreviewData={host.readPreviewData}
       isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
       timeRange={host.timeRange}
     />
   );
 }
 
+function QueryCoauthoringEntry({
+  adapter,
+  portalTarget,
+}: {
+  adapter: QueryEditorCoauthoringAdapterV1;
+  portalTarget: HTMLElement;
+}) {
+  const styles = useStyles2(getStyles);
+  const entryRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      // Selection gestures in the owning editor must not dismiss the entry they reveal.
+      const editor = portalTarget.closest('.monaco-editor');
+      if (
+        event.target instanceof Node &&
+        !entryRef.current?.contains(event.target) &&
+        !editor?.contains(event.target)
+      ) {
+        adapter.dismiss();
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        adapter.dismiss();
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointerDown, true);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [adapter, portalTarget]);
+  const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
+  return createPortal(
+    <div
+      ref={entryRef}
+      className={styles.toolbarSurface}
+      data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}
+    >
+      <Button
+        className={styles.entryButton}
+        fill="text"
+        icon="ai-sparkle"
+        onClick={adapter.invoke}
+        onMouseDown={preserveSelection}
+        size="sm"
+        variant="secondary"
+      >
+        {t('query-editor-coauthoring.explain-or-modify', 'Explain or modify')}
+        <span className={styles.shortcut}>{getModKey()}+.</span>
+      </Button>
+    </div>,
+    portalTarget
+  );
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
+    // The secondary text button hover matches background.secondary, so it needs a visible overlay here.
+    entryButton: css({
+      '&:hover, &:focus-visible': {
+        background: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    }),
     shortcut: css({
       marginLeft: theme.spacing(0.75),
       color: theme.colors.text.disabled,

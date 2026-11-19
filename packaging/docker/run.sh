@@ -28,7 +28,13 @@ if [ ! -d "$GF_PATHS_PLUGINS" ]; then
 fi
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
+    mkdir -p "$GF_PATHS_HOME/.aws"
+
+    # Save the current umask and restrict newly created files to 0600 (read/write by owner only)
+    old_umask="$(umask)"
+    umask 077
     :> "$GF_PATHS_HOME/.aws/credentials"
+    umask "$old_umask"
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
@@ -38,18 +44,21 @@ if [ ! -z ${GF_AWS_PROFILES+x} ]; then
         access_key="$(printenv "$access_key_varname")" || access_key=""
         secret_key="$(printenv "$secret_key_varname")" || secret_key=""
         if [ ! -z "${access_key}" ] && [ ! -z "${secret_key}" ]; then
-            echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_access_key_id = ${access_key}" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_secret_access_key = ${secret_key}" >> "$GF_PATHS_HOME/.aws/credentials"
-
+            # Feed credentials via stdin (here-document) instead of command-line arguments
+            cat <<EOF >> "$GF_PATHS_HOME/.aws/credentials"
+[${profile}]
+aws_access_key_id = ${access_key}
+aws_secret_access_key = ${secret_key}
+EOF
             region="$(printenv "$region_varname")" || region=""
             if [ ! -z "${region}" ]; then
                 echo "region = ${region}" >> "$GF_PATHS_HOME/.aws/credentials"
             fi
         fi
-    done
 
-    chmod 600 "$GF_PATHS_HOME/.aws/credentials"
+        # Clean sensitive variables from the shell environment before launching Grafana
+        unset "$access_key_varname" "$secret_key_varname" access_key secret_key
+    done
 fi
 
 # Convert all environment variables with names ending in __FILE into the content of

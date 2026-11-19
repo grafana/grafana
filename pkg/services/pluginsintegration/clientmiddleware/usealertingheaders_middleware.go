@@ -49,8 +49,14 @@ func applyAlertHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
 		if key == ngalertmodels.FromAlertHeaderName {
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
+				if t.Headers == nil {
+					t.Headers = map[string]string{}
+				}
 				t.Headers[key] = incomingValue
 			case *backend.QueryChunkedDataRequest:
+				if t.Headers == nil {
+					t.Headers = map[string]string{}
+				}
 				t.Headers[key] = incomingValue
 			}
 		} else {

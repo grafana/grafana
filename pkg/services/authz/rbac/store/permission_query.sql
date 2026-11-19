@@ -1,4 +1,4 @@
-SELECT{{ if not .Query.Action }} p.action,{{ end }} p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p
+SELECT{{ if not .Query.Action }} p.action,{{ end }} p.kind, p.attribute, p.identifier, p.scope FROM {{ .Ident .PermissionTable }} as p{{ if and .ForcePermissionRoleActionIndex .Query.Action (eq .DialectName "mysql") }} FORCE INDEX (IDX_permission_role_id_action){{ end }}
 INNER JOIN (
   SELECT role_id FROM {{ .Ident .BuiltinRoleTable }} as br WHERE (br.role = {{ .Arg .Query.Role }} AND (br.org_id = {{ .Arg .Query.OrgID }} OR br.org_id = 0))
     {{ if .Query.IsServerAdmin }}

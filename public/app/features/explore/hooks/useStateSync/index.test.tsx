@@ -27,6 +27,7 @@ const fetch = jest.fn().mockResolvedValue({ correlations: [] });
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
+  getDataSourceInstance: (...args: Parameters<DatasourceGetter>) => currentDatasourceGetter.get(...args),
 }));
 
 jest.mock('rxjs', () => ({
@@ -45,11 +46,6 @@ type DatasourceGetter = (ref?: DataSourceRef | string | null, scopedVars?: Scope
 const currentDatasourceGetter: { get: DatasourceGetter } = {
   get: () => Promise.reject(new Error('datasources have not been seeded')),
 };
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: (...args: Parameters<DatasourceGetter>) => currentDatasourceGetter.get(...args),
-}));
 
 function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DatasourceGetter {
   return (datasource) => {
@@ -136,6 +132,39 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
 }
 
 describe('useStateSync', () => {
+  it.each([true, false])('preserves expandSpan=%s through URL rewriting and reloading', async (expandSpan) => {
+    const { location, store, unmount } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            panelsState: { trace: { spanId: 'linked-span', expandSpan } },
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes.one?.datasourceInstance?.uid).toBe('loki-uid');
+      expect(JSON.parse(location.getSearch().get('panes')!).one.panelsState.trace).toEqual({
+        spanId: 'linked-span',
+        expandSpan,
+      });
+    });
+
+    const queryParams = location.getSearchObject();
+    unmount();
+    const reloaded = setup({ queryParams });
+    await waitFor(() => {
+      expect(reloaded.store.getState().explore.panes.one?.panelsState.trace).toEqual({
+        spanId: 'linked-span',
+        expandSpan,
+      });
+    });
+  });
+
   it('does not push a new entry to history on first render', async () => {
     const { location } = setup({});
 

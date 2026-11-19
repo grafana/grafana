@@ -51,9 +51,17 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
+  /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
   /**
    * Controls whether the header should show icons for the column types
    */
@@ -74,6 +82,7 @@ export const defaultOptions: Partial<Options> = {
   frameIndex: 0,
   hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
   zebraStriping: false,

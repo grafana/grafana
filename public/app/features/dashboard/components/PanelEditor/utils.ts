@@ -2,6 +2,32 @@ import { omit } from 'lodash';
 
 import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
 
+/**
+ * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the
+ * full property id (`custom.lineWidth`, not a path inside `custom`). Clearing the last entry
+ * removes `varMappings`.
+ */
+export const updateDefaultFieldConfigVarMapping = (
+  config: FieldConfigSource,
+  id: string,
+  expr: string | undefined
+): FieldConfigSource => {
+  const current = config.defaults.varMappings;
+
+  if (expr === undefined) {
+    if (!current || !(id in current)) {
+      return config;
+    }
+    const varMappings = omit(current, id);
+    const defaults = Object.keys(varMappings).length
+      ? { ...config.defaults, varMappings }
+      : omit(config.defaults, 'varMappings');
+    return { ...config, defaults };
+  }
+
+  return { ...config, defaults: { ...config.defaults, varMappings: { ...current, [id]: expr } } };
+};
+
 export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boolean {
   return plugin?.meta.skipDataQuery === false;
 }
@@ -37,7 +63,7 @@ export const updateDefaultFieldConfigValue = (
   };
 };
 
-export function setOptionImmutably<T extends object>(options: T, path: string | string[], value: any): T {
+export function setOptionImmutably<T extends object>(options: T, path: string | string[], value: unknown): T {
   const splat = !Array.isArray(path) ? path.split('.') : path;
 
   const key = splat.shift()!;

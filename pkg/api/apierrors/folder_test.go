@@ -1,6 +1,7 @@
 package apierrors_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,8 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
@@ -138,7 +142,7 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "folder with same uid exists",
 			input: folder.ErrSameUIDExists,
-			want:  response.Error(http.StatusConflict, folder.ErrSameUIDExists.Error(), nil),
+			want:  response.Error(http.StatusConflict, "a folder with the same UID already exists", folder.ErrSameUIDExists),
 		},
 		// --- 412 Precondition Failed ---
 		{
@@ -254,6 +258,155 @@ func TestToFolderErrorResponse(t *testing.T) {
 
 // TestErrorsIs_UnwrapsAPIWrappers tests that errors.Is matches the legacy sentinel via
 // the Unwrap chain.
+func TestToFolderStatusErrorPreservesValidationMessages(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		err     error
+		message string
+	}{
+		{"empty title", folder.ErrAPITitleEmpty, "folder title cannot be empty"},
+		{"invalid uid", folder.ErrAPIInvalidUID, "invalid uid for folder provided"},
+		{"self parent", folder.ErrAPIFolderCannotBeParentOfItself, "folder cannot be parent of itself"},
+		{"maximum depth", folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", 4), "[folder.maximum-depth-reached] folder max depth exceeded, max depth is 4"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(tc.err)
+			require.Equal(t, int32(http.StatusBadRequest), mapped.ErrStatus.Code)
+			require.Equal(t, tc.message, mapped.ErrStatus.Message)
+		})
+	}
+}
+
+func TestToFolderStatusErrorPreservesKubernetesStatus(t *testing.T) {
+	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
+		TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
+		Status:   metav1.StatusFailure,
+		Code:     http.StatusTooManyRequests,
+		Reason:   metav1.StatusReasonTooManyRequests,
+		Message:  "storage is throttling requests",
+		Details: &metav1.StatusDetails{
+			Group: "folder.grafana.app", Kind: "Folder", Name: "parent",
+			RetryAfterSeconds: 11,
+			Causes:            []metav1.StatusCause{{Type: metav1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid"}},
+		},
+	}}
+	before := *original.ErrStatus.DeepCopy()
+	for name, input := range map[string]error{
+		"direct":  original,
+		"wrapped": fmt.Errorf("create failed: %w", original),
+	} {
+		t.Run(name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(input)
+			require.Equal(t, before, mapped.ErrStatus)
+		})
+	}
+	require.Equal(t, before, original.ErrStatus)
+}
+
+func TestToFolderStatusErrorNormalizesReasonOnlyConflicts(t *testing.T) {
+	original := &k8sErrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "private storage details",
+		Details: &metav1.StatusDetails{RetryAfterSeconds: 6, Name: "folder"},
+	}}
+	mapped := apierrors.ToFolderStatusError(original)
+	require.Equal(t, int32(http.StatusConflict), mapped.ErrStatus.Code)
+	require.Equal(t, metav1.StatusReasonConflict, mapped.ErrStatus.Reason)
+	require.Equal(t, "the folder operation conflicted with another request; please retry", mapped.ErrStatus.Message)
+	require.Equal(t, int32(6), mapped.ErrStatus.Details.RetryAfterSeconds)
+	require.Equal(t, "folder", mapped.ErrStatus.Details.Name)
+	require.Equal(t, "private storage details", original.ErrStatus.Message)
+}
+
+func TestToFolderStatusErrorDefaultsIncompleteStatuses(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		status     metav1.Status
+		code       int32
+		reason     metav1.StatusReason
+		message    string
+		retryAfter int32
+	}{
+		{
+			name:   "reason-only conflict",
+			status: metav1.Status{Reason: metav1.StatusReasonConflict, Details: &metav1.StatusDetails{RetryAfterSeconds: 4}},
+			code:   http.StatusConflict, reason: metav1.StatusReasonConflict,
+			message: "the folder operation conflicted with another request; please retry", retryAfter: 4,
+		},
+		{
+			name:   "missing message",
+			status: metav1.Status{Code: http.StatusForbidden, Reason: metav1.StatusReasonForbidden},
+			code:   http.StatusForbidden, reason: metav1.StatusReasonForbidden, message: "Access denied",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(&k8sErrors.StatusError{ErrStatus: tc.status})
+			require.Equal(t, tc.code, mapped.ErrStatus.Code)
+			require.Equal(t, tc.reason, mapped.ErrStatus.Reason)
+			require.Equal(t, tc.message, mapped.ErrStatus.Message)
+			if tc.retryAfter != 0 {
+				require.Equal(t, tc.retryAfter, mapped.ErrStatus.Details.RetryAfterSeconds)
+			}
+		})
+	}
+}
+
+func TestToFolderStatusErrorSanitizesUnexpectedErrors(t *testing.T) {
+	for name, input := range map[string]error{
+		"plain":   errors.New("private database details"),
+		"wrapped": fmt.Errorf("create failed: %w", errors.New("private database details")),
+	} {
+		t.Run(name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(input)
+			require.Equal(t, int32(http.StatusInternalServerError), mapped.ErrStatus.Code)
+			require.Equal(t, metav1.StatusReasonInternalError, mapped.ErrStatus.Reason)
+			require.Equal(t, metav1.StatusFailure, mapped.ErrStatus.Status)
+			require.Equal(t, "Folder API error", mapped.ErrStatus.Message)
+			require.Nil(t, mapped.ErrStatus.Details)
+		})
+	}
+}
+
+func TestToFolderStatusErrorMapsContextErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		err     error
+		code    int32
+		reason  metav1.StatusReason
+		message string
+	}{
+		{name: "canceled", err: context.Canceled, code: 499, reason: "ClientClosedRequest", message: "Request canceled"},
+		{name: "grpc canceled", err: status.Error(codes.Canceled, "private transport details"), code: 499, reason: "ClientClosedRequest", message: "Request canceled"},
+		{name: "deadline", err: context.DeadlineExceeded, code: http.StatusGatewayTimeout, reason: metav1.StatusReasonTimeout, message: "Gateway Timeout"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mapped := apierrors.ToFolderStatusError(tc.err)
+			require.Equal(t, tc.code, mapped.ErrStatus.Code)
+			require.Equal(t, tc.reason, mapped.ErrStatus.Reason)
+			require.Equal(t, tc.message, mapped.ErrStatus.Message)
+		})
+	}
+}
+
+func TestToFolderStatusErrorMergesGrafanaAndStorageDetails(t *testing.T) {
+	storageErr := k8sErrors.NewInvalid(schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, "child", nil)
+	storageErr.ErrStatus.Details = &metav1.StatusDetails{
+		Group: "folder.grafana.app", Kind: "Folder", Name: "child",
+		Causes: []metav1.StatusCause{{Type: metav1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid"}},
+	}
+	wrapped := folder.ErrInternal.Errorf("operation failed: %w", storageErr)
+	mapped := apierrors.ToFolderStatusError(wrapped)
+	require.Equal(t, int32(http.StatusUnprocessableEntity), mapped.ErrStatus.Code)
+	require.NotNil(t, mapped.ErrStatus.Details)
+	require.Equal(t, "folder.grafana.app", mapped.ErrStatus.Details.Group)
+	require.Equal(t, "Folder", mapped.ErrStatus.Details.Kind)
+	require.Equal(t, "child", mapped.ErrStatus.Details.Name)
+	require.Equal(t, []metav1.StatusCause{{Type: metav1.CauseTypeFieldValueInvalid, Field: "metadata.name", Message: "invalid"}}, mapped.ErrStatus.Details.Causes)
+	require.Equal(t, "folder.internal", string(mapped.ErrStatus.Details.UID))
+}
+
 func TestErrorsIs_UnwrapsAPIWrappers(t *testing.T) {
 	cases := []struct {
 		name    string

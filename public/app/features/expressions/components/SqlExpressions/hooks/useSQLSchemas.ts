@@ -3,8 +3,8 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { getAPINamespace } from '@grafana/api-clients';
 import { type AdHocVariableFilter, getDefaultTimeRange, type ScopedVars, type TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
@@ -106,8 +106,13 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
       const namespace = getAPINamespace();
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
+      let apiGroup = 'query.grafana.app';
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+        apiGroup = 'datasource.grafana.app';
+      }
+
       const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
+        `/apis/${apiGroup}/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
           queries: interpolatedQueries,
           from: currentTimeRange.from.toISOString(),

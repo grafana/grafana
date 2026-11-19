@@ -204,6 +204,13 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// AllowsSecureValues reports whether files in a repository of this type may
+// create or remove secure values. A secret committed to git stays in a history
+// we cannot redact, and a file should not delete a value it never owned.
+func (r RepositoryType) AllowsSecureValues() bool {
+	return !r.IsGit()
+}
+
 // GitHub || GitHubEnterprise
 func (r RepositoryType) IsGitHub() bool {
 	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
@@ -667,6 +674,9 @@ type SyncStatus struct {
 	// When the sync job finished
 	Finished int64 `json:"finished,omitempty"`
 
+	// When the controller last attempted a sync or an interval check (Unix milliseconds).
+	LastChecked int64 `json:"lastChecked,omitempty"`
+
 	// When the next sync check is scheduled
 	Scheduled int64 `json:"scheduled,omitempty"`
 
@@ -971,6 +981,20 @@ type ResourceCount struct {
 
 func (ResourceCount) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ResourceCount"
+}
+
+// What a single manager manages.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceCountList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ResourceCount `json:"items"`
+}
+
+func (ResourceCountList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceCountList"
 }
 
 // TestResults is the result of a test connection operation

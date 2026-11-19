@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type DataSourceInstanceListItem, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -50,7 +50,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   // This key is used to force a rerender on the inputs when the filters are cleared
-  const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
+  const [filterKey, setFilterKey] = useState<number>(() => Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
@@ -64,7 +64,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
 
-  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
+  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceListItem, action: 'add' | 'remove') => {
     const dataSourceNames =
       action === 'add'
         ? [...filterState.dataSourceNames].concat([dataSourceValue.name])
@@ -159,7 +159,6 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           <MultipleDataSourcePicker
             key={dataSourceKey}
             alerting
-            noDefault
             placeholder={t('alerting.rules-filter.placeholder-all-data-sources', 'All data sources')}
             current={filterState.dataSourceNames}
             onChange={handleDataSourceChange}

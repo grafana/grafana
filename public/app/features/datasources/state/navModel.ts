@@ -18,7 +18,10 @@ import { type GenericDataSourcePlugin } from '../types';
 
 const loadingDSType = 'Loading';
 
-export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
+export function buildNavModel(
+  dataSource: DataSourceSettings,
+  plugin: Pick<GenericDataSourcePlugin, 'meta' | 'configPages'>
+): NavModelItem {
   const pluginMeta = plugin.meta;
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
@@ -173,7 +176,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
         module: '',
         baseUrl: '',
       },
-    } as any
+    }
   );
 
   return getDataSourceNav(main, pageName);

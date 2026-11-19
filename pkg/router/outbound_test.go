@@ -24,12 +24,10 @@ func TestProxyOutboundCredentials(t *testing.T) {
 	require.NoError(t, err)
 
 	group := metav1.APIGroup{Name: "test-app"}
-	forward, err := NewForwardBackend(group, forwardSpec(upstream.URL), "1", &http.Transport{})
-	require.NoError(t, err)
-	aggregate, err := newAggregateBackend("target", group, upstreamURL, &http.Transport{})
+	backend, err := newAggregateBackend("target", group, upstreamURL, &http.Transport{})
 	require.NoError(t, err)
 
-	for name, backend := range map[string]Backend{"forward": forward, "aggregate": aggregate} {
+	for name, backend := range map[string]Backend{"aggregate": backend} {
 		handler, err := backend.Load(t.Context())
 		require.NoError(t, err)
 		send := func(t *testing.T, ctx context.Context) http.Header {
@@ -86,14 +84,12 @@ func TestProxyDropsCallerIdentityHeaders(t *testing.T) {
 	require.NoError(t, err)
 
 	group := metav1.APIGroup{Name: "test-app"}
-	forward, err := NewForwardBackend(group, forwardSpec(upstream.URL), "1", &http.Transport{})
-	require.NoError(t, err)
-	aggregate, err := newAggregateBackend("target", group, upstreamURL, &http.Transport{})
+	backend, err := newAggregateBackend("target", group, upstreamURL, &http.Transport{})
 	require.NoError(t, err)
 
 	asserted := []string{"X-Remote-User", "X-Remote-Group", "X-Remote-Extra-Scopes", "x-remote-extra-lower", "X-WEBAUTH-USER", "X-Webauth-Email"}
 	scoped := []string{"Impersonate-User", "Impersonate-Group", "Impersonate-Uid", "Impersonate-Extra-Scopes", "X-Grafana-Org-Id"}
-	for name, backend := range map[string]Backend{"forward": forward, "aggregate": aggregate} {
+	for name, backend := range map[string]Backend{"aggregate": backend} {
 		handler, err := backend.Load(t.Context())
 		require.NoError(t, err)
 		send := func(t *testing.T, ctx context.Context) http.Header {

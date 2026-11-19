@@ -80,6 +80,23 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="completed" message="You're all caught up" />;
 ```
 
+## Semantic headings
+
+String messages render as a `span` with the `h4` visual style. When the message labels a page section, pass a `Text` component with the correct semantic heading level. Choose the level from the surrounding page structure, not the message's visual size.
+
+```jsx
+import { EmptyState, Text } from '@grafana/ui';
+
+<EmptyState
+  variant="not-found"
+  message={
+    <Text element="h2" variant="h4" textAlignment="center">
+      No playlists found
+    </Text>
+  }
+/>;
+```
+
 ## Customization
 
 For all variants you can:

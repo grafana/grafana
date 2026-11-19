@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { type DataSourceJsonData, type PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { setPluginComponentsHook, setPluginLinksHook, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../mocks/dataSourcesMocks';
+import { initialState } from '../state/reducers';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
@@ -16,20 +16,18 @@ import { EditDataSourceView, type ViewProps } from './EditDataSource';
 
 const onOptionsChange = jest.fn();
 
-jest.mock('@grafana/runtime/unstable', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime/unstable'),
-    useDataSourceInstanceSettings: jest.fn((uid?: string) => ({
-      isLoading: false,
-      settings: uid
-        ? {
-            uid,
-            meta: getMockDataSourceMeta(),
-          }
-        : undefined,
-    })),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useDataSourceInstanceSettings: jest.fn((uid?: string) => ({
+    isLoading: false,
+    settings: uid
+      ? {
+          uid,
+          meta: getMockDataSourceMeta(),
+        }
+      : undefined,
+  })),
+}));
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
@@ -117,6 +115,18 @@ describe('<EditDataSource>', () => {
       });
 
       expect(screen.queryByText('Data source not found')).toBeVisible();
+    });
+
+    it('should render the load error message when initialising the page failed before the data source loaded', () => {
+      const loadError =
+        'Could not load access information for data source "abc123": the server could not find the requested resource';
+      setup({
+        dataSource: initialState.dataSource,
+        dataSourceSettings: getMockDataSourceSettingsState({ plugin: null, loadError }),
+      });
+
+      expect(screen.getByText(loadError)).toBeVisible();
+      expect(screen.queryByText('Data source not found')).not.toBeInTheDocument();
     });
   });
 

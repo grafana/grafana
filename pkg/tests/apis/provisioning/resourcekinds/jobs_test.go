@@ -3,6 +3,7 @@ package resourcekinds
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,8 +74,10 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			client := rk.client(t, helper)
 
 			repo := rk.name + "-move-job-repo"
+			repoPath := filepath.Join(helper.ProvisioningPath, repo)
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:       repo,
+				LocalPath:  repoPath,
 				SyncTarget: "folder",
 				Workflows:  []string{"write"},
 			})
@@ -92,8 +95,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
-			// Bulk move both files into a subdirectory in a single job. The move plus its
-			// post-move re-upsert must complete cleanly.
+			common.WriteFolderMetadata(t, repo, repoPath, "archived")
 			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},

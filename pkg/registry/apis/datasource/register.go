@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -69,12 +70,14 @@ type DataSourceAPIBuilder struct {
 	schemas                map[string]*pluginschema.PluginSchema
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	cfg                    DataSourceAPIBuilderConfig
-	proxyDeps              *ProxyDependencies
+	proxyDependencies      ProxyDependenciesProvider
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 
 	// dataSourceRequestValidator gates outbound datasource requests (proxy and
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
+
+	permissionsDeleter datasources.PermissionsDeleter
 
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
@@ -91,7 +94,8 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	pluginSources sources.Registry,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
-	proxyDeps *ProxyDependencies,
+	proxyDependencies ProxyDependenciesProvider,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
@@ -152,7 +156,8 @@ func RegisterAPIService(
 			decrypter,
 			flags,
 			dataSourceRequestValidator,
-			proxyDeps,
+			proxyDependencies,
+			permissionsDeleter,
 		)
 		if err != nil {
 			return nil, err
@@ -178,7 +183,6 @@ type PluginClient interface {
 	backend.QueryChunkedDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -191,7 +195,8 @@ func NewDataSourceAPIBuilder(
 	decrypter decrypt.DecryptService, // when not reading legacy
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
-	proxyDeps *ProxyDependencies,
+	proxyDependencies ProxyDependenciesProvider,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -205,7 +210,8 @@ func NewDataSourceAPIBuilder(
 		decrypter:                  decrypter,
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
-		proxyDeps:                  proxyDeps,
+		proxyDependencies:          proxyDependencies,
+		permissionsDeleter:         permissionsDeleter,
 	}
 	return builder, nil
 }
@@ -297,13 +303,20 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			// Keep them for now, but we should get rid of them when possible
 			DeprecatedInternalID: apistore.DeprecatedID_Required,
 
-			// Avoid using the codec serializer -- we have multiple GVKs registered to the same go type
-			Serializer: apistore.JSONSerializer(),
+			// Every datasource type shares one collection, so a UID is unique across types
+			// and permissions are checked against a single group
+			SharedStorage: &apistore.SharedStorage{
+				Group:      datasourceV0.GROUP,
+				LabelKey:   datasourceV0.LabelKeyGroup,
+				LabelValue: datasourceV0.GroupLabelValue(ds.GroupResource().Group),
+			},
 		})
-		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, optsGetter)
 		if err != nil {
 			return err
+		}
+		if b.permissionsDeleter != nil {
+			unified.AfterDelete = b.afterDelete
 		}
 		b.store, err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
 		if err != nil {
@@ -324,7 +337,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Frontend proxy
 	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b, transports: newProxyTransportCache()}
 	}
 
 	// Register query types (convert to real k8s type first)

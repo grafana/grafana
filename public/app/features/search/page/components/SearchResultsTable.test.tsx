@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { type MouseEvent } from 'react';
 import { Subject } from 'rxjs';
 
 import {
@@ -10,8 +12,8 @@ import {
   type PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
@@ -23,8 +25,9 @@ jest.mock('@grafana/runtime/internal', () => ({
   usePanelPluginMetasMap: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   useDataSourceInstanceSettings: jest.fn(),
 }));
 
@@ -33,6 +36,7 @@ const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSetti
 
 describe('SearchResultsTable', () => {
   beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
     usePanelPluginMetasMapMock.mockReturnValue({
       loading: false,
       error: undefined,
@@ -155,6 +159,85 @@ describe('SearchResultsTable', () => {
       await screen.findByRole('table');
 
       expect(screen.queryByLabelText('Description')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when results include locations', () => {
+    function setup() {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'kind', values: ['dashboard', 'dashboard'] },
+          { name: 'uid', values: ['team-dashboard', 'root-dashboard'] },
+          { name: 'name', values: ['Team dashboard', 'Root dashboard'] },
+          { name: 'url', values: ['/d/team-dashboard', '/d/root-dashboard'] },
+          { name: 'location', values: ['team-folder', 'general'] },
+          { name: 'tags', type: FieldType.other, values: [[], []] },
+        ],
+        meta: {
+          custom: {
+            locationInfo: {
+              'team-folder': { kind: 'folder', name: 'Team dashboards', url: '/dashboards/f/team-folder' },
+            },
+          },
+        },
+      });
+      const [dataFrame] = applyFieldOverrides({
+        data: [frame],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+      });
+      const response: QueryResponse = {
+        view: new DataFrameView<DashboardQueryResult>(dataFrame),
+        totalRows: frame.length,
+        isItemLoaded: jest.fn().mockReturnValue(true),
+        loadMoreItems: jest.fn(),
+      };
+      const onClickItem = jest.fn((event: MouseEvent<HTMLElement>) => event.preventDefault());
+      const user = userEvent.setup();
+
+      render(
+        <SearchResultsTable
+          response={response}
+          clearSelection={mockClearSelection}
+          onTagSelected={mockOnTagSelected}
+          onClickItem={onClickItem}
+          keyboardEvents={mockKeyboardEvents}
+          trackingSource="search-test"
+          height={1000}
+          width={1000}
+        />
+      );
+
+      return { user, onClickItem };
+    }
+
+    it('links to the parent folder and falls back to Dashboards for the root location', () => {
+      setup();
+
+      expect(screen.getByRole('link', { name: 'Team dashboards' })).toHaveAttribute(
+        'href',
+        '/dashboards/f/team-folder'
+      );
+      expect(screen.getByRole('link', { name: 'Dashboards' })).toHaveAttribute('href', '/dashboards');
+    });
+
+    it.each([
+      { name: 'Team dashboard', href: '/d/team-dashboard', parent: 'folder' },
+      { name: 'Root dashboard', href: '/d/root-dashboard', parent: 'general' },
+    ])('reports the $parent parent when opening $name', async ({ name, href, parent }) => {
+      const { user, onClickItem } = setup();
+      const link = screen.getByRole('link', { name });
+      expect(link).toHaveAttribute('href', href);
+
+      await user.click(link);
+
+      expect(onClickItem).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_browse_dashboards_page_click_list_item', {
+        itemKind: 'dashboard',
+        parent,
+        source: 'search-test',
+      });
     });
   });
 

@@ -19,7 +19,14 @@ type PluginDefinition struct {
 	Schemas map[string]*pluginschema.PluginSchema `json:"schemas,omitempty"`
 
 	// When an app manifest is defined, we can use that
-	Manifest *app.ManifestData `json:"manifest,omitempty"`
+	Manifests []*app.ManifestData `json:"manifests,omitempty"`
+
+	// Settings describes an app's settings API, served under the plugin ID: the
+	// app resource and the routes of its resources and proxy subresources. The
+	// loader sets it to the app manifest whose group is the plugin ID, and
+	// LoadSettings completes it, with plugin.json's routes when that declares
+	// no proxy routes; see NewSettingsManifest.
+	Settings *app.ManifestData `json:"settings,omitempty"`
 }
 
 // Internal, cloud specific type used by the router to know which MT plugins exist

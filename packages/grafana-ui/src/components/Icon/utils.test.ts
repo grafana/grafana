@@ -25,12 +25,12 @@ describe('Icon utils', () => {
     describe('when the build path is configured', () => {
       beforeAll(() => {
         //@ts-ignore
-        window.__grafana_build_path__ = 'somepath/public/build/rspack/';
+        window.__grafana_build_path__ = 'somepath/public/build/';
       });
 
       it('should return icon root based on __grafana_build_path__', () => {
         const { getIconRoot } = require('./utils');
-        expect(getIconRoot()).toEqual('somepath/public/build/rspack/img/icons/');
+        expect(getIconRoot()).toEqual('somepath/public/build/img/icons/');
       });
     });
 

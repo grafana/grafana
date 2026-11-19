@@ -5,23 +5,24 @@ import (
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 var _ Backend = (*legacyClient)(nil)
 
 type legacyClient struct {
-	service provisioning.AlertRuleService
+	service legacy.LegacyRuleService
 	logger  log.Logger
 }
 
-func NewLegacyClient(service provisioning.AlertRuleService) *legacyClient {
+func NewLegacyClient(service legacy.LegacyRuleService) *legacyClient {
 	return &legacyClient{service: service, logger: log.New("alerting.rules.search.legacy")}
 }
 
@@ -32,15 +33,19 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 	}
 
 	f := extractFilters(req)
+	labelRegexes, err := compileLabelRegexes(req.Regexes)
+	if err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
 	if f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
 		return &Result{Hits: []Hit{}, TotalHitsExact: true}, nil
 	}
-	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, _, _, err := c.service.ListAlertRules(ctx, user, legacy.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
-		GroupFilter:               provisioning.ListRuleStringFilter{Include: f.groupsInclude, Exclude: f.groupsExclude},
+		GroupFilter:               legacy.ListRuleStringFilter{Include: f.groupsInclude, Exclude: f.groupsExclude},
 		FolderFilter:              includeFilter(f.folders),
-		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
+		PausedFilter:              legacy.ListRuleBoolFilter{Value: f.paused},
 		DashboardFilter:           stringFilter(f.dashboardUID),
 		PanelIDFilter:             stringFilter(f.panelID),
 		NotificationTypeFilter:    stringFilter(f.notificationType),
@@ -65,12 +70,15 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 		if !matchLabels(r, f.labelMatchers) {
 			continue
 		}
+		if !matchLabelRegexes(r, labelRegexes) {
+			continue
+		}
 		if !matchSourceDatasourceUIDs(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
 	}
-	perKindSortRules(filtered, f.sortField, f.sortDesc)
+	perKindSortRules(filtered, req.Sort)
 
 	total := len(filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)
@@ -87,7 +95,7 @@ func (c *legacyClient) Search(ctx context.Context, req *Query) (*Result, error) 
 		}
 		hits = append(hits, Hit{Name: r.UID, Values: values})
 	}
-	// The provisioning service counts only rules in folders the caller can read.
+	// The rules service counts only rules in folders the caller can read.
 	return &Result{Hits: hits, TotalHits: int64(total), TotalHitsExact: true}, nil
 }
 

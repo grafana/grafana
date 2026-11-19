@@ -41,6 +41,10 @@ The filter and group by feature lets you add label/value filter pairs that are a
 Unlike variables, you don't use these filters in queries.
 Instead, you use them to write filters for existing queries.
 
+To try filter and group by controls with a Prometheus data source, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Filter variables" url="https://play.grafana.org/d/canvvlh/" >}}
+
 The following data sources support filters.
 Data sources with an asterisk also support the group by function:
 
@@ -60,7 +64,7 @@ Data sources with an asterisk also support the group by function:
 To add filters and group by controls, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Filter and Group by**.
 1. Enter a **Name** for the filter.
@@ -78,7 +82,7 @@ To add filters and group by controls, follow these steps:
    - **Controls menu**: The filter is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
    - **Hidden**: No filter drop-down list is displayed on the dashboard.
 
-1. Under the **Filter options** section of the page, set the following options:
+1. Under the **Filter options** section of the sidebar, set the following options:
 
    | Option                    | Description                 |
    | ------------------------- | --------------------------- |
@@ -91,7 +95,7 @@ To add filters and group by controls, follow these steps:
 
 1. Click **Save**.
 1. Enter an optional description of your dashboard changes, and then click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 <!-- prettier-ignore-end -->
 
@@ -110,7 +114,7 @@ The overview lets you search for specific keys, and adjust them, without scrolli
 
 {{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by dimensions" >}}
 
-Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by dimension.
+Add an operator and value for a key to add it as a filter or select the **GroupBy** checkbox to set a group by dimension.
 You can use a key for both a filter and a group by.
 
 ## Cross-filtering {#dashboard-drilldown-with-filters}
@@ -125,11 +129,24 @@ To enable this functionality, you need to add an override for every field by whi
 In the override:
 
 - Select a field name.
-- Enable the **Filterable** switch.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.2.png" max-width="400px" alt="Field override making some fields filterable" >}}
+- Add the **Standard options > Cross-filter** override property.
+- Enable the **Cross-filter** switch to allow viewers to update dashboard filters by interacting with the panel.
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
+
+For provisioned dashboards, **Cross-filter** uses the JSON property ID `filterable`.
+For example, add the following override to the panel's `fieldConfig.overrides` array to enable filtering from the `service` field:
+
+```json
+{
+  "matcher": { "id": "byName", "options": "service" },
+  "properties": [{ "id": "filterable", "value": true }]
+}
+```
+
+Replace `service` with the name of the field you want to filter by.
+This requires a supported visualization and data source support for dashboard filters.
+The standard `filterable` property updates dashboard filters.
 
 Cross-filtering is supported for the following visualizations:
 
@@ -164,6 +181,11 @@ If one of the panels in the dashboard using that data source doesn't include tha
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
 
+From the filter field at the top of the dashboard, you can do the following as needed:
+
+- Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+- Delete the filter.
+
 For some visualizations, if your query doesn't include some type of data grouping, you might need to group the data first.
 For more information, refer to [Group from the panel](#group-from-the-panel).
 
@@ -190,7 +212,7 @@ This allows you to bypass the limitations of the data source in the source panel
 To use filters on data from an unsupported data source, follow these steps:
 
 1. Navigate to the dashboard with the panel with the data you want to filter.
-1. Click **Edit** in top-right corner of the dashboard.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon and click or drag a panel onto the dashboard.
 1. Click **Configure visualization**.
 1. In the **Queries** tab of the edit panel view, enter `Dashboard` in the **Data source** field and select **-- Dashboard --**.
@@ -206,7 +228,8 @@ To use filters on data from an unsupported data source, follow these steps:
 1. Configure any other needed options for the panel.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Now you can filter the data from the source panel by way of the Dashboard data source.
 Add as many panels as you need.

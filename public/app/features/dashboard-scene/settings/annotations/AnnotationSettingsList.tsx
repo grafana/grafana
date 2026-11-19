@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceSettings } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { ListNewButton } from './ListNewButton';

@@ -46,7 +46,8 @@ function setup(
   logs: LogListModel[],
   order: LogsSortOrder,
   infiniteScrollMode: InfiniteScrollMode = 'interval',
-  { element, events } = getMockElement(startPosition)
+  { element, events } = getMockElement(startPosition),
+  infiniteScrollTop = true
 ) {
   function scrollTo(position: number, timeStamp?: number) {
     element.scrollTop = position;
@@ -88,11 +89,13 @@ function setup(
       scrollElement={element as unknown as HTMLDivElement}
       loadMore={loadMoreMock}
       infiniteScrollMode={infiniteScrollMode}
+      infiniteScrollTop={infiniteScrollTop}
     >
-      {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+      {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
         <VariableSizeList
           height={100}
           itemCount={itemCount}
+          itemData={itemData}
           itemSize={() => virtualization.getLineHeight()}
           itemKey={getItemKey}
           layout="vertical"
@@ -100,7 +103,7 @@ function setup(
           style={{ overflow: 'scroll' }}
           width="100%"
         >
-          {Renderer}
+          {Log}
         </VariableSizeList>
       )}
     </InfiniteScroll>
@@ -189,6 +192,7 @@ describe('InfiniteScroll', () => {
           {
             from: logs[logs.length - 1].timeEpochMs,
             to: absoluteRange.to,
+            startNs: '1702578898000000001',
           },
           order === LogsSortOrder.Descending ? -1 : 1
         );
@@ -210,6 +214,7 @@ describe('InfiniteScroll', () => {
           {
             from: absoluteRange.from,
             to: logs[0].timeEpochMs,
+            endNs: '1702578602000000000',
           },
           order === LogsSortOrder.Ascending ? -1 : 1
         );
@@ -294,6 +299,67 @@ describe('InfiniteScroll', () => {
         });
       });
 
+      describe('Scrolling to the top', () => {
+        test('Does not request more logs when the top direction is disabled', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order, 'interval', getMockElement(0), false);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+        });
+
+        test('Requests more logs in the top direction', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).toHaveBeenCalledTimes(1);
+          expect(loadMoreMock).toHaveBeenCalledWith(expect.anything(), ScrollDirection.Top);
+        });
+
+        test('Shows the loading message for the direction of the request', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          // Scrolling to the top loads newer logs in descending order, and older logs in ascending order.
+          expect(
+            await screen.findByText(
+              order === LogsSortOrder.Descending ? 'Loading newer logs...' : 'Loading older logs...'
+            )
+          ).toBeInTheDocument();
+          expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+        });
+
+        test('Shows the end of the range when there are no more logs in the top direction', async () => {
+          // Visible range matches the current range
+          const logs = createLogs(absoluteRange.from, absoluteRange.to);
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+        });
+      });
+
       describe('With scroll mode unlimited', () => {
         test('Allows infinite scroll in the top direction', async () => {
           const loadMoreMock = jest.fn();
@@ -309,6 +375,122 @@ describe('InfiniteScroll', () => {
       });
     }
   );
+});
+
+describe('InfiniteScroll top direction with a long list', () => {
+  const pageFrom = absoluteRange.from + 20 * SCROLLING_THRESHOLD;
+  const pageTo = absoluteRange.from + 50 * SCROLLING_THRESHOLD;
+
+  function makeLongLogs(n: number): LogListModel[] {
+    return Array.from({ length: n }, (_, i) => {
+      const ts = pageFrom + Math.round(((pageTo - pageFrom) * i) / (n - 1));
+      return createLogLine({ entry: `line ${i}`, uid: `log-${i}`, timeEpochMs: ts });
+    });
+  }
+
+  test('Requires a second scroll after reaching the top to load more', async () => {
+    const loadMoreMock = jest.fn();
+    const { wheel } = setup(loadMoreMock, 0, makeLongLogs(30), LogsSortOrder.Ascending);
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    // The first event is only registered, the second one reaches the top.
+    wheel(-5, 1);
+    wheel(-5, 600);
+
+    expect(loadMoreMock).not.toHaveBeenCalled();
+    expect(await screen.findByText('Scroll to load more')).toBeInTheDocument();
+
+    wheel(-5, 1200);
+
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+    expect(loadMoreMock).toHaveBeenCalledWith(expect.anything(), ScrollDirection.Top);
+    expect(await screen.findByText('Loading older logs...')).toBeInTheDocument();
+  });
+
+  test('Does not arm the top direction when it is disabled', async () => {
+    const loadMoreMock = jest.fn();
+    const { wheel } = setup(
+      loadMoreMock,
+      0,
+      makeLongLogs(30),
+      LogsSortOrder.Ascending,
+      'interval',
+      getMockElement(0),
+      false
+    );
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheel(-5, 1);
+    wheel(-5, 600);
+    wheel(-5, 1200);
+
+    expect(screen.queryByText('Scroll to load more')).not.toBeInTheDocument();
+    expect(loadMoreMock).not.toHaveBeenCalled();
+  });
+
+  test('Marks the previously first line as the start of a page loaded from the top', async () => {
+    const { element, events } = getMockElement(0);
+    const loadMoreMock = jest.fn();
+    const page1 = makeLongLogs(30);
+    const ui = (logs: LogListModel[], loadingState: LoadingState) => (
+      <InfiniteScroll
+        {...defaultProps}
+        sortOrder={LogsSortOrder.Ascending}
+        logs={logs}
+        scrollElement={element as unknown as HTMLDivElement}
+        loadMore={loadMoreMock}
+        loadingState={loadingState}
+        infiniteScrollMode="interval"
+        infiniteScrollTop
+      >
+        {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
+          <VariableSizeList
+            height={100}
+            itemCount={itemCount}
+            itemData={itemData}
+            itemSize={() => virtualization.getLineHeight()}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            style={{ overflow: 'scroll' }}
+            width="100%"
+          >
+            {Log}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+    );
+    const { rerender } = render(ui(page1, LoadingState.Done));
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    const wheelUp = (timeStamp: number) =>
+      act(() => {
+        const event = new WheelEvent('wheel', { deltaY: -5 });
+        jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+        events['wheel'](event);
+      });
+    wheelUp(1);
+    wheelUp(600);
+    wheelUp(1200);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      rerender(ui(page1, LoadingState.Loading));
+    });
+    const olderLogs = [0, 1, 2].map((i) =>
+      createLogLine({ entry: `older ${i}`, uid: `older-${i}`, timeEpochMs: pageFrom - (3 - i) * SCROLLING_THRESHOLD })
+    );
+    act(() => {
+      rerender(ui([...olderLogs, ...page1], LoadingState.Done));
+    });
+
+    expect(await screen.findByText('older 0')).toBeInTheDocument();
+    expect(screen.getByText('line 0').closest('.infinite-scroll')).toBeInTheDocument();
+    expect(screen.getByText('older 2').closest('.infinite-scroll')).not.toBeInTheDocument();
+    expect(screen.getByText('line 1').closest('.infinite-scroll')).not.toBeInTheDocument();
+  });
 });
 
 // Regression tests for https://github.com/grafana/grafana/issues/129033 (infinite scroll stopping early).
@@ -341,10 +523,11 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
         loadingState={loadingState}
         infiniteScrollMode="interval"
       >
-        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+        {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
           <VariableSizeList
             height={100}
             itemCount={itemCount}
+            itemData={itemData}
             itemSize={() => virtualization.getLineHeight()}
             itemKey={getItemKey}
             layout="vertical"
@@ -352,7 +535,7 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
             style={{ overflow: 'scroll' }}
             width="100%"
           >
-            {Renderer}
+            {Log}
           </VariableSizeList>
         )}
       </InfiniteScroll>
@@ -542,8 +725,10 @@ function createLogs(from: number, to: number) {
   // Time field
   rows[0].dataFrame.fields[0].values = [from, to];
   rows[0].timeEpochMs = from;
+  rows[0].timeEpochNs = `${from}000000`;
   rows[1].dataFrame.fields[0].values = [from, to];
   rows[1].timeEpochMs = to;
+  rows[1].timeEpochNs = `${to}000000`;
   return rows;
 }
 

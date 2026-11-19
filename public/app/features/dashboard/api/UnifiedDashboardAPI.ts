@@ -1,7 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { type Resource, type TableResponse } from 'app/features/apiserver/types';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -12,7 +12,6 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
 import {
   failedFromVersion,
@@ -91,6 +90,13 @@ export class UnifiedDashboardAPI
     const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
     const { v1: v1Token, v2: v2Token } = decodeCompositeToken(options?.continueToken);
 
+    // A continue token without a v1 cursor means v1 has already listed every generation.
+    // Calling v1 again without a cursor would restart it from the first page and append
+    // the same versions over and over, so only drain the v2 stream from here on.
+    if (options?.continueToken && !v1Token) {
+      return await this.listRemainingV2History(uid, limit, v2Token);
+    }
+
     const v1Response = await this.v1Client.listDashboardHistory(uid, { limit, continueToken: v1Token });
     const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
@@ -131,6 +137,29 @@ export class UnifiedDashboardAPI
     };
   }
 
+  // The v1 stream can run out while v2 still holds a cursor, because pages where every v1
+  // item is valid advance v1 without advancing v2. The v2 items behind that cursor were either
+  // already listed through v1 or skipped by an earlier page, so only the v2-valid ones are new.
+  private async listRemainingV2History(uid: string, limit: number, continueToken?: string) {
+    const items: Array<Resource<DashboardV2Spec>> = [];
+    let page: ResourceList<DashboardV2Spec>;
+
+    do {
+      page = await this.v2Client.listDashboardHistory(uid, { limit: limit - items.length, continueToken });
+      items.push(...page.items.filter((item) => !failedFromVersion(item, ['v0', 'v1'])));
+      continueToken = page.metadata.continue;
+    } while (items.length < limit && continueToken);
+
+    return {
+      ...page,
+      items,
+      metadata: {
+        ...page.metadata,
+        continue: encodeCompositeToken(undefined, continueToken),
+      },
+    };
+  }
+
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
     try {
       return await this.v1Client.getDashboardHistoryVersions(uid, versions);
@@ -141,12 +170,6 @@ export class UnifiedDashboardAPI
 
   async restoreDashboardVersion(uid: string, version: number) {
     return await this.v1Client.restoreDashboardVersion(uid, version);
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    // Table format carries only metadata — no spec/status available for conversion
-    // filtering. Both v1 and v2 hit the same backend deleted-items store, so delegate to v1.
-    return this.v1Client.listDeletedDashboards(options);
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO | DashboardV2Spec> | undefined> {

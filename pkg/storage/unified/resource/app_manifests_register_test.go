@@ -9,7 +9,12 @@ import (
 )
 
 func TestRegisterAppManifest(t *testing.T) {
-	// Registration is process-wide, so restore the previous state for other tests.
+	// Registration is process-wide: other tests in this package read AppManifests,
+	// directly or through the global search coverage, so start from no reads, and
+	// restore the previous state for the tests after.
+	registeredManifestsMu.Lock()
+	manifestsRead = false
+	registeredManifestsMu.Unlock()
 	t.Cleanup(func() {
 		registeredManifestsMu.Lock()
 		registeredManifests, manifestsRead = nil, false
@@ -58,8 +63,8 @@ func TestSearchFieldsRegistryReplaceWarnsOnRemovedKinds(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{{
-				Kind:         "Thing",
-				Plural:       "things",
+				Kind:   "Thing",
+				Plural: "things", Resource: "things",
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "title", Path: "spec.title", Type: "string"}},
 			}},
 		}},

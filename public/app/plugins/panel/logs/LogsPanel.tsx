@@ -5,7 +5,6 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  type AbsoluteTimeRange,
   CoreApp,
   type DataFrame,
   DataHoverClearEvent,
@@ -31,14 +30,20 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+import { useFlagGrafanaLogsInfiniteScrollTop } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import {
+  type InfiniteScrollTimeRange,
+  withLokiInfiniteScrollBound,
+} from 'app/features/logs/components/infiniteScrollUtils';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
+import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
@@ -170,6 +175,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     grammar,
   } = options;
   const style = useStyles2(getStyles);
+  const infiniteScrollTopEnabled = useFlagGrafanaLogsInfiniteScrollTop();
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
@@ -397,7 +403,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [options.displayedFields]);
 
   const loadMoreLogs = useCallback(
-    async (scrollRange: AbsoluteTimeRange) => {
+    async (scrollRange: InfiniteScrollTimeRange) => {
       if (!data.request || loadingRef.current) {
         return;
       }
@@ -509,6 +515,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             getFieldLinks={getFieldLinks}
             grammar={isGrammar(grammar) ? grammar : undefined}
             isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            infiniteScrollTop={Boolean(enableInfiniteScrolling) && infiniteScrollTopEnabled}
             initialScrollPosition={initialScrollPosition}
             loadingState={loadMoreState}
             logLineMenuCustomItems={
@@ -596,7 +603,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
 async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
-  timeRange: AbsoluteTimeRange,
+  timeRange: InfiniteScrollTimeRange,
   timeZone: TimeZone,
   onNewLogsReceived?: onNewLogsReceivedType
 ) {
@@ -622,7 +629,16 @@ async function requestMoreLogs(
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid],
+        targets: targetGroups[uid].map((target) =>
+          withLokiInfiniteScrollBound(
+            {
+              ...target,
+              supportingQueryType: SupportingQueryType.InfiniteScroll,
+            },
+            timeRange,
+            dataSource.type
+          )
+        ),
       })
     );
   }

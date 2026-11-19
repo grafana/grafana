@@ -4,7 +4,7 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
 } from '@grafana/data';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import {
   defaultDataQueryKind,
@@ -19,8 +19,8 @@ import {
   type DefaultControlEvent,
 } from './dashboardControls';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));

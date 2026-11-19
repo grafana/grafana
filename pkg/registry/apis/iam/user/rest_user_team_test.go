@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -65,7 +67,7 @@ func TestUserTeamRESTResponse(t *testing.T) {
 		page UserTeamsPage
 	}{
 		{name: "empty"},
-		{name: "partial page", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{User: "alice", Team: "team-a", Permission: "admin", External: true}}}},
+		{name: "partial page", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{User: "alice", Team: "team-a", TeamInternalId: ptr.To(int64(42)), Permission: "admin", External: true}}}},
 		{name: "full page", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{{User: "alice", Team: "team-a"}}, Next: []string{"team-a"}, ResourceVersion: 42}},
 		{name: "all visited memberships disappeared", page: UserTeamsPage{Items: []iamv0.GetUserTeamsUserTeam{}, Next: []string{"team-b"}, ResourceVersion: 43}},
 	} {
@@ -77,6 +79,19 @@ func TestUserTeamRESTResponse(t *testing.T) {
 			require.Equal(t, http.StatusOK, responder.code)
 			result := responder.obj.(*iamv0.GetUserTeamsResponse)
 			require.Equal(t, tt.page.Items, result.Items)
+			body, err := json.Marshal(result)
+			require.NoError(t, err)
+			var decoded struct {
+				Items []map[string]any `json:"items"`
+			}
+			require.NoError(t, json.Unmarshal(body, &decoded))
+			for i, item := range tt.page.Items {
+				if item.TeamInternalId == nil {
+					require.NotContains(t, decoded.Items[i], "teamInternalId")
+				} else {
+					require.Equal(t, float64(*item.TeamInternalId), decoded.Items[i]["teamInternalId"])
+				}
+			}
 			if len(tt.page.Next) == 0 {
 				require.Empty(t, result.Continue)
 			} else {

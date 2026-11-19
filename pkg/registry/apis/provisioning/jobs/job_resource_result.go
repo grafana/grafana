@@ -67,6 +67,7 @@ func classifyWarning(err error) (string, bool) {
 	var folderManagedByOtherErr *resources.FolderManagedByOtherError
 	var uidTooLongErr *resources.FolderUIDTooLongError
 	var folderValidationErr *resources.FolderValidationError
+	var unsupportedPathErr *resources.UnsupportedPathError
 
 	// Order matters: the more specific folder reasons must be checked
 	// before the generic FolderValidationError fallback so the user-facing
@@ -74,6 +75,8 @@ func classifyWarning(err error) (string, bool) {
 	switch {
 	case errors.As(err, &quotaExceededErr):
 		return provisioning.ReasonQuotaExceeded, true
+	case errors.As(err, &unsupportedPathErr):
+		return provisioning.ReasonUnsupportedPath, true
 	case apierrors.IsRequestEntityTooLargeError(err):
 		return provisioning.ReasonResourceTooLarge, true
 	case errors.As(err, &validationErr):
@@ -114,14 +117,16 @@ func isWarningError(err error) bool {
 // isNonFailingWarning reports whether the warning represents an informational
 // issue where the underlying resource operation still succeeded (e.g. missing
 // or invalid folder metadata, or a skipped delete of an old resource now owned
-// by another file — the new resource was written successfully).
+// by another file — the new resource was written successfully, or a removal
+// whose file moved onto an unsupported path — the resource is gone).
 func isNonFailingWarning(err error) bool {
 	if err == nil {
 		return false
 	}
 	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
 		errors.Is(err, resources.ErrInvalidFolderMetadata) ||
-		errors.Is(err, resources.ErrResourceManagedByOtherFile)
+		errors.Is(err, resources.ErrResourceManagedByOtherFile) ||
+		errors.Is(err, resources.ErrUnsupportedPath)
 }
 
 // JobResourceResult represents the result of a resource operation in a job.

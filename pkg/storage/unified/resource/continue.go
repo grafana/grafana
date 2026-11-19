@@ -15,7 +15,7 @@ type ContinueToken struct {
 	// ClusterWide distinguishes a cross-namespace cursor from a namespaced scope.
 	ClusterWide bool `json:"cw,omitempty"`
 	// Name is the name to continue from. Required for list resources, empty for list history.
-	Name string `json:"n,omitempty"`
+	Name string `json:"an,omitempty"`
 	// ResourceVersion is the resource version for pagination.
 	// For list resources: the RV the list was performed at.
 	// For list history: the last seen RV for pagination.
@@ -50,5 +50,9 @@ func GetContinueToken(token string) (*ContinueToken, error) {
 
 // NewSearchContinueToken encodes SearchAfter values into a continue token string.
 func NewSearchContinueToken(searchAfter []string, rv int64) (string, error) {
-	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv}.String(), nil
+	return newSearchContinueToken(searchAfter, rv, false)
+}
+
+func newSearchContinueToken(searchAfter []string, rv int64, sortAscending bool) (string, error) {
+	return ContinueToken{SearchAfter: searchAfter, ResourceVersion: rv, SortAscending: sortAscending}.String(), nil
 }

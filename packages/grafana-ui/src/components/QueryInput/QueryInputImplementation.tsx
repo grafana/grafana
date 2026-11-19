@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { CodeEditor } from '../CodeMirror/CodeEditor';
+import { BaseCodeEditor } from '../CodeMirror/BaseCodeEditor';
 import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
 
 import { type QueryInputProps } from './QueryInput';
@@ -28,7 +28,8 @@ function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
     {
       '&': {
         width: '100%',
-        minHeight: theme.spacing(4),
+        minHeight: theme.spacing(theme.components.height.md),
+        justifyContent: 'center',
         fontSize: theme.typography.body.fontSize,
         fontFamily: theme.typography.fontFamilyMonospace,
         color: theme.colors.text.primary,
@@ -42,11 +43,15 @@ function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
         lineHeight: '18px',
       },
       '.cm-content': {
-        padding: theme.spacing(0.75, 1),
+        padding: theme.spacing(0.5, 1),
         caretColor: theme.colors.text.primary,
       },
       '.cm-line': {
         padding: 0,
+      },
+      // codemirror's widget buffer defaults to `vertical-align: text-top`, which grows the line box by 1px when empty
+      '.cm-widgetBuffer': {
+        verticalAlign: 'top',
       },
       '.cm-placeholder': {
         color: theme.colors.text.disabled,
@@ -114,7 +119,7 @@ export const QueryInputImplementation = memo(function QueryInputImplementation({
   );
 
   return (
-    <CodeEditor
+    <BaseCodeEditor
       value={value}
       onChange={onChange}
       theme={editorTheme}

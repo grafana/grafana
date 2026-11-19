@@ -10,6 +10,7 @@ import { ensureV2Response } from '../../dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from '../../dashboard/api/utils';
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { mobileEditNotAvailableMessage } from '../utils/mobileEditDeprecation';
 import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { buildDashboardResource, validateDashboardResourceEnvelope } from './dashboardResource';
@@ -95,14 +96,15 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return { success: false, error: mobileEditNotAvailableMessage() };
     }
 
     applyDashboardSpec({
       scene: dashboard,
       spec,
       description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
+      scope: 'code-pane',
     });
 
     return { success: true };

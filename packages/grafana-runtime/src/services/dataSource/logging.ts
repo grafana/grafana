@@ -24,3 +24,7 @@ export function describeRef(ref: DataSourceRef | string | null | undefined): str
   // An empty uid falls through to the type so the log still identifies the ref.
   return ref.uid || ref.type || 'unknown';
 }
+
+export function logDataSourceDebug(message: string, context?: LogContext): void {
+  getLogger('grafana/runtime.plugins.datasource').logDebug(message, context);
+}

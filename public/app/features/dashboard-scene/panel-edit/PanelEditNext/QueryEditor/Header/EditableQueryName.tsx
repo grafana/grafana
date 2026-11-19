@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 
@@ -42,6 +43,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       onCommit={(name) => onQueryUpdate({ ...query, refId: name }, query.refId)}
       onEditStart={trackRenameInitiated}
       label={t('query-editor-next.edit-query-name', 'Edit query name')}
+      data-testid={selectors.components.QueryEditorNext.queryName}
       inputTestId="query-name-input"
     />
   );

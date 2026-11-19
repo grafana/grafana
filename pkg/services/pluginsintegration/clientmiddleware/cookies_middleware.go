@@ -63,24 +63,36 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
 			t.Headers[cookieHeaderName] = cookieStr
 		}
 	case *backend.QueryChunkedDataRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
 			t.Headers[cookieHeaderName] = cookieStr
 		}
 	case *backend.CheckHealthRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string]string{}
+			}
 			t.Headers[cookieHeaderName] = cookieStr
 		}
 	case *backend.CallResourceRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
+			if t.Headers == nil {
+				t.Headers = map[string][]string{}
+			}
 			t.Headers[cookieHeaderName] = []string{cookieStr}
 		}
 	}

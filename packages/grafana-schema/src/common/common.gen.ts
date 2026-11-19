@@ -855,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -1068,9 +1069,17 @@ export interface TableOptions {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open.
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
+  /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
   /**
    * Controls whether the header should show icons for the column types
    */
@@ -1091,6 +1100,7 @@ export const defaultTableOptions: Partial<TableOptions> = {
   frameIndex: 0,
   hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
   zebraStriping: false,
@@ -1116,6 +1126,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
+  /**
+   * Whether the column can be hidden from the table.
+   */
+  hideable?: boolean;
   inspect: boolean;
   minWidth?: number;
   /**

@@ -27,6 +27,64 @@ describe('RadialGauge', () => {
     }
   );
 
+  it('places the single point at the value below neutral through the full gauge tree', () => {
+    render(
+      <RadialGaugeExample
+        width={200}
+        height={200}
+        shape="circle"
+        barWidthFactor={0.6}
+        min={0}
+        max={100}
+        value={25}
+        neutral={26}
+        roundedBars
+        endpointMarker="point"
+      />
+    );
+
+    const markers = screen.getByRole('img').querySelectorAll('circle[opacity="0.5"]');
+    expect(markers).toHaveLength(1);
+    expect(Number(markers[0].getAttribute('cx'))).toBeCloseTo(190, 5);
+    expect(Number(markers[0].getAttribute('cy'))).toBeCloseTo(100, 5);
+  });
+
+  // RadialGaugeExample sets min/max in the data frame's field config, where a data source can send strings
+  describe('when the data frame min/max are strings', () => {
+    const min = '50' as unknown as number;
+    const max = '150' as unknown as number;
+    // 30 is below the min and 120 is above the default max of 100, so the checks fail if the gauge drops either string
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 30, color: 'blue' },
+        { value: 65, color: 'orange' },
+        { value: 120, color: 'red' },
+      ],
+    };
+
+    it('should render labels for the thresholds in range with a gradient', () => {
+      render(<RadialGaugeExample gradient showScaleLabels value={55} min={min} max={max} thresholds={thresholds} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByText('55')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 50')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 65')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 120')).toBeInTheDocument();
+      expect(screen.getByLabelText('Threshold 150')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Threshold 30')).not.toBeInTheDocument();
+    });
+
+    it('should render a thresholds bar segment for each threshold in range', () => {
+      render(<RadialGaugeExample thresholdsBar value={55} min={min} max={max} thresholds={thresholds} />);
+
+      expect(screen.getByRole('img')).toBeInTheDocument();
+      expect(screen.getByText('55')).toBeInTheDocument();
+      expect(screen.getAllByTestId('radial-gauge-thresholds-bar')).toHaveLength(3);
+    });
+  });
+
   describe('text mode', () => {
     describe('auto mode', () => {
       it('should render `value_and_name` if the vizCount is greater than 1', () => {

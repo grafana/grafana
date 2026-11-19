@@ -5,7 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 
 import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
-import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
+import { MarketplacePluginBanner } from '../components/MarketplacePluginBanner';
+import { getLatestCompatibleVersion, hasInstallControlWarning, isMarketplacePlugin } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
 import { type CatalogPlugin, PluginStatus } from '../types';
 
@@ -45,6 +46,7 @@ export const PluginSubtitle = ({ plugin }: Props) => {
       <Stack direction="row" justifyContent="space-between">
         <div>
           {plugin?.description && <div>{plugin?.description}</div>}
+          {isMarketplacePlugin(plugin) && <MarketplacePluginBanner />}
           {hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion) && (
             <InstallControlsWarning
               plugin={plugin}

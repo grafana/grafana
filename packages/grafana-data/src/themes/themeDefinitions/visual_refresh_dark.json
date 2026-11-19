@@ -133,6 +133,10 @@
     "z3": "0px 8px 24px hsl(from palette.ink900 h s l)"
   },
   "components": {
+    "height": {
+      "md": 3.5,
+      "lg": 4.5
+    },
     "table": {
       "headerBackground": "palette.ink700",
       "border": "palette.ink700",
@@ -145,8 +149,11 @@
       "borderColor": "palette.ink700"
     },
     "checkbox": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange950",
+      "activeBackgroundHover": "palette.orange950",
+      "activeBorder": "palette.orange800",
+      "activeBorderHover": "palette.orange700",
+      "checkmarkColor": "palette.orange400"
     },
     "drawer": {
       "background": "palette.ink900",
@@ -163,14 +170,18 @@
       "borderColor": "palette.ink700"
     },
     "switch": {
-      "activeBackground": "palette.orange700",
-      "activeBackgroundHover": "palette.orange600"
+      "activeBackground": "palette.orange600",
+      "activeBackgroundHover": "palette.orange500"
     },
     "tooltip": {
       "borderColor": "palette.ink700"
     },
     "input": {
       "background": "palette.ink850"
+    },
+    "navmenu": {
+      "activeItemBackground": "palette.orange950",
+      "activeItemText": "palette.orange300"
     },
     "codeEditor": {
       "keyword": "palette.blue300",
@@ -190,16 +201,16 @@
     "tag": {
       "colors": [
         { "background": "palette.red950", "text": "palette.red300" },
-        { "background": "palette.orange950", "text": "palette.orange300" },
+        { "background": "palette.orange950", "text": "palette.orange200" },
         { "background": "palette.amber950", "text": "palette.amber300" },
-        { "background": "palette.lime950", "text": "palette.lime300" },
-        { "background": "palette.sage950", "text": "palette.sage300" },
-        { "background": "palette.teal950", "text": "palette.teal300" },
-        { "background": "palette.sky950", "text": "palette.sky300" },
+        { "background": "palette.lime950", "text": "palette.lime200" },
+        { "background": "palette.sage950", "text": "palette.sage200" },
+        { "background": "palette.teal950", "text": "palette.teal200" },
+        { "background": "palette.sky950", "text": "palette.sky200" },
         { "background": "palette.blue950", "text": "palette.blue300" },
-        { "background": "palette.violet950", "text": "palette.violet300" },
-        { "background": "palette.lavender950", "text": "palette.lavender300" },
-        { "background": "palette.rose950", "text": "palette.rose300" }
+        { "background": "palette.violet950", "text": "palette.violet200" },
+        { "background": "palette.lavender950", "text": "palette.lavender200" },
+        { "background": "palette.rose950", "text": "palette.rose200" }
       ]
     },
     "textHighlight": {
@@ -240,9 +251,9 @@
         "border": "palette.violet800"
       },
       "darkgrey": {
-        "text": "palette.ink300",
-        "background": "palette.ink950",
-        "border": "palette.ink800"
+        "text": "palette.ink150",
+        "background": "palette.ink750",
+        "border": "palette.ink550"
       }
     }
   },
@@ -261,6 +272,6 @@
     "h5": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
     "h6": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
     "body": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
-    "bodySmall": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
+    "bodySmall": { "fontWeight": 400, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
   }
 }

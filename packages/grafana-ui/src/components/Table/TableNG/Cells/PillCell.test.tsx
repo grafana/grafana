@@ -2,6 +2,7 @@ import { render, screen, type RenderResult } from '@testing-library/react';
 
 import {
   type Field,
+  type GrafanaTheme2,
   FieldType,
   MappingType,
   ThemeContext,
@@ -12,9 +13,20 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
-import { getTagColorsFromName } from '../../../../utils/tags';
+import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
+
+// Refreshed pills are Tags, which take their colors from inline custom properties.
+const expectTagColors = (element: HTMLElement, background: string, text: string) => {
+  expect(element.style.getPropertyValue('--tag-background')).toBe(background);
+  expect(element.style.getPropertyValue('--tag-text')).toBe(text);
+};
+
+const expectBaseColor = (element: HTMLElement, baseColor: string, theme?: GrafanaTheme2) => {
+  const variables = getTagColorVariables(baseColor, theme);
+  expectTagColors(element, variables['--tag-background'], variables['--tag-text']);
+};
 
 describe('PillCell', () => {
   const theme = createTheme();
@@ -202,6 +214,21 @@ describe('PillCell', () => {
   });
 
   describe('Visual refresh', () => {
+    it.each(['dark', 'light'] as const)('renders mapped pills with contrasting colors in %s mode', (mode) => {
+      const theme = createTheme({ colors: { mode } });
+      theme.flags.visualDesignRefresh = true;
+      const field = fieldWithValues(['error']);
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+      field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
+
+      render(
+        <ThemeContext.Provider value={theme}>
+          <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
+        </ThemeContext.Provider>
+      );
+      expectBaseColor(screen.getByText('error'), '#ff0000', theme);
+    });
+
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
     // table the prop and the context theme are the same object.
     const refreshTheme = createTheme();
@@ -224,11 +251,8 @@ describe('PillCell', () => {
       for (const text of ['value1', 'value2']) {
         const pill = screen.getByText(text);
         const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
-        expect(pill).toHaveStyle({
-          backgroundColor: background,
-          color: textColor,
-          borderRadius: refreshTheme.shape.radius.pill,
-        });
+        expectTagColors(pill, background, textColor);
+        expect(pill).toHaveStyle({ borderRadius: refreshTheme.shape.radius.pill });
       }
     });
 
@@ -242,10 +266,10 @@ describe('PillCell', () => {
       // Thresholds is the default mode, but it has no categorical palette for coloring pills.
       const { background, text } = getTagColorsFromName('value1', refreshTheme);
       renderRefreshed(field);
-      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+      expectTagColors(screen.getByText('value1'), background, text);
     });
 
-    it('honours a fixed field color over the tag colors', () => {
+    it('keeps a fixed field color as the background and derives contrasting text', () => {
       const mockField = fieldWithValues(['value1']);
       const fixed = {
         ...mockField,
@@ -253,12 +277,23 @@ describe('PillCell', () => {
       } satisfies Field;
 
       renderRefreshed(fixed);
-      expect(screen.getByText('value1')).toHaveStyle({
-        backgroundColor: refreshTheme.visualization.getColorByName('red'),
+      expectBaseColor(screen.getByText('value1'), refreshTheme.visualization.getColorByName('red'), refreshTheme);
+    });
+
+    it('outlines transparent mapped pills', () => {
+      const field = fieldWithValues(['none']);
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { none: { color: 'transparent' } } }];
+      field.display = () => ({ text: 'none', color: 'rgba(255, 255, 255, 0)', numeric: 0 });
+
+      renderRefreshed(field);
+      const pill = screen.getByText('none');
+      expectBaseColor(pill, 'rgba(255, 255, 255, 0)', refreshTheme);
+      expect(pill).toHaveStyle({
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
       });
     });
 
-    it('honours a categorical field palette over the tag colors', () => {
+    it('keeps a categorical field palette as the background', () => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
@@ -267,28 +302,7 @@ describe('PillCell', () => {
 
       renderRefreshed(classic);
       const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
-      expect(screen.getByText('value1')).toHaveStyle({
-        backgroundColor: getColorByStringHash(palette, 'value1'),
-      });
-    });
-
-    it('keeps the data-driven colors when a value mapping sets them', () => {
-      const mockField = fieldWithValues(['error']);
-      const field = {
-        ...mockField,
-        config: {
-          ...mockField.config,
-          mappings: [{ type: MappingType.ValueToText, options: { error: { color: '#FF0000' } } }],
-        },
-        display: () => ({ text: 'error', color: '#FF0000', numeric: 0 }),
-      } satisfies Field;
-
-      renderRefreshed(field);
-      // inline, so the mapped color wins over whatever Tag's own styles paint
-      expect(screen.getByText('error')).toHaveStyle({
-        backgroundColor: 'rgb(255, 0, 0)',
-        color: 'rgb(247, 248, 250)',
-      });
+      expectBaseColor(screen.getByText('value1'), getColorByStringHash(palette, 'value1'), refreshTheme);
     });
   });
 

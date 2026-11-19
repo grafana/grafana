@@ -1,17 +1,7 @@
 import { type performanceUtils } from '@grafana/scenes';
 
 import { registerPerformanceObserver } from './performanceUtils';
-
-interface MessageEventPayloadMap {
-  REPORT_RENDER_COMPLETE: { success: boolean };
-}
-
-type MessageEventType = keyof MessageEventPayloadMap;
-
-interface RenderBindingMessage<T extends MessageEventType> {
-  type: T;
-  data: MessageEventPayloadMap[T];
-}
+import { sendRenderComplete } from './sendRenderComplete';
 
 /**
  * Performance observer that signals to the grafana-image-renderer when a dashboard
@@ -27,7 +17,7 @@ interface RenderBindingMessage<T extends MessageEventType> {
 export class ReportRenderReadinessObserver implements performanceUtils.ScenePerformanceObserver {
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
     if (data.interactionType === 'dashboard_view') {
-      sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });
+      sendRenderComplete(true);
     }
   };
 }
@@ -40,20 +30,3 @@ export function initializeReportRenderReadinessObserver(): void {
     registerPerformanceObserver(instance, 'RRO');
   }
 }
-
-const createMessageEvent = <T extends MessageEventType>(
-  eventType: T,
-  data: MessageEventPayloadMap[T]
-): RenderBindingMessage<T> => {
-  return {
-    type: eventType,
-    data,
-  };
-};
-
-const sendMessageEvent = <T extends MessageEventType>(eventType: T, data: MessageEventPayloadMap[T]) => {
-  // check if chromedp binding exists. It only takes a string argument.
-  if (window.__grafanaImageRendererMessageChannel) {
-    window.__grafanaImageRendererMessageChannel(JSON.stringify(createMessageEvent(eventType, data)));
-  }
-};

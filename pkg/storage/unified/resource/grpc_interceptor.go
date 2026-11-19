@@ -6,34 +6,10 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-// UnaryErrorResultInterceptor converts response-embedded errors into gRPC status
-// errors while retaining the full ErrorResult as a status detail.
-func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-		resp, err := handler(ctx, req)
-		if err != nil {
-			return resp, err
-		}
-		result, ok := resp.(interface {
-			GetError() *resourcepb.ErrorResult
-		})
-		if !ok || result.GetError() == nil {
-			return resp, nil
-		}
-		failure := result.GetError()
-		st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "failed to encode error details")
-		}
-		return nil, st.Err()
-	}
-}
 
 const listPathNotApplicable = "not_applicable"
 
@@ -67,13 +43,6 @@ func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerIn
 		resp, err := handler(ctx, req)
 		group, resource := requestKeyLabels(req)
 		code := status.Code(err)
-		if err == nil {
-			if result, ok := resp.(interface {
-				GetError() *resourcepb.ErrorResult
-			}); ok {
-				code = grpcCodeFromErrorResult(result.GetError())
-			}
-		}
 		metrics.RequestDuration.
 			WithLabelValues(path.Base(info.FullMethod), group, resource, code.String(), state.listPath).
 			Observe(time.Since(start).Seconds())

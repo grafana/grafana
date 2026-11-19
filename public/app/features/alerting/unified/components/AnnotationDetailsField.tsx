@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { TextLink, Tooltip } from '@grafana/ui';
 
-import { type Annotation, annotationLabels } from '../utils/constants';
+import { annotationLabels } from '../utils/constants';
 
 import { DetailsField } from './DetailsField';
 import { Tokenize } from './Tokenize';
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const AnnotationDetailsField = ({ annotationKey, value, valueLink }: Props) => {
-  const annotation = annotationKey as Annotation;
+  const annotation = annotationKey;
   const label = annotationLabels[annotation] ? (
     <Tooltip content={annotationKey} placement="top" theme="info">
       <span>{annotationLabels[annotation]}</span>

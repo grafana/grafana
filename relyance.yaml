@@ -91,7 +91,7 @@ exclude_patterns:
   - "**/.DS_Store"
   - "**/*.log"
   - "**/go.sum"
-  - "**/yarn.lock"
+  - "**/pnpm-lock.yaml"
 
   # Generated specs
   - "**/swagger.json"

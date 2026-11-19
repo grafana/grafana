@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { getInputStyles } from '../Input/Input';
 
-import { CodeEditor } from './CodeEditor';
+import { BaseCodeEditor } from './BaseCodeEditor';
 import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from './types';
 
 export interface CodeMirrorInlineInputProps {
@@ -183,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2, monospace: boolean) => ({
       // sibling `Input` fields (`alignItems` centers the editor within it), but
       // only as a minimum: a wrapped, multi-line value grows the field downward.
       minHeight: theme.spacing(theme.components.height.md),
-      padding: theme.spacing(0.5, 1),
+      padding: theme.spacing(0.25, 1),
       '&:focus-within': getFocusStyles(theme),
     })
   ),
@@ -265,7 +265,7 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
   return (
     <div className={styles.wrapper} id={id}>
       <div className={styles.editor}>
-        <CodeEditor
+        <BaseCodeEditor
           value={value}
           onChange={onChange}
           theme={editorTheme}

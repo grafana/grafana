@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -188,6 +191,114 @@ func TestStore_Routes(t *testing.T) {
 	})
 }
 
+func TestStore_CancelledContext(t *testing.T) {
+	// The bug is a random select between ctx.Done() and the running channel, so a single call can pass by chance.
+	const iterations = 100
+
+	cancelledCtx := func() context.Context {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		return ctx
+	}
+
+	t.Run("Lookups on a running store succeed even when the context is cancelled", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource},
+			FS:       pluginfakes.NewFakePluginFS("/some/dir"),
+		}
+		p.RegisterClient(&clientV3Plugin{})
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{p.ID: p},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		ctx := cancelledCtx()
+		for i := 0; i < iterations; i++ {
+			_, exists := ps.Plugin(ctx, p.ID)
+			require.True(t, exists, "Plugin: iteration %d", i)
+
+			require.NotEmpty(t, ps.Plugins(ctx), "Plugins: iteration %d", i)
+
+			_, exists = ps.ClientV3(ctx, p.ID)
+			require.True(t, exists, "ClientV3: iteration %d", i)
+
+			require.NotEmpty(t, ps.Routes(ctx), "Routes: iteration %d", i)
+		}
+	})
+
+	t.Run("Lookups on a store that is not running yet respect the cancelled context", func(t *testing.T) {
+		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
+		ps := New(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{p.ID: p},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+
+		_, exists := ps.Plugin(cancelledCtx(), p.ID)
+		require.False(t, exists)
+	})
+}
+
+func TestStore_Notify(t *testing.T) {
+	newPlugin := func(id string) *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: id}}
+	}
+
+	t.Run("Notifies after a plugin is added to or removed from the registry", func(t *testing.T) {
+		reg := registry.NewInMemory()
+		ps := New(reg, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		ch := ps.Notify(t.Context())
+
+		require.NoError(t, reg.Add(t.Context(), newPlugin("test-datasource")))
+		require.Len(t, ch, 1)
+		<-ch
+
+		require.NoError(t, reg.Remove(t.Context(), "test-datasource", ""))
+		require.Len(t, ch, 1)
+	})
+
+	t.Run("Notifies about plugins loaded while the store starts", func(t *testing.T) {
+		reg := registry.NewInMemory()
+		ps := New(reg, &pluginfakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error) {
+				p := newPlugin("test-datasource")
+				p.SetLogger(log.NewTestLogger())
+				return []*plugins.Plugin{p}, reg.Add(ctx, p)
+			},
+		}, &pluginfakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{&pluginfakes.FakePluginSource{}}
+		}})
+		ps.loadOnStartup = true
+		ch := ps.Notify(t.Context())
+
+		require.NoError(t, ps.StartAsync(context.Background()))
+		require.NoError(t, ps.AwaitRunning(context.Background()))
+		require.Len(t, ch, 1)
+
+		ps.StopAsync()
+		require.NoError(t, ps.AwaitTerminated(context.Background()))
+	})
+
+	t.Run("Closes the channel once the context is done when the registry cannot notify", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ps := New(pluginfakes.NewFakePluginRegistry(), &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+			ctx, cancel := context.WithCancel(t.Context())
+			ch := ps.Notify(ctx)
+
+			select {
+			case <-ch:
+				t.Fatal("channel received or closed before the context was done")
+			default:
+			}
+
+			cancel()
+			synctest.Wait()
+
+			_, ok := <-ch
+			require.False(t, ok)
+		})
+	})
+}
+
 func TestProcessManager_shutdown(t *testing.T) {
 	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
 		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
@@ -278,4 +389,20 @@ func (p *DecommissionedPlugin) Decommission() error {
 
 func (p *DecommissionedPlugin) IsDecommissioned() bool {
 	return true
+}
+
+type clientV3Plugin struct {
+	backendplugin.Plugin
+}
+
+func (p *clientV3Plugin) IsDecommissioned() bool {
+	return false
+}
+
+func (p *clientV3Plugin) ClientV3(_ context.Context) (appclientv3.Client, bool) {
+	return &fakeClientV3{}, true
+}
+
+type fakeClientV3 struct {
+	appclientv3.Client
 }

@@ -3,6 +3,7 @@ import { type ChangeEvent, type PropsWithChildren, type ReactElement } from 'rea
 import * as React from 'react';
 
 import { Checkbox } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 interface VariableCheckboxFieldProps extends React.HTMLAttributes<HTMLInputElement> {
   value: boolean;
@@ -22,6 +23,7 @@ export function VariableCheckboxField({
   testId,
 }: PropsWithChildren<VariableCheckboxFieldProps>): ReactElement {
   const uniqueId = useId();
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
     <Checkbox
@@ -32,6 +34,7 @@ export function VariableCheckboxField({
       onChange={onChange}
       aria-label={ariaLabel}
       data-testid={testId}
+      disabled={readOnly}
     />
   );
 }

@@ -264,7 +264,7 @@ User opens a panel in edit mode and configures queries, transformations, or visu
 | End (discarded) | `panel_edit_closed` (after `panel_edit_discarded`)                            | User hit Discard                                            |
 | End (abandoned) | SPA route change to a different pathname                                      | Journey ends with `abandoned` and `abandonedAt: <pathname>` |
 
-**Silent interactions added by this journey:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates), `panel_edit_discarded` (emitted when the user hits Discard).
+**Interactions this journey relies on:** `panel_edit_closed` (emitted when the PanelEditor scene deactivates) and `panel_edit_discarded` (emitted when the user hits Discard). Neither is silent: both also report which areas of the panel changed, so they have analytics value of their own.
 
 **Attributes:**
 
@@ -319,7 +319,7 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 
 ## Adding a New Journey
 
-> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. Use `--dry-run` to preview without writing. Run `yarn cuj:new --help` for the full flag list. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
+> **Fast path:** `pnpm cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. Use `--dry-run` to preview without writing. Run `pnpm cuj:new --help` for the full flag list. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
 
 This section walks through instrumenting a new CUJ end-to-end. Worked example at the bottom.
 
@@ -356,7 +356,7 @@ Journey wiring only listens to interactions; it never adds DOM event listeners o
 2. **No suitable interaction exists.** Add a new `reportInteraction` call at the right point in the feature code. If the new interaction has _no analytics value beyond CUJ tracking_, mark it `silent: true` so it stays out of Rudderstack/Faro analytics:
 
    ```typescript
-   reportInteraction('panel_edit_closed', { panelId }, { silent: true });
+   reportInteraction('e_2_d_discarded', {}, { silent: true });
    ```
 
    Naming convention: `<feature>_<event>_<state>` (e.g. `panel_edit_closed`, `e_2_d_discarded`). Keep silent interactions documented in the [Silent Interactions](#silent-interactions) section.
@@ -865,16 +865,14 @@ Silent interactions:
 
 Use silent mode for interactions added specifically for journey tracking that have no standalone analytics value:
 
-| Interaction                           | Why silent                                              |
-| ------------------------------------- | ------------------------------------------------------- |
-| `command_palette_closed`              | Only needed to detect palette dismiss vs navigation     |
-| `grafana_browse_dashboards_page_view` | Only needed to detect folder load and journey start     |
-| `panel_edit_closed`                   | Only needed to detect panel editor deactivation         |
-| `panel_edit_discarded`                | Only needed to distinguish discard vs save before close |
-| `explore_to_dashboard_panel_applied`  | Only needed to detect panel applied on dashboard side   |
-| `e_2_d_discarded`                     | Only needed to detect form dismiss without submit       |
+| Interaction                           | Why silent                                            |
+| ------------------------------------- | ----------------------------------------------------- |
+| `command_palette_closed`              | Only needed to detect palette dismiss vs navigation   |
+| `grafana_browse_dashboards_page_view` | Only needed to detect folder load and journey start   |
+| `explore_to_dashboard_panel_applied`  | Only needed to detect panel applied on dashboard side |
+| `e_2_d_discarded`                     | Only needed to detect form dismiss without submit     |
 
-Existing interactions like `command_palette_opened`, `command_palette_action_selected`, and `dashboards_init_dashboard_completed` are NOT silent - they have independent analytics value.
+Existing interactions like `command_palette_opened`, `command_palette_action_selected`, `dashboards_init_dashboard_completed`, `panel_edit_closed` and `panel_edit_discarded` are NOT silent - they have independent analytics value.
 
 ## Telemetry Output
 
@@ -1069,7 +1067,7 @@ public/app/core/journeys/
 
 **Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM type stripping requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
+**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM type stripping requires them). They live under their own `tsconfig.smoke.json` so the main `pnpm typecheck` and dev-server fork-ts-checker stay untouched. Run `pnpm typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
 
 ## Implementation Details
 

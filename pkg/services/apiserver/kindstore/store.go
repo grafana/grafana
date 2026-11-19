@@ -9,12 +9,14 @@ import (
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -22,9 +24,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -44,6 +48,14 @@ type Options struct {
 	// cannot be completed without its options: they used to be declared through a
 	// separate by-GroupResource registration that every version of a kind shared.
 	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
+
+	// NamespaceReadable serves every get and list of a namespaced kind as the
+	// service identity, limited to the request's namespace. Anyone the
+	// authorizer let into the namespace can then read the kind's objects,
+	// without an RBAC grant storage would otherwise require. Writes, watches
+	// and access policies keep the caller's identity, so storage still
+	// authorizes them. Ignored for cluster-scoped kinds.
+	NamespaceReadable bool
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -61,6 +73,15 @@ type Store struct {
 
 	gvk           schema.GroupVersionKind
 	clusterScoped bool
+
+	// userReadable marks a cluster-scoped kind users may read. Storage rejects
+	// users on cluster-scoped objects, since their identity is bound to a
+	// namespace, so reads the authorizer allowed are served as the service.
+	userReadable bool
+
+	// namespaceReadable marks a namespaced kind whose reads are served as the
+	// service, limited to the request's namespace (Options.NamespaceReadable).
+	namespaceReadable bool
 
 	// used for admission hooks
 	admission appclientv3.AdmissionClient
@@ -97,19 +118,23 @@ func New(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
 	admission appclientv3.AdmissionClient,
+	conversion appclientv3.ConversionClient,
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {
-	// The manifest loader defaults plural to kind+"s", but a manifest built in
-	// code can omit it, and an empty resource name registers an unreachable path.
-	if kind.Plural == "" {
-		return nil, fmt.Errorf("kind %s is missing a plural name", gvk.Kind)
+	// Manifest validation requires a resource, but a manifest built in code can
+	// omit it, and an empty resource name registers an unreachable path.
+	if kind.Resource == "" {
+		return nil, fmt.Errorf("kind %s is missing a resource name", gvk.Kind)
 	}
 	if opts.StorageOptsGetter == nil {
 		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
 	}
+	if kind.Conversion && conversion == nil {
+		return nil, fmt.Errorf("kind %s declares conversion but has no plugin client", gvk.Kind)
+	}
 
-	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
+	gr := schema.GroupResource{Group: gvk.Group, Resource: kind.Resource}
 	listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
 	clusterScoped := kind.Scope == ClusterScope
 
@@ -122,7 +147,10 @@ func New(
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
+		userReadable:  clusterScoped && kind.UserReadable,
 		admission:     admission,
+
+		namespaceReadable: !clusterScoped && opts.NamespaceReadable,
 	}
 
 	if kind.Admission != nil {
@@ -168,12 +196,19 @@ func New(
 	// Scoped to this group+version+resource, so a kind that changes its folder
 	// scope between versions gets what each version declared.
 	folder := IsFolderScoped(kind)
-	optsGetter := opts.StorageOptsGetter(apistore.StorageOptions{
+	storageOpts := apistore.StorageOptions{
 		GVK:                  gvk,
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
-	})
+	}
+	if conversion != nil {
+		storageOpts.Serializer = &conversionSerializer{
+			client: conversion,
+			gvk:    gvk,
+		}
+	}
+	optsGetter := opts.StorageOptsGetter(storageOpts)
 
 	store := &registry.Store{
 		NewFunc: func() runtime.Object {
@@ -240,6 +275,45 @@ func newTableConvertor(gr schema.GroupResource, gvk schema.GroupVersionKind, kin
 // decides whether [NewStatusStore] has anything to serve.
 func (s *Store) HasStatus() bool {
 	return s.hasStatus
+}
+
+func (s *Store) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return s.Store.Get(s.readContext(ctx), name, options)
+}
+
+func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	return s.Store.List(s.readContext(ctx), options)
+}
+
+// readContext serves a read as the service identity when the kind allows it:
+//   - a userReadable cluster-scoped kind, for any caller. The appplugin
+//     authorizer only lets users get & list these kinds, so this never widens
+//     what a user can do.
+//   - a namespaceReadable kind, limited to the namespace the request names.
+//     The authorizer has already let the caller into that namespace. A request
+//     that names no single tenant namespace (a list across all of them, or
+//     "*") keeps the caller, so the service identity never reads another
+//     tenant's objects.
+//
+// An access policy keeps its own identity: storage holds it to its token.
+func (s *Store) readContext(ctx context.Context) context.Context {
+	if !s.userReadable && !s.namespaceReadable {
+		return ctx
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user.IsIdentityType(claims.TypeAccessPolicy) {
+		return ctx
+	}
+	if s.namespaceReadable {
+		ns, err := claims.ParseNamespace(request.NamespaceValue(ctx))
+		if err != nil || ns.OrgID < 1 {
+			return ctx
+		}
+		// WithServiceIdentityForSingleNamespace claims org 1 in every org, so
+		// set the namespace's own org and namespace instead.
+		return identity.WithServiceIdentityContext(ctx, ns.OrgID, func(id *identity.StaticRequester) { id.Namespace = ns.Value })
+	}
+	return identity.WithServiceIdentityContext(ctx, user.GetOrgID())
 }
 
 // NamespaceScoped avoids recursion through the embedded store's strategy.

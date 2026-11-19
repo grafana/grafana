@@ -22,15 +22,12 @@ export type GlobalSilenceAbilityParam =
   | { action: SilenceAction.Preview }
   | { action: SilenceAction.Update };
 
-// Backend HTTP gates accept either alert.instances:* or alert.silences:* for Grafana AM.
-// Frontend mirrors that by listing both in the accepted set.
-//
-// Create is the exception. alert.silences:create is always folder-scoped, so it only covers
-// silences for a rule in that folder - checked separately against folderUID. A silence that
-// isn't tied to a rule needs the org-wide alert.instances:create.
+// Grafana AM gates accept either alert.instances:* or alert.silences:*, except:
+// - Preview reads alert instances, which the alerts endpoint only gates on alert.instances:read.
+// - Create needs alert.silences:create on the rule's folder, or alert.instances:create org-wide.
 const GRAFANA_PERMISSIONS: Record<SilenceAction, AccessControlAction[]> = {
   [SilenceAction.View]: [instancesPermissions.read.grafana, silencesPermissions.read.grafana],
-  [SilenceAction.Preview]: [instancesPermissions.read.grafana, silencesPermissions.read.grafana],
+  [SilenceAction.Preview]: [instancesPermissions.read.grafana],
   [SilenceAction.Create]: [instancesPermissions.create.grafana],
   [SilenceAction.Update]: [instancesPermissions.update.grafana, silencesPermissions.update.grafana],
 };

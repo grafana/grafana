@@ -1,137 +1,174 @@
 ---
 description: Learn how to create LBAC for data sources rules for a supported data source.
 keywords:
+  - grafana
   - loki
+  - prometheus
+  - mimir
+  - tempo
+  - traces
+  - metrics
   - lbac
   - team
 labels:
   products:
+    - enterprise
     - cloud
-title: Create LBAC for data sources rules for a supported data source
-weight: 250
+menuTitle: Create LBAC rules
+title: Create LBAC for data sources rules
+weight: 100
+review_date: 2026-09-22
 ---
 
-# Create LBAC for data source rule
+# Create LBAC for data sources rules
 
-LBAC for data sources is available for LBAC-supported data sources created with basic authentication. As of today, managed/provisioned data source can **NOT** be configured with LBAC rules.
+LBAC for data sources works with supported data sources that use basic authentication. You can't add LBAC rules to a file-provisioned data source, and provisioned data sources are read-only in the UI. Create the data source first, then add its LBAC rules on the **Permissions** tab or provision them with the Grafana Terraform provider.
 
 ## Before you begin
 
-- Be sure that you have the permission setup to create a Loki tenant in Grafana Cloud.
-- Be sure that you have admin data source permissions for Grafana.
-- Be sure that you have a team setup in Grafana.
+Before you start, ensure you have:
 
-### Create a LBAC for data sources rule for a team
+- **Tenant permissions:** Permission to create the tenant for your data source, such as a Loki tenant, in Grafana Cloud or in Grafana Enterprise Metrics or Grafana Enterprise Logs.
+- **Data source permissions:** `Admin` permission on the data source in Grafana.
+- **A team:** At least one team set up in Grafana.
 
-1. Navigate to your data source
-1. Navigate to the permissions tab
-   - Here, you'll find the LBAC for data sources rules section.
-1. Add a LBAC for data sources Rule
-   - Add a new rule for the team in the LBAC for data sources rules section.
-1. Define a label selector for the rule
-   - Add a label selector to the rule. Refer to documentation for guidance on the types of log selections you can specify.
+## Create an LBAC for data sources rule for a team
 
-### LBAC rule
+To add an LBAC rule to a team:
 
-An LBAC rule is a `logql` query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
+1. Navigate to your data source.
+1. Select the **Permissions** tab. The LBAC for data sources rules section appears on this tab.
+1. In the LBAC for data sources rules section, add a new rule for the team.
+1. Define a label selector for the rule. For the selector syntax, refer to [LBAC rules](#lbac-rules). For data source-specific guidance, refer to the configuration guides in [Next steps](#next-steps).
+
+## LBAC rules
+
+An LBAC rule is a LogQL query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
 
 For example:
 
-- For logs: `{namespace="dev", cluster="us-west-0"}` filters log lines matching both `namespace="dev"` and `cluster="us-west-0"`.
-- For metrics: `{job="api-server", region="europe"}` filters metric data points matching `job="api-server"` and `region="europe"`.
+- **Logs:** `{namespace="dev", cluster="us-west-0"}` returns log lines that match both `namespace="dev"` and `cluster="us-west-0"`.
+- **Metrics:** `{job="api-server", region="europe"}` returns metric data points that match both `job="api-server"` and `region="europe"`.
 
-One rule `{namespace="dev", cluster="us-west-0"}` created with multiple namespaces will be seen as `namespace="dev"` **AND** `cluster="us-west-0"`.
-Two rules `{namespace="dev"}`, `{cluster="us-west-0"}` created for a team will be seen as `namespace="dev"` **OR** `cluster="us-west-0"`.
+Within a single rule, comma-separated selectors combine with **AND**. For example, the rule `{namespace="dev", cluster="us-west-0"}` matches data where `namespace="dev"` **AND** `cluster="us-west-0"`.
 
-#### Best practices
+Across a team, multiple rules combine with **OR**. For example, the two rules `{namespace="dev"}` and `{cluster="us-west-0"}` match data where `namespace="dev"` **OR** `cluster="us-west-0"`.
 
-We recommend you only add `query` permissions for teams that should use the data source and only `Admin` have `Admin` permissions.
+{{< admonition type="note" >}}
+An `Admin` user who's a member of one or more teams with LBAC rules can access only the logs or metrics allowed by those teams' rules. An `Admin` user who isn't a member of any team with LBAC rules can access all logs or metrics.
+{{< /admonition >}}
 
-We recommend for a first setup, setting up as few rules as possible for each team and make them additive for simplicity.
+### Traces rules
 
-To validate the rules, we recommend testing the rules in the Explore view. This will allow you to see the metrics or logs that would be returned for the rule.
+For Tempo and Cloud Traces, rules use attribute selectors rather than LogQL labels. This functionality is in public preview, and traces LBAC is available only at the team level. Use resource-scope attributes, for example:
 
-#### Tasks
+```
+{ resource.service.name="checkout", resource.env="prod" }
+```
 
-### Task 1: One rule setup for each team
+The same logic applies as for logs and metrics: comma-separated conditions in one rule combine with **AND**, and multiple rules across a team combine with **OR**. For more information, refer to [Configure team LBAC for Tempo or Cloud Traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-tempo/).
 
-One common use case for creating an LBAC policy is to grant access to logs or metrics with a specific label. For example, you can create a label policy that includes all log lines or metrics with the label `namespace`.
+### Best practices
 
-We have two teams, Team A and Team B with `Query` permissions. Data source access is set up with `Admin` roles to have `Admin` permission only.
+Follow these recommendations when you set up rules:
 
-- Team A has a rule `namespace="dev"`.
+- Grant `Query` permission only to teams that should use the data source, and grant `Admin` permission only to administrators.
+- Give every team that should be restricted its own rule. A team that has `Query` permission but no rule can query all logs or metrics.
+- Remove label selectors from the Cloud Access Policy for the data source. Cloud Access Policy rules override LBAC for data sources rules.
+- For a first setup, create as few rules as possible for each team and prefer rules that grant access over rules that exclude data, because access is the union of all rules.
+- Use a dedicated data source for LBAC, and keep a separate data source without LBAC for full access, so the separation is clear.
+- Manage rules as code with the Grafana Terraform provider for repeatable, reviewable setups.
+- To validate rules, test them in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). Explore shows the logs or metrics that a rule returns.
 
-- Team B has a rule `namespace="prod"`.
+## Examples
 
-A user that is part of Team A will have access to logs or metrics matching `namespace="dev"`. A user in both Team A and Team B will have access to data matching `namespace="dev"` OR `namespace="prod"`.
+The following examples show how different rule and team configurations affect access. Unless stated otherwise, each team has `Query` permission on the data source and administrators have `Admin` permission only.
 
-### Task 2: Set up a rule to exclude a label for a team
+### One rule for each team
 
-One common use case for creating an LBAC policy is to exclude logs or metrics that have a specific label. For example, you can create a label policy that excludes all log lines with the label `secret=true` by adding a selector with `secret!="true"` when you create an access policy:
+A common use case is to grant a team access to data that has a specific label. In this example, Team A and Team B each have one rule:
 
-We have one team, Team A `Query` permissions. Data source access is setup with `Admin` roles to have `Admin` permission only.
+- Team A has the rule `namespace="dev"`.
+- Team B has the rule `namespace="prod"`.
 
-- Team A has a rule `secret!="true"`.
+A user in Team A can access logs or metrics that match `namespace="dev"`. A user in both Team A and Team B can access data that matches `namespace="dev"` **OR** `namespace="prod"`.
 
-A user that is part of Team A will **NOT** have access to logs or metrics that match `secret!="true"`.
+### Multiple rules for one team
 
-### Task 3: Set up multiple rules for a team
+A team can have more than one rule, and its members can access data that matches any of them. In this example, Team A has two rules:
 
-We have two teams, Team A and Team B with `Query` permissions. Data Source access is setup with `Admin` roles having `Admin` permission.
+- Rule 1: `namespace="dev"`
+- Rule 2: `namespace="prod"`
 
-- Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
+A user in Team A can access logs or metrics that match `namespace="dev"` **OR** `namespace="prod"`.
 
-- Team B has rule `cluster="us-west-0", namespace="staging"` configured.
+### Exclude a label for a team
 
-A user that is only part of Team A will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod")`.
+You can exclude data that has a specific label. For example, to exclude all log lines labeled `secret="true"`, add the selector `secret!="true"`. In this example, Team A has one rule:
 
-A user that is only part of Team B will have access to logs that match `cluster="us-west-0" AND namespace="staging"`.
+- Team A has the rule `secret!="true"`.
 
-A user in Team A has access to logs in cluster us-west-0 with namespaces `dev` and `prod`. A user in Team B has access to to everything in cluster us-west-0, except namespace prod. So basically, user who is member of both team A and team B has access to everything in cluster us-west-0.
+A user in Team A can access logs or metrics that match `secret!="true"`, which is all data except data labeled `secret="true"`.
 
-A user that is **not** part of any Team with `Editor/Viewer` role will not have access to query any logs.
+### Rules with multiple conditions
 
-**Important**
+A single rule can combine multiple conditions with **AND**. In this example, Team A and Team B each have one rule:
 
-A `Admin` user that is part of a Team with will only have access to that teams logs
+- Team A has the rule `cluster="us-west-0", namespace=~"dev|prod"`.
+- Team B has the rule `cluster="us-west-0", namespace="staging"`.
 
-A `Admin` user that is not part of any Team with `Admin` role will have access to all logs
+The `=~` operator matches a regular expression, so `namespace=~"dev|prod"` matches either `dev` or `prod`.
 
-### Task 4: Rules that overlap
+A user in only Team A can access logs or metrics that match `cluster="us-west-0"` **AND** (`namespace="dev"` **OR** `namespace="prod"`).
 
-We have two teams, Team A and Team B.
+A user in only Team B can access logs or metrics that match `cluster="us-west-0"` **AND** `namespace="staging"`.
 
-- Team A has a rule `namespace="dev"`.
+A user in both Team A and Team B can access logs or metrics that match `cluster="us-west-0"` **AND** (`namespace="dev"`, `namespace="prod"`, or `namespace="staging"`), because rules across teams combine with **OR**.
 
-- Team B has a rule `namespace!="dev"`.
+A user with an `Editor` or `Viewer` role who isn't a member of any team can't query logs or metrics, because in this setup only teams have `Query` permission on the data source.
 
-A user in Team A will have access to logs that match `namespace="dev"`.
+### Rules that overlap
 
-A user in Team B will have access to logs that match `namespace!="dev"`.
+Two teams can have rules that overlap. In this example:
 
-> _NOTE:_ A user that is part of Team A and Team B will have access to all logs that match `namespace="dev"` `OR` `namespace!="dev"`.
+- Team A has the rule `namespace="dev"`.
+- Team B has the rule `namespace!="dev"`.
 
-### Task 5: Single rule setup for a team
+A user in Team A can access logs or metrics that match `namespace="dev"`.
 
-We have two teams, Team A and Team B. Data Source access is setup with `Editor`, `Viewer` roles to have `Query` permission.
+A user in Team B can access logs or metrics that match `namespace!="dev"`.
 
-- Team A has a rule `namespace="dev"` configured.
+{{< admonition type="note" >}}
+A user in both Team A and Team B can access all data, because the rules combine as `namespace="dev"` **OR** `namespace!="dev"`.
+{{< /admonition >}}
 
-- Team B does not have a rule configured for it.
+### Team without a rule
 
-A user that is part of Team A will have access to logs that match `namespace="dev"`.
+When a team has no LBAC rule, its members can access all logs or metrics, subject to their data source permission. In this example, the `Editor` and `Viewer` roles have `Query` permission:
 
-A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
+- Team A has the rule `namespace="dev"`.
+- Team B has no rule configured.
 
-A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+A user in only Team A can access logs or metrics that match `namespace="dev"`.
 
-### Task 6: User A is Admin and part of Team B
+A user in both Team A and Team B can access logs or metrics that match `namespace="dev"`.
 
-We have team B, user A is part of Team B and has an `Admin` basic role.
+A user in only Team B with an `Editor` or `Viewer` role can access all logs or metrics, because Team B has no rule and the user has `Query` permission.
 
-- Team B has no roles assigned
-- Team B has Query permissions to data source
+### Administrator on a team with a rule
 
-- Team B has a rule `{ project_id="project-dev" }`
+An administrator's basic role doesn't bypass LBAC rules when the administrator is a member of a team that has rules. In this example, User A has an `Admin` basic role and is a member of Team B:
 
-User A may only access logs or metrics for a data source that match `{ project_id="project-dev" }`.
+- Team B has no roles assigned.
+- Team B has `Query` permission on the data source.
+- Team B has the rule `{ project_id="project-dev" }`.
+
+User A can access only logs or metrics that match `{ project_id="project-dev" }`.
+
+## Next steps
+
+Set up LBAC for data sources for your data source:
+
+- [Configure LBAC for data sources for Loki](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/)
+- [Configure LBAC for data sources for Prometheus](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/)
+- [Configure team LBAC for Tempo or Cloud Traces](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-tempo/)

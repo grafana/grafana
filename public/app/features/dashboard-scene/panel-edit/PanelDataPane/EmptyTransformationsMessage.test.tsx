@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -14,13 +14,8 @@ const MOCK_DATA_SOURCE_UID = 'test-ds';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 const mockGetDataSourceInstanceSettings = getDataSourceInstanceSettings as jest.MockedFunction<
   typeof getDataSourceInstanceSettings
 >;

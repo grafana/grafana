@@ -2,15 +2,16 @@ import { useCallback } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select, TextLink } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type DashboardGridItem } from './DashboardGridItem';
 
@@ -75,7 +76,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
 
   const options = [repeatCategory];
 
-  if (config.featureToggles.dashboardNewLayouts) {
+  if (isDashboardNewLayoutsEnabled()) {
     options.push(conditionalRenderingCategory);
   }
 
@@ -100,11 +101,15 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
       value={repeatDirection ?? 'h'}
       onChange={(value) => {
         edit({
+          meta: { actionId: 'panel.changeRepeatDirection' },
           description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
           source: gridItem,
           perform: () => gridItem.setRepeatDirection(value),
           undo: () => gridItem.setRepeatDirection(repeatDirection ?? 'h'),
         });
+        if (value !== (repeatDirection ?? 'h')) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat_direction');
+        }
       }}
     />
   );
@@ -124,11 +129,15 @@ function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string 
       value={maxPerRow ?? 4}
       onChange={(value) => {
         edit({
+          meta: { actionId: 'panel.changeMaxPerRow' },
           description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
           source: gridItem,
           perform: () => gridItem.setMaxPerRow(value.value),
           undo: () => gridItem.setMaxPerRow(maxPerRow ?? 4),
         });
+        if (value.value !== (maxPerRow ?? 4)) {
+          trackPanelSettingChange(gridItem.state.body, 'change_panel_max_per_row');
+        }
       }}
     />
   );
@@ -154,11 +163,13 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
     (value?: string) => {
       if (value !== variableName) {
         edit({
+          meta: { actionId: 'panel.changeRepeat', scope: 'custom-grid' },
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: gridItem,
           perform: () => handleStateChange(value),
           undo: () => handleStateChange(variableName),
         });
+        trackPanelSettingChange(gridItem.state.body, 'change_panel_repeat');
       }
     },
     [gridItem, handleStateChange, variableName]

@@ -1,5 +1,5 @@
-import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, DataSourceWithBackend, featureEnabled, getDataSourceInstance } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
 import { type PanelModel } from '../../../state/PanelModel';
@@ -90,5 +90,5 @@ export const isPublicDashboardsEnabled = () => {
 
 export const isEmailSharingEnabled = () =>
   isPublicDashboardsEnabled() &&
-  !!config.featureToggles.publicDashboardsEmailSharing &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.PublicDashboardsEmailSharing, false) &&
   featureEnabled('publicDashboardsEmailSharing');

@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
@@ -65,8 +65,8 @@ func NewTimeIntervalClient(t *testing.T, user apis.User) *apis.TypedClient[v1bet
 	}
 }
 
-// UpdateDefaultRoute helper method to update the default route based on api definition.
-func UpdateDefaultRoute(t *testing.T, user apis.User, r *definitions.Route) {
+// UpdateDefaultRoute helper method to update the default route based on the persisted definition.
+func UpdateDefaultRoute(t *testing.T, user apis.User, r *store.RouteDB) {
 	t.Helper()
 	routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)

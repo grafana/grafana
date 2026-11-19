@@ -9,6 +9,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		AlertRule{}.OpenAPIModelName():                                                 schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_AlertRuleAlertRuleInstanceTotals(ref),
 		AlertRuleExpression{}.OpenAPIModelName():                                       schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
 		AlertRuleIntervalTrigger{}.OpenAPIModelName():                                  schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
 		AlertRuleList{}.OpenAPIModelName():                                             schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
@@ -103,6 +104,55 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			AlertRuleSpec{}.OpenAPIModelName(), AlertRuleStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleAlertRuleInstanceTotals(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Count of alert instances per state. error also counts instances whose evaluation errored but were mapped to another state via execErrState, so it can overlap.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"healthy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"firing": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"pending": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"recovering": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"nodata": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -563,6 +613,12 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 							Format:      "double",
 						},
 					},
+					"lastError": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -577,10 +633,9 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 							},
 						},
 					},
-					"lastError": {
+					"totals": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref(AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName()),
 						},
 					},
 					"additionalFields": {
@@ -602,7 +657,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			AlertRulestatusOperatorState{}.OpenAPIModelName()},
+			AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName(), AlertRulestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
@@ -909,7 +964,7 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref c
 					},
 					"pollInterval": {
 						SchemaProps: spec.SchemaProps{
-							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
+							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 24h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -943,6 +998,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref
 					"lastAppliedHash": {
 						SchemaProps: spec.SchemaProps{
 							Description: "lastAppliedHash is the upstream config hash from the last successful sync via this resource. The worker reads it back (API path only) to skip an unchanged re-apply across restarts and replicas, where an in-memory-only dedup cache would otherwise start empty. Internal bookkeeping; not user-facing.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"rootFolderUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "rootFolderUid is the UID of the folder the synced rules live under. The worker finds the folder by it, so a rename does not stop the sync and a deleted folder is recreated with the same UID. Internal bookkeeping.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

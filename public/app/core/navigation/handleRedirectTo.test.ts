@@ -1,7 +1,10 @@
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { contextSrv, RedirectToUrlKey } from '../services/context_srv';
+import { getLoginSectionTitle, rememberLoginSectionTitle } from '../services/loginSectionTitle';
 
 import { handleRedirectTo } from './handleRedirectTo';
 
@@ -94,6 +97,26 @@ describe('handleRedirectTo', () => {
     expect(sessionStorage.getItem(RedirectToUrlKey)).toBe(encodeURIComponent('/grafana/d/test?orgId=2'));
     expect(window.location.replace).not.toHaveBeenCalled();
     expect(locationService.replace).not.toHaveBeenCalled();
+  });
+
+  it('keeps the title while logged out and consumes it after successful login', () => {
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
+    try {
+      rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/test');
+      sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/test?orgId=1'));
+      handleRedirectTo();
+      expect(getLoginSectionTitle()).toBe('Dashboards');
+
+      contextSrv.user.isSignedIn = true;
+      handleRedirectTo();
+      expect(locationService.replace).toHaveBeenCalledWith('/d/test?orgId=1');
+
+      sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/test?orgId=1'));
+      expect(getLoginSectionTitle()).toBeUndefined();
+    } finally {
+      setTestFlags({});
+      sessionStorage.clear();
+    }
   });
 
   it('hard redirects goto URLs through the backend', () => {

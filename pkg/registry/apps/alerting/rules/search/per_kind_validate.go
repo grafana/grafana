@@ -12,7 +12,7 @@ import (
 	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -64,10 +64,12 @@ var legacyTextFields = map[string]struct{}{
 	fieldTitle: {},
 }
 
-// legacySortFields are the fields sort may name. The legacy store orders by
-// title only, so sorting on any other field would silently return title order.
+// legacySortFields are the fields sort may name: those perKindSortRules can
+// order legacy rules by. Other sortable fields would silently fall back to title
+// order on the legacy backend.
 var legacySortFields = map[string]struct{}{
 	fieldTitle: {},
+	fieldName:  {},
 }
 
 // scalarFilterFields are filterable fields the legacy backend applies as a
@@ -98,7 +100,7 @@ var negatableFilterFields = map[string]struct{}{
 // keys the legacy backend can filter are accepted. Selecting on any other key is
 // rejected rather than matching nothing on legacy while working on unified.
 var perKindSelectableLabelKeys = map[string]struct{}{
-	model.GroupLabelKey: {},
+	v1beta1.GroupLabelKey: {},
 }
 
 // validatePerKindQuery checks q against the fields declared for k and the restrictions
@@ -172,8 +174,8 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" {
-				errs = append(errs, field.Invalid(cp, ck, "only text and filter leaves are allowed inside and"))
+			if ck != "text" && ck != "filter" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter and regex leaves are allowed inside and"))
 				continue
 			}
 			// A second text leaf would overwrite the backend query, so it is rejected
@@ -196,7 +198,7 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter":
+	case "text", "filter", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, k, p)
 	default:
 		// or, not, range, exists: modelled for the future, rejected today.
@@ -223,6 +225,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Filter != nil {
 		set = append(set, "filter")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Range != nil {
 		set = append(set, "range")
 	}
@@ -235,7 +240,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 0:
 		// An empty node matters as much as an over-set one: it would flatten to no
 		// constraint at all and quietly return every rule.
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -247,6 +252,34 @@ func validateLeaf(n *searchv0.WhereNode, key string, k perKind, p *field.Path) f
 		return validateTextLeaf(n.Text, k, p.Child("text"))
 	case "filter":
 		return validateFilterLeaf(n.Filter, k, p.Child("filter"))
+	case "regex":
+		return validateRegexLeaf(n.Regex, k, p.Child("regex"))
+	}
+	return nil
+}
+
+// validateRegexLeaf accepts regex on labels only: it is the one field the legacy
+// backend evaluates in memory, so every other field would be honoured on
+// unified and dropped on legacy. The pattern is parsed with the subset unified
+// search accepts, so both backends reject the same patterns with a 422 rather
+// than legacy accepting what unified answers with a 400.
+func validateRegexLeaf(r *searchv0.RegexPredicate, k perKind, p *field.Path) field.ErrorList {
+	fp := p.Child("field")
+	if r.Field == "" {
+		return field.ErrorList{field.Required(fp, "regex field is required")}
+	}
+	if errs := checkCapability(k, r.Field, resource.SearchCapabilityFilter, fp); len(errs) > 0 {
+		return errs
+	}
+	if r.Field != fieldLabels {
+		return field.ErrorList{field.Invalid(fp, r.Field, fmt.Sprintf("regex filtering is only supported on %q", fieldLabels))}
+	}
+	pp := p.Child("pattern")
+	if r.Pattern == "" {
+		return field.ErrorList{field.Required(pp, "regex pattern is required")}
+	}
+	if _, _, err := parseLabelRegex(r.Pattern); err != nil {
+		return field.ErrorList{field.Invalid(pp, r.Pattern, err.Error())}
 	}
 	return nil
 }

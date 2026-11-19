@@ -84,6 +84,7 @@
   "unicons/filter",
   "unicons/filter-plus",
   "unicons/filter-minus",
+  "unicons/fjord",
   "unicons/folder",
   "unicons/folder-open",
   "unicons/folder-plus",
@@ -109,6 +110,7 @@
   "unicons/mobile-android",
   "unicons/monitor",
   "unicons/open-telemetry",
+  "unicons/pages",
   "unicons/pause",
   "unicons/pen",
   "unicons/play",
@@ -183,6 +185,7 @@
   "custom/gf-logs",
   "custom/gf-movepane-left",
   "custom/gf-movepane-right",
+  "custom/gf-notebook",
   "custom/gf-traces",
   "custom/gf-variable",
   "mono/favorite",
@@ -196,6 +199,9 @@
   "solid/bookmark",
   "unicons/ai-sparkle",
   "unicons/message-sparkles",
+  "unicons/ai-select",
+  "unicons/marquee-select",
+  "unicons/eraser",
   "unicons/dollar-alt",
   "unicons/window-grid",
   "unicons/ban",
@@ -209,5 +215,6 @@
   "unicons/cursor-logo",
   "unicons/github-copilot-logo",
   "unicons/github-enterprise",
-  "unicons/robot"
+  "unicons/robot",
+  "unicons/workflows"
 ]

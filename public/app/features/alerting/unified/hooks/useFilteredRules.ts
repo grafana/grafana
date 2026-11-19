@@ -17,7 +17,6 @@ import {
 } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
-import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import {
@@ -28,6 +27,7 @@ import {
   ruleUsesDefaultPolicy,
   rulerRuleType,
 } from '../utils/rules';
+import { isCloudRulesSource } from '../utils/rulesSource';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -358,7 +358,7 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
   });
 };
 
-const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
+const RULES_FILTER_KEYS = new Set<string>([
   'freeFormWords',
   'namespace',
   'groupName',
@@ -373,6 +373,6 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'contactPoint',
   'ruleSource',
   'policy',
-]);
+] satisfies Array<keyof RulesFilter>);
 
-const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);
+const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key);

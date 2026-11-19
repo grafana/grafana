@@ -6,6 +6,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type AutoGridItem } from './AutoGridItem';
 import { isAutoHeightPanelsEnabled } from './AutoGridLayoutManager';
@@ -75,6 +76,7 @@ function FitContentOption({ item }: { item: AutoGridItem }) {
         const prev = item.state.fitContent;
         const nextValue = next === 'default' ? undefined : next === 'on';
         edit({
+          meta: { actionId: 'panel.changeFitContent' },
           description: t('dashboard.edit-actions.panel-fit-content', 'Panel auto fit content'),
           source: item,
           perform: () => item.setFitContent(nextValue),
@@ -95,11 +97,15 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
       repeat={variableName}
       onChange={(value?: string) => {
         edit({
+          meta: { actionId: 'panel.changeRepeat', scope: 'auto-grid' },
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: item,
           perform: () => item.setRepeatByVariable(value),
           undo: () => item.setRepeatByVariable(variableName),
         });
+        if (value !== variableName) {
+          trackPanelSettingChange(item.state.body, 'change_panel_repeat');
+        }
       }}
     />
   );

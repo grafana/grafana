@@ -16,6 +16,18 @@ import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
+/**
+ * Marks an element that floats above open drawers, such as the floating extension sidebar. An open drawer treats it as
+ * inside for focus management, so it stays reachable for keyboard and assistive technology users instead of being
+ * hidden from them while the drawer is open.
+ */
+export const DRAWER_INSIDE_ATTRIBUTE = 'data-drawer-inside';
+
+const getDrawerInsideElements = () => [
+  getPortalContainer(),
+  ...document.querySelectorAll<HTMLElement>(`[${DRAWER_INSIDE_ATTRIBUTE}]`),
+];
+
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
@@ -131,7 +143,7 @@ export function Drawer({
       // this is handled by floating-ui
       autoFocus={false}
     >
-      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
+      <FloatingFocusManager context={context} modal getInsideElements={getDrawerInsideElements}>
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
@@ -207,7 +219,6 @@ function useResizebleDrawer(): [
   const onMouseUp = useCallback(
     (e: MouseEvent) => {
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
     },
     [onMouseMove]
   );
@@ -215,7 +226,6 @@ function useResizebleDrawer(): [
   const onTouchEnd = useCallback(
     (e: TouchEvent) => {
       document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
     },
     [onTouchMove]
   );
@@ -225,7 +235,7 @@ function useResizebleDrawer(): [
     e.preventDefault();
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', onMouseUp, { once: true });
   }
 
   function onTouchStart(e: React.TouchEvent<HTMLDivElement>) {
@@ -233,7 +243,7 @@ function useResizebleDrawer(): [
     e.preventDefault();
     // we will only add listeners when needed, and remove them afterward
     document.addEventListener('touchmove', onTouchMove);
-    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchend', onTouchEnd, { once: true });
   }
 
   return [drawerWidth, onMouseDown, onTouchStart];

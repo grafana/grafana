@@ -68,7 +68,7 @@ func TestBackendTracing(t *testing.T) {
 }
 
 func TestProxyTracing(t *testing.T) {
-	for _, mode := range []string{"forward", "aggregate", "single-tenant"} {
+	for _, mode := range []string{"aggregate", "single-tenant"} {
 		t.Run(mode, func(t *testing.T) {
 			recorder := setupRouterTracing(t)
 			upstreamContext := make(chan trace.SpanContext, 1)
@@ -84,8 +84,6 @@ func TestProxyTracing(t *testing.T) {
 			var handler http.Handler
 			var err error
 			switch mode {
-			case "forward":
-				backend, err = NewForwardBackend(group, forwardSpec(upstream.URL), "1", transport)
 			case "aggregate":
 				base, parseErr := url.Parse(upstream.URL)
 				require.NoError(t, parseErr)
@@ -201,7 +199,7 @@ func TestOpenAPIBackendTracing(t *testing.T) {
 			for range 2 {
 				response := httptest.NewRecorder()
 				req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
-				router.HandleFunc(response, req, http.NotFoundHandler())
+				router.HandleFunc(response, req)
 				require.Equal(t, status, response.Code)
 			}
 			if status == http.StatusOK {
@@ -252,7 +250,7 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(authenticatedTestContext(ctx))
 			req.Header.Set("Accept", aggregatedDiscoveryJSON)
 			response := httptest.NewRecorder()
-			router.HandleFunc(response, req, http.NotFoundHandler())
+			router.HandleFunc(response, req)
 			require.Equal(t, http.StatusOK, response.Code)
 			expected := 1
 			if mode == "legacy" {
@@ -354,4 +352,95 @@ func TestBackendTracingPanic(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The single-tenant fallback builds its traced transport once, and must
+// still follow a replaced tracer provider or propagator.
+func TestSingleTenantForwardFollowsTracingGlobals(t *testing.T) {
+	first := setupRouterTracing(t)
+	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 10, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://stack.example.com"}, nil
+	}})
+	require.NoError(t, err)
+	var sent http.Header
+	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+		sent = req.Header.Clone()
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: http.NoBody, Request: req}, nil
+	})
+	forward := func() {
+		rec := httptest.NewRecorder()
+		st.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/apis/fallback.grafana.app/v1/namespaces/stacks-1/things", nil))
+		require.Equal(t, http.StatusOK, rec.Code)
+	}
+	clientSpans := func(recorder *tracetest.SpanRecorder) int {
+		n := 0
+		for _, span := range recorder.Ended() {
+			if span.SpanKind() == trace.SpanKindClient {
+				n++
+			}
+		}
+		return n
+	}
+
+	forward()
+	require.Equal(t, 1, clientSpans(first))
+
+	second := setupRouterTracing(t)
+	forward()
+	require.Equal(t, 1, clientSpans(second), "the span goes to the new provider")
+	require.Equal(t, 1, clientSpans(first))
+
+	otel.SetTextMapPropagator(headerPropagator{})
+	forward()
+	require.Equal(t, "1", sent.Get(headerPropagatorField), "the new propagator injects the headers")
+}
+
+const headerPropagatorField = "X-Test-Propagator"
+
+// headerPropagator marks every request it injects into.
+type headerPropagator struct{}
+
+func (headerPropagator) Inject(_ context.Context, carrier propagation.TextMapCarrier) {
+	carrier.Set(headerPropagatorField, "1")
+}
+
+func (headerPropagator) Extract(ctx context.Context, _ propagation.TextMapCarrier) context.Context {
+	return ctx
+}
+
+func (headerPropagator) Fields() []string { return []string{headerPropagatorField} }
+
+// The ST transport cache compares meter providers; one of a type that can't be
+// compared counts as changed rather than panicking.
+func TestSameProvider(t *testing.T) {
+	type pointerProvider struct{ name string }
+	type sliceProvider []string
+	a, b := &pointerProvider{"a"}, &pointerProvider{"b"}
+	require.True(t, sameProvider(a, a))
+	require.False(t, sameProvider(a, b))
+	require.False(t, sameProvider(a, sliceProvider{"a"}))
+	require.False(t, sameProvider(sliceProvider{"a"}, sliceProvider{"a"}))
+	require.True(t, sameProvider(nil, nil))
+	require.False(t, sameProvider(a, nil))
+}
+
+// A call nested in another, such as a plugin's own span inside the router's
+// backend span, keeps the outer call's client breaker, and a proxy failure
+// inside it reaches the outer call's breaker outcome.
+func TestNestedBackendCallSharesBreakerState(t *testing.T) {
+	cb := newGroupBreaker("test.grafana.app")
+	outerRec, outerReq, outer := traceRouterRequest(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil), "router.backend", "test.grafana.app")
+	defer outerRec.endSpan()
+	outer.breaker = cb
+
+	innerRec, innerReq, inner := traceRouterRequest(httptest.NewRecorder(), outerReq, "router.plugin", "test.grafana.app")
+	defer innerRec.endSpan()
+	require.Same(t, inner, backendCallFrom(innerReq.Context()))
+	require.Same(t, cb, inner.breaker)
+
+	failure := io.ErrUnexpectedEOF
+	proxyErrorHandler(httptest.NewRecorder(), innerReq, failure)
+	require.ErrorIs(t, inner.proxyErr, failure)
+	require.ErrorIs(t, outer.proxyErr, failure)
+	require.ErrorIs(t, breakerOutcome(outerReq, http.StatusOK, outer), failure)
 }

@@ -6,7 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
+
+import { FrameMultiSelectionEditor } from './FrameSelectionEditor';
 
 interface TransformationFilterProps {
   /** data frames from the output of previous transformation */

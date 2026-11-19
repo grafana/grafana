@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -25,7 +26,7 @@ func afterCreatePermissionCreator(ctx context.Context,
 		return nil, nil
 	}
 	if grantPermisions != utils.AnnoGrantPermissionsDefault {
-		return nil, fmt.Errorf("invalid permissions value. only '%s' supported", utils.AnnoGrantPermissionsDefault)
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid permissions value. only '%s' supported", utils.AnnoGrantPermissionsDefault))
 	}
 	if setter == nil {
 		return nil, fmt.Errorf("missing default permission creator")

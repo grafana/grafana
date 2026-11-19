@@ -46,6 +46,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName():      schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref),
 		GitHubRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		GitLabRepositoryConfig{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
+		GitOAuthConnectionConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
 		HealthStatus{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		HistoricJob{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
@@ -74,6 +75,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		RepositoryView{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref),
 		RepositoryViewList{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref),
 		ResourceCount{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref),
+		ResourceCountList{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref),
 		ResourceList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceList(ref),
 		ResourceListItem{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref),
 		ResourceObjects{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceObjects(ref),
@@ -602,11 +604,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+							Enum:        []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
 						},
 					},
 					"url": {
@@ -640,6 +642,12 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
+					"gitOAuth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Generic git OAuth app connection configuration Only applicable when provider is \"gitOAuth\"",
+							Ref:         ref(GitOAuthConnectionConfig{}.OpenAPIModelName()),
+						},
+					},
 					"oauth": {
 						SchemaProps: spec.SchemaProps{
 							Description: "OAuth app configuration shared by all OAuth app providers",
@@ -657,7 +665,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseOAuthConnectionConfig{}.OpenAPIModelName(), GitOAuthConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -1327,6 +1335,50 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 					},
 				},
 				Required: []string{"branch"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"authURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tokenURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scopes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth scopes to request, granting git read and write access.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"authURL", "tokenURL"},
 			},
 		},
 	}
@@ -2983,7 +3035,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
 										Format: "",
-										Enum:   []interface{}{"bitbucketOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
+										Enum:   []interface{}{"bitbucketOAuth", "gitOAuth", "github", "githubEnterprise", "githubEnterpriseOAuth", "githubOAuth", "gitlabOAuth"},
 									},
 								},
 							},
@@ -3059,6 +3111,59 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 				Required: []string{"group", "resource", "count"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceCountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "What a single manager manages.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ResourceCount{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3706,6 +3811,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 					"finished": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When the sync job finished",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"lastChecked": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the controller last attempted a sync or an interval check (Unix milliseconds).",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
