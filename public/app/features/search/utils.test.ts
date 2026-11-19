@@ -1,7 +1,30 @@
 import { type SearchQueryParams } from './types';
-import { parseRouteParams } from './utils';
+import { SECTION_STORAGE_KEY } from './constants';
+import { cleanupOldExpandedFolders, parseRouteParams } from './utils';
 
 describe('Search utils', () => {
+  describe('cleanupOldExpandedFolders', () => {
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it('should remove all old expanded-folder keys and keep other keys', () => {
+      window.localStorage.setItem(`${SECTION_STORAGE_KEY}.general`, 'true');
+      window.localStorage.setItem(`${SECTION_STORAGE_KEY}.folder-a`, 'true');
+      window.localStorage.setItem(`${SECTION_STORAGE_KEY}.folder-b`, 'false');
+      window.localStorage.setItem(SECTION_STORAGE_KEY, 'keep');
+      window.localStorage.setItem('grafana.other.key', 'keep');
+
+      cleanupOldExpandedFolders();
+
+      expect(window.localStorage.getItem(`${SECTION_STORAGE_KEY}.general`)).toBeNull();
+      expect(window.localStorage.getItem(`${SECTION_STORAGE_KEY}.folder-a`)).toBeNull();
+      expect(window.localStorage.getItem(`${SECTION_STORAGE_KEY}.folder-b`)).toBeNull();
+      expect(window.localStorage.getItem(SECTION_STORAGE_KEY)).toBe('keep');
+      expect(window.localStorage.getItem('grafana.other.key')).toBe('keep');
+    });
+  });
+
   describe('parseRouteParams', () => {
     it('should remove all undefined keys', () => {
       const params: Partial<SearchQueryParams> = { sort: undefined, tag: undefined, query: 'test' };
