@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
-import { Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { PanelStylesSection } from '../panel-edit/PanelStylesSection';
+import { PanelStylesGrid, usePanelStylePresets } from '../panel-edit/PanelStylesSection';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -75,7 +76,7 @@ export function QuickEditButtons({
           onClose={close}
         >
           {open.quickEdit.presets ? (
-            <PanelStylesSection panel={panel} onApplyPreset={applyPreset} />
+            <QuickEditPresets panel={panel} onApplyPreset={applyPreset} />
           ) : (
             <div>{open.items.map((item) => item.renderElement())}</div>
           )}
@@ -83,6 +84,19 @@ export function QuickEditButtons({
       )}
     </>
   );
+}
+
+/** The preset cards without the full editor's collapsible section, as the card gives them their heading. */
+function QuickEditPresets({ panel, onApplyPreset }: { panel: VizPanel; onApplyPreset: QuickEdits['applyPreset'] }) {
+  const available = usePanelStylePresets(panel);
+  if (!available) {
+    return (
+      <Text element="p" variant="bodySmall" color="secondary">
+        {t('dashboard.quick-edits.presets-unavailable', "No styles to show for this panel's data")}
+      </Text>
+    );
+  }
+  return <PanelStylesGrid panel={panel} onApplyPreset={onApplyPreset} {...available} />;
 }
 
 interface ButtonProps {
