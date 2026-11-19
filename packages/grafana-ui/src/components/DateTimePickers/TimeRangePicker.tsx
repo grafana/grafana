@@ -3,7 +3,7 @@ import { autoUpdate, offset, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { memo, useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { memo, useContext, useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import { useMedia } from 'react-use';
 
 import {
@@ -28,6 +28,7 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { TimeRangePickerContext } from './TimeRangePicker/TimeRangePickerContext';
 import { TimeZoneDescription } from './TimeZonePicker/TimeZoneDescription';
 import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 import { getTimeZoneDisplayInfo } from './TimeZonePicker/timeZoneUtils';
@@ -96,6 +97,7 @@ export interface TimeRangePickerProps {
  */
 export function TimeRangePicker(props: TimeRangePickerProps) {
   const [isOpen, setOpen] = useState(false);
+  const defaultCompactDesign = useContext(TimeRangePickerContext);
 
   const {
     value,
@@ -263,7 +265,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   quickOptions={quickRanges || getQuickOptions()}
                   history={history}
                   showHistory={props.showHistory ?? true}
-                  compactDesign={props.compactDesign}
+                  compactDesign={props.compactDesign ?? defaultCompactDesign}
                   layout={props.layout}
                   calendarDisplay={props.calendarDisplay}
                   rememberLastTab={props.rememberLastTab}

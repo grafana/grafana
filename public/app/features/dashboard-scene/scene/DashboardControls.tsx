@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
@@ -28,6 +27,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { TimeRangePickerContext } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -249,9 +249,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
 
   const tabsEnabled = useFlagResponsiveTimePickerTabs();
-  useEffect(() => {
-    timePicker.setState({ compactDesign: tabsEnabled ? 'tabs' : 'legacy' });
-  }, [timePicker, tabsEnabled]);
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
@@ -303,7 +300,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <TimeRangePickerContext.Provider value={tabsEnabled ? 'tabs' : 'legacy'}>
+              <timePicker.Component model={timePicker} />
+            </TimeRangePickerContext.Provider>
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}

@@ -5,9 +5,11 @@ import { rangeUtil } from '@grafana/data';
 
 import { TimeRangePicker, type TimeRangePickerProps } from '../TimeRangePicker';
 
+import { TimeRangePickerContext } from './TimeRangePickerContext';
+
 const value = rangeUtil.convertRawToRange({ from: '2021-06-17 00:00:00', to: '2021-06-19 23:59:00' }, 'utc');
 
-function setup(overrides: Partial<TimeRangePickerProps> = {}) {
+function setup(overrides: Partial<TimeRangePickerProps> = {}, contextDesign: 'legacy' | 'tabs' = 'legacy') {
   const onChange = jest.fn();
   const view = render(
     <TimeRangePicker
@@ -22,7 +24,12 @@ function setup(overrides: Partial<TimeRangePickerProps> = {}) {
       layout="compact"
       rememberLastTab={false}
       {...overrides}
-    />
+    />,
+    {
+      wrapper: ({ children }) => (
+        <TimeRangePickerContext.Provider value={contextDesign}>{children}</TimeRangePickerContext.Provider>
+      ),
+    }
   );
   return {
     ...view,
@@ -155,4 +162,11 @@ it('supports an explicit modal calendar in tabbed compact layout', async () => {
   await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
   expect(screen.getByText('Select a time range')).toBeVisible();
   expect(screen.getByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
+});
+
+it('allows an explicit legacy prop to override a tabbed context', async () => {
+  const { open } = setup({ compactDesign: 'legacy' }, 'tabs');
+  await open();
+  expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'true');
+  expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 });
