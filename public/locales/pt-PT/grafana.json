@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Regra de gravação"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Controlo de funcionalidade",
       "close-tooltip": "Fechar controlo de funcionalidade",
       "open-tooltip": "Abrir controlo de funcionalidade"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Eliminar",
     "description": "Substitua localmente os sinalizadores de funcionalidades do frontend para fins de teste e desenvolvimento.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Remover interface do utilizador e botão da barra de ferramentas",
       "tooltip": "Quaisquer substituições de sinalizadores de funcionalidade definidas permanecerão ativas.<br/> Use <3>{{ param }} </3> no URL para ativar a IU novamente."
@@ -9846,11 +9881,18 @@
     "flag-type": "Tipo de sinalizador",
     "flag-value": "Valor do sinalizador",
     "menu": "Abrir menu",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Avaliação OFREP",
     "ofrep-reason": "Motivo: <2>{{reason}}</2>",
     "ofrep-variant": "Variante: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Guardar",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Controlo de funcionalidade"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Quando os controlos estiverem ativados, mostrar uma opção para transferir os registos mostrados.",
     "description-enable-field-selector": "Experimental. Mostrar um componente para gerir os campos exibidos dos registos.",
-    "description-enable-infinite-scrolling": "Experimental. Obtenha mais resultados deslocando o ecrã até à parte inferior da lista de registos.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Utilizar um esquema de cores predefinido para destacar as partes relevantes das linhas de registo.",
     "description-order": "Mostrar primeiro os registos mais recentes ou mais antigos. Quando a opção Mais antigos primeiro estiver selecionada, a vista deslocar-se-á automaticamente para os registos mais recentes, na parte inferior.",
     "description-prettify-json": "Formatar entradas de registo JSON com recuo e quebras de linha.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Novo",
       "new-template-dashboard-button": "Usar modelo"
     },
-    "rss-button": "Novidades do blog"
+    "rss-button": "Novidades do blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Notícias",
