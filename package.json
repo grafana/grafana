@@ -359,7 +359,7 @@
     "memoize-one": "6.0.0",
     "mermaid": "11.17.2",
     "micro-memoize": "^4.1.2",
-    "ml-regression-polynomial": "^3.0.0",
+    "ml-regression-polynomial": "^4.0.0",
     "ml-regression-simple-linear": "^3.0.0",
     "moment": "2.31.0",
     "monaco-editor": "0.34.1",
