@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -153,6 +154,17 @@ describe('MenuItem', () => {
     render(<MenuItem label="Item" data-role="custom" />);
 
     expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-role', 'menuitem');
+  });
+
+  it('allows custom styles to override the default item styles', () => {
+    render(<MenuItem label="Item" className={css({ padding: '12px 40px 12px 12px' })} />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveStyle({
+      paddingTop: '12px',
+      paddingRight: '40px',
+      paddingBottom: '12px',
+      paddingLeft: '12px',
+    });
   });
 
   it('activates link MenuItem with Space key', async () => {

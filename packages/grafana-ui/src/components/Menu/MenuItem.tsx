@@ -1,5 +1,4 @@
-import { css } from '@emotion/css';
-import clsx from 'clsx';
+import { css, cx } from '@emotion/css';
 import {
   type ReactElement,
   useCallback,
@@ -122,7 +121,7 @@ export const MenuItem = React.memo(
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
-    const itemStyle = clsx(
+    const itemStyle = cx(
       {
         [styles.item]: true,
         [styles.active]: isActive,
@@ -226,12 +225,12 @@ export const MenuItem = React.memo(
           {icon && (
             <Icon
               name={icon}
-              className={clsx(styles.icon, resolvedIconColor && css({ color: resolvedIconColor }))}
+              className={cx(styles.icon, resolvedIconColor && css({ color: resolvedIconColor }))}
               aria-hidden
             />
           )}
-          <span className={clsx(styles.ellipsis, styles.label)}>{label}</span>
-          <div className={clsx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
+          <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
+          <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
                 <Icon name="keyboard" title={t('grafana-ui.menu-item.keyboard-shortcut-label', 'Keyboard shortcut')} />
@@ -251,7 +250,7 @@ export const MenuItem = React.memo(
         </Stack>
         {description && (
           <div
-            className={clsx(styles.description, styles.ellipsis, {
+            className={cx(styles.description, styles.ellipsis, {
               [styles.descriptionWithIcon]: icon !== undefined,
             })}
           >
