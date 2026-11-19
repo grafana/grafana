@@ -100,6 +100,22 @@ func (s writtenSeries) merge(other writtenSeries) writtenSeries {
 	return s
 }
 
+// compacted copies s into maps of exactly the size they need.
+func (s writtenSeries) compacted() writtenSeries {
+	out := make(writtenSeries, len(s))
+	for target, set := range s {
+		if len(set) == 0 {
+			continue
+		}
+		c := make(seriesSet, len(set))
+		for fp, labels := range set {
+			c[fp] = labels
+		}
+		out[target] = c
+	}
+	return out
+}
+
 func (s writtenSeries) contains(target seriesTarget, fp data.Fingerprint) bool {
 	_, ok := s[target][fp]
 	return ok

@@ -228,7 +228,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "recording_rule_tracked_series",
-			Help:      "The number of series remembered for stale markers, as of the last recording rule evaluation.",
+			Help:      "The number of series remembered for stale markers.",
 		}),
 		RecordingRuleUntrackedSeries: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,

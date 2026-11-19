@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -124,7 +125,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 		metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetSchedulerMetrics(),
 		tracing.InitializeTracerForTest(),
 		&dsAgnosticWriter{FakeWriter: fake},
-		nil,
+		state.NewSeriesBudget(0),
 		nil,
 		nil,
 	)
@@ -266,7 +267,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, []map[string]string{withRuleLabels(a)}, h.staleSeries(0), "a was still tracked after the failed evaluations")
 	})
 
-	t.Run("failed data write keeps the previous state, so markers are written again", func(t *testing.T) {
+	t.Run("a failed data write does not make the markers be written again", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.ev.resp = seriesResponse(a, b)
 		h.tick()
@@ -278,13 +279,9 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, "error", h.rule.Status().Health)
 
 		h.failWrite = false
-		ts := h.tick()
-		require.Len(t, h.stale, 2, "the state was not replaced, so b is staled again")
-		require.Equal(t, markerTime(ts), h.stale[1].t)
-		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.stale[1].series)
-
 		h.tick()
-		require.Len(t, h.stale, 2)
+		h.tick()
+		require.Len(t, h.stale, 1, "b was forgotten when its marker was written")
 	})
 
 	t.Run("failed marker write does not fail the evaluation and is not retried", func(t *testing.T) {
@@ -512,7 +509,7 @@ func TestRecordingRuleStaleMarkersOnStop(t *testing.T) {
 			require.Len(t, h.stale, 2)
 			require.Equal(t, ts.Add(time.Millisecond), h.stale[1].t, "an older marker would be rejected as out of order")
 			require.Greater(t, h.stale[1].t.UnixMilli(), h.stale[0].t.UnixMilli())
-			require.ElementsMatch(t, []map[string]string{withRuleLabels(a), withRuleLabels(b)}, h.stale[1].series)
+			require.Equal(t, []map[string]string{withRuleLabels(a)}, h.stale[1].series, "b already has its marker")
 		})
 
 		t.Run(name+" after a failed query uses the tick of that evaluation", func(t *testing.T) {

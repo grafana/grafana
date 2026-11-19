@@ -93,7 +93,7 @@ type schedule struct {
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
 	rrCfg                setting.RecordingRuleSettings
-	seriesBudget         *state.SeriesBudget
+	seriesBudget         SeriesBudget
 
 	metrics *metrics.Scheduler
 
@@ -142,7 +142,7 @@ type SchedulerCfg struct {
 
 	// SeriesBudget caps the series tracked for stale markers by all recording rules of this scheduler.
 	// nil counts them without a limit.
-	SeriesBudget *state.SeriesBudget
+	SeriesBudget SeriesBudget
 }
 
 // NewScheduler returns a new scheduler.

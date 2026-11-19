@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,6 +33,20 @@ type RuleStatus struct {
 	EvaluationTimestamp time.Time
 	EvaluationDuration  time.Duration
 }
+
+// SeriesBudget caps how many series recording rules remember for stale markers.
+// state.SeriesBudget implements it.
+type SeriesBudget interface {
+	// Admit reserves room for one series and reports whether there was any.
+	Admit() bool
+	// Release gives back room for n series.
+	Release(n int)
+}
+
+type unlimitedBudget struct{}
+
+func (unlimitedBudget) Admit() bool { return true }
+func (unlimitedBudget) Release(int) {}
 
 type recordingRule struct {
 	key ngmodels.AlertRuleKeyWithGroup
@@ -55,11 +68,11 @@ type recordingRule struct {
 
 	// Series from the last successful evaluation, to stale the ones that go missing.
 	// Every series in it, and only those, holds one slot of budget, so held is its size
-	// and the budget's Used is the sum of held over all rules sharing it. Change written
+	// and the budget's use is the sum of held over all rules sharing it. Change written
 	// only through commitWritten and untrack, so the two cannot drift.
 	written writtenSeries
 	held    int
-	budget  *state.SeriesBudget
+	budget  SeriesBudget
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -83,13 +96,13 @@ func newRecordingRule(
 	metrics *metrics.Scheduler,
 	tracer tracing.Tracer,
 	writer RecordingWriter,
-	budget *state.SeriesBudget,
+	budget SeriesBudget,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	if budget == nil {
-		budget = state.NewSeriesBudget(0)
+		budget = unlimitedBudget{}
 	}
 
 	return &recordingRule{
@@ -406,7 +419,7 @@ func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
 	}
 	r.untrack(leaving)
 
-	untracked := 0
+	untracked, admitted := 0, 0
 	for target, set := range next {
 		for fp := range set {
 			if r.written.contains(target, fp) {
@@ -414,6 +427,7 @@ func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
 			}
 			if r.budget.Admit() {
 				r.held++
+				admitted++
 				continue
 			}
 			delete(set, fp)
@@ -423,13 +437,14 @@ func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
 			delete(next, target)
 		}
 	}
-	r.written = next
-
 	if untracked > 0 {
+		// A map keeps its capacity when entries are deleted, and next was sized for every series.
+		next = next.compacted()
 		r.metrics.RecordingRuleUntrackedSeries.Add(float64(untracked))
 		logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held)
 	}
-	r.metrics.RecordingRuleTrackedSeries.Set(float64(r.budget.Used()))
+	r.written = next
+	r.metrics.RecordingRuleTrackedSeries.Add(float64(admitted))
 }
 
 // untrack forgets the series in gone, which must be in written, and returns their room.
@@ -441,12 +456,15 @@ func (r *recordingRule) untrack(gone writtenSeries) {
 	r.written.remove(gone)
 	r.held -= n
 	r.budget.Release(n)
-	r.metrics.RecordingRuleTrackedSeries.Set(float64(r.budget.Used()))
+	r.metrics.RecordingRuleTrackedSeries.Sub(float64(n))
 }
 
 // writeStale writes markers at markerAt for the series from the previous evaluation that are
-// not in current. A failed write is logged and counted, and not retried: queries hide the
-// series after the lookback anyway.
+// not in current, and forgets them. A failed write is logged, counted and not retried: queries
+// hide the series after the lookback anyway. The series are forgotten also when the data write
+// that follows fails, so they are not staled again on the next tick.
+// The writer sends batches, so part of a failed write may have been accepted. All the series
+// of a failed write are counted as failed.
 func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) {
 	missing := r.written.missingFrom(current)
 	for target := range missing {
@@ -459,6 +477,7 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		r.metrics.StaleMarkerFailures.WithLabelValues(reason).Add(float64(len(missing[target])))
 		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "reason", reason, "error", err)
 	}
+	r.untrack(missing)
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {

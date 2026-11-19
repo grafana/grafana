@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -26,7 +27,15 @@ func (h *staleHarness) assertAccounting() {
 	for _, peer := range h.peers {
 		total += peer.rule.held
 	}
-	require.EqualValues(h.t, total, h.rule.budget.Used(), "the budget counts what its rules remember")
+	require.EqualValues(h.t, total, used(h.rule.budget), "the budget counts what its rules remember")
+	if len(h.peers) == 0 {
+		require.EqualValues(h.t, h.rule.held, testutil.ToFloat64(h.rule.metrics.RecordingRuleTrackedSeries), "the gauge follows what the rule remembers")
+	}
+}
+
+// used is how much of its budget has been taken, for the budgets these tests give to rules.
+func used(b SeriesBudget) int64 {
+	return b.(*state.SeriesBudget).Used()
 }
 
 func assertSharedAccounting(t *testing.T, budget *state.SeriesBudget, harnesses ...*staleHarness) {
@@ -111,6 +120,20 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 		require.EqualValues(t, 3, testutil.ToFloat64(h.rule.metrics.RecordingRuleUntrackedSeries))
 	})
 
+	t.Run("series the budget refused do not keep the capacity of the map they came in", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.rule.budget = state.NewSeriesBudget(1)
+		target := seriesTarget{dsUID: "ds-1", orgID: 1, name: "m"}
+		next := writtenSeries{target: {1: data.Labels{"i": "1"}, 2: data.Labels{"i": "2"}, 3: data.Labels{"i": "3"}}}
+		passed := reflect.ValueOf(next[target]).Pointer()
+
+		h.rule.commitWritten(next, &logtest.Fake{})
+
+		require.Len(t, h.rule.written[target], 1)
+		require.NotEqual(t, passed, reflect.ValueOf(h.rule.written[target]).Pointer(), "what is kept was copied into a map of its own size")
+		h.assertAccounting()
+	})
+
 	t.Run("rules share one budget", func(t *testing.T) {
 		budget := state.NewSeriesBudget(3)
 		h1, h2 := newStaleHarness(t), newStaleHarness(t)
@@ -149,18 +172,18 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 			"vanished and marked": func(t *testing.T, h *staleHarness) {
 				h.ev.resp = seriesResponse(instance("a"))
 				h.tick()
-				require.EqualValues(t, 1, h.rule.budget.Used())
+				require.EqualValues(t, 1, used(h.rule.budget))
 			},
 			"marker write fails": func(t *testing.T, h *staleHarness) {
 				h.failStale, h.staleErr = true, foreignError{"temporarily unavailable"}
 				h.ev.resp = seriesResponse(instance("a"))
 				h.tick()
-				require.EqualValues(t, 1, h.rule.budget.Used(), "b is forgotten with the failed write")
+				require.EqualValues(t, 1, used(h.rule.budget), "b is forgotten with the failed write")
 			},
 			"no data": func(t *testing.T, h *staleHarness) {
 				h.ev.resp = noDataResponse()
 				h.tick()
-				require.Zero(t, h.rule.budget.Used())
+				require.Zero(t, used(h.rule.budget))
 			},
 		} {
 			t.Run(name, func(t *testing.T) {
@@ -168,7 +191,7 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 				h.rule.budget = state.NewSeriesBudget(10)
 				h.ev.resp = seriesResponse(instance("a"), instance("b"))
 				h.tick()
-				require.EqualValues(t, 2, h.rule.budget.Used())
+				require.EqualValues(t, 2, used(h.rule.budget))
 				run(t, h)
 			})
 		}
