@@ -33,7 +33,7 @@ import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutMa
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
-import { activateSceneObjectAndParentTree } from '../../utils/utils';
+import { activateSceneObjectAndParentTree, getDashboardSceneFor } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,
@@ -496,6 +496,25 @@ describe('PanelDataQueriesTab', () => {
       await userEvent.click(screen.getByTestId('data-testid Remove query'));
 
       expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
+    });
+
+    it('counts an edit from a query row toward the panel editor close event', async () => {
+      const modelMock = await createModelMock();
+      const recordQueryEdit = jest.spyOn(getDashboardSceneFor(modelMock).state.editPanel!, 'recordQueryEdit');
+      ds1Mock.components = {
+        QueryEditor: ({ query, onChange }) => (
+          <button onClick={() => onChange({ ...query, queryType: 'edited' })}>Edit query</button>
+        ),
+      };
+      try {
+        render(<PanelDataQueriesTabRendered model={modelMock} />);
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Edit query' }));
+
+        expect(recordQueryEdit).toHaveBeenCalledTimes(1);
+      } finally {
+        delete ds1Mock.components;
+      }
     });
 
     it('renders add expression button when datasource meta.backend is true', async () => {

@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Registrando regla"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Control de funcionalidades",
       "close-tooltip": "Cerrar control de funcionalidades",
       "open-tooltip": "Abrir control de funcionalidades"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Eliminar",
     "description": "Anula localmente los indicadores de funciones del frontend para realizar pruebas y tareas de desarrollo.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Eliminar la interfaz de usuario y el botón de la barra de herramientas",
       "tooltip": "Las anulaciones de indicadores de funcionalidades que se hayan definido permanecerán activas.<br/> Usa <3>{{ param }}</3> en la URL para habilitar de nuevo la interfaz de usuario."
@@ -9846,11 +9881,18 @@
     "flag-type": "Tipo de indicador",
     "flag-value": "Valor del indicador",
     "menu": "Abrir menú",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Evaluación OFREP",
     "ofrep-reason": "Motivo: <2>{{reason}}</2>",
     "ofrep-variant": "Variante: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Guardar",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Control de funcionalidades"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Cuando los controles estén habilitados, muestra una opción para descargar los logs en pantalla.",
     "description-enable-field-selector": "Experimental. Muestra un componente para gestionar los campos mostrados de los logs.",
-    "description-enable-infinite-scrolling": "Experimental. Obtenga más resultados desplazándose hasta la parte inferior de la lista de logs.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Utiliza un esquema de color predefinido para resaltar las partes relevantes de las líneas del log.",
     "description-order": "Muestra primero los logs más recientes o los más antiguos. Si se selecciona «Más antiguos primero», la vista se desplaza automáticamente hasta los logs más recientes, situados en la parte inferior.",
     "description-prettify-json": "Da formato a las entradas de log JSON con sangría y saltos de línea.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Nuevo",
       "new-template-dashboard-button": "Utilizar plantilla"
     },
-    "rss-button": "Últimas entradas del blog"
+    "rss-button": "Últimas entradas del blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Noticias",

@@ -2998,6 +2998,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Pravidlo nahrávání"
     },
@@ -9974,13 +10005,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Ovládání funkcí",
       "close-tooltip": "Zavřít ovládání funkcí",
       "open-tooltip": "Otevřít ovládání funkcí"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Odstranit",
     "description": "Lokálně přepište příznaky funkcí frontendu pro účely testování a vývoje.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Odebrat uživatelské rozhraní a tlačítko panelu nástrojů",
       "tooltip": "Všechna definovaná přepsání příznaků funkce zůstanou aktivní.<br/> Použijte <3>{{ param }}</3> v adrese URL pro opětovné povolení uživatelského rozhraní."
@@ -9990,11 +10025,18 @@
     "flag-type": "Typ příznaku",
     "flag-value": "Hodnota příznaku",
     "menu": "Otevřít nabídku",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Hodnocení OFREP",
     "ofrep-reason": "Důvod: <2>{{reason}}</2>",
     "ofrep-variant": "Varianta: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Uložit",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Ovládání funkcí"
   },
   "folder-filter": {
@@ -12667,7 +12709,7 @@
     },
     "description-allow-download": "Když jsou ovládací prvky povoleny, zobrazit na obrazovce možnost stažení protokolů.",
     "description-enable-field-selector": "Experimentální. Zobrazit komponentu pro správu zobrazených polí z protokolů.",
-    "description-enable-infinite-scrolling": "Experimentální. Požádejte o další výsledky posunutím do dolní části seznamu protokolů.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Použijte předdefinované barevné schéma pro zvýraznění příslušných částí řádků protokolu.",
     "description-order": "Zobrazit nejdříve nejnovější nebo nejstarší protokoly. Pokud je vybrána možnost Nejstarší nejdříve, zobrazení se automaticky posune na nejnovější protokoly ve spodní části.",
     "description-prettify-json": "Formátovat záznamy protokolu JSON pomocí odsazení a zalomení řádků.",
@@ -13690,6 +13732,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13802,7 +13847,10 @@
       "aria-label": "Nové",
       "new-template-dashboard-button": "Použít šablonu"
     },
-    "rss-button": "Novinky z blogu"
+    "rss-button": "Novinky z blogu",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Novinky",

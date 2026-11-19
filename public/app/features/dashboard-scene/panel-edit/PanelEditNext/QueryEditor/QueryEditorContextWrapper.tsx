@@ -458,6 +458,7 @@ export function QueryEditorContextWrapper({
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: dataPane.onQueryOptionsChange,
+      onQueryEdited: dataPane.onQueryEdited,
       addTransformation: addTransformationAction,
       deleteTransformation: (transformId: string) => {
         const index = findTransformationIndex(transformId);
