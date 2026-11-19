@@ -62,6 +62,9 @@ func AccumulateJSONLines(jsonl io.Reader) (*backend.QueryDataResponse, error) {
 				default:
 					err = fmt.Errorf("unsupported property: %s (offset:%d)", key, decoder.InputOffset())
 				}
+				if err != nil {
+					break
+				}
 			}
 
 			if err == nil {

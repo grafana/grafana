@@ -104,6 +104,6 @@ func TestAccumulatorErrorStatus(t *testing.T) {
 	require.EqualError(t, rsp.Responses["A"].Error, "unauthorized")
 	require.Equal(t, backend.ErrorSourceDownstream, rsp.Responses["A"].ErrorSource)
 
-	_, err = AccumulateJSONLines(strings.NewReader(`{"refId":"A","status":"bad"}`))
+	_, err = AccumulateJSONLines(strings.NewReader(`{"refId":"A","status":"bad","error":"unauthorized"}`))
 	require.ErrorContains(t, err, "expected number")
 }
