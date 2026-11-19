@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -56,6 +57,9 @@ type cascadeDeleteStorage struct {
 	// variableClient resolves the variable apiserver client; nil when none is configured, in which
 	// case variable cleanup is skipped.
 	variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
+	// dashboardPreferencesClient resolves the dashboard preferences apiserver client; nil when none is
+	// configured, in which case dashboard preferences cleanup is skipped.
+	dashboardPreferencesClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
 	// contentsDeleter removes alert rules and library elements in each folder; nil when not wired
 	// (e.g. MT), in which case that cleanup is skipped.
 	contentsDeleter FolderContentsDeleter
@@ -67,8 +71,8 @@ type cascadeDeleteStorage struct {
 // newCascadeDeleteStorage wraps store, re-exposing the watch/deletecollection interfaces the wrapper
 // would otherwise hide. The wrapped store implements both (MT generic store) or neither
 // (folderStorage), so one check keeps the advertised verbs unchanged.
-func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient) grafanarest.Storage {
-	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, variableClient: variableClient, contentsDeleter: contentsDeleter, accessClient: accessClient}
+func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), variableClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), dashboardPreferencesClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter, accessClient authlib.AccessClient) grafanarest.Storage {
+	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, variableClient: variableClient, dashboardPreferencesClient: dashboardPreferencesClient, contentsDeleter: contentsDeleter, accessClient: accessClient}
 	watcher, hasWatch := store.(rest.Watcher)
 	collectionDeleter, hasCollectionDelete := store.(rest.CollectionDeleter)
 	if hasWatch && hasCollectionDelete {
@@ -279,6 +283,12 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			"folder", name, "has_contents_deleter", s.contentsDeleter != nil, "dry_run", len(options.DryRun) > 0)
 	}
 
+	// Remove this folder's dashboard preferences right before the folder itself, so a failed contents
+	// cleanup above keeps them along with the folder.
+	if err := s.deleteDashboardPreferencesOfFolder(ctx, namespace, name, options); err != nil {
+		return nil, false, err
+	}
+
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
 	// folder keeps its missing-resource error.
 	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
@@ -401,6 +411,28 @@ func (s *cascadeDeleteStorage) deleteVariablesInFolder(ctx context.Context, name
 		}
 	}
 	return nil
+}
+
+func (s *cascadeDeleteStorage) deleteDashboardPreferencesOfFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error {
+	if s.dashboardPreferencesClient == nil {
+		return nil
+	}
+	svc, err := s.dashboardPreferencesClient(ctx)
+	if err != nil {
+		return fmt.Errorf("get dashboard preferences client: %w", err)
+	}
+	if svc == nil {
+		// No dashboard preferences apiserver client configured; nothing to clean up here.
+		return nil
+	}
+	err = dashboardpreferences.DeleteFolderPreferences(ctx, *svc, namespace, folderUID, *cascadeDeleteOptions(options))
+	if errors.Is(err, dashboardpreferences.ErrNotServed) {
+		// Failing the cascade wouldn't help: a dashboard API that doesn't serve dashboard preferences
+		// can't delete them on a retry either.
+		logging.FromContext(ctx).Warn("failed to delete folder dashboard preferences", "namespace", namespace, "folder", folderUID, "error", err)
+		return nil
+	}
+	return err
 }
 
 func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace, folderUID string) ([]string, error) {
