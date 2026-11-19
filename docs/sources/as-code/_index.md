@@ -111,9 +111,17 @@ Use the following table to find the tool that fits your workflow. You can combin
 | Generate dashboards from code                                                           | [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)                                     | You define dashboards in Go, TypeScript, Python, Java, or PHP, and push the generated resources with `gcx`.                                                 |
 | Inspect, pull, and push resources from the command line or with an AI agent            | [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/)                                          | `gcx` manages resources across Grafana and Grafana Cloud with one set of commands, and works for both people and agents.                                    |
 
-
 ## Additional as code tools
+
+[`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) is the Grafana command-line tool for provisioning Grafana and Grafana Cloud resources. You can pull resources into JSON or YAML files, keep them in version control, and push them back to one or more Grafana instances from your terminal or a CI/CD pipeline. Explicit commands, structured output, and predictable exit codes make changes repeatable and reviewable, whether you run `gcx` yourself or hand it to an AI agent.
+
+You can also provision resources with other [AI tools](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/):
+
+- **Grafana Assistant:** Create and update dashboards in plain language, directly in the Grafana UI. Refer to [Grafana Assistant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/).
+- **MCP servers:** Let an external AI client, such as Claude, Cursor, or VS Code with Copilot, manage dashboards, folders, alerting, and other resources through the Model Context Protocol. Refer to [MCP server](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/mcp/).
+
+These tools work well for exploring and drafting changes. To keep changes durable, move them into version-controlled files and apply them with `gcx` or another as-code tool. For a comparison of the AI tools, refer to [AI tools](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/#side-by-side-comparison).
 
 [Grafonnet](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically. **Grafonnet is not officially supported by Grafana. Instead, use the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)** to create dashboards as code.
 
-**Grizzly has been removed**, and is no longer deployed, enhanced, or supported. Use the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) instead.
+**Grizzly has been removed**, and is no longer deployed, enhanced, or supported. Use [`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) instead.
