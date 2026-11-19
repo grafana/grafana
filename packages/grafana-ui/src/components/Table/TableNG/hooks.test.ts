@@ -2383,6 +2383,48 @@ describe('useScrollShadows', () => {
     expect(Object.keys(cache.inserted)).toHaveLength(insertedRules);
   });
 
+  it('keeps the same class name and drives shadow opacity through custom properties', () => {
+    const element = document.createElement('div');
+    Object.defineProperties(element, {
+      scrollHeight: { value: 1000 },
+      clientHeight: { value: 200 },
+      offsetHeight: { value: 200 },
+    });
+    const ref = { current: { element } as DataGridHandle };
+    const { result } = renderHook(() => useScrollShadows(ref, true, { topOffset: 30, bottomOffset: 20 }));
+    const { className } = result.current;
+
+    act(() => {
+      element.scrollTop = 400;
+      result.current.onScroll();
+    });
+    expect(result.current.className).toBe(className);
+    expect(result.current.style).toMatchObject({
+      '--table-scroll-shadow-top-opacity': '1',
+      '--table-scroll-shadow-bottom-opacity': '1',
+    });
+
+    act(() => {
+      element.scrollTop = 800;
+      result.current.onScroll();
+    });
+    expect(result.current.className).toBe(className);
+    expect(result.current.style).toMatchObject({
+      '--table-scroll-shadow-top-opacity': '1',
+      '--table-scroll-shadow-bottom-opacity': '0',
+    });
+
+    act(() => {
+      element.scrollTop = 0;
+      result.current.onScroll();
+    });
+    expect(result.current.className).toBe(className);
+    expect(result.current.style).toMatchObject({
+      '--table-scroll-shadow-top-opacity': '0',
+      '--table-scroll-shadow-bottom-opacity': '1',
+    });
+  });
+
   it('tracks scroll edges without rerendering between visibility transitions', () => {
     const wrapper = document.createElement('div');
     const element = document.createElement('div');
