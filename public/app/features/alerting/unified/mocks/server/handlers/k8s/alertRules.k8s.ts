@@ -1,7 +1,82 @@
 import { HttpResponse, http } from 'msw';
 
-import { API_GROUP, API_VERSION, type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import {
+  API_GROUP,
+  API_VERSION,
+  type AlertRule,
+  type AlertRuleExecErrState,
+  type AlertRuleExpression,
+  type AlertRuleNoDataState,
+  type RecordingRule,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { grafanaRulerRule } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
+import { isUngroupedRuleGroup } from 'app/features/alerting/unified/utils/rules';
+import { type RulerGrafanaRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+
+export const MOCK_K8S_RULE_RESOURCE_VERSION = '7';
+
+/** The rules API resource the backend serves for a ruler-shaped Grafana rule in `group`. */
+export function mockK8sRuleFromRuler(
+  { grafana_alert: rule, ...ruler }: RulerGrafanaRuleDTO,
+  group: RulerRuleGroupDTO
+): AlertRule | RecordingRule {
+  const metadata = {
+    name: rule.uid,
+    resourceVersion: MOCK_K8S_RULE_RESOURCE_VERSION,
+    annotations: { 'grafana.app/folder': rule.namespace_uid },
+    labels: (isUngroupedRuleGroup(group.name) ? {} : { 'grafana.com/group': group.name }) as Record<string, string>,
+  };
+  const expressions = Object.fromEntries(
+    rule.data.map((query): [string, AlertRuleExpression] => [
+      query.refId,
+      {
+        model: query.model,
+        queryType: query.queryType || undefined,
+        datasourceUID: query.datasourceUid === '__expr__' ? undefined : query.datasourceUid,
+        relativeTimeRange: query.relativeTimeRange && {
+          from: `${query.relativeTimeRange.from}s`,
+          to: `${query.relativeTimeRange.to}s`,
+        },
+        source: query.refId === rule.condition,
+      },
+    ])
+  );
+  const trigger = { interval: group.interval ?? '1m' };
+
+  if (rule.record) {
+    return {
+      apiVersion: `${API_GROUP}/${API_VERSION}`,
+      kind: 'RecordingRule',
+      metadata,
+      spec: {
+        title: rule.title,
+        metric: rule.record.metric,
+        targetDatasourceUID: rule.record.target_datasource_uid ?? '',
+        expressions,
+        trigger,
+        labels: ruler.labels,
+      },
+    };
+  }
+
+  return {
+    apiVersion: `${API_GROUP}/${API_VERSION}`,
+    kind: 'AlertRule',
+    metadata,
+    spec: {
+      title: rule.title,
+      expressions,
+      trigger,
+      noDataState: (rule.no_data_state === 'OK' ? 'Ok' : (rule.no_data_state ?? 'NoData')) as AlertRuleNoDataState,
+      execErrState: (rule.exec_err_state === 'OK' ? 'Ok' : (rule.exec_err_state ?? 'Error')) as AlertRuleExecErrState,
+      for: ruler.for,
+      keepFiringFor: ruler.keep_firing_for,
+      labels: ruler.labels,
+      annotations: ruler.annotations,
+      paused: rule.is_paused,
+    },
+  };
+}
 
 export function mockK8sAlertRule({ uid, title }: { uid: string; title: string }): AlertRule {
   return {
