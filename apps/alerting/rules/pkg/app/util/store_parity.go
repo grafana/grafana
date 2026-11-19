@@ -19,7 +19,9 @@ func StoreRejection(format string, args ...any) error {
 	return apierrors.NewBadRequest(fmt.Sprintf(format, args...))
 }
 
-// Same characters as the legacy rule UID.
+// Same characters as the legacy rule UID. This copies the rules of util.ValidateUID in the root module's pkg/util,
+// which the legacy store applies, because this module doesn't depend on the root module. Keep the two in step until
+// this check is removed.
 var validRuleName = regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`).MatchString
 
 // ValidateRuleName checks that the name can be used as a legacy rule UID. An empty name is accepted:
