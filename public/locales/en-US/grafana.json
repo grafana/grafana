@@ -4912,7 +4912,6 @@
     },
     "folder-permissions-exposed": {
       "loading": "Loading...",
-      "no-access": "You do not have permission to view the permissions of this folder.",
       "not-found": "Unable to load this folder."
     },
     "folder-picker": {
@@ -15192,7 +15191,8 @@
       "title": "Fix folder metadata"
     },
     "folder-permissions": {
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "no-access": "You do not have permission to view the permissions of this folder."
     },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",

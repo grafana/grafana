@@ -1,4 +1,6 @@
 import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { config } from '@grafana/runtime';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 export const rootFolder: Folder = {
   kind: 'Folder',
@@ -35,3 +37,8 @@ export const sharedWithMeFolder: Folder = {
     description: 'Dashboards and folders shared with me',
   },
 };
+
+/** True for the root and "shared with me" folders, which have no stored folder resource. */
+export function isVirtualFolderUID(uid?: string): boolean {
+  return Boolean(uid) && (isRootFolderUID(uid) || uid === config.sharedWithMeFolderUID);
+}

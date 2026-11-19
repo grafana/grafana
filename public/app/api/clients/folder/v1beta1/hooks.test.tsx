@@ -45,6 +45,26 @@ const renderFolderHook = async () => {
   return result;
 };
 
+/** Renders the hook and records what a caller would show on each render. */
+const renderFolderHookPhases = (store?: Store<StoreState>) => {
+  const phases: string[] = [];
+  const { result } = renderHook(
+    () => {
+      const state = useGetCombinedFolderQuery(expectedUid);
+      if (state.isLoading) {
+        phases.push('loading');
+      } else if (state.isError) {
+        phases.push('error');
+      } else {
+        phases.push(state.data ? 'ready' : 'empty');
+      }
+      return state;
+    },
+    { wrapper: getWrapper({ store }) }
+  );
+  return { phases, result };
+};
+
 const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
   folderAPIVersionResolver.set('v1beta1');
   server.use(
@@ -190,25 +210,22 @@ describe('useGetCombinedFolderQuery', () => {
   });
 
   it('stays loading on every render until the folder is ready', async () => {
-    const phases: string[] = [];
-    const { result } = renderHook(
-      () => {
-        const state = useGetCombinedFolderQuery(expectedUid);
-        if (state.isLoading) {
-          phases.push('loading');
-        } else if (state.isError) {
-          phases.push('error');
-        } else {
-          phases.push(state.data ? 'ready' : 'empty');
-        }
-        return state;
-      },
-      { wrapper: getWrapper({}) }
-    );
+    const { phases, result } = renderFolderHookPhases();
     await waitFor(() => expect(result.current.data?.uid).toBe(expectedUid));
 
     // Callers show a render that is neither loading nor an error, and has no folder, as a missing folder.
     expect([...new Set(phases)]).toEqual(['loading', 'ready']);
+  });
+
+  it('is ready from the first render when the folder is already cached', async () => {
+    const store = configureStore();
+    const first = renderFolderHookPhases(store);
+    await waitFor(() => expect(first.result.current.data?.uid).toBe(expectedUid));
+
+    const second = renderFolderHookPhases(store);
+    await waitFor(() => expect(second.result.current.data?.uid).toBe(expectedUid));
+
+    expect([...new Set(second.phases)]).toEqual(['ready']);
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {

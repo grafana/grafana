@@ -2,29 +2,46 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
+import { getFolderPermissions } from 'app/features/browse-dashboards/permissions';
+import { type FolderDTO } from 'app/types/folders';
 
 import { useFolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
+import { isItemManagedByRepository } from '../../utils/managedResource';
 
 import { MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
 
 interface FolderPermissionsProps {
-  folderUID: string;
-  canSetPermissions: boolean;
-  isProvisionedFolder: boolean;
+  folder: FolderDTO;
 }
 
-export function FolderPermissions({ folderUID, canSetPermissions, isProvisionedFolder }: FolderPermissionsProps) {
-  if (!isProvisionedFolder || !config.provisioningEnabled) {
-    return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
+export function FolderPermissions({ folder }: FolderPermissionsProps) {
+  const { canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
+
+  if (!canViewPermissions) {
+    return (
+      <Alert
+        severity="info"
+        title={t(
+          'provisioning.folder-permissions.no-access',
+          'You do not have permission to view the permissions of this folder.'
+        )}
+      />
+    );
   }
 
-  return <FolderPermissionsWithMetadataCheck folderUID={folderUID} canSetPermissions={canSetPermissions} />;
+  if (!isItemManagedByRepository(folder) || !config.provisioningEnabled) {
+    return <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />;
+  }
+
+  return <FolderPermissionsWithMetadataCheck folderUID={folder.uid} canSetPermissions={canSetPermissions} />;
 }
 
-function FolderPermissionsWithMetadataCheck({
-  folderUID,
-  canSetPermissions,
-}: Omit<FolderPermissionsProps, 'isProvisionedFolder'>) {
+interface MetadataCheckProps {
+  folderUID: string;
+  canSetPermissions: boolean;
+}
+
+function FolderPermissionsWithMetadataCheck({ folderUID, canSetPermissions }: MetadataCheckProps) {
   const { status: metadataStatus, repositoryName } = useFolderMetadataStatus(folderUID);
 
   switch (metadataStatus) {

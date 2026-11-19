@@ -1,5 +1,4 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo } from 'react';
 
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
 import { AppEvents } from '@grafana/data';
@@ -10,7 +9,7 @@ import {
   API_VERSION as IAM_API_VERSION,
   type DisplayList,
   iamAPIv0alpha1,
-  useLazyGetDisplayMappingQuery,
+  useGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
@@ -38,7 +37,7 @@ import { deletedDashboardsCache } from '../../../../features/search/service/dele
 import { useDispatch } from '../../../../types/store';
 
 import { isProvisionedFolderCheck } from './utils';
-import { rootFolder, sharedWithMeFolder } from './virtualFolders';
+import { isVirtualFolderUID, rootFolder, sharedWithMeFolder } from './virtualFolders';
 
 import {
   folderAPIv1beta1,
@@ -133,7 +132,7 @@ export async function getCombinedFolder(uid: string) {
   // Root-parented requests carry "" or "general" — serve the virtual root
   // folder for either rather than fetching a folder resource that doesn't exist.
   const isRoot = isRootFolderUID(uid);
-  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
+  const isVirtualFolder = isVirtualFolderUID(uid);
 
   // Virtual folders aren't real resources, so the folder object comes from a
   // hardcoded constant and they have no parents. Access is still a real query —
@@ -185,7 +184,7 @@ export function useGetCombinedFolderQuery(uid?: string) {
   // "" / undefined and "general" both mean the synthetic root folder —
   // neither is a real folder resource.
   const isRoot = isRootFolderUID(uid);
-  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
+  const isVirtualFolder = isVirtualFolderUID(uid);
   const params = !uid ? skipToken : { name: uid };
 
   // The folder object itself isn't fetched for virtual folders (the resource
@@ -194,19 +193,9 @@ export function useGetCombinedFolderQuery(uid?: string) {
   const resultFolder = useGetFolderQuery(!isVirtualFolder ? params : skipToken);
   const resultAccess = useGetFolderAccessQuery(params);
   const resultParents = useGetFolderParentsQuery(!isVirtualFolder ? params : skipToken);
-  const [triggerGetUserDisplayMapping, resultUserDisplay] = useLazyGetDisplayMappingQuery();
-
-  const needsUserData = useMemo(() => {
-    const userKeys = getUserKeys(resultFolder.data);
-    return !isVirtualFolder && Boolean(userKeys.length);
-  }, [isVirtualFolder, resultFolder]);
-
-  useEffect(() => {
-    const userKeys = getUserKeys(resultFolder.data);
-    if (needsUserData && userKeys.length) {
-      triggerGetUserDisplayMapping({ key: userKeys }, true);
-    }
-  }, [needsUserData, resultFolder, triggerGetUserDisplayMapping]);
+  const userKeys = isVirtualFolder ? [] : getUserKeys(resultFolder.data);
+  const needsUserData = userKeys.length > 0;
+  const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: userKeys } : skipToken);
 
   // User names only fill in createdBy and updatedBy. If they can't be looked up, for example on a 403 from the
   // display API, return the folder without them and keep that error off the folder: the folder picker reads a
@@ -455,18 +444,15 @@ function combinedState(
   result: ReturnType<typeof useGetFolderQuery>,
   resultParents: ReturnType<typeof useGetFolderParentsQuery>,
   resultAccess: ReturnType<typeof useGetFolderAccessQuery>,
-  resultUserDisplay: ReturnType<typeof useLazyGetDisplayMappingQuery>[1],
+  resultUserDisplay: ReturnType<typeof useGetDisplayMappingQuery>,
   needsUserData: boolean
 ) {
   const results = needsUserData
     ? [result, resultParents, resultAccess, resultUserDisplay]
     : [result, resultParents, resultAccess];
-  // The user names lookup starts one render after the folder arrives. Count that render as loading,
-  // or callers briefly see no folder and no error.
-  const userDataNotRequested = needsUserData && resultUserDisplay.isUninitialized;
   return {
-    isLoading: results.some((r) => r.isLoading) || userDataNotRequested,
-    isFetching: results.some((r) => r.isFetching) || userDataNotRequested,
+    isLoading: results.some((r) => r.isLoading),
+    isFetching: results.some((r) => r.isFetching),
     isSuccess: results.every((r) => r.isSuccess),
     isError: results.some((r) => r.isError),
     // Only one error will be shown. TODO: somehow create a single error out of them?

@@ -30,7 +30,8 @@ export function FolderPermissionsExposedComponentLazy(props: Partial<FolderPermi
     <Suspense
       fallback={<LoadingPlaceholder text={t('browse-dashboards.folder-permissions-exposed.loading', 'Loading...')} />}
     >
-      {/* start over for a new folder, or the previous folder's permissions stay on screen while it loads. */}
+      {/* Remount for a new folder. The folder hook keeps each query's previous result until the new one lands, so
+          without this the new folder can render with the previous folder's access. */}
       <FolderPermissionsExposedComponent key={props.folderUid} folderUid={props.folderUid} />
     </Suspense>
   );

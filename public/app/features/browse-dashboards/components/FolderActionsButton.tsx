@@ -193,11 +193,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
-          <FolderPermissions
-            folderUID={folder.uid}
-            canSetPermissions={canSetPermissions}
-            isProvisionedFolder={isProvisionedFolder}
-          />
+          <FolderPermissions folder={folder} />
         </Drawer>
       )}
       {showManageOwnersModal && (
