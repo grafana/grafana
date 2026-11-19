@@ -17,8 +17,7 @@ import {
   type ExtensionSidebarDockSide,
   type ExtensionSidebarPresentation,
   resolveExtensionSidebarPresentation,
-  setExtensionSidebarDockSide,
-  setExtensionSidebarPresentation,
+  setExtensionSidebarPlacement,
 } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 import {
@@ -135,12 +134,11 @@ export function ExtensionSidebar() {
 }
 
 function dockExtensionSidebar(side: ExtensionSidebarDockSide) {
-  setExtensionSidebarDockSide(side);
-  setExtensionSidebarPresentation('docked');
+  setExtensionSidebarPlacement(side, 'drag');
 }
 
 function floatExtensionSidebar() {
-  setExtensionSidebarPresentation('floating');
+  setExtensionSidebarPlacement('floating', 'drag');
 }
 
 /**
