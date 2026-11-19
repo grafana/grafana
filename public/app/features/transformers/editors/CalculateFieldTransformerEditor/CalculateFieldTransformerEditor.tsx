@@ -178,11 +178,9 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
 
   const onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
-    if (mode === CalculateFieldMode.WindowFunctions) {
-      options.window = options.window ?? defaultWindowOptions;
-    }
     onChange({
       ...options,
+      ...(mode === CalculateFieldMode.WindowFunctions && { window: options.window ?? defaultWindowOptions }),
       mode,
     });
   };

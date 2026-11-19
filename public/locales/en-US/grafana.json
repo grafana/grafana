@@ -1557,7 +1557,7 @@
           "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex). Quote a value with spaces: label:team=\"a b\".",
           "metric": "Recorded metric name (exact match).",
           "panel-id": "Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.",
-          "paused": "Whether the rule is paused (true/false).",
+          "paused": "paused:true shows only paused rules.",
           "plugins": "plugins:hide excludes rules created by plugins.",
           "policy": "Named notification policy (mutually exclusive with contactPoint:).",
           "rule": "Rule title text search (equivalent to free text).",
@@ -1573,7 +1573,6 @@
         "invalid-tokens": "Some filters could not be applied: {{tokens}}",
         "invalid-value": "Use one of these values for {{key}}: {{values}}",
         "label": "Search",
-        "not-paused-unavailable": "Filtering by not paused isn't available yet.",
         "placeholder": "Search by name or enter filter query...",
         "property": {
           "contact-point": "Contact point",
@@ -1620,6 +1619,65 @@
         "loading-rules": "Loading rules",
         "refresh-error": "Failed to refresh results",
         "retry": "Retry"
+      },
+      "sidebar": {
+        "all": "All",
+        "contact-point": "Contact point",
+        "contact-point-description": "Rules that route straight to it, not through a notification policy",
+        "contact-point-help": "Contact point filter help",
+        "contact-point-placeholder": "Select contact point",
+        "dashboard": "Dashboard",
+        "datasource": "Query data source",
+        "datasource-placeholder": "Select data sources",
+        "filters": "Filters",
+        "folder": "Folder",
+        "folder-description": "Rules directly in this folder",
+        "folder-help": "Folder filter help",
+        "folder-placeholder": "Select folders",
+        "health": "Health",
+        "health-error": "Error",
+        "health-nodata": "No data",
+        "health-ok": "OK",
+        "health-unknown": "Unknown",
+        "label-add": "Add label",
+        "label-key": "Label key",
+        "label-key-placeholder": "key",
+        "label-operator": "Operator",
+        "label-remove": "Remove label matcher",
+        "label-value": "Label value",
+        "label-value-any": "any",
+        "label-value-placeholder": "value",
+        "label-value-unset": "none",
+        "labels": "Labels",
+        "metric": "Recorded metric",
+        "metric-placeholder": "Exact metric name",
+        "operator-absent": "absent",
+        "operator-absent-description": "Lacks this label",
+        "operator-equal": "Equals",
+        "operator-exists": "exists",
+        "operator-exists-description": "Has this label",
+        "operator-not-equal": "Does not equal",
+        "operator-not-regex": "Does not match regex",
+        "operator-regex": "Matches regex",
+        "panel-id": "Panel ID",
+        "paused": "Paused",
+        "paused-true": "Paused",
+        "plugin-rules": "Plugin rules",
+        "plugin-rules-hide": "Hide",
+        "plugin-rules-show": "Show",
+        "policy": "Notification policy",
+        "policy-description": "Rules routed through it, not straight to a contact point",
+        "policy-help": "Notification policy filter help",
+        "policy-placeholder": "Select policy",
+        "rule-name": "Rule name",
+        "rule-name-placeholder": "Filter by name",
+        "state": "Alert state",
+        "state-firing": "Firing",
+        "state-normal": "Normal",
+        "state-pending": "Pending",
+        "state-recovering": "Recovering",
+        "target-datasource": "Target data source",
+        "target-datasource-placeholder": "Select data source"
       },
       "status": {
         "error": "Failed to evaluate rule",
@@ -4857,6 +4915,12 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions": {
+      "no-access": "You do not have permission to view the permissions of this folder."
+    },
+    "folder-permissions-exposed": {
+      "not-found": "Unable to load this folder."
+    },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
@@ -5654,6 +5718,36 @@
         "version": "Version"
       },
       "view-json-diff": "View JSON diff to see all changes"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "connection",
+      "label-plural": "connections"
+    },
+    "dashboard": {
+      "label": "dashboard",
+      "label-plural": "dashboards"
+    },
+    "datasource": {
+      "label": "data source",
+      "label-plural": "data sources"
+    },
+    "folder": {
+      "label": "folder",
+      "label-plural": "folders"
+    },
+    "librarypanel": {
+      "label": "library panel",
+      "label-plural": "library panels"
+    },
+    "playlist": {
+      "label": "playlist",
+      "label-plural": "playlists"
+    },
+    "repository": {
+      "label": "repository",
+      "label-plural": "repositories"
     }
   },
   "correlations": {
@@ -15133,9 +15227,6 @@
       "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
     },
-    "folder-permissions": {
-      "loading": "Loading..."
-    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -15639,22 +15730,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
-    },
-    "resource-kind": {
-      "connection": "connection",
-      "connections": "Connections",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboards",
-      "datasource": "data source",
-      "datasources": "Data sources",
-      "folder": "folder",
-      "folders": "Folders",
-      "library-panel": "library panel",
-      "library-panels": "Library panels",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "Repositories",
-      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16597,8 +16672,6 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
       "type-header": "Type"
     },
     "search-input": {
