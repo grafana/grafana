@@ -2,15 +2,31 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
+import { setFolderResponse } from '../../mocks/server/configure';
 import { grantPermissionsHelper } from '../../test/test-utils';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
 
 const server = setupMswServer();
+
+const RULE_FOLDER_UID = 'rule-folder';
+
+function setRuleFolderAccess(canWrite: boolean, canDelete: boolean) {
+  setFolderResponse({
+    uid: RULE_FOLDER_UID,
+    accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
+      [AccessControlAction.FoldersRead]: true,
+      [AccessControlAction.AlertingRuleUpdate]: canWrite,
+      [AccessControlAction.AlertingRuleDelete]: canDelete,
+    },
+  });
+}
 
 function ruleWithPerms({
   canWrite = true,
@@ -23,14 +39,14 @@ function ruleWithPerms({
   paused?: boolean;
   isProvisioned?: boolean;
 } = {}): RecordingRule {
+  setRuleFolderAccess(canWrite, canDelete);
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'RecordingRule',
     metadata: {
       name: 'rule-1',
       annotations: {
-        [K8sAnnotations.AccessWrite]: String(canWrite),
-        [K8sAnnotations.AccessDelete]: String(canDelete),
+        [AnnoKeyFolder]: RULE_FOLDER_UID,
         ...(isProvisioned ? { [K8sAnnotations.Provenance]: 'terraform' } : {}),
       },
     },
@@ -64,18 +80,28 @@ describe('RecordingRuleActions', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders Edit and More buttons when edit is granted', () => {
+  it('renders Edit and More buttons when edit is granted', async () => {
     renderActions(ruleWithPerms());
 
-    expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 
-  it('hides Edit when canEdit is false', () => {
+  it('hides Edit and Pause without the write permission on the rule folder', async () => {
     renderActions(ruleWithPerms({ canWrite: false }));
 
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /Delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
+  });
+
+  it('hides Delete without the delete permission on the rule folder', async () => {
+    renderActions(ruleWithPerms({ canDelete: false }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /Pause/i })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
   it('shows Pause when pause is granted and rule is active', async () => {
@@ -92,14 +118,6 @@ describe('RecordingRuleActions', () => {
     expect(await screen.findByRole('menuitem', { name: /Resume/i })).toBeInTheDocument();
   });
 
-  it('hides Pause and Delete when user has no write/delete permission', async () => {
-    renderActions(ruleWithPerms({ canWrite: false, canDelete: false }));
-
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
-  });
-
   it('shows Delete confirmation dialog on Delete click', async () => {
     renderActions(ruleWithPerms());
 
@@ -109,10 +127,22 @@ describe('RecordingRuleActions', () => {
   });
 
   it('hides Edit and Pause/Delete for provisioned rules', async () => {
-    renderActions(ruleWithPerms({ isProvisioned: true }));
+    const provisioned = ruleWithPerms({ isProvisioned: true });
+    const editable = { ...ruleWithPerms(), metadata: { ...ruleWithPerms().metadata, name: 'rule-2' } };
+    render(
+      <ul>
+        <li>
+          <RecordingRuleActions rule={provisioned} />
+        </li>
+        <li>
+          <RecordingRuleActions rule={editable} />
+        </li>
+      </ul>
+    );
 
-    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findAllByRole('link', { name: 'Edit' })).toHaveLength(1);
+    await userEvent.click(screen.getAllByRole('button', { name: 'More' })[0]);
+    expect(await screen.findByRole('menuitem', { name: /View/i })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Pause/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /Delete/i })).not.toBeInTheDocument();
   });
