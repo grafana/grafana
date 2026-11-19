@@ -51,6 +51,10 @@ export const DashboardInteractions = {
     reportDashboardInteraction('text_panel_usage', properties);
   },
 
+  tablePanelUsage: (properties: { dashboard_uid?: string; table_panel_count: number }) => {
+    reportDashboardInteraction('table_panel_usage', properties);
+  },
+
   dashboardCopied: (
     properties: { name: string; url: string; diff_count?: number } & Partial<DashboardEditSessionTracking>
   ) => {

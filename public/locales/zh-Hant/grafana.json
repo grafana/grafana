@@ -2926,6 +2926,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "錄製規則"
     },
@@ -9758,13 +9789,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "功能控制項",
       "close-tooltip": "關閉功能控制項",
       "open-tooltip": "開啟功能控制項"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "刪除",
     "description": "為了測試和開發目的，在本機覆寫前端功能標記。",
+    "disable-overrides": "",
     "dismiss": {
       "label": "移除使用者介面和工具列按鈕",
       "tooltip": "任何已定義的功能標記覆寫都將保持有效狀態。<br/>在網址中使用 <3>{{ param }}</3> 以再次啟用 UI。"
@@ -9774,11 +9809,18 @@
     "flag-type": "標記類型",
     "flag-value": "標記值",
     "menu": "開啟選單",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP 評估",
     "ofrep-reason": "原因：<2>{{reason}}</2>",
     "ofrep-variant": "變體：<2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "儲存",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "功能控制項"
   },
   "folder-filter": {
@@ -12361,7 +12403,7 @@
     },
     "description-allow-download": "啟用控制項時，在顯示器上顯示下載記錄的選項。",
     "description-enable-field-selector": "實驗性。顯示一個元件，用於管理記錄中顯示的欄位。",
-    "description-enable-infinite-scrolling": "實驗性。捲動至記錄清單底部，以請求更多結果。",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "使用預先定義的著色方案，來突顯記錄行中的相關部分。",
     "description-order": "先顯示最新或最舊的記錄。選取「最舊記錄優先」時，檢視畫面會自動捲動至最下方的最新記錄。",
     "description-prettify-json": "使用縮排和換行來格式化 JSON 記錄項目。",
@@ -13375,6 +13417,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13487,7 +13532,10 @@
       "aria-label": "新",
       "new-template-dashboard-button": "使用範本"
     },
-    "rss-button": "部落格的最新消息"
+    "rss-button": "部落格的最新消息",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "新聞",
