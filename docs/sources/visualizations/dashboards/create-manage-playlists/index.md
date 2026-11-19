@@ -17,12 +17,6 @@ menuTitle: Manage playlists
 title: Manage playlists
 description: Create and manage dashboard playlists
 weight: 500
-refs:
-  fixed-role-definitions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
 ---
 
 # Manage playlists
@@ -33,11 +27,20 @@ Grafana automatically scales dashboards to any resolution, which makes them perf
 
 You can access the **Playlist** feature from Grafana's side menu, in the Dashboards submenu.
 
-{{< admonition type="note" >}}
-To view and play playlists, you need the `playlists:read` permission. To create, update, and delete playlists, you need the `playlists:write` permission. By default, the Viewer role includes `playlists:read`, and the Editor and Admin roles include both. Refer to [Fixed role definitions](ref:fixed-role-definitions) for the `fixed:playlists:reader` and `fixed:playlists:writer` roles.
+## Playlist permissions
 
-To play a playlist, you also need `dashboards:read` on the dashboards in it. Without it, the playlist doesn't show those dashboards.
-{{< /admonition >}}
+The following table outlines the permissions you need for playlists.
+
+| Role action       | Description                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `playlists:read`  | Lets you view and play playlists. By default, the Viewer role includes this permission.                                                                             |
+| `playlists:write` | Lets you create, update, and delete playlists. By default, the Editor and Admin roles include this permission.                                                      |
+| `dashboards:read` | Needed, in addition to `playlists:read`, to play a playlist. You need it on the dashboards in the playlist. Without it, the playlist doesn't show those dashboards. |
+
+Note the following behaviors and limits:
+
+- Playlist permissions apply to all playlists in your organization. You can't grant access to a single playlist.
+- Assigning roles to users requires a Grafana Cloud or Grafana Enterprise account.
 
 ## Access, share, and control a playlist
 
