@@ -437,6 +437,34 @@ describe('edit periods that used Composer', () => {
     }
   });
 
+  it('marks a period that starts while Composer stays open after a save', async () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      const saved = await retitled(session, 'Saved');
+      await session.applySpec(saved.spec, { signal: live(), baseRevision: saved.revision });
+      // A save ends the period; Composer stays open over Editing.
+      await scene.saveCompleted(scene.getSaveModel(), {
+        slug: 'slug',
+        uid: 'composer-test',
+        url: 'url',
+        version: 2,
+        status: 'success',
+      });
+
+      const next = await retitled(session, 'After save');
+      await session.applySpec(next.spec, { signal: live(), baseRevision: next.revision });
+      session.exit();
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledTimes(1);
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
   it('leaves a period Composer never touched unmarked', () => {
     const ended = tracked();
     try {
