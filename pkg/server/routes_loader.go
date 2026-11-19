@@ -33,9 +33,13 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating router unified storage client: %w", err)
 	}
+	exchanger, err := router.NewServiceTokenExchanger(s.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("creating router service token exchanger: %w", err)
+	}
 	clients := router.RoutesLoaderClients{
 		Resource:           client,
-		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter, exchanger),
 		Access:             accessClient,
 	}
 	clients.SecureValues, err = routerSecureValues(s.cfg, s.tracer, accessClient)
