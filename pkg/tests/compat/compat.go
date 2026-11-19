@@ -92,6 +92,11 @@ func Dir(t *testing.T) string {
 func NewHelper(t *testing.T) *apis.K8sTestHelper {
 	t.Helper()
 	Dir(t)
+	// Every phase of every package starts here, so a failure that no resource reports still
+	// reaches the owners of its package.
+	if !strings.Contains(t.Name(), "/") {
+		ReportOwners(t, PackagePath(t))
+	}
 	h := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 		GrafanaOpts: testinfra.GrafanaOpts{
 			DisableAnonymous:   true,
@@ -100,8 +105,18 @@ func NewHelper(t *testing.T) *apis.K8sTestHelper {
 		},
 		ReuseExistingUsers: true,
 	})
-	t.Cleanup(h.Shutdown)
+	t.Cleanup(func() { shutDown(t, h.ShutdownErr) })
 	return h
+}
+
+// shutDown stops the server of a phase and fails the phase when that fails.
+func shutDown(t *testing.T, shutdown func() error) {
+	t.Helper()
+	if err := shutdown(); err != nil {
+		// A resource that failed before has reported itself, and this failure is the package's.
+		ReportOwnersNow(t, PackagePath(t))
+		t.Errorf("shut down Grafana: %v", err)
+	}
 }
 
 // Resource is a namespaced resource this server can create, read, update and delete.

@@ -19,6 +19,10 @@ import (
 // reported holds the top-level tests that already named an owner for a failure.
 var reported sync.Map
 
+// phases holds the top-level tests that registered package-level reporting, so that a
+// phase reporting through both NewHelper and its own entry point reports once.
+var phases sync.Map
+
 // ReportOwners names the owning team when t fails, so a red run says who should
 // look at it. It logs the owners and, in GitHub Actions, adds them to the job summary.
 //
@@ -34,12 +38,18 @@ var reported sync.Map
 func ReportOwners(t *testing.T, paths ...string) {
 	t.Helper()
 	root, _, isSubtest := strings.Cut(t.Name(), "/")
+	if !isSubtest {
+		if _, registered := phases.LoadOrStore(root, true); registered {
+			return
+		}
+	}
 	if deadline, ok := t.Deadline(); ok && !isSubtest {
-		stop := watchTimeout(t.Name(), deadline, paths)
-		t.Cleanup(func() { stop() })
+		stop := watchTimeout(timeoutEntryPath(t.Name()), t.Name(), deadline, paths)
+		t.Cleanup(stop)
 	}
 	t.Cleanup(func() {
 		if !isSubtest {
+			defer phases.Delete(root)
 			defer reported.Delete(root)
 			if _, done := reported.Load(root); done {
 				return
@@ -80,27 +90,63 @@ func logOwners(t *testing.T, paths []string) {
 	}
 }
 
-// watchTimeout names the owners of a phase that is about to hit the test timeout. The
-// testing package then panics outside the running test, which never runs its cleanups,
-// so nothing else would report a hung phase. It returns the function that cancels the
-// watch once the test ended in time.
-func watchTimeout(name string, deadline time.Time, paths []string) (stop func() bool) {
+// watchTimeout leaves the owners of a phase that is about to hit the test timeout in the
+// file entry, a little before the deadline. The testing package then panics outside the
+// running test, which never runs its cleanups, so nothing else would report a hung phase.
+// The file is only a candidate: the phase runner adds it to the job summary when the phase
+// did not end, and stop, which the test runs when it ends, removes it, so a phase that
+// finishes inside the margin leaves no entry in a passing job.
+func watchTimeout(entry, name string, deadline time.Time, paths []string) (stop func()) {
+	var (
+		mu      sync.Mutex
+		stopped bool
+	)
 	remaining := time.Until(deadline)
 	// Early enough to write before the panic ends the process.
 	timer := time.AfterFunc(remaining-min(10*time.Second, remaining/10), func() {
+		mu.Lock()
+		defer mu.Unlock()
+		if stopped {
+			return
+		}
 		owners, err := lookupOwners(paths)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s is about to time out; could not look up owners: %v\n", name, err)
 			return
 		}
 		fmt.Fprintf(os.Stderr, "%s is about to time out, owned by %s\n", name, owners)
-		if summary := os.Getenv("GITHUB_STEP_SUMMARY"); summary != "" {
-			if err := appendLine(summary, fmt.Sprintf("- `%s`%s timed out, owned by %s\n", name, phaseLabel(), owners)); err != nil {
-				fmt.Fprintf(os.Stderr, "could not write job summary: %v\n", err)
-			}
+		if entry == "" {
+			return
+		}
+		line := fmt.Sprintf("- `%s`%s timed out, owned by %s\n", name, phaseLabel(), owners)
+		if err := os.WriteFile(entry, []byte(line), 0o600); err != nil {
+			fmt.Fprintf(os.Stderr, "could not write %s: %v\n", entry, err)
 		}
 	})
-	return timer.Stop
+	return func() {
+		mu.Lock()
+		defer mu.Unlock()
+		stopped = true
+		timer.Stop()
+		if entry != "" {
+			_ = os.Remove(entry)
+		}
+	}
+}
+
+// timeoutEntryPath is where the watchdog of a phase leaves its entry, in the data directory
+// of the round trip, named for the package and the phase so that the phase runner finds it.
+// It is empty outside the workflow, where there is no job summary to add it to.
+func timeoutEntryPath(name string) string {
+	dir := os.Getenv(EnvDir)
+	if dir == "" {
+		return ""
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(dir, "timeout-"+filepath.Base(wd)+"-"+name+".md")
 }
 
 // phaseLabel names the version and the round trip a phase runs in, like " (newer,

@@ -74,6 +74,13 @@ runs:
             echo "::error::$pkg did not pass $TEST: it is missing, skipped, or failed"
             rc=1
           fi
+          # A phase that hit the test timeout never ran its cleanups, so its owners are still in
+          # the file its watchdog wrote. A phase that ended in time removes the file itself.
+          entry="$GRAFANA_COMPAT_DIR/timeout-$pkg-$TEST.md"
+          if [ -f "$entry" ]; then
+            cat "$entry" >> "$GITHUB_STEP_SUMMARY"
+            rm -f "$entry"
+          fi
         done
         # A missing build or no package in common must not pass as a green phase, even when
         # packages only the newer version ships ran.

@@ -295,8 +295,12 @@ func (c *K8sTestHelper) GetListenerAddress() string {
 }
 
 func (c *K8sTestHelper) Shutdown() {
-	err := c.env.Server.Shutdown(context.Background(), "done")
-	require.NoError(c.t, err)
+	require.NoError(c.t, c.ShutdownErr())
+}
+
+// ShutdownErr stops the server and returns the error, for callers that report it themselves.
+func (c *K8sTestHelper) ShutdownErr() error {
+	return c.env.Server.Shutdown(context.Background(), "done")
 }
 
 type ResourceClientArgs struct {

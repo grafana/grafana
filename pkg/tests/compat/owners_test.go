@@ -1,12 +1,14 @@
 package compat
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -131,7 +133,8 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 		{"a failure outside any subtest names the package owners", "phase", nil, 1},
 		{"a failing subtest is not reported a second time by its phase", "subtest", nil, 1},
 		{"a failure reported at once is not reported a second time by its phase", "now", nil, 1},
-		{"a phase that hits the test timeout names the package owners", "hang", []string{"-test.timeout=3s"}, 1},
+		{"a shutdown failure after a resource failure is reported too", "shutdown", nil, 2},
+		{"a phase registered twice reports once", "twice", nil, 1},
 		{"a passing phase reports nothing", "pass", nil, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -173,9 +176,15 @@ func TestReportOwnersHelper(t *testing.T) {
 	switch mode {
 	case "phase":
 		t.Fatal("phase failure")
-	case "hang":
-		// Stays here until the test timeout fires, like a phase stuck on a lock.
-		time.Sleep(time.Hour)
+	case "twice":
+		ReportOwners(t, PackagePath(t))
+		t.Fatal("phase failure")
+	case "shutdown":
+		t.Cleanup(func() { shutDown(t, func() error { return errors.New("server did not stop") }) })
+		t.Run("resource", func(t *testing.T) {
+			ReportOwners(t, PackagePath(t))
+			t.Fatal("resource failure")
+		})
 	case "now":
 		ReportOwnersNow(t, PackagePath(t))
 		t.Fatal("failure reported at once")
@@ -185,4 +194,55 @@ func TestReportOwnersHelper(t *testing.T) {
 			t.Fatal("resource failure")
 		})
 	}
+}
+
+// watchedPhase runs a phase with the timeout watchdog on a fake clock, in a repository of its own.
+func watchedPhase(t *testing.T, run func(entry string, stop func())) {
+	t.Helper()
+	synctest.Test(t, func(t *testing.T) {
+		repo := t.TempDir()
+		writeTree(t, repo, map[string]string{
+			".github/CODEOWNERS":     "/pkg/tests/compat/ @org/compat\n",
+			"pkg/tests/compat/.keep": "",
+		})
+		t.Chdir(filepath.Join(repo, "pkg", "tests", "compat"))
+		dir := filepath.Join(repo, "upgrade-rollback")
+		require.NoError(t, os.MkdirAll(dir, 0o750))
+		t.Setenv(EnvRole, "older")
+		t.Setenv(EnvDir, dir)
+		entry := timeoutEntryPath("TestCompatSetup")
+		require.Equal(t, filepath.Join(dir, "timeout-compat-TestCompatSetup.md"), entry)
+
+		stop := watchTimeout(entry, "TestCompatSetup", time.Now().Add(20*time.Minute), []string{"pkg/tests/compat"})
+		run(entry, stop)
+	})
+}
+
+func TestWatchTimeoutLeavesNothingForAPhaseThatEndsInTime(t *testing.T) {
+	watchedPhase(t, func(entry string, stop func()) {
+		// Past the early report, before the deadline: the phase still ends in time.
+		time.Sleep(20*time.Minute - 5*time.Second)
+		synctest.Wait()
+		_, err := os.Stat(entry) // #nosec G304 -- file in the test's temp dir
+		require.NoError(t, err, "the watchdog leaves its candidate entry before the deadline")
+
+		stop()
+		_, err = os.Stat(entry) // #nosec G304 -- file in the test's temp dir
+		require.ErrorIs(t, err, os.ErrNotExist, "a phase that ended in time is not a timeout")
+	})
+}
+
+func TestWatchTimeoutLeavesTheEntryForAPhaseThatDoesNotEnd(t *testing.T) {
+	watchedPhase(t, func(entry string, _ func()) {
+		time.Sleep(20 * time.Minute)
+		synctest.Wait()
+		written, err := os.ReadFile(entry) // #nosec G304 -- file in the test's temp dir
+		require.NoError(t, err)
+		require.Equal(t, "- `TestCompatSetup` (older, upgrade-rollback) timed out, owned by @org/compat\n", string(written))
+	})
+}
+
+func TestWatchTimeoutWritesNothingWithoutADataDirectory(t *testing.T) {
+	t.Setenv(EnvDir, "")
+	require.Empty(t, timeoutEntryPath("TestCompatSetup"))
 }
