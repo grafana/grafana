@@ -86,6 +86,13 @@ interface BaseDrawerProps {
    * pull-request banner. The caller owns its own routes.
    */
   redirectUrl: string;
+  /**
+   * Replaces the `redirectUrl` redirect after a commit to the configured branch, for a caller that
+   * stays where it is (e.g. a dialog over a dashboard).
+   */
+  onWriteSuccess?: () => void;
+  /** Runs before the pull-request redirect, for a caller that must settle its own state before the page changes. */
+  onBranchSaved?: () => void;
   onDismiss?: () => void;
 }
 
@@ -109,6 +116,8 @@ interface FormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
+  onWriteSuccess?: () => void;
+  onBranchSaved?: () => void;
   onDismiss?: () => void;
 }
 
@@ -124,6 +133,8 @@ function FormContent({
   initialValues,
   repository,
   canPushToConfiguredBranch,
+  onWriteSuccess,
+  onBranchSaved,
   onDismiss,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
@@ -140,7 +151,7 @@ function FormContent({
   const { handleSubmit, watch, formState } = methods;
   const ref = watch('ref') ?? '';
 
-  const { onWriteSuccess, onBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
+  const redirect = useProvisionedResourceDrawerHandlers(kind, redirectUrl, action);
 
   const templateVars: CommitTemplateVars = {
     action,
@@ -177,17 +188,19 @@ function FormContent({
     successMessage,
     handlers: {
       onDismiss,
-      onWriteSuccess,
+      onWriteSuccess: onWriteSuccess ?? redirect.onWriteSuccess,
       // Pushed to a branch: pass the repo info so the destination page can render the PR banner.
-      onBranchSuccess: ({ ref, urls }) =>
-        onBranchSuccess({
+      onBranchSuccess: ({ ref, urls }) => {
+        onBranchSaved?.();
+        redirect.onBranchSuccess({
           ref,
           urls,
           repoType: repository?.type,
           configuredBranch: repository?.branch,
           repoUrl: repository?.url,
           prTitle,
-        }),
+        });
+      },
     },
   });
 
@@ -266,7 +279,7 @@ function FormContent({
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
  * new resource's name/path/annotations and the commit message. After the commit it redirects to
- * `redirectUrl`. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
+ * `redirectUrl`, unless `onWriteSuccess` takes over a configured-branch commit. `delete` commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
  * open it for known managed resources).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
@@ -300,6 +313,8 @@ function ResourceDrawerContent({
   successMessage,
   readOnlyMessage,
   branchPrefix,
+  onWriteSuccess,
+  onBranchSaved,
   onDismiss,
 }: ResourceDrawerContentProps) {
   const isNew = action === 'create';
@@ -401,6 +416,8 @@ function ResourceDrawerContent({
             initialValues={initialValues}
             repository={repository}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
+            onWriteSuccess={onWriteSuccess}
+            onBranchSaved={onBranchSaved}
             onDismiss={onDismiss}
           />
         )}

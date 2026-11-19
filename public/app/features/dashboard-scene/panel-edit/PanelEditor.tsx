@@ -23,7 +23,7 @@ import { type Panel } from '@grafana/schema';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
-import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { getLibraryPanel, saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
@@ -410,6 +410,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       return;
     }
     saveLibPanel(this.state.panelRef.resolve());
+    this.onLibraryPanelSaved();
+  };
+
+  /** A configured-branch commit already updated the stored panel, so reload it as `saveLibPanel` does. */
+  public onLibraryPanelCommitted = () => {
+    const libraryPanel = this.getLibraryPanelBehavior();
+    if (libraryPanel) {
+      getLibraryPanel(libraryPanel.state.uid, true).then((libPanel) => libraryPanel.setPanelFromLibPanel(libPanel));
+    }
     this.onLibraryPanelSaved();
   };
 

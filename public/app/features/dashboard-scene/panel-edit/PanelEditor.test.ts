@@ -574,8 +574,17 @@ describe('PanelEditor', () => {
 
   describe('Handling library panels', () => {
     it('commits a repository-managed panel through the Git drawer instead of the API', async () => {
-      const { panelEditor } = await setup({ libraryPanel: createLoadedLibraryPanel(repoAnnotations) });
+      const libraryPanel = createLoadedLibraryPanel(repoAnnotations);
+      const { panelEditor } = await setup({ libraryPanel });
       const save = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue();
+      const committed = {
+        uid: 'lib-uid',
+        name: 'Library panel',
+        type: 'text',
+        version: 2,
+        model: { type: 'text', title: 'Committed' },
+      };
+      const reload = jest.spyOn(libAPI, 'getLibraryPanel').mockResolvedValue(committed);
       const afterSave = jest.fn();
       panelEditor.setState({ isDirty: true, showLibraryPanelSaveModal: true });
 
@@ -595,10 +604,15 @@ describe('PanelEditor', () => {
       act(() => drawer.onWriteSuccess?.());
       expect(panelEditor.state).toMatchObject({ isDirty: false, showLibraryPanelSaveDrawer: false });
       expect(afterSave).toHaveBeenCalledTimes(1);
+      // The commit already updated the stored panel, so the cached definition is reloaded like an API save.
+      expect(reload).toHaveBeenCalledWith('lib-uid', true);
+      await waitFor(() => expect(libraryPanel.state._loadedPanel).toBe(committed));
+      reload.mockRestore();
     });
 
     it('does not resume navigation after a branch save or a dismissed Git drawer', async () => {
       const { panelEditor } = await setup({ libraryPanel: createLoadedLibraryPanel(repoAnnotations) });
+      const reload = jest.spyOn(libAPI, 'getLibraryPanel');
       const afterSave = jest.fn();
       panelEditor.setState({ isDirty: true });
 
@@ -612,6 +626,9 @@ describe('PanelEditor', () => {
       act(() => branchDrawer.onBranchSaved?.());
       expect(panelEditor.state.isDirty).toBe(false);
       expect(afterSave).not.toHaveBeenCalled();
+      // Neither changed the stored panel, so there is nothing to reload.
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
     });
 
     it('resumes navigation after a direct save of an unmanaged panel', async () => {

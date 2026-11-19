@@ -100,6 +100,8 @@ type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;
   action?: 'update' | 'delete';
+  onWriteSuccess?: () => void;
+  onBranchSaved?: () => void;
 };
 
 function setup(props: DrawerOverrides = {}) {
@@ -189,6 +191,37 @@ describe('SaveProvisionedResourceDrawer', () => {
           )
         )
       );
+    });
+
+    it('lets onWriteSuccess replace the redirect after a configured-branch commit', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+        )
+      );
+      const onWriteSuccess = jest.fn();
+
+      const { user } = setup({ onWriteSuccess });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(onWriteSuccess).toHaveBeenCalledTimes(1));
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('runs onBranchSaved before the pull request redirect', async () => {
+      mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ ref: 'feature-branch', path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+        )
+      );
+      const onBranchSaved = jest.fn(() => expect(mockNavigate).not.toHaveBeenCalled());
+
+      const { user } = setup({ onBranchSaved });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/redirect-target\?/)));
+      expect(onBranchSaved).toHaveBeenCalledTimes(1);
     });
 
     it('shows an error alert when the commit fails', async () => {

@@ -32,7 +32,7 @@ export function LibraryPanelEditModals({ model }: SceneComponentProps<PanelEdito
           action="update"
           panel={libraryVizPanelToSaveModel(model.getPanel())}
           onDismiss={model.onDismissLibraryPanelSaveModal}
-          onWriteSuccess={() => model.onLibraryPanelSaved()}
+          onWriteSuccess={model.onLibraryPanelCommitted}
           onBranchSaved={() => model.onLibraryPanelSaved(false)}
         />
       )}
