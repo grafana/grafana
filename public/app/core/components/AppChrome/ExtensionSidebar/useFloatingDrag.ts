@@ -137,6 +137,9 @@ let pendingFloatDrop: { left: number; top: number } | undefined;
 /** Set by the mounted floating container; see `keepFloatingBottomEdge`. Module state for the same reason. */
 let keepBottomEdge: (() => void) | undefined;
 
+/** Told when the remembered placement changes, so the room a remembered height is held to follows the anchor. */
+const placementListeners = new Set<() => void>();
+
 /**
  * Keeps the floating container's bottom edge where it is from now on, whichever edge it was anchored to. Called as
  * core resizes its height from the top edge, so that edge follows the user, as the right edge stays put while the
@@ -210,6 +213,7 @@ export function useFloatingDrag(
       } else {
         store.setObject(OFFSET_LOCAL_STORAGE_KEY, placement);
       }
+      placementListeners.forEach((listener) => listener());
     },
     [element]
   );
@@ -819,7 +823,12 @@ export function useFloatingHeightRoom(element: HTMLElement | null): number {
     const update = () => setRoom(getPlacedFloatingHeightRoom(element));
     update();
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    // A move, or a resize from the top edge that keeps the bottom edge from then on, changes where the room is.
+    placementListeners.add(update);
+    return () => {
+      window.removeEventListener('resize', update);
+      placementListeners.delete(update);
+    };
   }, [element]);
   return element ? room : Infinity;
 }

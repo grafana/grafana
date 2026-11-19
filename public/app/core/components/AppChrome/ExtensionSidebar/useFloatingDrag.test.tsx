@@ -7,6 +7,7 @@ import { FloatingHeightHandle } from './FloatingHeightHandle';
 import {
   FLOATING_DRAG_HANDLE_ATTRIBUTE,
   FLOATING_SNAP_DURATION_MS,
+  keepFloatingBottomEdge,
   useDockedDrag,
   useFloatingDrag,
   useFloatingHeightRoom,
@@ -701,6 +702,19 @@ describe('the room a remembered height is held to', () => {
 
     resizeBox({ top: 500, height: 244 });
     expect(room()).toHaveTextContent('660');
+  });
+
+  it('follows the bottom edge once a resize from the top edge keeps it, as the handles do', () => {
+    window.localStorage.setItem(
+      'grafana.navigation.extensionSidebarFloatingOffset',
+      JSON.stringify({ x: 0, y: 100, anchor: 'top' })
+    );
+    render(<FloatingWithRoom />);
+    expect(room()).toHaveTextContent('660');
+
+    act(() => keepFloatingBottomEdge());
+    // 344 at the bottom (its top at 100, 244 tall), less the 8px gutter: the room the handles resize within.
+    expect(room()).toHaveTextContent('336');
   });
 });
 
