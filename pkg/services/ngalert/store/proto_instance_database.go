@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -102,6 +103,12 @@ func (st ProtoInstanceDBStore) SaveAlertInstancesForRule(ctx context.Context, ke
 	compressedAlertInstances, err := convertAndCompressAlertInstances(instances)
 	if err != nil {
 		return fmt.Errorf("failed to compress alert instances: %w", err)
+	}
+
+	if st.SQLStore.GetDBType() == migrator.MySQL {
+		return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			return st.updateThenUpsertCompressedAlertInstances(sess, key.OrgID, key.UID, compressedAlertInstances, time.Now())
+		})
 	}
 
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -257,6 +264,26 @@ func (st ProtoInstanceDBStore) upsertCompressedAlertInstances(sess *sqlstore.DBS
 	_, err := sess.SQL(upsertSQL, params...).Query()
 
 	return err
+}
+
+// Under REPEATABLE READ, ON DUPLICATE KEY UPDATE locks the primary key supremum, which blocks writes of unrelated rules.
+// The UPDATE and the fallback upsert must be separate autocommit statements, or concurrent first writes of new rules deadlock.
+// RowsAffected counts matched rows because the MySQL connection string sets clientFoundRows=true.
+func (st ProtoInstanceDBStore) updateThenUpsertCompressedAlertInstances(sess *sqlstore.DBSession, orgID int64, ruleUID string, compressedData []byte, timestamp time.Time) error {
+	res, err := sess.Exec("UPDATE alert_rule_state SET data = ?, updated_at = ? WHERE org_id = ? AND rule_uid = ?", compressedData, timestamp, orgID, ruleUID)
+	if err != nil {
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected > 0 {
+		return nil
+	}
+
+	return st.upsertCompressedAlertInstances(sess, orgID, ruleUID, compressedData, timestamp)
 }
 
 func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {

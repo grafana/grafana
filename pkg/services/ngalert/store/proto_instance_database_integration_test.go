@@ -135,6 +135,69 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 	}
 }
 
+// Under MySQL's default REPEATABLE READ, INSERT ... ON DUPLICATE KEY UPDATE takes a lock on the primary key
+// supremum pseudo-record, so an open upsert of one rule blocked the state write of every other rule.
+func TestIntegration_SaveAlertInstancesForRule_DoesNotBlockOnOtherRulesMySQL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbMySQL() {
+		t.Skip("lock behaviour is specific to MySQL")
+	}
+
+	ctx := context.Background()
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	rule1 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	rule2 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+
+	instancesFor := func(ruleUID string) []models.AlertInstance {
+		return []models.AlertInstance{
+			*models.AlertInstanceGen(
+				models.InstanceMuts.WithOrgID(1),
+				models.InstanceMuts.WithRuleUID(ruleUID),
+				models.InstanceMuts.WithLabelsHash("hash"),
+			),
+		}
+	}
+	require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule1.GetKeyWithGroup(), instancesFor(rule1.UID)))
+	require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), instancesFor(rule2.UID)))
+
+	holderHasLock := make(chan struct{})
+	releaseHolder := make(chan struct{})
+	holderDone := make(chan error, 1)
+	go func() {
+		holderDone <- dbstore.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Exec(
+				"INSERT INTO alert_rule_state (org_id, rule_uid, data, updated_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)",
+				1, rule1.UID, []byte("held"), time.Now(),
+			)
+			close(holderHasLock)
+			<-releaseHolder
+			return err
+		})
+	}()
+	t.Cleanup(func() {
+		select {
+		case <-releaseHolder:
+		default:
+			close(releaseHolder)
+		}
+		<-holderDone
+	})
+	<-holderHasLock
+
+	saveDone := make(chan error, 1)
+	go func() {
+		saveDone <- ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), instancesFor(rule2.UID))
+	}()
+
+	select {
+	case err := <-saveDone:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		require.Fail(t, "saving the state of one rule is blocked by an open write of another rule")
+	}
+}
+
 // containsHash is a helper function to check if an instance with
 // a given labels hash exists in the list of alert instances.
 func containsHash(t *testing.T, instances []*models.AlertInstance, hash string) {
