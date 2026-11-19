@@ -36,13 +36,14 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "SavedDashboardView",
 					Plural:     "SavedDashboardViews",
+					Resource:   "saveddashboardviews",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Schema: &versionSchemaSavedDashboardViewv0alpha1,
 					SelectableFields: []string{
