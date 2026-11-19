@@ -596,3 +596,22 @@ func TestHandlerOpenAPIPluginMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestStrategicMergeAsMergePatch(t *testing.T) {
+	for _, tc := range []struct{ method, in, want string }{
+		{http.MethodPatch, "application/strategic-merge-patch+json", "application/merge-patch+json"},
+		{http.MethodPatch, "application/strategic-merge-patch+json; charset=utf-8", "application/merge-patch+json; charset=utf-8"},
+		{http.MethodPatch, "application/json-patch+json", "application/json-patch+json"},
+		{http.MethodPatch, "application/merge-patch+json", "application/merge-patch+json"},
+		{http.MethodPost, "application/strategic-merge-patch+json", "application/strategic-merge-patch+json"},
+	} {
+		var got string
+		h := strategicMergeAsMergePatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+			got = r.Header.Get("Content-Type")
+		}))
+		req := httptest.NewRequest(tc.method, "/", nil)
+		req.Header.Set("Content-Type", tc.in)
+		h.ServeHTTP(httptest.NewRecorder(), req)
+		require.Equal(t, tc.want, got, "%s %s", tc.method, tc.in)
+	}
+}
