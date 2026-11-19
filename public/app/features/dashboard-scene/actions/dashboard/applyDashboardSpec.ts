@@ -5,6 +5,7 @@ import {
   NewSceneObjectAddedEvent,
   sceneGraph,
   type SceneObject,
+  type SceneVariable,
   sceneUtils,
   type SceneObjectUrlValue,
   type SceneObjectUrlValues,
@@ -17,6 +18,7 @@ import { buildDashboardWithAccessInfoFromScene } from '../../serialization/build
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { resolveAdHocMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -92,6 +94,7 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
         fromSpec: getPreviousSpecUrl,
         toSpec: () => nextSpecUrl,
       });
+      const injected = injectedVariables(scene);
       scene.setState({
         ...newState,
         mode: scene.state.mode,
@@ -105,9 +108,13 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       resolveAdHocMultiValueOperators(scene);
 
       // The spec never holds the global and folder variables an opted-in dashboard receives: they are
-      // injected after a load. The swap installed a variable set without them, so panels that
-      // reference one lost it until the page reloaded. Inject them again, as a load does.
-      void scene.refreshPredefinedVariables();
+      // injected after a load, so the swap installed a variable set without them. Carry them over
+      // before the re-sync below, which keeps their current values and lets them read the URL, then
+      // resolve them again in case the spec's own variables now shadow one or no longer do.
+      carryInjectedVariables(scene, injected);
+      scene.refreshPredefinedVariables().catch((error) => {
+        console.error('Failed to inject the cross-dashboard variables after applying a spec', error);
+      });
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -127,6 +134,8 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       performed = true;
     },
     undo: () => {
+      // A refresh started by the apply resolved against the spec's variables; the restored set is complete.
+      scene.cancelPredefinedVariablesRefresh();
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
       // A previously pending editor has no state key to overwrite the editor from the rebuilt tree.
       scene.setState({ ...previousState, editPanel: previousState.editPanel, mode: scene.state.mode });
@@ -192,6 +201,24 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
   reopenTabs(scene, tabs);
   if (editPanelKey) {
     urlSync?.updateFromUrl({ editPanel: editPanelKey });
+  }
+}
+
+/** Copies of the global and folder variables injected into the scene's variable set. */
+function injectedVariables(scene: DashboardScene): SceneVariable[] {
+  return sceneGraph
+    .getVariables(scene)
+    .state.variables.filter((variable) => isPredefinedOrigin(variable.state.origin))
+    .map((variable) => variable.clone());
+}
+
+/** Adds `injected` to the scene's variable set, except where a variable of the same name is already there. */
+function carryInjectedVariables(scene: DashboardScene, injected: SceneVariable[]) {
+  const variableSet = sceneGraph.getVariables(scene);
+  const present = new Set(variableSet.state.variables.map((variable) => variable.state.name));
+  const carried = injected.filter((variable) => !present.has(variable.state.name));
+  if (carried.length > 0) {
+    variableSet.setState({ variables: [...carried, ...variableSet.state.variables] });
   }
 }
 
