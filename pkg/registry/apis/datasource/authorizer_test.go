@@ -298,7 +298,7 @@ func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
 			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
 			b := newAuthorizerTestBuilder(client)
 
-			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+			decision, reason, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
 				ResourceRequest: true,
 				Resource:        "querytypes",
 				Verb:            tc.verb,
@@ -308,6 +308,8 @@ func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, authorizer.DecisionDeny, decision)
+			require.Equal(t, "unsupported verb or subresource for query types", reason)
+			require.Empty(t, client.lastReq, "the denial must not come from the datasource check")
 		})
 	}
 }

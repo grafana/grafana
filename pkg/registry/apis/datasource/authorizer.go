@@ -60,7 +60,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 				}
 				recordAuthzDecision(group, sub, verb, caller, "deny", "access_denied")
-				return authorizer.DecisionDeny, "query types are read-only", nil
+				return authorizer.DecisionDeny, "unsupported verb or subresource for query types", nil
 			}
 
 			req := authlib.CheckRequest{

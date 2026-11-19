@@ -42,7 +42,7 @@ func TestIntegrationDatasourceQueryTypes(t *testing.T) {
 		"admin":  helper.Org1.Admin,
 		"viewer": helper.Org1.Viewer,
 	} {
-		t.Run(name+" can list and get", func(t *testing.T) {
+		t.Run(name+" can list, get and validate", func(t *testing.T) {
 			list := apis.DoRequest(helper, apis.RequestParams{
 				User:   user,
 				Method: http.MethodGet,
@@ -57,6 +57,17 @@ func TestIntegrationDatasourceQueryTypes(t *testing.T) {
 				Path:   root + "/" + list.Result.Items[0].Metadata.Name,
 			}, nil)
 			require.Equal(t, http.StatusOK, get.Response.StatusCode, string(get.Body))
+
+			// The authorizer allows validate only for the create verb, so this
+			// depends on the apiserver mapping a POST on the connect subresource
+			// to create.
+			validate := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodPost,
+				Path:   root + "/" + list.Result.Items[0].Metadata.Name + "/validate",
+				Body:   []byte(`{}`),
+			}, nil)
+			require.Equal(t, http.StatusOK, validate.Response.StatusCode, string(validate.Body))
 		})
 	}
 
