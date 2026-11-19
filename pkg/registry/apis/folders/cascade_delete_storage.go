@@ -81,15 +81,18 @@ func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.Reso
 	return base
 }
 
-// cascadeCollectionDeleter rejects forced collection deletes (which would bypass the per-folder
-// cascade and orphan children/dashboards) and otherwise forwards to the wrapped store.
+// cascadeCollectionDeleter rejects forced collection deletes and otherwise forwards to the wrapped
+// store. The registry deletes each item through its own Delete, not through cascadeDeleteStorage.Delete,
+// so a forced collection delete would skip the per-folder cascade (orphaning children and dashboards)
+// and the contents access check on folders carrying the cascade finalizer. It is rejected whether or
+// not the cascade flag is on, since validateOnDelete lets such folders be force-deleted either way.
 type cascadeCollectionDeleter struct {
 	inner rest.CollectionDeleter
 }
 
 func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	if kubernetesFolderCascadeDeleteEnabled(ctx) && forceDeleteFromDeleteOptions(options) {
-		return nil, apierrors.NewBadRequest("forced collection delete is not supported with folder cascade delete; delete folders individually")
+	if forceDeleteFromDeleteOptions(options) {
+		return nil, apierrors.NewBadRequest("forced collection delete is not supported for folders; delete folders individually")
 	}
 	return c.inner.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }

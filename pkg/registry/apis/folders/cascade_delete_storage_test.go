@@ -1509,20 +1509,25 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 }
 
 func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
-	setKubernetesFolderCascadeDeleteToggle(t, true)
+	// A forced collection delete can't cascade, and the registry would delete each item without going
+	// through the contents access check, so it is rejected with the cascade flag on or off.
+	for name, enabled := range map[string]bool{"cascade flag on": true, "cascade flag off": false} {
+		t.Run(name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, enabled)
 
-	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
-	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+			inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
+			deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
 
-	_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
-	require.True(t, apierrors.IsBadRequest(err))
-	require.False(t, inner.deletedCollection, "underlying collection delete must not run")
+			_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
+			require.True(t, apierrors.IsBadRequest(err))
+			require.False(t, inner.deletedCollection, "underlying collection delete must not run")
 
-	// A non-force collection delete still forwards (the per-folder empty check protects it).
-	_, err = deleter.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
-	require.NoError(t, err)
-	require.True(t, inner.deletedCollection)
+			// A non-force collection delete still forwards (the per-folder empty check protects it).
+			_, err = deleter.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+			require.NoError(t, err)
+			require.True(t, inner.deletedCollection)
+		})
+	}
 }
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
