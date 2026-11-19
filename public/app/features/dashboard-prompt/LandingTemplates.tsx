@@ -22,7 +22,7 @@ interface Props {
   hidden?: boolean;
   /**
    * The most height the panel may take, as a CSS length, below any top padding `className` adds. The grid then
-   * shows the whole rows that fit and a sliver of the next, and scrolls the rest.
+   * shows the whole rows that fit, `MAX_ROWS` at most, and a sliver of the next, and scrolls the rest.
    */
   maxHeight?: string;
   className?: string;
@@ -34,6 +34,8 @@ const noop = () => {};
 const CARD_HEIGHT = 160;
 /** How much of the next row shows under the last whole one, so a longer list reads as one that scrolls. */
 const NEXT_ROW_PEEK = 0.1;
+/** The most rows the panel shows before it scrolls, so a tall screen does not push the actions under it down. */
+const MAX_ROWS = 2;
 /** Two rows on a desktop, enough to fill the panel while the lists load. */
 const LOADING_CARDS = 8;
 /** How long the cards wait for every list before showing the ones that have loaded. */
@@ -203,10 +205,11 @@ function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
   const peek = `${CARD_HEIGHT * NEXT_ROW_PEEK}px`;
   // What the panel draws around its list: the borders, the header and the bottom padding.
   const panelChrome = `(2px + ${headerHeight} + ${theme.spacing(1)})`;
+  const maxRows = `${MAX_ROWS} * ${row}`;
   // At least one row, so a short screen still shows a whole card; the panel shrinks below that if it must.
-  const listMaxHeight =
-    maxHeight &&
-    `calc(max(${row}, round(down, ${maxHeight} - ${panelChrome} - ${listPaddingTop} - ${peek}, ${row})) + ${listPaddingTop} + ${peek})`;
+  const rowsThatFit =
+    maxHeight && `max(${row}, round(down, ${maxHeight} - ${panelChrome} - ${listPaddingTop} - ${peek}, ${row}))`;
+  const listMaxHeight = `calc(${rowsThatFit ? `min(${maxRows}, ${rowsThatFit})` : maxRows} + ${listPaddingTop} + ${peek})`;
 
   return {
     // Shrinks with the page and scrolls its grid, so the content below the panel stays in view.
