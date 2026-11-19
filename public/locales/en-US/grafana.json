@@ -11497,6 +11497,9 @@
       },
       "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },
+    "tag": {
+      "remove": "Remove tag: {{name}}"
+    },
     "tags": {
       "list-label": "Tags"
     },
