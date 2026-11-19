@@ -22,6 +22,7 @@ const (
 	SwaggerServer           string = "swagger-server"
 	Router                  string = "router"
 	OperatorServer          string = "operator"
+	LegacyAPI               string = "legacy-api"
 
 	// CloudCoreAppsServer is registered by enterprise builds.
 	CloudCoreAppsServer string = "cloud-core-apps-server"
@@ -59,4 +60,5 @@ var dependencyMap = map[string][]string{
 	SwaggerServer:           {},
 	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
+	LegacyAPI:               {InstrumentationServer},
 }

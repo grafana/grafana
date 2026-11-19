@@ -320,6 +320,8 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
 
+	m.RegisterModule(modules.LegacyAPI, s.initLegacyAPIModule)
+
 	m.RegisterModule(modules.All, nil)
 
 	// Register modules provided by other builds (e.g. enterprise).
