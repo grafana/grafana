@@ -477,7 +477,14 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		r.metrics.StaleMarkerFailures.WithLabelValues(reason).Add(float64(len(missing[target])))
 		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "reason", reason, "error", err)
 	}
+
+	removed := missing.size()
 	r.untrack(missing)
+	if removed > r.held {
+		// If the data write fails, commitWritten does not replace the map, and it would keep
+		// the capacity of series whose room other rules can already use.
+		r.written = r.written.compacted()
+	}
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {

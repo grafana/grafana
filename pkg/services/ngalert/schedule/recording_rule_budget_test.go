@@ -134,6 +134,50 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 		h.assertAccounting()
 	})
 
+	t.Run("a big drop in output does not keep the old map when the data write fails", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.rule.budget = state.NewSeriesBudget(0)
+		many := make([]map[string]string, 0, 20)
+		for i := range 20 {
+			many = append(many, instance(fmt.Sprint(i)))
+		}
+		h.ev.resp = seriesResponse(many...)
+		h.tick()
+		target := seriesTarget{dsUID: "ds-1", orgID: 123, name: "my_metric"}
+		before := reflect.ValueOf(h.rule.written[target]).Pointer()
+		require.Equal(t, 20, h.rule.held)
+
+		h.ev.resp = seriesResponse(many[0])
+		h.failWrite = true
+		h.tick()
+
+		require.Equal(t, 1, h.rule.held, "the 19 that vanished gave their room back")
+		require.Len(t, h.rule.written[target], 1)
+		require.NotEqual(t, before, reflect.ValueOf(h.rule.written[target]).Pointer(), "what is left was copied into a map of its own size")
+		h.assertAccounting()
+	})
+
+	t.Run("a small drop in output keeps the map when the data write fails", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.rule.budget = state.NewSeriesBudget(0)
+		many := make([]map[string]string, 0, 20)
+		for i := range 20 {
+			many = append(many, instance(fmt.Sprint(i)))
+		}
+		h.ev.resp = seriesResponse(many...)
+		h.tick()
+		target := seriesTarget{dsUID: "ds-1", orgID: 123, name: "my_metric"}
+		before := reflect.ValueOf(h.rule.written[target]).Pointer()
+
+		h.ev.resp = seriesResponse(many[:19]...)
+		h.failWrite = true
+		h.tick()
+
+		require.Equal(t, 19, h.rule.held)
+		require.Equal(t, before, reflect.ValueOf(h.rule.written[target]).Pointer(), "more than half is left, so it is not copied")
+		h.assertAccounting()
+	})
+
 	t.Run("rules share one budget", func(t *testing.T) {
 		budget := state.NewSeriesBudget(3)
 		h1, h2 := newStaleHarness(t), newStaleHarness(t)
