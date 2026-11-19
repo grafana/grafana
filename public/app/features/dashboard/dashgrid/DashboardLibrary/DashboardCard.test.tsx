@@ -242,6 +242,25 @@ describe('DashboardCard', () => {
       expect(screen.getByText('Provisioned by').closest('p')).toHaveTextContent('Provisioned by Grafana');
     });
 
+    it('keeps a picker card to its title and author', () => {
+      render(
+        <DashboardCard
+          title="Checkout service"
+          dashboard={createMockCustomTemplateDashboard({ description: 'A custom template description' })}
+          onClick={mockOnClick}
+          onSelect={jest.fn()}
+          tags={['observability']}
+          createdByName="Jane"
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.getByText('Checkout service')).toBeInTheDocument();
+      expect(screen.getByText('Created by:').closest('p')).toHaveTextContent('Created by: Jane');
+      expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
+      expect(screen.queryByText('observability')).not.toBeInTheDocument();
+    });
+
     it('keeps the template modal card unchanged', () => {
       render(
         <DashboardCard

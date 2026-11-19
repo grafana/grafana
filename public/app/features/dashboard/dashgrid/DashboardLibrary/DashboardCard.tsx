@@ -339,20 +339,21 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
-      <div className={styles.bottomSection}>
+      <div className={cx(styles.bottomSection, onSelect && styles.selectableBottomSection)}>
         {isCustomTemplate && (
           <h3 className={styles.customTemplateTitle}>
             <span className={styles.titleText}>{title}</span>
           </h3>
         )}
-        {dashboard.description && (
+        {/* A picker card keeps to its title and author, so every card in its grid has the same height. */}
+        {!onSelect && dashboard.description && (
           <div title={dashboard.description}>
             <p data-testid="dashboard-card-description" className={styles.description}>
               {dashboard.description}
             </p>
           </div>
         )}
-        {tags && tags.length > 0 && (
+        {!onSelect && tags && tags.length > 0 && (
           <div className={styles.tagsContainer}>
             <TagList tags={tags} className={styles.tagList} />
           </div>
@@ -364,12 +365,17 @@ function DashboardCardComponent({
             </Trans>
           </p>
         )}
-        {isCustomTemplate && createdByName && (
+        {/* In the picker the line stays without a creator, so the card's title lines up with the others in its row. */}
+        {isCustomTemplate && (createdByName || onSelect) && (
           <p className={cx(styles.createdBy, onSelect && styles.selectableCreatedBy)}>
-            <span className={styles.createdByLabel}>
-              <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
-            </span>{' '}
-            {createdByName}
+            {createdByName && (
+              <>
+                <span className={styles.createdByLabel}>
+                  <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
+                </span>{' '}
+                {createdByName}
+              </>
+            )}
           </p>
         )}
         {hasCompatActions && (
@@ -688,8 +694,15 @@ function getStyles(theme: GrafanaTheme2) {
     createdByLabel: css({
       fontWeight: theme.typography.fontWeightBold,
     }),
+    // A custom card's title sits in this section and a Grafana card's above it, so without the inset both titles
+    // line up across a row.
+    selectableBottomSection: css({
+      paddingTop: 0,
+    }),
+    // Right under the title: a picker card has no description or tags between them. One line tall even when empty.
     selectableCreatedBy: css({
-      paddingTop: theme.spacing(1),
+      minHeight: `calc(1lh + ${theme.spacing(0.25)})`,
+      paddingTop: theme.spacing(0.25),
     }),
     bottomSection: css({
       display: 'flex',
