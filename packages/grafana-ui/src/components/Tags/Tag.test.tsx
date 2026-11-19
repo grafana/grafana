@@ -1,10 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
+import { getTagColorVariables } from '../../utils/tags';
+
 import { Tag } from './Tag';
+
+const getColorVariables = (element: HTMLElement) => ({
+  '--tag-background': element.style.getPropertyValue('--tag-background'),
+  '--tag-text': element.style.getPropertyValue('--tag-text'),
+});
 
 const setup = (jsx: JSX.Element) => {
   return {
@@ -16,16 +23,49 @@ const setup = (jsx: JSX.Element) => {
 const mockOnClick = jest.fn();
 
 describe('Tag', () => {
-  it.each([
-    ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
-    ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
-  ] as const)('uses a custom base color in %s mode ahead of the palette index', (mode, backgroundColor, color) => {
+  it.each(['dark', 'light'] as const)('uses a custom base color in %s mode ahead of the palette index', (mode) => {
+    const theme = createTheme({ colors: { mode } });
     render(
-      <ThemeContext.Provider value={createTheme({ colors: { mode } })}>
+      <ThemeContext.Provider value={theme}>
         <Tag name="error" baseColor="#ff0000" colorIndex={2} />
       </ThemeContext.Provider>
     );
-    expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': 'rgb(from #ff0000 r g b / clamp(0, alpha * 1e9, 1))',
+      '--tag-text': getTagColorVariables('#ff0000', theme)['--tag-text'],
+    });
+  });
+
+  it('uses the theme palette for a color index', () => {
+    const theme = createTheme();
+    render(
+      <ThemeContext.Provider value={theme}>
+        <Tag name="error" colorIndex={2} />
+      </ThemeContext.Provider>
+    );
+    const { background, text } = theme.components.tag.colors[2];
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': background,
+      '--tag-text': text,
+    });
+  });
+
+  it('shares one class across tag colors', () => {
+    render(
+      <>
+        <Tag name="red" baseColor="#ff0000" />
+        <Tag name="blue" baseColor="#0000ff" />
+        <Tag name="palette" colorIndex={3} />
+        <Tag name="hashed" />
+      </>
+    );
+    const classNames = new Set(['red', 'blue', 'palette', 'hashed'].map((name) => screen.getByText(name).className));
+    expect(classNames.size).toBe(1);
+  });
+
+  it('lets a passed style override the tag colors', () => {
+    render(<Tag name="error" baseColor="#ff0000" style={{ '--tag-text': 'black' } as CSSProperties} />);
+    expect(getColorVariables(screen.getByText('error'))['--tag-text']).toBe('black');
   });
 
   beforeEach(() => {

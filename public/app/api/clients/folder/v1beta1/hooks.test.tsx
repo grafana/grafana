@@ -189,6 +189,28 @@ describe('useGetCombinedFolderQuery', () => {
     expect(result.current.error).toBeUndefined();
   });
 
+  it('stays loading on every render until the folder is ready', async () => {
+    const phases: string[] = [];
+    const { result } = renderHook(
+      () => {
+        const state = useGetCombinedFolderQuery(expectedUid);
+        if (state.isLoading) {
+          phases.push('loading');
+        } else if (state.isError) {
+          phases.push('error');
+        } else {
+          phases.push(state.data ? 'ready' : 'empty');
+        }
+        return state;
+      },
+      { wrapper: getWrapper({}) }
+    );
+    await waitFor(() => expect(result.current.data?.uid).toBe(expectedUid));
+
+    // Callers show a render that is neither loading nor an error, and has no folder, as a missing folder.
+    expect([...new Set(phases)]).toEqual(['loading', 'ready']);
+  });
+
   it('runs a real access query for the root/general virtual folder', async () => {
     const { result } = renderHook(() => useGetCombinedFolderQuery('general'), {
       wrapper: getWrapper({}),

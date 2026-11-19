@@ -8,7 +8,7 @@ GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
 
-SWAGGER = GODEBUG=gotypesalias=0 $(swagger)
+SWAGGER = $(swagger)
 
 .DEFAULT_GOAL := all
 

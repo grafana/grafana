@@ -147,7 +147,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	// user authorized to force-delete the folder but not to see every contained resource would
 	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
 	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
+	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, options, true)
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
@@ -199,20 +199,47 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
 	}
 
-	if err := s.markTerminating(ctx, name, options); err != nil {
+	// Check existence before authorization so stale search hits remain idempotent,
+	// but authorize all contained resources before recording or stamping this folder.
+	if _, err := s.Get(ctx, name, &metav1.GetOptions{}); err != nil {
+		if apierrors.IsNotFound(err) && !requested {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
+		return nil, false, err
+	}
+
+	deleteOptions := options
+	if writer, ok := s.Storage.(interface {
+		preparePendingDelete(context.Context, string, rest.ValidateObjectFunc, *metav1.DeleteOptions) (*metav1.DeleteOptions, error)
+	}); ok {
+		// Establish intent as the original caller before any cascade mutation, not
+		// just before the final folder delete. Keep the captured UID pinned below.
+		deleteOptions, err = writer.preparePendingDelete(identity.WithRequester(ctx, user), name, nil, options)
+		if apierrors.IsNotFound(err) && !requested {
+			return nil, false, nil
+		}
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
+	if err := s.markTerminating(ctx, name, deleteOptions); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
 		return nil, false, err
 	}
 
-	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder
-	// permissions legacy enforced (plus variables:delete when global variables are enabled). Runs
-	// after the NotFound skip so a stale or already-deleted child folder is skipped idempotently
-	// instead of 403-ing on an un-walkable inheritance chain.
-	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
-		return nil, false, err
+	// The stamp changes resourceVersion itself; retain the UID pin, but do not
+	// apply the caller's pre-stamp version to the final delete.
+	deleteOptions = deleteOptions.DeepCopy()
+	if deleteOptions.Preconditions != nil {
+		deleteOptions.Preconditions.ResourceVersion = nil
 	}
+
 	// Mark ctx authorized for an Unchecked contents delete, but only when accessClient is wired --
 	// checkFolderContentsAccess is a no-op without one, so nothing was actually verified above.
 	if s.accessClient != nil {
@@ -225,7 +252,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, user, orgID, namespace, name, child, options, false); err != nil {
+		if _, _, err := s.cascadeDelete(ctx, user, orgID, namespace, name, child, cascadeDeleteOptions(options), false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -264,7 +291,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
 	// folder keeps its missing-resource error.
-	obj, async, err := s.Storage.Delete(ctx, name, nil, options)
+	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
+	// compatibility after the original caller's preflight authorization above.
+	obj, async, err := s.Storage.Delete(ctx, name, rest.ValidateAllObjectFunc, deleteOptions)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
@@ -462,6 +491,11 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 // does not actually mutate folders.
 func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
+		// Updates may retry against a replacement; check the current stored object
+		// on every attempt before stamping or allowing any cascade work.
+		if err := checkDeletePreconditions(oldObj, options); err != nil {
+			return nil, err
+		}
 		// With a nil base object, DefaultUpdatedObjectInfo passes a nil newObj; mutate a copy of the
 		// existing folder instead.
 		obj := newObj
