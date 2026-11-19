@@ -4915,9 +4915,10 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions": {
+      "no-access": "You do not have permission to view the permissions of this folder."
+    },
     "folder-permissions-exposed": {
-      "loading": "Loading...",
-      "no-access": "You do not have permission to view the permissions of this folder.",
       "not-found": "Unable to load this folder."
     },
     "folder-picker": {
@@ -15225,9 +15226,6 @@
       "submitting": "Fixing...",
       "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
-    },
-    "folder-permissions": {
-      "loading": "Loading..."
     },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",

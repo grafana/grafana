@@ -1,10 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
-
 import { useFolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
-import { FolderPermissions } from './FolderPermissions';
+import { ProvisionedFolderPermissions } from './ProvisionedFolderPermissions';
 
 jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: ({ canSetPermissions, resourceId }: { canSetPermissions: boolean; resourceId: string }) => (
@@ -18,50 +16,21 @@ jest.mock('../../hooks/useFolderMetadataStatus', () => ({
 
 const mockUseFolderMetadataStatus = jest.mocked(useFolderMetadataStatus);
 
-describe('FolderPermissions', () => {
-  let originalProvisioningEnabled: boolean;
-
-  beforeEach(() => {
-    originalProvisioningEnabled = config.provisioningEnabled;
-    config.provisioningEnabled = true;
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    config.provisioningEnabled = originalProvisioningEnabled;
-  });
-
-  it('renders permissions directly when folder is not provisioned', () => {
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={false} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
-    expect(mockUseFolderMetadataStatus).not.toHaveBeenCalled();
-  });
-
-  it('renders permissions directly when provisioning is disabled', () => {
-    config.provisioningEnabled = false;
-
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
-
-    const permissions = screen.getByTestId('permissions');
-    expect(permissions).toHaveAttribute('data-can-set', 'true');
-    expect(permissions).toHaveAttribute('data-resource-id', 'folder-1');
-  });
-
-  it('renders loading state', () => {
+describe('ProvisionedFolderPermissions', () => {
+  it('shows the permissions loader while the metadata is checked', () => {
     mockUseFolderMetadataStatus.mockReturnValue({ status: 'loading', repositoryName: 'test-repo' });
 
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
+    render(<ProvisionedFolderPermissions folderUID="folder-1" canSetPermissions={true} />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    // The editor's own loader has the same text, so the two stages read as one
+    expect(screen.getByText('Loading permissions...')).toBeInTheDocument();
+    expect(screen.queryByTestId('permissions')).not.toBeInTheDocument();
   });
 
   it('renders warning banner and read-only permissions when metadata is missing', () => {
     mockUseFolderMetadataStatus.mockReturnValue({ status: 'missing', repositoryName: 'test-repo' });
 
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
+    render(<ProvisionedFolderPermissions folderUID="folder-1" canSetPermissions={true} />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('This folder is missing metadata.')).toBeInTheDocument();
@@ -74,7 +43,7 @@ describe('FolderPermissions', () => {
   it('renders error alert when metadata check fails', () => {
     mockUseFolderMetadataStatus.mockReturnValue({ status: 'error', repositoryName: 'test-repo' });
 
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
+    render(<ProvisionedFolderPermissions folderUID="folder-1" canSetPermissions={true} />);
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Unable to check folder metadata status.')).toBeInTheDocument();
@@ -83,7 +52,7 @@ describe('FolderPermissions', () => {
   it('renders permissions with original canSetPermissions when metadata is ok', () => {
     mockUseFolderMetadataStatus.mockReturnValue({ status: 'ok', repositoryName: 'test-repo' });
 
-    render(<FolderPermissions folderUID="folder-1" canSetPermissions={true} isProvisionedFolder={true} />);
+    render(<ProvisionedFolderPermissions folderUID="folder-1" canSetPermissions={true} />);
 
     const permissions = screen.getByTestId('permissions');
     expect(permissions).toHaveAttribute('data-can-set', 'true');
