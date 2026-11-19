@@ -1574,6 +1574,17 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind": {
+        "type": "object",
+        "properties": {
+          "ConditionalRenderingTimeRangeSizeKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingTimeRangeSizeKind"
+          },
+          "ConditionalRenderingVariableKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKind"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableSpec": {
         "type": "object",
         "required": [
@@ -2866,6 +2877,14 @@
           "hidden"
         ],
         "properties": {
+          "conditionalRendering": {
+            "description": "When set, the query only runs while the group evaluates to visible",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupKind"
+              }
+            ]
+          },
           "hidden": {
             "type": "boolean",
             "default": false
@@ -2949,6 +2968,52 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKindOrGridLayoutKind"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupKind": {
+        "description": "Conditional rendering group of a panel query. Same as ConditionalRenderingGroupKind without the data item, which cannot be evaluated for a query since it would depend on the data that the query produces.",
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryConditionalRenderingGroupSpec": {
+        "type": "object",
+        "required": [
+          "visibility",
+          "condition",
+          "items"
+        ],
+        "properties": {
+          "condition": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "default": ""
           }
         }
       },

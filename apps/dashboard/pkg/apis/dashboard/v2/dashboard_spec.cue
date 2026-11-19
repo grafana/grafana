@@ -541,6 +541,8 @@ PanelQuerySpec: {
 	query:  DataQueryKind
 	refId:  string | *"A"
 	hidden: bool
+	// When set, the query only runs while the group evaluates to visible
+	conditionalRendering?: QueryConditionalRenderingGroupKind
 }
 
 PanelQueryKind: {
@@ -1116,6 +1118,19 @@ ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
 	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
+}
+
+// Conditional rendering group of a panel query. Same as ConditionalRenderingGroupKind without the data item, which
+// cannot be evaluated for a query since it would depend on the data that the query produces.
+QueryConditionalRenderingGroupKind: {
+	kind: "ConditionalRenderingGroup"
+	spec: QueryConditionalRenderingGroupSpec
+}
+
+QueryConditionalRenderingGroupSpec: {
+	visibility: "show" | "hide"
+	condition:  "and" | "or"
+	items: [...ConditionalRenderingVariableKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {

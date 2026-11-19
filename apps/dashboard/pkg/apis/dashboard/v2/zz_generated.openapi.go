@@ -42,6 +42,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardConditionalRenderingTimeRangeSizeSpec{}.OpenAPIModelName():               schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingTimeRangeSizeSpec(ref),
 		DashboardConditionalRenderingVariableKind{}.OpenAPIModelName():                    schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableKind(ref),
 		DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(): schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind(ref),
+		DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName():                               schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind(ref),
 		DashboardConditionalRenderingVariableSpec{}.OpenAPIModelName():                                                                      schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableSpec(ref),
 		DashboardConstantVariableKind{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2_DashboardConstantVariableKind(ref),
 		DashboardConstantVariableSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2_DashboardConstantVariableSpec(ref),
@@ -84,6 +85,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref),
 		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref),
 		DashboardPreferences{}.OpenAPIModelName():                                                                                           schema_pkg_apis_dashboard_v2_DashboardPreferences(ref),
+		DashboardQueryConditionalRenderingGroupKind{}.OpenAPIModelName():                                                                    schema_pkg_apis_dashboard_v2_DashboardQueryConditionalRenderingGroupKind(ref),
+		DashboardQueryConditionalRenderingGroupSpec{}.OpenAPIModelName():                                                                    schema_pkg_apis_dashboard_v2_DashboardQueryConditionalRenderingGroupSpec(ref),
 		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref),
 		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref),
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref),
@@ -1338,6 +1341,30 @@ func schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableKindOrCon
 		},
 		Dependencies: []string{
 			DashboardConditionalRenderingDataKind{}.OpenAPIModelName(), DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(), DashboardConditionalRenderingVariableKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ConditionalRenderingVariableKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardConditionalRenderingVariableKind{}.OpenAPIModelName()),
+						},
+					},
+					"ConditionalRenderingTimeRangeSizeKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName(), DashboardConditionalRenderingVariableKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -3342,12 +3369,18 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref common.ReferenceCa
 							Format:  "",
 						},
 					},
+					"conditionalRendering": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set, the query only runs while the group evaluates to visible",
+							Ref:         ref(DashboardQueryConditionalRenderingGroupKind{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"query", "refId", "hidden"},
 			},
 		},
 		Dependencies: []string{
-			DashboardDataQueryKind{}.OpenAPIModelName()},
+			DashboardDataQueryKind{}.OpenAPIModelName(), DashboardQueryConditionalRenderingGroupKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -3442,6 +3475,76 @@ func schema_pkg_apis_dashboard_v2_DashboardPreferences(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			DashboardAutoGridLayoutKindOrGridLayoutKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardQueryConditionalRenderingGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Conditional rendering group of a panel query. Same as ConditionalRenderingGroupKind without the data item, which cannot be evaluated for a query since it would depend on the data that the query produces.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardQueryConditionalRenderingGroupSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardQueryConditionalRenderingGroupSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardQueryConditionalRenderingGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"visibility": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"condition": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"visibility", "condition", "items"},
+			},
+		},
+		Dependencies: []string{
+			DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind{}.OpenAPIModelName()},
 	}
 }
 

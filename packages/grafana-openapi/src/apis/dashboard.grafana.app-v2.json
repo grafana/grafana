@@ -1402,6 +1402,17 @@
           }
         }
       },
+      "DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind": {
+        "type": "object",
+        "properties": {
+          "ConditionalRenderingTimeRangeSizeKind": {
+            "$ref": "#/components/schemas/DashboardConditionalRenderingTimeRangeSizeKind"
+          },
+          "ConditionalRenderingVariableKind": {
+            "$ref": "#/components/schemas/DashboardConditionalRenderingVariableKind"
+          }
+        }
+      },
       "DashboardConditionalRenderingVariableSpec": {
         "type": "object",
         "required": ["variable", "operator", "value"],
@@ -2590,6 +2601,14 @@
         "type": "object",
         "required": ["query", "refId", "hidden"],
         "properties": {
+          "conditionalRendering": {
+            "description": "When set, the query only runs while the group evaluates to visible",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardQueryConditionalRenderingGroupKind"
+              }
+            ]
+          },
           "hidden": {
             "type": "boolean",
             "default": false
@@ -2667,6 +2686,45 @@
                 "$ref": "#/components/schemas/DashboardAutoGridLayoutKindOrGridLayoutKind"
               }
             ]
+          }
+        }
+      },
+      "DashboardQueryConditionalRenderingGroupKind": {
+        "description": "Conditional rendering group of a panel query. Same as ConditionalRenderingGroupKind without the data item, which cannot be evaluated for a query since it would depend on the data that the query produces.",
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardQueryConditionalRenderingGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "DashboardQueryConditionalRenderingGroupSpec": {
+        "type": "object",
+        "required": ["visibility", "condition", "items"],
+        "properties": {
+          "condition": {
+            "type": "string",
+            "default": ""
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind"
+            }
+          },
+          "visibility": {
+            "type": "string",
+            "default": ""
           }
         }
       },
