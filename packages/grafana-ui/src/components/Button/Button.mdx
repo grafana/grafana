@@ -232,6 +232,38 @@ If a destructive action has a confirmation step it does not need to be destructi
   </Button>
 </ExampleFrame>
 
+## Warning
+
+Used for an action that is tied to something that needs attention, for example a button that shows firing alerts. Do not use it for a risky action. Use [Destructive](#destructive) for that. Pick the `outline` or `text` fill when the button sits next to other buttons, so that the warning color does not compete with the primary action.
+
+<ExampleFrame>
+  <Button variant="warning" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button variant="warning" fill="outline" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button variant="warning" fill="text" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
+## Info
+
+Used for an action that is tied to information, for example a button that opens help or details about a notice. It uses the same blue as the info `Alert`.
+
+<ExampleFrame>
+  <Button variant="info" size="sm" style={{ margin: '5px' }}>
+    {'Small'}
+  </Button>
+  <Button variant="info" fill="outline" size="md" style={{ margin: '5px' }}>
+    {'Medium'}
+  </Button>
+  <Button variant="info" fill="text" size="lg" style={{ margin: '5px' }}>
+    {'Large'}
+  </Button>
+</ExampleFrame>
+
 ## Text
 
 <ExampleFrame>
