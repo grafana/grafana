@@ -1,28 +1,25 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { type KindInfo } from 'app/core/kinds/types';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
-import { getIconForKind } from 'app/features/search/service/icons';
 import { dispatch, store } from 'app/store/store';
 
 import { appKindListPathResolver } from './appKindPages';
 
-interface StarredKindBase {
-  group: string;
-  kind: string;
+interface StarredKindBase extends Pick<KindInfo, 'group' | 'kind' | 'icon'> {
   /**
-   * The kind string search rows and nav leaves carry. `dashboard` and `folder` are the dashboard index's own
-   * spelling, which it filters on and labels its rows with. An app kind's hits are labelled by the client, as
-   * `group/Kind`: kind names repeat across groups, and two kinds sharing a string would share one entry.
+   * The kind string search rows and nav leaves carry. Optional on a core kind, required here. `dashboard` and
+   * `folder` are the dashboard index's own spelling, which it filters on and labels its rows with. An app kind's
+   * hits are labelled by the client, as `group/Kind`: kind names repeat across groups, and two kinds sharing a
+   * string would share one entry.
    */
   searchKind: string;
   /** Singular display name. */
   title(): string;
-  icon: IconName;
   /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then app kinds. */
   sortWeight: number;
 }
@@ -63,21 +60,15 @@ export interface StarredNames {
 export type StarredNamesOfKind<K extends StarredKind = StarredKind> = { kind: K; names: string[] };
 
 const DASHBOARD: StarredKind = {
-  group: DASHBOARD_API_GROUP,
-  kind: 'Dashboard',
-  searchKind: 'dashboard',
+  ...CORE_KINDS.dashboard,
   title: () => t('stars.kinds.dashboard', 'Dashboard'),
-  icon: getIconForKind('dashboard'),
   sortWeight: 0,
   source: 'dashboard-search',
 };
 
 const FOLDER: StarredKind = {
-  group: FOLDER_API_GROUP,
-  kind: 'Folder',
-  searchKind: 'folder',
+  ...CORE_KINDS.folder,
   title: () => t('stars.kinds.folder', 'Folder'),
-  icon: getIconForKind('folder'),
   sortWeight: 1,
   source: 'dashboard-search',
 };

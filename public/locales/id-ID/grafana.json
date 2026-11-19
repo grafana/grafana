@@ -2926,6 +2926,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Aturan pencatatan"
     },
@@ -9758,13 +9789,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Kontrol fitur",
       "close-tooltip": "Tutup kontrol fitur",
       "open-tooltip": "Buka kontrol fitur"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Hapus",
     "description": "Ganti flag fitur frontend secara lokal untuk keperluan pengujian dan pengembangan.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Hapus UI dan tombol toolbar",
       "tooltip": "Setiap penggantian flag fitur yang ditentukan akan tetap aktif.<br/> Gunakan <3>{{ param }}</3> di URL untuk mengaktifkan UI lagi."
@@ -9774,11 +9809,18 @@
     "flag-type": "Jenis flag",
     "flag-value": "Nilai flag",
     "menu": "Buka menu",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Evaluasi OFREP",
     "ofrep-reason": "Alasan: <2>{{reason}}</2>",
     "ofrep-variant": "Varian: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Simpan",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Kontrol fitur"
   },
   "folder-filter": {
@@ -12361,7 +12403,7 @@
     },
     "description-allow-download": "Saat kontrol diaktifkan, tampilkan opsi untuk mengunduh log yang sedang ditampilkan.",
     "description-enable-field-selector": "Eksperimental. Tampilkan komponen untuk mengelola bidang yang ditampilkan dari log.",
-    "description-enable-infinite-scrolling": "Eksperimental. Minta lebih banyak hasil dengan menggulir ke bagian bawah daftar log.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Gunakan skema pewarnaan yang telah ditentukan untuk menyoroti bagian yang relevan dari baris log.",
     "description-order": "Tampilkan log terbaru atau terlama terlebih dahulu. Jika opsi Terlama terlebih dahulu dipilih, tampilan akan otomatis menggulir ke log terbaru di bagian bawah.",
     "description-prettify-json": "Format entri log JSON dengan indentasi dan jeda baris.",
@@ -13375,6 +13417,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13487,7 +13532,10 @@
       "aria-label": "Baru",
       "new-template-dashboard-button": "Gunakan templat"
     },
-    "rss-button": "Terbaru dari blog"
+    "rss-button": "Terbaru dari blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Berita",

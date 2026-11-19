@@ -236,7 +236,7 @@ export function MegaMenuItem({
               })}
             >
               {(level === 0 || isStarredLeaf) && iconElement}
-              <Text truncate element="p">
+              <Text truncate element="p" weight={visualRefreshEnabled && isActive ? 'medium' : undefined}>
                 {link.text}
               </Text>
               <StPodPendingEllipsis url={link.url} itemName={link.text} />
@@ -328,7 +328,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     width: theme.spacing(3),
   }),
   activeIcon: css({
-    color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
+    color: theme.components.navmenu.activeItemText,
   }),
   img: css({
     height: theme.spacing(2),

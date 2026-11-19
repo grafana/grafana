@@ -6,7 +6,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { DASHBOARDS_TAB_NAV_IDS, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, NavID, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
@@ -351,6 +351,14 @@ export function removeEmptySavedSections(
     }
     return true;
   });
+}
+
+/**
+ * Folds the Administration section into a single row: its destinations stay in the nav tree for the
+ * section nav, breadcrumbs and routing, and only the mega menu stops listing them.
+ */
+export function foldAdministration(items: NavModelItem[]): NavModelItem[] {
+  return items.map((item) => (item.id === NavID.cfg ? { ...item, children: undefined } : item));
 }
 
 /** All descendant keys of an item. */

@@ -1792,12 +1792,15 @@
     {
       "metadata": {
         "name": "dashboardUndoRedo",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "resourceVersion": "1794996543111",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 10:09:03.111749511 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables undo/redo in dynamic dashboards",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2742,15 +2745,19 @@
     {
       "metadata": {
         "name": "flameGraph.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T19:21:31Z"
+        "resourceVersion": "1795040338225",
+        "creationTimestamp": "2026-08-13T19:21:31Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
-        "expression": "false"
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -2764,6 +2771,20 @@
       },
       "spec": {
         "description": "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "folder.pendingDeletionWrites",
+        "resourceVersion": "1794428269469",
+        "creationTimestamp": "2026-11-11T20:17:49Z"
+      },
+      "spec": {
+        "description": "Record durable pending folder deletions before sending folder deletes to storage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-search-and-storage",
         "hideFromDocs": true,
@@ -3104,15 +3125,17 @@
     {
       "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-19T13:59:18Z"
+        "resourceVersion": "1794928602679",
+        "creationTimestamp": "2026-08-19T13:59:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 15:16:42.679897 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the auto-height feature for dashboard panels",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3374,6 +3397,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logsInfiniteScrollTop",
+        "resourceVersion": "1794950185352",
+        "creationTimestamp": "2026-11-17T21:16:25Z"
+      },
+      "spec": {
+        "description": "Enable infinite scroll for logs when scrolling top",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.megaMenuPeekAndDock",
         "resourceVersion": "1794924578516",
         "creationTimestamp": "2026-11-17T10:20:15Z",
@@ -3476,6 +3514,23 @@
         "codeowner": "@grafana/identity-access-team",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.navigationAdminSubNav",
+        "resourceVersion": "1793749728452",
+        "creationTimestamp": "2026-10-28T21:50:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-03 23:48:48.452052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -5050,7 +5105,8 @@
       "metadata": {
         "name": "newSavedQueriesExperience",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-16T19:48:14Z"
+        "creationTimestamp": "2026-03-16T19:48:14Z",
+        "deletionTimestamp": "2026-11-02T21:10:32Z"
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
@@ -5816,15 +5872,19 @@
     {
       "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-13T20:46:09Z"
+        "resourceVersion": "1795040338225",
+        "creationTimestamp": "2026-08-13T20:46:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
-        "expression": "false"
+        "hideFromDocs": true,
+        "expression": "true"
       }
     },
     {
@@ -6481,16 +6541,19 @@
     {
       "metadata": {
         "name": "table.inspectDataTableNG",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T18:20:19Z"
+        "resourceVersion": "1795039264932",
+        "creationTimestamp": "2026-08-12T18:20:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 22:01:04.932465 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

@@ -112,6 +112,16 @@ Cluster-scoped kinds are reserved for service identities unless the manifest
 marks them `userReadable`. End users can only `get` or `list` a user-readable
 cluster-scoped kind; watching one is left to service identities.
 
+A namespaced kind can be readable by anyone the router lets into its namespace,
+with no RBAC grant. Its `get` and `list` are then served to storage as the
+service identity, limited to the request's namespace
+(`kindstore.Options.NamespaceReadable`). A request that names no single tenant
+namespace, writes and watches keep the caller, so storage still authorizes them,
+and an access policy is held to its token as for any other kind. The manifest
+cannot declare this yet, so `hardcodedNamespaceReadable` names the kinds:
+today only `banners.grafana.app/announcement-banners`, which every user of an
+instance sees.
+
 An access policy is held to the permissions in its own token for every kind,
 namespaced or cluster-scoped, because storage is called with a token this
 server substitutes or exchanges. The verb checked is the one storage checks:

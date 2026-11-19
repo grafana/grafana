@@ -14,7 +14,10 @@ describe('dashboardAPIv0alpha1 searchDashboardsAndFolders', () => {
   it('sends the include param along with the generated ones', async () => {
     const store = configureStore({
       reducer: { [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(dashboardAPIv0alpha1.middleware),
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(
+          dashboardAPIv0alpha1.middleware
+        ),
     });
     let searchParams: URLSearchParams | undefined;
     server.use(
