@@ -19,9 +19,11 @@ jobs:
       pull-requests: write # Create or update PR comments.
       statuses: write # Update GitHub status check with deploy preview link.
     if: "!github.event.pull_request.head.repo.fork"
-    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main # zizmor: ignore[unpinned-uses]
+    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@robbymilo/deploy-preview # zizmor: ignore[unpinned-uses]
     with:
       branch: ${{ github.head_ref }}
+      toolkit_ref: robbymilo/deploy-preview
+      checker_image: us-docker.pkg.dev/grafanalabs-dev/docker-website-public-dev/docs-checker:sha-48fa5c450c32be29dc073f3fbc1ae6388a1b056d
       event_number: ${{ github.event.number }}
       repo: grafana
       sha: ${{ github.event.pull_request.head.sha }}

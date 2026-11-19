@@ -1,12 +1,12 @@
 ---
-description: Guide for upgrading to Grafana v13.3
+description: Guide for upgrading to Grafana v13.2
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
   - '13.3'
-title: Upgrade to Grafana v13.3
+title: Upgrade to Grafana v13.2
 menuTitle: Upgrade to v13.3
 weight: 492
 ---
