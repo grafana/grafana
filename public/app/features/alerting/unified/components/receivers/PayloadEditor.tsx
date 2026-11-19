@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as React from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
@@ -36,9 +36,11 @@ export function PayloadEditor({
   const styles = useStyles2(getStyles);
   const [draftPayload, setDraftPayload] = useState(payload);
 
-  useEffect(() => {
+  const [prevPayload, setPrevPayload] = useState(payload);
+  if (prevPayload !== payload) {
+    setPrevPayload(payload);
     setDraftPayload(payload);
-  }, [payload]);
+  }
 
   const onReset = () => {
     setPayload(defaultPayload);

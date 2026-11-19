@@ -276,16 +276,16 @@ importers:
         version: link:packages/grafana-e2e-selectors
       '@grafana/faro-core':
         specifier: ^2.12.0
-        version: 2.12.1
+        version: 2.14.0
       '@grafana/faro-instrumentation-replay':
         specifier: ^2.12.0
-        version: 2.12.1
+        version: 2.14.0
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
-        version: 2.12.1
+        version: 2.14.0
       '@grafana/faro-web-tracing':
         specifier: ^2.12.0
-        version: 2.12.1(supports-color@7.2.0)
+        version: 2.14.0(supports-color@7.2.0)
       '@grafana/flamegraph':
         specifier: workspace:*
         version: link:packages/grafana-flamegraph
@@ -311,11 +311,11 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-runtime
       '@grafana/scenes':
-        specifier: 9.2.2
-        version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.3.0
+        version: 9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/scenes-react':
-        specifier: 9.2.2
-        version: 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.3.0
+        version: 9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema':
         specifier: workspace:*
         version: link:packages/grafana-schema
@@ -512,8 +512,8 @@ importers:
         specifier: 0.6.1
         version: 0.6.1
       kbar:
-        specifier: 0.1.0-beta.48
-        version: 0.1.0-beta.48(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 1.0.0
+        version: 1.0.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -2056,7 +2056,7 @@ importers:
         version: link:../grafana-data
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
-        version: 2.12.1
+        version: 2.14.0
       '@grafana/schema':
         specifier: workspace:*
         version: link:../grafana-schema
@@ -2386,7 +2386,7 @@ importers:
         version: link:../grafana-e2e-selectors
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
-        version: 2.12.1
+        version: 2.14.0
       '@grafana/i18n':
         specifier: workspace:*
         version: link:../grafana-i18n
@@ -3789,17 +3789,17 @@ packages:
       eslint-plugin-react-hooks: '>=7.1.0'
       typescript: '>=5.5.0'
 
-  '@grafana/faro-core@2.12.1':
-    resolution: {integrity: sha512-Pg0vjgsR1BxdmLzzX9r8YcZ8rI4aXLlDGtreppZev++BbnH2utKBwCI16Vx+IzfQqHKRT+7WGc63HOue8/9J6Q==}
+  '@grafana/faro-core@2.14.0':
+    resolution: {integrity: sha512-U1dydD2pQa3sgnaoGQsmsDoecef2S90Y6kVYyhdXjaSg8+bzJWwW5mGtO+7V15PjZSKA4tdXGKRHa1RGGJPY8Q==}
 
-  '@grafana/faro-instrumentation-replay@2.12.1':
-    resolution: {integrity: sha512-H3/xfbVIO7Vtht1QHSw4wnGTL6TptWWmx6HZwlSxABvoji+ax7Q5Fu3VX/5oqeTi3kUhCqYD5Lx44CKLLvwI5Q==}
+  '@grafana/faro-instrumentation-replay@2.14.0':
+    resolution: {integrity: sha512-nfuGwaOhJI2fIFjZ8YJ8cvRZPp/8McD4VQCz1ib1+Z7DD/ott+NlLfa0mq0bDEpdeCTcN5kcHqvz6zwjfAF2JQ==}
 
-  '@grafana/faro-web-sdk@2.12.1':
-    resolution: {integrity: sha512-JnpZy/ztfkP3UZ3AW0DzUxVgMRTBvYz+m0oZuVi+KRpGTYz0GGF0umi0S0pAemnaUbQBo6umGdCm5CL6n8BAWQ==}
+  '@grafana/faro-web-sdk@2.14.0':
+    resolution: {integrity: sha512-ZZu5GmNvx+2pA+ma8dMER7GiJ/UVbI5qXWV5rK5ms6uK6hrh2xXKNETp9s1R+U/yVfHlo7n/ArtjQB/8/8noTw==}
 
-  '@grafana/faro-web-tracing@2.12.1':
-    resolution: {integrity: sha512-m9TEjPsEc8kJVeKnHoHCEPz7eDVpn/etZqMc2louYCWZsXIH4v2hlfT8ZY3MAIKCzBPBgoxVFqOOjvSwtOKRfw==}
+  '@grafana/faro-web-tracing@2.14.0':
+    resolution: {integrity: sha512-mOewlmG3Y6rg1Xr7aWh0tIbghR7KKCAzCzRArHMw+I86rjFymnZAwZfnp9Aesjt/u57dBRBP6JvZ87naWYqxiw==}
 
   '@grafana/levitate@0.17.2':
     resolution: {integrity: sha512-huJVnbOZUeh1huR3Qpr3h8cP06vsbZHeAR9nZbpbgP1KhSeigdsWbHma20kdeWVVFkjogKMewqLy+SbHB3pBzg==}
@@ -3911,8 +3911,8 @@ packages:
   '@grafana/rrweb@2.0.0-grafana.2':
     resolution: {integrity: sha512-sQZj50i0t6YjLL8vY5CogSAXusmWusWhLifGK7RXLluQhlUZLB5Qfz+DUGN17UuJoE/Zrhe0nEF2gA+LqEEUDg==}
 
-  '@grafana/scenes-react@9.2.2':
-    resolution: {integrity: sha512-RjdhmqOc1MPPE2+WIYNpj0FKpFJoDdXJouWzepki2jd23uIizuFa1J8P9mp+OgDG81+PTt0qO0Y2OI0Xr1S1iQ==}
+  '@grafana/scenes-react@9.3.0':
+    resolution: {integrity: sha512-jANWv5+38+KBMVcyqQKBAZIvk8QAK/oLNMiCj+E5mzjiHJKj7VAhNtS4XUWLJcLIbsmI6z3YvRerpe+oz8K1wQ==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -3924,8 +3924,8 @@ packages:
       react-router-dom: ^6.28.0
       rxjs: ^7.8.1
 
-  '@grafana/scenes@9.2.2':
-    resolution: {integrity: sha512-+mW1t7B8FjV/94oXyBMBmnTksAWzMjToLevOSDT7FwKN38GCC+0/89bD1yk4Pp+kemwh8CTj00APpyichi7zJA==}
+  '@grafana/scenes@9.3.0':
+    resolution: {integrity: sha512-FFEq4s65ujXA9kDuhH2fygUVlD16ksPdhl22h3TkNqU/qxkq7sWW7ewKa4igDcxecnNPsfvXoTza1GGIOhgbvA==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -4918,8 +4918,8 @@ packages:
     peerDependencies:
       '@openfeature/core': ^1.12.0
 
-  '@opentelemetry/api-logs@0.222.0':
-    resolution: {integrity: sha512-9mb1If+IF6u0ZVXkHQ6ogEae5HwA6ajIVUgpSDQyRASxft6BSXHvBvPooRle3yFN/fKnCdSOnuu0OC3PLcF6+g==}
+  '@opentelemetry/api-logs@0.223.2':
+    resolution: {integrity: sha512-pKr/0bxkzNPhWKTqqSP2KtPVxqmC2oQrWjUjr4EDHrJCCiRkGIN52m2c7ILhCnQkYKmlTQBiESIEeyg0hlmotQ==}
     engines: {node: '>=8.0.0'}
 
   '@opentelemetry/api-metrics@0.25.0':
@@ -4946,38 +4946,38 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
 
-  '@opentelemetry/exporter-trace-otlp-http@0.222.0':
-    resolution: {integrity: sha512-RCnPWcHppwiquQ+cV3nWvNwdf0MG1w26e5jewW2T83nTZOlXgcg88sY9ulCVgagGHcq1mj0L0GP6YHgzk2v8oA==}
+  '@opentelemetry/exporter-trace-otlp-http@0.223.2':
+    resolution: {integrity: sha512-ERCu66nR7+0x/KzwxI+6GW9m26+u/Ett78yApmB/Oy42AaYJGhJSA0JTyrsFChyKvBQ9Bywo+dPSccYDY48UZQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-fetch@0.222.0':
-    resolution: {integrity: sha512-I0Vlvi1uzSnu4+cMssnYdaQgcJf/ffs0HSnq8/ZlkjgNS/J+ABc3196lZyL7uy++yRCl3bg2zPMhTphVdNx5sA==}
+  '@opentelemetry/instrumentation-fetch@0.223.2':
+    resolution: {integrity: sha512-ogh1No4x5GMzLDWN1/4lp9foZVyTNLTT4BOELfALxZnZgMm5J6T5j7afDi6L5bqHxZ5vVwhMHruffeE8pBlD5g==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-xml-http-request@0.222.0':
-    resolution: {integrity: sha512-bA+6QSEV0tk/7IfGgCBnVIhTB6ljVP+eMuwCq/vPapNAZWsuS/8nFd+WE1R0oPJk+TBGGck23bhjq662MqJAEg==}
+  '@opentelemetry/instrumentation-xml-http-request@0.223.2':
+    resolution: {integrity: sha512-biAlRPBJFdcPSYkUK0OXZcBr9fa8cXSg/9hCT7W/OrnuOG5X15Gn6gMgvqkvVSyb8s1CJYgOWIZk1TNDCADivw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation@0.222.0':
-    resolution: {integrity: sha512-fhbRDuAgzPKpq1k5+hX3uS+3QAYNca0on0Ngot/R8dDsQtuFaADeZnG2uSgxABuvcI7S2phAaRhbct9jieeKZw==}
+  '@opentelemetry/instrumentation@0.223.2':
+    resolution: {integrity: sha512-2tRpOgQ91+wC2/h6IDt+dsQNuUlfUR+CVwABceAEtiWtON9JumZR6YQcYCsisNRTX942TnCjPDuBI0xxGgVLHQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/otlp-exporter-base@0.222.0':
-    resolution: {integrity: sha512-YbywG3veEm2Fb6TbdxRkuquWob6eVWXuA8/Ba1tXz9jHfUqpdE3keilOHEtPboC4CvS1bjeeVfNkWGOOrLj+lw==}
+  '@opentelemetry/otlp-exporter-base@0.223.2':
+    resolution: {integrity: sha512-xiDR0ECXojG2zq5ZK2gnjP7FeHM0aLSfDVlpokbViY2BcgEySnbvazb/li8Ddd6XnUrt2g3kVVg5PFkvWYpFGw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/otlp-transformer@0.222.0':
-    resolution: {integrity: sha512-/F3BZ89+CJQnZkMh2tCrtcdB+XT2Dxhj4FFE+WPQ//413hmFL0/RfEX6vgOIWGhiSzrkHWTK3+6SiT7K5/g/jQ==}
+  '@opentelemetry/otlp-transformer@0.223.2':
+    resolution: {integrity: sha512-EQcjay0lf1HDW0ykqOSakUpxpYyaV3URhWPhcFQCu19Dp5hYt8K44TOGp3ZAphZNQDBpRqLqMO8hkVyME54oXg==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -4994,8 +4994,14 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
-  '@opentelemetry/sdk-logs@0.222.0':
-    resolution: {integrity: sha512-+19YHODIjaUCArxleaJtuufFZVpz/xvvK+VllQqE+W8hHolxdoRwHfK/s667zezwh1hkx6FFF+oYzetYgqK+Bg==}
+  '@opentelemetry/resources@2.12.1':
+    resolution: {integrity: sha512-IwrNcuLCvnJAnNLkXxx0Uw+rjBkVW6VGQrhd7PanNf0LavOzkTk9sDAjdqegM7p/VdxefNRrii6d+wBRJfz35g==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
+  '@opentelemetry/sdk-logs@0.223.2':
+    resolution: {integrity: sha512-gMCNZzXvb89w8MxZWYZLIRImgromnT6iloTQaSbQNyIdjtl9KPiZMrfBv3fYbR3sQl5EYBDJhFN/W3gycbEICw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': '>=1.4.0 <1.10.0'
@@ -5007,8 +5013,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.2
 
-  '@opentelemetry/sdk-metrics@2.11.0':
-    resolution: {integrity: sha512-7GXXcObyHyDUUSG+L+kJoquty01bzm7ivE7+SSgXXJcHuPzGviptxwARmI2c+bnnxjexGQbJnyNlN8HxBP/Y7A==}
+  '@opentelemetry/sdk-metrics@2.12.1':
+    resolution: {integrity: sha512-HeSblYhpds4QWliBE7ANCfoa2p3QH83uUxX4vO2qtk6BhIcqP7qDYYT36z3LOXftEBpdfbDStZxv+Cw5mqKX5g==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': '>=1.9.0 <1.10.0'
@@ -5040,6 +5046,12 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
+  '@opentelemetry/sdk-trace@2.12.1':
+    resolution: {integrity: sha512-vANdmCYnn+Ka/alBKxwICMl4Koa+aQBlRC9zAZy+Ig1Obbo3RZt2oiyv+8/gET5rrBBYrO3YniPcXfwZrN01rg==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
   '@opentelemetry/semantic-conventions@0.25.0':
     resolution: {integrity: sha512-V3N+MDBiv0TUlorbgiSqk6CvcP876CYUk/41Tg6s8OIyvniTwprE6vPvFQayuABiVkGlHOxv1Mlvp0w4qNdnVg==}
     engines: {node: '>=8.0.0'}
@@ -5047,6 +5059,12 @@ packages:
   '@opentelemetry/semantic-conventions@1.38.0':
     resolution: {integrity: sha512-kocjix+/sSggfJhwXqClZ3i9Y/MI0fp7b+g7kCRm6psy2dsf8uApTRclwG18h8Avm7C9+fnt+O36PspJ/OzoWg==}
     engines: {node: '>=14'}
+
+  '@opentelemetry/web-common@0.223.2':
+    resolution: {integrity: sha512-Wrz50L1/PTb9EZ76N6sBaMF+sp1gv/4zDd1nP7CgEVOnZtovpc1SI9OAkjpdHdx7QY7tKKuCEEcf2QV31F3D+Q==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     resolution: {integrity: sha512-0LC7ye4hvqbIKxAzThzvswgHLFu2AURKzYLeSVvLdu2TBOYWQDmHnTqPLeA597BcUCxiLqLsS4CJ5uoI5WYWCQ==}
@@ -5574,46 +5592,55 @@ packages:
     resolution: {integrity: sha512-S+9ANAvUmjutrshV4jZjaiG8XQyuJIZ8a4utWmN/vW1sgQ9IfBnPndwkmQYw53QmouOIytT874u65HEmu6H5jw==}
     engines: {node: '>=18'}
 
-  '@radix-ui/react-compose-refs@1.0.1':
-    resolution: {integrity: sha512-fDSBgd44FKHa1FRMU59qBMPFcl2PZE+2nmqunj+BWFyYYjnhIDWL2ItDs3rrbJDQOtzt5nIebLCQc4QRfz6LJw==}
+  '@radix-ui/react-compose-refs@1.1.5':
+    resolution: {integrity: sha512-+48PbAAbq3didjJxa+OaWY2ZwgAKsNiRGyeHKszblZMQ+kcpd9pAaT11cMkGEie0vsOi3QdeTE6d5Fe3Gn61kA==}
     peerDependencies:
       '@types/react': '*'
-      react: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
 
-  '@radix-ui/react-portal@1.0.4':
-    resolution: {integrity: sha512-Qki+C/EuGUVCQTOTD5vzJzJuMUlewbzuKyUy+/iHM2uwGiru9gZeBJtHAPKAEkB5KWGi9mP/CHKcY0wt1aW45Q==}
+  '@radix-ui/react-portal@1.2.0':
+    resolution: {integrity: sha512-StX7xXnaRU41VvFtMm9zlhVGz8XF6GmWWTXftkQaY+tqVkbs/R9UmAp5mLzHHapk5hM9RMZQvO/3usyIP/g42g==}
     peerDependencies:
       '@types/react': '*'
       '@types/react-dom': '*'
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
       '@types/react-dom':
         optional: true
 
-  '@radix-ui/react-primitive@1.0.3':
-    resolution: {integrity: sha512-yi58uVyoAcK/Nq1inRY56ZSjKypBNKTa/1mcL8qdl6oJeEaDbOldlzrGn7P6Q3Id5d+SYNGc5AJgc4vGhjs5+g==}
+  '@radix-ui/react-primitive@2.2.0':
+    resolution: {integrity: sha512-HCTSPMNqv55Qk0IX4geJbpyXazmqulcimwuyjxTkKi29v+QZbG2Zho9BnbBq4YS2PF+KlNb2CXoLz66uUmblkg==}
     peerDependencies:
       '@types/react': '*'
       '@types/react-dom': '*'
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
       '@types/react-dom':
         optional: true
 
-  '@radix-ui/react-slot@1.0.2':
-    resolution: {integrity: sha512-YeTpuq4deV+6DusvVUW4ivBgnkHwECUu0BiN43L5UCDFgdhsRUWAghhTF5MbvNTPzmiFOx90asDSUjWuCNapwg==}
+  '@radix-ui/react-slot@1.5.0':
+    resolution: {integrity: sha512-tyYd9ddPXAysAbdbD9eYxgwpCSv6f3PncqVSNKQFSR5lcJVLz3cb/pANDoYrLiHBpXv7skortyUgGUWsYuPPFQ==}
     peerDependencies:
       '@types/react': '*'
-      react: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@radix-ui/react-use-layout-effect@1.1.4':
+    resolution: {integrity: sha512-K20DkRkUwDnxEYMBPcg3Y6voLkEy5p5QQmszZgLngKKiC7dzBR/aEuK3w1qlx2JWDUNH6FluahYdgR3BP+QbYw==}
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -10388,8 +10415,8 @@ packages:
   functions-have-names@1.2.3:
     resolution: {integrity: sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==}
 
-  fuse.js@6.6.2:
-    resolution: {integrity: sha512-cJaJkxCCxC8qIIcPBF9yGxY0W/tVZS3uEISDxhYIdtk8OL93pe+6Zj7LjCqVV4dzbqcriOZ+kQ/NE4RXZHsIGA==}
+  fuse.js@7.5.0:
+    resolution: {integrity: sha512-sQtrEfA+ez/3G0cCZecF70oqpCRttCexYUG4mUrtWL49ULUzUyxokt5kyqwtKzj1270RaKih+hcP3qLcumccow==}
     engines: {node: '>=10'}
 
   gensync@1.0.0-beta.2:
@@ -11686,11 +11713,11 @@ packages:
     resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
     hasBin: true
 
-  kbar@0.1.0-beta.48:
-    resolution: {integrity: sha512-HD5A1dqfK6XGeoH4fRWTmRt4y76sDbtGxY4Dh2xNa5MYtvtKsqfz+nRZ0tKgcrjjGYN4rf5TLXMJuiE7Pb8rXg==}
+  kbar@1.0.0:
+    resolution: {integrity: sha512-b3IXEXokYQxFMcIUBXfY898dGKvMA1hMg3SjIxHnTnFjxUVVZs8S2yZmkriiBOpJEvgp9llb/FbPC6oYYSa/4g==}
     peerDependencies:
-      react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
 
   keycharm@0.4.0:
     resolution: {integrity: sha512-TyQTtsabOVv3MeOpR92sIKk/br9wxS+zGj4BG7CR8YbK4jM3tyIBaF0zhzeBUMx36/Q/iQLOKKOT+3jOQtemRQ==}
@@ -16422,34 +16449,34 @@ snapshots:
       eslint-plugin-react-hooks: 7.1.1(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       typescript: '@typescript/typescript6@6.0.2'
 
-  '@grafana/faro-core@2.12.1':
+  '@grafana/faro-core@2.14.0':
     dependencies:
       '@opentelemetry/api': 1.10.0
-      '@opentelemetry/otlp-transformer': 0.222.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/otlp-transformer': 0.223.2(@opentelemetry/api@1.10.0)
 
-  '@grafana/faro-instrumentation-replay@2.12.1':
+  '@grafana/faro-instrumentation-replay@2.14.0':
     dependencies:
-      '@grafana/faro-core': 2.12.1
+      '@grafana/faro-core': 2.14.0
       '@grafana/rrweb': 2.0.0-grafana.2
       '@grafana/rrweb-types': 2.0.0-grafana.2
 
-  '@grafana/faro-web-sdk@2.12.1':
+  '@grafana/faro-web-sdk@2.14.0':
     dependencies:
-      '@grafana/faro-core': 2.12.1
+      '@grafana/faro-core': 2.14.0
       ua-parser-js: 1.0.41
       web-vitals: 6.2.1
 
-  '@grafana/faro-web-tracing@2.12.1(supports-color@7.2.0)':
+  '@grafana/faro-web-tracing@2.14.0(supports-color@7.2.0)':
     dependencies:
-      '@grafana/faro-web-sdk': 2.12.1
+      '@grafana/faro-web-sdk': 2.14.0
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/exporter-trace-otlp-http': 0.222.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation': 0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
-      '@opentelemetry/instrumentation-fetch': 0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
-      '@opentelemetry/instrumentation-xml-http-request': 0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
-      '@opentelemetry/otlp-transformer': 0.222.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/exporter-trace-otlp-http': 0.223.2(@opentelemetry/api@1.10.0)
+      '@opentelemetry/instrumentation': 0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@opentelemetry/instrumentation-fetch': 0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@opentelemetry/instrumentation-xml-http-request': 0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@opentelemetry/otlp-transformer': 0.223.2(@opentelemetry/api@1.10.0)
+      '@opentelemetry/resources': 2.12.1(@opentelemetry/api@1.10.0)
       '@opentelemetry/sdk-trace-web': 2.11.0(@opentelemetry/api@1.10.0)
       '@opentelemetry/semantic-conventions': 1.38.0
     transitivePeerDependencies:
@@ -16657,14 +16684,14 @@ snapshots:
       base64-arraybuffer: 1.0.2
       mitt: 3.0.1
 
-  '@grafana/scenes-react@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes-react@9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/runtime': link:packages/grafana-runtime
-      '@grafana/scenes': 9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+      '@grafana/scenes': 9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
       lodash: 4.18.1
@@ -16679,7 +16706,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@grafana/scenes@9.2.2(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes@9.3.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
@@ -18061,7 +18088,7 @@ snapshots:
     dependencies:
       '@openfeature/core': 1.12.0
 
-  '@opentelemetry/api-logs@0.222.0':
+  '@opentelemetry/api-logs@0.223.2':
     dependencies:
       '@opentelemetry/api': 1.10.0
 
@@ -18085,57 +18112,57 @@ snapshots:
       '@opentelemetry/sdk-metrics-base': 0.25.0(@opentelemetry/api@1.10.0)
       '@opentelemetry/sdk-trace-base': 0.25.0(@opentelemetry/api@1.10.0)
 
-  '@opentelemetry/exporter-trace-otlp-http@0.222.0(@opentelemetry/api@1.10.0)':
+  '@opentelemetry/exporter-trace-otlp-http@0.223.2(@opentelemetry/api@1.10.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
-      '@opentelemetry/otlp-exporter-base': 0.222.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/otlp-transformer': 0.222.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-trace': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/otlp-exporter-base': 0.223.2(@opentelemetry/api@1.10.0)
+      '@opentelemetry/otlp-transformer': 0.223.2(@opentelemetry/api@1.10.0)
+      '@opentelemetry/sdk-trace': 2.12.1(@opentelemetry/api@1.10.0)
 
-  '@opentelemetry/instrumentation-fetch@0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
+  '@opentelemetry/instrumentation-fetch@0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation': 0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
-      '@opentelemetry/sdk-trace-web': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/instrumentation': 0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       '@opentelemetry/semantic-conventions': 1.38.0
+      '@opentelemetry/web-common': 0.223.2(@opentelemetry/api@1.10.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-xml-http-request@0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
+  '@opentelemetry/instrumentation-xml-http-request@0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/instrumentation': 0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
-      '@opentelemetry/sdk-trace-web': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/instrumentation': 0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       '@opentelemetry/semantic-conventions': 1.38.0
+      '@opentelemetry/web-common': 0.223.2(@opentelemetry/api@1.10.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation@0.222.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
+  '@opentelemetry/instrumentation@0.223.2(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
-      '@opentelemetry/api-logs': 0.222.0
+      '@opentelemetry/api-logs': 0.223.2
       import-in-the-middle: 3.0.1
       require-in-the-middle: 8.0.1(supports-color@7.2.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/otlp-exporter-base@0.222.0(@opentelemetry/api@1.10.0)':
+  '@opentelemetry/otlp-exporter-base@0.223.2(@opentelemetry/api@1.10.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/otlp-transformer': 0.222.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/otlp-transformer': 0.223.2(@opentelemetry/api@1.10.0)
 
-  '@opentelemetry/otlp-transformer@0.222.0(@opentelemetry/api@1.10.0)':
+  '@opentelemetry/otlp-transformer@0.223.2(@opentelemetry/api@1.10.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
-      '@opentelemetry/api-logs': 0.222.0
+      '@opentelemetry/api-logs': 0.223.2
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-logs': 0.222.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-metrics': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/sdk-trace': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/resources': 2.12.1(@opentelemetry/api@1.10.0)
+      '@opentelemetry/sdk-logs': 0.223.2(@opentelemetry/api@1.10.0)
+      '@opentelemetry/sdk-metrics': 2.12.1(@opentelemetry/api@1.10.0)
+      '@opentelemetry/sdk-trace': 2.12.1(@opentelemetry/api@1.10.0)
 
   '@opentelemetry/resources@0.25.0(@opentelemetry/api@1.10.0)':
     dependencies:
@@ -18149,12 +18176,18 @@ snapshots:
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
-  '@opentelemetry/sdk-logs@0.222.0(@opentelemetry/api@1.10.0)':
+  '@opentelemetry/resources@2.12.1(@opentelemetry/api@1.10.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
-      '@opentelemetry/api-logs': 0.222.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/semantic-conventions': 1.38.0
+
+  '@opentelemetry/sdk-logs@0.223.2(@opentelemetry/api@1.10.0)':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      '@opentelemetry/api-logs': 0.223.2
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/resources': 2.12.1(@opentelemetry/api@1.10.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/sdk-metrics-base@0.25.0(@opentelemetry/api@1.10.0)':
@@ -18165,11 +18198,11 @@ snapshots:
       '@opentelemetry/resources': 0.25.0(@opentelemetry/api@1.10.0)
       lodash.merge: 4.6.2
 
-  '@opentelemetry/sdk-metrics@2.11.0(@opentelemetry/api@1.10.0)':
+  '@opentelemetry/sdk-metrics@2.12.1(@opentelemetry/api@1.10.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
-      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/resources': 2.12.1(@opentelemetry/api@1.10.0)
 
   '@opentelemetry/sdk-trace-base@0.25.0(@opentelemetry/api@1.10.0)':
     dependencies:
@@ -18200,9 +18233,22 @@ snapshots:
       '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.10.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
+  '@opentelemetry/sdk-trace@2.12.1(@opentelemetry/api@1.10.0)':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/resources': 2.12.1(@opentelemetry/api@1.10.0)
+      '@opentelemetry/semantic-conventions': 1.38.0
+
   '@opentelemetry/semantic-conventions@0.25.0': {}
 
   '@opentelemetry/semantic-conventions@1.38.0': {}
+
+  '@opentelemetry/web-common@0.223.2(@opentelemetry/api@1.10.0)':
+    dependencies:
+      '@opentelemetry/api': 1.10.0
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/semantic-conventions': 1.38.0
 
   '@oxc-parser/binding-android-arm-eabi@0.127.0':
     optional: true
@@ -18519,37 +18565,40 @@ snapshots:
 
   '@publint/pack@0.1.2': {}
 
-  '@radix-ui/react-compose-refs@1.0.1(@types/react@19.2.18)(react@19.2.8)':
+  '@radix-ui/react-compose-refs@1.1.5(@types/react@19.2.18)(react@19.2.8)':
     dependencies:
-      '@babel/runtime': 7.29.7
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
 
-  '@radix-ui/react-portal@1.0.4(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@radix-ui/react-portal@1.2.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@babel/runtime': 7.29.7
-      '@radix-ui/react-primitive': 1.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-    optionalDependencies:
-      '@types/react': 19.2.18
-      '@types/react-dom': 19.2.4(@types/react@19.2.18)
-
-  '@radix-ui/react-primitive@1.0.3(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@radix-ui/react-slot': 1.0.2(@types/react@19.2.18)(react@19.2.8)
+      '@radix-ui/react-primitive': 2.2.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@radix-ui/react-use-layout-effect': 1.1.4(@types/react@19.2.18)(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
     optionalDependencies:
       '@types/react': 19.2.18
       '@types/react-dom': 19.2.4(@types/react@19.2.18)
 
-  '@radix-ui/react-slot@1.0.2(@types/react@19.2.18)(react@19.2.8)':
+  '@radix-ui/react-primitive@2.2.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@babel/runtime': 7.29.7
-      '@radix-ui/react-compose-refs': 1.0.1(@types/react@19.2.18)(react@19.2.8)
+      '@radix-ui/react-slot': 1.5.0(@types/react@19.2.18)(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+    optionalDependencies:
+      '@types/react': 19.2.18
+      '@types/react-dom': 19.2.4(@types/react@19.2.18)
+
+  '@radix-ui/react-slot@1.5.0(@types/react@19.2.18)(react@19.2.8)':
+    dependencies:
+      '@radix-ui/react-compose-refs': 1.1.5(@types/react@19.2.18)(react@19.2.8)
+      react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
+
+  '@radix-ui/react-use-layout-effect@1.1.4(@types/react@19.2.18)(react@19.2.8)':
+    dependencies:
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
@@ -24012,7 +24061,7 @@ snapshots:
 
   functions-have-names@1.2.3: {}
 
-  fuse.js@6.6.2: {}
+  fuse.js@7.5.0: {}
 
   gensync@1.0.0-beta.2: {}
 
@@ -25927,14 +25976,14 @@ snapshots:
     dependencies:
       commander: 8.3.0
 
-  kbar@0.1.0-beta.48(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  kbar@1.0.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
-      '@radix-ui/react-portal': 1.0.4(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@radix-ui/react-portal': 1.2.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tanstack/react-virtual': 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       fast-equals: 2.0.4
-      fuse.js: 6.6.2
+      fuse.js: 7.5.0
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-virtual: 2.10.4(react@19.2.8)
       tiny-invariant: 1.3.3
     transitivePeerDependencies:
       - '@types/react'

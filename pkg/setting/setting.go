@@ -809,6 +809,9 @@ type Cfg struct {
 	// aggregating facets on the post-filter path. Zero falls back to the
 	// default in search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzFacetSampleSize int
+	// SearchPostRankAuthzExactCountThreshold enables full authorized counts for
+	// small global-search result sets. Zero disables optional counting.
+	SearchPostRankAuthzExactCountThreshold int
 
 	// Vector storage
 	EnableVectorBackend bool
@@ -909,9 +912,6 @@ type Cfg struct {
 	// explicitWatchSettings records which watch settings had a value before
 	// their defaults were read, because reading a default writes it into Raw.
 	explicitWatchSettings explicitWatchSettings
-	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
-	// single-row descending lookup instead of scanning the resource's history.
-	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration

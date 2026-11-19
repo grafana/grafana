@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/endpoints/handlers/finisher"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -120,11 +121,30 @@ func pendingRecorder(store grafanarest.Storage) func(context.Context, *foldersv1
 }
 
 func (s *pendingDeleteStorage) Delete(ctx context.Context, name string, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	if !s.enabled(ctx) || (options != nil && len(options.DryRun) > 0) {
+		return s.Storage.Delete(ctx, name, validation, options)
+	}
 	pinned, err := s.preparePendingDelete(ctx, name, validation, options)
 	if err != nil {
 		return nil, false, err
 	}
-	return s.Storage.Delete(ctx, name, validation, pinned)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	// Hooks can detach from the request context. Bound the caller's wait even
+	// when cleanup ignores cancellation, without discarding the recorded intent.
+	var obj runtime.Object
+	var deleted bool
+	var deleteErr error
+	_, _ = finisher.FinishRequest(ctx, func() (runtime.Object, error) {
+		obj, deleted, deleteErr = s.Storage.Delete(ctx, name, validation, pinned)
+		return obj, deleteErr
+	})
+	// Only normal finisher completion synchronizes the captured results; cancellation
+	// can leave the callback running, so check it before reading any of them.
+	if ctx.Err() != nil {
+		return nil, false, apierrors.NewTimeoutError(ctx.Err().Error(), 0)
+	}
+	return obj, deleted, deleteErr
 }
 
 func (s *pendingDeleteStorage) preparePendingDelete(ctx context.Context, name string, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (*metav1.DeleteOptions, error) {

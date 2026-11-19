@@ -6,12 +6,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
+	pluginlog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 // fakeRawChunkWriter mimics chunked.rawChunkWriter: it implements both
@@ -52,9 +55,10 @@ func TestErrorRecordingChunkedWriterForwardsOnChunk(t *testing.T) {
 
 	require.NoError(t, receiver.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "A"}))
 	require.NoError(t, receiver.OnChunk(&pluginv2.QueryChunkedDataResponse{
-		RefId:  "B",
-		Error:  "boom",
-		Status: int32(backend.StatusBadRequest),
+		RefId:       "B",
+		Error:       "boom",
+		ErrorSource: "downstream",
+		Status:      int32(backend.StatusBadRequest),
 	}))
 
 	// Chunks are forwarded to the underlying raw writer unchanged.
@@ -66,7 +70,77 @@ func TestErrorRecordingChunkedWriterForwardsOnChunk(t *testing.T) {
 	// the raw path, where errors never flow through WriteError.
 	errs := w.refErrors()
 	require.Len(t, errs, 1)
+	require.Equal(t, backend.ErrorSourceDownstream, errs[0].source)
 	require.Equal(t, "B", errs[0].refID)
 	require.Equal(t, backend.StatusBadRequest, errs[0].status)
 	require.Equal(t, instrumentationutils.RequestStatusError, w.requestStatus(nil))
+}
+
+type typedErrorSink struct {
+	backend.ChunkedDataWriter
+	got     error
+	sendErr error
+}
+
+func (s *typedErrorSink) WriteError(_ context.Context, _ string, _ backend.Status, err error) error {
+	s.got = err
+	return s.sendErr
+}
+
+func TestErrorRecordingChunkedWriterTypedSource(t *testing.T) {
+	for _, tc := range []struct {
+		name                                        string
+		err                                         error
+		responseSource, wantRecorded, wantForwarded backend.ErrorSource
+	}{
+		{"tagged error", backend.DownstreamError(errors.New("query failed")), "", backend.ErrorSourceDownstream, backend.ErrorSourceDownstream},
+		{"unspecified", errors.New("unspecified"), "", "", ""},
+		{"explicit response source", backend.PluginError(errors.New("query failed")), backend.ErrorSourceDownstream, backend.ErrorSourceDownstream, backend.ErrorSourceDownstream},
+		{"cancellation", context.Canceled, "", backend.ErrorSourceDownstream, ""},
+		{"explicit plugin cancellation", backend.PluginError(context.Canceled), "", backend.ErrorSourcePlugin, backend.ErrorSourcePlugin},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			next := &typedErrorSink{sendErr: errors.New("writer failed")}
+			w := &errorRecordingChunkedWriter{ChunkedDataWriter: next}
+			response := &backend.QueryDataResponse{Responses: backend.Responses{
+				"A": {Status: backend.StatusBadRequest, Error: tc.err, ErrorSource: tc.responseSource},
+			}}
+			require.ErrorIs(t, chunked.ProcessTypedResponse(t.Context(), response, w), next.sendErr)
+			require.ErrorIs(t, next.got, tc.err)
+			require.Equal(t, tc.wantForwarded, backend.ErrorResponseWithErrorSource(next.got).ErrorSource)
+			require.Len(t, w.refErrors(), 1)
+			require.Equal(t, tc.wantRecorded, w.refErrors()[0].source)
+		})
+	}
+}
+
+type partialFailureLog struct {
+	*pluginlog.TestLogger
+	fields map[string]any
+}
+
+func (l *partialFailureLog) FromContext(context.Context) pluginlog.Logger { return l }
+func (l *partialFailureLog) Error(message string, args ...any) {
+	if message != "Partial data response error" {
+		return
+	}
+	l.fields = make(map[string]any)
+	for i := 0; i < len(args); i += 2 {
+		l.fields[args[i].(string)] = args[i+1]
+	}
+}
+
+func TestChunkedLoggerIncludesPartialErrorSource(t *testing.T) {
+	logger := &partialFailureLog{TestLogger: pluginlog.NewTestLogger()}
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewLoggerMiddleware(logger, pluginfakes.NewFakePluginRegistry())))
+	sent := &pluginv2.QueryChunkedDataResponse{RefId: "B", Status: 400, Error: "bad query", ErrorSource: "downstream"}
+	cdt.TestHandler.QueryChunkedDataFunc = func(_ context.Context, _ *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+		return w.(chunked.RawChunkReceiver).OnChunk(sent)
+	}
+	raw := &fakeRawChunkWriter{}
+	require.NoError(t, cdt.MiddlewareHandler.QueryChunkedData(t.Context(), &backend.QueryChunkedDataRequest{}, raw))
+	require.Equal(t, "downstream", logger.fields["statusSource"])
+	require.Equal(t, "B", logger.fields["refID"])
+	require.Len(t, raw.chunks, 1)
+	require.Same(t, sent, raw.chunks[0])
 }

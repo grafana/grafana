@@ -78,6 +78,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
 import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
+import { type ComposerExitReason } from '../composer/types';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import {
   getPendingChangePreview,
@@ -116,7 +117,6 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -288,6 +288,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     assistantChanges: boolean;
     manualEdits: Map<string, number>;
     aiEdits: Map<string, number>;
+    /** A Composer session was open at some point in the period. */
+    composerUsed: boolean;
   };
 
   public trackModePickerShown() {
@@ -320,6 +322,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       assistantChanges: false,
       manualEdits: new Map(),
       aiEdits: new Map(),
+      // A save ends a period without leaving Composer, so the next one can start with Composer already open.
+      composerUsed: this.getComposerSession() !== undefined,
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -355,6 +359,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
       manual_edits: editCounts(this._editSession.manualEdits),
       ai_edits: editCounts(this._editSession.aiEdits),
+      composer_used: this._editSession.composerUsed,
     };
   }
 
@@ -645,7 +650,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
       bindKeys();
-      this.closeComposerSession();
+      this.closeComposerSession('mode_change');
     });
 
     // Panel actions ask for their ad hoc changes to be saved with an event, so they do not import the dashboard's saving code.
@@ -662,8 +667,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // Leaving the dashboard ends Composer, and drops a request to enter it that Assistant has not taken
       // yet; the cached scene must not come back in it.
       clearPendingComposerEnterRequest();
-      this.exitComposerMode();
-      this.closeComposerSession();
+      this.exitComposerMode('navigation');
+      this.closeComposerSession('navigation');
       composerSubscription.unsubscribe();
       promoteAdHocChangesSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
@@ -879,7 +884,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     if (mode !== 'composer' && isComposerMode(this.state)) {
-      this.exitComposerMode();
+      this.exitComposerMode('mode_change');
       if (getDashboardMode(this.state) === mode) {
         return true;
       }
@@ -987,7 +992,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public openFullEditor() {
     // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
-    this.exitComposerMode();
+    this.exitComposerMode('manual_edit');
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -1014,13 +1019,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     this._composer = { session, modeBefore };
+    this.markComposerUsed();
     return true;
   }
 
+  /** Marks the period already running when Composer opens. One that starts while Composer is open is marked as it starts. */
+  private markComposerUsed() {
+    if (this._editSession) {
+      this._editSession.composerUsed = true;
+    }
+  }
+
   /** Leaves Composer for the mode it is over: Editing, or what it was entered from. Never saves or discards. */
-  public exitComposerMode() {
+  public exitComposerMode(reason?: ComposerExitReason) {
     if (!isComposerMode(this.state)) {
       return;
+    }
+    if (reason) {
+      this._composer?.session.noteExitReason(reason);
     }
     const modeBefore = this._composer?.modeBefore;
     const mode: DashboardMode = isComposerEditing(this.state) ? 'edit' : modeBefore === 'agent' ? 'agent' : 'view';
@@ -1130,7 +1146,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   public leaveComposer() {
     if (!this.getComposerSession()?.assistantWorking) {
-      this.exitComposerMode();
+      this.exitComposerMode('toolbar_button');
       return;
     }
     appEvents.publish(
@@ -1142,7 +1158,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         ),
         yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
         noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
-        onConfirm: () => this.exitComposerMode(),
+        onConfirm: () => this.exitComposerMode('toolbar_button'),
       })
     );
   }
@@ -1151,9 +1167,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return isComposerMode(this.state) ? this._composer?.session : undefined;
   }
 
-  private closeComposerSession() {
+  private closeComposerSession(reason?: ComposerExitReason) {
     const composer = this._composer;
     this._composer = undefined;
+    if (reason) {
+      composer?.session.noteExitReason(reason);
+    }
     composer?.session.close();
   }
 
@@ -1419,8 +1438,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
       restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
-      // The baseline can be taken before a lookup started on the live tree resolves.
-      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1555,7 +1572,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
-    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1639,7 +1655,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
-    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;

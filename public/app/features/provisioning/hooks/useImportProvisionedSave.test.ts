@@ -277,7 +277,7 @@ describe('useImportProvisionedSave', () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/dashboards/f/folder-abc/');
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboards/f/folder-abc');
       });
       expect(result.current.error).toBeUndefined();
     });

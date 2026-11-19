@@ -160,7 +160,8 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
       'explore',
       2,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
-      true
+      true,
+      false
     );
 
     expect(events).toEqual([
@@ -171,6 +172,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
         cellType: 'panel',
         target: 'existing',
         lockTimeRange: true,
+        hasText: false,
         schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
@@ -190,6 +192,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
       'dashboard_panel',
       0,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: true },
+      false,
       false
     );
 
@@ -201,7 +204,7 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
   // A chat answer brings text next to its panels. There is no panel to describe, so those properties
   // are left off rather than sent empty.
   it('reports a markdown cell with no panel properties', () => {
-    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 3, undefined, false);
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'plugin', 3, undefined, false, false);
 
     expect(events).toEqual([
       {
@@ -211,9 +214,24 @@ describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
         cellType: 'markdown',
         target: 'existing',
         lockTimeRange: false,
+        hasText: false,
         schema_version: 1,
       },
     ]);
+  });
+
+  // The text typed in the modal is not a cell event of its own, so this is how its use is counted.
+  it('reports that the person typed text with the panel it came with', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook(
+      'nb-1',
+      'dashboard_panel',
+      1,
+      { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
+      false,
+      true
+    );
+
+    expect(events).toEqual([expect.objectContaining({ hasText: true, cellType: 'panel', position: 1 })]);
   });
 });
 
@@ -239,7 +257,8 @@ describe('NotebookAnalytics.created', () => {
       'dashboard_panel',
       1,
       { panel: defaultVisualizationPanelKind(), isLibraryPanel: true },
-      true
+      true,
+      false
     );
 
     expect(events).toEqual([
@@ -249,6 +268,7 @@ describe('NotebookAnalytics.created', () => {
         cellCount: 1,
         target: 'new',
         lockTimeRange: true,
+        hasText: false,
         schema_version: 1,
         panelType: 'timeseries',
         datasourceTypes: [],
@@ -256,6 +276,19 @@ describe('NotebookAnalytics.created', () => {
         isLibraryPanel: true,
       },
     ]);
+  });
+
+  it('reports that the person typed text with the panel', () => {
+    NotebookAnalytics.created(
+      'nb-1',
+      'dashboard_panel',
+      2,
+      { panel: defaultVisualizationPanelKind(), isLibraryPanel: false },
+      false,
+      true
+    );
+
+    expect(events).toEqual([expect.objectContaining({ hasText: true, cellCount: 2 })]);
   });
 
   // The blank notebook route creates from whatever cells exist by the first save. There is no one

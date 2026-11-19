@@ -45,4 +45,11 @@ export const JOURNEY_REGISTRY: JourneyMeta[] = [
     owner: 'grafana-dashboards',
     timeoutMs: 60_000,
   },
+  {
+    type: 'datasource_picker_select',
+    description: 'User opens the data source picker and selects a data source',
+    owner: 'grafana-dashboards',
+    timeoutMs: 5 * 60_000,
+    parents: ['panel_edit', 'dashboard_edit'],
+  },
 ];
