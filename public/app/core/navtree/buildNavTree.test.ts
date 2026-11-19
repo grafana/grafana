@@ -454,12 +454,20 @@ describe('buildNavTree', () => {
       expect(ids(plugins?.children ?? [])).toContain('plugins');
     });
 
-    it('shows the extensions page in dev environments', () => {
-      setup();
+    it('shows the extensions page in dev environments with plugin write access', () => {
+      setup({ permissions: [AccessControlAction.PluginsWrite] });
       config.buildInfo.env = 'development';
 
       const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('extensions');
+    });
+
+    it('hides the extensions page in dev environments without plugin permissions', () => {
+      setup();
+      config.buildInfo.env = 'development';
+
+      const plugins = findById(findById(buildNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      expect(ids(plugins?.children ?? [])).not.toContain('extensions');
     });
 
     it('shows the extensions page outside dev only with the toggle and plugin write access', () => {
