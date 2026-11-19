@@ -98,6 +98,16 @@ func (shutdownDisabledBGTestService) IsDisabled() bool {
 	return true
 }
 
+// failOnStopService fails when it is asked to stop.
+type failOnStopService struct{ err error }
+
+func (s *failOnStopService) Run(ctx context.Context) error {
+	<-ctx.Done()
+	return s.err
+}
+
+func (s *failOnStopService) IsDisabled() bool { return false }
+
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
 	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), tracing.NewNoopTracerService(), featuremgmt.WithFeatures(), prometheus.NewRegistry())
@@ -146,5 +156,24 @@ func TestServer_Shutdown(t *testing.T) {
 
 		err = <-ch
 		require.NoError(t, err)
+		require.NoError(t, s.ServicesShutdownErr())
+	})
+
+	t.Run("a service that fails while stopping is reported by ServicesShutdownErr", func(t *testing.T) {
+		stopErr := errors.New("stop failed")
+		s := testServer(t, &failOnStopService{err: stopErr})
+		ch := make(chan error)
+		go func() {
+			defer close(ch)
+			require.NoError(t, s.managerAdapter.AwaitRunning(context.Background()))
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			ch <- s.Shutdown(ctx, "test interrupt")
+		}()
+		_ = s.Run() // returns the failure of the service too
+
+		// Shutdown keeps logging the failure instead of returning it, as its callers expect.
+		require.NoError(t, <-ch)
+		require.ErrorIs(t, s.ServicesShutdownErr(), stopErr)
 	})
 }

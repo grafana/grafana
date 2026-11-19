@@ -100,6 +100,9 @@ type Server struct {
 	isInitialized bool
 	mtx           sync.Mutex
 
+	// servicesShutdownErr is written once, by the Shutdown that ran shutdownOnce.
+	servicesShutdownErr error
+
 	pidFile     string
 	version     string
 	commit      string
@@ -164,6 +167,7 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 		s.log.Info("Shutdown started", "reason", reason)
 		if shutdownErr := s.managerAdapter.Shutdown(ctx, "shutdown"); shutdownErr != nil {
 			s.log.Error("Failed to shutdown background services", "error", shutdownErr)
+			s.servicesShutdownErr = shutdownErr
 		}
 		select {
 		case <-ctx.Done():
@@ -175,6 +179,13 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	})
 
 	return err
+}
+
+// ServicesShutdownErr returns what the background services reported while Shutdown stopped
+// them. Shutdown itself only logs it, so callers that must fail on it, like tests, ask here
+// after Shutdown returned.
+func (s *Server) ServicesShutdownErr() error {
+	return s.servicesShutdownErr
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.

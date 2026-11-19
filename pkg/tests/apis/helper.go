@@ -295,12 +295,18 @@ func (c *K8sTestHelper) GetListenerAddress() string {
 }
 
 func (c *K8sTestHelper) Shutdown() {
-	require.NoError(c.t, c.ShutdownErr())
+	err := c.env.Server.Shutdown(context.Background(), "done")
+	require.NoError(c.t, err)
 }
 
-// ShutdownErr stops the server and returns the error, for callers that report it themselves.
+// ShutdownErr stops the server and returns the error, for callers that report it
+// themselves. Unlike Shutdown it also returns the failure of a background service while
+// stopping, which the server only logs.
 func (c *K8sTestHelper) ShutdownErr() error {
-	return c.env.Server.Shutdown(context.Background(), "done")
+	if err := c.env.Server.Shutdown(context.Background(), "done"); err != nil {
+		return err
+	}
+	return c.env.Server.ServicesShutdownErr()
 }
 
 type ResourceClientArgs struct {

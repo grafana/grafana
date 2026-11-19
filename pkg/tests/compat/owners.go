@@ -84,7 +84,7 @@ func logOwners(t *testing.T, paths []string) {
 	}
 	t.Logf("owned by %s", owners)
 	if summary := os.Getenv("GITHUB_STEP_SUMMARY"); summary != "" {
-		if err := appendLine(summary, fmt.Sprintf("- `%s`%s failed, owned by %s\n", t.Name(), phaseLabel(), owners)); err != nil {
+		if err := appendLine(summary, fmt.Sprintf("- `%s`%s failed, owned by %s\n", qualified(t.Name()), phaseLabel(), owners)); err != nil {
 			t.Logf("could not write job summary: %v", err)
 		}
 	}
@@ -118,7 +118,7 @@ func watchTimeout(entry, name string, deadline time.Time, paths []string) (stop 
 		if entry == "" {
 			return
 		}
-		line := fmt.Sprintf("- `%s`%s timed out, owned by %s\n", name, phaseLabel(), owners)
+		line := fmt.Sprintf("- `%s`%s timed out, owned by %s\n", qualified(name), phaseLabel(), owners)
 		if err := os.WriteFile(entry, []byte(line), 0o600); err != nil {
 			fmt.Fprintf(os.Stderr, "could not write %s: %v\n", entry, err)
 		}
@@ -147,6 +147,16 @@ func timeoutEntryPath(name string) string {
 		return ""
 	}
 	return filepath.Join(dir, "timeout-"+filepath.Base(wd)+"-"+name+".md")
+}
+
+// qualified prefixes a test name with its package, because the packages of one round trip
+// run the same phases and their entries would otherwise look alike.
+func qualified(name string) string {
+	wd, err := os.Getwd()
+	if err != nil {
+		return name
+	}
+	return filepath.Base(wd) + "/" + name
 }
 
 // phaseLabel names the version and the round trip a phase runs in, like " (newer,

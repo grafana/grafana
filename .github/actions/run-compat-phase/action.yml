@@ -74,11 +74,14 @@ runs:
             echo "::error::$pkg did not pass $TEST: it is missing, skipped, or failed"
             rc=1
           fi
-          # A phase that hit the test timeout never ran its cleanups, so its owners are still in
-          # the file its watchdog wrote. A phase that ended in time removes the file itself.
+          # The watchdog of a phase writes its owners to a file shortly before the test timeout, and a
+          # phase that ends in time removes it. One left behind may also come from a crash, so the
+          # summary only gets it when Go reported the timeout.
           entry="$GRAFANA_COMPAT_DIR/timeout-$pkg-$TEST.md"
           if [ -f "$entry" ]; then
-            cat "$entry" >> "$GITHUB_STEP_SUMMARY"
+            if jq -e 'select(.Action == "output" and (.Output | startswith("panic: test timed out")))' "$events" > /dev/null; then
+              cat "$entry" >> "$GITHUB_STEP_SUMMARY"
+            fi
             rm -f "$entry"
           fi
         done

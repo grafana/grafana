@@ -162,6 +162,7 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.want, strings.Count(string(written), owner), string(written))
 			require.Contains(t, string(written), "(newer, upgrade-rollback)", "which version and round trip failed")
+			require.Contains(t, string(written), "`compat/TestReportOwnersHelper", "which package failed")
 		})
 	}
 }
@@ -238,7 +239,7 @@ func TestWatchTimeoutLeavesTheEntryForAPhaseThatDoesNotEnd(t *testing.T) {
 		synctest.Wait()
 		written, err := os.ReadFile(entry) // #nosec G304 -- file in the test's temp dir
 		require.NoError(t, err)
-		require.Equal(t, "- `TestCompatSetup` (older, upgrade-rollback) timed out, owned by @org/compat\n", string(written))
+		require.Equal(t, "- `compat/TestCompatSetup` (older, upgrade-rollback) timed out, owned by @org/compat\n", string(written))
 	})
 }
 
