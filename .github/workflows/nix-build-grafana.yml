@@ -43,7 +43,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: nix-bench-v1-native-${{ matrix.suite }}-${{ hashFiles('**/*.mod') }}
+          key: nix-bench-v2-native-${{ matrix.suite }}-${{ hashFiles('**/*.mod') }}
       - name: Run native tests
         env:
           SUITE: ${{ matrix.suite }}
@@ -92,7 +92,7 @@ jobs:
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: ${{ runner.temp }}/grafana-bench-go-cache
-          key: nix-bench-v1-go-${{ env.SUITE }}-${{ hashFiles('flake.lock', '**/*.mod') }}
+          key: nix-bench-v2-go-${{ env.SUITE }}-${{ hashFiles('flake.lock', '**/*.mod') }}
       - &build-nix-tests
         name: Build Nix test derivation
         id: built

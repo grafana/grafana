@@ -54,6 +54,16 @@ run_compiled_sql() {
   done < <(find "$binaries" -type f -name '*.test' | LC_ALL=C sort)
 }
 
+wait_for_database() {
+  local attempt
+  for ((attempt = 0; attempt < 60; attempt++)); do
+    if "$@" >/dev/null 2>&1; then return 0; fi
+    sleep 1
+  done
+  printf '%s did not accept SQL queries in time\n' "$mode" >&2
+  return 1
+}
+
 case "$mode" in
   capture)
     relative=${root#"$BENCH_SOURCE"/}
@@ -94,19 +104,15 @@ case "$mode" in
       mysql)
         export MYSQL_HOST=127.0.0.1
         make devenv sources=mysql_tests mysql_version=8.0.43
-        for _ in $(seq 1 60); do
-          if mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1' >/dev/null 2>&1; then
-            exec bash "$script" "$@"
-          fi
-          sleep 1
-        done
-        echo "MySQL did not become ready" >&2
-        exit 1
+        wait_for_database mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1'
+        exec bash "$script" "$@"
         ;;
       postgres)
         export POSTGRES_HOST=127.0.0.1 PGPASSWORD=grafanatest
         make devenv sources=postgres_tests
-        psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+        connection=(-p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest)
+        wait_for_database psql "${connection[@]}" -c 'SELECT 1'
+        psql "${connection[@]}" -v ON_ERROR_STOP=1 -f devenv/docker/blocks/postgres_tests/setup.sql
         exec bash "$script" "$@"
         ;;
     esac
