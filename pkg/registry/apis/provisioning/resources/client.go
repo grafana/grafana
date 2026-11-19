@@ -332,19 +332,14 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResourceProvider) ClientFactory {
+func NewClientFactory(configProvider apiserver.RestConfigProvider, provider SupportedResourceProvider) ClientFactory {
+	if provider == nil {
+		provider = NewSupportedResourceProvider(nil)
+	}
 	return &clientFactory{
 		clientsProvider: newSingleAPIClients(configProvider),
-		provider:        supportedProvider(supported),
+		provider:        provider,
 	}
-}
-
-// supportedProvider returns the provider that a constructor got, or an empty one.
-func supportedProvider(supported []SupportedResourceProvider) SupportedResourceProvider {
-	if len(supported) > 0 {
-		return supported[0]
-	}
-	return NewSupportedResourceProvider(nil)
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
@@ -354,8 +349,10 @@ func supportedProvider(supported []SupportedResourceProvider) SupportedResourceP
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResourceProvider) ClientFactory {
-	provider := supportedProvider(supported)
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, provider SupportedResourceProvider) ClientFactory {
+	if provider == nil {
+		provider = NewSupportedResourceProvider(nil)
+	}
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{

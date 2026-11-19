@@ -1355,7 +1355,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 			attr := newAdmissionTestAttributes(obj, tt.operation)
 
-			err := v.Validate(context.Background(), attr, nil)
+			err := v.Validate(t.Context(), attr, nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
