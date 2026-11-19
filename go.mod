@@ -357,7 +357,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.11 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.2.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.2 // indirect
