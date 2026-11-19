@@ -15,6 +15,7 @@ import {
   type Unstructured,
   useCreateRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -253,7 +254,7 @@ export function SaveProvisionedDashboardForm({
       // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
       // for a draft that was just saved, so go to the saved dashboard instead.
       if (recoverToNewBranch && upsert?.metadata?.name) {
-        navigate(`/d/${upsert.metadata.name}`);
+        navigate(CORE_KINDS.dashboard.getRoute(upsert.metadata.name));
         return;
       }
 
