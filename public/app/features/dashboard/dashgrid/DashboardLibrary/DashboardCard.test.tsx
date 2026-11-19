@@ -143,7 +143,7 @@ describe('DashboardCard', () => {
   });
 
   describe('Select mode', () => {
-    it('picks the card from its Use template action instead of opening it', async () => {
+    it('picks the card when it is clicked, instead of opening it', async () => {
       const onSelect = jest.fn();
       const { user } = render(
         <DashboardCard
@@ -162,23 +162,6 @@ describe('DashboardCard', () => {
       expect(screen.queryByRole('button', { name: 'View template: RED metrics' })).not.toBeInTheDocument();
     });
 
-    it('picks the card only from its Use template action, as the template modal does', async () => {
-      const onSelect = jest.fn();
-      const { user } = render(
-        <DashboardCard
-          title="RED metrics"
-          dashboard={createMockGnetDashboard()}
-          onClick={mockOnClick}
-          onSelect={onSelect}
-          kind="template_dashboard"
-        />
-      );
-
-      await user.click(screen.getByText('RED metrics'));
-
-      expect(onSelect).not.toHaveBeenCalled();
-    });
-
     it('reports the selected card as pressed', () => {
       render(
         <DashboardCard
@@ -194,7 +177,7 @@ describe('DashboardCard', () => {
       expect(screen.getByRole('button', { name: 'Use template: RED metrics' })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('offers Preview next to Use template when the caller can preview', async () => {
+    it('offers a Preview button apart from picking when the caller can preview', async () => {
       const onPreview = jest.fn();
       const onSelect = jest.fn();
       const { user } = render(

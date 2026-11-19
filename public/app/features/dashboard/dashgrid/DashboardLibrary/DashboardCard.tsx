@@ -78,13 +78,13 @@ interface BaseProps {
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
   /**
-   * Picks the card instead of opening it: the hover's Use template action hands it to `onSelect`. Used where a
+   * Picks the card instead of opening it: a click anywhere on the card hands it to `onSelect`. Used where a
    * template is attached to the Assistant prompt rather than opened.
    */
   onSelect?: () => void;
   /** Shows the card as picked. Only read together with `onSelect`. */
   selected?: boolean;
-  /** With `onSelect`, adds a Preview action next to Use template in the hover actions. */
+  /** With `onSelect`, adds a small Preview button in the thumbnail's corner. */
   onPreview?: () => void;
 }
 
@@ -181,6 +181,15 @@ function DashboardCardComponent({
     <article
       className={cx(styles.card, onSelect && styles.selectableCard, onSelect && selected && styles.selectedCard)}
     >
+      {onSelect && (
+        <button
+          type="button"
+          className={styles.selectButton}
+          onClick={onSelect}
+          aria-pressed={selected}
+          aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
+        />
+      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -273,30 +282,18 @@ function DashboardCardComponent({
             <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
           </div>
         )}
-        {onSelect && (
-          <div className={styles.thumbnailOverlay}>
+        {onSelect && onPreview && (
+          <div className={styles.previewAction}>
             <Button
+              size="sm"
               variant="secondary"
-              className={styles.overlayButton}
-              onClick={onSelect}
-              aria-pressed={selected}
-              aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
-            >
-              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
-            </Button>
-            {onPreview && (
-              <Button
-                variant="secondary"
-                className={styles.overlayButton}
-                icon="external-link-alt"
-                onClick={onPreview}
-                aria-label={t('dashboard-library.card.preview-template-button-label', 'Preview template: {{title}}', {
-                  title,
-                })}
-              >
-                <Trans i18nKey="dashboard-library.card.preview-template-button">Preview</Trans>
-              </Button>
-            )}
+              icon="external-link-alt"
+              onClick={onPreview}
+              tooltip={t('dashboard-library.card.preview-template-button', 'Preview')}
+              aria-label={t('dashboard-library.card.preview-template-button-label', 'Preview template: {{title}}', {
+                title,
+              })}
+            />
           </div>
         )}
         {!onSelect && (
@@ -506,6 +503,20 @@ function DetailsTooltipContent({ details }: { details: Details }) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
+  // Shown on hover or focus, and always where there is no hover, like a touch screen.
+  const previewAction = css({
+    position: 'absolute',
+    top: theme.spacing(0.5),
+    right: theme.spacing(0.5),
+    zIndex: 2,
+    opacity: 0,
+    '@media (hover: none)': {
+      opacity: 1,
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.15s ease',
+    },
+  });
   const thumbnailOverlay = css({
     position: 'absolute',
     inset: 0,
@@ -593,7 +604,31 @@ function getStyles(theme: GrafanaTheme2) {
     selectableCard: css({
       width: '100%',
       borderColor: theme.colors.border.weak,
+      '&:hover': {
+        borderColor: theme.colors.border.medium,
+        backgroundColor: theme.colors.action.hover,
+      },
+      [`&:hover .${previewAction}, &:focus-within .${previewAction}`]: {
+        opacity: 1,
+      },
     }),
+    // The whole card picks the template; Preview sits above it.
+    selectButton: css({
+      position: 'absolute',
+      inset: 0,
+      zIndex: 1,
+      padding: 0,
+      border: 0,
+      background: 'transparent',
+      borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      // Drawn inside the card, since the picker's scrolling list clips anything outside it.
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: -2,
+      },
+    }),
+    previewAction,
     // What CardContainer draws for `isSelected`, so a picked template looks like every selected card. Drawn over
     // the border, since the picker's scrolling list would clip an outline outside it.
     selectedCard: css({
