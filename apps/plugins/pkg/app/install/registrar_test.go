@@ -1307,7 +1307,7 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 
 		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
 			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
-		}, nil)
+		}, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, 1, c.lists)
 		require.Empty(t, c.gets)
@@ -1325,7 +1325,7 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 
 		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
 			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
-		}, nil)
+		}, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, 2, c.lists)
 		require.Equal(t, []string{"plugin-1"}, c.gets)
@@ -1347,7 +1347,7 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 
 		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
 			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
-		}, nil)
+		}, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, []string{"plugin-1"}, c.gets)
 		require.Equal(t, 1, c.lists)
@@ -1364,7 +1364,7 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 
 		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, []PluginInstall{
 			{ID: "plugin-1", Version: "2.0.0", Source: SourcePluginStore},
-		}, nil)
+		}, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, []string{"plugin-1"}, c.gets)
 		require.Equal(t, 2, c.lists)
@@ -1817,7 +1817,7 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 		)
 		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
 
-		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil, nil)
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, []string{"plugin-1"}, c.gets)
 		require.Equal(t, 2, c.lists)
