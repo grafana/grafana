@@ -33,7 +33,7 @@ type PostRankAuthzConfig struct {
 	// MaxCandidates limits count-only scans and counting beyond a full trash
 	// page. It never shortens a result page.
 	MaxCandidates int
-	// ExactCountThreshold enables full authorized counts when the initial
+	// ExactCountThreshold enables full authorized global-search counts when the initial
 	// match count fits. Nonpositive values disable optional counting.
 	ExactCountThreshold int
 	// FacetSampleSize is the candidate budget when aggregating facets. Facet
@@ -66,7 +66,8 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 // above the threshold, extra checks cannot guarantee one within that budget.
 // Cursor scans omit earlier matches, while count-only and facet requests have
 // their own counting policies. Eligibility alone does not prove an exact total:
-// the scan must still exhaust the matches. The caller excludes trash searches.
+// the scan must still exhaust the matches. The caller restricts this to live
+// global searches.
 func countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64, threshold int64) bool {
 	return req.Limit > 0 && len(req.Facet) == 0 &&
 		len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
@@ -419,6 +420,7 @@ func (s *postRankSearch) run(
 	var candidates int64
 	var authorized int64
 	var exhausted bool
+	var optionalExactCount bool
 	var firstRes queryResult
 	maxCandidates := int64(cfg.MaxCandidates)
 
@@ -442,7 +444,9 @@ windows:
 		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
-			if trashAuthz == nil && countSmallResultSet(req, res.Total, exactCountThreshold) {
+			if s.key.IsGlobal() && trashAuthz == nil && countSmallResultSet(req, res.Total, exactCountThreshold) {
+				optionalExactCount = true
+				access = exactCountAccessClient{AccessClient: access}
 				countEveryHit = true
 				// This budget is independent of count-only and trash scans.
 				maxCandidates = exactCountThreshold
@@ -455,11 +459,13 @@ windows:
 		}
 
 		// Authorize this window's hits in rank order.
+		walked := 0
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range res.Hits {
 				if budgetSpent() {
 					return
 				}
+				walked++
 				info, ok := windowDocInfo(hit, resources, metadata)
 				if !ok {
 					continue
@@ -491,10 +497,15 @@ windows:
 			}
 		}
 		if budgetSpent() {
-			// A budget that covered every match leaves nothing unseen, so the
-			// authorized count is still exact. candidates never exceeds the
-			// number of hits walked, so this can only under-claim.
+			// Preserve the existing count-only and trash budget policies; optional
+			// exact counting must verify that the scan left no matches unread.
 			exhausted = candidates >= int64(firstRes.Total)
+			if optionalExactCount {
+				exhausted, err = s.exhaustedAtBudget(ctx, windowReq, res.Hits, walked, stats)
+				if err != nil {
+					return nil, err
+				}
+			}
 			if !exhausted {
 				s.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
 			}
@@ -539,6 +550,52 @@ windows:
 	finalizePostFilter(response, docs, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 	return docs, nil
+}
+
+// Bleve windows do not share a snapshot. Reaching the initial total cannot
+// prove exhaustion if new matches appeared while authorizing earlier windows.
+func (s *postRankSearch) exhaustedAtBudget(ctx context.Context, req queryRequest, hits []*queryHit, walked int, stats *resource.SearchStats) (bool, error) {
+	if walked < len(hits) {
+		return false, nil
+	}
+	if len(hits) < req.Size || len(hits) == 0 {
+		return true, nil
+	}
+	req.SearchAfter = hits[len(hits)-1].Cursor
+	if len(req.SearchAfter) == 0 {
+		return false, nil
+	}
+	// Probe without authorization so checking exhaustion cannot exceed the budget.
+	req.Size = 1
+	res, err := s.backend.Search(ctx, req)
+	if err != nil {
+		return false, err
+	}
+	stats.AddSearchTime(res.Took)
+	return len(res.Hits) == 0, nil
+}
+
+// FilterAuthorized treats unresolved item results as denials. Exact counting
+// must surface these failures rather than publish an incomplete count as exact.
+type exactCountAccessClient struct {
+	authlib.AccessClient
+}
+
+func (c exactCountAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	res, err := c.AccessClient.BatchCheck(ctx, user, req)
+	if err != nil {
+		return res, err
+	}
+	for _, check := range req.Checks {
+		result, ok := res.Results[check.CorrelationID]
+		if !ok {
+			return res, fmt.Errorf("missing authorization result for %s", check.CorrelationID)
+		}
+		if result.Error != nil {
+			return res, fmt.Errorf("authorization check failed: %w", result.Error)
+		}
+	}
+	return res, nil
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,

@@ -810,7 +810,7 @@ type Cfg struct {
 	// default in search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzFacetSampleSize int
 	// SearchPostRankAuthzExactCountThreshold enables full authorized counts for
-	// small result sets. Zero disables optional counting.
+	// small global-search result sets. Zero disables optional counting.
 	SearchPostRankAuthzExactCountThreshold int
 
 	// Vector storage
