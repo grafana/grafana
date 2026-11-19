@@ -500,6 +500,9 @@ func pinToCheckedVersion(options *metav1.DeleteOptions, f *foldersv1.Folder) (*m
 // isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a terminating
 // cascade folder: the controller carrying out a delete authorized at the root. Only that is exempt
 // from the contents check. A failed parent read is returned so it is not reported as a 403.
+//
+// TODO: this matches any access-policy caller, not the cascade controller itself. Once the requester
+// is recorded on the terminating folder, check subfolder deletes against them and drop this exemption.
 func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, user identity.Requester, parentUID string) (bool, error) {
 	if parentUID == "" || !user.IsIdentityType(authlib.TypeAccessPolicy) {
 		return false, nil
