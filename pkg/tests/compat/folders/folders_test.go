@@ -94,13 +94,14 @@ type tree struct {
 	otherParent string
 	childTitle  string
 	remaining   int64 // status.cascadeDelete.remaining of child
+	pages       []string
 	// skipInherited is why inherited permissions cannot be checked yet, if they cannot.
 	skipInherited string
 }
 
 var (
-	beforeMove = tree{name: "before move", parent: parentA, otherParent: parentB, childTitle: childTitle, remaining: 2}
-	afterMove  = tree{name: "after move", parent: parentB, otherParent: parentA, childTitle: updatedTitle, remaining: 1}
+	beforeMove = tree{name: "before move", parent: parentA, otherParent: parentB, childTitle: childTitle, remaining: 2, pages: pages}
+	afterMove  = tree{name: "after move", parent: parentB, otherParent: parentA, childTitle: updatedTitle, remaining: 1, pages: pages[:2]}
 )
 
 // TestCompatSetup creates the tree, a dashboard in child, a status on child, an extra
@@ -131,7 +132,7 @@ func TestCompatSetup(t *testing.T) {
 	create(v, grandchild, titles[grandchild], child, nil)
 	create(v, sibling, titles[sibling], parentA, nil)
 	for i, name := range pages {
-		create(v, name, fmt.Sprintf("Compat page %d", i+1), "", map[string]string{pageLabel: "true"})
+		create(v, name, pageTitle(i), "", map[string]string{pageLabel: "true"})
 	}
 
 	_, err := dashboards(h).Create(ctx, &unstructured.Unstructured{Object: map[string]any{
@@ -278,16 +279,21 @@ func checkChild(t *testing.T, h *apis.K8sTestHelper, version string, tr tree) {
 	checkStatus(t, h, version, tr)
 }
 
-// checkHierarchy reads every folder of the tree in every served version.
+// checkHierarchy reads every folder of the tree, and every page folder still there, in
+// every served version.
 func checkHierarchy(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree) {
 	t.Helper()
 	ctx := context.Background()
-	want := map[string]struct{ parent, title string }{
-		parentA:    {"", titles[parentA]},
-		parentB:    {"", titles[parentB]},
-		child:      {tr.parent, tr.childTitle},
-		grandchild: {child, titles[grandchild]},
-		sibling:    {tr.parent, titles[sibling]},
+	type folder struct{ parent, title, label string }
+	want := map[string]folder{
+		parentA:    {"", titles[parentA], ""},
+		parentB:    {"", titles[parentB], ""},
+		child:      {tr.parent, tr.childTitle, ""},
+		grandchild: {child, titles[grandchild], ""},
+		sibling:    {tr.parent, titles[sibling], ""},
+	}
+	for i, name := range tr.pages {
+		want[name] = folder{"", pageTitle(i), "true"}
 	}
 	for _, v := range res.Versions {
 		folders := client(h, h.Org1.Admin, v)
@@ -296,6 +302,7 @@ func checkHierarchy(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr
 			require.NoError(t, err, "%s in %s", name, v)
 			require.Equal(t, w.title, title(t, obj), "%s in %s", name, v)
 			require.Equal(t, w.parent, obj.GetAnnotations()[utils.AnnoKeyFolder], "parent of %s in %s", name, v)
+			require.Equal(t, w.label, obj.GetLabels()[pageLabel], "page label of %s in %s", name, v)
 		}
 	}
 }
@@ -564,6 +571,10 @@ func viewerOfParentA(h *apis.K8sTestHelper) apis.User {
 
 func dashboards(h *apis.K8sTestHelper) dynamic.ResourceInterface {
 	return h.GetResourceClient(apis.ResourceClientArgs{User: h.Org1.Admin, GVR: dashboardGV.WithResource("dashboards")}).Resource
+}
+
+func pageTitle(i int) string {
+	return fmt.Sprintf("Compat page %d", i+1)
 }
 
 func title(t *testing.T, obj *unstructured.Unstructured) string {
