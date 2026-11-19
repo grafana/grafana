@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -13,7 +14,6 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { resourceKindInfos } from '../../utils/resourceKinds';
 import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 import { isRefNotFoundError } from '../utils/errors';
 import { splitSourcePath } from '../utils/path';
@@ -113,7 +113,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   // in a new tab bypasses the router and hits the URL directly.
   const originalUrl =
     typeof existingUid === 'string' && existingUid
-      ? locationUtil.assureBaseUrl(resourceKindInfos.dashboard.getRoute(existingUid))
+      ? locationUtil.assureBaseUrl(CORE_KINDS.dashboard.getRoute(existingUid))
       : undefined;
 
   return (

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { type RecoverToNewBranch } from '../../types';
-import { resourceKindInfos } from '../../utils/resourceKinds';
 
 interface BranchGoneBannerProps {
   dashboard: DashboardScene;
@@ -58,7 +58,7 @@ export function BranchGoneBanner({ dashboard, existingUid, draft, canSaveToNewBr
     if (dashboard.state.isEditing) {
       dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
     }
-    navigate(existingUid ? resourceKindInfos.dashboard.getRoute(existingUid) : '/dashboards');
+    navigate(existingUid ? CORE_KINDS.dashboard.getRoute(existingUid) : '/dashboards');
   };
 
   return (

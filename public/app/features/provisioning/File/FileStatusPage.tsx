@@ -14,11 +14,12 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { PROVISIONING_PREVIEW_URL } from '../constants';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { usePRBranch } from '../hooks/usePRBranch';
-import { resourceKindInfos } from '../utils/resourceKinds';
+import { getFileHistoryUrl, getFileStatusUrl } from '../utils/repository';
 
 enum TabSelection {
   File = 'file',
@@ -73,7 +74,7 @@ interface Props {
 }
 
 function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
-  const isDashboard = wrap.resource?.type?.kind === resourceKindInfos.dashboard.kind;
+  const isDashboard = wrap.resource?.type?.kind === CORE_KINDS.dashboard.kind;
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
   const [queryParams] = useQueryParams();
@@ -122,21 +123,21 @@ function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
         {isDashboard && existingName && (
           <LinkButton
             target={'_blank'}
-            href={locationUtil.assureBaseUrl(resourceKindInfos.dashboard.getRoute(existingName))}
+            href={locationUtil.assureBaseUrl(CORE_KINDS.dashboard.getRoute(existingName))}
             variant="secondary"
           >
             <Trans i18nKey="provisioning.resource-view.existing-dashboard">Existing dashboard</Trans>
           </LinkButton>
         )}
-        <LinkButton href={resourceKindInfos.repository.getRoute(repo)} variant="secondary">
+        <LinkButton href={CORE_KINDS.repository.getRoute(repo)} variant="secondary">
           <Trans i18nKey="provisioning.resource-view.repository">Repository</Trans>
         </LinkButton>
         {repoRef && (
-          <LinkButton href={`${resourceKindInfos.repository.getRoute(repo)}/file/${wrap.path}`} variant="secondary">
+          <LinkButton href={getFileStatusUrl(repo, wrap.path ?? '')} variant="secondary">
             <Trans i18nKey="provisioning.resource-view.base">Base</Trans>
           </LinkButton>
         )}
-        <LinkButton href={`${resourceKindInfos.repository.getRoute(repo)}/history/${wrap.path}`} variant="secondary">
+        <LinkButton href={getFileHistoryUrl(repo, wrap.path ?? '')} variant="secondary">
           <Trans i18nKey="provisioning.resource-view.history">History</Trans>
         </LinkButton>
       </Stack>

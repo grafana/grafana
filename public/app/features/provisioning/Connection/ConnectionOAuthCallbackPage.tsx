@@ -5,10 +5,10 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, TextLink } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { completeOAuthAuthorization, failOAuthAuthorization } from '../utils/connectionOAuth';
-import { resourceKindInfos } from '../utils/resourceKinds';
 
 export default function ConnectionOAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -55,7 +55,7 @@ export default function ConnectionOAuthCallbackPage() {
           setError(error);
           return;
         }
-        navigate(resourceKindInfos.connection.getRoute(name));
+        navigate(CORE_KINDS.connection.getRoute(name));
       })
       .catch((err) => {
         setError(

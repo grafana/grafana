@@ -3,14 +3,17 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { AnnoKeyFolder, type ResourceForCreate } from 'app/features/apiserver/types';
-import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import {
+  DASHBOARD_API_GROUP,
+  dashboardAPIVersionResolver,
+} from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { getResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
-import { resourceKindInfos } from '../utils/resourceKinds';
 import { getRequestRef } from '../utils/workflow';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
@@ -76,8 +79,8 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
       const resolvedVersion = apiVersion === 'v2' ? versions.v2 : versions.v1;
 
       const body: ResourceForCreate<unknown> = {
-        apiVersion: `${resourceKindInfos.dashboard.group}/${resolvedVersion}`,
-        kind: resourceKindInfos.dashboard.kind,
+        apiVersion: `${DASHBOARD_API_GROUP}/${resolvedVersion}`,
+        kind: CORE_KINDS.dashboard.kind,
         metadata: {
           annotations: { [AnnoKeyFolder]: targetFolderUid },
           ...(uid ? { name: uid } : { generateName: 'd' }),
@@ -111,7 +114,7 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
               // have a dashboard uid to navigate to.
               const dashboardUid = upsert?.metadata?.name;
               if (!dashboardUid) {
-                navigate(targetFolderUid ? resourceKindInfos.folder.getRoute(targetFolderUid) : '/dashboards');
+                navigate(targetFolderUid ? CORE_KINDS.folder.getRoute(targetFolderUid) : '/dashboards');
                 return;
               }
               navigate(getSavedDashboardPath(dashboardUid, title));

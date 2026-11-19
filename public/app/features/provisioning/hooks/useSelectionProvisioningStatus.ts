@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { config } from '@grafana/runtime';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { type SelectedItemRef, getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
-import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
@@ -33,9 +34,9 @@ export function useSelectionProvisioningStatus(
   const folderClient = useMemo(
     () =>
       new ScopedResourceClient({
-        group: resourceKindInfos.folder.group,
-        version: 'v1beta1',
-        resource: resourceKindInfos.folder.resource,
+        group: API_GROUP,
+        version: API_VERSION,
+        resource: CORE_KINDS.folder.resource,
       }),
     []
   );

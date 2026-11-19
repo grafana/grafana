@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { reportInteraction } from '@grafana/runtime';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
 import { isGitHubBased } from '../../utils/repositoryTypes';
-import { resourceKindInfos } from '../../utils/resourceKinds';
 import { type Step } from '../Stepper';
 import { type RepoType, type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
@@ -90,7 +90,7 @@ export function useWizardNavigation({
       // Navigate to repository status page instead of listing page
       const repoName = formData.repositoryName;
       if (repoName) {
-        navigate(resourceKindInfos.repository.getRoute(repoName));
+        navigate(CORE_KINDS.repository.getRoute(repoName));
       } else {
         navigate(PROVISIONING_URL);
       }

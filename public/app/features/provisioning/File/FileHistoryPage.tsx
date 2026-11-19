@@ -14,7 +14,7 @@ import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 import { PROVISIONING_URL } from '../constants';
 import { type HistoryListResponse } from '../types';
 import { getRemoteConfig } from '../utils/git';
-import { resourceKindInfos } from '../utils/resourceKinds';
+import { getFileStatusUrl } from '../utils/repository';
 import { formatTimestamp } from '../utils/time';
 
 import { isFileHistorySupported } from './utils';
@@ -95,11 +95,7 @@ function HistoryView({ history, path, repo, repoType, repoUrl }: Props) {
   return (
     <Stack direction={'column'}>
       {history.items.map((item) => (
-        <Card
-          noMargin
-          href={`${resourceKindInfos.repository.getRoute(repo)}/file/${path}?${new URLSearchParams({ ref: item.ref }).toString()}`}
-          key={item.ref}
-        >
+        <Card noMargin href={getFileStatusUrl(repo, path, item.ref)} key={item.ref}>
           <Card.Heading>{item.message}</Card.Heading>
           <Card.Meta>
             <span>{formatTimestamp(item.createdAt)}</span>

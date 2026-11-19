@@ -21,7 +21,7 @@ import {
   isManaged,
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
-import { getIsReadOnlyWorkflows, getRepositoryResourcesUrl } from '../utils/repository';
+import { getIsReadOnlyWorkflows, getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
@@ -151,7 +151,7 @@ export function RepositoryListItem({ repository }: Props) {
             <LinkButton
               variant="secondary"
               icon="cog"
-              href={`${resourceKindInfos.repository.getRoute(name)}/edit`}
+              href={getRepositoryEditUrl(name)}
               size="md"
               onClick={() => {
                 reportInteraction('grafana_provisioning_repository_settings_opened', {

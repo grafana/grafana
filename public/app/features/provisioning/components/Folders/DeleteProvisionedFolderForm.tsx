@@ -5,6 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -15,10 +16,9 @@ import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGet
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { useResourceJob } from '../../hooks/useResourceJob';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type DeleteJobSpec } from '../../types/job';
+import { type DeleteJobSpec, toResourceRef } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -100,7 +100,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       message,
       delete: {
         ref: getRequestRef(repository, ref),
-        resources: [{ name: resourceId, group: resourceKindInfos.folder.group, kind: resourceKindInfos.folder.kind }],
+        resources: [toResourceRef(CORE_KINDS.folder, resourceId)],
       },
     };
 

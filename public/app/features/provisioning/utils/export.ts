@@ -8,8 +8,7 @@ import {
   type Repository,
   type SecureValues,
 } from 'app/api/clients/provisioning/v0alpha1';
-
-import { resourceKindInfos } from './resourceKinds';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 const DEFAULT_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 
@@ -40,7 +39,7 @@ function toSecurePlaceholders(
 function secretsToSkip(resource: Repository | Connection, kind: string): string[] {
   // A connection's token is always derived server-side — a JWT minted from the private key for
   // GitHub App connections, the exchanged token for OAuth — and is rejected if it is anything else.
-  if (kind === resourceKindInfos.connection.kind) {
+  if (kind === CORE_KINDS.connection.kind) {
     return ['token'];
   }
 
@@ -58,10 +57,7 @@ function secretsToSkip(resource: Repository | Connection, kind: string): string[
  * group/version and `fallbackKind`, because Kubernetes list responses — which back the admin cards —
  * do not populate per-item TypeMeta.
  */
-export function exportResourceAsJson(
-  resource: Repository | Connection,
-  fallbackKind: (typeof resourceKindInfos)['repository' | 'connection']['kind']
-) {
+export function exportResourceAsJson(resource: Repository | Connection, fallbackKind: 'Repository' | 'Connection') {
   const kind = resource.kind ?? fallbackKind;
   const manifest: Record<string, unknown> = {
     apiVersion: resource.apiVersion ?? DEFAULT_API_VERSION,
