@@ -122,7 +122,7 @@ export function LandingTemplates({
       aria-labelledby={titleId}
       hidden={hidden}
     >
-      <div className={styles.header}>
+      <div className={cx(styles.header, !isOpen && styles.headerClosed)}>
         <button
           type="button"
           id={titleId}
@@ -150,7 +150,7 @@ export function LandingTemplates({
                 getSortOptions={getTemplateSortOptions}
                 placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
                 isClearable
-                width={28}
+                width="auto"
               />
             </div>
           </div>
@@ -203,7 +203,11 @@ export function LandingTemplates({
 
 function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
   const gap = theme.spacing(2);
-  const headerHeight = theme.spacing(4);
+  // The toggle's height, and the closed header's.
+  const toggleHeight = theme.spacing(4);
+  // Open, half a grid unit above and below the search and sort, which the insets around the header bring to about a
+  // unit from the prompt and from the cards.
+  const headerHeight = `calc(${theme.spacing(theme.components.height.md)} + ${theme.spacing(1)})`;
   const listPaddingTop = theme.spacing(0.5);
   const row = `(${CARD_HEIGHT}px + ${gap})`;
   const peek = `${CARD_HEIGHT * NEXT_ROW_PEEK}px`;
@@ -235,25 +239,34 @@ function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
     panelClosed: css({
       paddingBottom: theme.spacing(0.5),
     }),
-    // A set height, which the list's height accounts for; the search and sort fit in it.
+    // A set height, which the list's height accounts for, kept while the search and sort load so the cards do not jump.
     header: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
       height: headerHeight,
     }),
+    headerClosed: css({
+      height: toggleHeight,
+    }),
     filters: css({
+      flex: 1,
       display: 'flex',
+      justifyContent: 'flex-end',
       gap: theme.spacing(1),
       minWidth: 0,
-      marginLeft: 'auto',
     }),
+    // The main control: it takes the room the toggle leaves, up to a cap, and gives it up first.
     search: css({
-      width: theme.spacing(25),
+      flex: 1,
       minWidth: 0,
+      maxWidth: theme.spacing(32),
     }),
+    // As wide as its value, so it stays small until a person sorts. Flex, so the inline-flex select adds no line box.
     // A phone keeps the header to the toggle and the search.
     sort: css({
+      display: 'flex',
+      flexShrink: 0,
       [theme.breakpoints.down('sm')]: {
         display: 'none',
       },
@@ -263,7 +276,7 @@ function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      height: headerHeight,
+      height: toggleHeight,
       padding: 0,
       background: 'none',
       border: 'none',
