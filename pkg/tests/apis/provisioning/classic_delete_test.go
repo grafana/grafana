@@ -29,10 +29,12 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			SkipSync:   true,
 			Copies: map[string]string{
 				"testdata/all-panels.json": "dashboard1.json",
 			},
 		})
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -73,7 +75,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			SkipSync:   true,
 		})
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -113,7 +117,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			SkipSync:   true,
 		})
+		helper.SyncAndWait(t, repo, nil)
 
 		helper.RequireRepoDashboardCount(t, repo, 1)
 
@@ -178,7 +184,9 @@ func TestIntegrationProvisioning_ClassicDashboardDeletion(t *testing.T) {
 			Name:       repo,
 			LocalPath:  repoPath,
 			SyncTarget: "folder",
+			SkipSync:   true,
 		})
+		helper.SyncAndWait(t, repo, nil)
 
 		// Verify both dashboards were created
 		helper.RequireDashboards(t, "mixed-classic-uid", "mixed-k8s-uid")

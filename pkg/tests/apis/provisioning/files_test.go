@@ -836,8 +836,10 @@ func TestIntegrationProvisioning_ReadmeFiles_FolderTarget(t *testing.T) {
 		Name:       repo,
 		LocalPath:  helper.ProvisioningPath,
 		SyncTarget: "folder",
+		SkipSync:   true,
 		Workflows:  []string{"write"},
 	})
+	helper.SyncAndWait(t, repo, nil)
 
 	helper.WriteToProvisioningPath(t, "README.md", []byte(readmeContent))
 

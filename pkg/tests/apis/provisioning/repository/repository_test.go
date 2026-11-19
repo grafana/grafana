@@ -1793,10 +1793,12 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 	testRepo := common.TestRepo{
 		Name:       repo,
 		SyncTarget: "folder",
+		SkipSync:   true,
 		Workflows:  []string{"write"},
 		Copies:     map[string]string{}, // No files needed for this test
 	}
 	helper.CreateLocalRepo(t, testRepo)
+	helper.SyncAndWait(t, repo, nil)
 
 	helper.RequireRepoDashboardCount(t, repo, 0)
 	helper.RequireRepoFolderCount(t, repo, 1)
