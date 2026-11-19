@@ -278,6 +278,7 @@ describe('useSplitter', () => {
       fireEvent.doubleClick(separator);
 
       expect(onSizeChanged).toHaveBeenCalledWith(0.5, halfPane, halfPane);
+      expect(separator).toHaveAttribute('aria-valuenow', '50');
     });
 
     // The branch the options pane takes. It is not behind a feature flag, so this is the reset that
@@ -531,6 +532,34 @@ describe('useSplitter', () => {
 
       expect(resizeObservers[0].disconnect).toHaveBeenCalledTimes(1);
     });
+
+    // Drags don't notify the observer, so the drag handler must report the same share of the
+    // container as the observer would, including when the drag is clamped at the minimum.
+    it.each([
+      { case: 'a drag within the limits', pixels: 100, expected: '30' },
+      { case: 'a drag clamped at the minimum', pixels: -50, expected: '20' },
+    ])(
+      'reports the primary pane share of the container after $case on a flex splitter',
+      async ({ pixels, expected }) => {
+        const { container } = render(<Splitter direction="row" initialSize={0.2} />);
+        const containerEl = container.firstElementChild!;
+        const primaryEl = containerEl.firstElementChild! as HTMLElement;
+        // The pane can shrink to 200px and grow to 800px, and currently renders at 200px.
+        jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+          if (this === containerEl) {
+            return { width: 1016, height: 100 } as DOMRect;
+          }
+          if (this === primaryEl) {
+            return { width: primaryEl.style.flexGrow === '100' ? 800 : 200, height: 100 } as DOMRect;
+          }
+          return { width: 0, height: 100 } as DOMRect;
+        });
+
+        await dragSplitterBy(pixels);
+
+        expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', expected);
+      }
+    );
 
     it('stays in range while dragging a pixel splitter', async () => {
       render(<TestSplitter direction="row" usePixels initialSize={330} primaryWidth={670} containerWidth={1016} />);
