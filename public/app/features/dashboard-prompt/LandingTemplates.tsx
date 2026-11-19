@@ -3,7 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Grid, Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
@@ -18,14 +18,22 @@ interface Props {
   selectedTemplateId?: string;
   /** Keeps the panel out of view while its lists still load. */
   hidden?: boolean;
+  /**
+   * The most height the panel may take, as a CSS length, below any top padding `className` adds. The grid then
+   * shows the whole rows that fit and a sliver of the next, and scrolls the rest.
+   */
+  maxHeight?: string;
   className?: string;
 }
 
 const noop = () => {};
 
-const GRID_COLUMNS = { xs: 1, sm: 2, lg: 3 } as const;
+/** Every card's height: the thumbnail takes what the title and author lines leave. */
+const CARD_HEIGHT = 160;
+/** How much of the next row shows under the last whole one, so a longer list reads as one that scrolls. */
+const NEXT_ROW_PEEK = 0.1;
 /** Two rows on a desktop, enough to fill the panel while the lists load. */
-const LOADING_CARDS = 6;
+const LOADING_CARDS = 8;
 /** How long the cards wait for every list before showing the ones that have loaded. */
 export const LOAD_WAIT_MS = 3000;
 
@@ -41,9 +49,10 @@ export function LandingTemplates({
   onSelectTemplate,
   selectedTemplateId,
   hidden,
+  maxHeight,
   className,
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, maxHeight);
   const titleId = useId();
   const listId = useId();
   // Undefined until each list reports how many templates it shows.
@@ -119,15 +128,15 @@ export function LandingTemplates({
           </p>
         )}
         {!loaded && (
-          <Grid gap={2} columns={GRID_COLUMNS}>
+          <div className={styles.grid}>
             {Array.from({ length: LOADING_CARDS }).map((_, index) => (
               <DashboardCard.Skeleton key={index} fluid />
             ))}
-          </Grid>
+          </div>
         )}
         {/* Shown once every list has loaded, so the cards arrive together instead of reflowing list by list. */}
         <div hidden={!loaded}>
-          <Grid gap={2} columns={GRID_COLUMNS}>
+          <div className={styles.grid}>
             {renderCustomTemplates()}
             {showGrafanaTemplates && (
               <GrafanaTemplatesTab
@@ -140,14 +149,26 @@ export function LandingTemplates({
                 onTemplatesLoad={onGrafanaTemplatesLoad}
               />
             )}
-          </Grid>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
+  const gap = theme.spacing(2);
+  const headerHeight = theme.spacing(4);
+  const listPaddingTop = theme.spacing(0.5);
+  const row = `(${CARD_HEIGHT}px + ${gap})`;
+  const peek = `${CARD_HEIGHT * NEXT_ROW_PEEK}px`;
+  // What the panel draws around its list: the borders, the header and the bottom padding.
+  const panelChrome = `(2px + ${headerHeight} + ${theme.spacing(1)})`;
+  // At least one row, so a short screen still shows a whole card; the panel shrinks below that if it must.
+  const listMaxHeight =
+    maxHeight &&
+    `calc(max(${row}, round(down, ${maxHeight} - ${panelChrome} - ${listPaddingTop} - ${peek}, ${row})) + ${listPaddingTop} + ${peek})`;
+
   return {
     // Shrinks with the page and scrolls its grid, so the content below the panel stays in view.
     panel: css({
@@ -164,16 +185,18 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
-    // the page leaves past the prompt's edge, since the header's own padding already applies on both sides.
+    // the page leaves past the prompt's edge, since the header's height already centers its text.
     panelClosed: css({
       paddingBottom: theme.spacing(0.5),
     }),
+    // A set height, which the list's height accounts for.
     toggle: css({
       alignSelf: 'flex-start',
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(1, 0),
+      height: headerHeight,
+      padding: 0,
       background: 'none',
       border: 'none',
       color: theme.colors.text.secondary,
@@ -188,11 +211,19 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     list: css({
       minHeight: 0,
+      maxHeight: listMaxHeight,
       overflowY: 'auto',
-      paddingTop: theme.spacing(0.5),
+      paddingTop: listPaddingTop,
       '&[hidden]': {
         display: 'none',
       },
+    }),
+    // As many columns as fit at the minimum card width, four at most.
+    grid: css({
+      display: 'grid',
+      gridTemplateColumns: `repeat(auto-fill, minmax(max(${theme.spacing(22)}, (100% - 3 * ${gap}) / 4), 1fr))`,
+      gridAutoRows: CARD_HEIGHT,
+      gap,
     }),
     empty: css({
       margin: 0,

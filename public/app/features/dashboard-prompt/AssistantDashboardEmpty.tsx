@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
@@ -28,12 +28,6 @@ const PROMPT_OVERLAP = 24;
 /** Below this the page scrolls instead of squeezing the template grid to nothing. */
 const MIN_HEIGHT_WITH_TEMPLATES = 360;
 
-/**
- * Sizes the landing to the whole area its dashboard scrolls in, from the top edge to the bottom, so the content
- * can be centered in it, the template grid scrolls inside its panel, and the "build it yourself" actions under it
- * stay in view. The dashboard body grows with its content, so no CSS height chain reaches this far down, and the
- * empty-state wrapper's top padding is pulled back into the area (`pullUp`).
- */
 /**
  * True once the prompt shows its text box. The prompt is a plugin component that loads its own code after the
  * page, behind its own Suspense, so its text box rendering is the only signal the host gets.
@@ -64,6 +58,12 @@ function useHasTextbox(ref: RefObject<HTMLElement | null>) {
   return hasTextbox;
 }
 
+/**
+ * Sizes the landing to the whole area its dashboard scrolls in, from the top edge to the bottom, so the template
+ * grid scrolls inside its panel and the "build it yourself" actions under it stay in view. The dashboard body grows
+ * with its content, so no CSS height chain reaches this far down, and the empty-state wrapper's top padding is
+ * pulled back into the area (`pullUp`).
+ */
 function useFitToScrollArea(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState<{ height: number; pullUp: number }>();
@@ -106,6 +106,8 @@ function useFitToScrollArea(enabled: boolean) {
 
 export function AssistantDashboardEmpty({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const templatesMaxHeight = useMemo(() => getTemplatesMaxHeight(theme), [theme]);
   const { sidebar } = dashboard.useState();
   // Set at scene activation when the URL has editSource=assistant
   // (create_dashboard), or on submit from this landing so the same session
@@ -223,11 +225,15 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               onHostContextItemRemove={onTemplatePillRemove}
             />
           </div>
+        </div>
+
+        <div className={cx(styles.belowPrompt, showTemplates && styles.belowPromptWithTemplates)}>
           {showTemplates && (
             // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
             <LandingTemplates
               hidden={!promptReady}
               className={styles.templates}
+              maxHeight={templatesMaxHeight}
               testDataSource={testDataSource}
               showGrafanaTemplates={showGrafanaTemplates}
               showCustomTemplates={showCustomTemplates}
@@ -235,25 +241,25 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               selectedTemplateId={template?.id}
             />
           )}
-        </div>
 
-        <div className={styles.divider}>
-          <div className={styles.orLine} />
-          <span className={styles.orText}>
-            <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
-          </span>
-          <div className={styles.orLine} />
-        </div>
+          <div className={styles.divider}>
+            <div className={styles.orLine} />
+            <span className={styles.orText}>
+              <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
+            </span>
+            <div className={styles.orLine} />
+          </div>
 
-        <Button
-          icon="plus"
-          variant="secondary"
-          className={styles.addButton}
-          data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-          onClick={onAddVisualization}
-        >
-          <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
-        </Button>
+          <Button
+            icon="plus"
+            variant="secondary"
+            className={styles.addButton}
+            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+            onClick={onAddVisualization}
+          >
+            <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -277,15 +283,14 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 660,
       padding: theme.spacing(6, 4),
     }),
-    // Centered in the dashboard's free space; a long template grid takes what is left and scrolls inside its
-    // panel. The extra room below keeps "Add visualization" well clear of the bottom edge.
+    // Fills the dashboard's free space from the top: the template panel takes the whole rows that fit under the
+    // prompt, and what they leave goes under "Add visualization", so it sits right below the panel.
     contentWithTemplates: css({
       // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
       maxWidth: 'none',
       height: '100%',
-      justifyContent: 'center',
       paddingTop: theme.spacing(3),
-      paddingBottom: theme.spacing(8),
+      paddingBottom: theme.spacing(3),
       [theme.breakpoints.down('sm')]: {
         // On a phone the scroll area already insets the page, so the prompt and templates take the full width.
         paddingLeft: 0,
@@ -323,10 +328,20 @@ function getStyles(theme: GrafanaTheme2) {
       zIndex: 1,
       width: '100%',
     }),
+    belowPrompt: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(4),
+    }),
+    // The area under the prompt, a size container so the template panel can size its rows to it in CSS.
+    belowPromptWithTemplates: css({
+      flex: '1 1 0',
+      minHeight: 0,
+      containerType: 'size',
+    }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({
-      alignSelf: 'stretch',
-      marginTop: `calc(-1 * (${theme.spacing(3)} + ${PROMPT_OVERLAP}px))`,
+      marginTop: `calc(-1 * (${theme.spacing(4)} + ${PROMPT_OVERLAP}px))`,
       // The header's top inset; the closed panel repeats it at the bottom (LandingTemplates `panelClosed`).
       paddingTop: `calc(${PROMPT_OVERLAP}px + ${theme.spacing(0.5)})`,
     }),
@@ -343,6 +358,7 @@ function getStyles(theme: GrafanaTheme2) {
     orText: css({
       color: theme.colors.text.disabled,
       fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       textTransform: 'uppercase',
       letterSpacing: '0.04em',
     }),
@@ -351,4 +367,18 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
     }),
   };
+}
+
+/**
+ * The template panel's share of the area under the prompt (`100cqh` there, see `belowPromptWithTemplates`): all of
+ * it but the "build it yourself" actions under the panel. The panel also reaches up into the gap above the area,
+ * behind the prompt, and pads that back off (`templates`).
+ */
+function getTemplatesMaxHeight(theme: GrafanaTheme2) {
+  const gap = theme.spacing(4);
+  const reachAbove = `${gap} + ${PROMPT_OVERLAP}px`;
+  const paddingAdded = `${PROMPT_OVERLAP}px + ${theme.spacing(0.5)}`;
+  const divider = `${theme.typography.bodySmall.fontSize} * ${theme.typography.bodySmall.lineHeight}`;
+  const actions = `${gap} + ${divider} + ${gap} + ${theme.spacing(theme.components.height.md)}`;
+  return `(100cqh + ${reachAbove} - (${paddingAdded}) - (${actions}))`;
 }

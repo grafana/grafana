@@ -236,7 +236,8 @@ function DashboardCardComponent({
       <div
         className={cx(
           isLogo ? styles.logoContainer : styles.thumbnailContainer,
-          isCustomTemplate && styles.customTemplateThumbnail
+          isCustomTemplate && styles.customTemplateThumbnail,
+          onSelect && styles.selectableThumbnail
         )}
       >
         {imageUrl ? (
@@ -246,7 +247,8 @@ function DashboardCardComponent({
             className={cx(
               isLogo ? styles.logo : styles.thumbnail,
               dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
-              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage
+              kind === 'suggested_dashboard' ? styles.thumbnailCoverImage : styles.thumbnailContainImage,
+              onSelect && styles.selectableThumbnailImage
             )}
             onError={(e) => {
               console.error('Failed to load image for:', title, 'URL:', imageUrl);
@@ -337,7 +339,7 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
-      <div className={cx(styles.bottomSection, onSelect && styles.selectableBottomSection)}>
+      <div className={styles.bottomSection}>
         {isCustomTemplate && (
           <h3 className={styles.customTemplateTitle}>
             <span className={styles.titleText}>{title}</span>
@@ -592,6 +594,17 @@ function getStyles(theme: GrafanaTheme2) {
       outline: `solid 1px ${theme.colors.accent.border}`,
       outlineOffset: -1,
     }),
+    // The picker's grid sets the card height; the thumbnail takes what the title and author leave.
+    selectableThumbnail: css({
+      flex: '1 1 0',
+      minHeight: 0,
+      aspectRatio: 'auto',
+    }),
+    // Cropped to the top of the dashboard rather than letterboxed, since the shape varies with the column width.
+    selectableThumbnailImage: css({
+      objectFit: 'cover',
+      objectPosition: 'top',
+    }),
     overlayButton: css({
       width: '80%',
       justifyContent: 'center',
@@ -675,13 +688,7 @@ function getStyles(theme: GrafanaTheme2) {
     createdByLabel: css({
       fontWeight: theme.typography.fontWeightBold,
     }),
-    // In the picker the author line sits at the bottom of every card, so cards in a row line it up whether or
-    // not they have tags.
-    selectableBottomSection: css({
-      flexGrow: 1,
-    }),
     selectableCreatedBy: css({
-      marginTop: 'auto',
       paddingTop: theme.spacing(1),
     }),
     bottomSection: css({
@@ -763,7 +770,7 @@ function getStyles(theme: GrafanaTheme2) {
 
 interface DashboardCardSkeletonProps {
   showCompatibilityBadge?: boolean;
-  /** Fills its grid cell instead of the template modal's fixed card width. */
+  /** Fills its grid cell, as a picker card does, instead of the template modal's fixed card width. */
   fluid?: boolean;
 }
 
@@ -775,7 +782,7 @@ const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
   const styles = useStyles2(getSkeletonStyles);
   return (
     <div className={cx(styles.card, fluid && styles.fluid)} style={rootProps.style}>
-      <Skeleton containerClassName={styles.thumbnail} height="100%" />
+      <Skeleton containerClassName={cx(styles.thumbnail, fluid && styles.fluidThumbnail)} height="100%" />
       <Skeleton height={22} width="70%" />
       <Skeleton height={19} width="90%" />
       {showCompatibilityBadge && <Skeleton height={33} width={100} />}
@@ -786,7 +793,13 @@ const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   fluid: css({
     width: '100%',
+    height: '100%',
     borderColor: theme.colors.border.weak,
+  }),
+  fluidThumbnail: css({
+    flex: '1 1 0',
+    minHeight: 0,
+    aspectRatio: 'auto',
   }),
   card: css({
     width: '350px',
