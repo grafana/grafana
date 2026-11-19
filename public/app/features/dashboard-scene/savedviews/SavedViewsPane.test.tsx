@@ -169,6 +169,23 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
+  it('writes the applied state into the same URL update, leaving untouched params alone', async () => {
+    // A URL sync pass that still sees the old time range would otherwise revert the view.
+    const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+    const { scene } = renderPane([
+      buildView('view-1', { name: 'My view', timeRange: { from: 'now-24h', to: 'now-1h' } }),
+    ]);
+
+    await userEvent.click(screen.getByText('My view'));
+
+    expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+    expect(partialSpy).toHaveBeenCalledTimes(1);
+    const update = partialSpy.mock.calls[0][0];
+    expect(update).toMatchObject({ from: 'now-24h', to: 'now-1h', viewFilter: 'view-1' });
+    expect(update).not.toHaveProperty('timezone');
+    partialSpy.mockRestore();
+  });
+
   it('re-applies a saved view when its (already-selected) row is clicked again', async () => {
     // Re-clicking doesn't change the URL, so this must not rely on URL sync.
     const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});

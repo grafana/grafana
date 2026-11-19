@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { isEqual, pickBy } from 'lodash';
 import { useEffect, useReducer, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +11,7 @@ import {
   type SceneObjectState,
   SceneVariableValueChangedEvent,
   sceneGraph,
+  sceneUtils,
 } from '@grafana/scenes';
 import {
   Box,
@@ -166,10 +168,15 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
 
   function handleSelect(view: SavedDashboardView) {
     // Setting viewFilter first stops DashboardSceneUrlSync re-applying when the URL updates. The
-    // direct apply is still needed: re-clicking the selected view leaves the URL unchanged.
+    // direct apply is still needed: re-clicking the selected view leaves viewFilter unchanged.
     dashboard.setState({ viewFilter: view.metadata.name });
+    const before = sceneUtils.getUrlState(dashboard);
     applySavedViewState(dashboard, view.spec, dashboard.state.savedViewBaseline);
-    locationService.partial({ viewFilter: view.metadata.name });
+    // Write what the apply changed in the same URL update, so a URL sync pass has nothing to revert
+    // even if the scene's own URL write hasn't landed yet. Untouched params stay as they are.
+    const after = sceneUtils.getUrlState(dashboard);
+    const changed = pickBy(after, (value, key) => !isEqual(value, before[key]));
+    locationService.partial({ ...changed, viewFilter: view.metadata.name });
   }
 
   function handleClearSelection() {
