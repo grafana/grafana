@@ -17,6 +17,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type MoveJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { getResourceTargetPath, getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -128,8 +129,8 @@ export function MoveProvisionedDashboardForm({
         resources: [
           {
             name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app',
-            kind: 'Dashboard',
+            group: resourceKindInfos.dashboard.group,
+            kind: resourceKindInfos.dashboard.kind,
           },
         ],
       },

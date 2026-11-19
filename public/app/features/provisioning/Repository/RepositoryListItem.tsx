@@ -12,7 +12,6 @@ import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
-import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import {
@@ -23,7 +22,7 @@ import {
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows, getRepositoryResourcesUrl } from '../utils/repository';
-import { getKindInfoByStat } from '../utils/resourceKinds';
+import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -126,7 +125,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={1} direction="row">
           <LinkButton
             icon="eye"
-            href={`${PROVISIONING_URL}/${name}`}
+            href={resourceKindInfos.repository.getRoute(name)}
             variant="primary"
             size="md"
             data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
@@ -138,7 +137,7 @@ export function RepositoryListItem({ repository }: Props) {
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(repository, 'Repository')}
+            onClick={() => exportResourceAsJson(repository, resourceKindInfos.repository.kind)}
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>
@@ -152,7 +151,7 @@ export function RepositoryListItem({ repository }: Props) {
             <LinkButton
               variant="secondary"
               icon="cog"
-              href={`${PROVISIONING_URL}/${name}/edit`}
+              href={`${resourceKindInfos.repository.getRoute(name)}/edit`}
               size="md"
               onClick={() => {
                 reportInteraction('grafana_provisioning_repository_settings_opened', {

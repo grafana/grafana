@@ -8,8 +8,8 @@ import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
-import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { resourceKindInfos } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 export function RepositoryHealthCard({ repo }: { repo: Repository }) {
@@ -74,7 +74,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.connection-status">Connection status:</Trans>
               </Text>
               <div className={styles.spanTwo}>
-                <Link to={`${CONNECTIONS_URL}/${connectionName}/edit`}>
+                <Link to={resourceKindInfos.connection.getRoute(connectionName)}>
                   <ConnectionStatusBadge
                     key={connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status || 'pending'}
                     status={connection?.status}

@@ -9,10 +9,11 @@ import { Card, Collapse, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetConnectionRepositoriesQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
-import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
+import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { type ExternalRepository } from '../types';
 import { canListRepositories } from '../utils/connectionOAuth';
+import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { ConnectionForm } from './ConnectionForm';
 
@@ -77,7 +78,10 @@ export default function ConnectionFormPage() {
                   <Card.Description>
                     <Stack direction="column" gap={0.5}>
                       {connectedRepos.map((repo) => (
-                        <TextLink key={repo.metadata?.name} href={`${PROVISIONING_URL}/${repo.metadata?.name}`}>
+                        <TextLink
+                          key={repo.metadata?.name}
+                          href={resourceKindInfos.repository.getRoute(repo.metadata?.name ?? '')}
+                        >
                           {repo.spec?.title || repo.metadata?.name}
                         </TextLink>
                       ))}

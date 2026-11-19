@@ -14,6 +14,7 @@ import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 import { PROVISIONING_URL } from '../constants';
 import { type HistoryListResponse } from '../types';
 import { getRemoteConfig } from '../utils/git';
+import { resourceKindInfos } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { isFileHistorySupported } from './utils';
@@ -96,7 +97,7 @@ function HistoryView({ history, path, repo, repoType, repoUrl }: Props) {
       {history.items.map((item) => (
         <Card
           noMargin
-          href={`${PROVISIONING_URL}/${encodeURIComponent(repo)}/file/${path}?${new URLSearchParams({ ref: item.ref }).toString()}`}
+          href={`${resourceKindInfos.repository.getRoute(repo)}/file/${path}?${new URLSearchParams({ ref: item.ref }).toString()}`}
           key={item.ref}
         >
           <Card.Heading>{item.message}</Card.Heading>

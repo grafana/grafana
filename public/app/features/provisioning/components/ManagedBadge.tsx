@@ -8,9 +8,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PROVISIONING_URL } from '../constants';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
+import { resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
 import { splitSourcePath } from './utils/path';
@@ -107,7 +107,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
   // so it would match every logged-in user.
   const manageUrl =
     repository && contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
-      ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name ?? repositoryName)}`
+      ? resourceKindInfos.repository.getRoute(repository.name ?? repositoryName)
       : undefined;
 
   if (isOrphaned || (!sourceUrl && !manageUrl)) {

@@ -6,7 +6,6 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
-import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
@@ -50,7 +49,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         <LinkButton
           variant="secondary"
           icon="link"
-          href={`${CONNECTIONS_URL}/${connectionName}/edit`}
+          href={resourceKindInfos.connection.getRoute(connectionName)}
           onClick={() => {
             reportInteraction('grafana_provisioning_repository_connection_opened', {
               repositoryName: name,
@@ -64,7 +63,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton
         variant="secondary"
         icon="cog"
-        href={`${PROVISIONING_URL}/${name}/edit`}
+        href={`${resourceKindInfos.repository.getRoute(name)}/edit`}
         onClick={() => {
           reportInteraction('grafana_provisioning_repository_settings_opened', {
             repositoryName: name,

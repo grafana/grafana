@@ -15,6 +15,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type DeleteJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -119,8 +120,8 @@ export function DeleteProvisionedDashboardForm({
         resources: [
           {
             name: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-            group: 'dashboard.grafana.app',
-            kind: 'Dashboard',
+            group: resourceKindInfos.dashboard.group,
+            kind: resourceKindInfos.dashboard.kind,
           },
         ],
       },

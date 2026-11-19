@@ -6,6 +6,7 @@ import { Alert, Button, Stack } from '@grafana/ui';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { type RecoverToNewBranch } from '../../types';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 
 interface BranchGoneBannerProps {
   dashboard: DashboardScene;
@@ -57,7 +58,7 @@ export function BranchGoneBanner({ dashboard, existingUid, draft, canSaveToNewBr
     if (dashboard.state.isEditing) {
       dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
     }
-    navigate(existingUid ? `/d/${existingUid}` : '/dashboards');
+    navigate(existingUid ? resourceKindInfos.dashboard.getRoute(existingUid) : '/dashboards');
   };
 
   return (

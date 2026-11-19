@@ -7,7 +7,6 @@ import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
-import { CONNECTIONS_URL } from '../constants';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
 import {
@@ -17,6 +16,7 @@ import {
   isManaged,
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
+import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -74,14 +74,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
 
       {!onClick && (
         <Card.Actions>
-          <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
+          <LinkButton icon="eye" href={resourceKindInfos.connection.getRoute(name)} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
           <Button
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(connection, 'Connection')}
+            onClick={() => exportResourceAsJson(connection, resourceKindInfos.connection.kind)}
           >
             <Trans i18nKey="provisioning.connections.export">Export</Trans>
           </Button>

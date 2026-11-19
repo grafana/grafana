@@ -7,6 +7,7 @@ import { type SelectedItemRef, getSelectedItemRefs } from 'app/features/browse-d
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
@@ -32,9 +33,9 @@ export function useSelectionProvisioningStatus(
   const folderClient = useMemo(
     () =>
       new ScopedResourceClient({
-        group: 'folder.grafana.app',
+        group: resourceKindInfos.folder.group,
         version: 'v1beta1',
-        resource: 'folders',
+        resource: resourceKindInfos.folder.resource,
       }),
     []
   );

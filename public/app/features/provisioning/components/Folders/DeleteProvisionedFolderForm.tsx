@@ -18,6 +18,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type DeleteJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -99,7 +100,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       message,
       delete: {
         ref: getRequestRef(repository, ref),
-        resources: [{ name: resourceId, group: 'folder.grafana.app', kind: 'Folder' }],
+        resources: [{ name: resourceId, group: resourceKindInfos.folder.group, kind: resourceKindInfos.folder.kind }],
       },
     };
 

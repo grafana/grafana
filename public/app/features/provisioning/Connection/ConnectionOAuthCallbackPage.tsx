@@ -6,8 +6,9 @@ import { Alert, LoadingPlaceholder, TextLink } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 
-import { CONNECTIONS_TAB_URL, CONNECTIONS_URL } from '../constants';
+import { CONNECTIONS_TAB_URL } from '../constants';
 import { completeOAuthAuthorization, failOAuthAuthorization } from '../utils/connectionOAuth';
+import { resourceKindInfos } from '../utils/resourceKinds';
 
 export default function ConnectionOAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -54,7 +55,7 @@ export default function ConnectionOAuthCallbackPage() {
           setError(error);
           return;
         }
-        navigate(`${CONNECTIONS_URL}/${name}/edit`);
+        navigate(resourceKindInfos.connection.getRoute(name));
       })
       .catch((err) => {
         setError(

@@ -13,6 +13,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
 import { isRefNotFoundError } from '../utils/errors';
 import { splitSourcePath } from '../utils/path';
@@ -111,7 +112,9 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
   // assureBaseUrl so the href still resolves under a configured appSubUrl, since opening the link
   // in a new tab bypasses the router and hits the URL directly.
   const originalUrl =
-    typeof existingUid === 'string' && existingUid ? locationUtil.assureBaseUrl(`/d/${existingUid}`) : undefined;
+    typeof existingUid === 'string' && existingUid
+      ? locationUtil.assureBaseUrl(resourceKindInfos.dashboard.getRoute(existingUid))
+      : undefined;
 
   return (
     <PreviewBannerViewPR

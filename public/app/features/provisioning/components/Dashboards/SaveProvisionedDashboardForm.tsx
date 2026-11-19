@@ -38,6 +38,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl, getSavedDashboardPath } from '../../utils/redirect';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -253,7 +254,7 @@ export function SaveProvisionedDashboardForm({
       // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
       // for a draft that was just saved, so go to the saved dashboard instead.
       if (recoverToNewBranch && upsert?.metadata?.name) {
-        navigate(`/d/${upsert.metadata.name}`);
+        navigate(resourceKindInfos.dashboard.getRoute(upsert.metadata.name));
         return;
       }
 

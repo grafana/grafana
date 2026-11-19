@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
 import { isGitHubBased } from '../../utils/repositoryTypes';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { type Step } from '../Stepper';
 import { type RepoType, type StepStatusInfo, type WizardFormData, type WizardStep } from '../types';
 
@@ -89,7 +90,7 @@ export function useWizardNavigation({
       // Navigate to repository status page instead of listing page
       const repoName = formData.repositoryName;
       if (repoName) {
-        navigate(`${PROVISIONING_URL}/${repoName}`);
+        navigate(resourceKindInfos.repository.getRoute(repoName));
       } else {
         navigate(PROVISIONING_URL);
       }

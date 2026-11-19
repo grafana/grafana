@@ -1,11 +1,10 @@
-import { API_GROUP as FOLDER_BUCKET } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type ResourceKindInfo, resourceKindInfos } from '../utils/resourceKinds';
 
-// `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
+// `folders` is the legacy storage group, named by the plural resource.
 // Folders are the only kind the stats endpoint reports under two group names.
-const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
+const FOLDER_GROUPS: string[] = [resourceKindInfos.folder.group, resourceKindInfos.folder.resource];
 
 /** Total and managed counts for a single resource type, shown in a KPI card. */
 interface MigrationTotals {

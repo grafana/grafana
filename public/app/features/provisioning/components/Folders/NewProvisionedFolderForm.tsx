@@ -23,6 +23,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -121,7 +122,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const onWriteSuccess = (resource: Resource<FolderDTO>) => {
     // Navigation for new folders (resource-specific concern)
     if (resource?.metadata?.name) {
-      navigate(`/dashboards/f/${resource.metadata.name}/`);
+      navigate(resourceKindInfos.folder.getRoute(resource.metadata.name));
       return;
     }
 
