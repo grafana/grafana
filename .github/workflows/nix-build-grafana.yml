@@ -22,6 +22,7 @@ jobs:
       any-jobs: ${{ steps.matrix.outputs.any-jobs }}
       manifest-version: ${{ steps.matrix.outputs.manifest-version }}
       tarballs: ${{ steps.tarballs.outputs.targets }}
+      go-toolchain: ${{ steps.go.outputs.toolchain }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -42,7 +43,11 @@ jobs:
           upstream-cache-filter: 'true'
           filter-drv-closures: 'true'
       - name: Cache shared build inputs
-        run: nix build -L --no-link .#ciPackages.backend.goModules
+        id: go
+        run: |
+          nix build -L --no-link .#ciPackages.backend.goModules
+          toolchain=$(nix eval --raw .#ciPackages.backend.go.outPath)
+          printf 'toolchain=%s\n' "${toolchain##*/}" >> "$GITHUB_OUTPUT"
       - id: matrix
         uses: Mic92/hestia/matrix@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
         with:
@@ -78,13 +83,41 @@ jobs:
           version: v3.1.0
           upstream-cache-filter: 'true'
           wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
+      - name: Restore Go compiler cache
+        if: matrix.name == 'backend-linux-amd64'
+        id: go-cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ${{ runner.temp }}/grafana-go-cache
+          key: nix-gocache-v1-linux-amd64-${{ needs.eval.outputs.go-toolchain }}
       - name: Build from cached derivation
+        env:
+          INSTALLABLES: ${{ matrix.installables }}
+          PACKAGE_NAME: ${{ matrix.name }}
+        run: |
+          read -r -a installables <<< "$INSTALLABLES"
+          "$HESTIA_BIN" prefetch "${installables[@]}"
+          sandbox_options=()
+          if [[ "$PACKAGE_NAME" == backend-linux-amd64 ]]; then
+            cache="$RUNNER_TEMP/grafana-go-cache"
+            mkdir -p "$cache"
+            sudo chgrp -R nixbld "$cache"
+            sudo chmod -R g+rwX "$cache"
+            sandbox_options+=(--option extra-sandbox-paths "/grafana-go-cache=$cache")
+          fi
+          time nix build -L --no-link "${sandbox_options[@]}" "${installables[@]}"
+      - name: Verify warm Go cache rebuild
+        # Check each new cache scope once and allow a job rerun to benchmark a restore.
+        if: matrix.name == 'backend-linux-amd64' && (steps.go-cache.outputs.cache-hit != 'true' || github.run_attempt != '1')
         env:
           INSTALLABLES: ${{ matrix.installables }}
         run: |
           read -r -a installables <<< "$INSTALLABLES"
-          "$HESTIA_BIN" prefetch "${installables[@]}"
-          nix build -L --no-link "${installables[@]}"
+          cache="$RUNNER_TEMP/grafana-go-cache"
+          test -n "$(find "$cache" -type f -name '*-d' -print -quit)"
+          sudo chmod -R g+rwX "$cache"
+          time nix build -L --no-link --rebuild \
+            --option extra-sandbox-paths "/grafana-go-cache=$cache" "${installables[@]}"
 
   package:
     needs: [eval, build]

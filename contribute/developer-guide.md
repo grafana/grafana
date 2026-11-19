@@ -217,6 +217,8 @@ The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates `ciJ
 
 CI uses stable commit and timestamp values so commits outside the build inputs can reuse cached binaries. The regular release targets embed the checkout revision and timestamp.
 
+The Linux AMD64 backend job also pilots a Go compiler cache for builds that miss the Hestia cache. The job gives the Nix sandbox access to a dedicated cache directory keyed by the pinned Go toolchain. On a new compiler cache, CI warms it and uses `nix build --rebuild` to check that the warm build produces identical output.
+
 The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. To run Grafana locally, extract the archive from `result/` and run `./bin/grafana server` from the extracted directory.
 
 ## Test Grafana

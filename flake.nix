@@ -115,7 +115,11 @@
       ];
       packageBuilders = lib.mapAttrs (
         system: nativeTarget:
-        { revision, sourceDateEpoch }:
+        {
+          revision,
+          sourceDateEpoch,
+          useGoBuildCache ? false,
+        }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           pnpm = pkgs.pnpm_12;
@@ -179,7 +183,8 @@
               platform = "${goos}-${goarch}";
               target = "${platform}${lib.optionalString (goarm != "") "v${goarm}"}";
               executable = "grafana${lib.optionalString (goos == "windows") ".exe"}";
-              backend = pkgs.buildGo127Module {
+              backend = pkgs.buildGo127Module backendAttrs;
+              backendAttrs = {
                 pname = "grafana-backend-${target}";
                 inherit src version;
                 # Keep the workspace and download cache shared across all CGO-free targets.
@@ -214,6 +219,14 @@
                     grep -E $'^\tbuild\tGOARM=${goarm}(,|$)' <<< "$buildInfo"
                   ''}
                   runHook postInstallCheck
+                '';
+              }
+              // lib.optionalAttrs (useGoBuildCache && target == "linux-amd64") {
+                postConfigure = ''
+                  if [ -w /grafana-go-cache ]; then
+                    export GOCACHE=/grafana-go-cache
+                    echo "Using the CI Go build cache at $GOCACHE"
+                  fi
                 '';
               };
               pluginArchives = lib.mapAttrs (
@@ -305,6 +318,7 @@
       ciPackages = packageBuilders.x86_64-linux {
         revision = "unknown";
         sourceDateEpoch = "1";
+        useGoBuildCache = true;
       };
       ciJobs = lib.filterAttrs (
         name: _: name == "frontend" || lib.hasPrefix "backend-" name
