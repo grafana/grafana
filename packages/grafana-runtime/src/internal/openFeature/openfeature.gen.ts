@@ -1960,10 +1960,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", true, options).value;
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
