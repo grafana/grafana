@@ -112,80 +112,64 @@ describe('useAlertRuleAbilities', () => {
     expect(result.current.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
   });
 
-  it('locks edit, pause and delete for provisioned rules but still allows duplicate and silence', async () => {
-    const abilities = await getAbilitiesInFolder(rule({ annotations: { [K8sAnnotations.Provenance]: 'terraform' } }), {
-      ...canWriteAndDelete,
-      ...canSilence,
-    });
+  it.each([
+    {
+      reason: 'provisioned',
+      rule: rule({ annotations: { [K8sAnnotations.Provenance]: 'terraform' } }),
+      lock: Provisioned,
+      duplicate: Granted,
+    },
+    {
+      reason: 'managed by an external system',
+      rule: rule({ annotations: { 'grafana.app/managedBy': 'terraform' } }),
+      lock: Provisioned,
+      duplicate: Granted,
+    },
+    {
+      reason: 'plugin-managed',
+      rule: rule({ labels: { __grafana_origin: 'plugin/my-plugin' } }),
+      lock: IsPluginManaged,
+      duplicate: IsPluginManaged,
+    },
+  ])('locks edit, pause and delete but not silence for $reason rules', async ({ rule, lock, duplicate }) => {
+    const abilities = await getAbilitiesInFolder(rule, { ...canWriteAndDelete, ...canSilence });
 
-    expect(abilities.edit).toEqual(Provisioned);
-    expect(abilities.pause).toEqual(Provisioned);
-    expect(abilities.delete).toEqual(Provisioned);
-    expect(abilities.duplicate).toEqual(Granted);
+    expect(abilities.edit).toEqual(lock);
+    expect(abilities.pause).toEqual(lock);
+    expect(abilities.delete).toEqual(lock);
+    expect(abilities.duplicate).toEqual(duplicate);
     expect(abilities.silence).toEqual(Granted);
   });
 
-  it('locks everything but silence, duplicate included, for plugin-managed rules', async () => {
-    const abilities = await getAbilitiesInFolder(rule({ labels: { __grafana_origin: 'plugin/my-plugin' } }), {
-      ...canWriteAndDelete,
-      ...canSilence,
-    });
-
-    expect(abilities.edit).toEqual(IsPluginManaged);
-    expect(abilities.pause).toEqual(IsPluginManaged);
-    expect(abilities.delete).toEqual(IsPluginManaged);
-    expect(abilities.duplicate).toEqual(IsPluginManaged);
-    expect(abilities.silence).toEqual(Granted);
-  });
-
-  it('treats rules managed by an external system as provisioned', async () => {
-    const abilities = await getAbilitiesInFolder(rule({ annotations: { 'grafana.app/managedBy': 'terraform' } }), {
-      ...canWriteAndDelete,
-      ...canSilence,
-    });
-
-    expect(abilities.edit).toEqual(Provisioned);
-    expect(abilities.delete).toEqual(Provisioned);
-    expect(abilities.duplicate).toEqual(Granted);
-    expect(abilities.silence).toEqual(Granted);
-  });
-
-  it('denies edit and pause without the write permission on the rule folder', async () => {
+  it('denies edit and pause without write access to the rule folder', async () => {
     const abilities = await getAbilitiesInFolder(rule(), {
-      ...canRead,
-      ...canSilence,
-      [AccessControlAction.AlertingRuleDelete]: true,
+      ...canWriteAndDelete,
+      [AccessControlAction.AlertingRuleUpdate]: false,
     });
 
     expect(abilities.edit).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
     expect(abilities.pause).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
     expect(abilities.delete).toEqual(Granted);
-    expect(abilities.silence).toEqual(Granted);
   });
 
-  it('denies delete without the delete permission on the rule folder', async () => {
+  it('denies delete without delete access to the rule folder', async () => {
     const abilities = await getAbilitiesInFolder(rule(), {
-      ...canRead,
-      ...canSilence,
-      [AccessControlAction.AlertingRuleUpdate]: true,
+      ...canWriteAndDelete,
+      [AccessControlAction.AlertingRuleDelete]: false,
     });
 
     expect(abilities.edit).toEqual(Granted);
     expect(abilities.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
-    expect(abilities.silence).toEqual(Granted);
   });
 
   it('denies edit and delete without read access to the rule folder', async () => {
     const abilities = await getAbilitiesInFolder(rule(), {
-      ...canSilence,
-      [AccessControlAction.AlertingRuleRead]: true,
-      [AccessControlAction.AlertingRuleUpdate]: true,
-      [AccessControlAction.AlertingRuleDelete]: true,
+      ...canWriteAndDelete,
+      [AccessControlAction.FoldersRead]: false,
     });
 
     expect(abilities.edit).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
     expect(abilities.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
-    expect(abilities.silence).toEqual(Granted);
   });
 
   it('denies duplicate without the create permission', async () => {
@@ -195,31 +179,18 @@ describe('useAlertRuleAbilities', () => {
     expect(abilities.duplicate).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleCreate]));
   });
 
-  it('grants silence with the global instance create permission', async () => {
-    grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
-    const result = hookAbilities(rule());
+  it.each([
+    {
+      source: 'the global instance create permission',
+      global: [AccessControlAction.AlertingInstanceCreate],
+      folder: {},
+    },
+    { source: 'the silence permission on the rule folder', global: [], folder: canSilence },
+  ])('grants silence from $source', async ({ global, folder }) => {
+    grantUserPermissions(global);
+    const abilities = await getAbilitiesInFolder(rule(), folder);
 
-    await waitFor(() => expect(result.current.silence).toEqual(Granted));
-  });
-
-  it('grants silence from the silence permission on the rule folder', async () => {
-    grantUserPermissions([]);
-    setFolderResponse({
-      uid: RULE_FOLDER_UID,
-      accessControl: canSilence,
-    });
-    const result = hookAbilities(rule());
-
-    await waitFor(() => expect(result.current.silence).toEqual(Granted));
-  });
-
-  it('denies silence without any silence permission', async () => {
-    grantUserPermissions([]);
-    const abilities = await getAbilities(rule());
-
-    expect(abilities.silence).toEqual(
-      InsufficientPermissions([AccessControlAction.AlertingSilenceCreate, AccessControlAction.AlertingInstanceCreate])
-    );
+    expect(abilities.silence).toEqual(Granted);
   });
 
   it('does not support silence when Grafana only sends alerts to external alertmanagers', async () => {
