@@ -1104,6 +1104,7 @@ func TestRuleRoutine(t *testing.T) {
 				sch.tracer,
 				sch.featureToggles,
 				sch.recordingWriter,
+				sch.seriesBudget,
 				sch.evalAppliedFunc,
 				sch.stopAppliedFunc,
 			)
@@ -1460,6 +1461,7 @@ func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
 		sch.tracer,
 		sch.featureToggles,
 		sch.recordingWriter,
+		sch.seriesBudget,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
@@ -1541,6 +1543,7 @@ func TestAlertRuleNoRetryOnNonRetryableError(t *testing.T) {
 		sch.tracer,
 		sch.featureToggles,
 		sch.recordingWriter,
+		sch.seriesBudget,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)

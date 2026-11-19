@@ -9,7 +9,7 @@ import {
 import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { normalizeRoute } from '../../../utils/notification-policies';
 
 export const useAlertmanagerNotificationRoutingPreview = (

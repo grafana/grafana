@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getEffectiveExtensionSidebarPresentation,
@@ -19,6 +19,7 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { DashboardInteractions } from '../utils/interactions';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 
 import { ComposerSession } from './ComposerSession';
 import { canEnterComposer } from './composerAccess';
@@ -349,6 +350,154 @@ describe('entering and leaving Composer', () => {
   });
 });
 
+describe('why a session ended', () => {
+  it.each([
+    ['the plugin', (_scene: DashboardScene, session: ComposerSession) => session.exit(), 'plugin_exit'],
+    ['the toolbar button', (scene: DashboardScene) => scene.leaveComposer(), 'toolbar_button'],
+    ['the mode picker', (scene: DashboardScene) => scene.setDashboardMode('view', 'picker'), 'mode_change'],
+    ['openFullEditor', (scene: DashboardScene) => scene.openFullEditor(), 'manual_edit'],
+    [
+      'discarding the edit session',
+      (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true }),
+      'mode_change',
+    ],
+  ])('names %s on the aborted signal', (_name, leave, reason) => {
+    const scene = setup();
+    const session = enter(scene);
+
+    leave(scene, session);
+
+    expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe(reason);
+  });
+
+  it('names the scene deactivating as navigation', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    deactivate();
+    deactivate = () => {};
+
+    expect(session.signal.reason).toBe('navigation');
+  });
+
+  it('names the Composer flag turning off', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    await act(async () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false }));
+
+    expect(session.signal.reason).toBe('flag_off');
+  });
+
+  it('reports the first reason named, as the path that started the exit', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    session.noteExitReason('toolbar_button');
+    session.exit('sidebar_closed');
+
+    expect(session.signal.reason).toBe('toolbar_button');
+  });
+});
+
+describe('edit periods that used Composer', () => {
+  const tracked = () => jest.spyOn(DashboardInteractions, 'editPeriodEnded');
+
+  it('marks a period Composer was entered over', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it.each([
+    ['the user', (scene: DashboardScene) => scene.setComposerEditing(true)],
+    ['Assistant', (scene: DashboardScene) => scene.startComposerEditingForAssistant()],
+  ])('marks the period %s started by switching Composer from Viewing to Editing', (_name, switchToEditing) => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene, 'view');
+      switchToEditing(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('marks a period that starts while Composer stays open after a save', async () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      const saved = await retitled(session, 'Saved');
+      await session.applySpec(saved.spec, { signal: live(), baseRevision: saved.revision });
+      // A save ends the period; Composer stays open over Editing.
+      await scene.saveCompleted(scene.getSaveModel(), {
+        slug: 'slug',
+        uid: 'composer-test',
+        url: 'url',
+        version: 2,
+        status: 'success',
+      });
+
+      const next = await retitled(session, 'After save');
+      await session.applySpec(next.spec, { signal: live(), baseRevision: next.revision });
+      session.exit();
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledTimes(1);
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves a period Composer never touched unmarked', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      scene.setDashboardMode('edit');
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves the next period unmarked when Composer was used only in the one before', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      enter(scene).exit();
+      scene.exitEditMode({ skipConfirm: true });
+      ended.mockClear();
+
+      scene.setDashboardMode('edit');
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+});
+
 describe('checked apply', () => {
   it('applies inside the edit session, bumps the revision and supports native undo after exit', async () => {
     const scene = setup();
@@ -388,9 +537,8 @@ describe('checked apply', () => {
     expect(scene.state.title).toBe('Theirs');
   });
 
-  // Since #133913 a rebuilt ad hoc variable resolves its data source after the build, outside the write. The
-  // result must reach the live variable, and must not count as a change, or every write would make the next
-  // one stale.
+  // A rebuilt ad hoc variable resolves its data source when it activates, outside the write. The result must
+  // not count as a change, or every write would make the next one stale.
   it('keeps its revision through the lookups a rebuilt spec finishes later', async () => {
     const scene = setup();
     const session = enter(scene);
@@ -418,6 +566,11 @@ describe('checked apply', () => {
 
     const applied = await session.applySpec(withAdhoc, { signal: live(), baseRevision: revision });
     expect(applied).toMatchObject({ status: 'applied', revision: revision + 1 });
+    const filters = sceneGraph.lookupVariable('filters', scene);
+    if (filters instanceof AdHocFiltersVariable) {
+      // What the variable runs when its filter control mounts.
+      resolveMultiValueOperatorsOnActivate(filters);
+    }
     // Let the data source lookup land.
     await act(async () => {});
 
@@ -555,6 +708,23 @@ describe('picking', () => {
     const exited = session.pickElement(live());
     session.exit();
     await expect(exited).resolves.toBeNull();
+  });
+
+  it('keeps picking while working, and reports a turn running whether paused or working', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    const pick = session.pickElement(live());
+    session.setWorking(true);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(session.assistantWorking).toBe(true);
+    session.completePick(null);
+    await expect(pick).resolves.toBeNull();
+
+    session.setWorking(false);
+    expect(session.assistantWorking).toBe(false);
+    session.setPaused(true);
+    expect(session.assistantWorking).toBe(true);
   });
 
   it('keeps the highlight target for the overlay', () => {

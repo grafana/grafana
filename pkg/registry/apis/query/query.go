@@ -289,7 +289,7 @@ func prepareQuery(
 	)
 
 	// Expressions service
-	exprService := expr.ProvideService(
+	exprService := expr.NewServiceWithMetrics(
 		&setting.Cfg{
 			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
 			SQLExpressionCellLimit:        instanceConfig.SQLExpressionCellLimit,
@@ -300,7 +300,7 @@ func prepareQuery(
 		nil,
 		nil,
 		instanceConfig.FeatureToggles,
-		nil,
+		b.metrics,
 		b.tracer,
 		qsDsClientBuilder,
 	)

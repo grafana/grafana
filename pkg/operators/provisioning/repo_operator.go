@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -52,12 +51,16 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	unified, err := controllerCfg.UnifiedStorageClient()
+	clients, err := controllerCfg.Clients()
 	if err != nil {
-		return fmt.Errorf("failed to get unified storage client: %w", err)
+		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	resourceLister := resources.NewResourceLister(unified)
+	resourceLister, err := controllerCfg.ResourceLister()
+	if err != nil {
+		return err
+	}
+
 	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
@@ -97,11 +100,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	clients, err := controllerCfg.Clients()
-	if err != nil {
-		return fmt.Errorf("failed to get clients: %w", err)
-	}
-
 	// nil unless keys_only_relist is on, which keeps the full-object re-list.
 	repoKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.RepositoryResourceInfo.GroupVersionResource())
 	if err != nil {
@@ -129,7 +127,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		quotaGetter,
 		controller.NewRepositoryQuotaChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
-			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),

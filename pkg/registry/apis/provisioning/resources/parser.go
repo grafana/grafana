@@ -67,12 +67,11 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory         ClientFactory
-	folderMetadataEnabled bool
+	ClientFactory ClientFactory
 }
 
-func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
-	return &parserFactory{clientFactory, folderMetadataEnabled}
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -91,11 +90,10 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		reader:                repo,
-		urls:                  urls,
-		clients:               clients,
-		config:                config,
-		folderMetadataEnabled: f.folderMetadataEnabled,
+		reader:  repo,
+		urls:    urls,
+		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -113,8 +111,6 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
-
-	folderMetadataEnabled bool
 }
 
 type ParsedResource struct {
@@ -697,4 +693,25 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	}
 
 	return wrap
+}
+
+func (f *ParsedResource) loadExisting(ctx context.Context) error {
+	if f.Existing != nil || f.Client == nil || f.DryRunResponse != nil {
+		return nil
+	}
+
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	existing, err := f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("get existing resource: %w", err)
+	}
+	f.Existing = existing
+	return nil
 }

@@ -72,7 +72,7 @@ func (h *Handler) GlobalSearchRoute(kinds map[schema.GroupResource]string) Route
 		Path:    resource.GlobalSearchResource + "/" + searchPathSegment,
 		Spec:    globalSearchRouteSpec(),
 		Handler: h.GlobalSearchFor(kinds),
-		Schemas: envelopeSchemas(searchQueryGoName, globalSearchResultsGoName),
+		Schemas: envelopeSchemas(globalSearchQueryGoName, globalSearchResultsGoName),
 	}
 }
 
@@ -155,7 +155,7 @@ func globalSearchRouteSpec() *spec3.PathProps {
 		operationID:  "listGlobalSearch" + capitalize(searchv0.VERSION),
 		description:  globalSearchDescription(),
 		requestKind:  searchv0.KindSearchQuery,
-		requestGo:    searchQueryGoName,
+		requestGo:    globalSearchQueryGoName,
 		responseKind: searchv0.KindGlobalSearchResults,
 		responseGo:   globalSearchResultsGoName,
 		example:      globalSearchExample(),
@@ -173,7 +173,9 @@ func globalSearchDescription() string {
 		"Each result names its own group, resource and kind, and is authorized on its own. " +
 		"`folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. " +
 		"Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. " +
-		"Its ancestors are omitted.\n\n" +
+		"Its ancestors are omitted. " +
+		"`access` in the query, such as `[\"update\", \"delete\", \"set_permissions\"]`, adds to each result whether the caller may do each verb to it; " +
+		"a verb that could not be checked is left out.\n\n" +
 		"Only the fields every resource has can be used, plus:\n\n" +
 		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type. " +
 		"Its facet lists every type the search covers, with a count of 0 for those without results, after the `facetLimit` terms.\n" +
@@ -188,8 +190,8 @@ func globalSearchDescription() string {
 
 // globalSearchExample searches one folder and everything below it for
 // dashboards, newest first.
-func globalSearchExample() *searchv0.SearchQuery {
-	return &searchv0.SearchQuery{
+func globalSearchExample() *searchv0.GlobalSearchQuery {
+	return &searchv0.GlobalSearchQuery{SearchQuery: searchv0.SearchQuery{
 		TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
 		Where: &searchv0.WhereNode{And: []searchv0.WhereNode{
 			{Filter: &searchv0.FilterPredicate{Field: resource.SEARCH_FIELD_FOLDER_TREE, Operator: "In", Values: []string{"team-a"}}},
@@ -197,7 +199,7 @@ func globalSearchExample() *searchv0.SearchQuery {
 		}},
 		Sort:  []searchv0.SortField{{Field: resource.SEARCH_FIELD_UPDATED, Direction: "desc"}},
 		Limit: 10,
-	}
+	}}
 }
 
 func trashRouteSpec(kindName, version string) *spec3.PathProps {

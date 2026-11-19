@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -213,9 +214,10 @@ func TestService_LegacyCheckExpressionValidation(t *testing.T) {
 			permissions := &legacyPermissionStore{PermissionStore: s.permissionStore}
 			s.permissionStore = permissions
 			req := &authzextv1.LegacyCheckRequest{
-				Namespace:  "org-12",
-				Subject:    "user:u-1",
-				Expression: tc.expression,
+				Namespace:      "org-12",
+				RequesterOrgId: proto.Int64(12),
+				Subject:        "user:u-1",
+				Expression:     tc.expression,
 			}
 			response, err := s.LegacyCheck(legacyCheckContext(t), req)
 			require.NoError(t, err)

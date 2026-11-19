@@ -29,20 +29,22 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "SecureValue",
 					Plural:     "SecureValues",
+					Resource:   "securevalues",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 				},
 
 				{
 					Kind:       "Keeper",
 					Plural:     "Keepers",
+					Resource:   "keepers",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 				},
 			},

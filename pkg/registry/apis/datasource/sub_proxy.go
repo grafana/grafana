@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 // ProxyDependencies contains the services and configuration used to proxy a request.
@@ -36,9 +37,10 @@ type ProxyDependencies struct {
 	GrafanaConfig      *config.GrafanaCfg
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
-	OAuthTokenService  *oauthtoken.Service
-	Tracer             tracing.Tracer
-	Features           featuremgmt.FeatureToggles
+	// OAuthTokenService supplies Forward OAuth Identity tokens; nil rejects those data sources.
+	OAuthTokenService oauthtoken.OAuthTokenService
+	Tracer            tracing.Tracer
+	Features          featuremgmt.FeatureToggles
 	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when the requester
 	// carries no id token of its own. Nil disables that fallback (see
 	// proxyutil.ApplyForwardIDHeader).
@@ -117,6 +119,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		respondError := func(err error) {
+			responder.Error(proxyResponseError(req.Context(), err))
+		}
 		if r.builder.cfg.HandlerOrigin != "" {
 			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
 		}
@@ -127,7 +132,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		deps, err := r.builder.proxyDependencies(ctx, req)
 		if err != nil {
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		if deps.GrafanaConfig != nil {
@@ -140,11 +145,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		if err != nil {
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
 				m.SetNotFound()
-				responder.Error(r.builder.datasourceResourceInfo.NewNotFound(name))
+				respondError(r.builder.datasourceResourceInfo.NewNotFound(name))
 				return
 			}
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
@@ -152,7 +157,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			proxyCfg, err := deps.GrafanaConfig.Proxy()
 			if err != nil || proxyCfg.ClientCfg == nil {
 				m.SetError()
-				responder.Error(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
+				respondError(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
 				return
 			}
 		}
@@ -162,13 +167,13 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		if err := validate(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
-			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			respondError(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
 			return
 		}
 
 		if ds.Spec.IsOAuthPassThruEnabled() && deps.OAuthTokenService == nil {
 			m.SetError()
-			responder.Error(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
+			respondError(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
 			return
 		}
 
@@ -187,11 +192,27 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		)
 		if err != nil {
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		proxy.HandleRequest()
 	}), nil
+}
+
+// proxyResponseError reports a request the client abandoned as 499, as the
+// apiserver handler chain and the shared proxy error handler do. Otherwise the
+// apiserver reports the untyped context error as a 500. The context is checked
+// as well because some errors, such as gRPC status errors, do not wrap
+// context.Canceled.
+func proxyResponseError(ctx context.Context, err error) error {
+	if !errors.Is(err, context.Canceled) && !errors.Is(ctx.Err(), context.Canceled) {
+		return err
+	}
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    proxyutil.StatusClientClosedRequest,
+		Message: "client closed the request",
+	}}
 }
 
 // proxyPathFromRequest returns everything after the "<name>/proxy" subresource

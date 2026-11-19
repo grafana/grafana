@@ -184,6 +184,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	}
 
 	cmd.UserID = userID
+	cmd.UID = c.UserUID
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -511,7 +512,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, UID: c.UserUID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -581,7 +582,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response
 	}
 
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, UID: c.UserUID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 

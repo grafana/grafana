@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
@@ -105,7 +104,7 @@ func (tc *queryCacheConfigsTestCase) Verify(t *testing.T, helper *apis.K8sTestHe
 		Limit:    100,
 		KeysOnly: true,
 	})
-	require.NoError(t, resource.ErrorFromResponse(rsp.GetError(), err))
+	require.NoError(t, err)
 	require.Empty(t, rsp.NextPageToken)
 
 	var expectedNames []string

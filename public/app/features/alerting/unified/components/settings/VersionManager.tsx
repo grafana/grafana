@@ -16,7 +16,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -281,13 +281,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
           we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
           so the line numbers will not match up with what you can see in the JSON modal tab
         */}
-        <MonacoDiffEditor
-          original={right}
-          modified={left}
-          language="json"
-          height="65vh"
-          options={{ lineNumbers: 'off' }}
-        />
+        <DiffViewer original={right} modified={left} language="json" height="65vh" lineNumbers={false} />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />

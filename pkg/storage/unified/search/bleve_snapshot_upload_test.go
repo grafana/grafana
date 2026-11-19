@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -456,6 +457,54 @@ func TestUploadSnapshot_ProceedsWhenProbeErrors(t *testing.T) {
 
 	require.NoError(t, be.uploadSnapshot(t.Context(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
+}
+
+type indexWithBuildInfoReadError struct {
+	copyableIndex
+	readFailed atomic.Bool
+}
+
+func (i *indexWithBuildInfoReadError) GetInternal(key []byte) ([]byte, error) {
+	if string(key) == internalBuildInfoKey && i.readFailed.CompareAndSwap(false, true) {
+		return nil, errors.New("temporary live index read failure")
+	}
+	return i.copyableIndex.GetInternal(key)
+}
+
+func TestUploadSnapshot_BuildInfoProbeFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		corruptMetadata bool
+	}{
+		{name: "valid staged metadata"},
+		{name: "invalid staged metadata", corruptMetadata: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newHookableStore(t)
+			be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
+			key := newTestNsResource()
+			idx := newUploadTestIndex(t, be, key, 42)
+			if tc.corruptMetadata {
+				require.NoError(t, idx.index.SetInternal([]byte(internalBuildInfoKey), []byte("{")))
+			}
+			live := &indexWithBuildInfoReadError{copyableIndex: idx.index.(copyableIndex)}
+			idx.index = live
+
+			err := be.uploadSnapshot(t.Context(), key, idx)
+
+			require.True(t, live.readFailed.Load())
+			assert.Zero(t, store.listKeyCalls.Load())
+			if tc.corruptMetadata {
+				require.ErrorContains(t, err, "reading snapshot build info")
+				assert.Zero(t, store.uploadCalls.Load())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, int32(1), store.uploadCalls.Load())
+				assert.Equal(t, int64(42), store.getLastUploadedMeta().LatestResourceVersion)
+				assert.Equal(t, be.opts.BuildVersion, store.getLastUploadedMeta().BuildVersion)
+			}
+		})
+	}
 }
 
 // TestUploadSnapshot_SkipsProbeWhenUploadIntervalZero verifies that the probe

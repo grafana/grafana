@@ -315,11 +315,6 @@ export interface FeatureToggles {
   */
   canvasPanelPanZoom?: boolean;
   /**
-  * Enables time comparison option in supported panels
-  * @default true
-  */
-  timeComparison?: boolean;
-  /**
   * Enables shared crosshair in table panel
   * @default false
   */
@@ -439,11 +434,6 @@ export interface FeatureToggles {
   * @default true
   */
   savedQueriesRBAC?: boolean;
-  /**
-  * Enables the new Saved queries (query library) modal experience
-  * @default true
-  */
-  newSavedQueriesExperience?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -701,11 +691,6 @@ export interface FeatureToggles {
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
-  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
-  * @default false
-  */
-  useScopesNavigationEndpoint?: boolean;
-  /**
   * Enable scope search to include all levels of the scope node tree
   * @default false
   */
@@ -871,11 +856,6 @@ export interface FeatureToggles {
   */
   newInfluxDSConfigPageDesign?: boolean;
   /**
-  * Enables use of app platform API for folders
-  * @default true
-  */
-  foldersAppPlatformAPI?: boolean;
-  /**
   * Applies OTel formatting templates to displayed logs
   * @default true
   */
@@ -933,11 +913,6 @@ export interface FeatureToggles {
   */
   cdnPluginsLoadFirst?: boolean;
   /**
-  * Enable loading plugins via declarative URLs
-  * @default false
-  */
-  cdnPluginsUrls?: boolean;
-  /**
   * Enable syncing plugin installations to the installs API
   * @default false
   */
@@ -977,11 +952,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginInsights?: boolean;
-  /**
-  * Enables a new panel time settings drawer
-  * @default true
-  */
-  panelTimeSettings?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false
@@ -1024,7 +994,7 @@ export interface FeatureToggles {
   queryWithAssistant?: boolean;
   /**
   * Enables next generation query editor experience
-  * @default false
+  * @default true
   */
   queryEditorNext?: boolean;
   /**
@@ -1082,6 +1052,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirect?: boolean;
+  /**
+  * Disables the remote cache for signed ID tokens; a new token is signed on every authentication
+  * @default false
+  */
+  idTokenCacheDisabled?: boolean;
   /**
   * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
   * @default false
