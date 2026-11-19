@@ -59,7 +59,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	}
 	for _, d := range i.DetectorsProvider.ProvideDetectors(ctx) {
 		if d.DetectAngular(b) {
-			i.log.Debug("Angular detected", "pluginId", p.ID, "version", p.Info.Version, "detector", d.String())
+			i.log.Debug("Angular plugin detected", "pluginId", p.ID, "version", p.Info.Version, "detector", d.String())
 			isAngular = true
 			break
 		}
