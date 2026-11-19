@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	v0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 )
@@ -34,7 +35,15 @@ func validView() *v0alpha1.SavedDashboardView {
 }
 
 func validate(view *v0alpha1.SavedDashboardView) error {
-	return validateSavedDashboardView(context.Background(), &app.AdmissionRequest{Object: view})
+	return validateWith(view, resource.AdmissionActionCreate, 0, nil)
+}
+
+// validateWith runs the validator with existingViews already on the view's dashboard.
+func validateWith(view *v0alpha1.SavedDashboardView, action resource.AdmissionAction, existingViews int, countErr error) error {
+	v := &validator{countViews: func(context.Context, string, string, int) (int, error) {
+		return existingViews, countErr
+	}}
+	return v.validate(context.Background(), &app.AdmissionRequest{Action: action, Object: view})
 }
 
 // invalidFields returns the field paths of a 422, failing the test for any other error.
@@ -128,4 +137,63 @@ func TestValidateSavedDashboardView(t *testing.T) {
 			t.Fatalf("expected a cause on spec.name, got %v", fields)
 		}
 	})
+}
+
+func TestValidateSavedDashboardViewSpecSize(t *testing.T) {
+	// Each value is well within its own limit; together they exceed the whole-spec cap.
+	big := validView()
+	big.Spec.Variables[0].Value = &v0alpha1.SavedDashboardViewStringOrArrayOfString{
+		ArrayOfString: slices.Repeat([]string{strings.Repeat("x", maxTextRunes)}, maxSpecBytes/maxTextRunes+1),
+	}
+	if fields := invalidFields(t, validate(big)); !slices.Equal(fields, []string{"spec"}) {
+		t.Fatalf("expected a single cause on spec, got %v", fields)
+	}
+
+	justUnder := validView()
+	justUnder.Spec.Variables[0].Value = &v0alpha1.SavedDashboardViewStringOrArrayOfString{
+		ArrayOfString: slices.Repeat([]string{strings.Repeat("x", maxTextRunes)}, maxSpecBytes/maxTextRunes-2),
+	}
+	if err := validate(justUnder); err != nil {
+		t.Fatalf("a spec under the cap was rejected: %v", err)
+	}
+}
+
+func TestValidateSavedDashboardViewDashboardUID(t *testing.T) {
+	for _, uid := range []string{"", "a/b", "..", "50%", strings.Repeat("x", maxDashboardUIDRunes+1)} {
+		view := validView()
+		view.Spec.DashboardUID = uid
+		if fields := invalidFields(t, validate(view)); !slices.Contains(fields, "spec.dashboardUID") {
+			t.Fatalf("expected %q to be rejected, got %v", uid, fields)
+		}
+	}
+	view := validView()
+	view.Spec.DashboardUID = strings.Repeat("x", maxDashboardUIDRunes)
+	if err := validate(view); err != nil {
+		t.Fatalf("a %d-character uid was rejected: %v", maxDashboardUIDRunes, err)
+	}
+}
+
+func TestValidateSavedDashboardViewSectionKind(t *testing.T) {
+	view := validView()
+	view.Spec.SectionFilters = []v0alpha1.SavedDashboardViewSavedViewSectionFilter{{SectionKind: "panel", SectionKey: "/tabs/0"}}
+	if fields := invalidFields(t, validate(view)); !slices.Contains(fields, "spec.sectionFilters[0].sectionKind") {
+		t.Fatalf("expected the section kind to be rejected, got %v", fields)
+	}
+}
+
+func TestValidateSavedDashboardViewCountCap(t *testing.T) {
+	if err := validateWith(validView(), resource.AdmissionActionCreate, maxViewsPerDashboard-1, nil); err != nil {
+		t.Fatalf("creating view %d was rejected: %v", maxViewsPerDashboard, err)
+	}
+	if fields := invalidFields(t, validateWith(validView(), resource.AdmissionActionCreate, maxViewsPerDashboard, nil)); !slices.Contains(fields, "spec.dashboardUID") {
+		t.Fatalf("expected the cap on spec.dashboardUID, got %v", fields)
+	}
+	if err := validateWith(validView(), resource.AdmissionActionUpdate, maxViewsPerDashboard, nil); err != nil {
+		t.Fatalf("an update at the cap was rejected: %v", err)
+	}
+
+	err := validateWith(validView(), resource.AdmissionActionCreate, 0, errors.New("storage at 10.0.0.7 unreachable"))
+	if !apierrors.IsInternalError(err) || strings.Contains(err.Error(), "10.0.0.7") {
+		t.Fatalf("expected a generic internal error, got %v", err)
+	}
 }

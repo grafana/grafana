@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -14,6 +15,12 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	client, err := dashboardviewsv0alpha1.NewSavedDashboardViewClientFromGenerator(k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{}))
+	if err != nil {
+		return nil, err
+	}
+	v := &validator{countViews: newViewCounter(client)}
+
 	simpleConfig := simple.AppConfig{
 		Name:       "dashboardviews",
 		KubeConfig: cfg.KubeConfig,
@@ -27,7 +34,7 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind:      dashboardviewsv0alpha1.SavedDashboardViewKind(),
-				Validator: &simple.Validator{ValidateFunc: validateSavedDashboardView},
+				Validator: &simple.Validator{ValidateFunc: v.validate},
 			},
 		},
 	}
