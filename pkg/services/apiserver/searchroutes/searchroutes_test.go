@@ -41,6 +41,15 @@ type fakeBuilder struct {
 
 func (b *fakeBuilder) GetGroupVersions() []schema.GroupVersion { return b.gvs }
 
+var _ builder.APIGroupSearchRestrictor = (*searchRestrictedBuilder)(nil)
+
+type searchRestrictedBuilder struct {
+	*fakeBuilder
+	disabled []schema.GroupResource
+}
+
+func (b *searchRestrictedBuilder) DisabledSearchResources() []schema.GroupResource { return b.disabled }
+
 type resourceBuilder struct {
 	*fakeBuilder
 	infos []utils.ResourceInfo
@@ -408,6 +417,17 @@ func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 
 	assert.Contains(t, got, "dashboard.grafana.app/v1")
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
+}
+
+func TestBuild_OmitsSearchForDisabledResource(t *testing.T) {
+	gv := schema.GroupVersion{Group: "iam.grafana.app", Version: "v0alpha1"}
+	b := &searchRestrictedBuilder{
+		fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+		disabled:    []schema.GroupResource{{Group: gv.Group, Resource: "teams"}},
+	}
+	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{HybridEnabled: true}))
+	assert.NotContains(t, got[gv.String()], "teams/search")
+	assert.Contains(t, got[gv.String()], "users/search")
 }
 
 // Every namespaced kind in a served group gets the endpoint unless it opts out,

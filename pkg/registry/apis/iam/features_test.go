@@ -26,6 +26,11 @@ func TestParseAPIs(t *testing.T) {
 			want:   []API{APIRoles, APITeams},
 		},
 		{
+			name:   "parses list-only teams API",
+			values: []string{"teams-list-only"},
+			want:   []API{APITeamsListOnly},
+		},
+		{
 			name:   "parses read-only users API",
 			values: []string{"users-readonly"},
 			want:   []API{APIUsersReadOnly},
@@ -74,6 +79,17 @@ func TestFeaturesSetAPIsReplacesAPISurface(t *testing.T) {
 
 	require.Equal(t, []API{APITeams, APIUsers}, features.EnabledAPIs())
 	require.True(t, features.ZanzanaSync)
+}
+
+func TestFeaturesSetAPIsTeamsListOnly(t *testing.T) {
+	var features Features
+	features.SetAPIs([]API{APITeamsListOnly})
+	require.Equal(t, Features{TeamsAPI: true, TeamsAPIListOnly: true}, features)
+	require.Equal(t, []API{APITeamsListOnly}, features.EnabledAPIs())
+
+	features.SetAPIs([]API{APITeamsListOnly, APITeams})
+	require.Equal(t, Features{TeamsAPI: true}, features)
+	require.Equal(t, []API{APITeams}, features.EnabledAPIs())
 }
 
 func TestFeaturesSetAPIsUsersReadOnly(t *testing.T) {

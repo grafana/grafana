@@ -23,6 +23,7 @@ const (
 	APIResourcePermissions  API = "resourcepermissions"
 	APITeamLBACRules        API = "teamlbacrules"
 	APITeams                API = "teams"
+	APITeamsListOnly        API = "teams-list-only"
 	APIUsers                API = "users"
 	APIUsersReadOnly        API = "users-readonly"
 	APIServiceAccounts      API = "serviceaccounts"
@@ -40,6 +41,7 @@ var supportedAPIs = []API{
 	APIResourcePermissions,
 	APITeamLBACRules,
 	APITeams,
+	APITeamsListOnly,
 	APIUsers,
 	APIUsersReadOnly,
 	APIServiceAccounts,
@@ -57,6 +59,7 @@ type Features struct {
 	ResourcePermissionsAPI            bool
 	TeamLBACRulesAPI                  bool
 	TeamsAPI                          bool
+	TeamsAPIListOnly                  bool
 	UsersAPI                          bool
 	UsersAPIReadOnly                  bool
 	ServiceAccountsAPI                bool
@@ -224,7 +227,8 @@ func (f *Features) SetAPIs(apis []API) {
 	f.GlobalRolesAPI = slices.Contains(apis, APIGlobalRoles)
 	f.ResourcePermissionsAPI = slices.Contains(apis, APIResourcePermissions)
 	f.TeamLBACRulesAPI = slices.Contains(apis, APITeamLBACRules)
-	f.TeamsAPI = slices.Contains(apis, APITeams)
+	f.TeamsAPI = slices.Contains(apis, APITeams) || slices.Contains(apis, APITeamsListOnly)
+	f.TeamsAPIListOnly = slices.Contains(apis, APITeamsListOnly) && !slices.Contains(apis, APITeams)
 	f.UsersAPI = slices.Contains(apis, APIUsers) || slices.Contains(apis, APIUsersReadOnly)
 	f.UsersAPIReadOnly = slices.Contains(apis, APIUsersReadOnly) && !slices.Contains(apis, APIUsers)
 	f.ServiceAccountsAPI = slices.Contains(apis, APIServiceAccounts)
@@ -257,7 +261,9 @@ func featureForAPI(f Features, api API) bool {
 	case APITeamLBACRules:
 		return f.TeamLBACRulesAPI
 	case APITeams:
-		return f.TeamsAPI
+		return f.TeamsAPI && !f.TeamsAPIListOnly
+	case APITeamsListOnly:
+		return f.TeamsAPIListOnly
 	case APIUsers:
 		return f.UsersAPI && !f.UsersAPIReadOnly
 	case APIUsersReadOnly:

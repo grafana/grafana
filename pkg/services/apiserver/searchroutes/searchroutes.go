@@ -29,7 +29,8 @@ import (
 const namespacedScope = "Namespaced"
 
 type Options struct {
-	HybridEnabled bool
+	HybridEnabled     bool
+	disabledResources []schema.GroupResource
 }
 
 // Build returns the search, trash and hybrid routes to mount, or nil when all are off or
@@ -73,6 +74,11 @@ func BuildFromManifests(
 	installers []appsdkapiserver.AppInstaller,
 	opts Options,
 ) []builder.GroupVersionRoutes {
+	for _, b := range builders {
+		if provider, ok := b.(builder.APIGroupSearchRestrictor); ok {
+			opts.disabledResources = append(opts.disabledResources, provider.DisabledSearchResources()...)
+		}
+	}
 	builderManifests := builder.ManifestsFromBuilders(builders)
 	served := builder.ServedGroupVersions(builders, installers)
 	routes, err := BuildForServedGroupVersions(
@@ -82,7 +88,7 @@ func BuildFromManifests(
 		trashEnabled,
 		tracer,
 		index,
-		Options{},
+		Options{disabledResources: opts.disabledResources},
 	)
 	if err != nil {
 		panic(err.Error())
@@ -172,7 +178,7 @@ func BuildForServedGroupVersions(
 				}
 				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
-				if mounted[gvr] {
+				if mounted[gvr] || slices.Contains(opts.disabledResources, gvr.GroupResource()) {
 					continue
 				}
 				mounted[gvr] = true

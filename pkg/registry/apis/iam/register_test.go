@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"sync"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,12 +27,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/authn"
-	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -428,9 +430,8 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
-	storage := map[string]rest.Storage{
-		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
-	}
+	b.teamLister = &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo}
+	storage := map[string]rest.Storage{}
 
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
@@ -478,6 +479,65 @@ func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
 
 			_, registered := storage[iamv0.UserResourceInfo.StoragePath("teams")]
 			require.Equal(t, tt.wantRegistered, registered)
+		})
+	}
+}
+
+func TestUpdateAPIGroupInfo_TeamsListOnly(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		api      API
+		writable bool
+		legacy   bool
+	}{
+		{name: "list-only teams", api: APITeamsListOnly},
+		{name: "full teams", api: APITeams, writable: true},
+		{name: "full teams with a store without watch", api: APITeams, writable: true, legacy: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := &IdentityAccessManagementAPIBuilder{
+				teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+				apiConfig:            Config{SingleOrganization: true},
+				dual:                 dualwrite.NewMockService(t),
+				unified:              resource.NewMockResourceClient(t),
+				tracing:              tracing.InitializeTracerForTest(),
+				logger:               log.NewNopLogger(),
+			}
+			b.features.SetAPIs([]API{APIUsersReadOnly, APITeamLBACRules, tc.api})
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+			info := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{}}
+			opts := builder.APIGroupOptions{
+				Scheme: scheme, OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+				StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
+			}
+			if tc.legacy {
+				b.legacyTeamStore = team.NewLegacyStore(teamListFixture{}, nil, b.tracing, nil)
+				opts.DualWriteBuilder = func(_ schema.GroupResource, legacy, _ grafanarest.Storage) (grafanarest.Storage, error) {
+					return legacy, nil
+				}
+			}
+			require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+			stores := info.VersionedResourcesStorageMap[legacyiamv0.VERSION]
+			require.Contains(t, stores, "users")
+			require.Contains(t, stores, iamv0.TeamLBACRuleInfo.StoragePath("for-subject"))
+			require.Equal(t, !tc.writable, slices.Contains(b.DisabledSearchResources(), iamv0.TeamResourceInfo.GroupResource()))
+			teams := stores["teams"]
+			_, get := teams.(rest.Getter)
+			require.Equal(t, tc.writable, get)
+			require.Implements(t, (*rest.Lister)(nil), teams)
+			_, watch := teams.(rest.Watcher)
+			require.Equal(t, tc.writable && !tc.legacy, watch)
+			_, create := teams.(rest.Creater)
+			_, update := teams.(rest.Updater)
+			_, del := teams.(rest.GracefulDeleter)
+			require.Equal(t, tc.writable, create)
+			require.Equal(t, tc.writable, update)
+			require.Equal(t, tc.writable, del)
+			for _, path := range []string{"teams/members", "teams/addmember", "teams/removemember", "users/teams"} {
+				_, exists := stores[path]
+				require.Equal(t, tc.writable, exists, path)
+			}
 		})
 	}
 }

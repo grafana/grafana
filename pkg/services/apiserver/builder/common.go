@@ -87,6 +87,11 @@ type APIGroupRouteProvider interface {
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
+// APIGroupSearchRestrictor identifies resources whose manifest-based search routes must be omitted.
+type APIGroupSearchRestrictor interface {
+	DisabledSearchResources() []schema.GroupResource
+}
+
 // APIGroupResourceProvider lets a builder advertise the resources it serves to
 // hosts that discover per-kind routes from manifests.
 type APIGroupResourceProvider interface {

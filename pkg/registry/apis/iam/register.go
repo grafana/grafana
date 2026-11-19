@@ -616,16 +616,14 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires rule getter storage")
 	}
 
-	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
-	// Prefer the registered Team storage when present because it already
-	// reflects the configured dual-write mode; otherwise evaluate membership
-	// through the internal legacy Team store.
-	teamStorage := storage[iamv0.TeamResourceInfo.StoragePath()]
-	if teamStorage == nil && b.legacyTeamStore != nil {
-		teamStorage = b.legacyTeamStore
+	// LBAC reads full membership from the configured dual-write store because the
+	// public Team list can redact members. Single-tenant deployments can enable
+	// LBAC without serving the Team API. In that case, LBAC uses the legacy Team store.
+	teamLister := b.teamLister
+	if teamLister == nil && b.legacyTeamStore != nil {
+		teamLister = b.legacyTeamStore
 	}
-	teamLister, ok := teamStorage.(rest.Lister)
-	if !ok {
+	if teamLister == nil {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
 	}
 	// Kubernetes requires a separate storage-map entry for each named
@@ -655,30 +653,31 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 	// Team membership is sourced from team.spec.members; sync those changes
 	// to Zanzana from the Team hooks (TeamBinding is deprecated).
-	if enableZanzanaSync {
+	if enableZanzanaSync && !b.features.TeamsAPIListOnly {
 		b.logger.Info("Enabling hooks for Team to sync members to Zanzana")
 		teamUniStore.AfterCreate = b.AfterTeamCreate
 		teamUniStore.AfterDelete = b.AfterTeamDelete
 		teamUniStore.BeginUpdate = b.BeginTeamUpdate
 	}
 
-	storage[teamResource.StoragePath()] = teamUniStore
-	b.teamGetter = teamUniStore
-	teamStorage := rest.Storage(teamUniStore)
-
+	var teamStorage grafanarest.Storage = teamUniStore
 	if b.legacyTeamStore != nil {
-		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
+		teamStorage, err = opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
 		if err != nil {
 			return err
 		}
-
-		storage[teamResource.StoragePath()] = dw
-		teamStorage = dw
-		if getter, ok := dw.(rest.Getter); ok {
-			b.teamGetter = getter
-		}
 	}
 
+	b.teamGetter = teamStorage
+	b.teamLister = teamStorage
+	if b.features.TeamsAPIListOnly {
+		hiddenUsers := func(ctx context.Context) (map[string]struct{}, error) {
+			return user.ReadHiddenUsers(ctx, b.cfgProvider, b.settingService)
+		}
+		storage[teamResource.StoragePath()], err = team.NewListOnlyStore(teamStorage, b.accessClient, b.store, hiddenUsers)
+		return err
+	}
+	storage[teamResource.StoragePath()] = teamStorage
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
@@ -830,7 +829,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				)
 			}
 		}
-		if enableTeamsAPI {
+		if enableTeamsAPI && !b.features.TeamsAPIListOnly {
 			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),
 				user.NewLegacyUserTeamsBackend(b.store, b.tracing), user.NewUnifiedUserTeamsBackend(b.unified, b.teamGetter))
 			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(backends, b.tracing)
@@ -1148,10 +1147,18 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	return oas, nil
 }
 
+// DisabledSearchResources keeps the generic index routes from bypassing the Team list's roster check.
+func (b *IdentityAccessManagementAPIBuilder) DisabledSearchResources() []schema.GroupResource {
+	if b.features.TeamsAPIListOnly {
+		return []schema.GroupResource{iamv0.TeamResourceInfo.GroupResource()}
+	}
+	return nil
+}
+
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	enableTeamsApi := b.features.TeamsAPI
+	enableTeamsApi := b.features.TeamsAPI && !b.features.TeamsAPIListOnly
 	enableUserApi := b.isSingleOrgSetup() && b.features.UsersAPI
 	enableResourcePermissionsApi := b.features.ResourcePermissionsAPI
 	enableUserPermissionsApi := b.features.UserPermissionsAPI

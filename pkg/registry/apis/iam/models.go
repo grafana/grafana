@@ -33,6 +33,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupSearchRestrictor = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupValidation = (*IdentityAccessManagementAPIBuilder)(nil)
 var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -112,6 +113,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	sso ssosettings.Service
 
 	tracing tracing.Tracer
+
+	// LBAC evaluates membership against the underlying Team store.
+	teamLister rest.Lister
 
 	// Getters for existence validation during TeamBinding create
 	teamGetter rest.Getter

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -28,6 +29,43 @@ import (
 
 func TestIntegrationTeams(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationTeams)
+}
+
+func TestIntegrationTeamsListOnlyRoster(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationTeamsListOnlyRoster)
+}
+
+func testIntegrationTeamsListOnlyRoster(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Setenv("GF_IAM_API", "teams-list-only")
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs},
+	})
+	staff := helper.Org1.Staff
+	reader := helper.CreateUser("team-directory-reader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+		Actions: []string{accesscontrol.ActionTeamsRead}, Resource: "teams", ResourceAttribute: "uid", ResourceID: staff.UID,
+	}})
+	for _, tc := range []struct {
+		name string
+		user apis.User
+	}{
+		{"directory reader", reader},
+		{"Grafana admin", helper.Org1.Admin},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := helper.GetResourceClient(apis.ResourceClientArgs{User: tc.user, Namespace: helper.Namespacer(helper.Org1.OrgID), GVR: gvrTeams})
+			list, err := client.Resource.List(t.Context(), metav1.ListOptions{})
+			require.NoError(t, err)
+			idx := slices.IndexFunc(list.Items, func(item unstructured.Unstructured) bool { return item.GetName() == staff.UID })
+			require.NotEqual(t, -1, idx, "staff team missing from list")
+			spec := list.Items[idx].Object["spec"].(map[string]any)
+			require.NotContains(t, spec, "externalGroups")
+			members, found, err := unstructured.NestedSlice(spec, "members")
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Empty(t, members)
+		})
+	}
 }
 
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationTeams$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
