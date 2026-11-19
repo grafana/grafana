@@ -1636,20 +1636,60 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		require.Empty(t, store.deleted)
 	})
 
-	t.Run("a service deleting the folder is not checked", func(t *testing.T) {
+	// serviceCtx is the cascade controller's caller: an access policy, which holds no folder
+	// permissions, so its access checks all fail.
+	serviceCtx := func() context.Context {
+		return identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"),
+			&identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "access-policy:grafana", Namespace: "default"})
+	}
+	// subfolderOf builds a store holding a finalizer subfolder under a parent, terminating or not.
+	subfolderOf := func(terminatingParent bool) *fakeFolderStorage {
+		parent := newFolder("parent")
+		parent.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+		if terminatingParent {
+			now := metav1.Now()
+			parent.DeletionTimestamp = &now
+		}
+		child := newFolder("child")
+		child.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+		child.Annotations = map[string]string{utils.AnnoKeyFolder: "parent"}
+		return &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"parent": parent, "child": child}}
+	}
+
+	t.Run("a service deleting a subfolder of a terminating folder is not checked", func(t *testing.T) {
 		// The controller deletes subfolders as the service, carrying out a delete that was authorized
 		// when the root was requested, and a service holds no folder permissions to check.
+		setKubernetesFolderCascadeDeleteToggle(t, false)
+		store := subfolderOf(true)
+		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
+
+		_, _, err := s.Delete(serviceCtx(), "child", nil, forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, []string{"child"}, store.deleted)
+		require.Empty(t, access.checks)
+	})
+
+	t.Run("a service deleting a root folder is checked like a user", func(t *testing.T) {
 		setKubernetesFolderCascadeDeleteToggle(t, false)
 		store := newStore()
 		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
 		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
-		ctx := identity.WithRequester(apirequest.WithNamespace(context.Background(), "default"),
-			&identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "access-policy:grafana", Namespace: "default"})
 
-		_, _, err := s.Delete(ctx, "root", nil, forceDelete())
-		require.NoError(t, err)
-		require.Equal(t, []string{"root"}, store.deleted)
-		require.Empty(t, access.checks)
+		_, _, err := s.Delete(serviceCtx(), "root", nil, forceDelete())
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Empty(t, store.deleted)
+	})
+
+	t.Run("a service deleting a subfolder of a folder that is not terminating is checked", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, false)
+		store := subfolderOf(false)
+		access := &recordingAccessClient{allow: func(authlib.CheckRequest, string) bool { return false }}
+		s := &cascadeDeleteStorage{Storage: store, accessClient: access}
+
+		_, _, err := s.Delete(serviceCtx(), "child", nil, forceDelete())
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.Empty(t, store.deleted)
 	})
 }
 

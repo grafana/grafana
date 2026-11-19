@@ -124,10 +124,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 			return nil, false, err
 		}
 		parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
-		// The check is for the user asking for the delete. A service deleting a subfolder is the
-		// controller carrying out a delete that was authorized when it was requested, and it has no
-		// folder permissions of its own to be checked against.
-		if !user.IsIdentityType(authlib.TypeAccessPolicy) {
+		if !s.isCascadeSubfolderDelete(ctx, user, parentUID) {
 			if err := s.checkFolderContentsAccess(ctx, user, ns.Value, name, parentUID); err != nil {
 				return nil, false, err
 			}
@@ -472,6 +469,22 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			return names, nil
 		}
 	}
+}
+
+// isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a folder whose
+// cascade is under way, which is the cascade controller carrying out a delete that was authorized
+// when the root was requested. The service has no folder permissions of its own to check against,
+// so only this case is exempt; a service deleting any other folder is checked like a user.
+func (s *cascadeDeleteStorage) isCascadeSubfolderDelete(ctx context.Context, user identity.Requester, parentUID string) bool {
+	if parentUID == "" || !user.IsIdentityType(authlib.TypeAccessPolicy) {
+		return false
+	}
+	obj, err := s.Get(ctx, parentUID, &metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	parent, ok := obj.(*foldersv1.Folder)
+	return ok && parent.DeletionTimestamp != nil && hasCascadeDeleteFinalizer(parent)
 }
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
