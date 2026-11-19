@@ -114,10 +114,11 @@ type alertRule struct {
 	key                ngmodels.AlertRuleKeyWithGroup
 	currentFingerprint fingerprint
 
-	evalCh   chan *Evaluation
-	updateCh chan *Evaluation
-	ctx      context.Context
-	stopFn   util.CancelCauseFunc
+	evalCh    chan *Evaluation
+	updateCh  chan *Evaluation
+	ctx       context.Context
+	parentCtx context.Context
+	stopFn    util.CancelCauseFunc
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
@@ -165,6 +166,7 @@ func newAlertRule(
 		evalCh:               make(chan *Evaluation),
 		updateCh:             make(chan *Evaluation),
 		ctx:                  ctx,
+		parentCtx:            parent,
 		stopFn:               stop,
 		appURL:               appURL,
 		disableGrafanaFolder: disableGrafanaFolder,
@@ -382,6 +384,10 @@ func (a *alertRule) Run() error {
 			defer cancelFunc()
 
 			a.logger.Info("Stopping alert rule routine", "reason", reason)
+			// Preserve the cache for the final state sync, which runs concurrently with scheduler shutdown.
+			if a.parentCtx.Err() != nil {
+				return nil
+			}
 			if errors.Is(reason, errRuleDeleted) {
 				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
 				// the evaluation loop is that the rule was deleted.

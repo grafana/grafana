@@ -1,21 +1,36 @@
 package store
 
 import (
+	"context"
 	"math"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 )
+
+func TestProtoInstanceDBStore_ShutdownWithEmptyCache(t *testing.T) {
+	// A nil SQLStore ensures an empty shutdown snapshot never accesses the database.
+	cfg := state.ManagerCfg{InstanceStore: ProtoInstanceDBStore{}, Log: log.NewNopLogger()}
+	persister := state.NewAsyncRuleStatePersister(cfg.Log, clock.New(), time.Hour, cfg)
+	manager := state.NewManager(cfg, persister)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	require.NoError(t, manager.Run(ctx))
+}
 
 func TestTruncate(t *testing.T) {
 	tests := []struct {
