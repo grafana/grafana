@@ -3,11 +3,12 @@ import { defer, distinctUntilChanged, filter, finalize, from, map, type Observab
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
+import { findKind } from 'app/core/kinds/coreKinds';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
 import { invalidateStarredSearchFor } from './api';
-import { findStarredKind, isGrafanaKind, loadStarredKinds, type StarredKind } from './kinds';
+import { findStarredKind, loadStarredKinds, type StarredKind } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /**
@@ -78,7 +79,7 @@ export class CollectionsStarsSrv implements StarsSrv {
 
   /** The starrable kind behind group/kind. App kinds are discovered first; Grafana's own need no discovery. */
   private async starredKindFor(group: string, kind: string): Promise<StarredKind | undefined> {
-    if (!isGrafanaKind(group, kind)) {
+    if (!findKind(group, kind)) {
       await loadStarredKinds();
     }
     return findStarredKind(group, kind);

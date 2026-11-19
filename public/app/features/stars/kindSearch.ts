@@ -1,5 +1,6 @@
 import { chunk } from 'lodash';
 
+import { locationUtil } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
 import {
@@ -103,7 +104,8 @@ export async function searchStarredHits(
       description: typeof fields.description === 'string' ? fields.description : '',
       tags: Array.isArray(fields.tags) ? fields.tags.filter((tag): tag is string => typeof tag === 'string') : [],
       field: {},
-      url: kind.url(name),
+      // A kind's route leaves out the app sub path, which a link carries
+      url: locationUtil.assureBaseUrl(kind.getRoute(name)),
     };
   });
 }

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { useStarredSearch } from 'app/features/stars/hooks';
-import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
+import { findStarredKindBySearchKind, getStarredKinds } from 'app/features/stars/kinds';
 import { useSelector } from 'app/types/store';
 
 import { NavID, STARRED_ID_PREFIX } from './constants';
@@ -23,6 +23,8 @@ export function useNavTree(): NavModelItem[] {
     if (!rows) {
       return [];
     }
+    // The kinds are listed in display order, so a kind's place in the list is its rows' place in the nav
+    const kinds = getStarredKinds();
     return (
       rows
         // The rows are of starred kinds already; the lookup is for the icon and the sort group
@@ -30,7 +32,7 @@ export function useNavTree(): NavModelItem[] {
           const kind = findStarredKindBySearchKind(row.kind);
           return kind ? [{ kind, row }] : [];
         })
-        .sort((a, b) => a.kind.sortWeight - b.kind.sortWeight || collator.compare(a.row.name, b.row.name))
+        .sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || collator.compare(a.row.name, b.row.name))
         .map(
           ({ kind, row }): NavModelItem => ({
             // A dashboard and a folder may share a uid, so the kind is part of the identity

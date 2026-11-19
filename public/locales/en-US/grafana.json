@@ -17161,10 +17161,6 @@
     }
   },
   "stars": {
-    "kinds": {
-      "dashboard": "Dashboard",
-      "folder": "Folder"
-    },
     "mark-as-starred": "Mark as favorite",
     "mark-as-starred-with-title": "Mark \"{{title}}\" as favorite",
     "unmark-as-starred": "Unmark as favorite",

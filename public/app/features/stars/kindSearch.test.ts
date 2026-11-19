@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { getKindSearchHandler, kindSearchRoute, type MockServedKind } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -29,14 +30,13 @@ const THING_HIT = {
 const starredKindOf = ({ group, kind, version, plural }: MockServedKind): KindSearchStarredKind => ({
   group,
   kind,
+  resource: plural,
   searchKind: `${group}/${kind}`,
-  title: () => kind,
+  getLabel: () => kind,
   icon: 'cube',
-  sortWeight: 2,
+  getRoute: (name) => `/a/test-${plural}-app/${plural}/${name}`,
   source: 'kind-search',
   version,
-  resource: plural,
-  url: (name) => `/a/test-${plural}-app/${plural}/${name}`,
 });
 
 describe('searchStarredHits', () => {
@@ -124,6 +124,27 @@ describe('searchStarredHits', () => {
       { ...THING_HIT, title: 'CPU saturation', folder: 'f1', description: 'Hot nodes', tags: ['prod'] },
       { ...THING_HIT, name: 't2', title: 't2', url: '/a/test-things-app/things/t2' },
     ]);
+  });
+
+  it('links to the page under the app sub url', async () => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getTimeRangeForUrl: jest.fn(),
+      getVariablesUrlParams: jest.fn(),
+    });
+    server.use(getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: 't1', title: 'Thing 1' }]));
+
+    try {
+      expect(await searchStarredHits(thing, ['t1'])).toEqual([
+        { ...THING_HIT, url: '/grafana/a/test-things-app/things/t1' },
+      ]);
+    } finally {
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getTimeRangeForUrl: jest.fn(),
+        getVariablesUrlParams: jest.fn(),
+      });
+    }
   });
 
   it('warns and resolves to nothing when the kind has no search route', async () => {

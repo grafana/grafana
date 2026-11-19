@@ -454,14 +454,10 @@ function makeTypeColumn(
       let txt = kind;
       // The kind table names the kinds in the search index and the stars registry the app kinds; a panel's
       // name comes from its plugin, and anything else shows its kind
-      const coreKind = findKindBySearchKind(kind);
-      const starredKind = findStarredKindBySearchKind(kind);
-      if (coreKind) {
-        txt = coreKind.getLabel();
-        icon = coreKind.icon;
-      } else if (starredKind) {
-        txt = starredKind.title();
-        icon = starredKind.icon;
+      const kindInfo = findKindBySearchKind(kind) ?? findStarredKindBySearchKind(kind);
+      if (kindInfo) {
+        txt = kindInfo.getLabel();
+        icon = kindInfo.icon;
       } else if (kind === 'panel') {
         icon = `${PluginIconName.panel}`;
         const type = typeField.values[i];

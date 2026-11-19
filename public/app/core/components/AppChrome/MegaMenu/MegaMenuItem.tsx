@@ -144,7 +144,7 @@ export function MegaMenuItem({
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
   // as two identical links to screen readers. Other icons stay untitled (and thus aria-hidden):
   // level-0 section icons must, or they double-announce the label.
-  const starredLeafIconTitle = link.starredKind ? findStarredKindBySearchKind(link.starredKind)?.title() : undefined;
+  const starredLeafIconTitle = link.starredKind ? findStarredKindBySearchKind(link.starredKind)?.getLabel() : undefined;
 
   let iconElement: React.JSX.Element | null = null;
 

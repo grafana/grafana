@@ -43,17 +43,17 @@ describe('getStarredKinds', () => {
     expect(getStarredKinds().map((kind) => kind.searchKind)).toEqual(['dashboard', 'folder']);
   });
 
-  it('lists dashboards, folders, then the app kinds in discovery order with increasing ranks', async () => {
+  it('lists dashboards, folders, then the app kinds in discovery order', async () => {
     setNavTree(MOCK_STARRED_KIND_PAGE, { id: 'widgets', text: 'Widgets', url: '/a/test-widgets-app/widgets' });
     server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED, WIDGETS_SERVED));
 
     await loadStarredKinds();
 
-    expect(getStarredKinds().map((kind) => [kind.searchKind, kind.sortWeight, kind.source])).toEqual([
-      ['dashboard', 0, 'dashboard-search'],
-      ['folder', 1, 'dashboard-search'],
-      [THING, 2, 'kind-search'],
-      ['widgets.ext.grafana.app/Widget', 3, 'kind-search'],
+    expect(getStarredKinds().map((kind) => [kind.searchKind, kind.source])).toEqual([
+      ['dashboard', 'dashboard-search'],
+      ['folder', 'dashboard-search'],
+      [THING, 'kind-search'],
+      ['widgets.ext.grafana.app/Widget', 'kind-search'],
     ]);
   });
 });
@@ -70,7 +70,7 @@ describe('loadStarredKinds', () => {
       version: 'v1alpha1',
       resource: 'things',
     });
-    expect(thing?.title()).toBe('Thing');
+    expect(thing?.getLabel()).toBe('Thing');
     expect(findStarredKindBySearchKind('panel')).toBeUndefined();
   });
 
@@ -91,20 +91,27 @@ describe('loadStarredKinds', () => {
   });
 
   it("never turns Grafana's own kinds into app kinds, even when a plugin page ends in their plural", async () => {
-    setNavTree(MOCK_STARRED_KIND_PAGE, { id: 'dash', text: 'Dashboards', url: '/a/test-things-app/dashboards' });
+    setNavTree(
+      MOCK_STARRED_KIND_PAGE,
+      { id: 'dash', text: 'Dashboards', url: '/a/test-things-app/dashboards' },
+      { id: 'play', text: 'Playlists', url: '/a/test-things-app/playlists' }
+    );
     server.use(
-      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED, {
-        group: 'dashboard.grafana.app',
-        version: 'v1beta1',
-        kind: 'Dashboard',
-        plural: 'dashboards',
-      })
+      getKindDiscoveryHandler(
+        MOCK_STARRED_KIND_SERVED,
+        { group: 'dashboard.grafana.app', version: 'v1beta1', kind: 'Dashboard', plural: 'dashboards' },
+        // A core kind Grafana shows no stars of
+        { group: 'playlist.grafana.app', version: 'v1', kind: 'Playlist', plural: 'playlists' }
+      )
     );
 
     await loadStarredKinds();
 
-    expect(getStarredKinds().filter((kind) => kind.kind === 'Dashboard')).toHaveLength(1);
-    expect(findStarredKindBySearchKind('dashboard')?.source).toBe('dashboard-search');
+    expect(getStarredKinds().map((kind) => [kind.searchKind, kind.source])).toEqual([
+      ['dashboard', 'dashboard-search'],
+      ['folder', 'dashboard-search'],
+      [THING, 'kind-search'],
+    ]);
   });
 
   it('ignores the app sub url, a query string and a trailing slash on the plugin page', async () => {
@@ -121,7 +128,8 @@ describe('loadStarredKinds', () => {
       if (thing?.source !== 'kind-search') {
         throw new Error('the Thing kind was not discovered as an app kind');
       }
-      expect(thing.url('a b/c')).toBe('/grafana/a/test-things-app/things/a%20b%2Fc');
+      // The route leaves the app sub url to the link built from it
+      expect(thing.getRoute('a b/c')).toBe('/a/test-things-app/things/a%20b%2Fc');
     } finally {
       locationUtil.initialize({
         config: { appSubUrl: '' } as GrafanaConfig,
