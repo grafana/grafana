@@ -110,9 +110,8 @@ case "$mode" in
       postgres)
         export POSTGRES_HOST=127.0.0.1 PGPASSWORD=grafanatest
         make devenv sources=postgres_tests
-        connection=(-p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest)
-        wait_for_database psql "${connection[@]}" -c 'SELECT 1'
-        psql "${connection[@]}" -v ON_ERROR_STOP=1 -f devenv/docker/blocks/postgres_tests/setup.sql
+        # The container initializes this fixture database before serving TCP.
+        wait_for_database psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanadstest -c 'SELECT 1'
         exec bash "$script" "$@"
         ;;
     esac
