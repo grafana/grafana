@@ -39,6 +39,8 @@ export interface NavModelItem extends NavLinkDTO {
   tabSuffix?: ComponentType<{ className?: string }>;
   tabCounter?: number;
   hideFromBreadcrumbs?: boolean;
+  /** Shows the item in breadcrumbs as plain text, without a link to it */
+  noBreadcrumbLink?: boolean;
   emptyMessage?: string;
 }
 

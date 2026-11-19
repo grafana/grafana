@@ -1,17 +1,6 @@
 import { locationUtil, type NavModelItem } from '@grafana/data';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { NavID } from 'app/core/navtree/constants';
 
 import { type Breadcrumb } from './types';
-
-// With the Administration section nav, these overview pages are replaced by it, so a breadcrumb
-// names them without taking the user back to one
-const ADMIN_OVERVIEW_IDS = new Set<string>([NavID.cfg, NavID.cfgAccess, NavID.cfgPlugins]);
-
-const isAdminOverview = (node: NavModelItem) =>
-  node.id !== undefined &&
-  ADMIN_OVERVIEW_IDS.has(node.id) &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNavigationAdminSubNav, false);
 
 export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [];
@@ -55,7 +44,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       }
       crumbs.unshift({
         text: node.text,
-        ...(isAdminOverview(node) ? {} : { href: locationUtil.assureBaseUrl(node.url ?? '') }),
+        ...(node.noBreadcrumbLink ? {} : { href: locationUtil.assureBaseUrl(node.url ?? '') }),
         ...(node.highlightText ? { highlightText: node.highlightText } : {}),
       });
     }

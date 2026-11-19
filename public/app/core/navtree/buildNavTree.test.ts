@@ -841,6 +841,23 @@ describe('getInitialNavTree', () => {
       expect(findById(tree, NavID.cfgAccess)?.hideFromBreadcrumbs).toBeUndefined();
     });
 
+    it('shows the overview pages in breadcrumbs without a link, and nothing else', () => {
+      withBootdata(administration());
+
+      const tree = getInitialNavTree();
+
+      expect(findById(tree, NavID.cfg)?.noBreadcrumbLink).toBe(true);
+      expect(findById(tree, NavID.cfgAccess)?.noBreadcrumbLink).toBe(true);
+      expect(findById(tree, 'org-settings')?.noBreadcrumbLink).toBeUndefined();
+      expect(findById(tree, NavID.cfgGeneral)?.noBreadcrumbLink).toBeUndefined();
+    });
+
+    it('leaves the overview pages linked when the toggle is off', () => {
+      withBootdata(administration(), false);
+
+      expect(findById(getInitialNavTree(), NavID.cfg)?.noBreadcrumbLink).toBeUndefined();
+    });
+
     it('lands on the first destination the section nav lists when there is no Default preferences', () => {
       const tree = administration();
       const general = tree[0].children?.find((child) => child.id === NavID.cfgGeneral);
