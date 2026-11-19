@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -55,7 +56,7 @@ func ReportOwners(t *testing.T, paths ...string) {
 				return
 			}
 		}
-		if !t.Failed() {
+		if !t.Failed() && !panicking() {
 			return
 		}
 		if isSubtest {
@@ -73,6 +74,23 @@ func ReportOwnersNow(t *testing.T, paths ...string) {
 	root, _, _ := strings.Cut(t.Name(), "/")
 	reported.Store(root, true)
 	logOwners(t, paths)
+}
+
+// panicking reports whether the caller runs while a panic unwinds. The testing package runs the
+// cleanups of a test that panicked before it marks the test failed, and a cleanup cannot
+// recover the panic, so t.Failed() alone would skip the report of a panicking test.
+func panicking() bool {
+	pcs := make([]uintptr, 32)
+	frames := runtime.CallersFrames(pcs[:runtime.Callers(2, pcs)])
+	for {
+		frame, more := frames.Next()
+		if frame.Function == "runtime.gopanic" {
+			return true
+		}
+		if !more {
+			return false
+		}
+	}
 }
 
 func logOwners(t *testing.T, paths []string) {
