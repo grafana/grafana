@@ -4,20 +4,13 @@ import { render } from 'test/test-utils';
 import { locationService } from '@grafana/runtime';
 
 import { RealDrilldownPage } from './RealDrilldownPage';
-import { type Hint, type ScopeData, type ServiceSummary, setOverview } from './liveScenario';
+import { type Hint, type ScopeData, setOverview } from './liveScenario';
 import { loadScope } from './loadScenario';
+import { loadServiceCharts } from './serviceCharts';
 import { emptyOverview, emptyScopeData } from './testFixtures';
 
 jest.mock('./loadScenario', () => ({ loadScope: jest.fn() }));
-
-const service = (name: string): ServiceSummary => ({
-  name,
-  health: 'healthy',
-  p95: 'n/a',
-  errorRate: 'n/a',
-  trend: [],
-  lastDeploy: '',
-});
+jest.mock('./serviceCharts', () => ({ loadServiceCharts: jest.fn() }));
 
 const checkoutHint: Hint = {
   id: 'errors-checkout',
@@ -63,14 +56,17 @@ beforeEach(() => {
   setOverview({
     ...emptyOverview,
     hints: [checkoutHint],
-    services: [service('cart'), service('checkout')],
+    services: ['cart', 'checkout'],
     scopeValues: { service: ['cart', 'checkout'], environment: [], namespace: ['shop'] },
   });
   jest.mocked(loadScope).mockResolvedValue(scopeData('shop'));
+  // The charts stay loading, so no state update lands outside the test.
+  jest.mocked(loadServiceCharts).mockReturnValue(new Promise(() => {}));
 });
 
 afterEach(() => {
   jest.mocked(loadScope).mockReset();
+  jest.mocked(loadServiceCharts).mockReset();
   setOverview(emptyOverview);
 });
 

@@ -19,6 +19,7 @@ import { DrilldownScopeSummary } from './components/DrilldownScopeSummary';
 import { DrilldownServices } from './components/DrilldownServices';
 import { DrilldownSignals } from './components/DrilldownSignals';
 import { DrilldownTimeControls } from './components/DrilldownTimeControls';
+import { EnvironmentSelect } from './components/EnvironmentSelect';
 import { NotMeasuredNotice } from './components/NotMeasuredNotice';
 import { type AppKey, type Hint, HINTS, NOTES, type Scope, setScopeData } from './liveScenario';
 import { loadScope } from './loadScenario';
@@ -161,8 +162,15 @@ export function RealDrilldownPage() {
       navId={hasNav ? 'drilldown' : undefined}
       navModel={hasNav ? undefined : getFallbackNavModel()}
       renderTitle={renderDrilldownTitle}
-      // What could not be measured sits in the header as an icon, so it takes no room from the page.
-      actions={phase.kind === 'hints' ? <NotMeasuredNotice notes={NOTES} /> : undefined}
+      // The environment filter and what could not be measured sit in the header, so they take no room from the page.
+      actions={
+        phase.kind === 'hints' ? (
+          <Stack alignItems="flex-start" gap={1}>
+            <EnvironmentSelect />
+            <NotMeasuredNotice notes={NOTES} />
+          </Stack>
+        ) : undefined
+      }
     >
       <Page.Contents>
         {loadError && (
@@ -205,7 +213,7 @@ export function RealDrilldownPage() {
             {/* Extra space below the input separates asking from browsing. */}
             <Box paddingTop={2}>
               <Stack direction="column" gap={4}>
-                <DrilldownServices onPick={onPickScope} />
+                <DrilldownServices onPick={onPickScope} appUrls={appUrls} />
                 <DrilldownSignals appUrls={appUrls} />
               </Stack>
             </Box>

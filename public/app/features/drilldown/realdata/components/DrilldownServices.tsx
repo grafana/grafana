@@ -1,31 +1,46 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, formattedValueToString, getValueFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Button, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
+import { Button, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { getUrlDataSource } from '../../dataSources';
+import { getUrlEnvironment } from '../../environment';
+import { appServiceUrl } from '../appLinks';
 import {
+  type AppKey,
+  NOTES,
+  SCOPE_VALUES,
+  SPAN_METRICS,
   type Scope,
   type ScopeType,
-  SCOPE_VALUES,
-  type ServiceSummary,
-  TREND_MAX,
   YOUR_SERVICES,
 } from '../liveScenario';
+import { type ChartState, type ServiceCharts, loadServiceCharts } from '../serviceCharts';
 
-import { TrendSparkline } from './TrendSparkline';
+import { getAppNames } from './DrilldownInsights';
+import { ServiceChart } from './ServiceChart';
+import { ServiceStat } from './ServiceStat';
+import { emptyText } from './emptyText';
+
+// The list starts with this many services, and each click on the button adds this many more.
+const PAGE_SIZE = 4;
+
+// A value from a data source can hold a slash. React escapes text when it draws it, so i18next leaves values as they are.
+const RAW = { interpolation: { escapeValue: false } };
 
 interface Props {
   onPick: (scope: Scope) => void;
+  appUrls: Partial<Record<AppKey, string>>;
 }
 
 // Scope without a hint or a question: a service you know, or any service, environment or namespace.
-export function DrilldownServices({ onPick }: Props) {
+export function DrilldownServices({ onPick, appUrls }: Props) {
   const styles = useStyles2(getStyles);
   const [browsing, setBrowsing] = useState(false);
   const [scopeType, setScopeType] = useState<ScopeType>('service');
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   const scopeTypeOptions: Array<ComboboxOption<ScopeType>> = [
     { value: 'service', label: t('drilldown-real.services.scope-service', 'Service') },
@@ -63,78 +78,163 @@ export function DrilldownServices({ onPick }: Props) {
           </Button>
         )}
       </Stack>
-      <div className={styles.grid}>
-        {/* The knowledge graph lists a service once per environment, so a name repeats. The list never reorders, so
-            the position tells the cards apart. */}
-        {YOUR_SERVICES.map((service, index) => (
-          <ServiceCard key={index} service={service} onClick={() => onPick({ type: 'service', value: service.name })} />
+      {YOUR_SERVICES.length === 0 && <Text color="secondary">{emptyMessage(getUrlEnvironment())}</Text>}
+      <div className={styles.rows}>
+        {YOUR_SERVICES.slice(0, visible).map((service) => (
+          <ServiceRow
+            key={service}
+            service={service}
+            appUrls={appUrls}
+            onPick={() => onPick({ type: 'service', value: service })}
+          />
         ))}
       </div>
+      {visible < YOUR_SERVICES.length && (
+        <div>
+          <Button variant="secondary" onClick={() => setVisible((count) => count + PAGE_SIZE)}>
+            {t('drilldown-real.services.show-more', 'Show {{number}} more', { number: PAGE_SIZE })}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
 
-function ServiceCard({ service, onClick }: { service: ServiceSummary; onClick: () => void }) {
-  const styles = useStyles2(getStyles);
-  const degraded = service.health === 'degraded';
-  // A service the knowledge graph lists can have no span metrics, and then its numbers are not measured.
-  const measured = service.p95 !== 'n/a' || service.errorRate !== 'n/a';
-
-  return (
-    <button type="button" className={styles.card} onClick={onClick}>
-      <span className={styles.cardHead}>
-        <Text weight="medium">{service.name}</Text>
-        <Badge
-          color={degraded ? 'red' : 'green'}
-          text={
-            degraded
-              ? t('drilldown-real.services.degraded', 'Degraded')
-              : t('drilldown-real.services.healthy', 'Healthy')
-          }
-        />
-      </span>
-      {service.entity && (
-        <Text variant="bodySmall" color="secondary">
-          {[service.entity.env, service.entity.namespace, service.entity.serviceType].filter(Boolean).join(' · ')}
-        </Text>
-      )}
-      <span className={styles.stats}>
-        {service.entity && (
-          <Stat
-            label={t('drilldown-real.services.insights', 'Insights')}
-            value={String(service.entity.insights)}
-            alert={degraded}
-          />
-        )}
-        {measured && (
-          <>
-            <Stat label={t('drilldown-real.services.p95', 'p95')} value={service.p95} alert={degraded} />
-            <Stat label={t('drilldown-real.services.errors', 'Errors')} value={service.errorRate} alert={degraded} />
-          </>
-        )}
-      </span>
-      {measured && (
-        <>
-          <TrendSparkline values={service.trend} color={degraded ? 'red' : 'green'} height={28} max={TREND_MAX} />
-          <Text variant="bodySmall" color="secondary">
-            {t('drilldown-real.services.last-deploy', 'Version {{deploy}}', { deploy: service.lastDeploy })}
-          </Text>
-        </>
-      )}
-    </button>
-  );
+// A traces data source that did not answer says nothing about the services, so the list says it was not measured.
+function emptyMessage(environment: string | undefined) {
+  if (NOTES.some((note) => note.source === 'traces')) {
+    return t('drilldown-real.services.not-measured', 'Not measured: see the notice in the header');
+  }
+  return environment
+    ? t(
+        'drilldown-real.services.none-in-environment',
+        'No services found in traces for {{environment}} in the last 30 minutes',
+        { environment, ...RAW }
+      )
+    : t('drilldown-real.services.none', 'No services found in traces in the last 30 minutes');
 }
 
-function Stat({ label, value, alert }: { label: string; value: string; alert: boolean }) {
+// What the chart's selector matched in its data source, which a chart that found nothing still knows.
+const matchedValue = (state: ChartState | undefined) =>
+  state?.kind === 'data' || state?.kind === 'empty' ? state.value : undefined;
+
+const formatMs = (value: number) => formattedValueToString(getValueFormat('ms')(value));
+
+const formatCount = (value: number) =>
+  formattedValueToString(getValueFormat('short')(value, value >= 10 || Number.isInteger(value) ? 0 : 1));
+
+const formatCores = (value: number) => String(Number(value.toFixed(2)));
+
+interface RowProps {
+  service: string;
+  appUrls: Props['appUrls'];
+  onPick: () => void;
+}
+
+// A row asks for its charts when it shows, so only the services on the page cost queries.
+function ServiceRow({ service, appUrls, onPick }: RowProps) {
+  const styles = useStyles2(getStyles);
+  const apps = getAppNames();
+  const [charts, setCharts] = useState<ServiceCharts>();
+  const environment = getUrlEnvironment();
+
+  useEffect(() => {
+    let cancelled = false;
+    loadServiceCharts(service, environment).then((loaded) => {
+      if (!cancelled) {
+        setCharts(loaded);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [service, environment]);
+
+  // Each app takes the name its own data source uses. Logs and Profiles have it once their query has looked it up, and
+  // a service with no such name has no link there.
+  const logsValue = matchedValue(charts?.logs);
+  const profilesValue = matchedValue(charts?.profiles);
+  const open = (app: AppKey, name: string | undefined) =>
+    name === undefined ? undefined : appServiceUrl(app, appUrls[app], name, SPAN_METRICS.service);
+  const subject = { service, environment };
+  const from = (value: string | undefined) => (value && value !== service ? value : undefined);
+  const sql: ChartState = getUrlDataSource('sql') ? { kind: 'empty' } : { kind: 'no-source' };
+
   return (
-    <span>
-      <Text variant="bodySmall" color="secondary">
-        {label}{' '}
-      </Text>
-      <Text variant="body" weight="medium" color={alert ? 'error' : 'primary'}>
-        {value}
-      </Text>
-    </span>
+    <div className={styles.row}>
+      <div>
+        <Button variant="secondary" fill="text" onClick={onPick}>
+          {service}
+        </Button>
+      </div>
+      <div className={styles.molecule}>
+        <div className={styles.traces}>
+          <ServiceChart
+            icon="gf-traces"
+            title={apps.traces}
+            subtitle={t('drilldown-real.services.traces-subtitle', 'Requests per minute by status')}
+            state={charts?.traces}
+            emptyText={emptyText('traces', charts?.traces, subject)}
+            openLabel={t('drilldown-real.services.view-traces', 'View traces')}
+            openUrl={open('traces', service)}
+          />
+        </div>
+        <ServiceStat
+          icon="chart-line"
+          title={apps.metrics}
+          caption={t('drilldown-real.services.metrics-caption', 'p95 latency')}
+          state={charts?.metrics}
+          format={formatMs}
+          emptyText={emptyText('metrics', charts?.metrics, subject)}
+          appName={apps.metrics}
+          openUrl={open('metrics', service)}
+        />
+        <ServiceStat
+          icon="gf-logs"
+          title={apps.logs}
+          caption={
+            from(logsValue)
+              ? t('drilldown-real.services.logs-caption-from', 'Error lines per minute, from {{value}}', {
+                  value: logsValue,
+                  ...RAW,
+                })
+              : t('drilldown-real.services.logs-caption', 'Error lines per minute')
+          }
+          state={charts?.logs}
+          format={formatCount}
+          tone={(value) => (value > 0 ? 'error' : 'neutral')}
+          emptyText={emptyText('logs', charts?.logs, subject)}
+          appName={apps.logs}
+          openUrl={open('logs', logsValue)}
+        />
+        <ServiceStat
+          icon="fire"
+          title={apps.profiles}
+          caption={
+            from(profilesValue)
+              ? t('drilldown-real.services.profiles-caption-from', 'CPU cores, from {{value}}', {
+                  value: profilesValue,
+                  ...RAW,
+                })
+              : t('drilldown-real.services.profiles-caption', 'CPU cores')
+          }
+          state={charts?.profiles}
+          format={formatCores}
+          emptyText={emptyText('profiles', charts?.profiles, subject)}
+          appName={apps.profiles}
+          openUrl={open('profiles', profilesValue)}
+        />
+        <ServiceStat
+          icon="database"
+          title={apps.sql}
+          caption={t('drilldown-real.services.sql-caption', 'Slow queries per minute')}
+          state={sql}
+          format={String}
+          emptyText={t('drilldown-real.services.sql-not-measured', 'Not measured: nothing queries SQL yet')}
+          appName={apps.sql}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -144,35 +244,34 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(1.5),
   }),
-  grid: css({
-    display: 'grid',
-    gap: theme.spacing(2),
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  rows: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(3),
   }),
-  card: css({
+  row: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    padding: theme.spacing(1.5, 2),
-    textAlign: 'left',
-    color: 'inherit',
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    cursor: 'pointer',
-    '&:hover': {
-      borderColor: theme.colors.border.strong,
-    },
-    '&:focus-visible': getFocusStyles(theme),
   }),
-  cardHead: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  stats: css({
-    display: 'flex',
+  // The traces panel stands left over two rows of cards, as in the design.
+  molecule: css({
+    display: 'grid',
     gap: theme.spacing(2),
+    gridTemplateColumns: 'minmax(0, 2fr) repeat(2, minmax(0, 1fr))',
+    [theme.breakpoints.down('lg')]: {
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    },
+    [theme.breakpoints.down('sm')]: {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+    },
+  }),
+  traces: css({
+    gridRow: 'span 2',
+    minWidth: 0,
+    [theme.breakpoints.down('lg')]: {
+      gridColumn: '1 / -1',
+      gridRow: 'auto',
+    },
   }),
 });

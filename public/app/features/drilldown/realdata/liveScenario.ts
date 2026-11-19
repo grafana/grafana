@@ -4,6 +4,7 @@
 import { type Signal } from '../dataSources';
 
 import { type KgEntity } from './kgEntities';
+import { COLLECTOR_SPAN_METRICS, type SpanMetrics } from './spanMetrics';
 
 export type AppKey = 'metrics' | 'logs' | 'traces' | 'profiles' | 'sql';
 
@@ -25,17 +26,6 @@ export interface Hint {
   investigable: boolean;
   trendLabel: string;
   trend: number[];
-}
-
-export interface ServiceSummary {
-  name: string;
-  health: 'degraded' | 'healthy';
-  p95: string;
-  errorRate: string;
-  trend: number[];
-  lastDeploy: string;
-  // Set when the service comes from the knowledge graph, which knows where it runs and how many insights it carries.
-  entity?: { env?: string; namespace?: string; serviceType?: string; insights: number };
 }
 
 // A data source that could not be measured, with why. It is reported instead of shown as a zero.
@@ -113,11 +103,18 @@ export interface Overview {
   hints: Hint[];
   scopeValues: Record<ScopeType, string[]>;
   trendMax: number;
-  services: ServiceSummary[];
+  // The service names Tempo holds, problem services first.
+  services: string[];
   signals: SignalCoverage[];
   exampleService: string;
   notes: Note[];
   entities: KgEntity[];
+  // How this stack names its span metrics, which each row's charts query.
+  spanMetrics: SpanMetrics;
+  // The values of service_name in Loki, which a row matches its Tempo name against.
+  logServiceNames: string[];
+  // The values of service_name in Pyroscope. The first row that asks lists them, and the rest share the answer.
+  profileServiceNames: () => Promise<string[]>;
 }
 
 export interface ScopeData {
@@ -137,12 +134,15 @@ export interface ScopeData {
 export let HINTS: Hint[] = [];
 export let SCOPE_VALUES: Record<ScopeType, string[]> = { service: [], environment: [], namespace: [] };
 export let TREND_MAX = 2;
-export let YOUR_SERVICES: ServiceSummary[] = [];
+export let YOUR_SERVICES: string[] = [];
 export let SIGNALS: SignalCoverage[] = [];
 export let EXAMPLE_SERVICE = 'a service';
 export let NOTES: Note[] = [];
 // The knowledge graph entities the overview listed, which the scope step reads their insights from.
 export let ENTITIES: KgEntity[] = [];
+export let SPAN_METRICS: SpanMetrics = COLLECTOR_SPAN_METRICS;
+export let LOG_SERVICE_NAMES: string[] = [];
+export let PROFILE_SERVICE_NAMES: () => Promise<string[]> = async () => [];
 
 export let DETECTION_STEPS: Array<{ app: AppKey; finding: string }> = [];
 export let DETECTED_SCOPE: DetectedScope = { namespace: '', since: '', likelyCause: '' };
@@ -171,6 +171,9 @@ export function setOverview(overview: Overview) {
   EXAMPLE_SERVICE = overview.exampleService;
   NOTES = overview.notes;
   ENTITIES = overview.entities;
+  SPAN_METRICS = overview.spanMetrics;
+  LOG_SERVICE_NAMES = overview.logServiceNames;
+  PROFILE_SERVICE_NAMES = overview.profileServiceNames;
 }
 
 export function setScopeData(data: ScopeData) {

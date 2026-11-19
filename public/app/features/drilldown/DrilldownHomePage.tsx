@@ -3,14 +3,16 @@ import { useEffect, useState } from 'react';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { SIGNALS, dataSourceParam, suggestDataSources } from './dataSources';
+import { environmentParam } from './environment';
 import { RealDataDrilldownPage } from './realdata/RealDataDrilldownPage';
 
-// The page loads once every data source has a choice in the URL, and loads again when a choice changes.
+// The page loads once every data source has a choice in the URL, and loads again when a choice or the environment
+// changes.
 export function DrilldownHomePage() {
   const [queryParams] = useQueryParams();
   const dataSourcesFilled = useFilledDataSources();
 
-  return dataSourcesFilled ? <RealDataDrilldownPage key={dataSourcesKey(queryParams)} /> : null;
+  return dataSourcesFilled ? <RealDataDrilldownPage key={viewKey(queryParams)} /> : null;
 }
 
 // On first load, writes the related data sources for every signal the URL leaves open into the URL, so the URL
@@ -46,9 +48,11 @@ function useFilledDataSources(): boolean {
   return filled;
 }
 
-// The key changes with any chosen data source, so a view remounts and reloads when one changes.
-function dataSourcesKey(queryParams: Record<string, unknown>): string {
-  return SIGNALS.map((signal) => String(queryParams[dataSourceParam(signal)] ?? '')).join('|');
+// The key changes with any chosen data source and with the environment, so a view remounts and reloads when one changes.
+function viewKey(queryParams: Record<string, unknown>): string {
+  return [...SIGNALS.map((signal) => dataSourceParam(signal)), environmentParam]
+    .map((param) => String(queryParams[param] ?? ''))
+    .join('|');
 }
 
 export default DrilldownHomePage;

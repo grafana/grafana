@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { type Signal, getUrlDataSource } from '../dataSources';
+import { getUrlEnvironment } from '../environment';
 
 import { type EntitySearch, type KgEntity, searchEntities } from './kgEntities';
 import {
@@ -14,7 +15,9 @@ import {
   lokiLabelValues,
   lokiLogs,
   promInstant,
+  promLabelValues,
   promRange,
+  pyroscopeLabelValues,
   tempoSearch,
   tempoTagValues,
   tempoTrace,
@@ -28,30 +31,28 @@ import {
   type Overview,
   type Scope,
   type ScopeData,
-  type ServiceSummary,
   type SignalCoverage,
   type SpanColor,
   type TraceSpan,
   type TraceView,
   ENTITIES,
 } from './liveScenario';
+import { COLLECTOR_SPAN_METRICS, SERVER_OR_CONSUMER, TEMPO_SPAN_METRICS, type SpanMetrics } from './spanMetrics';
 
-const CALLS = 'traces_span_metrics_calls_total';
-const BUCKET = 'traces_span_metrics_duration_milliseconds_bucket';
-const SERVER = 'span_kind="SPAN_KIND_SERVER"';
+export const CALLS = COLLECTOR_SPAN_METRICS.calls;
+export const SERVER = 'span_kind="SPAN_KIND_SERVER"';
 const ERROR = 'status_code="STATUS_CODE_ERROR"';
 // flagd keeps one streaming RPC open for minutes, which would top every latency ranking.
 const NO_STREAMS = 'span_name!~".*EventStream.*"';
-const OVERVIEW_WINDOW_S = 1800;
+export const OVERVIEW_WINDOW_S = 1800;
 const ERROR_RATE_LIMIT = 0.01;
 const SLOW_RATIO = 1.5;
 const SLOW_MIN_MS = 100;
-const MAX_SERVICES = 8;
 const MAX_HINTS = 4;
 const SPAN_PALETTE: SpanColor[] = ['blue', 'orange', 'green', 'purple'];
 
 const nowSec = () => Math.floor(Date.now() / 1000);
-const esc = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+export const esc = (value: string) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 const finite = (value: number | undefined): value is number => value !== undefined && Number.isFinite(value);
 
 export function formatMs(ms: number): string {
@@ -79,8 +80,10 @@ function relative(values: number[]): number[] {
   return values.map((v) => (finite(v) ? v / mean : 1));
 }
 
-const p95 = (selector: string, by = '', window = '5m') =>
-  `histogram_quantile(0.95, sum by (le${by}) (rate(${BUCKET}{${selector}}[${window}])))`;
+export const p95 = (selector: string, by = '', window = '5m', metrics = COLLECTOR_SPAN_METRICS) => {
+  const quantile = `histogram_quantile(0.95, sum by (le${by}) (rate(${metrics.bucket}{${selector}}[${window}])))`;
+  return metrics.toMs === 1 ? quantile : `${quantile} * ${metrics.toMs}`;
+};
 const errorRatio = (selector: string, window = '5m') =>
   `sum(rate(${CALLS}{${selector},${ERROR}}[${window}])) / sum(rate(${CALLS}{${selector}}[${window}]))`;
 
@@ -88,9 +91,19 @@ function bySeries(samples: InstantSample[], label = 'service_name') {
   return new Map(samples.map((s) => [s.metric[label], s.value]));
 }
 
-// A series without a service_name is no service, so it never reaches a card, a hint, a scope choice or a count.
-async function named<T extends { metric: Record<string, string> }>(query: Promise<T[]>): Promise<T[]> {
-  return (await query).filter((row) => Boolean(row.metric.service_name));
+// A series without the service label is no service, so it never reaches a card, a hint, a scope choice or a count.
+// When that leaves no series at all, onNoneNamed lets the caller say so.
+async function named<T extends { metric: Record<string, string> }>(
+  query: Promise<T[]>,
+  label = 'service_name',
+  onNoneNamed?: () => void
+): Promise<T[]> {
+  const rows = await query;
+  const kept = rows.filter((row) => Boolean(row.metric[label]));
+  if (rows.length > 0 && kept.length === 0) {
+    onNoneNamed?.();
+  }
+  return kept;
 }
 
 function clockTime(timeNs: string) {
@@ -114,7 +127,7 @@ const read = (value: unknown, key: string): unknown =>
 const text = (value: unknown) => (typeof value === 'string' && value ? value : undefined);
 
 // A failed request carries its reason in the response body, which a data source proxy sends as text or as a message.
-function describeError(error: unknown): string {
+export function describeError(error: unknown): string {
   const status = read(error, 'status');
   return (
     text(read(error, 'data')) ??
@@ -125,16 +138,20 @@ function describeError(error: unknown): string {
   );
 }
 
+// Each reason is named once, however many queries fail for it.
+function addNote(notes: Note[], note: Note) {
+  if (!notes.some((one) => one.source === note.source && one.message === note.message)) {
+    notes.push(note);
+  }
+}
+
 // A source that fails leaves its part of the overview empty and is named in the notes, so one unreachable data
 // source does not hide what the others measured.
 async function attempt<T>(notes: Note[], source: Signal, query: Promise<T>, fallback: T): Promise<T> {
   try {
     return await query;
   } catch (error) {
-    const message = describeError(error);
-    if (!notes.some((note) => note.source === source && note.message === message)) {
-      notes.push({ source, message });
-    }
+    addNote(notes, { source, message: describeError(error) });
     return fallback;
   }
 }
@@ -160,16 +177,123 @@ function hintFromEntity(entity: KgEntity): Hint {
   };
 }
 
+// The collector and sources with no service.name are not services a team sets up telemetry for.
+export const isAppService = (name: string) => !name.startsWith('otelcol') && !name.startsWith('unknown_service');
+
+const byName = new Intl.Collator();
+
+// Each name once, without the collector or unnamed sources, A to Z.
+const cleanNames = (names: string[]) => [...new Set(names)].filter(isAppService).sort(byName.compare);
+
+interface Status {
+  latency: Map<string, number>;
+  before: Map<string, number>;
+  errorRate: Map<string, number>;
+}
+
+const statusOf = (
+  p95Now: InstantSample[],
+  p95Prev: InstantSample[],
+  errors: InstantSample[],
+  label = 'service_name'
+): Status => ({
+  latency: bySeries(p95Now, label),
+  before: bySeries(p95Prev, label),
+  errorRate: bySeries(errors, label),
+});
+
+// Where a stack keeps its span metrics depends on what writes them. A lookup that fails, or finds neither name, keeps
+// the collector names that this page queried before.
+async function detectSpanMetrics(start: number, end: number): Promise<SpanMetrics> {
+  const names = await promLabelValues('__name__', start, end, '{__name__=~"traces_span_?metrics_calls_total"}');
+  return names.includes(TEMPO_SPAN_METRICS.calls) && !names.includes(COLLECTOR_SPAN_METRICS.calls)
+    ? TEMPO_SPAN_METRICS
+    : COLLECTOR_SPAN_METRICS;
+}
+
+const isSlowIn = ({ latency, before }: Status, name: string) => {
+  const now = latency.get(name);
+  const earlier = before.get(name);
+  return finite(now) && finite(earlier) && earlier > 0 && now / earlier >= SLOW_RATIO && now >= SLOW_MIN_MS;
+};
+const isFailingIn = ({ errorRate }: Status, name: string) => (errorRate.get(name) ?? 0) >= ERROR_RATE_LIMIT;
+
+// A failing service scores above a slow one. A higher error rate or a larger p95 increase scores higher.
+function problemScore(status: Status, name: string): number {
+  if (isFailingIn(status, name)) {
+    return 2 + (status.errorRate.get(name) ?? 0);
+  }
+  if (isSlowIn(status, name)) {
+    const ratio = (status.latency.get(name) ?? 0) / (status.before.get(name) ?? 1);
+    return 1 + ratio / (1 + ratio);
+  }
+  return 0;
+}
+
+// Problem services first. A source that did not answer leaves every score at 0, so the list falls back to A to Z.
+const orderByProblem = (names: string[], status: Status) =>
+  [...names].sort((a, b) => problemScore(status, b) - problemScore(status, a) || byName.compare(a, b));
+
+const environmentFilter = (environment: string) =>
+  `{ ${selectors({ type: 'environment', value: environment }).tempo} }`;
+
 export async function loadOverview(): Promise<Overview> {
   const end = nowSec();
   const start = end - OVERVIEW_WINDOW_S;
   const byService = ', service_name';
   const notes: Note[] = [];
+  const environment = getUrlEnvironment();
+
+  // The three answers that say which services have a problem, for the span metrics a selector picks.
+  const statusQueries = (selector: string, metrics = COLLECTOR_SPAN_METRICS, onNoneNamed?: () => void) => {
+    const by = `, ${metrics.service}`;
+    const labelled = (query: Promise<InstantSample[]>) => named(query, metrics.service, onNoneNamed);
+    return Promise.all([
+      attempt(notes, 'metrics', labelled(promInstant(p95(selector, by, '5m', metrics), end)), []),
+      attempt(notes, 'metrics', labelled(promInstant(p95(selector, by, '5m', metrics), start)), []),
+      attempt(
+        notes,
+        'metrics',
+        labelled(
+          promInstant(
+            `sum by (${metrics.service}) (rate(${metrics.calls}{${selector},${ERROR}}[5m])) / sum by (${metrics.service}) (rate(${metrics.calls}{${selector}}[5m]))`,
+            end
+          )
+        ),
+        []
+      ),
+    ]);
+  };
+  const traceNames = (filter?: string) =>
+    attempt(notes, 'traces', tempoTagValues('resource.service.name', start, end, filter), []);
+
+  // The order takes the span metrics the stack has, for the chosen environment when there is one. The hints keep
+  // the collector names and the answers that cover every environment.
+  const spanMetricsFound = attempt(notes, 'metrics', detectSpanMetrics(start, end), COLLECTOR_SPAN_METRICS);
+  const orderingStatus = spanMetricsFound.then(async (metrics) => {
+    const noneNamed = () =>
+      addNote(notes, {
+        source: 'metrics',
+        message: t(
+          'drilldown-real.data.no-service-label',
+          'The span metrics series have no {{label}} label, so the list is not ordered by problems',
+          { label: metrics.service }
+        ),
+      });
+    const selector = environment
+      ? `${SERVER_OR_CONSUMER},${selectors({ type: 'environment', value: environment }).prom}`
+      : SERVER_OR_CONSUMER;
+    const [now, before, errorRate] = await statusQueries(selector, metrics, noneNamed);
+    return statusOf(now, before, errorRate, metrics.service);
+  });
+
+  // Pyroscope holds thousands of service names and takes seconds to list them, so the first row that needs them asks
+  // and the rest share the answer.
+  let profileNames: Promise<string[]> | undefined;
+  const getProfileNames = () => (profileNames ??= pyroscopeLabelValues('service_name', start, end));
 
   const [
-    p95Now,
-    p95Prev,
-    errors,
+    [p95Now, p95Prev, errors],
     traffic,
     p95Range,
     allSpanMetrics,
@@ -177,21 +301,13 @@ export async function loadOverview(): Promise<Overview> {
     newVersions,
     logServices,
     traceServices,
+    traceEnvironments,
     entitySearch,
+    spanMetrics,
+    orderStatus,
+    environmentServices,
   ] = await Promise.all([
-    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), end)), []),
-    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), start)), []),
-    attempt(
-      notes,
-      'metrics',
-      named(
-        promInstant(
-          `sum by (service_name) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (service_name) (rate(${CALLS}{${SERVER}}[5m]))`,
-          end
-        )
-      ),
-      []
-    ),
+    statusQueries(SERVER),
     attempt(
       notes,
       'metrics',
@@ -215,8 +331,13 @@ export async function loadOverview(): Promise<Overview> {
       []
     ),
     attempt(notes, 'logs', lokiLabelValues('service_name', start, end), []),
-    attempt(notes, 'traces', tempoTagValues('resource.service.name', start, end), []),
+    traceNames(),
+    attempt(notes, 'traces', tempoTagValues('resource.deployment.environment.name', start, end), []),
     attempt(notes, 'knowledgegraph', searchEntities('Service', start * 1000, end * 1000), NO_ENTITIES),
+    spanMetricsFound,
+    orderingStatus,
+    // The list narrows to the chosen environment. The hints keep the answers that cover every one.
+    environment ? traceNames(environmentFilter(environment)) : undefined,
   ]);
 
   // A data source that answers but holds no span metrics measured nothing, which is different from measuring zero.
@@ -241,61 +362,28 @@ export async function loadOverview(): Promise<Overview> {
   }
   const entities = entitySearch.entities;
 
-  const nowMap = bySeries(p95Now);
-  const prevMap = bySeries(p95Prev);
-  const errorMap = bySeries(errors);
+  const status = statusOf(p95Now, p95Prev, errors);
+  const { latency: nowMap, before: prevMap, errorRate: errorMap } = status;
   const rangeMap = new Map<string, RangeSeries>(p95Range.map((series) => [series.metric.service_name, series]));
 
   // One row per service: the version series with the most traffic wins when two versions overlap.
-  const busiest = new Map<string, { rate: number; version: string }>();
+  const busiest = new Map<string, number>();
   for (const sample of traffic) {
     const name = sample.metric.service_name;
-    if (finite(sample.value) && sample.value > (busiest.get(name)?.rate ?? -1)) {
-      busiest.set(name, { rate: sample.value, version: sample.metric.service_version ?? '' });
+    if (finite(sample.value) && sample.value > (busiest.get(name) ?? -1)) {
+      busiest.set(name, sample.value);
     }
   }
-  const ranked = [...busiest.entries()].sort((a, b) => b[1].rate - a[1].rate).map(([name]) => name);
+  const ranked = [...busiest.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
 
-  const isSlow = (name: string) => {
-    const now = nowMap.get(name);
-    const before = prevMap.get(name);
-    return finite(now) && finite(before) && before > 0 && now / before >= SLOW_RATIO && now >= SLOW_MIN_MS;
-  };
-  const isFailing = (name: string) => (errorMap.get(name) ?? 0) >= ERROR_RATE_LIMIT;
+  const isSlow = (name: string) => isSlowIn(status, name);
+  const isFailing = (name: string) => isFailingIn(status, name);
   const trendOf = (name: string) => relative(rangeMap.get(name)?.values ?? []);
-
-  const summaryOf = (name: string): ServiceSummary => {
-    const degraded = isSlow(name) || isFailing(name);
-    const latency = nowMap.get(name);
-    const errorRate = errorMap.get(name);
-    const version = busiest.get(name)?.version;
-    return {
-      name,
-      health: degraded ? 'degraded' : 'healthy',
-      p95: finite(latency) ? formatMs(latency) : 'n/a',
-      errorRate: finite(errorRate) ? `${(errorRate * 100).toFixed(1)}%` : 'n/a',
-      trend: trendOf(name),
-      lastDeploy: version ? `v${version}` : 'unknown',
-    };
-  };
   const needsAttention = (entity: KgEntity) => entity.severity === 'critical' || entity.severity === 'warning';
-  // The knowledge graph lists the services and says which need attention. Span metrics add numbers where they match.
-  const services: ServiceSummary[] =
-    entities.length > 0
-      ? entities.slice(0, MAX_SERVICES).map((entity) => {
-          const summary = summaryOf(entity.name);
-          return {
-            ...summary,
-            health: needsAttention(entity) ? 'degraded' : summary.health,
-            entity: {
-              env: entity.env,
-              namespace: entity.namespace,
-              serviceType: entity.serviceType,
-              insights: entity.insights.length,
-            },
-          };
-        })
-      : ranked.slice(0, MAX_SERVICES).map(summaryOf);
+
+  // Tempo names the services. Span metrics, for the chosen environment when there is one, put the problem services first.
+  const names = cleanNames(environmentServices ?? traceServices);
+  const services = orderByProblem(names, orderStatus);
 
   const hints: Hint[] = [];
   for (const name of ranked) {
@@ -349,8 +437,6 @@ export async function loadOverview(): Promise<Overview> {
   }
 
   const metricNames = allSpanMetrics.map((s) => s.metric.service_name);
-  // The collector and sources with no service.name are not services a team sets up telemetry for.
-  const isAppService = (name: string) => !name.startsWith('otelcol') && !name.startsWith('unknown_service');
   const universe = [...new Set([...metricNames, ...logServices, ...traceServices])].filter(isAppService).sort();
   const missingOf = (present: string[]) => {
     const absent = universe.filter((name) => !present.includes(name));
@@ -395,14 +481,14 @@ export async function loadOverview(): Promise<Overview> {
     },
   ];
 
-  const allTrends = [...services.map((s) => s.trend), ...hints.map((h) => h.trend)].flat();
+  const allTrends = hints.map((h) => h.trend).flat();
   const trendMax = Math.min(6, Math.max(2, ...allTrends.filter(finite).map((v) => v * 1.1)));
 
   return {
     hints: hints.slice(0, MAX_HINTS),
     scopeValues: {
-      service: [...new Set([...ranked, ...entities.map((entity) => entity.name)])],
-      environment: [...new Set(entities.flatMap((entity) => (entity.env ? [entity.env] : [])))].sort(),
+      service: names,
+      environment: [...new Set(traceEnvironments)].sort(byName.compare),
       namespace: [
         ...new Set([
           ...namespaces.map((s) => s.metric.service_namespace),
@@ -418,10 +504,13 @@ export async function loadOverview(): Promise<Overview> {
     exampleService: hints[0]?.scope.value ?? ranked[0] ?? entities[0]?.name ?? 'a service',
     notes,
     entities,
+    spanMetrics,
+    logServiceNames: logServices,
+    profileServiceNames: getProfileNames,
   };
 }
 
-function selectors(scope: Scope) {
+export function selectors(scope: Scope) {
   const value = esc(scope.value);
   switch (scope.type) {
     case 'service':

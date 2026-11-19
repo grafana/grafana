@@ -1,4 +1,13 @@
 import { type Overview, type ScopeData } from './liveScenario';
+import { type ServiceCharts } from './serviceCharts';
+import { COLLECTOR_SPAN_METRICS } from './spanMetrics';
+
+export const emptyCharts: ServiceCharts = {
+  traces: { kind: 'empty' },
+  metrics: { kind: 'empty' },
+  logs: { kind: 'empty' },
+  profiles: { kind: 'empty' },
+};
 
 export const emptyOverview: Overview = {
   hints: [],
@@ -9,6 +18,9 @@ export const emptyOverview: Overview = {
   exampleService: 'cart',
   notes: [],
   entities: [],
+  spanMetrics: COLLECTOR_SPAN_METRICS,
+  logServiceNames: [],
+  profileServiceNames: async () => [],
 };
 
 export const emptyScopeData: ScopeData = {
