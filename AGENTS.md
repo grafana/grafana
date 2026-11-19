@@ -122,7 +122,7 @@ make lefthook-install                             # Pre-commit hooks
 
 ### Frontend (`public/app/`)
 
-When building product UI, check `@grafana/ui` before writing a custom component. Read the component's MDX in [`packages/grafana-ui/src/components/`](packages/grafana-ui/src/components/) for usage guidance.
+When building product UI, check `@grafana/ui` before writing a custom component. Read the component's MDX in [`packages/grafana-ui/src/components/`](packages/grafana-ui/src/components/) for usage guidance. For guidance that spans components, check the [shared patterns](packages/grafana-ui/src/guidance/patterns/).
 
 | Directory              | Purpose                                               |
 | ---------------------- | ----------------------------------------------------- |

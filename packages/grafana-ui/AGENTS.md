@@ -17,5 +17,13 @@ description states exactly when it applies:
 Prefer an existing `@grafana/ui` component over a custom one. Read its MDX in
 [`src/components/`](src/components/) before using it.
 
+Keep everyday usage advice in the MDX. Add a `<Component>.guidance.md` next to the
+component's MDX only if there is component-specific detail worth linking from the
+MDX. Follow linked guides when they match your task. The MDX is enough for
+ordinary usage.
+
+Shared patterns live in [`src/guidance/patterns/`](src/guidance/patterns/), such as
+[inline actions](src/guidance/patterns/inline-actions.md).
+
 When you add or change a component, update its MDX using the
 [component docs template](../../contribute/style-guides/component-docs-template.mdx).
