@@ -2,7 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
+import { createTheme, getThemeById } from '@grafana/data';
+
 import { Button } from './Button';
+import { getPropertiesForVariant } from './StyledButton.styles';
 
 const setup = (jsx: JSX.Element) => {
   return {
@@ -70,5 +73,44 @@ describe('Button', () => {
     expect(screen.queryByRole('button', { name: 'Child text' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tooltip text' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Aria label' })).toBeInTheDocument();
+  });
+});
+
+describe('getPropertiesForVariant', () => {
+  const theme = createTheme();
+
+  it.each([
+    ['warning', theme.colors.warning],
+    ['info', theme.colors.info],
+  ] as const)('uses the %s theme color for the %s variant', (variant, color) => {
+    expect(getPropertiesForVariant(theme, variant, 'solid')).toMatchObject({
+      background: color.main,
+      color: color.contrastText,
+    });
+    expect(getPropertiesForVariant(theme, variant, 'outline')).toMatchObject({
+      color: color.text,
+      border: `1px solid ${color.border}`,
+    });
+    expect(getPropertiesForVariant(theme, variant, 'text')).toMatchObject({ color: color.text });
+  });
+});
+
+describe('warning variant in the visual refresh themes', () => {
+  describe.each(['visual_refresh_dark', 'visual_refresh_light'])('%s', (id) => {
+    const refreshTheme = getThemeById(id);
+    refreshTheme.flags.visualDesignRefresh = true;
+    const { warning } = refreshTheme.colors;
+
+    it('uses a brighter solid background than the standard step, with text that contrasts with it', () => {
+      const styles = getPropertiesForVariant(refreshTheme, 'warning', 'solid');
+      expect(styles.background).toBe(warning.borderEmphasis);
+      expect(styles.background).not.toBe(warning.background);
+      expect(styles.color).toBe(refreshTheme.colors.getContrastText(warning.borderEmphasis));
+    });
+
+    it('leaves the outline and text fills on the standard warning colors', () => {
+      expect(getPropertiesForVariant(refreshTheme, 'warning', 'outline')).toMatchObject({ color: warning.text });
+      expect(getPropertiesForVariant(refreshTheme, 'warning', 'text')).toMatchObject({ color: warning.text });
+    });
   });
 });

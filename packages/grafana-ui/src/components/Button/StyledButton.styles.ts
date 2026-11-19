@@ -206,6 +206,34 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
   };
 }
 
+function getWarningVariantStyles(theme: GrafanaTheme2, fill: ButtonFill) {
+  const color = theme.colors.warning;
+
+  if (!theme.flags.visualDesignRefresh || fill !== 'solid') {
+    return getButtonVariantStyles(theme, color, fill);
+  }
+
+  // The refresh themes' warning background is a muted amber. borderEmphasis is the brightest step both modes share.
+  const background = color.borderEmphasis;
+  const styles = getButtonVariantStyles(
+    theme,
+    {
+      ...color,
+      background,
+      backgroundEmphasis: theme.colors.emphasize(background, theme.colors.tonalOffset),
+      contrastText: theme.colors.getContrastText(background),
+    },
+    fill
+  );
+
+  return {
+    ...styles,
+    '&:active': {
+      background: color.main,
+    },
+  };
+}
+
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
@@ -217,6 +245,12 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);
+
+    case 'warning':
+      return getWarningVariantStyles(theme, fill);
+
+    case 'info':
+      return getButtonVariantStyles(theme, theme.colors.info, fill);
 
     case 'accent':
       return getButtonVariantStyles(theme, theme.colors.accent, fill);
