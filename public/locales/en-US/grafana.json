@@ -17277,7 +17277,9 @@
     "quick-edits": {
       "calculation": "Calculation",
       "color": "Color",
-      "text": "Text"
+      "text": "Text",
+      "text-title-size": "Title size",
+      "text-value-size": "Value size"
     },
     "suggestions": {
       "stat": "Stat",

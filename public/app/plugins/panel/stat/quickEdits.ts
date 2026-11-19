@@ -24,6 +24,11 @@ export function getStatQuickEdits(): Array<PanelQuickEdit<Options>> {
       title: t('stat.quick-edits.text', 'Text'),
       icon: 'text-fields',
       optionIds: ['textMode', 'text.valueSize', 'text.titleSize', 'orientation'],
+      // In the full editor these sit under a Text size heading, which their names rely on.
+      labels: {
+        'text.valueSize': t('stat.quick-edits.text-value-size', 'Value size'),
+        'text.titleSize': t('stat.quick-edits.text-title-size', 'Title size'),
+      },
       summary: ({ options }) => ({ text: getTextModeLabel(options.textMode) }),
     },
   ];

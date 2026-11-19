@@ -44,6 +44,12 @@ describe('stat quick edits', () => {
     expect(named.filter((id) => !ids.includes(id))).toEqual([]);
   });
 
+  it('relabels only options it names', () => {
+    for (const edit of plugin.getQuickEdits()) {
+      expect(Object.keys(edit.labels ?? {}).filter((id) => !edit.optionIds.includes(id))).toEqual([]);
+    }
+  });
+
   it.each([
     { id: 'calculation', options: { reduceOptions: { calcs: ['mean'] } }, text: 'Mean' },
     { id: 'calculation', options: { reduceOptions: { calcs: [] } }, text: 'Last *' },
