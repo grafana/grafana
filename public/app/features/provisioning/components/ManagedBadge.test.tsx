@@ -77,15 +77,6 @@ describe('ManagedBadge', () => {
       expect(await screen.findByText('Managed by: Repository')).toBeInTheDocument();
     });
 
-    it('renders the read-only variant with a labelled lock and says so in the tooltip', async () => {
-      const { user } = render(<ManagedBadge managerKind={ManagerKind.Repo} name="My Repo" isReadOnly />);
-
-      expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-      expect(screen.getByRole('img', { name: 'Read only, Managed by: Repository My Repo' })).toBeInTheDocument();
-      await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('Read only, Managed by: Repository My Repo');
-    });
-
     it('renders the orphaned repository state', async () => {
       const { user } = render(<ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />);
 
@@ -123,8 +114,8 @@ describe('ManagedBadge', () => {
     });
   });
 
-  describe('actions menu', () => {
-    it('renders the badge without a menu button for users with no permitted action (viewer)', async () => {
+  describe('actions dropdown', () => {
+    it('renders a plain badge without a dropdown for users with no permitted action (viewer)', async () => {
       setPermissions({ isEditor: false, canManageRepositories: false });
       mockRepositories([makeRepository()]);
 
@@ -143,10 +134,10 @@ describe('ManagedBadge', () => {
         <ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
       );
 
-      const trigger = await screen.findByRole('button', { name: 'Managed resource actions' });
+      const trigger = await screen.findByRole('button', { name: 'Managed by: Repository My Repo' });
       await user.click(trigger);
 
-      const sourceItem = await screen.findByRole('menuitem', { name: /view source/i });
+      const sourceItem = await screen.findByRole('menuitem', { name: /view source file/i });
       expect(sourceItem).toHaveAttribute('href', 'https://github.com/grafana/repo/blob/main/dashboards/foo.json');
       expect(sourceItem).toHaveAttribute('target', '_blank');
       expect(screen.queryByRole('menuitem', { name: /manage repository/i })).not.toBeInTheDocument();
@@ -160,9 +151,9 @@ describe('ManagedBadge', () => {
         <ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
       );
 
-      await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
 
-      expect(await screen.findByRole('menuitem', { name: /view source/i })).toHaveAttribute(
+      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
         'href',
         'https://github.com/grafana/repo/blob/main/grafana/dashboards/foo.json'
       );
@@ -180,23 +171,22 @@ describe('ManagedBadge', () => {
         />
       );
 
-      await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
 
-      expect(await screen.findByRole('menuitem', { name: /view source/i })).toHaveAttribute(
+      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toHaveAttribute(
         'href',
         'https://github.com/grafana/repo/blob/feature-branch/dashboards/foo.json'
       );
     });
 
-    it('marks the menu button as a menu trigger without a title attribute', async () => {
+    it('does not set a title attribute on the dropdown trigger', async () => {
       setPermissions({ isEditor: true });
       mockRepositories([makeRepository()]);
 
       render(<ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
 
-      const trigger = await screen.findByRole('button', { name: 'Managed resource actions' });
+      const trigger = await screen.findByRole('button', { name: 'Managed by: Repository My Repo' });
       expect(trigger).not.toHaveAttribute('title');
-      expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
     });
 
     it('shows the repository administration link for repository managers', async () => {
@@ -207,11 +197,11 @@ describe('ManagedBadge', () => {
         <ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
       );
 
-      await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
 
       const manageItem = await screen.findByRole('menuitem', { name: /manage repository/i });
       expect(manageItem).toHaveAttribute('href', '/admin/provisioning/my-repo');
-      expect(screen.queryByRole('menuitem', { name: /view source/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /view source file/i })).not.toBeInTheDocument();
     });
 
     it('shows both actions for editors with repository write access', async () => {
@@ -222,9 +212,9 @@ describe('ManagedBadge', () => {
         <ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
       );
 
-      await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
 
-      expect(await screen.findByRole('menuitem', { name: /view source/i })).toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: /view source file/i })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: /manage repository/i })).toBeInTheDocument();
     });
 
@@ -236,13 +226,13 @@ describe('ManagedBadge', () => {
         <ManagedBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
       );
 
-      await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
+      await user.click(await screen.findByRole('button', { name: 'Managed by: Repository My Repo' }));
 
       expect(await screen.findByRole('menuitem', { name: /manage repository/i })).toBeInTheDocument();
-      expect(screen.queryByRole('menuitem', { name: /view source/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /view source file/i })).not.toBeInTheDocument();
     });
 
-    it('renders the orphaned badge without a menu button when the repository no longer exists', async () => {
+    it('renders the orphaned badge without a dropdown when the repository no longer exists', async () => {
       setPermissions({ isEditor: true, canManageRepositories: true });
       mockRepositories([]);
 

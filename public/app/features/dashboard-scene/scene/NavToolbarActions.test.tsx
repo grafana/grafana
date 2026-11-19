@@ -57,7 +57,7 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
 }));
 
 // Same as what the real hook returns with provisioning off, so the existing toolbar tests keep
-// their baseline. Only the read-only repository tests care about this mock.
+// their baseline. Only the read-only badge tests care about this mock.
 const noRepositoryView: RepositoryViewData = {
   isLoading: false,
   isInstanceManaged: false,
@@ -251,15 +251,23 @@ describe('NavToolbarActions', () => {
     });
   });
 
-  describe('Read-only repository', () => {
+  describe('Read-only badge', () => {
     beforeEach(() => {
       jest.mocked(useGetResourceRepositoryView).mockReturnValue(readOnlyRepositoryView);
     });
 
-    it('disables the Edit button for a user who could otherwise edit', async () => {
+    it('shows the badge next to the disabled Edit button for a user who could otherwise edit', async () => {
       setup();
 
       expect(await screen.findByRole('button', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByText('Read only')).toBeInTheDocument();
+    });
+
+    it('hides the badge from a user who cannot edit the dashboard anyway', async () => {
+      setup({ canEdit: false, canMakeEditable: false });
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
   });
 });
