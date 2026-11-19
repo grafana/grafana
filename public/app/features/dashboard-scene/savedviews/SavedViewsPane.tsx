@@ -387,15 +387,17 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           />
                         )}
 
-                        {!isEditingTitle && canEdit && (
+                        {!isEditingTitle && (
                           <Dropdown
                             overlay={
                               <Menu>
-                                <Menu.Item
-                                  label={t('dashboard.sidebar.saved-views.edit-title', 'Edit title')}
-                                  icon="pen"
-                                  onClick={() => startEditingTitle(view)}
-                                />
+                                {canEdit && (
+                                  <Menu.Item
+                                    label={t('dashboard.sidebar.saved-views.edit-title', 'Edit title')}
+                                    icon="pen"
+                                    onClick={() => startEditingTitle(view)}
+                                  />
+                                )}
                                 <Menu.Item
                                   label={
                                     isDefault
@@ -405,12 +407,14 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                                   icon="favorite"
                                   onClick={() => handleToggleDefault(view)}
                                 />
-                                <Menu.Item
-                                  label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
-                                  icon="trash-alt"
-                                  destructive
-                                  onClick={() => setPendingDelete(view)}
-                                />
+                                {canEdit && (
+                                  <Menu.Item
+                                    label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
+                                    icon="trash-alt"
+                                    destructive
+                                    onClick={() => setPendingDelete(view)}
+                                  />
+                                )}
                               </Menu>
                             }
                             placement="bottom-end"

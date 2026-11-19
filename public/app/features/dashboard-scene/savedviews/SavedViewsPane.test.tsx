@@ -95,10 +95,19 @@ describe('SavedViewsPane', () => {
 
       expect(screen.queryByRole('button', { name: 'Save new' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'My view' }));
       expect(scene.state.viewFilter).toBe('view-1');
+    });
+
+    it('can still pick a personal default, which stays in their browser', async () => {
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Set as default' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Edit title' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
