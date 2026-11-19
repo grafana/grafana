@@ -1,4 +1,7 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type Trace, type TraceSpan } from './components/types/trace';
 import { createTraceLogsLink, getTimeRangeFromTimestamps } from './createTraceLink';
@@ -141,5 +144,90 @@ describe('createTraceLogsLink data source type', () => {
     const link = createLink({ customQuery: false });
 
     expect(link?.interpolatedParams?.query?.datasource).toEqual({ type: 'loki', uid: 'loki-uid' });
+  });
+});
+
+describe('createTraceLogsLink across services', () => {
+  const createServiceSpan = (spanID: string, serviceName: string, parentSpanID?: string) =>
+    ({
+      spanID,
+      traceID: 'trace1',
+      processID: spanID,
+      operationName: 'operation',
+      logs: [],
+      startTime: 1_000_000,
+      duration: 1000,
+      flags: 0,
+      hasChildren: false,
+      dataFrameRowIndex: 0,
+      tags: [],
+      references: parentSpanID ? [{ refType: 'CHILD_OF', traceID: 'trace1', spanID: parentSpanID }] : [],
+      process: {
+        serviceName,
+        tags: [
+          { key: 'service.name', value: serviceName },
+          { key: 'service.namespace', value: 'shop' },
+        ],
+      },
+    }) as unknown as TraceSpan;
+  const spans = [
+    createServiceSpan('root', 'load-generator'),
+    createServiceSpan('order', 'checkout', 'root'),
+    createServiceSpan('quote', 'quote.v2', 'order'),
+  ];
+  const trace = {
+    traceID: 'trace1',
+    traceName: 'checkout',
+    duration: 1000,
+    startTime: 1_000_000,
+    spans,
+    processes: {},
+  } as unknown as Trace;
+  const selector = String.raw`{service_name=~"load-generator|checkout|quote\\.v2", service_namespace="shop"}`;
+  const createLink = (traceToLogsOptions: Partial<TraceToLogsOptionsV2>) =>
+    createTraceLogsLink({
+      splitOpenFn: jest.fn(),
+      traceToLogsOptions: { datasourceUid: 'loki-uid', customQuery: false, ...traceToLogsOptions },
+      trace,
+      logsDataSourceSettings: {
+        uid: 'loki-uid',
+        name: 'Loki',
+        type: 'loki',
+        jsonData: {},
+      } as unknown as DataSourceInstanceSettings,
+    });
+  const getExploreQuery = (href: string) =>
+    JSON.parse(new URLSearchParams(href.split('?')[1]).get('left')!).queries[0].expr;
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('probes logs of every service in the trace first', () => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+
+    const link = createLink({});
+    const expected = `${selector} | logfmt | json | drop __error__ | trace_id="trace1"`;
+
+    expect(link?.interpolatedParams?.alternativeQueries?.[0]).toEqual(
+      expect.objectContaining({ expr: expected, refId: 't2l:default:trace_id' })
+    );
+    expect(getExploreQuery(link!.href)).toBe(expected);
+  });
+
+  it('interpolates the combined tags into the legacy query', () => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: false });
+
+    const link = createLink({ filterByTraceID: true });
+
+    expect(getExploreQuery(link!.href)).toBe(
+      `${selector} | label_format log_line_contains_trace_id=\`{{ contains "trace1" __line__  }}\` | log_line_contains_trace_id="true" or trace_id="trace1"`
+    );
+  });
+
+  it('interpolates the combined tags into a custom query', () => {
+    const link = createLink({ customQuery: true, query: '{${__tags}} |= "${__trace.traceId}"' });
+
+    expect(getExploreQuery(link!.href)).toBe(`${selector} |= "trace1"`);
   });
 });
