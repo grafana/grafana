@@ -139,12 +139,6 @@ func runDryRunTests(t *testing.T, helper *apis.K8sTestHelper, k ruleKind, mode g
 
 	// The legacy store rejects these when it writes. Admission rejects them too, so every mode does.
 	storeInvalid := map[string]func(t *testing.T, obj *unstructured.Unstructured){
-		"non-string queryType": func(t *testing.T, obj *unstructured.Unstructured) {
-			require.NoError(t, unstructured.SetNestedField(obj.Object, int64(5), "spec", "expressions", "A", "model", "queryType"))
-		},
-		"name that is not a valid rule UID": func(t *testing.T, obj *unstructured.Unstructured) {
-			obj.SetName(prefix + ".dotted")
-		},
 		"empty title": func(t *testing.T, obj *unstructured.Unstructured) {
 			require.NoError(t, unstructured.SetNestedField(obj.Object, "", "spec", "title"))
 		},

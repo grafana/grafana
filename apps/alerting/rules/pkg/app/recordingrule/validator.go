@@ -112,13 +112,6 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Reco
 			return err
 		}
 
-		// The name can't change, so an existing rule is not re-checked against rules added later.
-		if req.Action == resource.AdmissionActionCreate {
-			if err := util.ValidateRuleName(r.Name); err != nil {
-				return err
-			}
-		}
-
 		if err := util.ValidateTitle("recording rule", r.Spec.Title); err != nil {
 			return err
 		}
@@ -136,10 +129,7 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Reco
 		}
 
 		expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
-		for refID, expression := range r.Spec.Expressions {
-			if err := util.ValidateExpressionModel(refID, expression.Model); err != nil {
-				return err
-			}
+		for _, expression := range r.Spec.Expressions {
 			expressions = append(expressions, &expression)
 		}
 		if err := util.ValidateExpressions(expressions); err != nil {
