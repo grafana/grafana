@@ -1943,12 +1943,12 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("counts complete small result sets after filling the page", func(t *testing.T) {
 		for _, tc := range []struct {
 			name          string
-			total         int
-			offset        int64
-			maxCandidates int
-			threshold     int
-			wantTotal     int64
-			wantExact     bool
+			total         int   // Matches before authorization; this fixture allows every other match.
+			offset        int64 // Authorized hits to skip before filling the page.
+			maxCandidates int   // Existing scan budget, independent of threshold; zero uses its default.
+			threshold     int   // Maximum pre-auth match count eligible for optional exact counting.
+			wantTotal     int64 // Expected authorized count if exact, otherwise the pre-auth upper bound.
+			wantExact     bool  // Whether every match was checked, making wantTotal exact.
 		}{
 			{name: "disabled", total: 80, wantTotal: 80},
 			{name: "negative disables", total: 80, threshold: -1, wantTotal: 80},
