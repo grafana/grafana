@@ -180,6 +180,38 @@ func TestNewSettingsManifest(t *testing.T) {
 	})
 }
 
+func TestWithTrailingSlashesLeavesOutConflictingCopies(t *testing.T) {
+	op := &spec3.Operation{}
+	op.AddExtension(ExtensionProxy, ProxyTarget{URL: "https://example"})
+	p := appWithRoutes(nil, &app.ManifestData{Group: "example-app", Versions: []app.ManifestVersion{{
+		Name: "v0alpha1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+			// a/b/ is matched by both a/{x} with a trailing slash and {y}/b/,
+			// and neither is more specific.
+			SettingsProxyRoot + "/a/{x}":   {Get: op},
+			SettingsProxyRoot + "/{y}/b/":  {Get: op},
+			SettingsProxyRoot + "/c/d/{z}": {Get: op},
+		}},
+	}}})
+	require.NoError(t, p.LoadSettings(testMatcher))
+	mux, err := settingsRouteMux(p.Settings.Versions[0])
+	require.NoError(t, err)
+
+	root := "/namespaces/default/app/instance/proxy/"
+	matched := func(path string) string {
+		h, _ := mux.Handler(&http.Request{Method: http.MethodGet, URL: &url.URL{Path: root + path}})
+		if m, ok := h.(matchedRoute); ok {
+			return m.route.Path
+		}
+		return ""
+	}
+	for path, want := range map[string]string{
+		"a/1": "a/:p1", "x/b/": ":p0/b/", "a/b/": ":p0/b/", "c/d/1": "c/d/:p2", "c/d/1/": "c/d/:p2",
+	} {
+		require.Equal(t, want, matched(path), path)
+	}
+	require.Empty(t, matched("a/1/"), "the conflicting copy is left out")
+}
+
 func TestLoadSettings(t *testing.T) {
 	p := appWithRoutes([]*plugins.Route{{Path: "ids/:id([0-9]+)"}})
 	require.Error(t, p.LoadSettings(testMatcher))

@@ -18,7 +18,8 @@ import (
 
 // ExtensionProxy declares, on an OpenAPI operation, the plugin route a matched
 // request is forwarded with. Its value is a ProxyTarget. It names upstream hosts
-// and secure settings, so it must be removed from any published spec.
+// and secure settings by template, so it is removed from the published OpenAPI;
+// the published settings manifest keeps it, so it can be declared again.
 const ExtensionProxy = "x-grafana-proxy"
 
 // ProxyTarget is everything in a plugin route except where it matches: the path
@@ -259,6 +260,11 @@ func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plu
 
 func proxyRoutePath(specPath string) (string, error) {
 	segments := strings.Split(strings.TrimPrefix(specPath, "/"), "/")
+	// The last parameter, before any trailing slash, as app-sdk reads a path.
+	last := len(segments) - 1
+	if last > 0 && segments[last] == "" {
+		last--
+	}
 	for i, segment := range segments {
 		if len(segment) < 2 || segment[0] != '{' || segment[len(segment)-1] != '}' {
 			if strings.ContainsAny(segment, "{}:*") {
@@ -267,12 +273,14 @@ func proxyRoutePath(specPath string) (string, error) {
 			continue
 		}
 		name := segment[1 : len(segment)-1]
-		if strings.HasSuffix(name, ":*") || strings.HasSuffix(name, "...") {
-			if i != len(segments)-1 {
+		// app-sdk also matches the rest of the path with a last {path}.
+		if strings.HasSuffix(name, ":*") || strings.HasSuffix(name, "...") || (name == "path" && i == last) {
+			if i != last {
 				return "", fmt.Errorf("only the last segment can match the rest of %s", specPath)
 			}
 			segments[i] = "*"
-			continue
+			segments = segments[:i+1] // the * matches a trailing slash too
+			break
 		}
 		segments[i] = ":p" + strconv.Itoa(i)
 	}

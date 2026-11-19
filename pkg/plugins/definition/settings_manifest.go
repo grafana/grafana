@@ -219,11 +219,13 @@ func ProxyRouteFor(route manifestroutes.Route, method string, op *spec3.Operatio
 // not match the rest of the path, which matches its path with a trailing
 // slash, as the plugin proxy does. A copy keeps the route's Declared path, so it
 // is served and published as that route. A path a route already matches is not
-// copied.
+// copied, nor is a copy that would conflict with another route: routes are
+// mounted on a ServeMux, which panics on a conflict, and manifestroutes.Parse
+// only checked the declared routes.
 func WithTrailingSlashes(routes []manifestroutes.Route) []manifestroutes.Route {
-	patterns := make(map[string]bool, len(routes))
+	scratch := http.NewServeMux()
 	for _, r := range routes {
-		patterns[r.Pattern] = true
+		_ = registers(scratch, r)
 	}
 	out := slices.Clone(routes)
 	for _, r := range routes {
@@ -232,12 +234,25 @@ func WithTrailingSlashes(routes []manifestroutes.Route) []manifestroutes.Route {
 		}
 		copied := r
 		copied.Pattern += "/{$}"
-		if !patterns[copied.Pattern] {
-			patterns[copied.Pattern] = true
+		if registers(scratch, copied) {
 			out = append(out, copied)
 		}
 	}
 	return out
+}
+
+// registers registers r's operations on mux, reporting false if one conflicts
+// with a pattern already registered, or is one.
+func registers(mux *http.ServeMux, r manifestroutes.Route) (ok bool) {
+	defer func() {
+		if recover() != nil {
+			ok = false
+		}
+	}()
+	for method := range manifestroutes.Operations(&r.Operations) {
+		mux.Handle(method+" /"+r.Pattern, http.NotFoundHandler())
+	}
+	return true
 }
 
 // matchedRoute is the handler a probed route is registered with, so a match

@@ -213,6 +213,15 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 			"an undeclared method is refused as on any manifest route")
 	})
 
+	t.Run("match the rest of the path with a last {path}, as app-sdk does", func(t *testing.T) {
+		s := newProxyServer(t, pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
+			declaredProxy + "files/{path}": {Get: proxyOperation(definition.ProxyTarget{URL: up.URL + "/files"})},
+		})))
+		up.forwarded = nil
+		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "files/a/b"))
+		require.Equal(t, []string{"GET /files/a/b"}, up.forwarded)
+	})
+
 	t.Run("must all declare where they forward to", func(t *testing.T) {
 		broken := manifestDeclaring(map[string]spec3.PathProps{
 			declaredProxy + "v2": {Get: &spec3.Operation{}},
@@ -252,8 +261,8 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	require.Equal(t, []string{"Settings"}, items.Get.Tags)
 	require.Len(t, items.Parameters, 2, "the settings path parameters are documented")
 	require.Contains(t, paths, item+"/proxy/api/{path}", "a catch-all is published as an ordinary parameter")
-	require.Equal(t, "getProxyApiItemsId", items.Get.OperationId, "an unnamed operation is named by its route")
-	require.Equal(t, "deleteProxyApiPath", paths[item+"/proxy/api/{path}"].Delete.OperationId)
+	require.Equal(t, "proxyGetApiItemsId", items.Get.OperationId, "an unnamed operation is named by its route")
+	require.Equal(t, "proxyDeleteApiPath", paths[item+"/proxy/api/{path}"].Delete.OperationId)
 	for path, p := range paths {
 		for _, op := range []*spec3.Operation{p.Get, p.Head, p.Post, p.Put, p.Patch, p.Delete, p.Options} {
 			if op != nil {
@@ -273,9 +282,9 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 }
 
 func TestSubresourceOperationID(t *testing.T) {
-	require.Equal(t, "postProxyFleetManagementApiSetK8sInstrumentation",
+	require.Equal(t, "proxyPostFleetManagementApiSetK8sInstrumentation",
 		subresourceOperationID(http.MethodPost, "proxy", "/fleet-management-api/set-k8s-instrumentation"))
-	require.Equal(t, "getResourcesThingsIdPath", subresourceOperationID(http.MethodGet, "resources", "things/{id}/{path:*}"))
+	require.Equal(t, "resourcesGetThingsIdPath", subresourceOperationID(http.MethodGet, "resources", "things/{id}/{path:*}"))
 }
 
 func TestOpenAPIPublishesResourceRoutes(t *testing.T) {

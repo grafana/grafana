@@ -40,8 +40,9 @@ func Wrap(group string, versions []Version, handlerFor HandlerFunc, next http.Ha
 		root := "/apis/" + gv.String() + "/"
 		for _, route := range version.Routes {
 			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, handlerFor(gv, route).ServeHTTP)
-			// manifestroutes.Parse has already registered every pattern on a
-			// scratch mux, so registering them again cannot fail.
+			// manifestroutes.Parse has already registered every declared
+			// pattern on a scratch mux, and definition.WithTrailingSlashes every
+			// pattern it adds, so registering them again cannot fail.
 			for method := range manifestroutes.Operations(&route.Operations) {
 				mux.Handle(method+" "+root+route.Pattern, handler)
 				mounted++

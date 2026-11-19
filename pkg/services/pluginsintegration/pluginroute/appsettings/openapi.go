@@ -169,11 +169,12 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 
 // subresourceOperationID names an operation the settings manifest leaves
 // unnamed, since the generated name repeats the whole settings path. GET
-// proxy/set-k8s/{path:*} is getProxySetK8sPath.
+// proxy/set-k8s/{path:*} is proxyGetSetK8sPath: the subresource comes first,
+// so its operations are listed together.
 func subresourceOperationID(method, subresource, specPath string) string {
 	var id strings.Builder
-	id.WriteString(strings.ToLower(method))
-	words := strings.FieldsFunc(subresource+"/"+strings.ReplaceAll(specPath, ":*", ""), func(r rune) bool {
+	id.WriteString(subresource)
+	words := strings.FieldsFunc(strings.ToLower(method)+"/"+strings.ReplaceAll(specPath, ":*", ""), func(r rune) bool {
 		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
 	})
 	for _, word := range words {
