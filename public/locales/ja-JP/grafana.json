@@ -2926,6 +2926,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "記録ルール"
     },
@@ -9758,13 +9789,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "機能コントロール",
       "close-tooltip": "機能コントロールを閉じる",
       "open-tooltip": "機能コントロール"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "削除",
     "description": "テストおよび開発目的で、フロントエンドの機能フラグをローカルで上書きします。",
+    "disable-overrides": "",
     "dismiss": {
       "label": "UIとツールバーボタンを削除",
       "tooltip": "定義した機能フラグのオーバーライドはすべて有効なままになります。<br/>UIを再度有効にするには、URLで<3>{{ param }}</3>を使用してください。"
@@ -9774,11 +9809,18 @@
     "flag-type": "フラグタイプ",
     "flag-value": "フラグ値",
     "menu": "メニューを開く",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP評価",
     "ofrep-reason": "理由：<2>{{reason}}</2>",
     "ofrep-variant": "バリアント：<2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "保存",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "機能コントロール"
   },
   "folder-filter": {
@@ -12361,7 +12403,7 @@
     },
     "description-allow-download": "コントロールが有効になっている場合、表示されているログをダウンロードするオプションを表示します。",
     "description-enable-field-selector": "実験的機能。ログから表示フィールドを管理するためのコンポーネントを表示します。",
-    "description-enable-infinite-scrolling": "実験的機能。ログリストの一番下までスクロールして、さらに結果をリクエストします。",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "事前定義された配色スキームを使い、ログ行の関連部分をハイライト表示します。",
     "description-order": "最新のログまたは最も古いログを最初に表示します。「最も古いログを最初に表示」を選択すると、ビューは自動的に下部にある最新のログまでスクロールします。",
     "description-prettify-json": "JSONログエントリをインデントと改行で整形します。",
@@ -13375,6 +13417,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13487,7 +13532,10 @@
       "aria-label": "新規",
       "new-template-dashboard-button": "テンプレートを使用"
     },
-    "rss-button": "最新ブログから"
+    "rss-button": "最新ブログから",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "ニュース",

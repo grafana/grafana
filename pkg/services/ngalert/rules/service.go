@@ -122,6 +122,10 @@ func (s *Service) Count(ctx context.Context, orgID int64) (int64, error) {
 	return s.sql.Count(ctx, orgID)
 }
 
+func (s *Service) CountByOrg(ctx context.Context) (map[int64]int64, error) {
+	return s.sql.CountByOrg(ctx)
+}
+
 func (s *Service) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {
 	return s.sql.CountRuleGroups(ctx, orgID)
 }
