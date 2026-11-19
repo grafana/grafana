@@ -125,6 +125,29 @@ describe('GrafanaTemplatesTab', () => {
       open.mockRestore();
     });
 
+    it('shows the templates that match the search, sorted as asked', async () => {
+      server.use(
+        http.get('/api/gnet/dashboards', () =>
+          HttpResponse.json({
+            page: 1,
+            pages: 1,
+            items: [
+              { id: 1, name: 'RED metrics', description: 'Rate, errors and duration', slug: 'red', downloads: 1 },
+              { id: 2, name: 'USE method', description: 'Utilization and saturation', slug: 'use', downloads: 1 },
+              { id: 3, name: 'Golden signals', description: 'Latency, traffic, errors', slug: 'gold', downloads: 1 },
+            ],
+          })
+        )
+      );
+      renderTab({ onSelectTemplate: jest.fn(), searchQuery: 'ERRORS', sortOrder: 'desc' });
+
+      await screen.findByRole('button', { name: 'Use template: RED metrics' });
+      const titles = screen
+        .getAllByRole('button', { name: /^Use template: / })
+        .map((b) => b.getAttribute('aria-label'));
+      expect(titles).toEqual(['Use template: RED metrics', 'Use template: Golden signals']);
+    });
+
     it('marks the selected template', async () => {
       renderTab({ onSelectTemplate: jest.fn(), selectedTemplateId: 'grafana:1' });
 

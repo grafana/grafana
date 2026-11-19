@@ -7170,6 +7170,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filter by created by",
       "search-placeholder": "Search",
+      "sort": {
+        "asc": "Alphabetically (A–Z)",
+        "desc": "Alphabetically (Z–A)"
+      },
       "sort-placeholder": "Sort"
     },
     "dashboard-card": {

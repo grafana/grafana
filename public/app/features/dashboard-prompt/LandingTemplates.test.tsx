@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
+import { type Props as SortPickerProps } from 'app/core/components/Select/SortPicker';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 
@@ -9,11 +10,15 @@ import { LOAD_WAIT_MS, LandingTemplates } from './LandingTemplates';
 // `undefined` keeps a list loading.
 let mockGrafanaCount: number | undefined = 1;
 let mockCustomCount: number | undefined = 1;
+// What the Grafana list was last rendered with.
+let mockGrafanaProps: TemplateSelectionProps = {};
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
   return {
-    GrafanaTemplatesTab: ({ onTemplatesLoad }: TemplateSelectionProps) => {
+    GrafanaTemplatesTab: (props: TemplateSelectionProps) => {
+      const { onTemplatesLoad } = props;
+      mockGrafanaProps = props;
       useMockEffect(() => {
         if (mockGrafanaCount !== undefined) {
           onTemplatesLoad?.(mockGrafanaCount);
@@ -23,6 +28,17 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab'
     },
   };
 });
+
+// The real picker loads its options asynchronously; a plain select keeps these tests synchronous.
+jest.mock('app/core/components/Select/SortPicker', () => ({
+  SortPicker: ({ value, onChange, placeholder }: SortPickerProps) => (
+    <select aria-label={placeholder} value={value ?? ''} onChange={(e) => onChange({ value: e.target.value })}>
+      <option value="" />
+      <option value="asc">A–Z</option>
+      <option value="desc">Z–A</option>
+    </select>
+  ),
+}));
 
 jest.mock(
   'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
@@ -67,6 +83,32 @@ describe('LandingTemplates', () => {
     const grafana = screen.getByTestId('grafana-card');
     expect(custom.parentElement).toBe(grafana.parentElement);
     expect(custom.compareDocumentPosition(grafana) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('searches and sorts the templates from their header', async () => {
+    const { user } = renderTemplates();
+
+    await user.type(screen.getByPlaceholderText('Search'), 'node');
+    expect(mockGrafanaProps.searchQuery).toBe('node');
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort' }), 'desc');
+    expect(mockGrafanaProps.sortOrder).toBe('desc');
+  });
+
+  it('adds a no-matches line while a search is on, which CSS hides while the grid has cards', async () => {
+    const { user } = renderTemplates();
+    expect(screen.queryByText('No template dashboards found')).not.toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
+    expect(screen.getByText('No template dashboards found')).toBeInTheDocument();
+  });
+
+  it('has no search without templates to search', () => {
+    mockGrafanaCount = 0;
+    mockCustomCount = 0;
+    renderTemplates();
+
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
   });
 
   it('collapses and expands the templates from their header', async () => {

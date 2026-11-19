@@ -25,6 +25,7 @@ import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link, type TemplateSelectionProps } from './types';
 import { buildTemplateContextData } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
+import { filterTemplates } from './utils/templateFilters';
 
 interface GrafanaTemplatesTabProps extends TemplateSelectionProps {
   /** Raw `source` search param value, mapped to a known entry point when fired. */
@@ -47,6 +48,8 @@ export const GrafanaTemplatesTab = ({
   onSelectTemplate,
   selectedTemplateId,
   onTemplatesLoad,
+  searchQuery,
+  sortOrder,
 }: GrafanaTemplatesTabProps) => {
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
@@ -170,9 +173,19 @@ export const GrafanaTemplatesTab = ({
     );
   }
 
+  const shownDashboards = onSelectTemplate
+    ? filterTemplates(
+        dashboards,
+        (dashboard) => dashboard.name,
+        (dashboard) => dashboard.description,
+        searchQuery,
+        sortOrder
+      )
+    : dashboards;
+
   const cards = loading
     ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
-    : dashboards?.map((dashboard) => {
+    : shownDashboards.map((dashboard) => {
         const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
         const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
 

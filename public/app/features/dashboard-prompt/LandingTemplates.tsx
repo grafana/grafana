@@ -2,13 +2,15 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { FilterInput, Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
-import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { type TemplateSelection, type TemplateSortOrder } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { getTemplateSortOptions } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templateFilters';
 
 interface Props {
   testDataSource: DataSourceInstanceListItem | undefined;
@@ -59,6 +61,9 @@ export function LandingTemplates({
   const [counts, setCounts] = useState<{ custom?: number; grafana?: number }>({});
   // A person's own toggle wins over the default.
   const [openedByUser, setOpenedByUser] = useState<boolean>();
+  // The template modal's search and sort, applied to every list.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<TemplateSortOrder>();
   const onCustomTemplatesLoad = useCallback((custom: number) => setCounts((current) => ({ ...current, custom })), []);
   const onGrafanaTemplatesLoad = useCallback(
     (grafana: number) => setCounts((current) => ({ ...current, grafana })),
@@ -99,6 +104,8 @@ export function LandingTemplates({
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
         onTemplatesLoad={onCustomTemplatesLoad}
+        searchQuery={searchQuery}
+        sortOrder={sortOrder}
       />
     );
   };
@@ -109,17 +116,40 @@ export function LandingTemplates({
       aria-labelledby={titleId}
       hidden={hidden}
     >
-      <button
-        type="button"
-        id={titleId}
-        className={styles.toggle}
-        aria-expanded={isOpen}
-        aria-controls={listId}
-        onClick={() => setOpenedByUser(!isOpen)}
-      >
-        <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
-        <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-      </button>
+      <div className={styles.header}>
+        <button
+          type="button"
+          id={titleId}
+          className={styles.toggle}
+          aria-expanded={isOpen}
+          aria-controls={listId}
+          onClick={() => setOpenedByUser(!isOpen)}
+        >
+          <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
+        </button>
+        {isOpen && loaded && !isEmpty && (
+          <div className={styles.filters}>
+            <FilterInput
+              className={styles.search}
+              placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
+              value={searchQuery}
+              escapeRegex={false}
+              onChange={setSearchQuery}
+            />
+            <div className={styles.sort}>
+              <SortPicker
+                value={sortOrder}
+                onChange={(change) => setSortOrder(change?.value)}
+                getSortOptions={getTemplateSortOptions}
+                placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
+                isClearable
+                width={22}
+              />
+            </div>
+          </div>
+        )}
+      </div>
       {/* Hidden, not unmounted: reopening keeps the loaded templates instead of refetching them. */}
       <div id={listId} className={styles.list} hidden={!isOpen}>
         {isEmpty && (
@@ -147,9 +177,18 @@ export function LandingTemplates({
                 onSelectTemplate={onSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
                 onTemplatesLoad={onGrafanaTemplatesLoad}
+                searchQuery={searchQuery}
+                sortOrder={sortOrder}
               />
             )}
           </div>
+          {searchQuery.trim() && (
+            <p className={styles.noMatches}>
+              <Trans i18nKey="dashboard-library.grafana-dashboard-template-modal.no-results-found">
+                No template dashboards found
+              </Trans>
+            </p>
+          )}
         </div>
       </div>
     </section>
@@ -189,9 +228,31 @@ function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
     panelClosed: css({
       paddingBottom: theme.spacing(0.5),
     }),
-    // A set height, which the list's height accounts for.
+    // A set height, which the list's height accounts for; the search and sort fit in it.
+    header: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      height: headerHeight,
+    }),
+    filters: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      minWidth: 0,
+      marginLeft: 'auto',
+    }),
+    search: css({
+      width: theme.spacing(25),
+      minWidth: 0,
+    }),
+    // A phone keeps the header to the toggle and the search.
+    sort: css({
+      [theme.breakpoints.down('sm')]: {
+        display: 'none',
+      },
+    }),
     toggle: css({
-      alignSelf: 'flex-start',
+      flexShrink: 0,
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
@@ -224,6 +285,15 @@ function getStyles(theme: GrafanaTheme2, maxHeight?: string) {
       gridTemplateColumns: `repeat(auto-fill, minmax(max(${theme.spacing(22)}, (100% - 3 * ${gap}) / 4), 1fr))`,
       gridAutoRows: CARD_HEIGHT,
       gap,
+    }),
+    // Shown while a search is on and no list has a card for it.
+    noMatches: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      'div:has(> article) + &': {
+        display: 'none',
+      },
     }),
     empty: css({
       margin: 0,
