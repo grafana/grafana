@@ -293,7 +293,7 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
-  reportInteractionUI: 'panel-edit' | 'view-panel';
+  reportInteractionUI: 'panel-edit' | 'view-panel' | 'quick-edits';
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
   varMappingsEnabled?: boolean;

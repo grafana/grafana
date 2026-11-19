@@ -501,9 +501,17 @@ export const DashboardInteractions = {
     reportDashboardInteraction('view_panel_action', properties);
   },
 
+  // Quick edits in the panel edit popover; their changes report through setVisualOption with ui 'quick-edits'.
+  panelQuickEditsShown: (properties: { panel_type: string; panel_id: number }) => {
+    reportDashboardInteraction('panel_quick_edits_shown', properties);
+  },
+  panelQuickEditOpened: (properties: { quick_edit: string; panel_type: string; panel_id: number }) => {
+    reportDashboardInteraction('panel_quick_edit_opened', properties);
+  },
+
   setVisualOption: (properties?: {
     // text-panel-editor: the Text panel's own editor, which writes its options directly.
-    ui: 'panel-edit' | 'view-panel' | 'text-panel-editor';
+    ui: 'panel-edit' | 'view-panel' | 'text-panel-editor' | 'quick-edits';
     option: string;
     // Only set when the value cannot be free text; see getReportableOptionValue.
     value?: string;
