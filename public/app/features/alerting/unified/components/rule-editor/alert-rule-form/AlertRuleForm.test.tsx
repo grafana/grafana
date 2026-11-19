@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -166,6 +166,23 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
     expect(replaceSpy).toHaveBeenCalled();
+  });
+
+  it("keeps a grouped rule's interval when its old group has a different one", async () => {
+    setReplaceGrafanaRuleResolver(echoBodyResolver);
+    server.use(
+      http.get('/api/ruler/grafana/api/v1/rules/:folderUid', () =>
+        HttpResponse.json({ [folderA.title]: [{ ...grafanaRulerGroup, interval: '2m' }] })
+      )
+    );
+
+    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+    expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
+    const interval = screen.getByRole('textbox', { name: /evaluation interval/i });
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+    expect(interval).toHaveValue(grafanaRulerGroup.interval);
   });
 
   it('saves an existing grouped recording rule through the k8s recording rules API', async () => {
