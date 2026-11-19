@@ -57,19 +57,13 @@ export const Permissions = ({
   const [isAdding, setIsAdding] = useState(false);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
 
-  // Loading from the start: nothing is fetched until the description arrives, and until then an empty editor
-  // reads as a resource with no permissions.
-  const [permissions, fetchPermissions] = useAsyncFn(
-    async () => {
-      let items = await getPermissions(resource, resourceId, queryParams);
-      if (getWarnings) {
-        items = getWarnings(items);
-      }
-      return items;
-    },
-    [resource, resourceId, queryParams, getWarnings],
-    { loading: true }
-  );
+  const [permissions, fetchPermissions] = useAsyncFn(async () => {
+    let items = await getPermissions(resource, resourceId, queryParams);
+    if (getWarnings) {
+      items = getWarnings(items);
+    }
+    return items;
+  }, [resource, resourceId, queryParams, getWarnings]);
 
   useEffect(() => {
     getDescription(resource, queryParams).then((r) => {
@@ -159,7 +153,10 @@ export const Permissions = ({
   const titleServiceAccount = t('access-control.permissions.serviceaccount', 'Service Account');
   const titleTeam = t('access-control.permissions.team', 'Team');
 
-  if (permissions.loading) {
+  // Also before the first fetch starts: it waits for the description, and until then an empty editor reads as a
+  // resource with no permissions. Not through useAsyncFn's initial state, which would stop every later fetch
+  // from reporting loading, and with it the reset of the add form after a change.
+  if (permissions.loading || !(permissions.value || permissions.error)) {
     return <PermissionsLoading />;
   }
 
