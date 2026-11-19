@@ -51,7 +51,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     iconButton: css({
       display: 'flex',
-      padding: theme.spacing(1.5),
+      padding: theme.spacing(0, 1.5),
       gap: theme.spacing(1.5),
       alignItems: 'center',
       fontSize: '14px',
