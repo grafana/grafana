@@ -30,12 +30,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	pluginID       = "example-app"
+	pluginGroup    = "example.ext.grafana.app"
+	pluginResource = pluginGroup + "/things"
+	audience       = "grafana"
+	namespace      = "default"
+	userID         = "u1"
+)
+
 func TestExtendedJWTPluginDelegationSync_GroupWildcard(t *testing.T) {
-	const group = "example.ext.grafana.app"
-	create := group + "/things:create"
-	get := group + "/things:get"
+	create := pluginResource + ":create"
+	get := pluginResource + ":get"
 	ident := syncPluginCallerPermissions(t,
-		[]string{group + ":*"},
+		[]string{pluginGroup + ":*"},
 		[]accesscontrol.Permission{
 			{Action: create},
 			{Action: get},
@@ -47,15 +55,14 @@ func TestExtendedJWTPluginDelegationSync_GroupWildcard(t *testing.T) {
 }
 
 func TestExtendedJWTPluginDelegationSync_K8sVerbAliases(t *testing.T) {
-	const resource = "example.ext.grafana.app/things"
-	get := resource + ":get"
-	update := resource + ":update"
+	get := pluginResource + ":get"
+	update := pluginResource + ":update"
 	ident := syncPluginCallerPermissions(t,
-		[]string{resource + ":list", resource + ":patch"},
+		[]string{pluginResource + ":list", pluginResource + ":patch"},
 		[]accesscontrol.Permission{
 			{Action: get},
 			{Action: update},
-			{Action: resource + ":delete"},
+			{Action: pluginResource + ":delete"},
 		},
 	)
 
@@ -68,40 +75,11 @@ func TestExtendedJWTPluginDelegationSync_K8sVerbAliases(t *testing.T) {
 func syncPluginCallerPermissions(t *testing.T, delegated []string, held []accesscontrol.Permission) *authn.Identity {
 	t.Helper()
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
-	const group = "example.ext.grafana.app"
 	cfg := &setting.Cfg{
 		Raw:        ini.Empty(),
-		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},
+		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{audience}},
 	}
-	policy := v3.LocalAccessPolicy{
-		PluginID:             "example-app",
-		Audiences:            []string{"grafana", group},
-		Permissions:          delegated,
-		DelegatedPermissions: delegated,
-	}
-
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	require.NoError(t, err)
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
-		(&jose.SignerOptions{}).WithType(jose.ContentType(authlib.TokenTypeID)))
-	require.NoError(t, err)
-	idToken, err := jwt.Signed(signer).Claims(jwt.Claims{
-		Subject: "user:u1", Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-	}).Claims(authlib.IDTokenClaims{
-		Identifier: "u1", Type: claims.TypeUser, Namespace: "default",
-	}).Serialize()
-	require.NoError(t, err)
-
-	exchanger, err := v3.LocalTokenExchanger()
-	require.NoError(t, err)
-	inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{
-		Namespace: "default", Audiences: []string{"example-app"}, SubjectToken: idToken,
-	})
-	require.NoError(t, err)
-	token, err := v3.SignLocalAccessToken(context.Background(), policy, authlib.TokenExchangeRequest{
-		Namespace: "default", Audiences: []string{"grafana"}, SubjectToken: inbound.Token,
-	})
-	require.NoError(t, err)
+	token := createPluginDelegationToken(t, delegated)
 
 	pluginAuth, err := pluginauth.ProvideConfig(cfg)
 	require.NoError(t, err)
@@ -119,4 +97,38 @@ func syncPluginCallerPermissions(t *testing.T, delegated []string, held []access
 	sync := authnsync.ProvideRBACSync(cfg, ac, tracing.InitializeTracerForTest(), permreg.ProvidePermissionRegistry(t))
 	require.NoError(t, sync.SyncPermissionsHook(context.Background(), ident, request))
 	return ident
+}
+
+func createPluginDelegationToken(t *testing.T, delegated []string) string {
+	t.Helper()
+	policy := v3.LocalAccessPolicy{
+		PluginID:             pluginID,
+		Audiences:            []string{audience, pluginGroup},
+		Permissions:          delegated,
+		DelegatedPermissions: delegated,
+	}
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authlib.TokenTypeID)))
+	require.NoError(t, err)
+	idToken, err := jwt.Signed(signer).Claims(jwt.Claims{
+		Subject: "user:" + userID, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+	}).Claims(authlib.IDTokenClaims{
+		Identifier: userID, Type: claims.TypeUser, Namespace: namespace,
+	}).Serialize()
+	require.NoError(t, err)
+
+	exchanger, err := v3.LocalTokenExchanger()
+	require.NoError(t, err)
+	inbound, err := exchanger.Exchange(context.Background(), authlib.TokenExchangeRequest{
+		Namespace: namespace, Audiences: []string{pluginID}, SubjectToken: idToken,
+	})
+	require.NoError(t, err)
+	token, err := v3.SignLocalAccessToken(context.Background(), policy, authlib.TokenExchangeRequest{
+		Namespace: namespace, Audiences: []string{audience}, SubjectToken: inbound.Token,
+	})
+	require.NoError(t, err)
+	return token
 }
