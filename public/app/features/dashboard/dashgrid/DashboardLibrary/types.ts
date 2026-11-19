@@ -59,13 +59,12 @@ export function isGnetDashboard(dashboard: PluginDashboard | GnetDashboard): das
 }
 
 /**
- * A template picked to start a dashboard with the Assistant. Sending the prompt opens the template at `url`, as
- * Use template does, and hands the context item to the Assistant, which adapts the open dashboard.
+ * A template picked to start a dashboard with the Assistant. Sending the prompt opens the template at `url`, as the
+ * template modal opens it, and hands the context item to the Assistant, which adapts the open dashboard.
  */
 export interface TemplateSelection {
   /** Unique across Grafana-provisioned and custom templates. */
   id: string;
-  title: string;
   kind: 'template_dashboard' | 'custom_dashboard_template';
   /** The template's page, where it opens as a new, unsaved dashboard. */
   url: string;

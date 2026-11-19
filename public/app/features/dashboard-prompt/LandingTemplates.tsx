@@ -23,7 +23,7 @@ interface Props {
   selectedTemplateId?: string;
   /** Called with whether the lists turned out to have no templates, so the host can start the panel closed. */
   onEmptyChange?: (isEmpty: boolean) => void;
-  /** Keeps the panel out of sight while its lists still load, holding its place so the page does not shift. */
+  /** Keeps the panel out of sight until the prompt shows its text box, holding its place so the page does not shift. */
   hidden?: boolean;
   className?: string;
 }
@@ -95,12 +95,13 @@ export function LandingTemplates({
     (grafana: number) => setCounts((current) => ({ ...current, grafana })),
     []
   );
-  const DashboardTemplatesTab = getDashboardTemplatesTab();
-  const hasCustomTemplates = Boolean(DashboardTemplatesTab) && showCustomTemplates;
+  // Registered by the enterprise build; `showCustomTemplates` is only set when it is.
+  const DashboardTemplatesTab = showCustomTemplates ? getDashboardTemplatesTab() : null;
+  const hasCustomTemplates = Boolean(DashboardTemplatesTab);
   const allLoaded =
     (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
   const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
-  // A list that never reports (an older enterprise build) must not hold back the cards the others loaded.
+  // A slow list must not hold back the cards the others loaded.
   const [waitedLong, setWaitedLong] = useState(false);
   useEffect(() => {
     if (allLoaded) {
@@ -115,12 +116,11 @@ export function LandingTemplates({
     onEmptyChange?.(isEmpty);
   }, [isEmpty, onEmptyChange]);
   // Pre-set so the lists' `loaded` events, which report the template modal as their location, stay silent here.
-  const customLoadedFiredRef = useRef(true);
-  const grafanaLoadedFiredRef = useRef(true);
+  const loadedFiredRef = useRef(true);
 
-  // Rendered through a function, as in the template modal: the tab is registered by the enterprise build.
+  // Rendered through a function, as in the template modal: the tab comes from a registry at render time.
   const renderCustomTemplates = () => {
-    if (!DashboardTemplatesTab || !hasCustomTemplates) {
+    if (!DashboardTemplatesTab) {
       return null;
     }
     return (
@@ -128,7 +128,7 @@ export function LandingTemplates({
         isOpen
         onClose={noop}
         entryPoint={ENTRY_POINT}
-        loadedFiredRef={customLoadedFiredRef}
+        loadedFiredRef={loadedFiredRef}
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
         onTemplatesLoad={onCustomTemplatesLoad}
@@ -194,7 +194,7 @@ export function LandingTemplates({
                 entryPoint={ENTRY_POINT}
                 testDataSource={testDataSource}
                 onClose={noop}
-                loadedFiredRef={grafanaLoadedFiredRef}
+                loadedFiredRef={loadedFiredRef}
                 onSelectTemplate={onSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
                 onTemplatesLoad={onGrafanaTemplatesLoad}
@@ -241,7 +241,7 @@ function getStyles(theme: GrafanaTheme2) {
     panelHidden: css({
       visibility: 'hidden',
     }),
-    // A set height, kept while the search and sort load so the cards do not jump.
+    // A set height, so the row keeps its height while the lists load and the cards do not jump.
     header: css({
       display: 'flex',
       alignItems: 'center',

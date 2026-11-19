@@ -502,6 +502,13 @@ function DetailsTooltipContent({ details }: { details: Details }) {
   );
 }
 
+// The picker's grid sets the card height; the thumbnail takes what the title and author leave.
+const pickerThumbnail = {
+  flex: '1 1 0',
+  minHeight: 0,
+  aspectRatio: 'auto',
+};
+
 function getStyles(theme: GrafanaTheme2) {
   // Shown on hover or focus, and always where there is no hover, like a touch screen.
   const previewAction = css({
@@ -635,12 +642,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderColor: theme.colors.accent.main,
       backgroundColor: theme.colors.action.selected,
     }),
-    // The picker's grid sets the card height; the thumbnail takes what the title and author leave.
-    selectableThumbnail: css({
-      flex: '1 1 0',
-      minHeight: 0,
-      aspectRatio: 'auto',
-    }),
+    selectableThumbnail: css(pickerThumbnail),
     // Cropped to the top of the dashboard rather than letterboxed, since the shape varies with the column width.
     selectableThumbnailImage: css({
       objectFit: 'cover',
@@ -844,11 +846,7 @@ const getSkeletonStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     borderColor: theme.colors.border.weak,
   }),
-  fluidThumbnail: css({
-    flex: '1 1 0',
-    minHeight: 0,
-    aspectRatio: 'auto',
-  }),
+  fluidThumbnail: css(pickerThumbnail),
   card: css({
     width: '350px',
     border: `1px solid ${theme.colors.border.strong}`,

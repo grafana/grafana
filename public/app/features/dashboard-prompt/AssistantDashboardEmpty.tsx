@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type ChatContextItem, checkLimits } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
@@ -59,7 +59,7 @@ function useHasTextbox(ref: RefObject<HTMLElement | null>) {
 
   useEffect(() => {
     const element = ref.current;
-    if (!element || hasTextbox) {
+    if (!element) {
       return;
     }
     const check = () => Boolean(element.querySelector('[role="textbox"], textarea'));
@@ -75,15 +75,16 @@ function useHasTextbox(ref: RefObject<HTMLElement | null>) {
     });
     observer.observe(element, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [ref, hasTextbox]);
+  }, [ref]);
 
   return hasTextbox;
 }
 
 /**
  * Sizes the landing to at least the whole area its dashboard scrolls in, from the top edge to the bottom, so its
- * content sits in that area with the free space split around it (`FREE_SPACE_ABOVE`, `FREE_SPACE_BELOW`). The dashboard body grows with its content, so no CSS height chain
- * reaches this far down, and the empty-state wrapper's top padding is pulled back into the area (`pullUp`).
+ * content sits in that area with the free space split around it (`FREE_SPACE_ABOVE`, `FREE_SPACE_BELOW`). The
+ * dashboard body grows with its content, so no CSS height chain reaches this far down, and the empty-state
+ * wrapper's top padding is pulled back into the area (`pullUp`).
  */
 function useFitToScrollArea(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -153,7 +154,9 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const heldHeight = held && held.fit === fit ? held.height : undefined;
   const onTemplatesToggle = useCallback(() => {
     const height = contentRef.current?.getBoundingClientRect().height;
-    setHeld((current) => (height === undefined || (current && current.fit === fit) ? current : { fit, height }));
+    if (height !== undefined) {
+      setHeld({ fit, height });
+    }
     setTemplatesOpenedByUser(!templatesOpen);
   }, [fit, templatesOpen]);
   const renderTemplatesToggle = useCallback(
@@ -164,7 +167,6 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const promptReady = useHasTextbox(promptRef);
   // The picked template travels to the Assistant as a context pill in the prompt.
   const [template, setTemplate] = useState<TemplateSelection>();
-  const hostContextItems = useMemo(() => (template ? [template.contextItem] : []), [template]);
 
   const onSelectTemplate = useCallback((selection: TemplateSelection) => {
     setTemplate((current) => (current?.id === selection.id ? undefined : selection));
@@ -179,7 +181,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   };
 
   const onSubmitPrompt = useCallback(
-    async (prompt: string, submittedContextItems: ChatContextItem[]) => {
+    async (prompt: string, contextItems: ChatContextItem[]) => {
       // The Assistant reports nothing back once it has the prompt, so check before handing it over: a failed handoff
       // must leave the prompt, the picked template and the templates as they were.
       const problem = await findHandoffProblem();
@@ -187,13 +189,6 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         appEvents.publish({ type: AppEvents.alertError.name, payload: [problem] });
         throw new Error(problem);
       }
-      // A plugin version without host pills never sends the template back, so make sure it travels.
-      const templateItem = template?.contextItem;
-      const contextItems =
-        templateItem && !submittedContextItems.some(({ node }) => node.id === templateItem.node.id)
-          ? [...submittedContextItems, templateItem]
-          : submittedContextItems;
-      const request = prompt.trim();
       const selectedDatasources = contextItems.flatMap(({ node }) => {
         const data = node.data;
         if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
@@ -221,17 +216,22 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       });
 
       if (template) {
+        // A plugin version without host pills never sends the template back, so make sure it travels.
+        const templateItem = template.contextItem;
+        const context = contextItems.some(({ node }) => node.id === templateItem.node.id)
+          ? contextItems
+          : [...contextItems, templateItem];
         // As in the template modal: the template opens as Use template opens it, and the Assistant adapts it.
         openTemplateInAssistant({
           templateUrl: template.url,
           // The prompt can be sent empty once a template is attached; the template is then the whole request.
-          prompt: request || OPEN_TEMPLATE_PROMPT,
-          context: contextItems,
+          prompt: prompt.trim() || OPEN_TEMPLATE_PROMPT,
+          context,
         });
       } else {
         startPlanningInAssistant({
-          request,
-          displayPrompt: request,
+          request: prompt,
+          displayPrompt: prompt,
           datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
           context: contextItems,
           dashboards,
@@ -262,7 +262,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       ref={fitRef}
       className={cx(styles.root, fit && styles.rootFit)}
       // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
-      style={fit ? { height: 'auto', minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
+      style={fit ? { minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
     >
       <div
         ref={contentRef}
@@ -285,48 +285,46 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
                     t('dashboard.empty.assistant-placeholder-template', 'Add changes, or send as is')
                   : undefined
               }
-              hostContextItems={hostContextItems}
+              hostContextItems={template ? [template.contextItem] : []}
               onHostContextItemRemove={onTemplatePillRemove}
               renderHostActions={showTemplates ? renderTemplatesToggle : undefined}
             />
           </div>
         </div>
 
-        <div className={styles.belowPrompt}>
-          {showTemplates && (
-            // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
-            <LandingTemplates
-              id={templatesId}
-              isOpen={templatesOpen}
-              onEmptyChange={setTemplatesEmpty}
-              hidden={!promptReady}
-              className={styles.templates}
-              testDataSource={testDataSource}
-              showGrafanaTemplates={showGrafanaTemplates}
-              showCustomTemplates={showCustomTemplates}
-              onSelectTemplate={onSelectTemplate}
-              selectedTemplateId={template?.id}
-            />
-          )}
+        {showTemplates && (
+          // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
+          <LandingTemplates
+            id={templatesId}
+            isOpen={templatesOpen}
+            onEmptyChange={setTemplatesEmpty}
+            hidden={!promptReady}
+            className={styles.templates}
+            testDataSource={testDataSource}
+            showGrafanaTemplates={showGrafanaTemplates}
+            showCustomTemplates={showCustomTemplates}
+            onSelectTemplate={onSelectTemplate}
+            selectedTemplateId={template?.id}
+          />
+        )}
 
-          <div className={styles.divider}>
-            <div className={styles.orLine} />
-            <span className={styles.orText}>
-              <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
-            </span>
-            <div className={styles.orLine} />
-          </div>
-
-          <Button
-            icon="plus"
-            variant="secondary"
-            className={styles.addButton}
-            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-            onClick={onAddVisualization}
-          >
-            <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
-          </Button>
+        <div className={styles.divider}>
+          <div className={styles.orLine} />
+          <span className={styles.orText}>
+            <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
+          </span>
+          <div className={styles.orLine} />
         </div>
+
+        <Button
+          icon="plus"
+          variant="secondary"
+          className={styles.addButton}
+          data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+          onClick={onAddVisualization}
+        >
+          <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
+        </Button>
       </div>
     </div>
   );
@@ -346,8 +344,7 @@ function getStyles(theme: GrafanaTheme2) {
     // They only grow, so on a screen too short for the content it starts at the top.
     rootFit: css({
       flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
+      height: 'auto',
       '&::before': {
         content: '""',
         flex: `${FREE_SPACE_ABOVE} 0 0`,
@@ -368,7 +365,6 @@ function getStyles(theme: GrafanaTheme2) {
     contentWithTemplates: css({
       // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
       maxWidth: 'none',
-      flexShrink: 0,
       paddingTop: theme.spacing(3),
       paddingBottom: theme.spacing(3),
       [theme.breakpoints.down('sm')]: {
@@ -383,7 +379,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       alignItems: 'center',
       gap: theme.spacing(3),
-      minHeight: 0,
     }),
     // The icon belongs to the heading, closer to it than the heading is to the prompt.
     heading: css({
@@ -407,11 +402,6 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       zIndex: 1,
       width: '100%',
-    }),
-    belowPrompt: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(4),
     }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({

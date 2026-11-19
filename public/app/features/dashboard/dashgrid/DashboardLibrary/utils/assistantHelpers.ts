@@ -1,6 +1,6 @@
 import { firstValueFrom, map } from 'rxjs';
 
-import { isAssistantAvailable } from '@grafana/assistant';
+import { type ChatContextItem, createAssistantContextItem, isAssistantAvailable } from '@grafana/assistant';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -131,18 +131,18 @@ export function buildAssistantPrompt(
 export const OPEN_TEMPLATE_PROMPT = 'Adapt this template to my data sources and adjust its queries as needed.';
 
 /**
- * Builds the context data for a template already open in the dashboard editor as a new, unsaved dashboard, as Use
- * template opens it: the Assistant adapts that dashboard in place instead of building one from a description. Uses
+ * Builds the context item for a template already open in the dashboard editor as a new, unsaved dashboard, as the
+ * template modal opens it: the Assistant adapts that dashboard in place instead of building one from a description. Uses
  * `name` rather than `templateName`, as suggested dashboards do, so the Assistant does not create the template again.
  */
-export function buildOpenTemplateContextData(template: {
+export function buildOpenTemplateContextItem(template: {
   name: string;
   description?: string;
   author?: string;
-}): TemplateContextData {
-  return {
+}): ChatContextItem {
+  const data: TemplateContextData = {
     name: template.name,
-    description: template.description || undefined,
+    description: template.description,
     author: template.author,
     instructions:
       'This template is open in the dashboard editor as a new, unsaved dashboard. Adapt that dashboard in place: ' +
@@ -152,6 +152,8 @@ export function buildOpenTemplateContextData(template: {
       'variables and annotations. Do not create a new dashboard or load the template again, and do not save the ' +
       'dashboard: the user reviews and saves it.',
   };
+  // The prompt pill is narrow: a "Dashboard Template:" prefix leaves no room for the name.
+  return createAssistantContextItem('structured', { hidden: false, title: template.name, data });
 }
 
 /**

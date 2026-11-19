@@ -1,7 +1,6 @@
 import { type MutableRefObject, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { createAssistantContextItem } from '@grafana/assistant';
 import { type DataSourceInstanceListItem, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -23,7 +22,7 @@ import {
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link, type TemplateSelectionProps } from './types';
-import { buildOpenTemplateContextData } from './utils/assistantHelpers';
+import { buildOpenTemplateContextItem } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 import { filterTemplates } from './utils/templateFilters';
 
@@ -131,18 +130,17 @@ export const GrafanaTemplatesTab = ({
     locationService.push(templateUrl);
   };
 
+  const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
+
   // A new tab keeps the landing, and its prompt, where the person left them.
   const previewTemplate = (dashboard: GnetDashboard) => {
-    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
     const url = getTemplateDashboardUrl(dashboard, testDataSource, sourceEntryPoint);
     window.open(locationUtil.assureBaseUrl(url), '_blank', 'noopener,noreferrer');
   };
 
   const selectTemplate = (dashboard: GnetDashboard) => {
-    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
     onSelectTemplate?.({
       id: getGrafanaTemplateSelectionId(dashboard),
-      title: dashboard.name,
       kind: 'template_dashboard',
       // The page Customize with Assistant opens: the template's own dashboard, on TestData.
       url: getTemplateDashboardUrl(
@@ -151,15 +149,10 @@ export const GrafanaTemplatesTab = ({
         sourceEntryPoint,
         TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON
       ),
-      contextItem: createAssistantContextItem('structured', {
-        hidden: false,
-        // The prompt pill is narrow: a "Dashboard Template:" prefix leaves no room for the name.
-        title: dashboard.name,
-        data: buildOpenTemplateContextData({
-          name: dashboard.name,
-          description: dashboard.description,
-          author: dashboard.orgName || dashboard.userName,
-        }),
+      contextItem: buildOpenTemplateContextItem({
+        name: dashboard.name,
+        description: dashboard.description,
+        author: dashboard.orgName || dashboard.userName,
       }),
     });
   };
@@ -169,11 +162,7 @@ export const GrafanaTemplatesTab = ({
     return null;
   }
 
-  if (!loading && dashboards.length === 0) {
-    // A picker shares one grid with other template sources, where an empty state would take a card's slot.
-    if (onSelectTemplate) {
-      return null;
-    }
+  if (!onSelectTemplate && !loading && dashboards.length === 0) {
     return (
       <EmptyState
         variant="not-found"
@@ -185,15 +174,13 @@ export const GrafanaTemplatesTab = ({
     );
   }
 
-  const shownDashboards = onSelectTemplate
-    ? filterTemplates(
-        dashboards,
-        (dashboard) => dashboard.name,
-        (dashboard) => dashboard.description,
-        searchQuery,
-        sortOrder
-      )
-    : dashboards;
+  const shownDashboards = filterTemplates(
+    dashboards,
+    (dashboard) => dashboard.name,
+    (dashboard) => dashboard.description,
+    searchQuery,
+    sortOrder
+  );
 
   const cards = loading
     ? Array.from({ length: 4 }).map((_, index) => (
