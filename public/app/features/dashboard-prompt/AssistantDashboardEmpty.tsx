@@ -6,7 +6,7 @@ import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -26,9 +26,6 @@ interface Props {
 
 /** How far the template panel starts behind the prompt. */
 const PROMPT_OVERLAP = 24;
-
-/** Below this the page scrolls instead of squeezing the template grid to nothing. */
-const MIN_HEIGHT_WITH_TEMPLATES = 360;
 
 /** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
 async function findHandoffProblem(): Promise<string | undefined> {
@@ -77,10 +74,9 @@ function useHasTextbox(ref: RefObject<HTMLElement | null>) {
 }
 
 /**
- * Sizes the landing to the whole area its dashboard scrolls in, from the top edge to the bottom, so the template
- * grid scrolls inside its panel and the "build it yourself" actions under it stay in view. The dashboard body grows
- * with its content, so no CSS height chain reaches this far down, and the empty-state wrapper's top padding is
- * pulled back into the area (`pullUp`).
+ * Sizes the landing to at least the whole area its dashboard scrolls in, from the top edge to the bottom, so its
+ * content centers vertically in that area. The dashboard body grows with its content, so no CSS height chain
+ * reaches this far down, and the empty-state wrapper's top padding is pulled back into the area (`pullUp`).
  */
 function useFitToScrollArea(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
@@ -110,7 +106,7 @@ function useFitToScrollArea(enabled: boolean) {
       // Where the landing starts without the pull-up: the parent's content edge, which its own margin never moves.
       const naturalTop = parent.getBoundingClientRect().top + parseFloat(getComputedStyle(parent).paddingTop || '0');
       setFit({
-        height: Math.max(MIN_HEIGHT_WITH_TEMPLATES, Math.floor(areaBottom - areaTop)),
+        height: Math.max(0, Math.floor(areaBottom - areaTop)),
         pullUp: Math.max(0, Math.floor(naturalTop - areaTop)),
       });
     };
@@ -124,8 +120,6 @@ function useFitToScrollArea(enabled: boolean) {
 
 export function AssistantDashboardEmpty({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
-  const templatesMaxHeight = useMemo(() => getTemplatesMaxHeight(theme), [theme]);
   const { sidebar } = dashboard.useState();
   // Set at scene activation when the URL has editSource=assistant
   // (create_dashboard), or on submit from this landing so the same session
@@ -139,6 +133,15 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
   const { ref: fitRef, fit } = useFitToScrollArea(showTemplates);
+  // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
+  // instead of centering again; the actions move and the room goes below them. A new fit centers it again.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [held, setHeld] = useState<{ fit: typeof fit; height: number }>();
+  const heldHeight = held && held.fit === fit ? held.height : undefined;
+  const onTemplatesToggle = useCallback(() => {
+    const height = contentRef.current?.getBoundingClientRect().height;
+    setHeld((current) => (height === undefined || (current && current.fit === fit) ? current : { fit, height }));
+  }, [fit]);
   const promptRef = useRef<HTMLDivElement>(null);
   const promptReady = useHasTextbox(promptRef);
   // The picked template travels to the Assistant as a context pill in the prompt.
@@ -237,8 +240,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   }, [assistantDriven, sidebar]);
 
   return (
-    <div ref={fitRef} className={styles.root} style={fit ? { height: fit.height, marginTop: -fit.pullUp } : undefined}>
-      <div className={cx(styles.content, showTemplates && styles.contentWithTemplates)}>
+    <div
+      ref={fitRef}
+      className={styles.root}
+      // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
+      style={fit ? { height: 'auto', minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
+    >
+      <div
+        ref={contentRef}
+        className={cx(styles.content, showTemplates && styles.contentWithTemplates)}
+        style={heldHeight ? { minHeight: heldHeight } : undefined}
+      >
         <div className={styles.top}>
           <div className={styles.heading}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -261,13 +273,13 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           </div>
         </div>
 
-        <div className={cx(styles.belowPrompt, showTemplates && styles.belowPromptWithTemplates)}>
+        <div className={styles.belowPrompt}>
           {showTemplates && (
             // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
             <LandingTemplates
               hidden={!promptReady}
+              onToggle={onTemplatesToggle}
               className={styles.templates}
-              maxHeight={templatesMaxHeight}
               testDataSource={testDataSource}
               showGrafanaTemplates={showGrafanaTemplates}
               showCustomTemplates={showCustomTemplates}
@@ -317,12 +329,12 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 660,
       padding: theme.spacing(6, 4),
     }),
-    // Fills the dashboard's free space from the top: the template panel takes the whole rows that fit under the
-    // prompt, and what they leave goes under "Add visualization", so it sits right below the panel.
+    // Centered vertically in the dashboard's free space; on a screen too short for it, at the top.
     contentWithTemplates: css({
       // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
       maxWidth: 'none',
-      height: '100%',
+      marginTop: 'auto',
+      marginBottom: 'auto',
       paddingTop: theme.spacing(3),
       paddingBottom: theme.spacing(3),
       [theme.breakpoints.down('sm')]: {
@@ -367,12 +379,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(4),
     }),
-    // The area under the prompt, a size container so the template panel can size its rows to it in CSS.
-    belowPromptWithTemplates: css({
-      flex: '1 1 0',
-      minHeight: 0,
-      containerType: 'size',
-    }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({
       marginTop: `calc(-1 * (${theme.spacing(4)} + ${PROMPT_OVERLAP}px))`,
@@ -401,18 +407,4 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
     }),
   };
-}
-
-/**
- * The template panel's share of the area under the prompt (`100cqh` there, see `belowPromptWithTemplates`): all of
- * it but the "build it yourself" actions under the panel. The panel also reaches up into the gap above the area,
- * behind the prompt, and pads that back off (`templates`).
- */
-function getTemplatesMaxHeight(theme: GrafanaTheme2) {
-  const gap = theme.spacing(4);
-  const reachAbove = `${gap} + ${PROMPT_OVERLAP}px`;
-  const paddingAdded = `${PROMPT_OVERLAP}px + ${theme.spacing(0.5)}`;
-  const divider = `${theme.typography.bodySmall.fontSize} * ${theme.typography.bodySmall.lineHeight}`;
-  const actions = `${gap} + ${divider} + ${gap} + ${theme.spacing(theme.components.height.md)}`;
-  return `(100cqh + ${reachAbove} - (${paddingAdded}) - (${actions}))`;
 }
