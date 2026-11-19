@@ -220,7 +220,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "recording_rule_stale_marker_failures_total",
-				Help:      "The number of series whose stale marker failed to write, by reason. Failed markers are not retried.",
+				Help:      "The number of series in stale marker writes that failed, by reason. A write can be partly accepted, so this counts every series of a failed write. Failed markers are not retried.",
 			},
 			[]string{"reason"},
 		),
