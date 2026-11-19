@@ -15603,7 +15603,6 @@
       "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
       "confirm-release-button": "Convert to local",
       "confirm-release-title": "Convert all resources to local from this repository?",
-      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
       "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
       "go-to-dashboards": "Go to dashboards",
