@@ -382,7 +382,7 @@ func TestClientServer(t *testing.T) {
 		_ = services.StopAndAwaitTerminated(ctx, grpcService)
 	})
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)

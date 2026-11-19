@@ -1,10 +1,12 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { ruleItem } from '../mocks/factories';
 import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
 import { setupRuleListBackend } from '../mocks/ruleListBackend';
@@ -33,6 +35,7 @@ describe('RecordingRulesPage', () => {
   beforeEach(() => {
     reportInteractionMock.mockClear();
     mockFolderParents({ 'folder-1': 'Team Metrics', 'folder-2': 'Infra' });
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
   });
 
   it('lists the Recording rules in the order the search returns them, each with its folder path', async () => {
@@ -341,5 +344,41 @@ describe('RecordingRulesPage search', () => {
     expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
     expect(searchInput()).toHaveAccessibleDescription(description);
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+});
+
+describe('RecordingRulesPage header', () => {
+  beforeEach(() => {
+    mockFolderParents({});
+    mockRuleSearch('recording', () => ({ items: [], metadata: {} }));
+  });
+
+  it('shows New recording rule button when user has create permission and recording rules are enabled', async () => {
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
+    config.unifiedAlerting.recordingRulesEnabled = true;
+    renderInListMode();
+
+    expect(await screen.findByRole('link', { name: /New recording rule/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/alerting/new/grafana-recording')
+    );
+  });
+
+  it('hides New recording rule button when user lacks create permission', async () => {
+    grantPermissionsHelper([]);
+    config.unifiedAlerting.recordingRulesEnabled = true;
+    renderInListMode();
+
+    await screen.findByRole('textbox');
+    expect(screen.queryByRole('link', { name: /New recording rule/i })).not.toBeInTheDocument();
+  });
+
+  it('hides New recording rule button when recording rules are disabled', async () => {
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
+    config.unifiedAlerting.recordingRulesEnabled = false;
+    renderInListMode();
+
+    await screen.findByRole('textbox');
+    expect(screen.queryByRole('link', { name: /New recording rule/i })).not.toBeInTheDocument();
   });
 });

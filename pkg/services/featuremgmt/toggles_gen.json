@@ -194,6 +194,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityTeamPolicies",
+        "resourceVersion": "1794592743390",
+        "creationTimestamp": "2026-11-13T17:59:03Z"
+      },
+      "spec": {
+        "description": "Enable team-scoped alert rule quality policies, one per team, alongside the org policy.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleReviews",
         "resourceVersion": "1791369430263",
         "creationTimestamp": "2026-10-07T09:54:44Z",
@@ -1114,11 +1128,14 @@
     {
       "metadata": {
         "name": "assistant.fullscreenWorkspace",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-16T10:13:54Z"
+        "resourceVersion": "1794516179400",
+        "creationTimestamp": "2026-07-16T10:13:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 20:42:59.400754 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "description": "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
@@ -1775,12 +1792,15 @@
     {
       "metadata": {
         "name": "dashboardUndoRedo",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "resourceVersion": "1794996543111",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 10:09:03.111749511 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables undo/redo in dynamic dashboards",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2288,6 +2308,20 @@
     },
     {
       "metadata": {
+        "name": "dataviz.reverseColorScheme",
+        "resourceVersion": "1794465675116",
+        "creationTimestamp": "2026-11-12T06:41:15Z"
+      },
+      "spec": {
+        "description": "Enable the option to reverse by value color schemes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataviz.tabularNums",
         "resourceVersion": "1790951488017",
         "creationTimestamp": "2026-10-02T15:19:46Z",
@@ -2741,6 +2775,20 @@
     },
     {
       "metadata": {
+        "name": "folder.pendingDeletionWrites",
+        "resourceVersion": "1794428269469",
+        "creationTimestamp": "2026-11-11T20:17:49Z"
+      },
+      "spec": {
+        "description": "Record durable pending folder deletions before sending folder deletes to storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "folderPickerCreatePermission",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-10-14T22:15:23Z",
@@ -2882,6 +2930,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearchSkipRerank",
+        "resourceVersion": "1794828817249",
+        "creationTimestamp": "2026-11-16T11:33:37Z"
+      },
+      "spec": {
+        "description": "Skips reranking in command palette hybrid dashboard search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.configFromQueryDynamicName",
         "resourceVersion": "1792594531964",
         "creationTimestamp": "2026-09-17T22:29:38Z",
@@ -2913,12 +2975,15 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T18:36:50Z"
+        "resourceVersion": "1794931415420",
+        "creationTimestamp": "2026-06-24T18:36:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 16:03:35.420811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -3056,15 +3121,17 @@
     {
       "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-19T13:59:18Z"
+        "resourceVersion": "1794928602679",
+        "creationTimestamp": "2026-08-19T13:59:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 15:16:42.679897 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the auto-height feature for dashboard panels",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3145,6 +3212,20 @@
       },
       "spec": {
         "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.extensionSidebarPlacements",
+        "resourceVersion": "1794908123209",
+        "creationTimestamp": "2026-11-17T09:35:23Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
@@ -3312,6 +3393,38 @@
     },
     {
       "metadata": {
+        "name": "grafana.logsInfiniteScrollTop",
+        "resourceVersion": "1794950185352",
+        "creationTimestamp": "2026-11-17T21:16:25Z"
+      },
+      "spec": {
+        "description": "Enable infinite scroll for logs when scrolling top",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.megaMenuPeekAndDock",
+        "resourceVersion": "1794924578516",
+        "creationTimestamp": "2026-11-17T10:20:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 14:09:38.516633 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.meticulousAIMode",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-21T18:23:23Z"
@@ -3397,6 +3510,23 @@
         "codeowner": "@grafana/identity-access-team",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.navigationAdminSubNav",
+        "resourceVersion": "1793749728452",
+        "creationTimestamp": "2026-10-28T21:50:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-03 23:48:48.452052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4971,7 +5101,8 @@
       "metadata": {
         "name": "newSavedQueriesExperience",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-16T19:48:14Z"
+        "creationTimestamp": "2026-03-16T19:48:14Z",
+        "deletionTimestamp": "2026-11-02T21:10:32Z"
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
@@ -5211,6 +5342,21 @@
     },
     {
       "metadata": {
+        "name": "plugins.disableMTPluginsFallback",
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-11-11T11:44:45Z"
+      },
+      "spec": {
+        "description": "Disables the ST fallback for multi-tenant plugin api calls",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.initDataSourcesAsync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-27T09:11:55Z"
@@ -5255,12 +5401,15 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-08T08:32:12Z"
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-05-08T08:32:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 11:44:45.768111 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "hideFromDocs": true,
         "expression": "false"

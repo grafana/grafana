@@ -220,10 +220,11 @@ type globalDocumentBuilder struct {
 
 // Unexpected field types must not exclude an otherwise searchable resource.
 type globalDocumentSpec struct {
-	Title       any `json:"title"`
-	Name        any `json:"name"`
-	Description any `json:"description"`
-	Tags        any `json:"tags"`
+	Title       any             `json:"title"`
+	Name        any             `json:"name"`
+	Description any             `json:"description"`
+	Tags        any             `json:"tags"`
+	Spec        json.RawMessage `json:"spec"`
 }
 
 func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
@@ -265,10 +266,17 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 		}
 	}
 
-	obj.Object["spec"] = map[string]any{
+	specValue := map[string]any{
 		"title": spec.Title, "name": spec.Name,
 		"description": spec.Description, "tags": spec.Tags,
 	}
+	var nested struct {
+		Name any `json:"name"`
+	}
+	if json.Unmarshal(spec.Spec, &nested) == nil {
+		specValue["spec"] = map[string]any{"name": nested.Name}
+	}
+	obj.Object["spec"] = specValue
 	return NewIndexableDocument(key, rv, meta, ""), nil
 }
 

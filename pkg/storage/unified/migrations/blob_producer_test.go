@@ -108,7 +108,9 @@ func TestBlobProducerNegotiation(t *testing.T) {
 
 func TestMigrationBulkCompletionErrors(t *testing.T) {
 	transportErr := errors.New("transport failed")
-	publication := &resourcepb.ErrorResult{Code: 500, Message: "publication failed"}
+	publication := &resourcepb.ErrorResult{Code: 500, Message: "publication failed", Details: &resourcepb.ErrorDetails{
+		Name: "tests", Causes: []*resourcepb.ErrorCause{{Reason: "publication", Message: "storage failed"}},
+	}}
 	publicationStatus, err := status.New(codes.Internal, publication.Message).WithDetails(publication)
 	require.NoError(t, err)
 	publicationStatusErr := publicationStatus.Err()
@@ -120,8 +122,9 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 	}{
 		{name: "success", response: &resourcepb.BulkResponse{}},
 		{name: "transport", err: transportErr, wantErr: "transport failed"},
-		{name: "embedded", response: &resourcepb.BulkResponse{Error: publication}, wantErr: "publication failed"},
-		{name: "transport takes precedence", response: &resourcepb.BulkResponse{Error: publication}, err: transportErr, wantErr: "transport failed"},
+		{name: "transport with partial response", response: &resourcepb.BulkResponse{Processed: 1}, err: transportErr, wantErr: "transport failed"},
+		{name: "cancellation", err: context.Canceled, wantErr: "context canceled"},
+		{name: "failure joined with cancellation", err: errors.Join(transportErr, context.Canceled), wantErr: "transport failed"},
 		{name: "status error", err: publicationStatusErr, wantErr: "publication failed"},
 		{name: "status error with partial response", response: &resourcepb.BulkResponse{Processed: 1}, err: publicationStatusErr, wantErr: "publication failed"},
 		{name: "missing completion", wantErr: "no completion response"},
@@ -137,7 +140,8 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 			stream := &blobProducerStream{response: tc.response, closeErr: tc.err}
 			client := resource.NewMockResourceClient(t)
 			client.EXPECT().BulkProcess(mock.Anything).Return(stream, nil)
-			_, err := migrations.ProvideUnifiedMigrator(client, registry).Migrate(t.Context(), migrations.MigrateOptions{Namespace: "default", Resources: []schema.GroupResource{gr}})
+			response, err := migrations.ProvideUnifiedMigrator(client, registry).Migrate(t.Context(), migrations.MigrateOptions{Namespace: "default", Resources: []schema.GroupResource{gr}})
+			require.Same(t, tc.response, response)
 			if tc.wantErr == "" {
 				require.NoError(t, err)
 			} else {
@@ -146,7 +150,15 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			}
+			if errors.Is(tc.err, context.Canceled) {
+				require.ErrorIs(t, err, context.Canceled)
+				if errors.Is(tc.err, transportErr) {
+					require.ErrorIs(t, err, transportErr)
+					require.Equal(t, int32(500), resource.AsErrorResult(err).Code)
+				}
+			}
 			if errors.Is(tc.err, publicationStatusErr) {
+				require.Equal(t, codes.Internal, status.Code(err))
 				require.True(t, proto.Equal(publication, resource.AsErrorResult(err)), "status details must be preserved")
 			}
 		})

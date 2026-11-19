@@ -48,7 +48,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/i18n": "workspace:*",
-    "@grafana/plugin-ui": "^0.17.3",
+    "@grafana/plugin-ui": "^0.18.0",
     "@grafana/ui": "workspace:*",
     "@react-awesome-query-builder/ui": "^6.6.15",
     "lodash": "^4.18.1",
