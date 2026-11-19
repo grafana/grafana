@@ -633,7 +633,8 @@ export function ToggleButtonGroup<T>({
 }: ToggleButtonGroupProps<T>) {
   const styles = useStyles2(getStyles);
   const checkedIndex = options.findIndex((opt) => opt.value === value);
-  // One tab stop per group; arrows move the choice, like native radio buttons.
+  // One tab stop per group. Arrows only move focus and Space or Enter picks: picking applies the filter, and the
+  // RuleList.v2 sidebar remounts on every filter change, which would drop focus after one arrow.
   const focusIndex = Math.max(checkedIndex, 0);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -644,7 +645,6 @@ export function ToggleButtonGroup<T>({
     event.preventDefault();
     const next = (index + step + options.length) % options.length;
     event.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus();
-    onChange(options[next].value);
   };
 
   return (
