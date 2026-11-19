@@ -213,8 +213,8 @@ func (r resourceReconciler) collectProtected(ctx context.Context, orgID int64) (
 		for _, tuples := range res {
 			for _, t := range tuples {
 				k := tupleKey(t.User, t.Relation, t.Object)
-				if seen, ok := out[k]; ok && zanzana.IsFolderResourceTuple(t) && zanzana.IsFolderResourceTuple(seen) {
-					zanzana.MergeFolderResourceTuples(seen, t)
+				if seen, ok := out[k]; ok {
+					mergeSubresourceFilters(seen, t)
 					continue
 				}
 				out[k] = proto.Clone(t).(*openfgav1.TupleKey)
@@ -238,8 +238,8 @@ func mergeProtectedFilters(res map[string]map[string]*openfgav1.TupleKey, protec
 				continue
 			}
 			merged := proto.Clone(t).(*openfgav1.TupleKey)
-			if p, ok := protected[tupleKey(t.User, t.Relation, t.Object)]; ok && zanzana.IsFolderResourceTuple(p) {
-				zanzana.MergeFolderResourceTuples(merged, p)
+			if p, ok := protected[tupleKey(t.User, t.Relation, t.Object)]; ok {
+				mergeSubresourceFilters(merged, p)
 			}
 			normalizeSubresources(merged)
 			tuples[key] = merged
@@ -247,13 +247,31 @@ func mergeProtectedFilters(res map[string]map[string]*openfgav1.TupleKey, protec
 	}
 }
 
+// subresourceFilter returns a folder resource tuple's subresource filter, or
+// nil when it has none. Action set relations (resource_view, resource_edit,
+// resource_admin) are folder resource tuples without a condition.
+func subresourceFilter(t *openfgav1.TupleKey) *structpb.ListValue {
+	if !zanzana.IsFolderResourceTuple(t) || t.GetCondition().GetContext() == nil {
+		return nil
+	}
+	return t.GetCondition().GetContext().GetFields()["subresources"].GetListValue()
+}
+
+// mergeSubresourceFilters adds src's subresource filter to dst's. It does
+// nothing unless both have one: tuples without a filter, such as action sets,
+// are the same tuple whichever collector returned them.
+func mergeSubresourceFilters(dst, src *openfgav1.TupleKey) {
+	d, s := subresourceFilter(dst), subresourceFilter(src)
+	if d == nil || s == nil {
+		return
+	}
+	d.Values = append(d.Values, s.Values...)
+}
+
 // normalizeSubresources sorts a folder resource tuple's subresource filter and
 // drops duplicates, so tuples merged in a different order compare equal.
 func normalizeSubresources(t *openfgav1.TupleKey) {
-	if t.Condition == nil || t.Condition.Context == nil {
-		return
-	}
-	list := t.Condition.Context.Fields["subresources"].GetListValue()
+	list := subresourceFilter(t)
 	if list == nil {
 		return
 	}

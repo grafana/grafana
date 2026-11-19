@@ -2,7 +2,6 @@ package dualwrite
 
 import (
 	"context"
-	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -159,7 +158,9 @@ func TestResourceReconciler_ProtectedTuplesAreNotDeleted(t *testing.T) {
 }
 
 // statefulZanzanaClient stores tuples across reconciles, so a test can run
-// several cycles. Like OpenFGA, it refuses to write a tuple that exists.
+// several cycles. Like the Zanzana server, which writes with OnDuplicate and
+// OnMissing set to ignore, it keeps an existing tuple when asked to write it
+// again. writes counts every tuple a reconciler asked to write.
 type statefulZanzanaClient struct {
 	zclient.NoopClient
 	tuples map[string]*authzextv1.TupleKey
@@ -189,12 +190,12 @@ func (f *statefulZanzanaClient) Write(ctx context.Context, req *authzextv1.Write
 		delete(f.tuples, tupleKey(d.GetUser(), d.GetRelation(), d.GetObject()))
 	}
 	for _, w := range req.GetWrites().GetTupleKeys() {
+		f.writes++
 		k := tupleKey(w.GetUser(), w.GetRelation(), w.GetObject())
 		if _, ok := f.tuples[k]; ok {
-			return fmt.Errorf("tuple %s already exists", k)
+			continue
 		}
 		f.tuples[k] = proto.Clone(w).(*authzextv1.TupleKey)
-		f.writes++
 	}
 	return nil
 }
@@ -247,4 +248,31 @@ func TestResourceReconciler_SharedFolderResourceTupleKeepsBothFilters(t *testing
 		}
 	}
 	require.Equal(t, writesAfterFirstCycle, fake.writes, "a converged tuple was written again")
+}
+
+// Action set grants (resource_view, resource_edit, resource_admin) are folder
+// resource tuples without a subresource filter. When two reconcilers collect
+// the same one there is nothing to merge, and reconciling must not panic.
+func TestResourceReconciler_SharedActionSetTupleIsKept(t *testing.T) {
+	const editor = "role:basic_editor#assignee"
+	collector := func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		tuple := zanzanacommon.NewFolderResourceTuple(editor, zanzana.RelationSetEdit, "dashboard.grafana.app", "dashboards", "", "general")
+		return map[string]map[string]*openfgav1.TupleKey{
+			tuple.Object: {zanzana.TupleStringWithoutCondition(tuple): tuple},
+		}, nil
+	}
+
+	fake := &statefulZanzanaClient{tuples: map[string]*authzextv1.TupleKey{}}
+	managedReconciler := newResourceReconciler("managed folder permissions", collector, zanzanaCollector(zanzana.RelationsFolder, 100), fake).withProtected(collector)
+	roleReconciler := newResourceReconciler("role permissions", collector, zanzanaCollector(zanzana.RelationsFolder, 100), fake).withProtected(collector)
+
+	ns := authlib.OrgNamespaceFormatter(1)
+	for range 2 {
+		require.NoError(t, managedReconciler.reconcile(context.Background(), ns))
+		require.NoError(t, roleReconciler.reconcile(context.Background(), ns))
+	}
+
+	stored, ok := fake.tuples[tupleKey(editor, zanzana.RelationSubresourceSetEdit, "folder:general")]
+	require.True(t, ok, "the Editor's root folder edit grant is missing")
+	require.Nil(t, stored.GetCondition())
 }
