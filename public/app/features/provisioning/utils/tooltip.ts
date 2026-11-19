@@ -2,7 +2,6 @@ import { t } from '@grafana/i18n';
 
 /**
  * Returns the tooltip text for a resource managed by a repository.
- * Shared by ManagedDashboardNavBarBadge and FolderRepo.
  */
 export function getManagedByRepositoryTooltip(title?: string): string {
   if (!title) {
@@ -27,18 +26,9 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
       );
 };
 
-/** Copy for a repository Grafana only reads from, addressed to whoever can change that. */
-export const getPullOnlyTooltipText = ({ isLocal = false }) => {
-  return isLocal
-    ? t(
-        'provisioning.pull-only-local-tooltip',
-        'Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.'
-      )
-    : t(
-        'provisioning.pull-only-remote-tooltip',
-        'Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.'
-      );
-};
+export function getReadOnlyRepositoryTooltip(): string {
+  return t('provisioning.config-form.description-read-only', "Resources can't be modified through Grafana.");
+}
 
 export function getOrphanedRepositoryTooltip(): string {
   return t('provisioning.orphaned-repository-tooltip', 'Repository not found');

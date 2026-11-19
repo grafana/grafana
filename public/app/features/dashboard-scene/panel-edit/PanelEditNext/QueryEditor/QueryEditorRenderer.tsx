@@ -1,5 +1,6 @@
 import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
-import { useEffect, useMemo, useState } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -50,6 +51,8 @@ interface QueryEditorPanelProps {
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
   runQueries: () => void;
   startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
+  /** Called when the data source's query editor changes the query. AI proposals and renames don't call it. */
+  onQueryEdited?: () => void;
 }
 
 export function QueryEditorPanel({
@@ -63,6 +66,7 @@ export function QueryEditorPanel({
   addQuery,
   runQueries,
   startQueryPreview,
+  onQueryEdited,
 }: QueryEditorPanelProps) {
   const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
   const providerStatus = useOpenFeatureClientStatus();
@@ -104,6 +108,24 @@ export function QueryEditorPanel({
     runQueries,
     startQueryPreview,
   });
+
+  const { onChange: onTransactionChange, editorQuery } = proposalTransaction;
+  // Read through a ref so onChange stays stable: an editor that keeps its first onChange still compares
+  // with the current query.
+  const currentQueryRef = useRef(editorQuery ?? query);
+  useLayoutEffect(() => {
+    currentQueryRef.current = editorQuery ?? query;
+  });
+  const onEditorChange = useCallback(
+    (updatedQuery: DataQuery) => {
+      // An editor echoing the query it was given (including an AI proposal on preview) isn't an edit.
+      if (!isEqual(updatedQuery, currentQueryRef.current)) {
+        onQueryEdited?.();
+      }
+      onTransactionChange(updatedQuery);
+    },
+    [onQueryEdited, onTransactionChange]
+  );
 
   const coauthoringHost = useMemo(
     () => ({
@@ -189,7 +211,7 @@ export function QueryEditorPanel({
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
-            onChange={proposalTransaction.onChange}
+            onChange={onEditorChange}
             onRunQuery={proposalTransaction.run}
             queries={proposalTransaction.editorQueries}
             query={proposalTransaction.editorQuery ?? query}
@@ -213,7 +235,7 @@ export function QueryEditorRenderer() {
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
-  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview, onQueryEdited } = useActionsContext();
 
   return (
     <>
@@ -229,6 +251,7 @@ export function QueryEditorRenderer() {
         addQuery={addQuery}
         runQueries={runQueries}
         startQueryPreview={startQueryPreview}
+        onQueryEdited={onQueryEdited}
       />
     </>
   );

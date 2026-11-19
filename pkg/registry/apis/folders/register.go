@@ -26,8 +26,10 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -36,12 +38,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -64,6 +68,10 @@ type FolderAPIBuilder struct {
 	deleteChecks         *deleteCheckMetrics
 	countMetrics         *countMetrics
 
+	pendingDeletionResourceEnabled bool
+	// Nil when the resource is disabled; consumers requiring durable intent must fail closed.
+	pendingDeletionStore *genericregistry.Store
+
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
@@ -71,6 +79,7 @@ type FolderAPIBuilder struct {
 	// The legacy folder permission service is used while the RP API feature is off.
 	resourcePermissions  *rpclient.Client
 	folderPermissionsSvc accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+	acService            accesscontrol.Service                  // refreshes the creator's permissions after the legacy default permissions are written
 
 	// Dashboard client for cascade delete, built lazily from cascadeConfigProvider; access via
 	// dashboardClient(ctx). Set independently of the authz flag so cleanup works whenever cascade is on.
@@ -142,6 +151,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
+	acService accesscontrol.Service,
+	sqlStore *sqlstore.SQLStore,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -150,15 +161,16 @@ func RegisterAPIService(cfg *setting.Cfg,
 	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		accessClient:         accessClient,
-		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
-		searcher:             unified,
-		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
-		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
-		contentsDeleter:      contentsDeleter,
-		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
-		countMetrics:         newCountMetrics(registerer, true),
+		pendingDeletionResourceEnabled: cfg.PendingDeletionResourceEnabled,
+		accessClient:                   accessClient,
+		permissionsOnCreate:            cfg.RBAC.PermissionsOnCreation("folder"),
+		useZanzana:                     features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		searcher:                       unified,
+		permissionStore:                NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth:           cfg.MaxNestedFolderDepth,
+		contentsDeleter:                contentsDeleter,
+		deleteChecks:                   newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
+		countMetrics:                   newCountMetrics(registerer, true),
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -169,6 +181,8 @@ func RegisterAPIService(cfg *setting.Cfg,
 		}
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
+		builder.acService = acService
+		sqlStore.Bus().AddEventListener(builder.onDefaultPermissionsSet)
 	}
 
 	// Cascade dashboard cleanup needs an apiserver client regardless of the authz flag above.
@@ -209,13 +223,22 @@ func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServ
 	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
 }
 
+// WithPendingDeletionResourceEnabled sets the process-startup resource gate in standalone deployments.
+func WithPendingDeletionResourceEnabled(enabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.pendingDeletionResourceEnabled = enabled }
+}
+
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	// Same pattern as dashboards: stable version first, then compatibility alias.
 	// This order feeds LegacyCodec(groupVersions...) and must match SetVersionPriority below.
-	return []schema.GroupVersion{
+	versions := []schema.GroupVersion{
 		foldersv1.FolderResourceInfo.GroupVersion(),
 		foldersv1beta1.FolderResourceInfo.GroupVersion(),
 	}
+	if b.pendingDeletionResourceEnabled {
+		versions = append(versions, foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion())
+	}
+	return versions
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runtime.Object) {
@@ -225,6 +248,10 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runt
 func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvv1beta1 := foldersv1beta1.FolderResourceInfo.GroupVersion()
 	gvv1 := foldersv1.FolderResourceInfo.GroupVersion()
+
+	gvalpha := foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion()
+	addKnownTypes(scheme, gvalpha, &foldersv1alpha1.PendingFolderDeletion{}, &foldersv1alpha1.PendingFolderDeletionList{})
+	metav1.AddToGroupVersion(scheme, gvalpha)
 
 	addKnownTypes(scheme, gvv1,
 		&foldersv1.Folder{},
@@ -248,6 +275,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   foldersv1.FolderResourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
 	},
+		&foldersv1alpha1.PendingFolderDeletion{},
+		&foldersv1alpha1.PendingFolderDeletionList{},
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
@@ -298,10 +327,18 @@ func (b *FolderAPIBuilder) storageForVersion(
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
+			refreshCreator:       b.refreshCreatorAfterCommit,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}
 	}
+
+	var pendingStore grafanarest.Storage
+	if b.pendingDeletionStore != nil {
+		pendingStore = b.pendingDeletionStore
+	}
+	// The inner writer intercepts each descendant delete performed by the cascade.
+	b.storage = newPendingDeleteStorage(b.storage, pendingStore, folderPendingDeletionWritesEnabled, b.accessClient)
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
@@ -351,6 +388,15 @@ func (b *FolderAPIBuilder) folderStorageOpts() apistore.StorageOptions {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	if b.pendingDeletionResourceEnabled {
+		pending := foldersv1alpha1.PendingFolderDeletionResourceInfo
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, pending, opts.StorageOptsGetterFor(pending, apistore.StorageOptions{}))
+		if err != nil {
+			return err
+		}
+		b.pendingDeletionStore = store
+		apiGroupInfo.VersionedResourcesStorageMap[pending.GroupVersion().Version] = map[string]rest.Storage{pending.StoragePath(): store}
+	}
 	// v1
 	if err := b.storageForVersion(
 		apiGroupInfo,
@@ -407,6 +453,29 @@ func buildDefaultFolderPermissions(id authlib.AuthInfo) []iamv0alpha1.ResourcePe
 	return append(permissions, defaultPermissions...)
 }
 
+type folderDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+// refreshCreatorAfterCommit reloads the creator's permissions after the outermost SQL
+// transaction on ctx commits, or immediately when ctx carries no transaction.
+func (b *FolderAPIBuilder) refreshCreatorAfterCommit(ctx context.Context, requester identity.Requester) {
+	if b.acService == nil || requester == nil || !requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+		return
+	}
+	event := &folderDefaultPermissionsSet{requester: requester}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = b.onDefaultPermissionsSet(ctx, event)
+}
+
+func (b *FolderAPIBuilder) onDefaultPermissionsSet(ctx context.Context, event *folderDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, b.acService, event.requester)
+	return nil
+}
+
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	if b.resourcePermissions == nil {
 		return nil
@@ -444,8 +513,14 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	// Same pattern as dashboards: v1beta1 aliases v1; kube-openapi definitions use v1 model keys only.
-	return foldersv1.GetOpenAPIDefinitions
+	// Folder v1beta1 aliases v1; only the pending resource has separate alpha definitions.
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		definitions := foldersv1.GetOpenAPIDefinitions(ref)
+		for name, definition := range foldersv1alpha1.GetOpenAPIDefinitions(ref) {
+			definitions[name] = definition
+		}
+		return definitions
+	}
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -464,10 +539,13 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	return pendingDeletionAuthorizer(grafanaauthorizer.NewServiceAuthorizer())
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return nil
+	}
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
@@ -491,6 +569,9 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return validatePendingDeletion(a)
+	}
 	var obj runtime.Object
 	verb := a.GetOperation()
 

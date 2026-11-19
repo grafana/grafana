@@ -6,7 +6,7 @@ require (
 	github.com/getkin/kin-openapi v0.153.0
 	github.com/grafana/grafana-app-sdk v0.63.2
 	github.com/grafana/grafana-app-sdk/logging v0.63.2
-	github.com/prometheus/common v0.73.1
+	github.com/prometheus/common v0.74.0
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.2
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
@@ -73,7 +73,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
+	go.yaml.in/yaml/v2 v2.4.5 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
