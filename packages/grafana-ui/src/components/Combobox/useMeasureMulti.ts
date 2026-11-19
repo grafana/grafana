@@ -25,6 +25,9 @@ export function useMeasureMulti<T extends string | number>(
   const finalWidth = width && width !== 'auto' ? width : containerWidth;
 
   const shownItems = useMemo(() => {
+    if (!finalWidth) {
+      return selectedItems.length;
+    }
     const maxWidth = finalWidth - counterWidth - suffixWidth;
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
