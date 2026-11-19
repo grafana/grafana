@@ -463,13 +463,9 @@ function resolveVarMappingInput(
   rawValue: unknown,
   context: FieldOverrideEnv
 ): unknown {
-  if (!isVarMappingsEnabled()) {
-    return rawValue;
-  }
-
   const kind = getVarMappingKind(item);
   const expr = context.varMappings?.[varMappingId];
-  if (!kind || typeof expr !== 'string') {
+  if (!kind || typeof expr !== 'string' || !isVarMappingsEnabled()) {
     return rawValue;
   }
 
