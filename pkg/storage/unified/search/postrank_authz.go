@@ -66,10 +66,10 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 // above the threshold, extra checks cannot guarantee one within that budget.
 // Cursor scans omit earlier matches, while count-only and facet requests have
 // their own counting policies. Eligibility alone does not prove an exact total:
-// the scan must still exhaust the matches. The caller restricts this to live
-// global searches.
-func countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64, threshold int64) bool {
-	return req.Limit > 0 && len(req.Facet) == 0 &&
+// the scan must still exhaust the matches.
+func (s *postRankSearch) countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64, trashAuthz *resource.TrashAuthorizer) bool {
+	threshold := s.config.ExactCountThreshold
+	return s.key.IsGlobal() && trashAuthz == nil && req.Limit > 0 && len(req.Facet) == 0 &&
 		len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
 		threshold > 0 && total <= uint64(threshold)
 }
@@ -384,7 +384,6 @@ func (s *postRankSearch) run(
 
 	resources := authzResources(s.key, req)
 	cfg := s.config
-	exactCountThreshold := int64(cfg.ExactCountThreshold)
 	wantFacets := len(req.Facet) > 0
 	// A count-only request returns no rows, so there is no page to fill: the
 	// scan authorizes ranked hits purely to total them and runs until the match
@@ -433,7 +432,7 @@ func (s *postRankSearch) run(
 	windowReq.Fields = nil
 	// Existing callers treat a short page as exhaustion. Only count-only scans
 	// and counting beyond a full page may stop at the budget.
-	budgetSpent := func() bool { return candidates >= maxCandidates && (countOnly || page.full()) }
+	budgetSpent := func() bool { return candidates >= maxCandidates && page.full() }
 windows:
 	for window := 0; ; window++ {
 		res, err := s.backend.Search(ctx, windowReq)
@@ -444,12 +443,12 @@ windows:
 		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
-			if s.key.IsGlobal() && trashAuthz == nil && countSmallResultSet(req, res.Total, exactCountThreshold) {
+			if s.countSmallResultSet(req, res.Total, trashAuthz) {
 				optionalExactCount = true
 				access = exactCountAccessClient{AccessClient: access}
 				countEveryHit = true
 				// This budget is independent of count-only and trash scans.
-				maxCandidates = exactCountThreshold
+				maxCandidates = int64(cfg.ExactCountThreshold)
 			}
 		}
 
