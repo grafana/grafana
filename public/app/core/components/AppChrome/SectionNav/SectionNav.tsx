@@ -45,7 +45,13 @@ function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: bool
         className={isActive ? styles.linkActive : styles.link}
         aria-current={isActive ? 'page' : undefined}
       >
-        {item.icon ? <Icon name={item.icon} size="md" /> : <span className={styles.iconSpace} aria-hidden />}
+        {item.icon ? (
+          <span className={styles.iconSlot}>
+            <Icon name={item.icon} size="md" />
+          </span>
+        ) : (
+          <span className={styles.iconSlot} aria-hidden />
+        )}
         {item.text}
       </Link>
     </li>
@@ -54,7 +60,7 @@ function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: bool
 
 const getStyles = (theme: GrafanaTheme2) => {
   const row = {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderRadius: theme.shape.radius.default,
     display: 'flex',
     gap: theme.spacing(1),
@@ -91,9 +97,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.maxContrast,
       },
     }),
-    // Holds the place of an icon, so a link without one lines up with the rest
-    iconSpace: css({
+    // As tall as a line of text and holding an icon's width, so the icon sits level with the first line,
+    // and a link without one still lines up with the rest
+    iconSlot: css({
+      alignItems: 'center',
+      display: 'flex',
       flexShrink: 0,
+      height: '1lh',
       width: getSvgSize('md'),
     }),
     linkActive: css(row, {
