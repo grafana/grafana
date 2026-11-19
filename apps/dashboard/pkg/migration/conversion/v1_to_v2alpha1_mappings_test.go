@@ -354,6 +354,37 @@ func TestTransformVariableHideToEnum_V1_to_V2alpha1(t *testing.T) {
 	}
 }
 
+func TestTransformVariableSortToEnum_V1_to_V2alpha1(t *testing.T) {
+	tests := []struct {
+		in   int
+		want dashv2alpha1.DashboardVariableSort
+	}{
+		{0, dashv2alpha1.DashboardVariableSortDisabled},
+		{1, dashv2alpha1.DashboardVariableSortAlphabeticalAsc},
+		{2, dashv2alpha1.DashboardVariableSortAlphabeticalDesc},
+		{3, dashv2alpha1.DashboardVariableSortNumericalAsc},
+		{4, dashv2alpha1.DashboardVariableSortNumericalDesc},
+		{5, dashv2alpha1.DashboardVariableSortAlphabeticalCaseInsensitiveAsc},
+		{6, dashv2alpha1.DashboardVariableSortAlphabeticalCaseInsensitiveDesc},
+		{7, dashv2alpha1.DashboardVariableSortNaturalAsc},
+		{8, dashv2alpha1.DashboardVariableSortNaturalDesc},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.want), func(t *testing.T) {
+			t.Run("int", func(t *testing.T) {
+				assert.Equal(t, tt.want, transformVariableSortToEnum(tt.in))
+			})
+			t.Run("float64", func(t *testing.T) {
+				assert.Equal(t, tt.want, transformVariableSortToEnum(float64(tt.in)))
+			})
+			t.Run("string", func(t *testing.T) {
+				assert.Equal(t, tt.want, transformVariableSortToEnum(string(tt.want)))
+			})
+		})
+	}
+}
+
 func TestTransformVariableHideFromEnum_V2alpha1_to_V1(t *testing.T) {
 	tests := []struct {
 		name string
