@@ -144,7 +144,7 @@ export function LandingTemplates({
                 getSortOptions={getTemplateSortOptions}
                 placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
                 isClearable
-                width={22}
+                width={28}
               />
             </div>
           </div>
