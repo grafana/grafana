@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -24,6 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// Arbitrary upper bound for single-flight DEK decrypt lookup requests without a parent context.
+const sharedDataKeyLookupTimeout = 10 * time.Second
+
 type EncryptionManager struct {
 	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
@@ -34,6 +38,7 @@ type EncryptionManager struct {
 	cacheEncryptionKey string
 
 	mtx sync.Mutex
+	sf  singleflight.Group
 
 	// The cipher is used to encrypt and decrypt payloads with a data key.
 	cipher cipher.Cipher
@@ -367,6 +372,42 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	))
 	defer span.End()
 
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if skipCache {
+		return s.lookupDataKeyById(ctx, namespace, id, true)
+	}
+
+	key := namespace + "\x00" + id
+	// A cache hit still unwraps the data key, so share the entire lookup.
+	resultCh := s.sf.DoChan(key, func() (any, error) {
+		// Callers can leave independently. Bound the lookup even if every caller leaves.
+		lookupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sharedDataKeyLookupTimeout)
+		defer cancel()
+
+		return s.lookupDataKeyById(lookupCtx, namespace, id, false)
+	})
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+
+	case result := <-resultCh:
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		if result.Err != nil {
+			return nil, result.Err
+		}
+
+		return result.Val.([]byte), nil
+	}
+}
+
+func (s *EncryptionManager) lookupDataKeyById(ctx context.Context, namespace, id string, skipCache bool) ([]byte, error) {
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
 		entry, exists, cacheErr := s.dataKeyCache.GetById(ctx, namespace, id)

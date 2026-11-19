@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 	"uuid"
 
@@ -914,13 +915,36 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	require.NoError(t, cacheErr)
 	assert.False(t, existsByLabel, "DEK should not be in cache by label after flush")
 
-	// Verify we can still decrypt - this should fetch from DB and re-cache
-	decrypted, err = svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptionOption{})
-	require.NoError(t, err)
-	assert.Equal(t, plaintext, decrypted)
+	synctest.Test(t, func(t *testing.T) {
+		ctx := t.Context()
 
-	// Verify the key is back in the cache after the decrypt operation
-	_, existsById, cacheErr = dekCache.GetById(ctx, namespace.String(), dataKeyID)
-	require.NoError(t, cacheErr)
-	assert.True(t, existsById, "DEK should be re-cached by ID after decrypt")
+		// Hold the only SQL connection so both decrypts see a cold cache.
+		sqlDB := testDB.GetEngine().DB().DB
+		sqlDB.SetMaxOpenConns(1)
+
+		conn, err := sqlDB.Conn(ctx)
+		require.NoError(t, err)
+		waitCount := sqlDB.Stats().WaitCount
+
+		for range 2 {
+			go func() {
+				decrypted, err := svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptionOption{})
+				assert.NoError(t, err)
+				assert.Equal(t, plaintext, decrypted)
+			}()
+		}
+
+		// Let both decrypts block before counting how many attempted a SQL read.
+		synctest.Wait()
+
+		assert.Equal(t, int64(1), sqlDB.Stats().WaitCount-waitCount, "concurrent decrypts should queue one DEK read")
+		require.NoError(t, conn.Close())
+
+		// Let the pending read repopulate the cache before checking for the DEK.
+		synctest.Wait()
+
+		_, existsById, err := dekCache.GetById(ctx, namespace.String(), dataKeyID)
+		require.NoError(t, err)
+		assert.True(t, existsById, "DEK should be re-cached by ID after decrypt")
+	})
 }
