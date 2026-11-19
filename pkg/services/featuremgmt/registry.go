@@ -2742,6 +2742,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "alerting.rulesAPIV2",
+			Description:  "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "alerting.gmaOnlyListView",
 			Description:  "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
 			Stage:        FeatureStageExperimental,
