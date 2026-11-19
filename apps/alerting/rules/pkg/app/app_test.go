@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -345,6 +346,28 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 			"A": v1.AlertRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
+
+	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Title = "" }), "want empty title error")
+}
+
+func TestAlertRuleValidation_StoreParityOnUpdate(t *testing.T) {
+	update := func(mut func(r *v1.AlertRule)) error {
+		old := baseAlertRule()
+		old.Labels = map[string]string{v1.GroupLabelKey: "grp", v1.GroupIndexLabelKey: "0"}
+		r := old.DeepCopy()
+		mut(r)
+		return alertRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionUpdate, Object: r, OldObject: old})
+	}
+
+	require.NoError(t, update(func(r *v1.AlertRule) {}))
+	// The name can't change on update, so it is only checked when the rule is created.
+	require.NoError(t, update(func(r *v1.AlertRule) { r.Name = "has.dot" }))
+	assert.Error(t, update(func(r *v1.AlertRule) {
+		r.Labels[v1.GroupLabelKey] = strings.Repeat("g", v1.AlertRuleMaxRuleGroupNameLength+1)
+	}), "want group name too long error")
 }
 
 func baseAlertRule() *v1.AlertRule {
@@ -505,6 +528,11 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 			"A": v1.RecordingRuleExpression{Model: map[string]any{"expr": "1"}, Source: new(true), DatasourceUID: &dsUID},
 		}
 	}), "want query expression requires relative time range error")
+
+	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Spec.Title = "" }), "want empty title error")
 }
 
 func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {

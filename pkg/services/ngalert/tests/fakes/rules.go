@@ -664,6 +664,15 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 	return ids, nil
 }
 
+// ValidateAlertRuleForWrite accepts every rule. Use Hook to make it fail.
+func (f *RuleStore) ValidateAlertRuleForWrite(rule models.AlertRule) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "ValidateAlertRuleForWrite", Params: []any{rule}}
+	f.RecordedOps = append(f.RecordedOps, q)
+	return f.Hook(q)
+}
+
 func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
 }

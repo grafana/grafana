@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 // onlyRecordingVersions filters versions to those representing recording rules. Versions of
@@ -56,7 +58,8 @@ func onlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
 }
 
 var (
-	_ grafanarest.Storage = (*legacyStorage)(nil)
+	_ grafanarest.Storage            = (*legacyStorage)(nil)
+	_ dualwrite.DryRunUpdatePreparer = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
@@ -215,7 +218,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	return obj, err
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -250,7 +253,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	rule, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
+	rule, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps, options != nil && dryrun.IsDryRun(options.DryRun))
 	if err != nil {
 		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
@@ -258,9 +261,17 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	return convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	return common.LegacyRuleUpdate(
-		ctx, name, objInfo, updateValidation,
+		ctx, name, objInfo, updateValidation, options != nil && dryrun.IsDryRun(options.DryRun),
+		&s.service, s.namespacer, ResourceInfo, s.Get,
+		convertToDomainModel, convertToK8sResource,
+	)
+}
+
+func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, error) {
+	return common.LegacyRulePrepareDryRunUpdate(
+		ctx, name, objInfo,
 		&s.service, s.namespacer, ResourceInfo, s.Get,
 		convertToDomainModel, convertToK8sResource,
 	)
@@ -299,7 +310,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, err
 	}
 
-	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
+	err = s.service.DeleteAlertRule(ctx, user, name, managerProps, opts != nil && dryrun.IsDryRun(opts.DryRun))
 	if err != nil {
 		return old, false, common.ToAPIError(ResourceInfo.GroupResource(), name, err)
 	}
@@ -322,7 +333,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 	if listOptions == nil {
 		listOptions = &internalversion.ListOptions{}
 	}
-	if err := common.ValidateDeleteCollectionRequest(options, listOptions); err != nil {
+	if err := common.ValidateDeleteCollectionRequest(listOptions); err != nil {
 		return nil, err
 	}
 
@@ -362,7 +373,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 			managers[domainModel.UID] = managerProps
 			page = append(page, *rule)
 		}
-		if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
+		if err := s.service.DeleteAlertRules(ctx, user, rules, managers, options != nil && dryrun.IsDryRun(options.DryRun)); err != nil {
 			return nil, err
 		}
 		deleted.Items = append(deleted.Items, page...)

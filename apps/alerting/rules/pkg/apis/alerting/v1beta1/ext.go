@@ -14,6 +14,10 @@ const (
 	ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
 	// Copy of the max title length used in legacy validation path
 	AlertRuleMaxTitleLength = 190
+	// Copy of the max rule group name length used in legacy validation path
+	AlertRuleMaxRuleGroupNameLength = 190
+	// Copy of the max rule UID length used in legacy validation path. The rule name is its UID.
+	AlertRuleMaxNameLength = 40
 	// Annotation key used to store the folder UID on resources
 	FolderAnnotationKey = "grafana.app/folder"
 	FolderLabelKey      = FolderAnnotationKey

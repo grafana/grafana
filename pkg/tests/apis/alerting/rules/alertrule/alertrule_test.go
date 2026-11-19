@@ -1240,9 +1240,9 @@ func TestIntegrationDeleteCollection(t *testing.T) {
 		require.Len(t, list.Items, 2)
 	})
 
-	t.Run("dry-run is rejected and deletes nothing", func(t *testing.T) {
+	t.Run("dry-run deletes nothing", func(t *testing.T) {
 		err := client.Client.DeleteCollection(ctx, v1.DeleteOptions{DryRun: []string{v1.DryRunAll}}, alphaSelector)
-		require.True(t, k8serrors.IsBadRequest(err), "got %v", err)
+		require.NoError(t, err)
 
 		list, err := client.List(ctx, alphaSelector)
 		require.NoError(t, err)
