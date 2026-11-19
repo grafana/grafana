@@ -17,7 +17,7 @@ import {
   collapseFloatingExtensionSidebar,
   type FloatingExtensionSidebarHeightOptions,
 } from './extensionSidebarLayout';
-import { FLOATING_SNAP_DURATION_MS, getFloatingHeightRoom } from './useFloatingDrag';
+import { FLOATING_SNAP_DURATION_MS, getFloatingHeightRoom, keepFloatingBottomEdge } from './useFloatingDrag';
 
 /** The CSS variable the extension sizes its floating surface with, set on the sidebar once the user resized it. */
 export const FLOATING_HEIGHT_VARIABLE = '--extension-sidebar-floating-height';
@@ -80,7 +80,8 @@ interface FloatingHeightHandleProps {
 
 /**
  * The floating sidebar's top edge, or its top-left corner, for an extension that lets core resize its height. The
- * container is anchored to the bottom right, so dragging up grows it and the corner also widens it to the left.
+ * container keeps its bottom right corner while resized, even where it was anchored to its top edge, so dragging up
+ * grows it and the corner also widens it to the left.
  * While dragging, the height goes straight to `--extension-sidebar-floating-height`, which the extension sizes its
  * surface with, and is committed on release. Below the minimum it follows down to the extension's collapsed height,
  * and a release nearer to that than to the minimum glides down and asks the extension to collapse. The top edge is
@@ -218,6 +219,7 @@ export function FloatingHeightHandle({
     if (!active || active.pointerId !== event.pointerId) {
       return;
     }
+    keepFloatingBottomEdge();
     if (edge === 'corner') {
       active.width = clampWidth(active.startWidth + (active.startX - event.clientX));
       onWidthChange(active.width);
@@ -245,6 +247,8 @@ export function FloatingHeightHandle({
       }
       return;
     }
+    // A release with no move before it still resizes from the top edge.
+    keepFloatingBottomEdge();
     if (released === 'collapse') {
       const committed = height;
       settle(from, active.floor, () => {
@@ -287,6 +291,7 @@ export function FloatingHeightHandle({
       const next = clampHeight(current + (event.key === 'ArrowUp' ? step : -step), options.minHeight, maxHeight());
       // At a bound the step changes nothing, and committing it would replace a height remembered in a taller window.
       if (next !== Math.round(current)) {
+        keepFloatingBottomEdge();
         onHeightChange(next);
         reportResized(edge, 'keyboard', { height: next });
       }

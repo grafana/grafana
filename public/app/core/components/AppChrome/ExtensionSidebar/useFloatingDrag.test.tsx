@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
+import { FloatingHeightHandle } from './FloatingHeightHandle';
 import {
   FLOATING_DRAG_HANDLE_ATTRIBUTE,
   FLOATING_SNAP_DURATION_MS,
@@ -42,7 +43,7 @@ let leftDockable = false;
 /** Whether taking the pointer to the bottom edge docks there; off, like the flag that turns it on. */
 let bottomDockable = false;
 
-function Floating() {
+function Floating({ children }: { children?: ReactNode }) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const preview = useFloatingDrag(element, {
     dockWidth: 360,
@@ -59,6 +60,7 @@ function Floating() {
         <button type="button" {...{ [FLOATING_DRAG_HANDLE_ATTRIBUTE]: '' }} onClick={onHandleClick}>
           Move
         </button>
+        {children}
       </div>
       {preview && <div data-testid="preview">{JSON.stringify(preview)}</div>}
     </>
@@ -618,6 +620,44 @@ it('left in the bottom half, keeps its bottom edge, re-clamped while the box has
   // Collapsed again, it returns to the place the user chose, not the clamped one.
   resizeBox({ top: 500, height: 244 });
   expect(floating().style.transform).toBe('translate(0px, -200px)');
+});
+
+it.each([
+  [
+    'dragged',
+    (resize: HTMLElement) => {
+      fireEvent.pointerDown(resize, { clientY: 200, button: 0 });
+      fireEvent.pointerMove(resize, { clientY: 184 });
+      fireEvent.pointerUp(resize, { clientY: 184 });
+    },
+  ],
+  ['stepped with the arrow keys', (resize: HTMLElement) => fireEvent.keyDown(resize, { key: 'ArrowUp' })],
+])('keeps its bottom edge when resized from its top edge, though left in the top half: %s', (_how, resizeFromTop) => {
+  const { unmount } = render(
+    <Floating>
+      <FloatingHeightHandle
+        edge="top"
+        options={{ minHeight: 100 }}
+        height={undefined}
+        onHeightChange={jest.fn()}
+        onWidthChange={jest.fn()}
+      />
+    </Floating>
+  );
+  // Top edge at 200, so anchored there.
+  drag({ x: 700, y: 520 }, { x: 700, y: 220 });
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
+
+  resizeFromTop(screen.getByRole('separator', { name: 'Resize sidebar height' }));
+  // 16px taller. Untranslated, the container keeps its bottom edge, so its top is 16px higher.
+  resizeBox({ top: 484, height: 260 });
+  // The top edge moved up to 184 with the resize, and the bottom edge stayed at 444.
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
+
+  // Floating again, it is where the resize left it.
+  unmount();
+  render(<Floating />);
+  expect(floating().style.transform).toBe('translate(0px, -300px)');
 });
 
 it('moves only by its handle, with the primary button, following the pointer that grabbed it', () => {

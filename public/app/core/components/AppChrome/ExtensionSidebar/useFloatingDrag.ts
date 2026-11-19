@@ -134,6 +134,18 @@ const DEFAULT_PLACEMENT: Placement = { ...ORIGIN, anchor: 'bottom' };
  */
 let pendingFloatDrop: { left: number; top: number } | undefined;
 
+/** Set by the mounted floating container; see `keepFloatingBottomEdge`. Module state for the same reason. */
+let keepBottomEdge: (() => void) | undefined;
+
+/**
+ * Keeps the floating container's bottom edge where it is from now on, whichever edge it was anchored to. Called as
+ * core resizes its height from the top edge, so that edge follows the user, as the right edge stays put while the
+ * width changes; the next move picks the anchor again.
+ */
+export function keepFloatingBottomEdge(): void {
+  keepBottomEdge?.();
+}
+
 function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
   reportInteraction('grafana_extension_sidebar_floating_moved', { method, anchor });
 }
@@ -150,8 +162,9 @@ function reportMoved(method: 'drag' | 'reset', anchor: Anchor): void {
  * with the side or, after snapping to the bottom, `onCollapse`. The
  * arrow keys move it in steps without snapping, docking or collapsing. Left in the top half of the
  * page, it keeps its top edge and grows downward; in the bottom half, it keeps its bottom edge and grows
- * upward. The placement is remembered in local storage, so floating again, or a reload, puts it back; a
- * re-clamp never overwrites it, so it returns once there is room.
+ * upward. Resized from its top edge, it keeps its bottom edge until it is moved again. The placement is remembered
+ * in local storage, so floating again, or a reload, puts it back; a re-clamp never overwrites it, so it returns once
+ * there is room.
  */
 export function useFloatingDrag(
   element: HTMLElement | null,
@@ -185,18 +198,21 @@ export function useFloatingDrag(
     [element, apply]
   );
 
-  const remember = useCallback(() => {
-    if (!element) {
-      return;
-    }
-    const placement = offsetToPlacement(element, offsetRef.current);
-    chosenRef.current = placement;
-    if (placement.anchor === 'bottom' && isOrigin(placement)) {
-      store.delete(OFFSET_LOCAL_STORAGE_KEY);
-    } else {
-      store.setObject(OFFSET_LOCAL_STORAGE_KEY, placement);
-    }
-  }, [element]);
+  const remember = useCallback(
+    (chosen?: Placement) => {
+      if (!element) {
+        return;
+      }
+      const placement = chosen ?? offsetToPlacement(element, offsetRef.current);
+      chosenRef.current = placement;
+      if (placement.anchor === 'bottom' && isOrigin(placement)) {
+        store.delete(OFFSET_LOCAL_STORAGE_KEY);
+      } else {
+        store.setObject(OFFSET_LOCAL_STORAGE_KEY, placement);
+      }
+    },
+    [element]
+  );
 
   // Floating starts where a drag from the docked sidebar let go, or else where the user left it; docking (the
   // element going away) only clears the transform.
@@ -251,6 +267,15 @@ export function useFloatingDrag(
       remember();
       reportMoved('reset', 'bottom');
     };
+    // A bottom anchor keeps the translation, so the container's own bottom anchoring holds that edge as it resizes.
+    const keepBottom = () => {
+      const { x, y } = offsetRef.current;
+      const chosen = chosenRef.current;
+      if (chosen.anchor !== 'bottom' || chosen.x !== x || chosen.y !== y) {
+        remember({ x, y, anchor: 'bottom' });
+      }
+    };
+    keepBottomEdge = keepBottom;
 
     const onPointerDown = (event: PointerEvent) => {
       const handle = event.target instanceof Element ? event.target.closest(HANDLE_SELECTOR) : null;
@@ -379,6 +404,9 @@ export function useFloatingDrag(
     element.addEventListener('dblclick', onDoubleClick);
     element.addEventListener('keydown', onKeyDown);
     return () => {
+      if (keepBottomEdge === keepBottom) {
+        keepBottomEdge = undefined;
+      }
       endSnap();
       setPreview(null);
       window.removeEventListener('resize', reclamp);
