@@ -67,7 +67,8 @@ func (v *validator) validate(ctx context.Context, req *app.AdmissionRequest) err
 		return nil
 	}
 
-	// Concurrent creates can overshoot the cap slightly.
+	// Validating admission runs inside the storage call, after the storage authorizer, so only callers
+	// allowed to write reach this count. Concurrent creates can overshoot the cap slightly.
 	count, err := v.countViews(ctx, view.Namespace, view.Spec.DashboardUID, maxViewsPerDashboard)
 	if err != nil {
 		logging.FromContext(ctx).Error("Failed to count saved views", "namespace", view.Namespace, "dashboardUID", view.Spec.DashboardUID, "error", err)
