@@ -128,7 +128,7 @@ describe('ManagedResourceBadge', () => {
       setPermissions({ isEditor: false, canManageRepositories: false });
       mockRepositories([makeRepository()]);
 
-      render(
+      const { user } = render(
         <ManagedResourceBadge
           managerKind={ManagerKind.Repo}
           repositoryName="my-repo"
@@ -136,8 +136,8 @@ describe('ManagedResourceBadge', () => {
         />
       );
 
-      // Wait for the repository lookup to settle, then confirm no trigger appeared.
-      await waitFor(() => expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument());
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
