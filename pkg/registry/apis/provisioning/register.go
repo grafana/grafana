@@ -397,7 +397,8 @@ func RegisterAPIService(
 	supportedResourceProvider := resources.NewSupportedResourceProvider(configured)
 	// The router always publishes the manifests, but it serves their groups only as middleware.
 	if router.MiddlewareEnabled(cfg, features) {
-		manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResourceProvider.Update, cfg.Logger)
+		watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+		manifestWatcher := resource.NewLocalManifestWatcher(manifests, watcherReg, supportedResourceProvider.Update, cfg.Logger)
 		if err := manifestWatcher.StartAsync(ctx); err != nil {
 			return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
 		}

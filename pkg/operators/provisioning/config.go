@@ -366,7 +366,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, resource.ManifestWatcherConfig{
+	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: provisioning.GROUP,
 		Exchanger:         tokenExchangeClient,

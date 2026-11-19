@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -402,11 +403,12 @@ type SupportedResourceProvider interface {
 	Added() []SupportedResource
 }
 
-func NewRemoteManifestWatcher(supportedResourceProvider SupportedResourceProvider, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+func NewRemoteManifestWatcher(supportedResourceProvider SupportedResourceProvider, reg prometheus.Registerer, cfg resource.ManifestWatcherConfig) (services.Service, error) {
 	if cfg.DiscoveryURL == "" {
 		return services.NewIdleService(nil, nil), nil
 	}
-	return resource.NewManifestWatcher(cfg, nil, supportedResourceProvider.Update)
+	watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+	return resource.NewManifestWatcher(cfg, watcherReg, supportedResourceProvider.Update)
 }
 
 func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {
