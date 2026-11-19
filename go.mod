@@ -717,6 +717,9 @@ require (
 )
 
 replace (
+	// v22.7.0 breaks builds for BSDs and Solaris (AIX), see: https://github.com/coreos/go-systemd/issues/512
+	github.com/coreos/go-systemd/v22 => github.com/coreos/go-systemd/v22 v22.6.0
+
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
 	// and makes non-cgo the default for developer builds.
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4

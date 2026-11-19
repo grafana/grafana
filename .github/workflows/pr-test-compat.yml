@@ -1,0 +1,68 @@
+name: Compatibility Tests
+
+# Runs pkg/tests/compat across two Grafana versions sharing one database: this
+# commit and the newest release of the previous minor. See pkg/tests/compat/README.md.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**/go.mod'
+      - '**/go.sum'
+      - apps/**
+      - pkg/apimachinery/**
+      - pkg/apiserver/**
+      - pkg/apis/**
+      - pkg/registry/apis/**
+      - pkg/registry/apps/**
+      - pkg/services/apiserver/**
+      - pkg/services/sqlstore/migrations/**
+      - pkg/storage/**
+      - pkg/tests/apis/helper.go
+      - pkg/tests/compat/**
+      - pkg/tests/testinfra/**
+      - .github/actions/run-compat-phase/**
+      - .github/actions/setup-enterprise/**
+      - .github/workflows/pr-test-compat.yml
+      - .github/workflows/run-compat-tests.yml
+  workflow_dispatch:
+    inputs:
+      old_ref:
+        description: Git ref of the older version (defaults to the newest release of the previous minor)
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  # Two jobs instead of a matrix, so only the Enterprise job gets id-token: write.
+  oss:
+    # Only for fork PRs, like the OSS jobs in pr-test-integration.yml: everything else runs the
+    # Enterprise job, which builds on top of OSS.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    name: Compatibility (OSS)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/run-compat-tests.yml
+    with:
+      edition: oss
+      old_ref: ${{ inputs.old_ref || '' }}
+
+  enterprise:
+    # Same condition as the Enterprise jobs in pr-test-integration.yml (fork PRs cannot get a
+    # token to clone grafana-enterprise), plus manual runs.
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) || github.event_name == 'workflow_dispatch'
+    name: Compatibility (Enterprise)
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/run-compat-tests.yml
+    with:
+      edition: enterprise
+      old_ref: ${{ inputs.old_ref || '' }}

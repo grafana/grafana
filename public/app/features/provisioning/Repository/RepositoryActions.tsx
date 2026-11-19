@@ -10,7 +10,7 @@ import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
-import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
+import { resourceKindInfos } from '../utils/resourceKinds';
 import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -35,11 +35,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
       <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
-        <LinkButton
-          variant="secondary"
-          icon="folder-open"
-          href={getRepositoryRoute(resourceKindInfos.folder, repository)}
-        >
+        <LinkButton variant="secondary" icon="folder-open" href={resourceKindInfos.folder.getRoute(name)}>
           <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
         </LinkButton>
       )}

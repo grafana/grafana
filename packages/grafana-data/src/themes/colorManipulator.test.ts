@@ -145,6 +145,23 @@ describe('utils/colorManipulator', () => {
       expect(values).toEqual([0, 1, 0, 0.4]);
     });
 
+    it('parses a color() alpha with spaces around the slash, as browsers serialize it', () => {
+      const { type, values, colorSpace } = decomposeColor('color(srgb 0.2 0.4 0.6 / 0.5)');
+      expect(type).toEqual('color');
+      expect(colorSpace).toEqual('srgb');
+      expect(values).toEqual([0.2, 0.4, 0.6, 0.5]);
+    });
+
+    it('parses a color() alpha with the slash attached to the channels', () => {
+      expect(decomposeColor('color(srgb 0.2 0.4 0.6/ 0.5)').values).toEqual([0.2, 0.4, 0.6, 0.5]);
+    });
+
+    it('supports the srgb-linear color space', () => {
+      const { values, colorSpace } = decomposeColor('color(srgb-linear 0.2 0.4 0.6)');
+      expect(colorSpace).toEqual('srgb-linear');
+      expect(values).toEqual([0.2, 0.4, 0.6]);
+    });
+
     it('should throw error with inexistent color color space', () => {
       const decimposeWithError = () => decomposeColor('color(foo 0 1 0)');
       expect(decimposeWithError).toThrow();
