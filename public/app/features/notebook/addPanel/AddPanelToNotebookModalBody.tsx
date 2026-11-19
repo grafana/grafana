@@ -223,6 +223,7 @@ export function AddPanelToNotebookModalBody(props: Props) {
       }
 
       isSubmittingRef.current = true;
+      const hasText = values.note.trim().length > 0;
 
       // A failed serialize and a failed write both land in the catch below, as plain Errors. This
       // tells them apart.
@@ -239,8 +240,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
         const cells: AppendedElement[] = note ? [{ kind: 'markdown', text: note }, ...built] : built;
         panelWasBuilt = true;
         added = existingUid
-          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange)
-          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange);
+          ? await addToExistingNotebook(existingUid, cells, entryPoint, source, values.lockTimeRange, hasText)
+          : await createNotebookWithContent({ title }, cells, entryPoint, source, values.lockTimeRange, hasText);
 
         dispatch(
           notifyApp(
@@ -271,7 +272,8 @@ export function AddPanelToNotebookModalBody(props: Props) {
           entryPoint,
           existingUid ? NOTEBOOK_ADD_TARGET.EXISTING : NOTEBOOK_ADD_TARGET.NEW,
           addPanelFailureReason(error, panelWasBuilt),
-          values.lockTimeRange
+          values.lockTimeRange,
+          hasText
         );
 
         dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));

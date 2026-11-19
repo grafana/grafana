@@ -323,6 +323,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -346,6 +347,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -545,6 +547,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -563,6 +566,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -631,7 +635,8 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
-          true
+          true,
+          false
         )
       );
     });
@@ -650,6 +655,7 @@ describe('AddPanelToNotebookModalBody', () => {
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
           'user',
+          false,
           false
         )
       );
@@ -764,6 +770,8 @@ describe('AddPanelToNotebookModalBody', () => {
         { kind: 'markdown', text: 'Latency spiked after the deploy' },
         { kind: 'panel', panel: panel(), isLibraryPanel: false },
       ]);
+      expect(createWithContent.mock.calls[0][4]).toBe(false);
+      expect(createWithContent.mock.calls[0][5]).toBe(true);
     });
 
     it('adds nothing when left blank', async () => {
@@ -998,6 +1006,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'existing',
             reason: 'conflict',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -1005,6 +1014,17 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     // Nothing was created, so there is no uid to send.
+    it('reports that text was typed when the add fails', async () => {
+      createWithContent.mockRejectedValue(new Error('notebook is too large'));
+      const { user } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /^Text above the panel/ }), 'Latency spiked');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(failures).toEqual([expect.objectContaining({ hasText: true })]));
+    });
+
     it('reports a failed create with no notebook uid', async () => {
       createWithContent.mockRejectedValue(new Error('notebook is too large'));
       const { user } = renderModal();
@@ -1020,6 +1040,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'write_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -1044,6 +1065,7 @@ describe('AddPanelToNotebookModalBody', () => {
             target: 'new',
             reason: 'build_failed',
             lockTimeRange: false,
+            hasText: false,
             schema_version: 1,
           },
         ])
@@ -1104,6 +1126,7 @@ describe('AddPanelToNotebookModalBody', () => {
           ],
           'plugin',
           'assistant',
+          false,
           false
         )
       );
