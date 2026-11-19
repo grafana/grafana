@@ -125,6 +125,10 @@ type kvStorageBackend struct {
 	// leaseManager serializes writes per resource and bulk imports per collection.
 	leaseManager *lease.Manager
 
+	// clockSkew rejects writes while the local clock is too far from the
+	// database clock. nil when the check is disabled.
+	clockSkew *clockSkewChecker
+
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
 	// lease package default.
 	leaseTTL time.Duration
@@ -158,6 +162,8 @@ type kvBackendMetrics struct {
 	ResourceVersionClockRegression    prometheus.Gauge
 	ResourceVersionOrderingRejections *prometheus.CounterVec
 	ResourceVersionWaitDuration       *prometheus.HistogramVec
+	ClockOffsetFromDatabase           prometheus.Gauge
+	ClockSkewRejectedWrites           prometheus.Counter
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -194,6 +200,14 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		ResourceVersionClockRegression: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_storage_resource_version_clock_regression_seconds",
 			Help: "Wall-clock regression relative to the last emitted resource version, reset on successful generation.",
+		}),
+		ClockOffsetFromDatabase: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_storage_clock_offset_from_database_seconds",
+			Help: "Estimated offset of the local clock from the database clock at the last clock skew check: positive when ahead, negative when behind. Zero when the check is disabled.",
+		}),
+		ClockSkewRejectedWrites: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_storage_clock_skew_rejected_writes_total",
+			Help: "Writes rejected because the local clock was too far from the database clock.",
 		}),
 		WriteConflicts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_write_conflicts_total",
@@ -370,6 +384,11 @@ type KVBackendOptions struct {
 	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
 	// Zero uses the default (1s); a negative value disables waiting.
 	ResourceVersionMaxWait time.Duration
+
+	// ClockSkewCheck rejects writes while the local clock is too far from the
+	// database clock. Set by the wiring, which knows whether instances share
+	// the database.
+	ClockSkewCheck bool
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -464,6 +483,18 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
+	var clockSkew *clockSkewChecker
+	if opts.ClockSkewCheck {
+		clockSkew = newClockSkewChecker(func(ctx context.Context) (time.Time, error) {
+			return readKVClock(ctx, kv)
+		}, logger.With("component", "clock-skew-check"), metrics)
+		// Check before serving so a skewed clock cannot write until the first tick.
+		clockSkew.check(ctx)
+		go clockSkew.run(ctx)
+		logger.Info("clock skew check enabled", "interval", clockSkew.interval.String(),
+			"warnThreshold", clockSkew.warnThreshold.String(), "maxOffset", clockSkew.maxOffset.String())
+	}
+
 	dataStore := newDataStore(kv)
 
 	backend := &kvStorageBackend{
@@ -490,6 +521,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventRetentionPeriod:      eventRetentionPeriod,
 		eventPruningInterval:      eventPruningInterval,
 		leaseManager:              leaseManager,
+		clockSkew:                 clockSkew,
 		leaseTTL:                  opts.LeaseTTL,
 		dbKeepAlive:               opts.DBKeepAlive,
 		lastImportStore:           newLastImportStore(kv),
@@ -1219,6 +1251,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	))
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
+
+	if err := k.clockSkew.checkWrite(); err != nil {
+		return 0, err
+	}
 
 	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
 	if err != nil {
@@ -3084,6 +3120,10 @@ func (b *kvStorageBackend) inBulkStep(ctx context.Context, fn func(context.Conte
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) (*resourcepb.BulkResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ProcessBulk")
 	defer span.End()
+
+	if err := b.clockSkew.checkWrite(); err != nil {
+		return nil, err
+	}
 
 	usingExternalTx := false
 	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {

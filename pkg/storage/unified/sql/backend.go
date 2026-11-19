@@ -217,6 +217,8 @@ func NewStorageBackend(
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
 	kvBackendOpts.UseChannelNotifier = !isHA
+	// Only instances sharing the database can hand out conflicting resource versions.
+	kvBackendOpts.ClockSkewCheck = isHA
 	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
