@@ -1,50 +1,104 @@
-import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-
-import { setupMswServer } from '../../mockApi';
 import { makeDeletedRule } from '../mocks/handlers';
 
 import { RestoreModal } from './RestoreModal';
 
-const server = setupMswServer();
-const CREATE_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/default/alertrules`;
+const mockNavigate = jest.fn();
 
 describe('RestoreModal', () => {
   it('shows the rule title in the confirmation', () => {
-    render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={jest.fn()} />);
+    render(
+      <RestoreModal
+        rule={makeDeletedRule()}
+        restore={jest.fn()}
+        isRestoring={false}
+        navigateAfterRestore={mockNavigate}
+        onDismiss={jest.fn()}
+      />
+    );
     expect(screen.getByText(/Deleted rule/i)).toBeInTheDocument();
   });
 
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
-    render(<RestoreModal rule={makeDeletedRule()} onDismiss={onDismiss} onSuccess={jest.fn()} />);
+    render(
+      <RestoreModal
+        rule={makeDeletedRule()}
+        restore={jest.fn()}
+        isRestoring={false}
+        navigateAfterRestore={mockNavigate}
+        onDismiss={onDismiss}
+      />
+    );
     await userEvent.click(screen.getByRole('button', { name: /Cancel/i }));
     expect(onDismiss).toHaveBeenCalled();
   });
 
-  it('calls onSuccess and navigates to the rule after a successful restore', async () => {
-    server.use(http.post(CREATE_URL, () => HttpResponse.json({}, { status: 200 })));
+  it('calls navigateAfterRestore and onSuccess after a successful restore', async () => {
+    const navigate = jest.fn();
     const onSuccess = jest.fn();
-    render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={onSuccess} />);
+    const rule = makeDeletedRule();
+    rule.metadata.name = 'my-rule-uid';
+
+    render(
+      <RestoreModal
+        rule={rule}
+        restore={jest.fn().mockResolvedValue({ success: true, isConflict: false })}
+        isRestoring={false}
+        navigateAfterRestore={navigate}
+        onDismiss={jest.fn()}
+        onSuccess={onSuccess}
+      />
+    );
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
-    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('my-rule-uid'));
+    expect(onSuccess).toHaveBeenCalled();
   });
 
-  it('shows the API error message inline on failure (e.g. folder not writable)', async () => {
-    server.use(
-      http.post(CREATE_URL, () => HttpResponse.json({ message: 'folder not found or not writable' }, { status: 403 }))
+  it('shows the API error message inline on failure', async () => {
+    render(
+      <RestoreModal
+        rule={makeDeletedRule()}
+        restore={jest.fn().mockResolvedValue({
+          success: false,
+          isConflict: false,
+          error: { status: 403, data: { message: 'folder not found or not writable' } },
+        })}
+        isRestoring={false}
+        navigateAfterRestore={mockNavigate}
+        onDismiss={jest.fn()}
+      />
     );
-    render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={jest.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
     expect(await screen.findByText(/folder not found or not writable/i)).toBeInTheDocument();
   });
 
-  it('shows conflict message on 409', async () => {
-    server.use(http.post(CREATE_URL, () => HttpResponse.json({ message: 'conflict' }, { status: 409 })));
-    render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={jest.fn()} />);
+  it('shows conflict message on conflict result', async () => {
+    render(
+      <RestoreModal
+        rule={makeDeletedRule()}
+        restore={jest.fn().mockResolvedValue({ success: false, isConflict: true })}
+        isRestoring={false}
+        navigateAfterRestore={mockNavigate}
+        onDismiss={jest.fn()}
+      />
+    );
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
+  });
+
+  it('uses a custom title when provided', () => {
+    render(
+      <RestoreModal
+        rule={makeDeletedRule()}
+        restore={jest.fn()}
+        isRestoring={false}
+        navigateAfterRestore={mockNavigate}
+        onDismiss={jest.fn()}
+        title="Restore recording rule"
+      />
+    );
+    expect(screen.getByText('Restore recording rule')).toBeInTheDocument();
   });
 });
