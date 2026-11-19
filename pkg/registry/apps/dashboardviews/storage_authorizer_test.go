@@ -15,6 +15,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
@@ -32,6 +34,12 @@ const testDashboardUID = "dash-1"
 // OrgID from it.
 func withTestNamespace(ctx context.Context, orgID int64) context.Context {
 	return genericapirequest.WithNamespace(ctx, claims.OrgNamespaceFormatter(orgID))
+}
+
+// requireDenied checks for the authorizer's 403.
+func requireDenied(t *testing.T, err error) {
+	t.Helper()
+	require.True(t, apierrors.IsForbidden(err), "expected a 403, got %v", err)
 }
 
 func requesterWithDashboardRead(uid string) context.Context {
@@ -91,13 +99,13 @@ func TestCheckAccess(t *testing.T) {
 	t.Run("denied with no permissions at all", func(t *testing.T) {
 		ctx := requesterWithNoPermissions()
 		err := authz.checkAccess(ctx, viewWithDashboardUID(testDashboardUID))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+		requireDenied(t, err)
 	})
 
 	t.Run("denied when the grant is for a different dashboard", func(t *testing.T) {
 		ctx := requesterWithDashboardRead("some-other-dash")
 		err := authz.checkAccess(ctx, viewWithDashboardUID(testDashboardUID))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+		requireDenied(t, err)
 	})
 
 	t.Run("denied with no requester in context", func(t *testing.T) {
@@ -108,7 +116,7 @@ func TestCheckAccess(t *testing.T) {
 	t.Run("denied when dashboardUID is empty", func(t *testing.T) {
 		ctx := requesterWithDashboardRead(testDashboardUID)
 		err := authz.checkAccess(ctx, viewWithDashboardUID(""))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+		requireDenied(t, err)
 	})
 
 	t.Run("rejects an unexpected object type", func(t *testing.T) {
@@ -128,7 +136,7 @@ func TestCheckAccess(t *testing.T) {
 			requester.Permissions = map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {scope}}}
 			ctx := withTestNamespace(identity.WithRequester(context.Background(), requester), 7)
 
-			require.ErrorIs(t, authz.checkAccess(ctx, viewWithDashboardUID(testDashboardUID)), storewrapper.ErrUnauthorized)
+			requireDenied(t, authz.checkAccess(ctx, viewWithDashboardUID(testDashboardUID)))
 			require.NoError(t, authz.checkAccess(withTestNamespace(ctx, 1), viewWithDashboardUID(testDashboardUID)))
 		})
 	}
@@ -156,7 +164,7 @@ func TestBeforeCreateUpdateDeleteAfterGet(t *testing.T) {
 
 	t.Run("BeforeUpdate allows/denies same as checkAccess when the dashboard is unchanged", func(t *testing.T) {
 		require.NoError(t, authz.BeforeUpdate(allowedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)))
-		require.ErrorIs(t, authz.BeforeUpdate(deniedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)), storewrapper.ErrUnauthorized)
+		requireDenied(t, authz.BeforeUpdate(deniedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)))
 	})
 
 	t.Run("BeforeUpdate rejects moving a view to a different dashboard", func(t *testing.T) {
@@ -191,7 +199,7 @@ func TestCheckDashboardExists(t *testing.T) {
 		authz := newTestAuthorizerWithDashboardService(svc)
 
 		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
-		require.ErrorIs(t, err, storewrapper.ErrUnauthorized)
+		requireDenied(t, err)
 	})
 
 	t.Run("looks the dashboard up as a service identity, not the caller", func(t *testing.T) {
@@ -212,14 +220,13 @@ func TestCheckDashboardExists(t *testing.T) {
 		require.True(t, apierrors.IsInternalError(err), "got %v", err)
 	})
 
-	t.Run("does not affect update/delete/get, which never repeat this check", func(t *testing.T) {
+	t.Run("update and delete don't look the dashboard up, so orphans can still be cleaned up", func(t *testing.T) {
 		svc := &dashboards.FakeDashboardService{}
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, errors.New("dashboard service unreachable"))
 		authz := newTestAuthorizerWithDashboardService(svc)
 
 		require.NoError(t, authz.BeforeUpdate(allowedCtx, viewWithDashboardUID(testDashboardUID), viewWithDashboardUID(testDashboardUID)))
 		require.NoError(t, authz.BeforeDelete(allowedCtx, viewWithDashboardUID(testDashboardUID)))
-		require.NoError(t, authz.AfterGet(allowedCtx, viewWithDashboardUID(testDashboardUID)))
 		svc.AssertNotCalled(t, "GetDashboard", mock.Anything, mock.Anything)
 	})
 }
@@ -288,9 +295,9 @@ func TestOrphanedViews(t *testing.T) {
 	}), 1)
 
 	t.Run("get, delete and create are denied, not internal errors", func(t *testing.T) {
-		require.ErrorIs(t, authz.AfterGet(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
-		require.ErrorIs(t, authz.BeforeDelete(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
-		require.ErrorIs(t, authz.BeforeCreate(ctx, viewWithDashboardUID("deleted-dash")), storewrapper.ErrUnauthorized)
+		requireDenied(t, authz.AfterGet(ctx, viewWithDashboardUID("deleted-dash")))
+		requireDenied(t, authz.BeforeDelete(ctx, viewWithDashboardUID("deleted-dash")))
+		requireDenied(t, authz.BeforeCreate(ctx, viewWithDashboardUID("deleted-dash")))
 	})
 
 	t.Run("list drops the orphan instead of failing", func(t *testing.T) {
@@ -327,8 +334,103 @@ func TestAnonymousViewers(t *testing.T) {
 	})
 
 	t.Run("cannot create, update or delete them", func(t *testing.T) {
-		require.ErrorIs(t, authz.BeforeCreate(ctx, view), storewrapper.ErrUnauthorized)
-		require.ErrorIs(t, authz.BeforeUpdate(ctx, view, view), storewrapper.ErrUnauthorized)
-		require.ErrorIs(t, authz.BeforeDelete(ctx, view), storewrapper.ErrUnauthorized)
+		requireDenied(t, authz.BeforeCreate(ctx, view))
+		requireDenied(t, authz.BeforeUpdate(ctx, view, view))
+		requireDenied(t, authz.BeforeDelete(ctx, view))
 	})
+}
+
+func wildcardReader() context.Context {
+	return withTestNamespace(identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgRole: identity.RoleAdmin,
+		UserID:  1,
+		OrgID:   1,
+		Permissions: map[int64]map[string][]string{
+			1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID("*")}},
+		},
+	}), 1)
+}
+
+// A wildcard grant passes checkAccess without resolving the scope, so only the existence check
+// hides views of a deleted dashboard from it.
+func TestOrphanedViewsForWildcardGrants(t *testing.T) {
+	svc := &dashboards.FakeDashboardService{}
+	svc.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+		return q.UID == "deleted-dash"
+	})).Return(nil, dashboards.ErrDashboardNotFound)
+	svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	authz := newTestAuthorizerWithDashboardService(svc)
+	ctx := wildcardReader()
+
+	t.Run("get is denied", func(t *testing.T) {
+		requireDenied(t, authz.AfterGet(ctx, viewWithDashboardUID("deleted-dash")))
+		require.NoError(t, authz.AfterGet(ctx, viewWithDashboardUID(testDashboardUID)))
+	})
+
+	t.Run("list drops orphans and looks each dashboard up once", func(t *testing.T) {
+		svc.Calls = nil
+		result, err := authz.FilterList(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{
+			Items: []dashboardviewsv0alpha1.SavedDashboardView{
+				*viewWithDashboardUID(testDashboardUID),
+				*viewWithDashboardUID("deleted-dash"),
+				*viewWithDashboardUID(testDashboardUID),
+				*viewWithDashboardUID("deleted-dash"),
+			},
+		})
+		require.NoError(t, err)
+		filtered, ok := result.(*dashboardviewsv0alpha1.SavedDashboardViewList)
+		require.True(t, ok)
+		require.Len(t, filtered.Items, 2)
+		for _, item := range filtered.Items {
+			assert.Equal(t, testDashboardUID, item.Spec.DashboardUID)
+		}
+		svc.AssertNumberOfCalls(t, "GetDashboard", 2)
+	})
+
+	t.Run("delete still works, so orphans can be cleaned up", func(t *testing.T) {
+		require.NoError(t, authz.BeforeDelete(ctx, viewWithDashboardUID("deleted-dash")))
+	})
+}
+
+func TestAccessCheckErrorsDoNotLeakDetails(t *testing.T) {
+	ac := acimpl.ProvideAccessControl(nil)
+	ac.RegisterScopeAttributeResolver(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(""),
+		accesscontrol.ScopeAttributeResolverFunc(func(context.Context, int64, string) ([]string, error) {
+			return nil, errors.New("connection to db-internal-7 refused")
+		}))
+	authz := &savedViewStorageAuthorizer{ac: ac, dashboardSvc: fakeDashboardServiceAlwaysFound()}
+	ctx := withTestNamespace(identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgRole: identity.RoleViewer,
+		UserID:  1,
+		OrgID:   1,
+		Permissions: map[int64]map[string][]string{
+			1: {dashboards.ActionDashboardsRead: {folder.ScopeFoldersProvider.GetResourceScopeUID("folder-1")}},
+		},
+	}), 1)
+
+	for name, err := range map[string]error{
+		"get": authz.AfterGet(ctx, viewWithDashboardUID(testDashboardUID)),
+		"list": func() error {
+			_, err := authz.FilterList(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{
+				Items: []dashboardviewsv0alpha1.SavedDashboardView{*viewWithDashboardUID(testDashboardUID)},
+			})
+			return err
+		}(),
+	} {
+		t.Run(name, func(t *testing.T) {
+			require.True(t, apierrors.IsInternalError(err), "got %v", err)
+			assert.NotContains(t, err.Error(), "db-internal-7")
+		})
+	}
+}
+
+func TestReservedAnnotations(t *testing.T) {
+	authz := newTestAuthorizer()
+	ctx := requesterWithDashboardRead(testDashboardUID)
+	managed := viewWithDashboardUID(testDashboardUID)
+	managed.SetAnnotations(map[string]string{utils.AnnoKeyManagerKind: "repo"})
+
+	require.True(t, apierrors.IsBadRequest(authz.BeforeCreate(ctx, managed)))
+	require.True(t, apierrors.IsBadRequest(authz.BeforeUpdate(ctx, viewWithDashboardUID(testDashboardUID), managed)))
+	require.NoError(t, authz.BeforeCreate(ctx, viewWithDashboardUID(testDashboardUID)))
 }

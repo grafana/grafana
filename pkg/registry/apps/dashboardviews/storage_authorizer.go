@@ -3,6 +3,7 @@ package dashboardviews
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,10 +13,34 @@ import (
 
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+)
+
+var (
+	logger = log.New("dashboardviews.authz")
+
+	// A 403, not storewrapper's 401: the frontend treats a 401 as an expired session and retries.
+	errDenied = apierrors.NewForbidden(
+		schema.GroupResource{Group: dashboardviewsv0alpha1.APIGroup, Resource: dashboardviewsv0alpha1.SavedDashboardViewKind().Plural()},
+		"", errors.New("access denied"))
+	errAccessCheckFailed = apierrors.NewInternalError(errors.New("could not check saved view access"))
+
+	// Views are user content only. The store runs as a service identity, which would otherwise skip
+	// the manager checks these annotations normally get.
+	reservedAnnotations = []string{
+		utils.AnnoKeyManagerKind,
+		utils.AnnoKeyManagerIdentity,
+		utils.AnnoKeyManagerAllowsEdits,
+		utils.AnnoKeyManagerSuspended,
+		utils.AnnoKeySourcePath,
+		utils.AnnoKeySourceChecksum,
+		utils.AnnoKeySourceTimestamp,
+	}
 )
 
 // GetNamespaceScopedStorageAuthorizer is where the real per-object check lives: it's the first
@@ -38,10 +63,25 @@ func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runti
 	if err := s.checkAccess(ctx, obj); err != nil {
 		return err
 	}
-	return s.checkDashboardExists(ctx, obj)
+	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
+	if !ok {
+		return storewrapper.ErrUnexpectedType
+	}
+	if err := rejectReservedAnnotations(view); err != nil {
+		return err
+	}
+	// A wildcard dashboards:read grant skips scope resolution, so checkAccess passes for any UID.
+	exists, err := s.dashboardExists(ctx, view.Spec.DashboardUID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errDenied
+	}
+	return nil
 }
 
-// BeforeUpdate keeps spec.dashboardUID immutable, since checkDashboardExists only runs on create.
+// BeforeUpdate keeps spec.dashboardUID immutable, since the existence check only runs on create.
 func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	if err := denyAnonymousWrite(ctx); err != nil {
 		return err
@@ -60,7 +100,7 @@ func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, o
 	if oldView.Spec.DashboardUID != newView.Spec.DashboardUID {
 		return apierrors.NewBadRequest("spec.dashboardUID is immutable")
 	}
-	return nil
+	return rejectReservedAnnotations(newView)
 }
 
 func (s *savedViewStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
@@ -70,8 +110,24 @@ func (s *savedViewStorageAuthorizer) BeforeDelete(ctx context.Context, obj runti
 	return s.checkAccess(ctx, obj)
 }
 
+// AfterGet and FilterList hide views whose dashboard was deleted; delete stays allowed so they can
+// be cleaned up.
 func (s *savedViewStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
-	return s.checkAccess(ctx, obj)
+	if err := s.checkAccess(ctx, obj); err != nil {
+		return err
+	}
+	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
+	if !ok {
+		return storewrapper.ErrUnexpectedType
+	}
+	exists, err := s.dashboardExists(ctx, view.Spec.DashboardUID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errDenied
+	}
+	return nil
 }
 
 // FilterList checks each item rather than trusting the fieldSelector, so an unscoped LIST can't leak
@@ -83,16 +139,28 @@ func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtim
 	}
 
 	allowed := make([]dashboardviewsv0alpha1.SavedDashboardView, 0, len(views.Items))
+	// Lists are normally scoped to one dashboard, so this is usually a single lookup.
+	exists := map[string]bool{}
 	for i := range views.Items {
 		err := s.checkAccess(ctx, &views.Items[i])
 		switch {
 		case err == nil:
-			allowed = append(allowed, views.Items[i])
-		case errors.Is(err, storewrapper.ErrUnauthorized):
-		case errors.Is(err, storewrapper.ErrUnauthenticated):
-			return nil, err
+		case apierrors.IsForbidden(err):
+			continue
 		default:
-			return nil, apierrors.NewInternalError(err)
+			return nil, err
+		}
+
+		uid := views.Items[i].Spec.DashboardUID
+		found, checked := exists[uid]
+		if !checked {
+			if found, err = s.dashboardExists(ctx, uid); err != nil {
+				return nil, err
+			}
+			exists[uid] = found
+		}
+		if found {
+			allowed = append(allowed, views.Items[i])
 		}
 	}
 	views.Items = allowed
@@ -111,7 +179,17 @@ func denyAnonymousWrite(ctx context.Context) error {
 		return storewrapper.ErrUnauthenticated
 	}
 	if requester.IsIdentityType(claims.TypeAnonymous) {
-		return storewrapper.ErrUnauthorized
+		return errDenied
+	}
+	return nil
+}
+
+func rejectReservedAnnotations(view *dashboardviewsv0alpha1.SavedDashboardView) error {
+	annotations := view.GetAnnotations()
+	for _, key := range reservedAnnotations {
+		if _, ok := annotations[key]; ok {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %q is not supported on saved views", key))
+		}
 	}
 	return nil
 }
@@ -124,7 +202,7 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 		return storewrapper.ErrUnexpectedType
 	}
 	if view.Spec.DashboardUID == "" {
-		return storewrapper.ErrUnauthorized
+		return errDenied
 	}
 
 	requester, err := identity.GetRequester(ctx)
@@ -136,50 +214,43 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 	// namespace authorizer for any org.
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil || nsInfo.OrgID != requester.GetOrgID() {
-		return storewrapper.ErrUnauthorized
+		return errDenied
 	}
 
 	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(view.Spec.DashboardUID)
 	allowed, err := s.ac.Evaluate(ctx, requester, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, scope))
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		// The scope resolver fails for a deleted dashboard; deny rather than 500.
-		return storewrapper.ErrUnauthorized
+		return errDenied
 	}
 	if err != nil {
-		return err
+		logger.Error("Failed to evaluate saved view access", "dashboardUID", view.Spec.DashboardUID, "error", err)
+		return errAccessCheckFailed
 	}
 	if !allowed {
-		return storewrapper.ErrUnauthorized
+		return errDenied
 	}
 	return nil
 }
 
-// checkDashboardExists runs on create only: a wildcard dashboards:read grant skips scope
-// resolution, so checkAccess passes for any UID.
-func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, obj runtime.Object) error {
-	view, ok := obj.(*dashboardviewsv0alpha1.SavedDashboardView)
-	if !ok {
-		return storewrapper.ErrUnexpectedType
-	}
-
+// dashboardExists runs as a service identity: checkAccess already authorized the caller, and this
+// only asks whether the dashboard is still there.
+func (s *savedViewStorageAuthorizer) dashboardExists(ctx context.Context, uid string) (bool, error) {
 	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
-		return storewrapper.ErrUnauthorized
+		return false, errDenied
 	}
 
-	// Run as a service identity: checkAccess already authorized the caller, this only checks existence.
 	_, err = identity.WithServiceIdentityFn(ctx, nsInfo.OrgID, func(ctx context.Context) (*dashboards.Dashboard, error) {
-		return s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-			UID:   view.Spec.DashboardUID,
-			OrgID: nsInfo.OrgID,
-		})
+		return s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: nsInfo.OrgID})
 	})
 	switch {
 	case err == nil:
-		return nil
+		return true, nil
 	case errors.Is(err, dashboards.ErrDashboardNotFound):
-		return storewrapper.ErrUnauthorized
+		return false, nil
 	default:
-		return apierrors.NewInternalError(err)
+		logger.Error("Failed to look up the dashboard of a saved view", "dashboardUID", uid, "error", err)
+		return false, errAccessCheckFailed
 	}
 }
