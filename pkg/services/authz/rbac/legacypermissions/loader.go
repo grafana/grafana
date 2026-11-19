@@ -1,5 +1,5 @@
-// Package legacypermissions loads the legacy permission snapshot inside embedded
-// AuthZ. It is not a standalone or multi-tenant authorization service.
+// Package legacypermissions loads legacy permission snapshots. Transport callers
+// must authenticate requests and authorize the namespace before loading permissions.
 package legacypermissions
 
 import (
@@ -52,6 +52,7 @@ type Loader struct {
 	features          featuremgmt.FeatureToggles
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
+	enforced          bool
 	zanzana           MigratedPermissions
 	scopeResolver     legacyscopes.ScopeResolver
 	flight            singleflight.Group
@@ -62,8 +63,29 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
+	return newLoader(legacysql.NewDatabaseProvider(sql), catalog, actionResolver, cache, cfg, features, license, zanzana)
+}
+
+// NewEnforcedLoader follows standalone AuthZ's SQL-backed policy without a local
+// license or role catalog. Default roles must already be persisted in SQL.
+// Permission caches are not tenant-scoped yet; callers must not share a cached
+// loader across tenants. This constructor does not register a remote handler.
+func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.ActionResolver,
+	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
+) *Loader {
+	loader := newLoader(database, nil, actions, cache, cfg, features, nil, zanzana)
+	loader.enforced = true
+	loader.scopeResolver = scopeResolver
+	return loader
+}
+
+func newLoader(database legacysql.LegacyDatabaseProvider, catalog *RoleCatalog, actionResolver ac.ActionResolver,
+	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	license licensing.Licensing, zanzana MigratedPermissions,
+) *Loader {
 	return &Loader{
-		store:             permissionStore{database: legacysql.NewDatabaseProvider(sql)},
+		store:             permissionStore{database: database},
 		catalog:           catalog,
 		actions:           actionResolver,
 		cache:             cache,
@@ -74,6 +96,10 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 		zanzana:           zanzana,
 		log:               log.New("authz.legacypermissions"),
 	}
+}
+
+func (l *Loader) enforcementEnabled() bool {
+	return l.enforced || l.license.FeatureEnabled("accesscontrol.enforcement")
 }
 
 var _ ac.UserPermissionsEvaluator = (*Loader)(nil)
@@ -91,7 +117,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.GetUserPermissions")
 	defer span.End()
 	settings := loadSettings{
-		enforcementEnabled: l.license.FeatureEnabled("accesscontrol.enforcement"),
+		enforcementEnabled: l.enforcementEnabled(),
 		//nolint:staticcheck // Preserve the current global feature-toggle behavior.
 		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
 	}
