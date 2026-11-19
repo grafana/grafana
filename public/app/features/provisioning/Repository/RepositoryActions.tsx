@@ -4,13 +4,12 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { StatusBadge } from '../Shared/StatusBadge';
-import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
-import { getIsReadOnlyWorkflows } from '../utils/repository';
+import { getIsReadOnlyWorkflows, getRepositoryEditUrl } from '../utils/repository';
 import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
-import { resourceKindInfos } from '../utils/resourceKinds';
 import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -35,7 +34,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
       <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
-        <LinkButton variant="secondary" icon="folder-open" href={resourceKindInfos.folder.getRoute(name)}>
+        <LinkButton variant="secondary" icon="folder-open" href={CORE_KINDS.folder.getRoute(name)}>
           <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
         </LinkButton>
       )}
@@ -49,7 +48,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         <LinkButton
           variant="secondary"
           icon="link"
-          href={`${CONNECTIONS_URL}/${connectionName}/edit`}
+          href={CORE_KINDS.connection.getRoute(connectionName)}
           onClick={() => {
             reportInteraction('grafana_provisioning_repository_connection_opened', {
               repositoryName: name,
@@ -63,7 +62,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
       <LinkButton
         variant="secondary"
         icon="cog"
-        href={`${PROVISIONING_URL}/${name}/edit`}
+        href={getRepositoryEditUrl(name)}
         onClick={() => {
           reportInteraction('grafana_provisioning_repository_settings_opened', {
             repositoryName: name,

@@ -1960,10 +1960,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", true, options).value;
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -2268,10 +2268,10 @@ export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `queryEditorNext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNext", false, options).value;
+  return useFlag("queryEditorNext", true, options).value;
 };
 
 /**

@@ -126,6 +126,38 @@ func TestClientV2QueryChunkedDataFallbackRecordsResponseSize(t *testing.T) {
 	assert.Equal(t, want, recorder.Sizes())
 }
 
+func TestClientV2ReleasesEncodedFramesOnceDecoded(t *testing.T) {
+	tests := []struct {
+		name  string
+		query func(*ClientV2) error
+	}{
+		{"QueryData", func(c *ClientV2) error {
+			_, err := c.QueryData(context.Background(), &backend.QueryDataRequest{})
+			return err
+		}},
+		{"QueryChunkedData fallback", func(c *ClientV2) error {
+			return c.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{}, &typedWriter{})
+		}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			protoResp, _ := encodedResponse(t)
+			client := &ClientV2{DataClient: fakeDataClient{resp: protoResp, chunkedErr: status.Error(codes.Unimplemented, "no chunking")}}
+
+			require.NoError(t, tc.query(client))
+			held := 0
+			for _, r := range protoResp.Responses {
+				for _, f := range r.Frames {
+					if f != nil {
+						held++
+					}
+				}
+			}
+			assert.Zero(t, held, "encoded frames still held after decoding")
+		})
+	}
+}
+
 // sdkPlugin serves QueryData and QueryChunkedData with the data server of the plugin SDK.
 type sdkPlugin struct {
 	queryDataCalls atomic.Int32
