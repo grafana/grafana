@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { act, render, screen } from 'test/test-utils';
 
-import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { getDefaultTimeRange, store, systemDateFormats } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
@@ -42,6 +42,45 @@ describe('TimePickerWithHistory', () => {
       expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('aria-selected', 'true');
     } else {
       expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it.each([true, false])('applies absolute ranges with blocked storage and showHistory=%s', async (showHistory) => {
+    const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage blocked by host', 'SecurityError');
+    });
+    try {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const { unmount } = render(
+        <TimePickerWithHistory
+          value={getDefaultTimeRange()}
+          {...props}
+          onChange={onChange}
+          showHistory={showHistory}
+          layout="wide"
+        />
+      );
+      await user.click(screen.getByLabelText(/Time range selected/));
+      await user.clear(getFromField());
+      await user.type(getFromField(), '2022-12-01 00:00:00');
+      await user.clear(getToField());
+      await user.type(getToField(), '2022-12-02 00:00:00');
+      await user.click(getApplyButton());
+      expect(onChange.mock.calls[0][0].from.toISOString()).toBe('2022-12-01T00:00:00.000Z');
+      await user.click(screen.getByLabelText(/Time range selected/));
+      expect(getFromField()).toHaveValue('now-6h');
+      const recentRange = screen.queryByRole('checkbox', { name: '2022-12-01 00:00:00 to 2022-12-02 00:00:00' });
+      if (showHistory) {
+        expect(recentRange).toBeInTheDocument();
+      } else {
+        expect(screen.queryByText('Recently used absolute ranges')).not.toBeInTheDocument();
+        expect(recentRange).not.toBeInTheDocument();
+      }
+      unmount();
+    } finally {
+      store.delete(LOCAL_STORAGE_KEY);
+      storage.mockRestore();
     }
   });
 

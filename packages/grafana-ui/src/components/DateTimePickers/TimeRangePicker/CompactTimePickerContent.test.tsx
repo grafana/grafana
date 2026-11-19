@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { rangeUtil } from '@grafana/data';
+import { rangeUtil, store } from '@grafana/data';
 
 import { TimeRangePicker, type TimeRangePickerProps } from '../TimeRangePicker';
 
@@ -170,3 +170,62 @@ it('allows an explicit legacy prop to override a tabbed context', async () => {
   expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'true');
   expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 });
+
+it.each(['compact', 'wide'] as const)(
+  'uses only consumer presets in their supplied order in %s layout',
+  async (layout) => {
+    const { open, user, onChange } = setup({
+      layout,
+      showHistory: false,
+      quickRanges: [
+        { from: 'now-2h', to: 'now', display: 'Two hours' },
+        { from: 'now-15m', to: 'now', display: 'Quarter hour' },
+      ],
+    });
+    await open();
+    const options = screen.getAllByRole('checkbox');
+    expect(options).toHaveLength(2);
+    expect(options[0]).toHaveAccessibleName('Two hours');
+    expect(options[1]).toHaveAccessibleName('Quarter hour');
+    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Quarter hour' }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-15m', to: 'now' } }));
+  }
+);
+
+it('accepts an empty preset list while retaining custom-duration search', async () => {
+  const { open, user, onChange } = setup({ quickRanges: [] });
+  await open();
+  const search = screen.getByRole('textbox', { name: 'Search quick ranges' });
+  expect(search).toHaveFocus();
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  await user.type(search, '3h{Enter}');
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-3h', to: 'now' } }));
+});
+
+it.each([true, false])(
+  'still applies ranges when storage is blocked and tab persistence is %s',
+  async (rememberLastTab) => {
+    const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage blocked by host', 'SecurityError');
+    });
+    try {
+      const { open, user, onChange, unmount } = setup({ rememberLastTab, showHistory: false });
+      await open();
+      await user.click(screen.getByRole('tab', { name: 'Absolute' }));
+      await user.keyboard('{Escape}');
+      await open();
+      expect(screen.getByRole('tab', { name: rememberLastTab ? 'Absolute' : 'Relative' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
+      await user.click(screen.getByRole('tab', { name: 'Relative' }));
+      await user.type(screen.getByRole('textbox', { name: 'Search quick ranges' }), '3h{Enter}');
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-3h', to: 'now' } }));
+      unmount();
+    } finally {
+      store.delete('grafana.timepicker.tab');
+      storage.mockRestore();
+    }
+  }
+);

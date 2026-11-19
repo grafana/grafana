@@ -46,7 +46,7 @@ export interface TimeRangePickerProps {
   calendarDisplay?: 'auto' | 'inline' | 'modal';
   /** Show supplied history. Defaults to true; persistence remains the caller's responsibility. */
   showHistory?: boolean;
-  /** Persist the selected compact tab. Defaults to true; disable in sandboxed embeds. */
+  /** Persist the selected compact tab. Defaults to true, with an in-memory fallback when storage is blocked. */
   rememberLastTab?: boolean;
   /** Initial compact tab when no preference is stored. Defaults to relative. */
   defaultTab?: 'relative' | 'absolute';
@@ -83,6 +83,10 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  /**
+   * Replace the default quick-range presets, preserving the supplied order and labels.
+   * An empty array shows no presets. Search can still create custom relative durations.
+   */
   quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;

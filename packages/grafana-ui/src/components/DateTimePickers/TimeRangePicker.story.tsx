@@ -78,6 +78,24 @@ Embedded.args = {
   hideFiscalYear: true,
 };
 
+export const CustomRelativeRanges = Basic.bind({});
+CustomRelativeRanges.args = {
+  ...Embedded.args,
+  quickRanges: [
+    { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+    { from: 'now-1h', to: 'now', display: 'Last hour' },
+    { from: 'now-24h', to: 'now', display: 'Last 24 hours' },
+  ],
+};
+CustomRelativeRanges.parameters = {
+  docs: {
+    description: {
+      story:
+        'quickRanges replaces the default presets. showHistory=false omits recently used ranges; rememberLastTab=false disables tab persistence. Custom-duration search remains available.',
+    },
+  },
+};
+
 export const Responsive = Basic.bind({});
 Responsive.args = { compactDesign: 'tabs' };
 
