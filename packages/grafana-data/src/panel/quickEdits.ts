@@ -38,6 +38,11 @@ export interface PanelQuickEdit<TOptions = unknown, TFieldConfigOptions = unknow
    * does not offer, e.g. a standard option the plugin disables, are left out.
    */
   optionIds: string[];
+  /**
+   * Names for options whose own name is unclear outside the full editor, where it relies on its category, by option
+   * id. E.g. Value under a Text size category reads better as Value size on its own. The full editor is unchanged.
+   */
+  labels?: Partial<Record<string, string>>;
   /** Shows the plugin's presets instead of options. Left out for plugins without a presets supplier. */
   presets?: boolean;
   summary?: (context: PanelQuickEditContext<TOptions, TFieldConfigOptions>) => PanelQuickEditSummary;

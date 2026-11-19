@@ -6593,7 +6593,8 @@
       "try-again-later": "Try again later"
     },
     "quick-edits": {
-      "close": "Close"
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
     },
     "remove-panel": {
       "text": {

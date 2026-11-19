@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { changeViewPanelFieldConfig, changeViewPanelOptions } from '../actions/panel/changeViewPanelOptions';
@@ -61,7 +61,11 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
     categories.forEach(collect);
 
     return declared.flatMap((quickEdit) => {
-      const items = quickEdit.optionIds.flatMap((id) => byId.get(id) ?? []);
+      const items = quickEdit.optionIds.flatMap((id) => {
+        const item = byId.get(id);
+        const label = quickEdit.labels?.[id];
+        return item ? [label ? relabel(item, label) : item] : [];
+      });
       const offered = quickEdit.presets ? plugin.hasPresetsSupplier() : items.length > 0;
       if (!offered) {
         return [];
@@ -73,4 +77,11 @@ export function useQuickEdits(panel: VizPanel, enabled = true): QuickEdits {
   const applyPreset = useMemo(() => createPresetApplyHandler(panel), [panel]);
 
   return { edits, applyPreset };
+}
+
+/** The same option item under another name, for options whose own name relies on their category. */
+function relabel(item: OptionsPaneItemDescriptor, title: string) {
+  const relabelled = new OptionsPaneItemDescriptor({ ...item.props, title });
+  relabelled.parent = item.parent;
+  return relabelled;
 }
