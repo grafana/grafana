@@ -262,3 +262,22 @@ func TestWatchTimeoutWritesNothingWithoutADataDirectory(t *testing.T) {
 	t.Setenv(EnvDir, "")
 	require.Empty(t, timeoutEntryPath("TestCompatSetup"))
 }
+
+func TestPackageOwnersResolvesTheWorkingDirectory(t *testing.T) {
+	repo := t.TempDir()
+	writeTree(t, repo, map[string]string{
+		".github/CODEOWNERS":           "/pkg/tests/compat/ @org/compat\n/pkg/tests/compat/deep/ @org/deep\n",
+		"pkg/tests/compat/smoke/.keep": "",
+		"pkg/tests/compat/deep/.keep":  "",
+	})
+
+	t.Chdir(filepath.Join(repo, "pkg", "tests", "compat", "smoke"))
+	owners, err := packageOwners()
+	require.NoError(t, err)
+	require.Equal(t, "@org/compat", owners, "a package without an entry of its own")
+
+	t.Chdir(filepath.Join(repo, "pkg", "tests", "compat", "deep"))
+	owners, err = packageOwners()
+	require.NoError(t, err)
+	require.Equal(t, "@org/deep", owners)
+}

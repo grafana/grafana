@@ -199,6 +199,10 @@ func phaseLabel() string {
 // failing test then logs the lookup error instead of failing every test up front.
 func PackagePath(t *testing.T) string {
 	t.Helper()
+	return packagePath()
+}
+
+func packagePath() string {
 	root, err := repoRoot()
 	if err != nil {
 		return ""
@@ -212,6 +216,12 @@ func PackagePath(t *testing.T) string {
 		return ""
 	}
 	return filepath.ToSlash(rel)
+}
+
+// packageOwners returns the owners of the package in the working directory, for the phase
+// runner to name when a phase ends without reporting any, like after a crash of the process.
+func packageOwners() (string, error) {
+	return lookupOwners([]string{packagePath()})
 }
 
 func lookupOwners(paths []string) (string, error) {

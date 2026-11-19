@@ -31,6 +31,11 @@ import (
 // versions of one round trip. Tests skip when it is unset.
 const EnvDir = "GRAFANA_COMPAT_DIR"
 
+// EnvPrintOwners makes a test binary print the CODEOWNERS owners of its package and exit,
+// without running any test. The phase runner uses it to name a team when a phase died before
+// the test could, because it asks a fresh process and so does not depend on the crashed one.
+const EnvPrintOwners = "GRAFANA_COMPAT_PRINT_OWNERS"
+
 // EnvRole tells a phase which side of the round trip it runs on: "older" or "newer".
 const EnvRole = "GRAFANA_COMPAT_ROLE"
 
@@ -45,6 +50,15 @@ func IsNewer() bool {
 // SQLite file in EnvDir, so packages can run in parallel and one package's data
 // cannot break another package's tests.
 func Main(m *testing.M) {
+	if os.Getenv(EnvPrintOwners) != "" {
+		owners, err := packageOwners()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "compat: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(owners)
+		os.Exit(0)
+	}
 	if dir := os.Getenv(EnvDir); dir != "" {
 		if err := setupDB(dir); err != nil {
 			fmt.Fprintf(os.Stderr, "compat: %v\n", err)
