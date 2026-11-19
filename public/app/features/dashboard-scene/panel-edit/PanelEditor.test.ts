@@ -525,6 +525,7 @@ describe('PanelEditor', () => {
     let panelSettingChanged: jest.SpyInstance;
 
     beforeEach(() => {
+      setTestFlags({ queryEditorNext: false });
       panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
     });
 
@@ -575,7 +576,6 @@ describe('PanelEditor', () => {
     });
 
     it('reports a query option changed in the next query editor', async () => {
-      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
       setTestFlags({ queryEditorNext: true });
       const { panelEditor } = await setup();
       const { dataPane } = panelEditor.state;
@@ -629,7 +629,12 @@ describe('PanelEditor', () => {
     };
 
     beforeEach(() => {
+      setTestFlags({ queryEditorNext: false });
       jest.mocked(reportInteraction).mockClear();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
     });
 
     it('reports a non-silent close with no changed areas when nothing was edited', async () => {
@@ -771,7 +776,6 @@ describe('PanelEditor', () => {
     });
 
     it('reports the next query editor when the panel was edited with it', async () => {
-      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
       setTestFlags({ queryEditorNext: true });
       try {
         await setup();
@@ -789,7 +793,7 @@ describe('PanelEditor', () => {
     });
 
     it('reports a dashboard without dynamic layouts as not dynamic', async () => {
-      setTestFlags({ dashboardNewLayouts: false });
+      setTestFlags({ queryEditorNext: false, dashboardNewLayouts: false });
       try {
         await setup();
 
@@ -839,7 +843,6 @@ describe('PanelEditor', () => {
     });
 
     it('counts a query edit reported by the next query editor', async () => {
-      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
       setTestFlags({ queryEditorNext: true });
       try {
         const { panelEditor } = await setup();
