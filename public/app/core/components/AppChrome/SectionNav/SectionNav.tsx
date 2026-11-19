@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/internal';
 
 interface Props {
   label: string;
@@ -42,7 +43,7 @@ function SectionNavLink({ item, isActive }: { item: NavModelItem; isActive: bool
         className={isActive ? styles.linkActive : styles.link}
         aria-current={isActive ? 'page' : undefined}
       >
-        {item.icon && <Icon name={item.icon} size="md" />}
+        {item.icon ? <Icon name={item.icon} size="md" /> : <span className={styles.iconSpace} aria-hidden />}
         {item.text}
       </Link>
     </li>
@@ -87,6 +88,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.action.hover,
         color: theme.colors.text.maxContrast,
       },
+    }),
+    // Holds the place of an icon, so a link without one lines up with the rest
+    iconSpace: css({
+      flexShrink: 0,
+      width: getSvgSize('md'),
     }),
     linkActive: css(row, {
       background: theme.colors.action.selected,
