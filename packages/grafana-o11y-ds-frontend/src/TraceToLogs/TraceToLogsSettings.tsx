@@ -327,7 +327,11 @@ function TraceToLogsDestinationSettings({
           label="Tags"
           labelWidth={26}
         >
-          <TagMappingInput values={tags ?? []} onChange={(v) => updateTracesToLogs({ tags: v })} />
+          <TagMappingInput
+            id={`trace-to-logs-tags${idSuffix}`}
+            values={tags ?? []}
+            onChange={(v) => updateTracesToLogs({ tags: v })}
+          />
         </InlineField>
       </InlineFieldRow>
 

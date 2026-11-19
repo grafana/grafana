@@ -305,6 +305,27 @@ describe('TraceToLogsSettings', () => {
         })
       );
     });
+
+    it('gives the tag inputs of each destination their own ids', async () => {
+      const user = userEvent.setup();
+      render(
+        <TraceToLogsSettings
+          options={withJsonData({
+            tracesToLogsV2: { ...first, tags: [{ key: 'app.tag' }] },
+            tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'audit_uid', tags: [{ key: 'audit.tag' }] }],
+          })}
+          onOptionsChange={jest.fn()}
+          allowMultipleDestinations
+        />
+      );
+      await act(async () => {});
+
+      await user.click(screen.getByText('app.tag'));
+      expect(screen.getByDisplayValue('app.tag')).toHaveAttribute('id', 'trace-to-logs-tags-key-0');
+
+      await user.click(screen.getByText('audit.tag'));
+      expect(screen.getByDisplayValue('audit.tag')).toHaveAttribute('id', 'trace-to-logs-tags-1-key-0');
+    });
   });
 });
 
