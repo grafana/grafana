@@ -849,6 +849,7 @@ type server struct {
 	// Background watch task -- this has permissions for everything
 	ctx          context.Context
 	cancel       context.CancelFunc
+	watchMu      sync.Mutex // publishes broadcaster and watchStartup together
 	broadcaster  *broadcaster[*WrittenEvent]
 	watchStartup *watchStartup
 
@@ -962,9 +963,9 @@ func (s *server) Stop(ctx context.Context) error {
 
 	// Stops streaming (broadcaster, watch events).
 	s.cancel()
-	if s.watchStartup != nil {
+	if _, startup := s.watchState(); startup != nil {
 		select {
-		case <-s.watchStartup.stopped:
+		case <-startup.stopped:
 		case <-ctx.Done():
 			s.log.Warn("timed out waiting for watch startup and capture to stop")
 		}
@@ -2257,7 +2258,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = newBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, writtenEventIdentity)
+	s.setWatchState(newBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, writtenEventIdentity), nil)
 	return nil
 }
 
@@ -2270,7 +2271,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	waitsForStartup := s.broadcaster != nil && s.broadcaster.starting()
+	b, startup := s.watchState()
+	waitsForStartup := startup != nil && b.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2325,17 +2327,17 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
 	// The gRPC service can take watches before storage initialization installs it.
-	if s.broadcaster == nil {
+	if b == nil {
 		return status.Error(codes.Unavailable, "watch is not ready yet")
 	}
 	// Invalidations before capture starts, such as the one when it first
 	// starts, predate the stream a waiting watch subscribes to. Later ones,
 	// even before the cache is ready, still expire it.
 	if waitsForStartup {
-		if err := s.broadcaster.ensureReady(ctx); err != nil {
+		if err := b.ensureReady(ctx); err != nil {
 			return err
 		}
-		if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+		if expiry := startup.expiryAtCapture(); expiry != nil {
 			watchExpiryC = expiry
 		}
 	}
@@ -2344,11 +2346,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		resume = &watchResume{since: requestedSince, requestedRV: req.Since, unchecked: req.Since < 0}
 	}
 	gr := GroupResource{Group: key.Group, Resource: key.Resource}
-	stream, progress, err := s.broadcaster.subscribeWatch(ctx, name, gr, resume)
+	stream, progress, err := b.subscribeWatch(ctx, name, gr, resume)
 	if err != nil {
 		return err
 	}
-	defer s.broadcaster.Unsubscribe(stream)
+	defer b.Unsubscribe(stream)
 
 	since := requestedSince
 	expired := func() error {

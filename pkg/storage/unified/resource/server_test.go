@@ -1832,7 +1832,7 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	})
 	require.NoError(t, err)
 	srv.log = log.NewNopLogger()
-	srv.broadcaster = newBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity)
+	srv.setWatchState(newBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity), nil)
 	if configure != nil {
 		configure(srv, stream)
 	}

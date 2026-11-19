@@ -1000,20 +1000,30 @@ func (b *failingListKVWatchBackend) ListIterator(context.Context, *resourcepb.Li
 	return 0, errUnimplemented
 }
 
-// The gRPC service can take watches before storage initialization installs
-// the broadcaster.
 func TestWatchBeforeBroadcasterIsInstalled(t *testing.T) {
-	srv, err := NewUninitializedResourceServer(ResourceServerOptions{Backend: &UnimplementedStorageBackend{}})
-	require.NoError(t, err)
-	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
-	require.NotPanics(t, func() {
+	synctest.Test(t, func(t *testing.T) {
+		backend := &gatedWatchBackend{seed: make(chan watchSeed, 1), events: make(chan *WrittenEvent)}
+		backend.seed <- watchSeed{initialCacheFloor: 100, highestRV: 100}
+		expiry := NewWatchExpiry()
+		var srv *server
+		srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+			Backend: backend, StorageMetrics: ProvideStorageMetrics(prometheus.NewRegistry()), WatchExpiry: expiry,
+			SeededWatchesEnabled: true,
+			AccessClient: compileHookAccess{AccessClient: authlib.FixedAccessClient(true), onCompile: func() {
+				// Init publishes the watcher during authorization, after Watch took its snapshot.
+				expiry.Invalidate()
+				require.NoError(t, srv.Init(t.Context()))
+			}},
+		})
+		require.NoError(t, err)
+		defer func() { require.NoError(t, srv.Stop(t.Context())) }()
+
+		ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
 		err = srv.Watch(&resourcepb.WatchRequest{}, newMockWatchServer(ctx))
-	})
-	require.Equal(t, codes.InvalidArgument, status.Code(err))
-	require.NotPanics(t, func() {
+		require.Equal(t, codes.InvalidArgument, status.Code(err), "%v", err)
 		err = srv.Watch(bookmarkWatchRequest(), newMockWatchServer(ctx))
+		require.Equal(t, codes.Unavailable, status.Code(err), "%v", err)
 	})
-	require.Equal(t, codes.Unavailable, status.Code(err))
 }
 
 // Negative cursors predate resume floors: such watches still replay every
