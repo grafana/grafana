@@ -130,6 +130,15 @@ describe('k8sRuleToRuleWithLocation', () => {
     expect(editorSettings?.simplifiedQueryEditor).toBe(false);
   });
 
+  it('shows Go-formatted durations the way the editor writes them', () => {
+    const saved = asSaved(buildAlertRuleResource(alertValues, 'rule-uid', 'v0alpha1') as AlertRule);
+    const resource = { ...saved, spec: { ...saved.spec, for: '40m0s', keepFiringFor: '1h0m0s' } };
+
+    const { evaluateFor, keepFiringFor } = rulerRuleToFormValues(k8sRuleToRuleWithLocation(resource));
+
+    expect({ evaluateFor, keepFiringFor }).toEqual({ evaluateFor: '40m', keepFiringFor: '1h' });
+  });
+
   it("keeps a grouped rule's group so the editor can warn before ungrouping it", () => {
     const resource = asSaved(buildAlertRuleResource(alertValues, 'rule-uid', 'v0alpha1') as AlertRule, {
       'grafana.com/group': 'cpu-group',
