@@ -12,6 +12,8 @@ const hint: Hint = {
   investigable: true,
   trendLabel: 'errors',
   trend: [1, 2, 3],
+  evidence: [],
+  timeRange: { from: 1_700_000_000_000, to: 1_700_001_800_000 },
 };
 
 describe('scopeFromQuery', () => {

@@ -12,9 +12,19 @@ export type ScopeType = 'service' | 'environment' | 'namespace';
 export interface Scope {
   type: ScopeType;
   value: string;
+  env?: string;
+  namespace?: string;
 }
 
 export type HintSeverity = 'slow' | 'errors' | 'deploy';
+
+export interface HintEvidence {
+  signal: Extract<Signal, 'metrics' | 'logs' | 'traces'>;
+  datasourceUid: string;
+  query: string;
+  summary: string;
+  traceIds?: string[];
+}
 
 export interface Hint {
   id: string;
@@ -25,6 +35,8 @@ export interface Hint {
   investigable: boolean;
   trendLabel: string;
   trend: number[];
+  evidence: HintEvidence[];
+  timeRange: { from: number; to: number };
 }
 
 export interface ServiceSummary {
@@ -111,6 +123,7 @@ export interface EvidenceText {
 
 export interface Overview {
   hints: Hint[];
+  topLogLabels: Array<{ label: string; bytes: number }>;
   scopeValues: Record<ScopeType, string[]>;
   trendMax: number;
   services: ServiceSummary[];
@@ -135,6 +148,7 @@ export interface ScopeData {
 }
 
 export let HINTS: Hint[] = [];
+export let TOP_LOG_LABELS: Overview['topLogLabels'] = [];
 export let SCOPE_VALUES: Record<ScopeType, string[]> = { service: [], environment: [], namespace: [] };
 export let TREND_MAX = 2;
 export let YOUR_SERVICES: ServiceSummary[] = [];
@@ -164,6 +178,7 @@ export const SLOW_QUERIES: Array<{ query: string; p95: string }> = [];
 
 export function setOverview(overview: Overview) {
   HINTS = overview.hints;
+  TOP_LOG_LABELS = overview.topLogLabels;
   SCOPE_VALUES = overview.scopeValues;
   TREND_MAX = overview.trendMax;
   YOUR_SERVICES = overview.services;

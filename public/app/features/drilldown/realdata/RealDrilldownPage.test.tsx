@@ -1,14 +1,22 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { useAssistant } from '@grafana/assistant';
+import { locationService, setPluginLinksHook } from '@grafana/runtime';
 
 import { RealDrilldownPage } from './RealDrilldownPage';
 import { type Hint, type ScopeData, type ServiceSummary, setOverview } from './liveScenario';
 import { loadScope } from './loadScenario';
 import { emptyOverview, emptyScopeData } from './testFixtures';
 
-jest.mock('./loadScenario', () => ({ loadScope: jest.fn() }));
+jest.mock('./loadScenario', () => ({ ...jest.requireActual('./loadScenario'), loadScope: jest.fn() }));
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn((type: string, params: object) => ({ type, params })),
+}));
+
+const openAssistant = jest.fn();
 
 const service = (name: string): ServiceSummary => ({
   name,
@@ -28,6 +36,8 @@ const checkoutHint: Hint = {
   investigable: true,
   trendLabel: 'errors',
   trend: [1, 2, 3],
+  evidence: [{ signal: 'metrics', datasourceUid: 'metrics-1', query: 'errors', summary: '5% failed spans' }],
+  timeRange: { from: 1_700_000_000_000, to: 1_700_001_800_000 },
 };
 
 const scopeData = (namespace: string): ScopeData => ({
@@ -60,6 +70,15 @@ const goForward = () =>
   });
 
 beforeEach(() => {
+  setPluginLinksHook(() => ({ isLoading: false, links: [] }));
+  openAssistant.mockReset();
+  jest.mocked(useAssistant).mockReturnValue({
+    isLoading: false,
+    isAvailable: true,
+    openAssistant,
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  });
   setOverview({
     ...emptyOverview,
     hints: [checkoutHint],
@@ -80,6 +99,14 @@ describe('RealDrilldownPage', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Drilldown' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Data sources' })).toBeInTheDocument();
+  });
+
+  it('shows top log labels from the loaded overview', () => {
+    setOverview({ ...emptyOverview, topLogLabels: [{ label: 'service_name', bytes: 1000000 }] });
+
+    renderPage();
+
+    expect(screen.getByRole('region', { name: 'Top log labels' })).toHaveTextContent('service_name1 MB');
   });
 
   it('writes a picked service to the URL and loads its scope', async () => {
@@ -139,33 +166,34 @@ describe('RealDrilldownPage', () => {
     expect(screen.queryByText('Scope chosen by Grafana Assistant')).not.toBeInTheDocument();
   });
 
-  it('plays the detection step for Investigate, and Back returns to the overview', async () => {
+  it('opens Assistant from a recommendation while keeping the overview and its URL', async () => {
     const { user } = renderPage();
 
-    await user.click(screen.getByRole('button', { name: 'Investigate' }));
+    await user.click(screen.getByRole('button', { name: 'Ask Grafana Assistant about checkout errors are up' }));
 
-    expect(await screen.findByText('Checking…')).toBeInTheDocument();
-    expect(search()).toMatchObject({ 'scope-type': 'service', 'scope-value': 'checkout', hint: 'errors-checkout' });
-
-    goBack();
-
-    expect(await screen.findByRole('button', { name: 'Investigate' })).toBeInTheDocument();
-    expect(screen.queryByText('Checking…')).not.toBeInTheDocument();
+    expect(openAssistant).toHaveBeenCalledTimes(1);
+    expect(openAssistant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: 'grafana/drilldown-home',
+        prompt: expect.stringContaining('Explain this finding: checkout errors are up.'),
+        autoSend: true,
+      })
+    );
+    expect(screen.getByRole('heading', { name: 'Your services' })).toBeInTheDocument();
+    expect(search()).not.toHaveProperty('scope-type');
+    expect(loadScope).not.toHaveBeenCalled();
   });
 
-  it('goes straight to the insights with the hint when the browser replays the Investigate URL', async () => {
-    const { user } = renderPage();
-    await user.click(screen.getByRole('button', { name: 'Investigate' }));
-    await screen.findByText('Checking…');
-    goBack();
-    await screen.findByRole('button', { name: 'Investigate' });
+  it('loads a scoped URL with a hint without reopening Assistant', async () => {
+    renderPage('/drilldown?scope-type=service&scope-value=checkout&hint=errors-checkout');
 
-    goForward();
-
-    // Whichever of the two appears first shows if the detection step played, since it ends on its own after a pause.
-    await screen.findByText(/Checking…|Scope chosen by Grafana Assistant/);
-    expect(screen.queryByText('Checking…')).not.toBeInTheDocument();
-    expect(screen.getByText('Scope chosen by Grafana Assistant')).toBeInTheDocument();
+    expect(await screen.findByText('Scope')).toBeInTheDocument();
+    expect(loadScope).toHaveBeenCalledWith(
+      { type: 'service', value: 'checkout' },
+      expect.any(Number),
+      expect.any(Number)
+    );
+    expect(openAssistant).not.toHaveBeenCalled();
   });
 
   it('leaves the scope with Back to overview, and Back then returns to the scope', async () => {
@@ -198,7 +226,7 @@ describe('RealDrilldownPage', () => {
     jest.mocked(loadScope).mockReturnValueOnce(cart.promise);
     const { user } = renderPage();
     await user.click(screen.getByRole('button', { name: /^cart/ }));
-    expect(await screen.findByText('Grafana Assistant is checking cart')).toBeInTheDocument();
+    expect(await screen.findByText('Loading telemetry for cart')).toBeInTheDocument();
 
     goBack();
     await act(async () => {
