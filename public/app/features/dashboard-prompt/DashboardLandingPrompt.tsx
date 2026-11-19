@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Suspense, useCallback } from 'react';
+import { type ReactNode, Suspense, useCallback } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -22,6 +22,11 @@ interface StandalonePromptProps {
   /** Context attached from outside the prompt, shown as pills. Older plugin versions ignore it. */
   hostContextItems?: ChatContextItem[];
   onHostContextItemRemove?: (id: string) => void;
+  /**
+   * Controls shown next to the prompt's + button. A function, since the props reach the plugin deep-cloned and an
+   * element does not survive the clone. Older plugin versions do not show them.
+   */
+  renderHostActions?: () => ReactNode;
 }
 
 interface DashboardLandingPromptProps {
@@ -30,6 +35,7 @@ interface DashboardLandingPromptProps {
   className?: string;
   hostContextItems?: ChatContextItem[];
   onHostContextItemRemove?: (id: string) => void;
+  renderHostActions?: () => ReactNode;
 }
 
 function PromptLoadingSlot() {
@@ -51,6 +57,7 @@ export function DashboardLandingPrompt({
   placeholder,
   hostContextItems,
   onHostContextItemRemove,
+  renderHostActions,
 }: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
   const submit = useCallback(
@@ -82,6 +89,7 @@ export function DashboardLandingPrompt({
         mode="dashboarding"
         hostContextItems={hostContextItems}
         onHostContextItemRemove={onHostContextItemRemove}
+        renderHostActions={renderHostActions}
       />
     </Suspense>
   );

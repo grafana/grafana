@@ -1,14 +1,11 @@
 import { useEffect } from 'react';
-import { act, render, screen, within } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { type Props as SortPickerProps } from 'app/core/components/Select/SortPicker';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
-import {
-  type TemplateSelection,
-  type TemplateSelectionProps,
-} from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 
-import { LOAD_WAIT_MS, LandingTemplates } from './LandingTemplates';
+import { LOAD_WAIT_MS, LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
 
 // `undefined` keeps a list loading.
 let mockGrafanaCount: number | undefined = 1;
@@ -17,29 +14,19 @@ let mockCustomCount: number | undefined = 1;
 let mockGrafanaProps: TemplateSelectionProps & { entryPoint?: string } = {};
 // Called with the entry point on every render of the custom list.
 const mockCustomEntryPoint = jest.fn();
-// What clicking a Grafana card picks.
-const mockSelection: TemplateSelection = {
-  id: 'grafana:1',
-  title: 'RED metrics',
-  kind: 'template_dashboard',
-  url: '/dashboard/template?gnetId=1',
-  contextItem: { node: { id: 'template-red', name: 'RED metrics', navigable: false }, occurrences: [] },
-};
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
   return {
     GrafanaTemplatesTab: (props: TemplateSelectionProps & { entryPoint?: string }) => {
-      const { onTemplatesLoad, onSelectTemplate } = props;
+      const { onTemplatesLoad } = props;
       mockGrafanaProps = props;
       useMockEffect(() => {
         if (mockGrafanaCount !== undefined) {
           onTemplatesLoad?.(mockGrafanaCount);
         }
       }, [onTemplatesLoad]);
-      return (mockGrafanaCount ?? 0) > 0 ? (
-        <article data-testid="grafana-card" onClick={() => onSelectTemplate?.(mockSelection)} />
-      ) : null;
+      return (mockGrafanaCount ?? 0) > 0 ? <article data-testid="grafana-card" /> : null;
     },
   };
 });
@@ -73,16 +60,23 @@ const CustomTemplates = ({ onTemplatesLoad, entryPoint }: TemplateSelectionProps
   return (mockCustomCount ?? 0) > 0 ? <article data-testid="custom-card" /> : null;
 };
 
-function renderTemplates(props: Partial<Parameters<typeof LandingTemplates>[0]> = {}) {
-  return render(
+const onSelectTemplate = jest.fn();
+
+function templates(props: Partial<Parameters<typeof LandingTemplates>[0]> = {}) {
+  return (
     <LandingTemplates
+      isOpen
       testDataSource={undefined}
       showGrafanaTemplates
       showCustomTemplates
-      onSelectTemplate={jest.fn()}
+      onSelectTemplate={onSelectTemplate}
       {...props}
     />
   );
+}
+
+function renderTemplates(props: Partial<Parameters<typeof LandingTemplates>[0]> = {}) {
+  return render(templates(props));
 }
 
 describe('LandingTemplates', () => {
@@ -108,52 +102,42 @@ describe('LandingTemplates', () => {
     expect(mockCustomEntryPoint).toHaveBeenLastCalledWith('emptyDashboardPrompt');
   });
 
-  it('lists every template unfiltered, with no search of its own', () => {
-    renderTemplates();
-
-    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
-    expect(mockGrafanaProps.searchQuery).toBeUndefined();
-  });
-
-  it('searches and sorts every template in the Browse all dialog', async () => {
+  it('searches and sorts the templates from the top of the panel', async () => {
     const { user } = renderTemplates();
 
-    await user.click(screen.getByRole('button', { name: 'Browse all' }));
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByPlaceholderText('Search')).toHaveFocus();
-    await user.keyboard('node');
+    await user.type(screen.getByPlaceholderText('Search'), 'node');
     expect(mockGrafanaProps.searchQuery).toBe('node');
 
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Sort' }), 'desc');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort' }), 'desc');
     expect(mockGrafanaProps.sortOrder).toBe('desc');
   });
 
   it('adds a no-matches line while a search is on, which CSS hides while the grid has cards', async () => {
     const { user } = renderTemplates();
-    await user.click(screen.getByRole('button', { name: 'Browse all' }));
     expect(screen.queryByText('No template dashboards found')).not.toBeInTheDocument();
 
-    await user.keyboard('nothing like it');
+    await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
     expect(screen.getByText('No template dashboards found')).toBeInTheDocument();
   });
 
-  it('attaches a template picked in the dialog and closes it', async () => {
-    const onSelectTemplate = jest.fn();
-    const { user } = renderTemplates({ onSelectTemplate });
-    await user.click(screen.getByRole('button', { name: 'Browse all' }));
-
-    await user.click(within(screen.getByRole('dialog')).getByTestId('grafana-card'));
-
-    expect(onSelectTemplate).toHaveBeenCalledWith(mockSelection);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('offers no Browse all without templates to browse', () => {
+  it('has no search without templates to search', () => {
     mockGrafanaCount = 0;
     mockCustomCount = 0;
     renderTemplates();
 
-    expect(screen.queryByRole('button', { name: 'Browse all' })).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
+  });
+
+  it('takes no room while closed, and keeps its lists mounted so reopening does not reload them', () => {
+    const { rerender } = renderTemplates();
+    const card = screen.getByTestId('grafana-card');
+
+    rerender(templates({ isOpen: false }));
+    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
+
+    rerender(templates({ isOpen: true }));
+    expect(screen.getByTestId('grafana-card')).toBeVisible();
+    expect(screen.getByTestId('grafana-card')).toBe(card);
   });
 
   it('holds its place while hidden, out of sight and out of the accessibility tree', () => {
@@ -163,44 +147,11 @@ describe('LandingTemplates', () => {
     expect(screen.queryByRole('region')).not.toBeInTheDocument();
   });
 
-  it('collapses and expands the templates from their header', async () => {
-    const { user } = renderTemplates();
-    const toggle = screen.getByRole('button', { name: 'Start from a template' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
-
-    await user.click(toggle);
-    expect(screen.getByTestId('grafana-card')).toBeVisible();
-  });
-
-  it('tells its host before a person opens or closes it', async () => {
-    const onToggle = jest.fn();
-    const { user } = renderTemplates({ onToggle });
-
-    await user.click(screen.getByRole('button', { name: 'Start from a template' }));
-
-    expect(onToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the lists mounted while closed, so reopening does not reload them', async () => {
-    const { user } = renderTemplates();
-    const card = screen.getByTestId('grafana-card');
-    const toggle = screen.getByRole('button', { name: 'Start from a template' });
-
-    await user.click(toggle);
-    await user.click(toggle);
-
-    expect(screen.getByTestId('grafana-card')).toBe(card);
-  });
-
   it('holds every card back until all lists have loaded, so they do not reflow', () => {
     mockCustomCount = undefined;
     renderTemplates();
 
-    expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('region', { name: 'Start from a template' })).toBeVisible();
     expect(screen.getByTestId('grafana-card')).not.toBeVisible();
   });
 
@@ -221,32 +172,32 @@ describe('LandingTemplates', () => {
     it('keeps waiting while no list has shown a card, and does not call the panel empty', () => {
       mockCustomCount = undefined;
       mockGrafanaCount = undefined;
-      renderTemplates();
+      const onEmptyChange = jest.fn();
+      renderTemplates({ onEmptyChange });
 
       act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
 
-      expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+      expect(onEmptyChange).not.toHaveBeenCalledWith(true);
       expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
     });
   });
 
-  it('starts closed when no list has templates, and says so when opened', async () => {
+  it('tells its host when no list has templates, and says so while open', () => {
     mockGrafanaCount = 0;
     mockCustomCount = 0;
-    const { user } = renderTemplates();
-    const toggle = screen.getByRole('button', { name: 'Start from a template' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const onEmptyChange = jest.fn();
+    renderTemplates({ onEmptyChange });
 
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(onEmptyChange).toHaveBeenLastCalledWith(true);
     expect(screen.getByText('No templates available')).toBeInTheDocument();
   });
 
-  it('stays open when only one list has templates', () => {
+  it('is not empty when only one list has templates', () => {
     mockCustomCount = 0;
-    renderTemplates();
+    const onEmptyChange = jest.fn();
+    renderTemplates({ onEmptyChange });
 
-    expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+    expect(onEmptyChange).toHaveBeenLastCalledWith(false);
     expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
   });
 
@@ -262,5 +213,21 @@ describe('LandingTemplates', () => {
     renderTemplates();
 
     expect(screen.queryByTestId('custom-card')).not.toBeInTheDocument();
+  });
+});
+
+describe('LandingTemplatesToggle', () => {
+  it('opens and closes the panel it names', async () => {
+    const onToggle = jest.fn();
+    const { user, rerender } = render(<LandingTemplatesToggle isOpen onToggle={onToggle} controls="templates" />);
+    const toggle = screen.getByRole('button', { name: 'Start from a template' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAttribute('aria-controls', 'templates');
+
+    await user.click(toggle);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+
+    rerender(<LandingTemplatesToggle isOpen={false} onToggle={onToggle} controls="templates" />);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 });

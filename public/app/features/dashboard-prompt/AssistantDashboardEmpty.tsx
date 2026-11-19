@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type ChatContextItem, checkLimits } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ import { OPEN_TEMPLATE_PROMPT } from 'app/features/dashboard/dashgrid/DashboardL
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
-import { LandingTemplates } from './LandingTemplates';
+import { LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
 import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 
@@ -133,6 +133,12 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
   const { ref: fitRef, fit } = useFitToScrollArea(showTemplates);
+  // The templates panel opens and closes from a toggle next to the prompt's + button. It starts open, unless the
+  // lists have no templates; a person's own toggle wins.
+  const templatesId = useId();
+  const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState<boolean>();
+  const [templatesEmpty, setTemplatesEmpty] = useState(false);
+  const templatesOpen = templatesOpenedByUser ?? !templatesEmpty;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of centering again; the actions move and the room goes below them. A new fit centers it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -141,7 +147,12 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const onTemplatesToggle = useCallback(() => {
     const height = contentRef.current?.getBoundingClientRect().height;
     setHeld((current) => (height === undefined || (current && current.fit === fit) ? current : { fit, height }));
-  }, [fit]);
+    setTemplatesOpenedByUser(!templatesOpen);
+  }, [fit, templatesOpen]);
+  const renderTemplatesToggle = useCallback(
+    () => <LandingTemplatesToggle isOpen={templatesOpen} onToggle={onTemplatesToggle} controls={templatesId} />,
+    [templatesOpen, onTemplatesToggle, templatesId]
+  );
   const promptRef = useRef<HTMLDivElement>(null);
   const promptReady = useHasTextbox(promptRef);
   // The picked template travels to the Assistant as a context pill in the prompt.
@@ -269,6 +280,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               }
               hostContextItems={hostContextItems}
               onHostContextItemRemove={onTemplatePillRemove}
+              renderHostActions={showTemplates ? renderTemplatesToggle : undefined}
             />
           </div>
         </div>
@@ -277,8 +289,10 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           {showTemplates && (
             // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
             <LandingTemplates
+              id={templatesId}
+              isOpen={templatesOpen}
+              onEmptyChange={setTemplatesEmpty}
               hidden={!promptReady}
-              onToggle={onTemplatesToggle}
               className={styles.templates}
               testDataSource={testDataSource}
               showGrafanaTemplates={showGrafanaTemplates}
@@ -382,7 +396,7 @@ function getStyles(theme: GrafanaTheme2) {
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({
       marginTop: `calc(-1 * (${theme.spacing(4)} + ${PROMPT_OVERLAP}px))`,
-      // The header's top inset; the closed panel repeats it at the bottom (LandingTemplates `panelClosed`).
+      // The search row's top inset.
       paddingTop: `calc(${PROMPT_OVERLAP}px + ${theme.spacing(0.5)})`,
     }),
     divider: css({

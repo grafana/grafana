@@ -1,4 +1,5 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
@@ -34,6 +35,7 @@ interface LandingPromptProps {
   placeholder?: string;
   hostContextItems?: ChatContextItem[];
   onHostContextItemRemove?: (id: string) => void;
+  renderHostActions?: () => ReactNode;
 }
 let latestPromptProps: LandingPromptProps | undefined;
 // The plugin prompt renders its text box once its code has loaded.
@@ -43,13 +45,20 @@ jest.mock('./DashboardLandingPrompt', () => ({
   DashboardLandingPrompt: (props: LandingPromptProps) => {
     latestOnSubmit = props.onSubmit;
     latestPromptProps = props;
-    return <div data-testid="dashboard-landing-prompt">{mockPromptLoaded ? <div role="textbox" /> : 'loading'}</div>;
+    return (
+      <div data-testid="dashboard-landing-prompt">
+        {mockPromptLoaded ? <div role="textbox" /> : 'loading'}
+        {props.renderHostActions?.()}
+      </div>
+    );
   },
 }));
 
 interface LandingTemplatesProps {
+  isOpen: boolean;
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
+  onEmptyChange?: (isEmpty: boolean) => void;
   hidden?: boolean;
 }
 let latestTemplatesProps: LandingTemplatesProps | undefined;
@@ -59,6 +68,11 @@ jest.mock('./LandingTemplates', () => ({
     latestTemplatesProps = props;
     return <div data-testid="landing-templates" hidden={props.hidden} />;
   },
+  LandingTemplatesToggle: ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) => (
+    <button type="button" aria-expanded={isOpen} onClick={onToggle}>
+      Start from a template
+    </button>
+  ),
 }));
 
 const mockAvailability = {
@@ -80,8 +94,8 @@ function renderEmpty() {
     body: AutoGridLayoutManager.createEmpty(),
   });
   const addNewPanel = jest.spyOn(dashboard.state.sidebar, 'addNewPanel').mockImplementation(() => {});
-  const { rerender } = render(<AssistantDashboardEmpty dashboard={dashboard} />);
-  return { dashboard, addNewPanel, rerender };
+  const { rerender, user } = render(<AssistantDashboardEmpty dashboard={dashboard} />);
+  return { dashboard, addNewPanel, rerender, user };
 }
 
 describe('AssistantDashboardEmpty', () => {
@@ -222,6 +236,31 @@ describe('AssistantDashboardEmpty', () => {
       renderEmpty();
 
       expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Start from a template' })).not.toBeInTheDocument();
+    });
+
+    it("opens and closes the templates from a toggle next to the prompt's + button", async () => {
+      const { user } = renderEmpty();
+      const toggle = within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button', {
+        name: 'Start from a template',
+      });
+      expect(latestTemplatesProps?.isOpen).toBe(true);
+
+      await user.click(toggle);
+      expect(latestTemplatesProps?.isOpen).toBe(false);
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(toggle);
+      expect(latestTemplatesProps?.isOpen).toBe(true);
+    });
+
+    it('starts the templates closed when the lists have none', () => {
+      renderEmpty();
+
+      act(() => latestTemplatesProps?.onEmptyChange?.(true));
+
+      expect(latestTemplatesProps?.isOpen).toBe(false);
+      expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('attaches the picked template to the prompt and swaps it on the next pick', () => {

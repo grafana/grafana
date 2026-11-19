@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FilterInput, Icon, Modal, useStyles2 } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
+import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
@@ -13,21 +12,20 @@ import { type TemplateSelection, type TemplateSortOrder } from 'app/features/das
 import { getTemplateSortOptions } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templateFilters';
 
 interface Props {
+  /** The panel's id, which its toggle in the prompt controls. */
+  id?: string;
+  /** Open or closed, as the toggle in the prompt sets it. Closed, the panel takes no room; its lists stay loaded. */
+  isOpen: boolean;
   testDataSource: DataSourceInstanceListItem | undefined;
   showGrafanaTemplates: boolean;
   showCustomTemplates: boolean;
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
+  /** Called with whether the lists turned out to have no templates, so the host can start the panel closed. */
+  onEmptyChange?: (isEmpty: boolean) => void;
   /** Keeps the panel out of sight while its lists still load, holding its place so the page does not shift. */
   hidden?: boolean;
-  /** Called when a person opens or closes the panel, before it changes. */
-  onToggle?: () => void;
   className?: string;
-}
-
-interface ListFilters {
-  searchQuery?: string;
-  sortOrder?: TemplateSortOrder;
 }
 
 const noop = () => {};
@@ -44,30 +42,54 @@ const LOADING_CARDS = 8;
 /** How long the cards wait for every list before showing the ones that have loaded. */
 export const LOAD_WAIT_MS = 3000;
 
+interface ToggleProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  /** The id of the panel it opens and closes. */
+  controls?: string;
+}
+
+/** Opens and closes the templates panel, from the prompt's toolbar next to its + button. */
+export function LandingTemplatesToggle({ isOpen, onToggle, controls }: ToggleProps) {
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      fill="text"
+      aria-expanded={isOpen}
+      aria-controls={controls}
+      onClick={onToggle}
+    >
+      <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
+      <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
+    </Button>
+  );
+}
+
 /**
- * The templates under the new-dashboard prompt: a collapsible panel holding one row of the organization's custom
- * templates, then the Grafana-provisioned ones, which scrolls for the rest. "Browse all" opens every template in a
- * dialog with search and sort. Picking a card attaches it to the prompt instead of opening it. As pickers, both lists
- * render bare cards, so they flow into one grid.
+ * The templates under the new-dashboard prompt: a panel with the template modal's search and sort, and one row of
+ * the organization's custom templates, then the Grafana-provisioned ones, which scrolls for the rest. Picking a card
+ * attaches it to the prompt instead of opening it. As pickers, both lists render bare cards, so they flow into one
+ * grid.
  */
 export function LandingTemplates({
+  id,
+  isOpen,
   testDataSource,
   showGrafanaTemplates,
   showCustomTemplates,
   onSelectTemplate,
   selectedTemplateId,
+  onEmptyChange,
   hidden,
-  onToggle,
   className,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const titleId = useId();
-  const listId = useId();
   // Undefined until each list reports how many templates it shows.
   const [counts, setCounts] = useState<{ custom?: number; grafana?: number }>({});
-  // A person's own toggle wins over the default.
-  const [openedByUser, setOpenedByUser] = useState<boolean>();
-  const [isBrowsing, setIsBrowsing] = useState(false);
+  // The template modal's search and sort, applied to every list.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<TemplateSortOrder>();
   const onCustomTemplatesLoad = useCallback((custom: number) => setCounts((current) => ({ ...current, custom })), []);
   const onGrafanaTemplatesLoad = useCallback(
     (grafana: number) => setCounts((current) => ({ ...current, grafana })),
@@ -89,82 +111,68 @@ export function LandingTemplates({
   }, [allLoaded]);
   const loaded = allLoaded || (waitedLong && total > 0);
   const isEmpty = allLoaded && total === 0;
-  // Open while the lists load and when they show templates; closed when there are none to show.
-  const isOpen = openedByUser ?? !isEmpty;
+  useEffect(() => {
+    onEmptyChange?.(isEmpty);
+  }, [isEmpty, onEmptyChange]);
   // Pre-set so the lists' `loaded` events, which report the template modal as their location, stay silent here.
   const customLoadedFiredRef = useRef(true);
   const grafanaLoadedFiredRef = useRef(true);
 
-  const onSelectFromDialog = (selection: TemplateSelection) => {
-    onSelectTemplate(selection);
-    setIsBrowsing(false);
+  // Rendered through a function, as in the template modal: the tab is registered by the enterprise build.
+  const renderCustomTemplates = () => {
+    if (!DashboardTemplatesTab || !hasCustomTemplates) {
+      return null;
+    }
+    return (
+      <DashboardTemplatesTab
+        isOpen
+        onClose={noop}
+        entryPoint={ENTRY_POINT}
+        loadedFiredRef={customLoadedFiredRef}
+        onSelectTemplate={onSelectTemplate}
+        selectedTemplateId={selectedTemplateId}
+        onTemplatesLoad={onCustomTemplatesLoad}
+        searchQuery={searchQuery}
+        sortOrder={sortOrder}
+      />
+    );
   };
 
-  // Rendered through a function, as in the template modal: the custom list is registered by the enterprise build.
-  const renderLists = (
-    onSelect: (selection: TemplateSelection) => void,
-    { searchQuery, sortOrder }: ListFilters,
-    onLoad?: { custom: (count: number) => void; grafana: (count: number) => void }
-  ) => (
-    <>
-      {DashboardTemplatesTab && hasCustomTemplates && (
-        <DashboardTemplatesTab
-          isOpen
-          onClose={noop}
-          entryPoint={ENTRY_POINT}
-          loadedFiredRef={customLoadedFiredRef}
-          onSelectTemplate={onSelect}
-          selectedTemplateId={selectedTemplateId}
-          onTemplatesLoad={onLoad?.custom}
-          searchQuery={searchQuery}
-          sortOrder={sortOrder}
-        />
-      )}
-      {showGrafanaTemplates && (
-        <GrafanaTemplatesTab
-          entryPoint={ENTRY_POINT}
-          testDataSource={testDataSource}
-          onClose={noop}
-          loadedFiredRef={grafanaLoadedFiredRef}
-          onSelectTemplate={onSelect}
-          selectedTemplateId={selectedTemplateId}
-          onTemplatesLoad={onLoad?.grafana}
-          searchQuery={searchQuery}
-          sortOrder={sortOrder}
-        />
-      )}
-    </>
-  );
-
   return (
+    // Hidden, not unmounted: reopening keeps the loaded templates instead of refetching them.
     <section
-      className={cx(styles.panel, !isOpen && styles.panelClosed, hidden && styles.panelHidden, className)}
-      aria-labelledby={titleId}
+      id={id}
+      className={cx(styles.panel, hidden && styles.panelHidden, className)}
+      aria-label={t('dashboard.empty.templates-title', 'Start from a template')}
       aria-hidden={hidden || undefined}
+      hidden={!isOpen}
     >
-      <div className={styles.header}>
-        <button
-          type="button"
-          id={titleId}
-          className={styles.toggle}
-          aria-expanded={isOpen}
-          aria-controls={listId}
-          onClick={() => {
-            onToggle?.();
-            setOpenedByUser(!isOpen);
-          }}
-        >
-          <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-        </button>
-        {isOpen && loaded && !isEmpty && (
-          <Button size="sm" variant="secondary" fill="text" aria-haspopup="dialog" onClick={() => setIsBrowsing(true)}>
-            <Trans i18nKey="dashboard.empty.templates-browse-all">Browse all</Trans>
-          </Button>
-        )}
-      </div>
-      {/* Hidden, not unmounted: reopening keeps the loaded templates instead of refetching them. */}
-      <div id={listId} className={styles.list} hidden={!isOpen}>
+      {!isEmpty && (
+        <div className={styles.header}>
+          {loaded && (
+            <>
+              <FilterInput
+                className={styles.search}
+                placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
+                value={searchQuery}
+                escapeRegex={false}
+                onChange={setSearchQuery}
+              />
+              <div className={styles.sort}>
+                <SortPicker
+                  value={sortOrder}
+                  onChange={(change) => setSortOrder(change?.value)}
+                  getSortOptions={getTemplateSortOptions}
+                  placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
+                  isClearable
+                  width="auto"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      <div className={styles.list}>
         {isEmpty && (
           <p className={styles.empty}>
             <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
@@ -178,76 +186,41 @@ export function LandingTemplates({
           </div>
         )}
         {/* Shown once every list has loaded, so the cards arrive together instead of reflowing list by list. */}
-        <div className={styles.grid} hidden={!loaded}>
-          {renderLists(onSelectTemplate, {}, { custom: onCustomTemplatesLoad, grafana: onGrafanaTemplatesLoad })}
+        <div hidden={!loaded}>
+          <div className={styles.grid}>
+            {renderCustomTemplates()}
+            {showGrafanaTemplates && (
+              <GrafanaTemplatesTab
+                entryPoint={ENTRY_POINT}
+                testDataSource={testDataSource}
+                onClose={noop}
+                loadedFiredRef={grafanaLoadedFiredRef}
+                onSelectTemplate={onSelectTemplate}
+                selectedTemplateId={selectedTemplateId}
+                onTemplatesLoad={onGrafanaTemplatesLoad}
+                searchQuery={searchQuery}
+                sortOrder={sortOrder}
+              />
+            )}
+          </div>
+          {searchQuery.trim() && (
+            <p className={styles.noMatches}>
+              <Trans i18nKey="dashboard-library.grafana-dashboard-template-modal.no-results-found">
+                No template dashboards found
+              </Trans>
+            </p>
+          )}
         </div>
       </div>
-      {isBrowsing && (
-        <BrowseTemplatesDialog
-          onDismiss={() => setIsBrowsing(false)}
-          renderLists={(filters) => renderLists(onSelectFromDialog, filters)}
-        />
-      )}
     </section>
-  );
-}
-
-interface BrowseTemplatesDialogProps {
-  onDismiss: () => void;
-  renderLists: (filters: ListFilters) => ReactNode;
-}
-
-/** Every template in one grid, with the template modal's search and sort. Picking one closes the dialog. */
-function BrowseTemplatesDialog({ onDismiss, renderLists }: BrowseTemplatesDialogProps) {
-  const styles = useStyles2(getStyles);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<TemplateSortOrder>();
-
-  return (
-    <Modal
-      isOpen
-      onDismiss={onDismiss}
-      className={styles.dialog}
-      contentClassName={styles.dialogContent}
-      title={t('dashboard-library.template-dashboard-modal.title', 'Start a dashboard from a template')}
-    >
-      <div className={styles.dialogFilters}>
-        {/* Browse all is a search over every template, so typing starts at once. */}
-        <FilterInput
-          autoFocus
-          className={styles.search}
-          placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
-          value={searchQuery}
-          escapeRegex={false}
-          onChange={setSearchQuery}
-        />
-        <div className={styles.sort}>
-          <SortPicker
-            value={sortOrder}
-            onChange={(change) => setSortOrder(change?.value)}
-            getSortOptions={getTemplateSortOptions}
-            placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
-            isClearable
-            width="auto"
-          />
-        </div>
-      </div>
-      <div className={styles.grid}>{renderLists({ searchQuery, sortOrder })}</div>
-      {searchQuery.trim() && (
-        <p className={styles.noMatches}>
-          <Trans i18nKey="dashboard-library.grafana-dashboard-template-modal.no-results-found">
-            No template dashboards found
-          </Trans>
-        </p>
-      )}
-    </Modal>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   const gap = theme.spacing(2);
-  // The toggle's height, and the header's.
-  const headerHeight = theme.spacing(4);
+  // Half a grid unit above and below the search and sort, which the insets around the header bring to about a unit
+  // from the prompt and from the cards.
+  const headerHeight = `calc(${theme.spacing(theme.components.height.md)} + ${theme.spacing(1)})`;
   const listPaddingTop = theme.spacing(0.5);
   const peek = `${CARD_HEIGHT * NEXT_ROW_PEEK}px`;
 
@@ -255,56 +228,47 @@ function getStyles(theme: GrafanaTheme2) {
     panel: css({
       display: 'flex',
       flexDirection: 'column',
-      // Same side inset as the prompt's text, so the label and cards line up with it.
+      // Same side inset as the prompt's text, so the search and cards line up with it.
       padding: theme.spacing(0, 1, 1),
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-    }),
-    // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
-    // the page leaves past the prompt's edge, since the header's height already centers its text.
-    panelClosed: css({
-      paddingBottom: theme.spacing(0.5),
+      '&[hidden]': {
+        display: 'none',
+      },
     }),
     // Out of sight but in the layout, so the page, centered on its content, does not move when the panel shows.
     panelHidden: css({
       visibility: 'hidden',
     }),
-    // A set height, so the Browse all button showing once the lists load does not move the cards.
+    // A set height, kept while the search and sort load so the cards do not jump.
     header: css({
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
       gap: theme.spacing(1),
       height: headerHeight,
     }),
-    toggle: css({
+    // The main control: it takes the room the sort leaves, up to a cap, and gives it up first.
+    search: css({
+      flex: 1,
+      minWidth: 0,
+      maxWidth: theme.spacing(32),
+    }),
+    // As wide as its value, so it stays small until a person sorts, at the far end of the row. Flex, so the
+    // inline-flex select adds no line box. A phone keeps the row to the search.
+    sort: css({
+      display: 'flex',
       flexShrink: 0,
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
-      height: headerHeight,
-      padding: 0,
-      background: 'none',
-      border: 'none',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-      cursor: 'pointer',
-      '&:hover': {
-        color: theme.colors.text.primary,
+      marginLeft: 'auto',
+      [theme.breakpoints.down('sm')]: {
+        display: 'none',
       },
-      '&:focus-visible': getFocusStyles(theme),
     }),
     // One row and a sliver of the next; the rest scrolls.
     list: css({
       maxHeight: `calc(${CARD_HEIGHT}px + ${gap} + ${peek} + ${listPaddingTop})`,
       overflowY: 'auto',
       paddingTop: listPaddingTop,
-      '&[hidden]': {
-        display: 'none',
-      },
     }),
     // As many columns as fit at the minimum card width, four at most.
     grid: css({
@@ -312,40 +276,6 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `repeat(auto-fill, minmax(max(${theme.spacing(22)}, (100% - 3 * ${gap}) / 4), 1fr))`,
       gridAutoRows: CARD_HEIGHT,
       gap,
-      '&[hidden]': {
-        display: 'none',
-      },
-    }),
-    empty: css({
-      margin: 0,
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    // The template modal's width.
-    dialog: css({
-      width: '1200px',
-    }),
-    dialogContent: css({
-      paddingTop: 0,
-    }),
-    // Stays in view while the grid scrolls under it, as the template modal's header does.
-    dialogFilters: css({
-      position: 'sticky',
-      top: 0,
-      zIndex: 2,
-      display: 'flex',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1, 0, 2),
-      background: theme.flags.visualDesignRefresh ? theme.colors.background.page : theme.colors.background.primary,
-    }),
-    search: css({
-      flex: 1,
-      minWidth: 0,
-    }),
-    // As wide as its value, so it stays small until a person sorts. Flex, so the inline-flex select adds no line box.
-    sort: css({
-      display: 'flex',
-      flexShrink: 0,
     }),
     // Shown while a search is on and no list has a card for it.
     noMatches: css({
@@ -355,6 +285,11 @@ function getStyles(theme: GrafanaTheme2) {
       'div:has(> article) + &': {
         display: 'none',
       },
+    }),
+    empty: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 }
