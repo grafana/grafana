@@ -80,6 +80,7 @@ import (
 	_ "github.com/grafana/grafana-app-sdk/k8s"
 	_ "github.com/grafana/grafana-app-sdk/logging"
 	_ "github.com/grafana/grafana-app-sdk/operator"
+	_ "github.com/grafana/grafana-app-sdk/plugin"
 	_ "github.com/grafana/grafana-app-sdk/plugin/appadapter"
 	_ "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	_ "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"

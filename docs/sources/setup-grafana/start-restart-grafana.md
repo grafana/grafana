@@ -18,7 +18,7 @@ This topic includes instructions for starting the Grafana server. For certain co
 
 The following instructions start the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
-If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you execute the binary.
+The Debian package includes a `systemd` service. On a system without `systemd`, run `sudo -u grafana grafana server` or configure your own service. If you installed from a `.tar.gz` file, run the binary directly.
 
 ## Linux
 

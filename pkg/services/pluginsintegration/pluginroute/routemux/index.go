@@ -1,4 +1,4 @@
-package pluginroute
+package routemux
 
 import (
 	"strings"
