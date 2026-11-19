@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Kayıt kuralı"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Özellik denetimi",
       "close-tooltip": "Özellik denetimini kapat",
       "open-tooltip": "Özellik denetimini aç"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Sil",
     "description": "Test ve geliştirme amacıyla ön uç özellik bayraklarını yerel olarak geçersiz kılın.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Kullanıcı arayüzü ve araç çubuğu düğmesini kaldır",
       "tooltip": "Tanımlanan özellik bayrağı geçersiz kılmalarının tümü etkin kalacaktır.<br/> Kullanıcı arayüzünü yeniden etkinleştirmek için URL'de <3>{{ param }}</3> kullanın."
@@ -9846,11 +9881,18 @@
     "flag-type": "Bayrak türü",
     "flag-value": "Bayrak değeri",
     "menu": "Menüyü aç",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP değerlendirmesi",
     "ofrep-reason": "Gerekçe: <2>{{reason}}</2>",
     "ofrep-variant": "Varyant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Kaydet",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Özellik denetimi"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Denetimler etkinleştirildiğinde, görüntülenen günlükleri indirme seçeneğini gösterin.",
     "description-enable-field-selector": "Deneysel. Günlük kayıtlarında görüntülenen alanları yönetmek için bir bileşen gösterin.",
-    "description-enable-infinite-scrolling": "Deneysel. Günlük listesinin en altına kaydırarak daha fazla sonuç isteyin.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Günlük kaydı satırlarının ilgili kısımlarını vurgulamak için önceden tanımlanmış bir renklendirme şeması kullanın.",
     "description-order": "Önce en yeni veya en eski günlük kayıtlarını gösterin. Önce en eski seçildiğinde, görünüm otomatik olarak en alttaki en yeni günlük kayıtlarına kaydırılır.",
     "description-prettify-json": "JSON günlük kaydı girişlerini girinti ve satır sonlarıyla biçimlendirin.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Yeni",
       "new-template-dashboard-button": "Şablonu kullan"
     },
-    "rss-button": "Blog'tan son gönderiler"
+    "rss-button": "Blog'tan son gönderiler",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Haberler",

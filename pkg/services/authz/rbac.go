@@ -211,11 +211,14 @@ func ProvideAuthZClients(
 			legacyclient.WithLegacyTracerClientOption(tracer),
 		)
 		if configurable, ok := accessControl.(legacyclient.LegacyCheckClientSetter); ok {
-			configurable.SetLegacyCheckClient(
+			if err := configurable.SetLegacyCheckClient(
 				legacyAccessClient,
 				cfg.IDUseExternalGroupsForGroupsClaim,
 				apirequest.GetNamespaceMapper(cfg),
-			)
+				reg,
+			); err != nil {
+				return nil, err
+			}
 		}
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
