@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
@@ -140,10 +142,17 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 		for specPath, props := range paths {
 			props.Parameters = append(slices.Clone(params), props.Parameters...)
 			props.Parameters = append(props.Parameters, undeclaredPathParameters(specPath, &props)...)
-			for _, op := range []**spec3.Operation{&props.Get, &props.Head, &props.Post, &props.Put, &props.Patch, &props.Delete, &props.Options} {
+			for method, op := range map[string]**spec3.Operation{
+				http.MethodGet: &props.Get, http.MethodHead: &props.Head, http.MethodPost: &props.Post,
+				http.MethodPut: &props.Put, http.MethodPatch: &props.Patch, http.MethodDelete: &props.Delete,
+				http.MethodOptions: &props.Options,
+			} {
 				if *op != nil {
 					tagged := **op
 					tagged.Tags = []string{"Settings"}
+					if tagged.OperationId == "" {
+						tagged.OperationId = subresourceOperationID(method, subresource, specPath)
+					}
 					*op = &tagged
 				}
 			}
@@ -156,6 +165,23 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 	}
 	b.addComponents(oas, routes.components)
 	return nil
+}
+
+// subresourceOperationID names an operation the settings manifest leaves
+// unnamed, since the generated name repeats the whole settings path. GET
+// proxy/set-k8s/{path:*} is getProxySetK8sPath.
+func subresourceOperationID(method, subresource, specPath string) string {
+	var id strings.Builder
+	id.WriteString(strings.ToLower(method))
+	words := strings.FieldsFunc(subresource+"/"+strings.ReplaceAll(specPath, ":*", ""), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	for _, word := range words {
+		first, size := utf8.DecodeRuneInString(word)
+		id.WriteRune(unicode.ToUpper(first))
+		id.WriteString(word[size:])
+	}
+	return id.String()
 }
 
 // addComponents publishes the components the settings manifest's routes refer

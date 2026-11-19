@@ -418,6 +418,7 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 		pluginID:   id,
 		info:       plugin.JSONData.Info,
 		group:      metav1.APIGroup{Name: id, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version},
+		manifest:   plugin.Settings,
 		settings:   &plugin,
 		client:     client,
 		deps:       deps,
@@ -441,8 +442,11 @@ type PluginBackend struct {
 	client    PluginClientProvider
 	deps      PluginDependencies
 
-	// settings is set instead of manifest for the backend that serves the
-	// plugin's settings API under its plugin ID.
+	// settings is set for the backend that serves the plugin's settings API
+	// under its plugin ID. Its manifest, the settings manifest, is only
+	// published: what it serves is built from settings. It is published as
+	// served, with its x-grafana-proxy routes, so a plugin can declare it in
+	// place of its plugin.json routes.
 	settings *definition.PluginDefinition
 
 	// hasBackend is whether the plugin runs a backend process, for the

@@ -32,6 +32,7 @@ func TestProxyRoutesToOpenAPIPaths(t *testing.T) {
 		{Path: "items/:id/", Method: http.MethodGet},
 		{Path: "a/*/b", Method: "*"},
 		{Path: "orgs/:name/users/:path", Method: http.MethodDelete},
+		{Path: "/rooted/*", Method: http.MethodGet},
 	})
 	require.NoError(t, err)
 
@@ -41,7 +42,8 @@ func TestProxyRoutesToOpenAPIPaths(t *testing.T) {
 		"/items/{id}",
 		"/a/{segment_1}/b",
 		"/orgs/{name_}/users/{path_}",
-	}, slices.Collect(maps.Keys(paths)))
+		"/rooted/{path:*}",
+	}, slices.Collect(maps.Keys(paths)), "one leading slash is dropped, as the plugin proxy does")
 
 	require.Equal(t, []string{http.MethodPost}, methodsOf(paths["/api/admin"]))
 	require.Equal(t, anyMethods, methodsOf(paths["/api/{path:*}"]), "a route without a method serves every method, and HEAD through GET")
@@ -81,7 +83,7 @@ func TestProxyRoutesToOpenAPIRefusesWhatItCannotConvert(t *testing.T) {
 	for _, route := range []*plugins.Route{
 		{Path: ""},
 		{Path: "/"},
-		{Path: "/api"},
+		{Path: "//api"},
 		{Path: "a//b"},
 		{Path: "ids/:id([0-9]+)"},
 		{Path: "ids/:id:int"},

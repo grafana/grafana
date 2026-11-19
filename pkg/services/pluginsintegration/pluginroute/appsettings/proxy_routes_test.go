@@ -252,6 +252,8 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	require.Equal(t, []string{"Settings"}, items.Get.Tags)
 	require.Len(t, items.Parameters, 2, "the settings path parameters are documented")
 	require.Contains(t, paths, item+"/proxy/api/{path}", "a catch-all is published as an ordinary parameter")
+	require.Equal(t, "getProxyApiItemsId", items.Get.OperationId, "an unnamed operation is named by its route")
+	require.Equal(t, "deleteProxyApiPath", paths[item+"/proxy/api/{path}"].Delete.OperationId)
 	for path, p := range paths {
 		for _, op := range []*spec3.Operation{p.Get, p.Head, p.Post, p.Put, p.Patch, p.Delete, p.Options} {
 			if op != nil {
@@ -268,6 +270,12 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 		declaredProxy + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
 	})))
 	require.Contains(t, declared, item+"/proxy/v2/{path}")
+}
+
+func TestSubresourceOperationID(t *testing.T) {
+	require.Equal(t, "postProxyFleetManagementApiSetK8sInstrumentation",
+		subresourceOperationID(http.MethodPost, "proxy", "/fleet-management-api/set-k8s-instrumentation"))
+	require.Equal(t, "getResourcesThingsIdPath", subresourceOperationID(http.MethodGet, "resources", "things/{id}/{path:*}"))
 }
 
 func TestOpenAPIPublishesResourceRoutes(t *testing.T) {

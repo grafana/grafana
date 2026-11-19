@@ -37,7 +37,15 @@ func settingsPaths(t *testing.T, manifest *app.ManifestData) map[string]spec3.Pa
 	version := manifest.Versions[0]
 	require.Equal(t, "v0alpha1", version.Name)
 	require.True(t, version.Served)
-	require.Equal(t, []app.ManifestVersionKind{settingsKind}, version.Kinds)
+	require.Len(t, version.Kinds, 1)
+	kind := version.Kinds[0]
+	require.Equal(t, "Settings", kind.Kind)
+	require.Equal(t, SettingsAPIResource, kind.Resource)
+	require.NotNil(t, kind.FolderScoped)
+	require.False(t, *kind.FolderScoped, "settings are not in a folder")
+	require.False(t, kind.HasSearchEndpoint())
+	require.False(t, kind.HasTrashEndpoint())
+	require.Equal(t, []string{SettingsAPIInstance}, kind.FixedNames)
 	return version.OpenAPI.Paths
 }
 
@@ -58,11 +66,13 @@ func TestNewSettingsManifest(t *testing.T) {
 		manifest, err := NewSettingsManifest(appWithRoutes([]*plugins.Route{
 			{Path: "api/items/:id", Method: http.MethodGet, URL: "https://items"},
 			{Path: "api/*", URL: "https://api"},
+			{Path: "/rooted", Method: http.MethodGet, URL: "https://rooted"},
 		}), testMatcher)
 		require.NoError(t, err)
 		paths := settingsPaths(t, manifest)
 		require.Contains(t, paths, SettingsProxyRoot+"/api/items/{id}")
 		require.Contains(t, paths, SettingsProxyRoot+"/api/{path:*}")
+		require.Contains(t, paths, SettingsProxyRoot+"/rooted", "the plugin proxy ignores a leading slash")
 
 		// The plugin proxy also matches a route's path with a trailing slash.
 		require.Contains(t, paths, SettingsProxyRoot+"/api/items/{id}/")
@@ -196,7 +206,7 @@ func testMatcher(routes []*plugins.Route, method, path string) (*plugins.Route, 
 		if route.Method != "" && route.Method != "*" && route.Method != method {
 			continue
 		}
-		want := strings.Split(strings.TrimSuffix(route.Path, "/"), "/")
+		want := strings.Split(strings.TrimSuffix(strings.TrimPrefix(route.Path, "/"), "/"), "/")
 		for i, segment := range want {
 			if segment == "*" && i == len(want)-1 {
 				if len(got) > i && path != "" {

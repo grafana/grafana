@@ -134,8 +134,9 @@ func ProxyRoutesToOpenAPI(routes []*plugins.Route) (map[string]spec3.PathProps, 
 // proxyOpenAPIPath converts a plugin proxy route path to an app-sdk route path.
 // shape is the path with its parameter names blanked.
 func proxyOpenAPIPath(routePath string) (specPath, shape string, params []string, err error) {
-	// The plugin proxy's router drops one trailing slash from a pattern.
-	trimmed := strings.TrimSuffix(routePath, "/")
+	// The plugin proxy's router drops one leading and one trailing slash from a
+	// pattern.
+	trimmed := strings.TrimSuffix(strings.TrimPrefix(routePath, "/"), "/")
 	if trimmed == "" {
 		return "", "", nil, errors.New("a route must name a path below the proxy root")
 	}

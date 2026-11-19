@@ -48,12 +48,19 @@ func IsBelow(path, root string) bool {
 // hasRest whether it has one.
 type RouteMatcher func(routes []*plugins.Route, method, path string) (route *plugins.Route, rest string, hasRest bool)
 
-// settingsKind is the kind the settings API serves its one object as.
-var settingsKind = app.ManifestVersionKind{
-	Kind:     "Settings",
-	Plural:   "Settings",
-	Resource: SettingsAPIResource,
-	Scope:    "Namespaced",
+// settingsKind is the kind the settings API serves its one object as. The
+// object is always named instance, is not in a folder, and is not searchable.
+func settingsKind() app.ManifestVersionKind {
+	no := false
+	return app.ManifestVersionKind{
+		Kind:         "Settings",
+		Plural:       "Settings",
+		Resource:     SettingsAPIResource,
+		Scope:        "Namespaced",
+		FolderScoped: &no,
+		FixedNames:   []string{SettingsAPIInstance},
+		Search:       &app.ManifestVersionKindSearch{Endpoint: &no, Trash: &no},
+	}
 }
 
 // SettingsRouteOptions are the rules the settings manifest's routes are parsed
@@ -91,7 +98,7 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 	version := app.ManifestVersion{
 		Name:   SettingsAPIVersion,
 		Served: true,
-		Kinds:  []app.ManifestVersionKind{settingsKind},
+		Kinds:  []app.ManifestVersionKind{settingsKind()},
 	}
 	defer func() { manifest.Versions = []app.ManifestVersion{version} }()
 
@@ -323,7 +330,8 @@ func proxyProbes(routes []*plugins.Route) []string {
 		if route == nil {
 			continue
 		}
-		segments := strings.Split(strings.TrimSuffix(route.Path, "/"), "/")
+		// A request path below the proxy root has no leading slash.
+		segments := strings.Split(strings.TrimSuffix(strings.TrimPrefix(route.Path, "/"), "/"), "/")
 		for i, segment := range segments {
 			if segment == "*" || strings.HasPrefix(segment, ":") {
 				segments[i] = "v"
