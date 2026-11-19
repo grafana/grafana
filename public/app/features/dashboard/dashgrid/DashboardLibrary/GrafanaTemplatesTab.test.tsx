@@ -22,6 +22,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(() => ({ isAvailable: true, openAssistant: jest.fn() })),
   createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
@@ -72,6 +73,10 @@ describe('GrafanaTemplatesTab', () => {
     );
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('select mode', () => {
     it('hands the picked template to the caller as Assistant context instead of opening it', async () => {
       const onSelectTemplate = jest.fn();
@@ -81,15 +86,14 @@ describe('GrafanaTemplatesTab', () => {
 
       expect(onSelectTemplate).toHaveBeenCalledWith({
         id: 'grafana:1',
-        title: 'RED metrics',
         kind: 'template_dashboard',
         url: expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1&.*assistantSource=assistant_button$/),
-        contextItem: expect.objectContaining({
+        contextItem: {
           type: 'structured',
           hidden: false,
           title: 'RED metrics',
           data: expect.objectContaining({ name: 'RED metrics', description: 'Rate, errors and duration' }),
-        }),
+        },
       });
       expect(locationService.push).not.toHaveBeenCalled();
     });
@@ -115,11 +119,12 @@ describe('GrafanaTemplatesTab', () => {
       expect(onTemplatesLoad).toHaveBeenLastCalledWith(0);
     });
 
-    it('reports how many templates it shows once they load', async () => {
+    it('reports how many templates there are before the search, once they load', async () => {
       const onTemplatesLoad = jest.fn();
-      renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad });
+      renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad, searchQuery: 'no such template' });
 
-      await waitFor(() => expect(onTemplatesLoad).toHaveBeenCalledWith(1));
+      await waitFor(() => expect(onTemplatesLoad).toHaveBeenLastCalledWith(1));
+      expect(screen.queryByRole('button', { name: /^Use template: / })).not.toBeInTheDocument();
     });
 
     it('previews the template on its dashboard page in a new tab', async () => {
@@ -134,7 +139,6 @@ describe('GrafanaTemplatesTab', () => {
         'noopener,noreferrer'
       );
       expect(locationService.push).not.toHaveBeenCalled();
-      open.mockRestore();
     });
 
     it('shows the templates that match the search, sorted as asked', async () => {
@@ -171,9 +175,11 @@ describe('GrafanaTemplatesTab', () => {
   });
 
   it('opens the template without select mode', async () => {
-    renderTab();
+    const { user } = renderTab();
 
-    expect(await screen.findByRole('button', { name: 'View template: RED metrics' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'View template: RED metrics' }));
+
+    expect(locationService.push).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1/));
     expect(screen.queryByRole('button', { name: 'Use template: RED metrics' })).not.toBeInTheDocument();
   });
 });

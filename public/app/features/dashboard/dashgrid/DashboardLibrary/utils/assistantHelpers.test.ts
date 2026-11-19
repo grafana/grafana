@@ -4,7 +4,7 @@ import { isAssistantAvailable } from '@grafana/assistant';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
-  buildOpenTemplateContextData,
+  buildOpenTemplateContextItem,
   buildTemplateContextData,
   buildTemplateContextTitle,
   isSuggestedDashboardAssistantEnabled,
@@ -15,6 +15,7 @@ import { createMockGnetDashboard, createMockPluginDashboard } from './test-utils
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   isAssistantAvailable: jest.fn(() => of(true)),
+  createAssistantContextItem: jest.fn((type: string, data: object) => ({ type, ...data })),
 }));
 
 describe('assistantHelpers', () => {
@@ -115,15 +116,17 @@ describe('assistantHelpers', () => {
     });
   });
 
-  describe('buildOpenTemplateContextData', () => {
-    it('asks the Assistant to adapt the open template in place, under a key the template tools do not match', () => {
-      const data = buildOpenTemplateContextData({ name: 'RED metrics', description: '' });
+  describe('buildOpenTemplateContextItem', () => {
+    it('attaches the open template by its bare name, under a key the template tools do not match', () => {
+      const item = buildOpenTemplateContextItem({ name: 'RED metrics', description: 'Rate, errors and duration' });
 
-      expect(data.name).toBe('RED metrics');
-      expect(data.templateName).toBeUndefined();
-      expect(data.description).toBeUndefined();
-      expect(data.instructions).toContain('open in the dashboard editor as a new, unsaved dashboard');
-      expect(data.instructions).toContain('Do not create a new dashboard or load the template again');
+      expect(item).toMatchObject({
+        type: 'structured',
+        hidden: false,
+        title: 'RED metrics',
+        data: { name: 'RED metrics', description: 'Rate, errors and duration' },
+      });
+      expect(item).not.toHaveProperty('data.templateName');
     });
   });
 });

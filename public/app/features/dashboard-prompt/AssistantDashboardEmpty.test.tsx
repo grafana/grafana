@@ -106,11 +106,13 @@ describe('AssistantDashboardEmpty', () => {
     mockCheckLimits.mockResolvedValue({ count: 0, limit: 0, month: '2026-11', isLimitReached: false });
     latestPromptProps = undefined;
     latestTemplatesProps = undefined;
+    mockPromptLoaded = true;
     Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
     setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     setTestFlags({});
   });
 
@@ -196,7 +198,6 @@ describe('AssistantDashboardEmpty', () => {
   describe('templates under the prompt', () => {
     const red: TemplateSelection = {
       id: 'grafana:1',
-      title: 'RED metrics',
       kind: 'template_dashboard',
       url: '/dashboard/template?gnetId=1',
       contextItem: {
@@ -206,7 +207,6 @@ describe('AssistantDashboardEmpty', () => {
     };
     const use: TemplateSelection = {
       id: 'grafana:2',
-      title: 'USE method',
       kind: 'template_dashboard',
       url: '/dashboard/template?gnetId=2',
       contextItem: {
@@ -217,7 +217,6 @@ describe('AssistantDashboardEmpty', () => {
 
     beforeEach(() => {
       Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
-      mockPromptLoaded = true;
     });
 
     it('loads the templates out of view until the prompt shows its text box', async () => {

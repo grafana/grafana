@@ -211,8 +211,8 @@ describe('DashboardCard', () => {
       expect(screen.queryByRole('button', { name: 'Preview template: RED metrics' })).not.toBeInTheDocument();
     });
 
-    it('says a Grafana template is provisioned by Grafana', () => {
-      render(
+    it('says a Grafana template is provisioned by Grafana, in the picker only', () => {
+      const { rerender } = render(
         <DashboardCard
           title="RED metrics"
           dashboard={createMockGnetDashboard()}
@@ -223,6 +223,17 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.getByText('Provisioned by').closest('p')).toHaveTextContent('Provisioned by Grafana');
+
+      rerender(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Provisioned by')).not.toBeInTheDocument();
     });
 
     it('keeps a picker card to its title and author', () => {
@@ -242,20 +253,6 @@ describe('DashboardCard', () => {
       expect(screen.getByText('Created by:').closest('p')).toHaveTextContent('Created by: Jane');
       expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
       expect(screen.queryByText('observability')).not.toBeInTheDocument();
-    });
-
-    it('keeps the template modal card unchanged', () => {
-      render(
-        <DashboardCard
-          title="RED metrics"
-          dashboard={createMockGnetDashboard()}
-          onClick={mockOnClick}
-          kind="template_dashboard"
-        />
-      );
-
-      expect(screen.queryByText('Provisioned by Grafana')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'View template: RED metrics' })).toBeInTheDocument();
     });
   });
 

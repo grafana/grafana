@@ -112,7 +112,7 @@ describe('LandingTemplates', () => {
     expect(mockGrafanaProps.sortOrder).toBe('desc');
   });
 
-  it('adds a no-matches line while a search is on, which CSS hides while the grid has cards', async () => {
+  it('adds a no-matches line while a search is on', async () => {
     const { user } = renderTemplates();
     expect(screen.queryByText('No template dashboards found')).not.toBeInTheDocument();
 
@@ -120,12 +120,14 @@ describe('LandingTemplates', () => {
     expect(screen.getByText('No template dashboards found')).toBeInTheDocument();
   });
 
-  it('has no search without templates to search', () => {
-    mockGrafanaCount = 0;
-    mockCustomCount = 0;
-    renderTemplates();
+  it('keeps the list one row and a peek tall while a search matches nothing, so the page does not move', async () => {
+    const { user } = renderTemplates();
 
-    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
+
+    // The no-matches line sits under the grid, in the list.
+    const list = screen.getByText('No template dashboards found').parentElement?.parentElement;
+    expect(list).toHaveStyle({ height: 'calc(160px + 16px + 16px + 4px)' });
   });
 
   it('takes no room while closed, and keeps its lists mounted so reopening does not reload them', () => {
@@ -145,6 +147,7 @@ describe('LandingTemplates', () => {
 
     expect(container.querySelector('section')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('region')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { hidden: true })).not.toBeVisible();
   });
 
   it('holds every card back until all lists have loaded, so they do not reflow', () => {
@@ -190,6 +193,9 @@ describe('LandingTemplates', () => {
 
     expect(onEmptyChange).toHaveBeenLastCalledWith(true);
     expect(screen.getByText('No templates available')).toBeInTheDocument();
+    // The line alone, without the room a row of cards takes.
+    expect(screen.getByText('No templates available').parentElement).toHaveStyle({ height: 'auto' });
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
   });
 
   it('is not empty when only one list has templates', () => {
@@ -205,7 +211,7 @@ describe('LandingTemplates', () => {
     renderTemplates({ showCustomTemplates: false });
 
     expect(screen.queryByTestId('custom-card')).not.toBeInTheDocument();
-    expect(screen.getByTestId('grafana-card')).toBeInTheDocument();
+    expect(screen.getByTestId('grafana-card')).toBeVisible();
   });
 
   it('leaves out custom templates when no enterprise list is registered', () => {
@@ -213,6 +219,7 @@ describe('LandingTemplates', () => {
     renderTemplates();
 
     expect(screen.queryByTestId('custom-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('grafana-card')).toBeVisible();
   });
 });
 

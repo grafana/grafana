@@ -91,12 +91,18 @@ describe('startPlanningInAssistant', () => {
 });
 
 describe('openTemplateInAssistant', () => {
+  let push: jest.SpiedFunction<typeof locationService.push>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    push = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    push.mockRestore();
   });
 
   it('opens the template page, then hands the template to the Assistant without a planning item', () => {
-    const push = jest.spyOn(locationService, 'push').mockImplementation(() => {});
     const templateItem: ChatContextItem = {
       node: { id: 'template-red', name: 'RED metrics', navigable: false },
       occurrences: [],
@@ -116,7 +122,7 @@ describe('openTemplateInAssistant', () => {
       prompt: 'add a latency panel',
       context: [templateItem],
     });
-    push.mockRestore();
+    expect(push.mock.invocationCallOrder[0]).toBeLessThan(openAssistantMock.mock.invocationCallOrder[0]);
   });
 });
 

@@ -1,4 +1,4 @@
-import { filterTemplates, getTemplateSortOptions } from './templateFilters';
+import { filterTemplates } from './templateFilters';
 
 const templates = [
   { title: 'Node exporter', description: 'Host metrics' },
@@ -30,15 +30,6 @@ describe('filterTemplates', () => {
       'Node exporter',
       'Kubernetes cluster',
       'apache',
-    ]);
-  });
-});
-
-describe('getTemplateSortOptions', () => {
-  it('offers the template modal sort orders', async () => {
-    expect(await getTemplateSortOptions()).toEqual([
-      { value: 'asc', label: 'Alphabetically (A–Z)' },
-      { value: 'desc', label: 'Alphabetically (Z–A)' },
     ]);
   });
 });
