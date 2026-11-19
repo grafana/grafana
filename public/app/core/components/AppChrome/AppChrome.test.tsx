@@ -1,3 +1,4 @@
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import { type ReactNode } from 'react';
@@ -10,6 +11,7 @@ import { config, locationService, setBackendSrv, useScopes } from '@grafana/runt
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getPortalContainer, PortalContainer } from '@grafana/ui';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
@@ -20,6 +22,7 @@ import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome, EXTENSION_SIDEBAR_FLOATING_TESTID } from './AppChrome';
+import { MEGA_MENU_BACKDROP_TESTID } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, MEGA_MENU_PEEK_CLOSE_DELAY, MEGA_MENU_PEEK_OPEN_DELAY } from './AppChromeService';
 import {
   type ExtensionSidebarContextType,
@@ -137,7 +140,14 @@ const stylesFor = (element: Element) => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode, { path, extraNav = [] }: { path?: string; extraNav?: NavModelItem[] } = {}) => {
+const setup = (
+  children: ReactNode,
+  {
+    path,
+    extraNav = [],
+    withPortalContainer = false,
+  }: { path?: string; extraNav?: NavModelItem[]; withPortalContainer?: boolean } = {}
+) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -167,13 +177,22 @@ const setup = (children: ReactNode, { path, extraNav = [] }: { path?: string; ex
     historyOptions: path ? { initialEntries: [path] } : undefined,
   });
 
-  const tree = (
+  const chrome = (
     <KBarProvider>
       <AppChrome>
         <SectionSidePanel />
         <div data-testid="page-children">{children}</div>
       </AppChrome>
     </KBarProvider>
+  );
+  // As AppWrapper does: overlays, popovers and menus all render into Grafana's portal container.
+  const tree = withPortalContainer ? (
+    <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+      {chrome}
+      <PortalContainer />
+    </UNSAFE_PortalProvider>
+  ) : (
+    chrome
   );
   const renderResult = render(tree, { wrapper });
 
@@ -318,6 +337,23 @@ describe('AppChrome', () => {
         // The docked header names Grafana beside the logo.
         expect(screen.getByText('Grafana')).toBeInTheDocument();
       });
+    });
+
+    it('stays open while something it opened into the portal container is used, and closes from its backdrop', async () => {
+      const user = userEvent.setup();
+      setup(<Page navId="child1">Children</Page>, { withPortalContainer: true });
+      await user.click(await screen.findByRole('button', { name: 'Main menu' }));
+      expect(await screen.findByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+      // A section's popover renders into the portal container, outside the menu.
+      const popoverOption = document.createElement('button');
+      popoverOption.textContent = 'Popover option';
+      getPortalContainer().appendChild(popoverOption);
+      await user.click(screen.getByRole('button', { name: 'Popover option' }));
+      expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+      await user.click(screen.getByTestId(MEGA_MENU_BACKDROP_TESTID));
+      expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
     });
 
     describe('with grafana.megaMenuPeekAndDock on', () => {
