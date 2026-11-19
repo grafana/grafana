@@ -4,15 +4,15 @@ keywords:
   - Quickstart
   - Grafana Cloud
   - Terraform
-menuTitle: Provision with Terraform
-title: Provision Grafana with Terraform
+menuTitle: Terraform
+title: Provision Grafana resources with Terraform
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/
 aliases:
   - ./infrastructure-as-code/terraform/
 ---
 
-# Provision Grafana with Terraform
+# Provision Grafana resources with Terraform
 
 The [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest) provisions configuration management resources for Grafana. If you're a Grafana administrator you can manage dashboards, data sources, plugins, alerts and collectors, add synthetic monitoring probes and checks, manage identity and access, and more, using the Terraform provider.
 
