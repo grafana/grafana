@@ -190,18 +190,16 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const view = new DataFrameView<DashboardQueryResult>(first);
 
     const getNextPage = async () => {
-      while (loadMax > view.dataFrame.length) {
+      while (view.dataFrame.length < Math.min(loadMax, meta.count)) {
         const offset = view.dataFrame.length;
-        if (offset >= meta.count) {
-          return;
-        }
         const nextPageUrl = `${uri}&offset=${offset}`;
         const resp = await this.fetchResponse(nextPageUrl);
-        const frame = toDashboardResults(resp, query.sort ?? '');
-        if (!frame) {
-          console.log('no results', frame);
-          return;
+        if (resp.hits.length === 0) {
+          // The initial total can be an upper bound. No more visible rows can advance this offset.
+          meta.count = offset;
+          break;
         }
+        const frame = toDashboardResults(resp, query.sort ?? '');
 
         // We append the frames and align the fields here, but if there are new fields, view won't know about them
         // and won't be accessible by doing `view.get(0).newField` for example
@@ -217,20 +215,21 @@ export class UnifiedSearcher implements GrafanaSearcher {
           }
         }
       }
-      pending = undefined;
     };
 
     return {
-      totalRows: meta.count ?? first.length,
+      get totalRows() {
+        return meta.count;
+      },
 
       // This will be mutated when loadMoreItems is called.
       view,
 
       loadMoreItems: async (stopIndex: number): Promise<void> => {
         loadMax = Math.max(loadMax, stopIndex + 1);
-        if (!pending) {
-          pending = getNextPage();
-        }
+        pending ??= getNextPage().finally(() => {
+          pending = undefined;
+        });
         return pending;
       },
 

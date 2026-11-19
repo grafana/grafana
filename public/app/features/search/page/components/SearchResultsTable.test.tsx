@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type MouseEvent } from 'react';
 import { Subject } from 'rxjs';
@@ -141,6 +141,34 @@ describe('SearchResultsTable', () => {
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
       expect(screen.getByText('bar')).toBeInTheDocument();
+    });
+
+    it('removes placeholder rows when pagination finds the end of the results', async () => {
+      let totalRows = 3;
+      const response: QueryResponse = {
+        view: mockSearchResult.view,
+        get totalRows() {
+          return totalRows;
+        },
+        isItemLoaded: (index) => index === 0,
+        loadMoreItems: async () => {
+          totalRows = 1;
+        },
+      };
+
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={response}
+          onTagSelected={mockOnTagSelected}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+
+      await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
+      expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
     });
 
     it('does not render a description tooltip indicator when there is no description', async () => {

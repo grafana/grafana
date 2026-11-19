@@ -137,6 +137,37 @@ describe('Unified Storage Searcher', () => {
     // expect(response.view.get(1).description).toBe('foobar');
   });
 
+  it('stops fetching and reduces the row count when an upper-bound total outlasts the visible results', async () => {
+    const offsets: string[] = [];
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        if (params.get('query') !== 'dashboard') {
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        }
+        const offset = params.get('offset') ?? '0';
+        offsets.push(offset);
+        if (offsets.length > 2) {
+          return HttpResponse.json({ message: 'Unexpected page request' }, { status: 400 });
+        }
+        return HttpResponse.json({
+          totalHits: 3,
+          hits: offset === '0' ? [{ name: 'dashboard1', title: 'Dashboard 1', resource: 'dashboards' }] : [],
+        });
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: 'dashboard', limit: 1 });
+    expect(response.totalRows).toBe(3);
+
+    await response.loadMoreItems(2);
+    await response.loadMoreItems(2);
+
+    expect(response.totalRows).toBe(1);
+    expect(response.view.get(0).title).toBe('Dashboard 1');
+    expect(offsets).toEqual(['0', '1']);
+  });
+
   it('should filter search results by ownerReference', async () => {
     server.use(
       getCustomSearchHandler([
