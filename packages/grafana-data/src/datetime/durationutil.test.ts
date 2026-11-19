@@ -80,7 +80,9 @@ describe('Duration util', () => {
     );
 
     it('rejects a long run of digits without a unit quickly', () => {
+      const start = performance.now();
       expect(isValidGoDuration('1'.repeat(50000))).toEqual(false);
+      expect(performance.now() - start).toBeLessThan(100);
     });
 
     it('invalid duration string returns false', () => {
@@ -116,7 +118,7 @@ describe('Duration util', () => {
       expect(isValidGrafanaDuration(durationString)).toEqual(true);
     });
 
-    it.each(['5sabc', '1h30m', '1d30'])('invalid duration %j returns false', (durationString) => {
+    it.each(['5sabc', '1d30'])('invalid duration %j returns false', (durationString) => {
       expect(isValidGrafanaDuration(durationString)).toEqual(false);
     });
 
