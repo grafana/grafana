@@ -1,14 +1,11 @@
 import { type AlertRule, useCreateAlertRuleMutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { isFetchError } from '@grafana/runtime';
 
+import { type DeletedRule, type RestoreResult } from './types';
+
 const GROUP_LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
 
-/**
- * Builds the create payload from a trash item, following the same pattern as
- * the dashboards restore (keep metadata + spec, clear resourceVersion).
- * Group labels are stripped because the group-free create API rejects them.
- */
-export function sanitizeForRestore(rule: AlertRule): AlertRule {
+export function sanitizeForRestore(rule: DeletedRule): DeletedRule {
   const { resourceVersion, deletionTimestamp, managedFields, finalizers, generation, ...cleanMeta } =
     rule.metadata ?? {};
 
@@ -24,17 +21,12 @@ export function sanitizeForRestore(rule: AlertRule): AlertRule {
   };
 }
 
-interface RestoreResult {
-  success: boolean;
-  isConflict: boolean;
-  error?: unknown;
-}
-
 export function useRestoreAlertRule() {
   const [createAlertRule, { isLoading }] = useCreateAlertRuleMutation();
 
-  const restore = async (rule: AlertRule): Promise<RestoreResult> => {
-    const payload = sanitizeForRestore(rule);
+  const restore = async (rule: DeletedRule): Promise<RestoreResult> => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const payload = sanitizeForRestore(rule) as AlertRule;
     const result = await createAlertRule({ alertRule: payload });
 
     if ('error' in result) {

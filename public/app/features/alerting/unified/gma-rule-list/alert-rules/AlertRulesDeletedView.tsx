@@ -3,13 +3,23 @@ import { useMemo, useState } from 'react';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 
+import { grafanaRulesNav } from '../../utils/navigation';
 import { DeletedRulesTable } from '../deleted-rules/DeletedRulesTable';
 import { RestoreModal } from '../deleted-rules/RestoreModal';
 import { ReviewDrawer } from '../deleted-rules/ReviewDrawer';
-import { trackJsonOpened, trackReviewOpened, useTrackDeletedRulesPageView } from '../deleted-rules/analytics';
+import {
+  trackJsonOpened,
+  trackRestoreAttempt,
+  trackRestoreFailure,
+  trackRestoreSuccess,
+  trackReviewOpened,
+  useTrackDeletedRulesPageView,
+} from '../deleted-rules/analytics';
+import { useRestoreAlertRule } from '../deleted-rules/useRestoreRule';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 
 import { useDeletedAlertRules } from './useDeletedAlertRules';
@@ -52,6 +62,7 @@ export function AlertRulesDeletedView() {
   const [reviewing, setReviewing] = useState<AlertRule | null>(null);
   const [restoring, setRestoring] = useState<AlertRule | null>(null);
   const userNames = useDeletedByNames(items);
+  const { restore, isRestoring } = useRestoreAlertRule();
 
   useTrackDeletedRulesPageView(totalFromApi);
 
@@ -95,8 +106,13 @@ export function AlertRulesDeletedView() {
       {restoring && (
         <RestoreModal
           rule={restoring}
+          restore={restore}
+          isRestoring={isRestoring}
+          navigateAfterRestore={(uid) => locationService.push(grafanaRulesNav.viewLink(uid, { includeReturnTo: true }))}
+          onAttempt={trackRestoreAttempt}
+          onSuccess={trackRestoreSuccess}
+          onFailure={trackRestoreFailure}
           onDismiss={() => setRestoring(null)}
-          onSuccess={() => setRestoring(null)}
           onRefetch={refetch}
         />
       )}
