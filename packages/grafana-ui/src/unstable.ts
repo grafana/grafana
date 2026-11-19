@@ -25,6 +25,8 @@ export type {
   CodeMirrorDiffEditorProps,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
+  CodeMirrorHighlightProvider,
+  CodeMirrorHighlightRange,
   CodeMirrorProviderContext,
   CodeMirrorSqlDialect,
   CodeMirrorStyle,

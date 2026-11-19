@@ -27,6 +27,7 @@ function getPublicProps(props: CodeMirrorEditorProps): EveryProp<PublicBaseProps
   return {
     value: props.value,
     language: props.language,
+    syntaxHighlighting: props.syntaxHighlighting,
     sqlDialect: props.sqlDialect,
     height: props.height,
     onChange: props.onChange,
