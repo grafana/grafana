@@ -10973,6 +10973,9 @@
     "data-link-inline-editor": {
       "one-click": "One click"
     },
+    "data-link-menu-items": {
+      "link": "Link"
+    },
     "data-links-inline-editor": {
       "add-link": "Add link",
       "drag-handle-label": "Reorder data link {{title}}",
