@@ -34,6 +34,9 @@ type SavedDashboardViewSavedViewFilter struct {
 	Value    string `json:"value"`
 	// values holds the selection for multi-value operators.
 	Values []string `json:"values,omitempty"`
+	// Display labels, kept so applied filters show the same chips as when they were saved.
+	KeyLabel    *string  `json:"keyLabel,omitempty"`
+	ValueLabels []string `json:"valueLabels,omitempty"`
 }
 
 // NewSavedDashboardViewSavedViewFilter creates a new SavedDashboardViewSavedViewFilter object.

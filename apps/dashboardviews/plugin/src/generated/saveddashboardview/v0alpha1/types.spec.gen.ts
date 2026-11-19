@@ -20,6 +20,9 @@ export interface SavedViewFilter {
 	value: string;
 	// values holds the selection for multi-value operators.
 	values?: string[];
+	// Display labels, kept so applied filters show the same chips as when they were saved.
+	keyLabel?: string;
+	valueLabels?: string[];
 }
 
 export const defaultSavedViewFilter = (): SavedViewFilter => ({
