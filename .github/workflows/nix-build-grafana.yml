@@ -12,6 +12,7 @@ permissions:
 
 env:
   CGO_ENABLED: '0'
+  NIX_GO_CACHE_VERSION: v3
 
 jobs:
   native:
@@ -92,7 +93,7 @@ jobs:
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: ${{ runner.temp }}/grafana-bench-go-cache
-          key: nix-bench-v3-go-${{ env.SUITE }}-${{ hashFiles('flake.lock', '**/*.mod') }}
+          key: nix-bench-${{ env.NIX_GO_CACHE_VERSION }}-go-${{ env.SUITE }}-${{ hashFiles('flake.lock', '**/*.mod') }}
       - &build-nix-tests
         name: Build Nix test derivation
         id: built
@@ -116,6 +117,7 @@ jobs:
     runs-on: ubuntu-x64-large-io
     env:
       SUITE: sql
+      NIX_GO_CACHE_VERSION: v4
     outputs:
       path: ${{ steps.cached.outputs.path || steps.built.outputs.path }}
     steps:

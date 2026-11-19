@@ -44,6 +44,8 @@ in
     bash ${./nix-test-benchmark.sh} unit "$out/summary.json"
   '';
   sql = mkTest "sql" ''
+    # Fixture lookups via runtime.Caller must work after the build sandbox exits.
+    cd "$src"
     bash ${./nix-test-benchmark.sh} compile "$out"
   '';
 }
