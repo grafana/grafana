@@ -82,11 +82,13 @@ import { legacyRuleCacheTagsForUid } from './formValuesToAppPlatform';
 
 type Props = {
   existing?: RuleWithLocation;
+  // Sent with a rules API save so the server rejects it if the rule changed since it was loaded.
+  existingResourceVersion?: string;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
   isManualRestore?: boolean;
 };
 
-export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => {
+export const AlertRuleForm = ({ existing, existingResourceVersion, prefill, isManualRestore }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const dispatch = useDispatch();
@@ -184,7 +186,11 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         }
 
         const existingUid = existing ? getRuleUID(existing.rule) : undefined;
-        const savedUid = await upsertUngroupedGrafanaRule({ values, existingUid });
+        const savedUid = await upsertUngroupedGrafanaRule({
+          values,
+          existingUid,
+          resourceVersion: existingResourceVersion,
+        });
 
         dispatch(alertingApi.util.invalidateTags(legacyRuleCacheTagsForUid(savedUid)));
         notifyApp.success(

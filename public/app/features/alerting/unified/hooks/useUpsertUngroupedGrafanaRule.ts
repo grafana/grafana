@@ -14,6 +14,7 @@ import { isGrafanaRecordingRuleByType } from '../utils/rules';
 type SaveArgs = {
   values: RuleFormValues;
   existingUid: string | undefined;
+  resourceVersion?: string;
 };
 
 export function useUpsertUngroupedGrafanaRule() {
@@ -29,7 +30,7 @@ export function useUpsertUngroupedGrafanaRule() {
   const [replaceRecordingRuleV0alpha1] = rulesAPIv0alpha1.useReplaceRecordingRuleMutation();
 
   return useCallback(
-    async ({ values, existingUid }: SaveArgs): Promise<string> => {
+    async ({ values, existingUid, resourceVersion }: SaveArgs): Promise<string> => {
       const version = await resolveRulesAPIVersion();
       const isV1beta1 = version === 'v1beta1';
       const isRecordingRule = isGrafanaRecordingRuleByType(values.type);
@@ -39,13 +40,13 @@ export function useUpsertUngroupedGrafanaRule() {
           const replace = isV1beta1 ? replaceRecordingRule : replaceRecordingRuleV0alpha1;
           await replace({
             name: existingUid,
-            recordingRule: buildRecordingRuleResource(values, existingUid, version),
+            recordingRule: buildRecordingRuleResource(values, existingUid, version, resourceVersion),
           }).unwrap();
         } else {
           const replace = isV1beta1 ? replaceAlertRule : replaceAlertRuleV0alpha1;
           await replace({
             name: existingUid,
-            alertRule: buildAlertRuleResource(values, existingUid, version),
+            alertRule: buildAlertRuleResource(values, existingUid, version, resourceVersion),
           }).unwrap();
         }
         return existingUid;
