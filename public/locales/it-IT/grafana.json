@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Regola di registrazione"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Controllo funzionalità",
       "close-tooltip": "Chiudi controllo funzionalità",
       "open-tooltip": "Apri controllo funzionalità"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Elimina",
     "description": "Sovrascrivi localmente i flag delle funzionalità del frontend per scopi di test e sviluppo.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Rimuovi interfaccia utente e pulsante della barra degli strumenti",
       "tooltip": "Eventuali sovrascritture di flag di funzionalità definite rimarranno attive.<br/> Utilizza <3>{{ param }}</3> nell'URL per abilitare nuovamente l'interfaccia utente."
@@ -9846,11 +9881,18 @@
     "flag-type": "Tipo di flag",
     "flag-value": "Valore del flag",
     "menu": "Apri menu",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Valutazione OFREP",
     "ofrep-reason": "Motivo: <2>{{reason}}</2>",
     "ofrep-variant": "Variante: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Salva",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Controllo funzionalità"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Quando i controlli sono abilitati, mostra un'opzione per scaricare i registri visualizzati.",
     "description-enable-field-selector": "Sperimentale. Mostra un componente per gestire i campi visualizzati nei registri.",
-    "description-enable-infinite-scrolling": "Sperimentale. Richiedi più risultati scorrendo fino alla fine dell'elenco dei registri.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Utilizza uno schema di colorazione predefinito per evidenziare le parti rilevanti delle righe del registro.",
     "description-order": "Mostra per primi i registri più recenti o quelli più vecchi. Quando si seleziona l'opzione \"Prima i meno recenti\", la visualizzazione scorre automaticamente fino ai registri più recenti in fondo alla pagina.",
     "description-prettify-json": "Imposta le voci di registro JSON con rientro e ritorno a capo.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Nuovo",
       "new-template-dashboard-button": "Usa modello"
     },
-    "rss-button": "Ultime dal blog"
+    "rss-button": "Ultime dal blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Notizie",

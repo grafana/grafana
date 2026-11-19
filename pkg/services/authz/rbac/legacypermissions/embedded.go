@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -90,8 +91,8 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUser
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
-			if isPermissionShadow(clientCtx) {
-				ctx = WithPermissionShadow(ctx)
+			if shadow.IsShadow(clientCtx) {
+				ctx = shadow.WithContext(ctx)
 			}
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
@@ -164,9 +165,12 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	const chunkSize = 1000
 	for start := 0; start < len(permissions); start += chunkSize {
 		end := min(start+chunkSize, len(permissions))
-		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, 0, end-start)}
-		for _, p := range permissions[start:end] {
-			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
+		// Allocate message values together instead of allocating one object per permission.
+		values := make([]authzv1.LegacyUserPermission, end-start)
+		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, end-start)}
+		for i, p := range permissions[start:end] {
+			values[i].Action, values[i].Scope = p.Action, p.Scope
+			chunk.Permissions[i] = &values[i]
 		}
 		if err := stream.Send(chunk); err != nil {
 			return err

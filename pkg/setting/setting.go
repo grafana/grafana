@@ -136,6 +136,8 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
+	withoutGlobals bool
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -758,6 +760,7 @@ type Cfg struct {
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	IndexCacheTTLIdleOnly                      bool
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
@@ -906,9 +909,6 @@ type Cfg struct {
 	// explicitWatchSettings records which watch settings had a value before
 	// their defaults were read, because reading a default writes it into Raw.
 	explicitWatchSettings explicitWatchSettings
-	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
-	// single-row descending lookup instead of scanning the resource's history.
-	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -1001,6 +1001,9 @@ type CommandLineArgs struct {
 }
 
 func copyServerURLSettingsToGlobals(cfg *Cfg) {
+	if cfg.withoutGlobals {
+		return
+	}
 	AppUrl = cfg.AppURL
 	AppSubUrl = cfg.AppSubURL
 }
@@ -1565,6 +1568,18 @@ func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	return cfg, nil
 }
 
+// NewCfgFromINIFileWithoutGlobals parses a config other than the running server's without writing package globals or environment variables, and returns an error for an invalid root_url instead of exiting.
+func NewCfgFromINIFileWithoutGlobals(iniFile *ini.File) (*Cfg, error) {
+	cfg := NewCfg()
+	cfg.withoutGlobals = true
+
+	if err := cfg.parseINIFile(iniFile); err != nil {
+		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
+	}
+
+	return cfg, nil
+}
+
 func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
@@ -1956,29 +1971,31 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
 
 	// Also set environment variables that can be used by core plugins
-	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
-	}
+	if !cfg.withoutGlobals {
+		err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
+		}
 
-	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
-	}
+		err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+		}
 
-	err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
-	}
+		err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
+		}
 
-	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
-	}
+		err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+		}
 
-	err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
+		err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
+		}
 	}
 }
 
@@ -2171,6 +2188,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
+	if cfg.withoutGlobals {
+		return
+	}
 	CookieSecure = cfg.CookieSecure
 	if cfg.CookieSameSiteDisabled {
 		CookieSameSiteDisabled = cfg.CookieSameSiteDisabled
@@ -2385,6 +2405,9 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		if cfg.withoutGlobals {
+			return err
+		}
 		cfg.Logger.Error("Invalid root_url.", "url", cfg.AppURL, "error", err)
 		os.Exit(1)
 	}

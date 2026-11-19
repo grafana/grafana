@@ -5,14 +5,17 @@ inputs:
   checkout:
     description: Grafana checkout the tests run in; they read testdata and config from it
     required: true
-  binaries:
-    description: Directory with the <package>.test binaries built by go test -c from that checkout
+  newer-binaries:
+    description: Directory with the <package>.test binaries built by go test -c from the newer version
+    required: true
+  older-binaries:
+    description: Directory with the <package>.test binaries built by go test -c from the older version
     required: true
   test:
     description: TestCompatSetup, TestCompatUpdate, or TestCompatVerify
     required: true
   role:
-    description: older or newer
+    description: older or newer, the version that runs this phase; checkout must be that version's
     required: true
   data:
     description: Directory shared by the phases of one round trip
@@ -28,20 +31,54 @@ runs:
       shell: bash
       env:
         CHECKOUT: ${{ inputs.checkout }}
-        BINARIES: ${{ inputs.binaries }}
+        NEWER_CHECKOUT: ${{ github.workspace }}
+        NEWER_BINARIES: ${{ inputs.newer-binaries }}
+        OLDER_BINARIES: ${{ inputs.older-binaries }}
         TEST: ${{ inputs.test }}
         GRAFANA_COMPAT_ROLE: ${{ inputs.role }}
         GRAFANA_COMPAT_DIR: ${{ inputs.data }}
         LOG: ${{ inputs.log }}
       run: |
         set -uo pipefail
+        # Resolved once here, so go never runs in the older checkout, whose go.mod may ask
+        # for another toolchain.
+        test2json="$(go tool -n test2json)" || exit 1
         rc=0
+        ran=0
         # go test -c names each binary after its package directory under pkg/tests/compat.
-        for bin in "$BINARIES"/*.test; do
-          pkg="$(basename "$bin" .test)"
+        for newer in "$NEWER_BINARIES"/*.test; do
+          [ -e "$newer" ] || continue
+          pkg="$(basename "$newer" .test)"
           # The harness package itself only has unit tests and no directory of its own to run in.
           if [ "$pkg" = compat ]; then continue; fi
+          bin="$newer"
+          dir="$CHECKOUT"
+          role="$GRAFANA_COMPAT_ROLE"
+          if [ -e "$OLDER_BINARIES/$pkg.test" ]; then
+            ran=$((ran + 1))
+            if [ "$GRAFANA_COMPAT_ROLE" = older ]; then bin="$OLDER_BINARIES/$pkg.test"; fi
+          else
+            # Every phase of a package must run the same version, or update and verify find no
+            # fixtures or changes that never happened. Until a release ships the package, it
+            # runs against the newer version alone, on its own database, so it still runs in CI.
+            echo "::notice::Running $pkg in $TEST with the newer version only: the older version does not ship it"
+            dir="$NEWER_CHECKOUT"
+            role=newer
+          fi
           echo "=== $pkg"
-          (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
+          events="${LOG%.log}-$pkg.json"
+          (cd "$dir/pkg/tests/compat/$pkg" && GRAFANA_COMPAT_ROLE="$role" "$test2json" -t -p "$pkg" "$bin" -test.count=1 -test.timeout=20m -test.v=test2json -test.run "^${TEST}\$") \
+            | tee "$events" | jq --unbuffered -rj 'select(.Action == "output") | .Output' | tee -a "$LOG" || rc=1
+          # A binary without the test, or a test that skips, exits 0 without checking anything.
+          if ! jq -e --arg test "$TEST" 'select(.Test == $test and .Action == "pass")' "$events" > /dev/null; then
+            echo "::error::$pkg did not pass $TEST: it is missing, skipped, or failed"
+            rc=1
+          fi
         done
+        # A missing build or no package in common must not pass as a green phase, even when
+        # packages only the newer version ships ran.
+        if [ "$ran" -eq 0 ]; then
+          echo "::error::No package both versions ship ran in $TEST: the newer and older test binaries have none in common"
+          exit 1
+        fi
         exit "$rc"

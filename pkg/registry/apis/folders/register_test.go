@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	restful "github.com/emicklei/go-restful/v3"
-
-	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
-	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,13 +18,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	clientrest "k8s.io/client-go/rest"
+	basecompatibility "k8s.io/component-base/compatibility"
 
 	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
@@ -40,13 +45,82 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestPendingClientConditionalCleanupThroughAPI(t *testing.T) {
+	b := NewAPIService(nil, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, nil, WithPendingDeletionResourceEnabled(true))
+	scheme := runtime.NewScheme()
+	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
+	require.NoError(t, b.InstallSchema(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	opts, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(pending.SchemeGroupVersion)}, nil)
+	require.NoError(t, err)
+	info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+	require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: opts}))
+	info.VersionedResourcesStorageMap = map[string]map[string]rest.Storage{"v1alpha1": {"pendingfolderdeletions": info.VersionedResourcesStorageMap["v1alpha1"]["pendingfolderdeletions"]}}
+	config := genericapiserver.NewConfig(codecs)
+	config.ExternalAddress = "127.0.0.1:443"
+	config.LoopbackClientConfig = &clientrest.Config{}
+	config.EffectiveVersion = basecompatibility.NewEffectiveVersionFromString("", "", "")
+	config.SkipOpenAPIInstallation = true
+	config.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(apiserverbuilder.GetOpenAPIDefinitions([]apiserverbuilder.APIGroupBuilder{b}), openapinamer.NewDefinitionNamer(scheme))
+	config.Authorization.Authorizer = b.GetAuthorizer()
+	server, err := config.Complete(nil).New("pending-test", genericapiserver.NewEmptyDelegate())
+	require.NoError(t, err)
+	t.Cleanup(server.Destroy)
+	require.NoError(t, server.InstallAPIGroup(&info))
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := identity.WithServiceIdentityContext(r.Context(), 1)
+		ctx = request.WithUser(ctx, &k8suser.DefaultInfo{Name: "internal-test-service"})
+		server.Handler.FullHandlerChain.ServeHTTP(w, r.WithContext(ctx))
+	}))
+	defer httpServer.Close()
+	dyn, err := dynamic.NewForConfig(&clientrest.Config{Host: httpServer.URL})
+	require.NoError(t, err)
+	client := cascadedelete.NewPendingClient(dyn)
+	entry := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-old-uid", Namespace: "default"}, Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "old-uid"}}
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(entry)
+	require.NoError(t, err)
+	u["apiVersion"] = "folder.grafana.app/v1alpha1"
+	u["kind"] = "PendingFolderDeletion"
+	resource := dyn.Resource(pending.PendingFolderDeletionResourceInfo.GroupVersionResource()).Namespace("default")
+	_, err = resource.Create(t.Context(), &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	stale, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NoError(t, client.Capture(t.Context(), stale, metav1.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)))
+	require.True(t, apierrors.IsConflict(client.Remove(t.Context(), stale)), "stale API cleanup must preserve the captured entry")
+	fresh, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NotNil(t, fresh.Spec.DeletionTimestamp)
+	require.Equal(t, "2026-11-11T12:00:00Z", *fresh.Spec.DeletionTimestamp)
+	require.NoError(t, client.Remove(t.Context(), fresh))
+	_, err = client.Get(t.Context(), "default", entry.Name)
+	require.True(t, apierrors.IsNotFound(err))
+
+	_, err = resource.Create(t.Context(), &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	recreated, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NotEqual(t, fresh.UID, recreated.UID)
+	// Use the current version to isolate the stale UID precondition.
+	fresh.ResourceVersion = recreated.ResourceVersion
+	require.True(t, apierrors.IsConflict(client.Remove(t.Context(), fresh)))
+	preserved, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.Equal(t, recreated, preserved)
+	require.NoError(t, client.Remove(t.Context(), recreated))
+}
 
 func TestFolderAPIBuilder_PendingDeletionSchema(t *testing.T) {
 	scheme := runtime.NewScheme()
@@ -146,6 +220,127 @@ func TestFolderAPIBuilder_PendingDeletionStorage(t *testing.T) {
 				}
 			})
 		})
+	}
+}
+
+func TestPendingDeleteUIDNamesThroughStorage(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		uid   string
+		valid bool
+	}{
+		{"mixed case non-UUID", "CalculatedUID-AbC123", true},
+		{"slash", "unsupported/UID", false},
+		{"dot in composite name", ".", true},
+		{"percent", "unsupported%UID", false},
+		{"253 characters", strings.Repeat("x", 234), true},
+		{"unsupported Unicode", "é", false},
+		{"254 characters", strings.Repeat("x", 235), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			uid := tc.uid
+			b := NewAPIService(nil, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, nil, WithPendingDeletionResourceEnabled(true))
+			scheme := runtime.NewScheme()
+			require.NoError(t, b.InstallSchema(scheme))
+			codecs := serializer.NewCodecFactory(scheme)
+			opts, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(b.GetGroupVersions()...)}, nil)
+			require.NoError(t, err)
+			info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+			require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: opts}))
+			f := newFolder("legacy-folder-name")
+			f.UID = types.UID(uid)
+			store := &fakeFolderStorage{existing: map[string]*folders.Folder{f.Name: f}}
+			wrapped := newPendingDeleteStorage(store, b.pendingDeletionStore, func(context.Context) bool { return true }, &recordingAccessClient{})
+			ctx := ctxWithNamespace()
+			_, _, err = wrapped.Delete(ctx, f.Name, nil, &metav1.DeleteOptions{})
+			if !tc.valid {
+				require.Error(t, err)
+				require.Empty(t, store.deleted)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, []string{f.Name}, store.deleted)
+			obj, err := b.pendingDeletionStore.Get(ctx, "legacy-folder-name-"+uid, &metav1.GetOptions{})
+			require.NoError(t, err)
+			entry := obj.(*pending.PendingFolderDeletion)
+			require.Equal(t, "legacy-folder-name-"+uid, entry.Name)
+			require.Equal(t, uid, entry.Spec.FolderUID)
+			require.Equal(t, "legacy-folder-name", entry.Spec.FolderName)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionWriterMatrix(t *testing.T) {
+	for _, resourceEnabled := range []bool{false, true} {
+		for _, writerEnabled := range []bool{false, true} {
+			for _, mode := range []string{"delete", "cascade", "collection", "dry-run", "cascade-dry-run", "collection-dry-run"} {
+				t.Run(fmt.Sprintf("resource=%t/writer=%t/%s", resourceEnabled, writerEnabled, mode), func(t *testing.T) {
+					cascade := mode == "cascade" || mode == "cascade-dry-run"
+					dryRun := mode == "dry-run" || mode == "cascade-dry-run" || mode == "collection-dry-run"
+					setOpenFeatureToggles(t, map[string]bool{
+						featuremgmt.FlagFolderPendingDeletionWrites:   writerEnabled,
+						featuremgmt.FlagKubernetesFolderCascadeDelete: cascade,
+					})
+					access := &recordingAccessClient{}
+					contents := &recordingContentsDeleter{}
+					b := NewAPIService(access, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, contents, WithPendingDeletionResourceEnabled(resourceEnabled))
+					b.searcher = &fakeCascadeSearcher{}
+					scheme := runtime.NewScheme()
+					require.NoError(t, b.InstallSchema(scheme))
+					codecs := serializer.NewCodecFactory(scheme)
+					opts, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(b.GetGroupVersions()...)}, nil)
+					require.NoError(t, err)
+					info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+					require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: opts}))
+					ctx := identity.WithRequester(request.WithNamespace(t.Context(), "default"), &identity.StaticRequester{UserUID: "user", OrgID: 1})
+					store := info.VersionedResourcesStorageMap["v1"]["folders"].(grafanarest.Storage)
+					obj, err := store.Create(ctx, &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", Namespace: "default"}, Spec: folders.FolderSpec{Title: "Reports"}}, nil, &metav1.CreateOptions{})
+					require.NoError(t, err)
+					created := obj.(*folders.Folder)
+					options := &metav1.DeleteOptions{}
+					if cascade {
+						options = forceDelete()
+						options.Preconditions = &metav1.Preconditions{UID: &created.UID, ResourceVersion: &created.ResourceVersion}
+					}
+					if dryRun {
+						options.DryRun = []string{metav1.DryRunAll}
+					}
+					if mode == "collection" || mode == "collection-dry-run" {
+						_, err = store.(rest.CollectionDeleter).DeleteCollection(ctx, rest.ValidateAllObjectFunc, options, nil)
+					} else {
+						_, _, err = store.Delete(ctx, created.Name, rest.ValidateAllObjectFunc, options)
+					}
+					blocked := writerEnabled && !resourceEnabled && !dryRun
+					if blocked {
+						require.True(t, apierrors.IsServiceUnavailable(err), "expected unavailable, got %v", err)
+					} else {
+						require.NoError(t, err)
+					}
+					remaining, getErr := store.Get(ctx, created.Name, &metav1.GetOptions{})
+					if blocked || dryRun {
+						require.NoError(t, getErr)
+						require.Equal(t, created, remaining, "failed/dry-run delete must not even mark the folder")
+					} else {
+						require.True(t, apierrors.IsNotFound(getErr), "%v", getErr)
+					}
+					if cascade && !blocked && !dryRun {
+						require.Equal(t, []string{"reports"}, contents.folders)
+					} else {
+						require.Empty(t, contents.folders)
+					}
+					if resourceEnabled {
+						entry, err := b.pendingDeletionStore.Get(ctx, created.Name+"-"+string(created.UID), &metav1.GetOptions{})
+						if writerEnabled && !dryRun {
+							require.NoError(t, err)
+							require.Equal(t, created.Name+"-"+string(created.UID), entry.(*pending.PendingFolderDeletion).Name)
+							require.Equal(t, created.Name, entry.(*pending.PendingFolderDeletion).Spec.FolderName)
+						} else {
+							require.True(t, apierrors.IsNotFound(err), "%v", err)
+						}
+					}
+				})
+			}
+		}
 	}
 }
 
