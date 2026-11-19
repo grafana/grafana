@@ -27,6 +27,13 @@ interface Props {
 /** How far the template panel starts behind the prompt. */
 const PROMPT_OVERLAP = 24;
 
+/**
+ * How the free space around the landing splits, above to below. Centered, a tall screen leaves the block low under
+ * the dashboard's toolbar and the edit pane's controls, which sit at the top; one part above to two below lifts it.
+ */
+const FREE_SPACE_ABOVE = 1;
+const FREE_SPACE_BELOW = 2;
+
 /** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
 async function findHandoffProblem(): Promise<string | undefined> {
   if (!contextSrv.isSignedIn) {
@@ -75,7 +82,7 @@ function useHasTextbox(ref: RefObject<HTMLElement | null>) {
 
 /**
  * Sizes the landing to at least the whole area its dashboard scrolls in, from the top edge to the bottom, so its
- * content centers vertically in that area. The dashboard body grows with its content, so no CSS height chain
+ * content sits in that area with the free space split around it (`FREE_SPACE_ABOVE`, `FREE_SPACE_BELOW`). The dashboard body grows with its content, so no CSS height chain
  * reaches this far down, and the empty-state wrapper's top padding is pulled back into the area (`pullUp`).
  */
 function useFitToScrollArea(enabled: boolean) {
@@ -140,7 +147,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const [templatesEmpty, setTemplatesEmpty] = useState(false);
   const templatesOpen = templatesOpenedByUser ?? !templatesEmpty;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
-  // instead of centering again; the actions move and the room goes below them. A new fit centers it again.
+  // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
   const [held, setHeld] = useState<{ fit: typeof fit; height: number }>();
   const heldHeight = held && held.fit === fit ? held.height : undefined;
@@ -253,7 +260,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   return (
     <div
       ref={fitRef}
-      className={styles.root}
+      className={cx(styles.root, fit && styles.rootFit)}
       // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
       style={fit ? { height: 'auto', minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
     >
@@ -335,6 +342,21 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       minHeight: '100%',
     }),
+    // Fitted to the dashboard's free space: the content keeps its height and spacers above and below share the rest.
+    // They only grow, so on a screen too short for the content it starts at the top.
+    rootFit: css({
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      '&::before': {
+        content: '""',
+        flex: `${FREE_SPACE_ABOVE} 0 0`,
+      },
+      '&::after': {
+        content: '""',
+        flex: `${FREE_SPACE_BELOW} 0 0`,
+      },
+    }),
     content: css({
       display: 'flex',
       flexDirection: 'column',
@@ -343,12 +365,10 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 660,
       padding: theme.spacing(6, 4),
     }),
-    // Centered vertically in the dashboard's free space; on a screen too short for it, at the top.
     contentWithTemplates: css({
       // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
       maxWidth: 'none',
-      marginTop: 'auto',
-      marginBottom: 'auto',
+      flexShrink: 0,
       paddingTop: theme.spacing(3),
       paddingBottom: theme.spacing(3),
       [theme.breakpoints.down('sm')]: {
