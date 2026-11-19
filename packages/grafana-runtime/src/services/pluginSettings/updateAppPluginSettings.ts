@@ -27,7 +27,8 @@ function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Prom
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
   const apiVersion = await getApiVersion();
-  const spec = settingsSpecMapper(data);
+  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
+  const spec = settingsSpecMapper(data, { metadata, ...stored });
   const secure = inlineSecureValuesMapper(data);
   const update = {
     apiVersion: `${pluginId}/${apiVersion}`,
@@ -36,7 +37,6 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
     secure,
   };
 
-  const { metadata, ...stored } = await refetchCachedAppSettings(pluginId, false, apiVersion);
   const test: Operation = { op: 'test', path: '/metadata/resourceVersion', value: metadata.resourceVersion };
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });

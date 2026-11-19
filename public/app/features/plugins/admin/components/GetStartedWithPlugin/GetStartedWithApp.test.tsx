@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { act } from '@testing-library/react';
+import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { usePluginConfig } from '../../hooks/usePluginConfig';
@@ -11,6 +13,7 @@ import { GetStartedWithApp } from './GetStartedWithApp';
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
+    user: { orgId: 1 },
   },
 }));
 
@@ -85,6 +88,33 @@ describe('GetStartedWithApp', () => {
 
     render(<GetStartedWithApp plugin={mockPlugin} />);
     expect(screen.getByText('Disable')).toBeInTheDocument();
+  });
+
+  describe('when plugins.useMTPluginSettings is enabled', () => {
+    // setTestFlags fires OpenFeature events that update React state, so flush them with act().
+    beforeAll(() => {
+      act(() => setTestFlags({ 'plugins.useMTPluginSettings': true }));
+    });
+
+    afterAll(() => {
+      act(() => setTestFlags({}));
+    });
+
+    it('does not render disable button because only enabled apps have settings', () => {
+      (usePluginConfig as jest.Mock).mockReturnValue({ value: { meta: { enabled: true, autoEnabled: false } } });
+      (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
+
+      render(<GetStartedWithApp plugin={mockPlugin} />);
+      expect(screen.queryByText('Disable')).not.toBeInTheDocument();
+    });
+
+    it('renders enable button if plugin is not enabled', () => {
+      (usePluginConfig as jest.Mock).mockReturnValue({ value: { meta: { enabled: false } } });
+      (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
+
+      render(<GetStartedWithApp plugin={mockPlugin} />);
+      expect(screen.getByText('Enable')).toBeInTheDocument();
+    });
   });
 
   it('does not render disable button if plugin is enabled and autoEnabled', () => {

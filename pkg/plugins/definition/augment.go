@@ -57,28 +57,11 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts SettingsResource) (*spec3.OpenAPI, 
 	if !settings.IsZero() {
 		resourceSpec := settings.Spec
 		if opts.IsApp {
-			resourceSpec = &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type: []string{"object"},
-					Properties: map[string]spec.Schema{
-						"pinned":   *spec.BooleanProperty().WithDescription("shows up in the sidebar"),
-						"enabled":  *spec.BooleanProperty().WithDescription("can be executed"),
-						"jsonData": *settings.Spec,
-					},
-				},
-			}
-
-			example := map[string]any{
+			opts.Resource.Example = map[string]any{
 				"metadata": map[string]any{
 					"name": app_INSTANCE_NAME,
 				},
-				"spec": map[string]any{
-					"enabled": true,
-					"pinned":  true,
-					// JSONData (from examples)
-				},
 			}
-			opts.Resource.Example = example
 		}
 
 		oas.Components.Schemas[opts.SpecName] = resourceSpec

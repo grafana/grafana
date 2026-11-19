@@ -77,7 +77,7 @@ describe('settings', () => {
         // stored value
         backendSrv.get = jest.fn().mockResolvedValue({
           ...myOrgTestAppSettings,
-          spec: { enabled: true, pinned: true, jsonData: { apiUrl: 'https://www.grafana.com/' } },
+          spec: { apiUrl: 'https://www.grafana.com/' },
           secure: {
             apiKey: { name: 'some-secret-apiKey' },
             password: { name: 'some-secret-password' },
@@ -87,7 +87,7 @@ describe('settings', () => {
         // value after patch
         backendSrv.patch = jest.fn().mockResolvedValue({
           ...myOrgTestAppSettings,
-          spec: { enabled: false, pinned: false, jsonData: { apiUrl: 'https://grafana.com/' } },
+          spec: { apiUrl: 'https://grafana.com/' },
           secure: {
             apiKey: { name: 'some-secret-apiKey' },
             newKey: { name: 'some-secret-newKey' },
@@ -95,8 +95,6 @@ describe('settings', () => {
         });
 
         const response = await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
-          enabled: false,
-          pinned: false,
           jsonData: { apiUrl: 'https://grafana.com/' },
           secureJsonData: { apiKey: 'the api key', newKey: 'the new key' },
           secureJsonFields: { apiKey: true, password: false },
@@ -104,7 +102,7 @@ describe('settings', () => {
 
         expect(response).toMatchObject({
           ...legacyMyOrgTestAppSettings,
-          enabled: false,
+          enabled: true,
           pinned: false,
           jsonData: { apiUrl: 'https://grafana.com/' },
           secureJsonFields: { apiKey: true, newKey: true },
@@ -114,7 +112,7 @@ describe('settings', () => {
         expect(backendSrv.patch).toHaveBeenCalledWith(
           '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
           [
-            { op: 'test', path: '/metadata/resourceVersion', value: '' },
+            { op: 'test', path: '/metadata/resourceVersion', value: myOrgTestAppSettings.metadata.resourceVersion },
             { op: 'remove', path: '/secure/password/name' },
             {
               op: 'add',
@@ -136,22 +134,13 @@ describe('settings', () => {
             },
             {
               op: 'replace',
-              path: '/spec/jsonData/apiUrl',
+              path: '/spec/apiUrl',
               value: 'https://grafana.com/',
-            },
-            {
-              op: 'replace',
-              path: '/spec/pinned',
-              value: false,
-            },
-            {
-              op: 'replace',
-              path: '/spec/enabled',
-              value: false,
             },
           ],
           { validatePath: true, headers: { 'Content-Type': 'application/json-patch+json' } }
         );
+        expect(backendSrv.post).not.toHaveBeenCalled();
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
         expect(backendSrv.get).toHaveBeenCalledWith(
           '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
@@ -161,11 +150,33 @@ describe('settings', () => {
         );
       });
 
+      it('should not send enabled or pinned to any endpoint', async () => {
+        const patched = { ...myOrgTestAppSettings, spec: { apiUrl: 'https://grafana.com/' } };
+        backendSrv.patch = jest.fn().mockResolvedValue(patched);
+
+        const response = await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
+          enabled: false,
+          pinned: false,
+          jsonData: { apiUrl: 'https://grafana.com/' },
+        });
+
+        expect(backendSrv.post).not.toHaveBeenCalled();
+        expect(backendSrv.patch).toHaveBeenCalledWith(
+          '/apis/myorg-test-app/v0alpha1/namespaces/default/app/instance',
+          expect.arrayContaining([{ op: 'replace', path: '/spec/apiUrl', value: 'https://grafana.com/' }]),
+          expect.anything()
+        );
+        const [, ops] = jest.mocked(backendSrv.patch).mock.calls[0];
+        expect(JSON.stringify(ops)).not.toMatch(/\/spec\/(enabled|pinned)/);
+        // saved settings mean the app is enabled
+        expect(response.enabled).toBe(true);
+      });
+
       it('should cache updated settings from new apis', async () => {
         // stored value
         backendSrv.get = jest.fn().mockResolvedValue({
           ...myOrgTestAppSettings,
-          spec: { enabled: true, pinned: true, jsonData: { apiUrl: 'https://www.grafana.com/' } },
+          spec: { apiUrl: 'https://www.grafana.com/' },
           secure: {
             apiKey: { name: 'some-secret-apiKey' },
             password: { name: 'some-secret-password' },
@@ -175,7 +186,7 @@ describe('settings', () => {
         // value after patch
         backendSrv.patch = jest.fn().mockResolvedValue({
           ...myOrgTestAppSettings,
-          spec: { enabled: false, pinned: false, jsonData: { apiUrl: 'https://grafana.com/' } },
+          spec: { apiUrl: 'https://grafana.com/' },
           secure: {
             apiKey: { name: 'some-secret-apiKey' },
             newKey: { name: 'some-secret-newKey' },
@@ -184,8 +195,6 @@ describe('settings', () => {
 
         const before = await getCachedPromise(async () => {}, { cacheKey: 'getAppPluginSettings-myorg-test-app' });
         const response = await updateAppPluginSettings(myOrgTestAppSettings.metadata.name, {
-          enabled: false,
-          pinned: false,
           jsonData: { apiUrl: 'https://grafana.com/' },
           secureJsonData: { apiKey: 'the api key', newKey: 'the new key' },
           secureJsonFields: { apiKey: true, password: false },
@@ -195,9 +204,7 @@ describe('settings', () => {
         });
 
         expect(before).not.toBe(cached);
-        expect(response?.enabled).toBe(cached.spec.enabled);
-        expect(response?.pinned).toBe(cached.spec.pinned);
-        expect(response?.jsonData).toBe(cached.spec.jsonData);
+        expect(response?.jsonData).toBe(cached.spec);
         expect(cached?.secure).toEqual({
           apiKey: { name: 'some-secret-apiKey' },
           newKey: { name: 'some-secret-newKey' },

@@ -13,7 +13,7 @@ type Settings struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec SettingsSpec `json:"spec,omitempty"`
+	Spec common.Unstructured `json:"spec,omitempty"`
 
 	// Secure values allows setting values that are never shown to users.
 	// The returned properties are only the names of the configured values.
@@ -34,16 +34,6 @@ type SettingsList struct {
 
 func (SettingsList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SettingsList"
-}
-
-type SettingsSpec struct {
-	Enabled  bool                `json:"enabled"`
-	Pinned   bool                `json:"pinned"`
-	JsonData common.Unstructured `json:"jsonData,omitzero"`
-}
-
-func (SettingsSpec) OpenAPIModelName() string {
-	return OpenAPIPrefix + "SettingsSpec"
 }
 
 // +k8s:deepcopy-gen=true

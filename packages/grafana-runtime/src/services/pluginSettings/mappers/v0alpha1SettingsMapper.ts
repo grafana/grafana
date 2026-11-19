@@ -25,22 +25,14 @@ import {
   type InlineSecureValues as v0alpha1InlineSecureValues,
 } from '../types';
 
-export function settingsSpecMapper(data: Partial<PluginMeta>): Partial<v0alpha1SettingsSpec> {
-  const result: Partial<v0alpha1SettingsSpec> = {};
+export function settingsSpecMapper(data: Partial<PluginMeta>, stored: v0alpha1Settings): v0alpha1SettingsSpec {
+  return data.jsonData ?? stored.spec ?? {};
+}
 
-  if (data.enabled !== undefined) {
-    result.enabled = data.enabled;
-  }
-
-  if (data.pinned !== undefined) {
-    result.pinned = data.pinned;
-  }
-
-  if (data.jsonData !== undefined) {
-    result.jsonData = data.jsonData;
-  }
-
-  return result;
+// The legacy-backed API always returns an instance; resourceVersion "0" means no settings have been stored.
+export function hasStoredSettings(settings: v0alpha1Settings): boolean {
+  const { resourceVersion } = settings.metadata;
+  return Boolean(resourceVersion) && resourceVersion !== '0';
 }
 
 export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1InlineSecureValues {
@@ -219,14 +211,13 @@ export const v0alpha1SettingsMapper: SettingsMapper = (spec, settings) => {
   const specMappings = v0alpha1SpecMapper(spec);
 
   if (spec.pluginJson.type === 'app' && settings) {
-    const { enabled, jsonData, pinned } = settings.spec;
     const secureJsonFields = secureJsonFieldsMapper(settings);
 
     return {
       ...specMappings,
-      enabled: specMappings.autoEnabled ? true : enabled,
-      jsonData,
-      pinned: specMappings.autoEnabled ? true : pinned,
+      enabled: specMappings.autoEnabled || hasStoredSettings(settings),
+      jsonData: settings.spec ?? {},
+      pinned: specMappings.autoEnabled,
       secureJsonFields,
     };
   }

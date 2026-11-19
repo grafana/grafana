@@ -3,6 +3,7 @@ import * as React from 'react';
 import { type PluginMeta } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { updateAppPluginSettings } from '@grafana/runtime';
+import { useFlagPluginsUseMTPluginSettings } from '@grafana/runtime/internal';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,6 +17,8 @@ type Props = {
 
 export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null {
   const { value: pluginConfig } = usePluginConfig(plugin);
+  // App settings only exist for enabled apps, so there is nothing to disable.
+  const canDisable = !useFlagPluginsUseMTPluginSettings();
 
   if (!pluginConfig) {
     return null;
@@ -51,7 +54,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
         </Button>
       )}
 
-      {enabled && !autoEnabled && (
+      {enabled && !autoEnabled && canDisable && (
         <Button variant="destructive" onClick={disable}>
           <Trans i18nKey="plugins.get-started-with-app.disable">Disable</Trans>
         </Button>

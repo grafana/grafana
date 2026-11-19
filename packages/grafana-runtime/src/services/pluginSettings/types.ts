@@ -44,17 +44,14 @@ interface ObjectMeta {
   resourceVersion: string;
 }
 
-export interface SettingsSpec<T extends KeyValue = {}> {
-  enabled: boolean;
-  pinned: boolean;
-  jsonData: T;
-}
+/** The plugin's own settings (legacy `jsonData`). `null` when nothing has been stored yet. */
+export type SettingsSpec<T extends KeyValue = KeyValue> = T;
 
 export interface Settings {
   apiVersion: string;
   kind: 'Settings';
   metadata: ObjectMeta;
-  spec: SettingsSpec;
+  spec: SettingsSpec | null;
   secure?: InlineSecureValues;
 }
 
