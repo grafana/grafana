@@ -1,3 +1,4 @@
+import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canCollapseFloatingExtensionSidebar,
@@ -17,7 +18,19 @@ import {
 
 import { extensionSidebarApi } from './extensionSidebarApi';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+
+/** The placement changes reported, without the event name. */
+const reportedPlacementChanges = () =>
+  jest
+    .mocked(reportInteraction)
+    .mock.calls.filter(([name]) => name === 'grafana_extension_sidebar_placement_changed')
+    .map(([, properties]) => properties);
 
 const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
 
@@ -34,6 +47,7 @@ describe('extensionSidebarApi', () => {
   afterEach(() => {
     resetExtensionSidebarPresentationForTests();
     setTestFlags({});
+    jest.mocked(reportInteraction).mockClear();
   });
 
   describe('with grafana.extensionSidebarFloating on', () => {
@@ -50,6 +64,18 @@ describe('extensionSidebarApi', () => {
 
       extensionSidebarApi.setPresentation('docked');
       expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
+    });
+
+    it('reports a move it makes as made by the plugin, docking on the side it last docked on', () => {
+      setExtensionSidebarDockSide('bottom');
+
+      extensionSidebarApi.setPresentation('docked');
+      placementApi().setPlacement('left');
+
+      expect(reportedPlacementChanges()).toEqual([
+        { placement: 'bottom', previous_placement: 'floating', source: 'plugin' },
+        { placement: 'left', previous_placement: 'bottom', source: 'plugin' },
+      ]);
     });
 
     it('ignores a value that is not a layout', () => {

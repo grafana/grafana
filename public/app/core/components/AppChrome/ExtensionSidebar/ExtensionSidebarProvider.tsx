@@ -38,6 +38,7 @@ import {
   type ExtensionSidebarPresentation,
   type FloatingExtensionSidebarHeightOptions,
   getEffectiveExtensionSidebarPresentation,
+  getExtensionSidebarPlacement,
   getFloatingExtensionSidebarHeightOptions,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
@@ -391,6 +392,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         fromLocalstorage: storedComponentId === dockedComponentId,
         // Read here rather than from state, so a layout switch alone does not report an open or close.
         presentation: getEffectiveExtensionSidebarPresentation(pluginId),
+        // Where it opened or closed: `presentation` alone does not say which edge a docked sidebar was on.
+        placement: getExtensionSidebarPlacement(pluginId),
       });
     }
     if (dockedComponentId) {

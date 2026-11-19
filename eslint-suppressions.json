@@ -440,11 +440,6 @@
       "count": 1
     }
   },
-  "packages/grafana-sql/src/components/visual-query-builder/SelectCustomFunctionParameters.tsx": {
-    "react-hooks/immutability": {
-      "count": 2
-    }
-  },
   "packages/grafana-sql/src/components/visual-query-builder/VisualEditor.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
@@ -664,11 +659,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/PanelChrome/PanelChrome.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -748,11 +738,6 @@
   "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/Cells/DefaultCell.tsx": {
-    "react-hooks/immutability": {
-      "count": 4
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {
@@ -889,11 +874,6 @@
   "packages/grafana-ui/src/components/Typeahead/Typeahead.tsx": {
     "react-hooks/refs": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/VizLegend/VizLegendList.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/VizLegend/types.ts": {
@@ -2569,9 +2549,6 @@
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -2783,11 +2760,6 @@
   "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/dimensions/editors/URLPickerTab.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
     }
   },
   "public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor.tsx": {
@@ -3665,11 +3637,6 @@
       "count": 2
     }
   },
-  "public/app/features/transformers/editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/CalculateFieldTransformerEditor/CumulativeOptionsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3691,9 +3658,6 @@
     }
   },
   "public/app/features/transformers/editors/EnumMappingEditor.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }

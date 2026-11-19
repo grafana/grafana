@@ -5,8 +5,8 @@ import {
   type ExtensionSidebarPlacement,
   type FloatingExtensionSidebarHeightOptions,
   getFloatingExtensionSidebarPlacement,
+  getRequestedExtensionSidebarDockSide,
   setExtensionSidebarPlacement,
-  setExtensionSidebarPresentation,
   setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPopOut,
   subscribeToExtensionSidebarPresentation,
@@ -45,9 +45,12 @@ function toFloatingHeightOptions(sizing: unknown): FloatingExtensionSidebarHeigh
 export const extensionSidebarApi: ExtensionSidebarAPI = {
   canFloat: () => canFloatExtensionSidebar(),
   setPresentation: (presentation) => {
-    // Plugins call this from untyped code too; anything else is not a layout.
+    // Plugins call this from untyped code too; anything else is not a layout. Docking keeps the side last docked on.
     if (presentation === 'docked' || presentation === 'floating') {
-      setExtensionSidebarPresentation(presentation);
+      setExtensionSidebarPlacement(
+        presentation === 'floating' ? 'floating' : getRequestedExtensionSidebarDockSide(),
+        'plugin'
+      );
     }
   },
   subscribeToCollapse: (listener) => {
@@ -101,7 +104,7 @@ function getPlacement(): ExtensionSidebarPlacement {
 function setPlacement(placement: ExtensionSidebarPlacement): void {
   // Plugins call this from untyped code too; anything else is not a placement.
   if (isPlacement(placement) && canPlaceExtensionSidebar()) {
-    setExtensionSidebarPlacement(placement);
+    setExtensionSidebarPlacement(placement, 'plugin');
   }
 }
 

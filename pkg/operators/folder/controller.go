@@ -62,10 +62,14 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	}
 	defer closeSearchClient()
 	folders := dynamic.New(restClient)
-	controller := cascadedelete.NewDefaultController(groupRouter{
+	var controllerOptions []cascadedelete.ControllerOption
+	if deps.Config.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").MustBool(false) {
+		controllerOptions = append(controllerOptions, cascadedelete.WithPendingRecovery(cascadedelete.NewPendingClient(folders)))
+	}
+	controller := cascadedelete.NewDefaultControllerWithOptions(groupRouter{
 		byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
 		fallback: folders,
-	}, searchClient)
+	}, searchClient, controllerOptions)
 	// Run shuts the queue down itself, but only once the workers start; every earlier return needs it too.
 	defer controller.ShutDown()
 	handler := controller.Handler()

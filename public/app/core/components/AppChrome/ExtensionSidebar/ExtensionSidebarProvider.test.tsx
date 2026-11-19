@@ -747,7 +747,12 @@ describe('ExtensionSidebarProvider', () => {
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
       expect(reportInteraction).toHaveBeenCalledWith(
         'grafana_extension_sidebar_changed',
-        expect.objectContaining({ opened: true, pluginId: mockPathfinderMeta.pluginId, presentation: 'docked' })
+        expect.objectContaining({
+          opened: true,
+          pluginId: mockPathfinderMeta.pluginId,
+          presentation: 'docked',
+          placement: 'right',
+        })
       );
     });
 

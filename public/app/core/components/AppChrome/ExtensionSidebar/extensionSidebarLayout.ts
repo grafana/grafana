@@ -233,15 +233,36 @@ export function getFloatingExtensionSidebarPlacement(): ExtensionSidebarPlacemen
   return getExtensionSidebarPlacement(FLOATING_EXTENSION_SIDEBAR_PLUGINS[0]);
 }
 
-/** Moves the sidebar, for every page: floating over the page, or docked on that edge. */
-export function setExtensionSidebarPlacement(placement: ExtensionSidebarPlacement): void {
+/**
+ * What moved the sidebar: the Chat button's menu, one of its keyboard shortcuts, the extension through the restricted
+ * API, or a drag of the sidebar itself.
+ */
+export type ExtensionSidebarPlacementSource = 'chat_menu' | 'shortcut' | 'plugin' | 'drag';
+
+/**
+ * Moves the sidebar, for every page: floating over the page, or docked on that edge. Reports the move once, with what
+ * made it, when the sidebar ends up somewhere else.
+ */
+export function setExtensionSidebarPlacement(
+  placement: ExtensionSidebarPlacement,
+  source: ExtensionSidebarPlacementSource
+): void {
+  const previous = getFloatingExtensionSidebarPlacement();
   if (placement === 'floating') {
     setExtensionSidebarPresentation('floating');
-    return;
+  } else {
+    // The side first, so the sidebar never shows docked on the other one.
+    setExtensionSidebarDockSide(placement);
+    setExtensionSidebarPresentation('docked');
   }
-  // The side first, so the sidebar never shows docked on the other one.
-  setExtensionSidebarDockSide(placement);
-  setExtensionSidebarPresentation('docked');
+  const next = getFloatingExtensionSidebarPlacement();
+  if (next !== previous) {
+    reportInteraction('grafana_extension_sidebar_placement_changed', {
+      placement: next,
+      previous_placement: previous,
+      source,
+    });
+  }
 }
 
 /** For `useSyncExternalStore`. */
