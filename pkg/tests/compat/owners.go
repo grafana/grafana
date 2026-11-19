@@ -17,7 +17,14 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// reported holds the top-level tests that already named an owner for a failure.
+// Track ordinary failures and panics separately so a resource failure doesn't
+// suppress reporting of a subsequent panic in the phase.
+type phaseReport struct {
+	name     string
+	panicked bool
+}
+
+// reported holds the phase reports that already named an owner.
 var reported sync.Map
 
 // phases holds the top-level tests that registered package-level reporting, so that a
@@ -51,18 +58,22 @@ func ReportOwners(t *testing.T, paths ...string) {
 	t.Cleanup(func() {
 		if !isSubtest {
 			defer phases.Delete(root)
-			defer reported.Delete(root)
-			if _, done := reported.Load(root); done {
+			defer reported.Delete(phaseReport{name: root})
+			defer reported.Delete(phaseReport{name: root, panicked: true})
+		}
+		panicked := panicking()
+		if !t.Failed() && !panicked {
+			return
+		}
+		key := phaseReport{name: root, panicked: panicked}
+		if !isSubtest {
+			if _, done := reported.Load(key); done {
 				return
 			}
 		}
-		if !t.Failed() && !panicking() {
-			return
+		if logOwners(t, paths, panicked) && isSubtest {
+			reported.Store(key, true)
 		}
-		if isSubtest {
-			reported.Store(root, true)
-		}
-		logOwners(t, paths)
 	})
 }
 
@@ -72,8 +83,9 @@ func ReportOwners(t *testing.T, paths ...string) {
 func ReportOwnersNow(t *testing.T, paths ...string) {
 	t.Helper()
 	root, _, _ := strings.Cut(t.Name(), "/")
-	reported.Store(root, true)
-	logOwners(t, paths)
+	if logOwners(t, paths, false) {
+		reported.Store(phaseReport{name: root}, true)
+	}
 }
 
 // panicking reports whether the caller runs while a panic unwinds. The testing package runs the
@@ -93,19 +105,25 @@ func panicking() bool {
 	}
 }
 
-func logOwners(t *testing.T, paths []string) {
+func logOwners(t *testing.T, paths []string, panicked bool) bool {
 	t.Helper()
 	owners, err := lookupOwners(paths)
 	if err != nil {
 		t.Logf("could not look up owners: %v", err)
-		return
+		return false
 	}
-	t.Logf("owned by %s", owners)
 	if summary := os.Getenv("GITHUB_STEP_SUMMARY"); summary != "" {
 		if err := appendLine(summary, fmt.Sprintf("- `%s`%s failed, owned by %s\n", qualified(t.Name()), phaseLabel(), owners)); err != nil {
 			t.Logf("could not write job summary: %v", err)
 		}
 	}
+	// The runner can match these markers regardless of which caller Go attributes the log to.
+	if panicked {
+		t.Logf("[compat-panic-owner] owned by %s", owners)
+	} else {
+		t.Logf("[compat-owner] owned by %s", owners)
+	}
+	return true
 }
 
 // watchTimeout leaves the owners of a phase that is about to hit the test timeout in the

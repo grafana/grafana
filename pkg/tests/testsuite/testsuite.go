@@ -8,8 +8,13 @@ import (
 )
 
 func Run(m *testing.M) {
+	os.Exit(RunWithDB(m))
+}
+
+// RunWithDB runs the tests and returns their exit code after tearing down the test DB.
+func RunWithDB(m *testing.M) int {
 	db.SetupTestDB()
 	code := m.Run()
 	db.CleanupTestDB()
-	os.Exit(code)
+	return code
 }

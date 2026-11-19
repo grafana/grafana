@@ -1,7 +1,6 @@
 package compat
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
 	"os"
@@ -13,7 +12,20 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
+
+func TestMain(m *testing.M) {
+	mode := os.Getenv("COMPAT_REPORT_OWNERS_MODE")
+	if mode == "cleanup-exit" {
+		db.CleanupTestDB = func() { os.Exit(1) }
+	}
+	if mode != "" {
+		Main(m)
+	}
+	os.Exit(m.Run())
+}
 
 // codeowners has distinct teams, so the tests check lookup precedence and not who owns what today.
 const codeowners = `
@@ -124,22 +136,30 @@ func TestLookupOwnersFindsRepositoryEntry(t *testing.T) {
 func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 	self, err := os.Executable()
 	require.NoError(t, err)
+	const (
+		packageFailure  = "[compat-owner] owned by @org/compat"
+		resourceFailure = "[compat-owner] owned by @org/resource"
+		packagePanic    = "[compat-panic-owner] owned by @org/compat"
+		resourcePanic   = "[compat-panic-owner] owned by @org/resource"
+	)
 	for _, tc := range []struct {
-		name string
-		mode string
-		args []string
-		want int
-		// owner is the team the entry must name, the package's unless a resource has its own.
-		owner string
+		name     string
+		mode     string
+		complete bool
+		reports  []string
 	}{
-		{"a failure outside any subtest names the package owners", "phase", nil, 1, ""},
-		{"a failing subtest is not reported a second time by its phase", "subtest", nil, 1, ""},
-		{"a failure reported at once is not reported a second time by its phase", "now", nil, 1, ""},
-		{"a shutdown failure after a resource failure is reported too", "shutdown", nil, 2, ""},
-		{"a phase registered twice reports once", "twice", nil, 1, ""},
-		{"a panic in a phase names the package owners", "panic-phase", nil, 1, ""},
-		{"a panic in a resource names its owners, not the package's", "panic-subtest", nil, 1, "@org/resource"},
-		{"a passing phase reports nothing", "pass", nil, 0, ""},
+		{"a failure outside any subtest names the package owners", "phase", true, []string{packageFailure}},
+		{"a failing subtest is not reported a second time by its phase", "subtest", true, []string{resourceFailure}},
+		{"an unowned subtest failure falls back to the package", "unowned-subtest", true, []string{packageFailure}},
+		{"a failure reported at once is not reported a second time by its phase", "now", true, []string{packageFailure}},
+		{"a shutdown failure after a resource failure is reported too", "shutdown", true, []string{resourceFailure, packageFailure}},
+		{"a phase registered twice reports once", "twice", true, []string{packageFailure}},
+		{"a panic in a phase names the package owners", "panic-phase", false, []string{packagePanic}},
+		{"a panic in a resource names only its owners", "panic-subtest", false, []string{resourcePanic}},
+		{"a phase panic after a resource failure reports both owners", "resource-failure-then-panic", false, []string{resourceFailure, packagePanic}},
+		{"a background panic after a resource failure leaves it to the runner to report the crash", "background-panic", false, []string{resourceFailure}},
+		{"a resource failure followed by a database cleanup exit is incomplete", "cleanup-exit", false, []string{resourceFailure}},
+		{"a passing phase reports nothing", "pass", true, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// A repository of its own, so the owner does not depend on the real CODEOWNERS, and a
@@ -150,26 +170,29 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 				".github/CODEOWNERS":     "/pkg/tests/compat/ @org/compat\n/apps/resource-owned/ @org/resource\n",
 				"pkg/tests/compat/.keep": "",
 			})
-			owner := "owned by " + cmp.Or(tc.owner, "@org/compat")
 			summary := filepath.Join(repo, "summary.md")
-			args := append([]string{"-test.run=^TestReportOwnersHelper$", "-test.count=1"}, tc.args...)
-			cmd := exec.Command(self, args...) // #nosec G204 -- re-runs this test binary
+			cmd := exec.Command(self, "-test.run=^TestReportOwnersHelper$", "-test.count=1", "-test.v=test2json") // #nosec G204 -- re-runs this test binary
 			cmd.Dir = pkg
 			cmd.Env = append(os.Environ(), "COMPAT_REPORT_OWNERS_MODE="+tc.mode, "GITHUB_STEP_SUMMARY="+summary,
-				EnvRole+"=newer", EnvDir+"="+filepath.Join(repo, "upgrade-rollback"))
-			out, _ := cmd.CombinedOutput() // a failing helper exits non-zero, which is the point
-			require.Equal(t, tc.want, strings.Count(string(out), owner), string(out))
-			written, err := os.ReadFile(summary) // #nosec G304 -- file in the test's temp dir
-			if tc.want == 0 {
-				require.ErrorIs(t, err, os.ErrNotExist)
+				EnvRole+"=newer", EnvDir+"="+filepath.Join(repo, "upgrade-rollback"), EnvPrintOwners+"=", "GRAFANA_TEST_DB=sqlite3")
+			out, runErr := cmd.CombinedOutput()
+			require.Equal(t, tc.complete, strings.Contains(string(out), "[compat-phase-complete]\n"), string(out))
+			require.Equal(t, len(tc.reports), strings.Count(string(out), "-owner] owned by "), string(out))
+			written, readErr := os.ReadFile(summary) // #nosec G304 -- file in the test's temp dir
+			if len(tc.reports) == 0 {
+				require.NoError(t, runErr, string(out))
+				require.ErrorIs(t, readErr, os.ErrNotExist)
 				return
 			}
-			require.NoError(t, err)
-			require.Equal(t, tc.want, strings.Count(string(written), owner), string(written))
-			require.Contains(t, string(written), "(newer, upgrade-rollback)", "which version and round trip failed")
-			if tc.owner != "" {
-				require.NotContains(t, string(written), "@org/compat", "a resource entry is not also reported to the package")
+			require.Error(t, runErr)
+			require.NoError(t, readErr)
+			require.Equal(t, len(tc.reports), strings.Count(string(written), "failed, owned by "), string(written))
+			for _, report := range tc.reports {
+				require.Contains(t, string(out), report)
+				_, owner, _ := strings.Cut(report, " owned by ")
+				require.Contains(t, string(written), "owned by "+owner)
 			}
+			require.Contains(t, string(written), "(newer, upgrade-rollback)", "which version and round trip failed")
 			require.Contains(t, string(written), "`compat/TestReportOwnersHelper", "which package failed")
 		})
 	}
@@ -182,6 +205,10 @@ func TestReportOwnersHelper(t *testing.T) {
 		t.Skip("runs only as a subprocess")
 	}
 	ReportOwners(t, PackagePath(t))
+	resourceFailure := func(t *testing.T) {
+		ReportOwners(t, "apps/resource-owned", PackagePath(t))
+		t.Fatal("resource failure")
+	}
 	switch mode {
 	case "phase":
 		t.Fatal("phase failure")
@@ -197,18 +224,24 @@ func TestReportOwnersHelper(t *testing.T) {
 		t.Fatal("phase failure")
 	case "shutdown":
 		t.Cleanup(func() { shutDown(t, func() error { return errors.New("server did not stop") }) })
-		t.Run("resource", func(t *testing.T) {
-			ReportOwners(t, PackagePath(t))
-			t.Fatal("resource failure")
-		})
+		t.Run("resource", resourceFailure)
 	case "now":
 		ReportOwnersNow(t, PackagePath(t))
 		t.Fatal("failure reported at once")
-	case "subtest":
+	case "subtest", "cleanup-exit":
+		t.Run("resource", resourceFailure)
+	case "unowned-subtest":
 		t.Run("resource", func(t *testing.T) {
-			ReportOwners(t, PackagePath(t))
-			t.Fatal("resource failure")
+			ReportOwners(t, "apps/unowned")
+			t.Fatal("unowned resource failure")
 		})
+	case "resource-failure-then-panic":
+		t.Run("resource", resourceFailure)
+		panic("phase panic")
+	case "background-panic":
+		t.Run("resource", resourceFailure)
+		go func() { panic("background service panic") }()
+		select {}
 	}
 }
 

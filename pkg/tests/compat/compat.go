@@ -59,13 +59,20 @@ func Main(m *testing.M) {
 		fmt.Println(owners)
 		os.Exit(0)
 	}
-	if dir := os.Getenv(EnvDir); dir != "" {
+	dir := os.Getenv(EnvDir)
+	if dir != "" {
 		if err := setupDB(dir); err != nil {
 			fmt.Fprintf(os.Stderr, "compat: %v\n", err)
 			os.Exit(1)
 		}
 	}
-	testsuite.Run(m)
+	code := testsuite.RunWithDB(m)
+	if dir != "" {
+		// The phase runner uses this to distinguish test failures from a process that
+		// died before finishing, including during database cleanup after m.Run.
+		fmt.Println("[compat-phase-complete]")
+	}
+	os.Exit(code)
 }
 
 func setupDB(dir string) error {
