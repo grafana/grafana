@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	claims "github.com/grafana/authlib/types"
+
 	dashboardviewsv0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -30,6 +32,9 @@ type savedViewStorageAuthorizer struct {
 }
 
 func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	if err := denyAnonymousWrite(ctx); err != nil {
+		return err
+	}
 	if err := s.checkAccess(ctx, obj); err != nil {
 		return err
 	}
@@ -38,6 +43,9 @@ func (s *savedViewStorageAuthorizer) BeforeCreate(ctx context.Context, obj runti
 
 // BeforeUpdate keeps spec.dashboardUID immutable, since checkDashboardExists only runs on create.
 func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
+	if err := denyAnonymousWrite(ctx); err != nil {
+		return err
+	}
 	if err := s.checkAccess(ctx, oldObj); err != nil {
 		return err
 	}
@@ -56,6 +64,9 @@ func (s *savedViewStorageAuthorizer) BeforeUpdate(ctx context.Context, oldObj, o
 }
 
 func (s *savedViewStorageAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	if err := denyAnonymousWrite(ctx); err != nil {
+		return err
+	}
 	return s.checkAccess(ctx, obj)
 }
 
@@ -91,6 +102,18 @@ func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtim
 // WatchFilter denies Watch outright; nothing uses it.
 func (s *savedViewStorageAuthorizer) WatchFilter(_ context.Context) (storewrapper.WatchEventFilter, error) {
 	return storewrapper.RejectAllWatchFilter, nil
+}
+
+// denyAnonymousWrite keeps anonymous visitors from changing views that every viewer shares.
+func denyAnonymousWrite(ctx context.Context) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return storewrapper.ErrUnauthenticated
+	}
+	if requester.IsIdentityType(claims.TypeAnonymous) {
+		return storewrapper.ErrUnauthorized
+	}
+	return nil
 }
 
 // checkAccess uses AccessControl.Evaluate rather than AccessClient.BatchCheck because Evaluate's

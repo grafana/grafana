@@ -303,3 +303,32 @@ func TestOrphanedViews(t *testing.T) {
 		assert.Empty(t, filtered.Items)
 	})
 }
+
+func TestAnonymousViewers(t *testing.T) {
+	authz := newTestAuthorizer()
+	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(testDashboardUID)
+	ctx := withTestNamespace(identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:        claims.TypeAnonymous,
+		OrgRole:     identity.RoleViewer,
+		OrgID:       1,
+		Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {scope}}},
+	}), 1)
+	view := viewWithDashboardUID(testDashboardUID)
+
+	t.Run("can read shared views", func(t *testing.T) {
+		require.NoError(t, authz.AfterGet(ctx, view))
+		result, err := authz.FilterList(ctx, &dashboardviewsv0alpha1.SavedDashboardViewList{
+			Items: []dashboardviewsv0alpha1.SavedDashboardView{*view},
+		})
+		require.NoError(t, err)
+		filtered, ok := result.(*dashboardviewsv0alpha1.SavedDashboardViewList)
+		require.True(t, ok)
+		assert.Len(t, filtered.Items, 1)
+	})
+
+	t.Run("cannot create, update or delete them", func(t *testing.T) {
+		require.ErrorIs(t, authz.BeforeCreate(ctx, view), storewrapper.ErrUnauthorized)
+		require.ErrorIs(t, authz.BeforeUpdate(ctx, view, view), storewrapper.ErrUnauthorized)
+		require.ErrorIs(t, authz.BeforeDelete(ctx, view), storewrapper.ErrUnauthorized)
+	})
+}
