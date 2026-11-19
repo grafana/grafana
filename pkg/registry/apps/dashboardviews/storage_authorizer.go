@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/validation/path"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -212,7 +212,7 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 	// A malformed UID can't name a dashboard; deny it before it reaches the scope resolver, which
 	// would fail with a 500. This runs before admission, so the validator can't catch it first.
 	if len(view.Spec.DashboardUID) == 0 || len(view.Spec.DashboardUID) > maxDashboardUIDLength ||
-		len(path.IsValidPathSegmentName(view.Spec.DashboardUID)) > 0 {
+		len(content.IsPathSegmentName(view.Spec.DashboardUID)) > 0 {
 		return errDenied
 	}
 

@@ -56,8 +56,9 @@ func invalidFields(t *testing.T, err error) []string {
 	if !errors.As(err, &status) || status.Status().Details == nil {
 		t.Fatalf("expected status details on %v", err)
 	}
-	var fields []string
-	for _, cause := range status.Status().Details.Causes {
+	causes := status.Status().Details.Causes
+	fields := make([]string, 0, len(causes))
+	for _, cause := range causes {
 		fields = append(fields, cause.Field)
 	}
 	return fields
