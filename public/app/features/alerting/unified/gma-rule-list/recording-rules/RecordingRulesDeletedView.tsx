@@ -19,6 +19,7 @@ import {
   trackRecordingRuleReviewOpened,
   useTrackDeletedRecordingRulesPageView,
 } from '../deleted-rules/analytics';
+import { type DeletedRule } from '../deleted-rules/types';
 import { useRestoreRecordingRule } from '../deleted-rules/useRestoreRecordingRule';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 
@@ -54,8 +55,8 @@ function useDeletedByNames(rules: RecordingRule[]): Record<string, string> {
 export function RecordingRulesDeletedView() {
   const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } =
     useDeletedRecordingRules();
-  const [reviewing, setReviewing] = useState<RecordingRule | null>(null);
-  const [restoring, setRestoring] = useState<RecordingRule | null>(null);
+  const [reviewing, setReviewing] = useState<DeletedRule | null>(null);
+  const [restoring, setRestoring] = useState<DeletedRule | null>(null);
   const userNames = useDeletedByNames(items);
   const { restore, isRestoring } = useRestoreRecordingRule();
 

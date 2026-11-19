@@ -19,6 +19,7 @@ import {
   trackReviewOpened,
   useTrackDeletedRulesPageView,
 } from '../deleted-rules/analytics';
+import { type DeletedRule } from '../deleted-rules/types';
 import { useRestoreAlertRule } from '../deleted-rules/useRestoreRule';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 
@@ -59,8 +60,8 @@ function useDeletedByNames(rules: AlertRule[]): Record<string, string> {
 
 export function AlertRulesDeletedView() {
   const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = useDeletedAlertRules();
-  const [reviewing, setReviewing] = useState<AlertRule | null>(null);
-  const [restoring, setRestoring] = useState<AlertRule | null>(null);
+  const [reviewing, setReviewing] = useState<DeletedRule | null>(null);
+  const [restoring, setRestoring] = useState<DeletedRule | null>(null);
   const userNames = useDeletedByNames(items);
   const { restore, isRestoring } = useRestoreAlertRule();
 
