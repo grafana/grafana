@@ -8,9 +8,14 @@ import { type UPlotConfigBuilder, Button } from '@grafana/ui';
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  /**
+   * Set when each value is drawn until the next one, like the state timeline does.
+   * The last value then reaches into the time range even if its timestamp is before it.
+   */
+  holdLastValue?: boolean;
 }
 
-export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
+export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastValue }: ThresholdControlsPluginProps) => {
   const [data, setData] = useState<uPlot['data']>([]);
   const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
 
@@ -28,6 +33,18 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
     (idx: number): boolean => {
       for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
         if (data[seriesIdx][idx] != null) {
+          return false;
+        }
+      }
+      return true;
+    },
+    [data]
+  );
+
+  const allValuesExplicitNullAtIndex = useCallback(
+    (idx: number): boolean => {
+      for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
+        if (data[seriesIdx][idx] !== null) {
           return false;
         }
       }
@@ -65,8 +82,15 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
   let first = timeValues[i];
   let last = timeValues[j];
 
+  // Matches how the timeline draws: an undefined value continues the previous one and a null ends it,
+  // so the last value lasts until a row where every series is null, or to the edge of the chart.
+  let end = last;
+  if (holdLastValue) {
+    end = j + 1 < timeValues.length && allValuesExplicitNullAtIndex(j + 1) ? timeValues[j + 1] : Infinity;
+  }
+
   // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= timeRange.max && last >= timeRange.min) {
+  if (first <= timeRange.max && end >= timeRange.min) {
     return null;
   }
 
