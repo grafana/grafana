@@ -20,7 +20,7 @@ import {
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { defaultTableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { type TableNG } from '@grafana/ui/unstable';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
@@ -68,7 +68,7 @@ const mockEventBus: EventBus = {
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the table only renders a single column.
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();

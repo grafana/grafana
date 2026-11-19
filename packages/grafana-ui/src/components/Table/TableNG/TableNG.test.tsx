@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -32,7 +32,6 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 beforeAll(() => {
   // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
   mockBoundingClientRect({ width: 800, height: 600 });
-  mockClientSize({ width: 800, height: 600 });
   // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
   mockBoundingClientRect({ width: 800, height: 600 });
 });
