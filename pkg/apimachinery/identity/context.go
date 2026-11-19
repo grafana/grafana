@@ -236,6 +236,7 @@ var serviceIdentityTokenPermissions = []string{
 	"provisioning.grafana.app:*",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
+	"logsdrilldown.grafana.app:*",
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"notifications.alerting.grafana.app:*",

@@ -249,6 +249,41 @@ func TestMapperRegistry_Playlist(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
 }
 
+// TestMapperRegistry_LogsDrilldown verifies the Logs Drilldown kinds are readable
+// by anyone with app access, and writable with the action each kind needs.
+func TestMapperRegistry_LogsDrilldown(t *testing.T) {
+	reg := NewMapperRegistry()
+	readVerbs := []string{utils.VerbGet, utils.VerbList, utils.VerbWatch}
+	writeVerbs := []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection}
+
+	for resource, writeAction := range map[string]string{
+		"logsdrilldowns":              "datasources:explore",
+		"logsdrilldowndefaults":       "plugins:write",
+		"logsdrilldowndefaultcolumns": "plugins:write",
+		"logsdrilldowndefaultlabels":  "plugins:write",
+	} {
+		t.Run(resource, func(t *testing.T) {
+			mapping, ok := reg.Get("logsdrilldown.grafana.app", resource, "")
+			require.True(t, ok, "%s should be registered in the mapper", resource)
+
+			for _, verb := range readVerbs {
+				action, ok := mapping.Action(verb)
+				require.True(t, ok)
+				assert.Equal(t, "plugins.app:access", action, "verb %q", verb)
+			}
+			for _, verb := range writeVerbs {
+				action, ok := mapping.Action(verb)
+				require.True(t, ok)
+				assert.Equal(t, writeAction, action, "verb %q", verb)
+			}
+			for _, verb := range append(readVerbs, writeVerbs...) {
+				assert.True(t, mapping.SkipScope(verb), "verb %q must skip scope", verb)
+			}
+			assert.False(t, mapping.HasFolderSupport())
+		})
+	}
+}
+
 func TestMapperRegistry_InvalidDatasourceGroups(t *testing.T) {
 	reg := NewMapperRegistry()
 	for _, group := range []string{

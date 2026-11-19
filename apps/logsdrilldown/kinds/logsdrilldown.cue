@@ -13,6 +13,10 @@ LogsDrilldownSpecv1alpha1: {
 
 logsdrilldownv1alpha1: {
 	kind: "LogsDrilldown" // note: must be uppercase
+	// Names are <service>:<user_uid>; only that user may write the object.
+	validation: {
+		operations: ["CREATE", "UPDATE", "DELETE"]
+	}
 	schema: {
 		spec: LogsDrilldownSpecv1alpha1
 	}

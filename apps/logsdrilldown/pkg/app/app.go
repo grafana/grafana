@@ -27,7 +27,8 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: logsdrilldownv1alpha1.LogsDrilldownKind(),
+				Kind:      logsdrilldownv1alpha1.LogsDrilldownKind(),
+				Validator: &simple.Validator{ValidateFunc: validateOwner},
 			},
 			{
 				Kind: logsdrilldownv1alpha1.LogsDrilldownDefaultsKind(),

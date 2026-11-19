@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -417,6 +418,38 @@ func newAlertmanagerImportsTranslation() translation {
 	}
 }
 
+// newLogsDrilldownTranslation maps a Logs Drilldown kind for callers whose
+// requests skip the app's own authorizer (the router). Anyone who can use app
+// plugins may read; writes need writeAction. No verb is scoped, since the kinds
+// have no per-object permissions. Per-user ownership of logsdrilldowns is not
+// expressible here; the app's admission validator enforces it.
+func newLogsDrilldownTranslation(writeAction string) translation {
+	return translation{
+		resource:  "logsdrilldown",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              pluginaccesscontrol.ActionAppAccess,
+			utils.VerbList:             pluginaccesscontrol.ActionAppAccess,
+			utils.VerbWatch:            pluginaccesscontrol.ActionAppAccess,
+			utils.VerbCreate:           writeAction,
+			utils.VerbUpdate:           writeAction,
+			utils.VerbPatch:            writeAction,
+			utils.VerbDelete:           writeAction,
+			utils.VerbDeleteCollection: writeAction,
+		},
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:              true,
+			utils.VerbList:             true,
+			utils.VerbWatch:            true,
+			utils.VerbCreate:           true,
+			utils.VerbUpdate:           true,
+			utils.VerbPatch:            true,
+			utils.VerbDelete:           true,
+			utils.VerbDeleteCollection: true,
+		},
+	}
+}
+
 // newAlertingConfigTranslation maps an alerting app's per-org Config singleton
 // (and its /status subresource) to its read/update actions, mirroring the
 // app's own authorizer. Delete is deliberately unmapped because the singleton
@@ -700,6 +733,12 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: skipScopeOnAllVerbs,
 			},
+		},
+		"logsdrilldown.grafana.app": {
+			"logsdrilldowns":              newLogsDrilldownTranslation(accesscontrol.ActionDatasourcesExplore),
+			"logsdrilldowndefaults":       newLogsDrilldownTranslation(pluginaccesscontrol.ActionWrite),
+			"logsdrilldowndefaultcolumns": newLogsDrilldownTranslation(pluginaccesscontrol.ActionWrite),
+			"logsdrilldowndefaultlabels":  newLogsDrilldownTranslation(pluginaccesscontrol.ActionWrite),
 		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
