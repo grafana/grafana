@@ -221,7 +221,7 @@
                   runHook postInstallCheck
                 '';
               }
-              // lib.optionalAttrs (useGoBuildCache && target == "linux-amd64") {
+              // lib.optionalAttrs useGoBuildCache {
                 postConfigure = ''
                   if [ -w /grafana-go-cache ]; then
                     export GOCACHE=/grafana-go-cache
