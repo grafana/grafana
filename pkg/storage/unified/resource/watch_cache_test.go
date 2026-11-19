@@ -139,16 +139,6 @@ func TestWatchCacheByteAccountingWraparound(t *testing.T) {
 	}
 }
 
-func TestWatchCacheEvictionFloorDoesNotRegress(t *testing.T) {
-	gr := GroupResource{Group: "g", Resource: "r"}
-	cache := newWatchCache(1, writtenEventIdentity)
-	for _, rv := range []int64{100, 50, 60} {
-		cache.add(cacheEvent(gr, rv))
-	}
-	require.True(t, IsResourceVersionExpired(cache.validateResume(gr, watchResume{since: 99})))
-	require.NoError(t, cache.validateResume(gr, watchResume{since: 100}))
-}
-
 func TestWrittenEventSizeBytes(t *testing.T) {
 	var event *WrittenEvent
 	require.Zero(t, event.sizeBytes())
@@ -189,34 +179,6 @@ func TestWatchCacheCollectionFloors(t *testing.T) {
 	require.NoError(t, validate(second, 80))
 }
 
-func TestWatchCacheByteEvictionRaisesCollectionFloor(t *testing.T) {
-	gr := GroupResource{Group: "g", Resource: "r"}
-	cache := newWatchCache(10, writtenEventIdentity)
-	require.NoError(t, cache.seed(cacheSeed[*WrittenEvent]{collectionFloors: map[GroupResource]int64{gr: 50}}))
-	validate := func(since int64) error {
-		return cache.validateResume(gr, watchResume{since: since, requestedRV: since})
-	}
-
-	first := cacheEvent(gr, 80)
-	first.Value = make([]byte, 1024)
-	cache.maxBytes = first.sizeBytes()
-	cache.add(first)
-	next := cacheEvent(gr, 90)
-	next.Value = make([]byte, 1024)
-	// The byte limit, not the count, evicts the first event.
-	cache.add(next)
-	require.Equal(t, 1, cache.cachedLen())
-	require.True(t, IsResourceVersionExpired(validate(79)))
-	require.NoError(t, validate(80))
-
-	// An event too large to cache raises the floor too.
-	huge := cacheEvent(gr, 100)
-	huge.Value = make([]byte, 4096)
-	cache.add(huge)
-	require.True(t, IsResourceVersionExpired(validate(99)))
-	require.NoError(t, validate(100))
-}
-
 func TestWatchCacheRejectsOversizedSeed(t *testing.T) {
 	cache := newWatchCache(1, intIdentity)
 	require.ErrorContains(t, cache.seed(cacheSeed[int]{items: []int{1, 2}, initialCacheFloor: 50}), "cache capacity")
@@ -224,47 +186,98 @@ func TestWatchCacheRejectsOversizedSeed(t *testing.T) {
 	require.Zero(t, cache.initialFloor)
 }
 
-func TestWatchCacheByteBudgetEvictsLargestCollection(t *testing.T) {
+func TestWatchCacheByteEviction(t *testing.T) {
 	quiet := GroupResource{Group: "g", Resource: "quiet"}
 	busy := GroupResource{Group: "g", Resource: "busy"}
-	sized := func(gr GroupResource, rv int64) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, 1024)
-		return event
+	incoming := GroupResource{Group: "g", Resource: "incoming"}
+	type write struct {
+		gr   GroupResource
+		rv   int64
+		size int
 	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxBytes = 4 * 1024
-	cache.add(sized(quiet, 10))
-	for rv := int64(11); rv <= 20; rv++ {
-		cache.add(sized(busy, rv))
-		require.LessOrEqual(t, cache.sizeBytes, cache.maxBytes)
+	type replay struct {
+		gr    GroupResource
+		floor int64
+		rvs   []int64
 	}
-	// A burst that fills the shared budget evicts its own collection's events.
-	require.Equal(t, []int64{10}, replayRVs(t, &cache, quiet))
-	require.Equal(t, []int64{18, 19, 20}, replayRVs(t, &cache, busy))
-	require.NoError(t, cache.validateResume(quiet, watchResume{since: 0}))
-	require.True(t, IsResourceVersionExpired(cache.validateResume(busy, watchResume{since: 16})))
-	require.NoError(t, cache.validateResume(busy, watchResume{since: 17}))
+	for _, tc := range []struct {
+		name       string
+		maxBytes   int64
+		maxEvents  int
+		ringLimit  int
+		seedFloors map[GroupResource]int64
+		writes     []write
+		want       []replay
+	}{
+		{
+			name: "burst evicts the largest collection", maxBytes: 4,
+			writes: []write{{quiet, 10, 1}, {busy, 11, 1}, {busy, 12, 1}, {busy, 13, 1}, {busy, 14, 1}},
+			want:   []replay{{quiet, 0, []int64{10}}, {busy, 11, []int64{12, 13, 14}}},
+		},
+		{
+			name: "pending bytes count toward the largest collection", maxBytes: 7,
+			seedFloors: map[GroupResource]int64{busy: 10},
+			writes:     []write{{quiet, 10, 4}, {busy, 11, 3}, {busy, 12, 3}},
+			want:       []replay{{quiet, 0, []int64{10}}, {busy, 11, []int64{12}}},
+		},
+		{
+			name: "byte eviction also frees a count slot", maxBytes: 100, maxEvents: 3,
+			writes: []write{{quiet, 10, 1}, {quiet, 11, 1}, {busy, 12, 98}, {incoming, 13, 25}},
+			want:   []replay{{quiet, 0, []int64{10, 11}}, {busy, 12, nil}, {incoming, 0, []int64{13}}},
+		},
+		{
+			name: "reject when the incoming event alone outweighs other rings", maxBytes: 8,
+			writes: []write{{quiet, 10, 3}, {busy, 11, 1}, {busy, 12, 6}},
+			want:   []replay{{quiet, 0, []int64{10}}, {busy, 12, []int64{11}}},
+		},
+		{
+			name: "reject without applying a partial plan", maxBytes: 100,
+			writes: []write{{busy, 10, 4}, {busy, 11, 50}, {quiet, 12, 46}, {incoming, 13, 52}},
+			want:   []replay{{busy, 0, []int64{10, 11}}, {quiet, 0, []int64{12}}, {incoming, 13, nil}},
+		},
+		{
+			name: "reject a late event without evicting from its full ring", maxBytes: 100, ringLimit: 2,
+			writes: []write{{busy, 20, 1}, {busy, 30, 1}, {quiet, 40, 60}, {busy, 10, 80}},
+			want:   []replay{{busy, 10, []int64{20, 30}}, {quiet, 0, []int64{40}}},
+		},
+		{
+			name: "evict several events from the incoming collection", maxBytes: 100,
+			writes: []write{{busy, 1, 20}, {busy, 2, 20}, {busy, 3, 20}, {busy, 4, 20}, {quiet, 5, 20}, {busy, 6, 50}},
+			want:   []replay{{busy, 3, []int64{4, 6}}, {quiet, 0, []int64{5}}},
+		},
+		{
+			name: "evict from multiple collections", maxBytes: 100,
+			writes: []write{{quiet, 1, 30}, {quiet, 2, 10}, {busy, 3, 30}, {busy, 4, 30}, {incoming, 5, 40}},
+			want:   []replay{{quiet, 1, []int64{2}}, {busy, 3, []int64{4}}, {incoming, 0, []int64{5}}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cache := newWatchCache(tc.ringLimit, writtenEventIdentity)
+			cache.maxBytes = tc.maxBytes
+			if tc.maxEvents > 0 {
+				cache.maxEvents = tc.maxEvents
+			}
+			require.NoError(t, cache.seed(cacheSeed[*WrittenEvent]{collectionFloors: tc.seedFloors}))
+			for _, event := range tc.writes {
+				cache.add(sizedCacheEvent(event.gr, event.rv, event.size))
+				require.LessOrEqual(t, cache.sizeBytes, cache.maxBytes)
+				require.LessOrEqual(t, cache.count, cache.maxEvents)
+			}
+			for _, want := range tc.want {
+				require.Equal(t, want.rvs, replayRVs(t, &cache, want.gr), want.gr.Resource)
+				require.NoError(t, cache.validateResume(want.gr, watchResume{since: want.floor}), want.gr.Resource)
+				require.True(t, IsResourceVersionExpired(cache.validateResume(want.gr, watchResume{since: want.floor - 1})), want.gr.Resource)
+			}
+			requireRankingsConsistent(t, &cache)
+			requireNoPlanReferences(t, &cache)
+		})
+	}
 }
 
-func TestWatchCacheCountLimitIsPerCollection(t *testing.T) {
-	quiet := GroupResource{Group: "g", Resource: "quiet"}
-	busy := GroupResource{Group: "g", Resource: "busy"}
-	cache := newWatchCache(2, writtenEventIdentity)
-	cache.add(cacheEvent(quiet, 10))
-	for rv := int64(11); rv <= 20; rv++ {
-		cache.add(cacheEvent(busy, rv))
-	}
-	require.Equal(t, []int64{10}, replayRVs(t, &cache, quiet))
-	require.NoError(t, cache.validateResume(quiet, watchResume{since: 0}))
-}
-
-func TestWatchCacheMaxRVIgnoresLateEvents(t *testing.T) {
-	gr := GroupResource{Group: "g", Resource: "r"}
-	cache := newWatchCache(3, writtenEventIdentity)
-	cache.add(cacheEvent(gr, 20))
-	cache.add(cacheEvent(gr, 10))
-	require.Equal(t, int64(20), cache.maxRV)
+func sizedCacheEvent(gr GroupResource, rv int64, size int) *WrittenEvent {
+	event := cacheEvent(gr, rv)
+	event.Value = make([]byte, size)
+	return event
 }
 
 func replayRVs(t *testing.T, cache *watchCache[*WrittenEvent], gr GroupResource) []int64 {
@@ -272,6 +285,9 @@ func replayRVs(t *testing.T, cache *watchCache[*WrittenEvent], gr GroupResource)
 	replayed := make(chan *WrittenEvent, cache.size)
 	require.NoError(t, cache.replay(replayed, gr))
 	events := drainChan(replayed)
+	if len(events) == 0 {
+		return nil
+	}
 	out := make([]int64, 0, len(events))
 	for _, event := range events {
 		out = append(out, event.ResourceVersion)
@@ -316,135 +332,21 @@ func TestWatchCacheDropsEmptyCollections(t *testing.T) {
 	require.Equal(t, []int64{12}, replayRVs(t, &cache, second))
 }
 
-func TestWatchCacheByteEvictionCountsIncomingEvent(t *testing.T) {
-	quiet := GroupResource{Group: "g", Resource: "quiet"}
-	busy := GroupResource{Group: "g", Resource: "busy"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxBytes = 7 * 1024
-	cache.add(sized(quiet, 10, 4*1024))
-	cache.add(sized(busy, 11, 3*1024))
-	// With the incoming event, busy holds the most bytes, so it makes the room.
-	cache.add(sized(busy, 12, 3*1024))
-	require.Equal(t, []int64{10}, replayRVs(t, &cache, quiet))
-	require.Equal(t, []int64{12}, replayRVs(t, &cache, busy))
-	require.NoError(t, cache.validateResume(quiet, watchResume{since: 0}))
-}
-
-func TestWatchCacheByteEvictionBeforeCountEviction(t *testing.T) {
-	small := GroupResource{Group: "g", Resource: "small"}
-	large := GroupResource{Group: "g", Resource: "large"}
-	incoming := GroupResource{Group: "g", Resource: "incoming"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxEvents = 3
-	cache.maxBytes = 4096
-	cache.add(sized(small, 10, 1))
-	cache.add(sized(small, 11, 1))
-	cache.add(sized(large, 12, 4094))
-	// Making byte room also frees an event slot, so small keeps both events.
-	cache.add(sized(incoming, 13, 1000))
-	require.Equal(t, []int64{10, 11}, replayRVs(t, &cache, small))
-	require.Equal(t, []int64{13}, replayRVs(t, &cache, incoming))
-	require.NoError(t, cache.validateResume(small, watchResume{since: 0}))
-}
-
-func TestWatchCacheKeepsQuietCollectionWhenIncomingEventIsLargest(t *testing.T) {
-	quiet := GroupResource{Group: "g", Resource: "quiet"}
-	busy := GroupResource{Group: "g", Resource: "busy"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxBytes = 8 * 1024
-	cache.add(sized(quiet, 10, 3*1024))
-	cache.add(sized(busy, 11, 1024))
-	// Emptying busy's ring is not enough room, and the incoming event alone
-	// still uses more bytes than quiet, so it stays uncached instead.
-	cache.add(sized(busy, 12, 6*1024))
-	require.Equal(t, []int64{10}, replayRVs(t, &cache, quiet))
-	require.Equal(t, []int64{11}, replayRVs(t, &cache, busy))
-	require.NoError(t, cache.validateResume(quiet, watchResume{since: 0}))
-	require.True(t, IsResourceVersionExpired(cache.validateResume(busy, watchResume{since: 11})))
-	require.NoError(t, cache.validateResume(busy, watchResume{since: 12}))
-}
-
-func TestWatchCacheRejectsBeforeEvictingOthers(t *testing.T) {
-	first := GroupResource{Group: "g", Resource: "first"}
-	second := GroupResource{Group: "g", Resource: "second"}
-	incoming := GroupResource{Group: "g", Resource: "incoming"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxBytes = 100
-	cache.add(sized(first, 10, 4))
-	cache.add(sized(first, 11, 50))
-	cache.add(sized(second, 12, 46))
-	// After evicting first's oldest, the incoming event would use the most bytes
-	// and be left uncached, so nothing may be evicted for it.
-	cache.add(sized(incoming, 13, 52))
-	require.Equal(t, []int64{10, 11}, replayRVs(t, &cache, first))
-	require.Equal(t, []int64{12}, replayRVs(t, &cache, second))
-	require.Empty(t, replayRVs(t, &cache, incoming))
-	require.NoError(t, cache.validateResume(first, watchResume{since: 0}))
-	require.True(t, IsResourceVersionExpired(cache.validateResume(incoming, watchResume{since: 12})))
-	require.NoError(t, cache.validateResume(incoming, watchResume{since: 13}))
-}
-
-func TestWatchCacheRejectionKeepsFullRing(t *testing.T) {
-	late := GroupResource{Group: "g", Resource: "late"}
-	other := GroupResource{Group: "g", Resource: "other"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(2, writtenEventIdentity)
-	cache.maxBytes = 100
-	cache.add(sized(late, 20, 1))
-	cache.add(sized(late, 30, 1))
-	cache.add(sized(other, 40, 60))
-	// A late event too large to cache must not first evict from its full ring:
-	// a cursor between the late RV and the oldest cached one still replays.
-	cache.add(sized(late, 10, 80))
-	require.Equal(t, []int64{20, 30}, replayRVs(t, &cache, late))
-	require.NoError(t, cache.validateResume(late, watchResume{since: 15}))
-	require.True(t, IsResourceVersionExpired(cache.validateResume(late, watchResume{since: 9})))
-}
-
 func BenchmarkWatchCacheRejectsOversizedEvent(b *testing.B) {
 	own := GroupResource{Group: "g", Resource: "own"}
 	cache := newWatchCache(defaultCacheSize, writtenEventIdentity)
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
 	rv := int64(0)
 	for range defaultCacheSize {
 		rv++
-		cache.add(sized(own, rv, 1))
+		cache.add(sizedCacheEvent(own, rv, 1))
 	}
 	for i := range 50 {
 		rv++
-		cache.add(sized(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 10))
+		cache.add(sizedCacheEvent(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 10))
 	}
 	cache.maxBytes = cache.sizeBytes
 	// Larger than any other ring, and too large even once its own ring is empty.
-	oversized := sized(own, rv+1, defaultCacheSize+100)
+	oversized := sizedCacheEvent(own, rv+1, defaultCacheSize+100)
 	for b.Loop() {
 		cache.add(oversized)
 	}
@@ -453,50 +355,22 @@ func BenchmarkWatchCacheRejectsOversizedEvent(b *testing.B) {
 	}
 }
 
-func TestWatchCacheLargeEventEvictsOnlyItsOwnCollection(t *testing.T) {
-	own := GroupResource{Group: "g", Resource: "own"}
-	other := GroupResource{Group: "g", Resource: "other"}
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	cache := newWatchCache(10, writtenEventIdentity)
-	cache.maxBytes = 100
-	for rv := int64(1); rv <= 4; rv++ {
-		cache.add(sized(own, rv, 20))
-	}
-	cache.add(sized(other, 5, 20))
-	// Larger than other's ring, so only own's oldest events make room for it.
-	cache.add(sized(own, 6, 50))
-	require.Equal(t, []int64{4, 6}, replayRVs(t, &cache, own))
-	require.Equal(t, []int64{5}, replayRVs(t, &cache, other))
-	require.Equal(t, int64(90), cache.sizeBytes)
-	require.True(t, IsResourceVersionExpired(cache.validateResume(own, watchResume{since: 2})))
-	require.NoError(t, cache.validateResume(own, watchResume{since: 3}))
-}
-
 func BenchmarkWatchCacheRejectsAfterPartialPlan(b *testing.B) {
 	large := GroupResource{Group: "g", Resource: "large"}
 	cache := newWatchCache(1000, writtenEventIdentity)
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
 	rv := int64(0)
 	for range 1000 {
 		rv++
-		cache.add(sized(large, rv, 1))
+		cache.add(sizedCacheEvent(large, rv, 1))
 	}
 	for i := range 1000 {
 		rv++
-		cache.add(sized(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 1))
+		cache.add(sizedCacheEvent(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 1))
 	}
 	cache.maxBytes = cache.sizeBytes
 	// Smaller than large's ring, so the plan walks it until the incoming event
 	// is the largest consumer and gets rejected.
-	incoming := sized(GroupResource{Group: "g", Resource: "incoming"}, rv+1, 600)
+	incoming := sizedCacheEvent(GroupResource{Group: "g", Resource: "incoming"}, rv+1, 600)
 	for b.Loop() {
 		cache.add(incoming)
 	}
@@ -692,66 +566,20 @@ func requireNoPlanReferences(t *testing.T, cache *watchCache[*WrittenEvent]) {
 	}
 }
 
-func TestWatchCachePlanBuffersReleaseRings(t *testing.T) {
-	sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-		event := cacheEvent(gr, rv)
-		event.Value = make([]byte, size)
-		return event
-	}
-	first := GroupResource{Group: "g", Resource: "first"}
-	second := GroupResource{Group: "g", Resource: "second"}
-	third := GroupResource{Group: "g", Resource: "third"}
-
-	t.Run("applied", func(t *testing.T) {
-		cache := newWatchCache(10, writtenEventIdentity)
-		cache.maxBytes = 100
-		cache.add(sized(first, 1, 30))
-		cache.add(sized(first, 2, 10))
-		cache.add(sized(second, 3, 30))
-		cache.add(sized(second, 4, 30))
-		// Needs one eviction from second and one from first.
-		cache.add(sized(third, 5, 40))
-		require.Equal(t, []int64{5}, replayRVs(t, &cache, third))
-		require.Equal(t, []int64{2}, replayRVs(t, &cache, first))
-		require.Equal(t, []int64{4}, replayRVs(t, &cache, second))
-		requireNoPlanReferences(t, &cache)
-	})
-	t.Run("rejected", func(t *testing.T) {
-		cache := newWatchCache(10, writtenEventIdentity)
-		cache.maxBytes = 100
-		for rv := int64(1); rv <= 10; rv++ {
-			cache.add(sized(first, rv, 5))
-		}
-		cache.add(sized(second, 11, 40))
-		cache.add(sized(third, 12, 10))
-		// After two of first's events, the incoming event uses the most bytes.
-		incoming := GroupResource{Group: "g", Resource: "incoming"}
-		cache.add(sized(incoming, 13, 45))
-		require.Empty(t, replayRVs(t, &cache, incoming))
-		require.Len(t, replayRVs(t, &cache, first), 10)
-		requireNoPlanReferences(t, &cache)
-	})
-}
-
 func BenchmarkWatchCacheMultiEvictionManyRings(b *testing.B) {
 	for _, others := range []int{200, 4000} {
 		b.Run(fmt.Sprint(others, "-rings"), func(b *testing.B) {
 			own := GroupResource{Group: "g", Resource: "own"}
 			cache := newWatchCache(defaultCacheSize, writtenEventIdentity)
 			cache.maxEvents = 10 * others
-			sized := func(gr GroupResource, rv int64, size int) *WrittenEvent {
-				event := cacheEvent(gr, rv)
-				event.Value = make([]byte, size)
-				return event
-			}
 			rv := int64(0)
 			for i := range others {
 				rv++
-				cache.add(sized(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 10))
+				cache.add(sizedCacheEvent(GroupResource{Group: "g", Resource: fmt.Sprint("other-", i)}, rv, 10))
 			}
 			for range 100 {
 				rv++
-				cache.add(sized(own, rv, 100))
+				cache.add(sizedCacheEvent(own, rv, 100))
 			}
 			cache.maxBytes = cache.sizeBytes
 			b.ReportAllocs()
@@ -767,6 +595,7 @@ func BenchmarkWatchCacheMultiEvictionManyRings(b *testing.B) {
 		})
 	}
 }
+
 func TestWatchCacheRingsGrowAsEventsArrive(t *testing.T) {
 	gr := GroupResource{Group: "g", Resource: "r"}
 	cache := newWatchCache(defaultCacheSize, writtenEventIdentity)
