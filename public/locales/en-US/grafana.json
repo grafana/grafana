@@ -17256,6 +17256,11 @@
       "wide-list": "Wide list",
       "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
+    "quick-edits": {
+      "calculation": "Calculation",
+      "color": "Color",
+      "text": "Text"
+    },
     "suggestions": {
       "stat": "Stat",
       "stat-color-background": "Stat - color background",

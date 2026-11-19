@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, presetsQuickEdit, rangeQuickEdit, thresholdsQuickEdit, unitQuickEdit } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -45,6 +45,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
   .setPresetsSupplier(timeseriesPresetsSupplier)
+  .setQuickEdits(() => [
+    unitQuickEdit(),
+    presetsQuickEdit(),
+    commonOptionsBuilder.legendQuickEdit(),
+    rangeQuickEdit(),
+    thresholdsQuickEdit(['custom.thresholdsStyle']),
+    commonOptionsBuilder.tooltipQuickEdit(),
+  ])
   .setViewPanelOptions({
     fanout: { enabled: true },
     quickToggles: {
