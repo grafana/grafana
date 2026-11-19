@@ -29,6 +29,7 @@ type Service struct {
 	iamFeatures       iamapi.Features
 	logger            log.Logger
 	tracer            tracing.Tracer
+	deleted           *teamdelete.DeletedRegistry
 }
 
 var _ team.Service = (*Service)(nil)
@@ -39,13 +40,13 @@ func (s *Service) LegacySearchService() team.Service {
 }
 
 func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
-	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil)
+	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil, nil)
 }
 
 // ProvideServiceWithWatch is ProvideService that also announces legacy team
 // writes on the legacy watch subjects. It is separate so wire sets without the
 // NATS bus, such as the CLI's, can keep using ProvideService.
-func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher, deleted *teamdelete.DeletedRegistry) (*Service, error) {
 	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
@@ -60,6 +61,7 @@ func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.
 		iamFeatures:       iamFeatures,
 		logger:            log.New("team"),
 		tracer:            tracer,
+		deleted:           deleted,
 	}, nil
 }
 
@@ -85,10 +87,18 @@ func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) e
 
 func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	if s.isK8sRedirectEnabled(ctx) {
+		// The Team API storage runs the deleted handlers.
 		return s.k8sService.DeleteTeam(ctx, cmd)
 	}
 
-	return s.legacyService.DeleteTeam(ctx, cmd)
+	uid, err := s.legacyService.deleteTeam(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	if s.deleted != nil {
+		s.deleted.Run(ctx, teamdelete.Deleted{OrgID: cmd.OrgID, TeamID: cmd.ID, TeamUID: uid})
+	}
+	return nil
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {

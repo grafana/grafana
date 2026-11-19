@@ -242,6 +242,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
@@ -414,7 +415,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	deletedRegistry := teamdelete.ProvideDeletedRegistry()
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -993,7 +995,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v5, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v5, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1216,7 +1218,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	deletedRegistry := teamdelete.ProvideDeletedRegistry()
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1794,7 +1797,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v5, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v5, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1928,7 +1931,8 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	deletedRegistry := teamdelete.ProvideDeletedRegistry()
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2153,7 +2157,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	deletedRegistry := teamdelete.ProvideDeletedRegistry()
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher, deletedRegistry)
 	if err != nil {
 		return nil, err
 	}
