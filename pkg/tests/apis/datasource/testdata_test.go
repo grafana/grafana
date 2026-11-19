@@ -92,6 +92,22 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 	require.Equal(t, "1", out.GetResourceVersion())
 
+	storage := helper.GetEnv().ResourceClient
+	svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     datasourceV0alpha1.GROUP,
+		Resource:  "datasources",
+		Name:      "test",
+	}
+
+	// The dual writer copies writes to unified storage in the background with no ordering,
+	// so the update must not start until the create is there.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(c, err)
+	}, 5*time.Second, 50*time.Millisecond)
+
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -154,15 +170,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	// Every datasource type is persisted in one unified storage collection
 	t.Run("stored in the shared datasource group", func(t *testing.T) {
-		storage := helper.GetEnv().ResourceClient
-		svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
-		key := &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     datasourceV0alpha1.GROUP,
-			Resource:  "datasources",
-			Name:      "test",
-		}
-
 		// Every dual-write mode (1-3) writes to unified storage in the background
 		stored := &unstructured.Unstructured{}
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
