@@ -96,15 +96,10 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 
 // Delete removes a folder and, when cascade delete is enabled, its entire subtree. A forced delete of
 // a folder with the cascade finalizer is handed to the cascade controller, whether or not the flag is
-// on, once the requester's access to its contents is checked. Besides the permission to delete the
-// folder itself, the requester needs (see checkFolderContentsAccess):
-//   - alert.rules:delete and dashboards:delete on the folder
-//   - folders:write on its parent (General for a root folder)
-//   - variables:delete on the folder, only when global variables are enabled
-//
-// For other folders the subtree is walked depth-first: each folder is stamped with a terminating
-// label on the way down, and folders are deleted on the way back up once they have no remaining
-// child folders (i.e. leaves first).
+// on, once the requester's access to its contents is checked (see checkFolderContentsAccess for the
+// permissions required besides deleting the folder itself). For other folders the subtree is walked
+// depth-first: each folder is stamped with a terminating label on the way down, and folders are
+// deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	if !forceDeleteFromDeleteOptions(options) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
@@ -599,10 +594,13 @@ type contentsAccessCheck struct {
 	folder string
 }
 
-// checkFolderContentsAccess denies the delete unless the requester may delete the alert rules
-// (alert.rules:delete), dashboards (dashboards:delete) and library elements (folders:write) in folderUID; parentUID lets folder
-// permissions resolve through inheritance. When global variables are enabled it also requires
-// variables:delete. No-op when no access client is wired (e.g. tests).
+// checkFolderContentsAccess denies the delete unless the requester has:
+//   - alert.rules:delete and dashboards:delete on folderUID
+//   - folders:write on parentUID, which covers the library elements (General for a root folder)
+//   - variables:delete on folderUID, only when global variables are enabled
+//
+// parentUID lets folder permissions resolve through inheritance. No-op when no access client is wired
+// (e.g. tests).
 func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, user identity.Requester, namespace, folderUID, parentUID string) error {
 	if s.accessClient == nil {
 		return nil
