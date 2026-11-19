@@ -30,16 +30,11 @@ export interface RuleAbilities {
 
 export type RuleFolderAccess = ReturnType<typeof useGetFolderAccessQuery>;
 
-/**
- * Returns the permissions the user has on the rule's folder. `alert.rules:*` permissions can only be granted on a
- * folder, so rule abilities come from here rather than from the rule itself.
- */
 export function useRuleFolderAccess(rule: RuleMetadata): RuleFolderAccess {
   const folderUid = rule.metadata?.annotations?.[AnnoKeyFolder];
   return useGetFolderAccessQuery(folderUid ? { name: folderUid } : skipToken);
 }
 
-/** Abilities shared by alert and recording rules. Edit and delete need the folder access, locks come from the rule. */
 export function getRuleAbilities(rule: RuleMetadata, folderAccess: RuleFolderAccess): RuleAbilities {
   const locked = getLockedReason(rule);
   const edit = locked ?? fromFolderPermission(folderAccess, AccessControlAction.AlertingRuleUpdate);
@@ -67,13 +62,18 @@ function getLockedReason(rule: RuleMetadata): Ability | undefined {
   return undefined;
 }
 
-function fromFolderPermission({ data, isLoading }: RuleFolderAccess, permission: AccessControlAction): AsyncAbility {
-  if (isLoading) {
+function fromFolderPermission(
+  { currentData, isFetching }: RuleFolderAccess,
+  permission: AccessControlAction
+): AsyncAbility {
+  if (isFetching) {
     return Loading;
   }
   // The rule editor also requires read access to the rule and its folder, so Edit must not link to a page that refuses.
   const required = [AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead, permission];
-  return required.every((action) => data?.accessControl?.[action]) ? Granted : InsufficientPermissions([permission]);
+  return required.every((action) => currentData?.accessControl?.[action])
+    ? Granted
+    : InsufficientPermissions([permission]);
 }
 
 function isPluginManaged(rule: RuleMetadata): boolean {

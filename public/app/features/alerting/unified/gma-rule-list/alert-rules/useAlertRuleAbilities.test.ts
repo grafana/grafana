@@ -2,13 +2,21 @@ import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { isLoading } from '../../hooks/abilities/abilityUtils';
-import { Granted, InsufficientPermissions, IsPluginManaged, Loading, Provisioned } from '../../hooks/abilities/types';
+import {
+  Granted,
+  InsufficientPermissions,
+  IsPluginManaged,
+  Loading,
+  NotSupported,
+  Provisioned,
+} from '../../hooks/abilities/types';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { setFolderResponse } from '../../mocks/server/configure';
+import { setAlertmanagerChoices, setFolderResponse } from '../../mocks/server/configure';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 import { mockK8sAlertRule } from '../mocks/handlers';
 
@@ -57,13 +65,32 @@ describe('useAlertRuleAbilities', () => {
     grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
   });
 
-  it('grants edit, pause, delete and duplicate from the rule permissions on the rule folder', async () => {
-    const abilities = await getAbilitiesInFolder(rule(), canWriteAndDelete);
+  it('switches to the permissions of the new folder when the rule moves', async () => {
+    setFolderResponse({ uid: RULE_FOLDER_UID, accessControl: { ...canWriteAndDelete, ...canSilence } });
+    setFolderResponse({ uid: 'read-only-folder', accessControl: canRead });
+    const { result, rerender } = renderHook((alertRule: AlertRule) => useAlertRuleAbilities(alertRule), {
+      initialProps: rule(),
+      wrapper: getWrapper({}),
+    });
 
-    expect(abilities.edit).toEqual(Granted);
-    expect(abilities.pause).toEqual(Granted);
-    expect(abilities.delete).toEqual(Granted);
-    expect(abilities.duplicate).toEqual(Granted);
+    await waitFor(() => expect(result.current.edit).toEqual(Granted));
+    expect(result.current.pause).toEqual(Granted);
+    expect(result.current.delete).toEqual(Granted);
+    expect(result.current.duplicate).toEqual(Granted);
+    expect(result.current.silence).toEqual(Granted);
+
+    rerender(rule({ annotations: { [AnnoKeyFolder]: 'read-only-folder' } }));
+
+    expect(result.current.edit).toEqual(Loading);
+    await waitFor(() =>
+      expect(result.current.edit).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]))
+    );
+    expect(result.current.pause).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleUpdate]));
+    expect(result.current.delete).toEqual(InsufficientPermissions([AccessControlAction.AlertingRuleDelete]));
+    expect(result.current.duplicate).toEqual(Granted);
+    expect(result.current.silence).toEqual(
+      InsufficientPermissions([AccessControlAction.AlertingSilenceCreate, AccessControlAction.AlertingInstanceCreate])
+    );
   });
 
   it('reports edit, pause, delete and silence as loading until the folder access has loaded', async () => {
@@ -193,5 +220,13 @@ describe('useAlertRuleAbilities', () => {
     expect(abilities.silence).toEqual(
       InsufficientPermissions([AccessControlAction.AlertingSilenceCreate, AccessControlAction.AlertingInstanceCreate])
     );
+  });
+
+  it('does not support silence when Grafana only sends alerts to external alertmanagers', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
+    setAlertmanagerChoices(AlertmanagerChoice.External, 1);
+    const abilities = await getAbilities(rule());
+
+    expect(abilities.silence).toEqual(NotSupported);
   });
 });

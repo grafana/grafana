@@ -2,13 +2,9 @@ import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { type AsyncAbility, Granted, InsufficientPermissions, Loading } from '../../hooks/abilities/types';
-import {
-  type RuleAbilities,
-  type RuleFolderAccess,
-  getRuleAbilities,
-  useRuleFolderAccess,
-} from '../rule-row/ruleAbilities';
+import { buildSilenceAbility, useGrafanaRulesSilenceSupport } from '../../hooks/abilities/rules/ruleAbilities.utils';
+import { type AsyncAbility } from '../../hooks/abilities/types';
+import { type RuleAbilities, getRuleAbilities, useRuleFolderAccess } from '../rule-row/ruleAbilities';
 
 export interface AlertRuleAbilities extends RuleAbilities {
   silence: AsyncAbility;
@@ -16,17 +12,13 @@ export interface AlertRuleAbilities extends RuleAbilities {
 
 export function useAlertRuleAbilities(rule: AlertRule): AlertRuleAbilities {
   const folderAccess = useRuleFolderAccess(rule);
-  return { ...getRuleAbilities(rule, folderAccess), silence: getSilenceAbility(folderAccess) };
-}
-
-function getSilenceAbility({ data, isLoading }: RuleFolderAccess): AsyncAbility {
-  if (isLoading) {
-    return Loading;
-  }
+  const { silenceSupported, silenceLoading } = useGrafanaRulesSilenceSupport();
   const canSilence =
     contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
-    Boolean(data?.accessControl?.[AccessControlAction.AlertingSilenceCreate]);
-  return canSilence
-    ? Granted
-    : InsufficientPermissions([AccessControlAction.AlertingSilenceCreate, AccessControlAction.AlertingInstanceCreate]);
+    Boolean(folderAccess.currentData?.accessControl?.[AccessControlAction.AlertingSilenceCreate]);
+
+  return {
+    ...getRuleAbilities(rule, folderAccess),
+    silence: buildSilenceAbility(silenceLoading || folderAccess.isFetching, silenceSupported, canSilence),
+  };
 }
