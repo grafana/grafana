@@ -18,6 +18,16 @@ export function mockBoundingClientRect(rect: Partial<DOMRect> = {}): void {
     configurable: true,
   });
 
+  // @tanstack/virtual-core >=3.19 sizes the scroll container from clientWidth/clientHeight.
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    get: () => merged.width,
+    configurable: true,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    get: () => merged.height,
+    configurable: true,
+  });
+
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
     get: () => merged.width,
     configurable: true,

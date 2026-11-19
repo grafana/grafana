@@ -483,7 +483,15 @@ describe('TextNGPanel', () => {
   });
 
   describe('pagination', () => {
+    // The fit measures the pane's clientHeight, and the panel height is the fallback while it is 0, as in JSDOM.
+    const clientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
+
+    beforeEach(() => {
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', { get: () => 0, configurable: true });
+    });
+
     afterEach(() => {
+      Object.defineProperty(HTMLElement.prototype, 'clientHeight', clientHeight!);
       setTestFlags({ [FlagKeys.TextNewFeatures]: true });
     });
 

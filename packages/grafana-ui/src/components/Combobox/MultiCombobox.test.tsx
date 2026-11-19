@@ -560,6 +560,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
@@ -596,6 +597,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(10));
