@@ -88,6 +88,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPreferencesDashboardDefaults{}.OpenAPIModelName():                                                                          schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesDashboardDefaults(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardPreferencesJSONCodec":                                schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesJSONCodec(ref),
 		DashboardPreferencesList{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesList(ref),
+		DashboardPreferencesMerged{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMerged(ref),
+		DashboardPreferencesMergedSource{}.OpenAPIModelName():                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSource(ref),
+		DashboardPreferencesMergedSpec{}.OpenAPIModelName():                                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSpec(ref),
 		DashboardPreferencesPanelDefaults{}.OpenAPIModelName():                                                                              schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref),
 		DashboardPreferencesSpec{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesSpec(ref),
 		DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}.OpenAPIModelName():                                                           schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesV2beta1DashboardDefaultsAutoGrid(ref),
@@ -3696,6 +3699,118 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesList(ref common.Refer
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMerged(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DashboardPreferencesMerged is what a new dashboard in a folder starts from. It is computed on request and never stored.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only the fields some tier set. A field that is absent uses Grafana's built-in default.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardPreferencesMergedSpec{}.OpenAPIModelName()),
+						},
+					},
+					"sources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where each field came from, keyed by its path as in spec.reset, such as \"dashboard.autoGrid.columnWidth\". A field with no entry uses Grafana's built-in default.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPreferencesMergedSource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"spec", "sources"},
+			},
+		},
+		Dependencies: []string{
+			DashboardPreferencesMergedSource{}.OpenAPIModelName(), DashboardPreferencesMergedSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tier": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"folder\"`\n - `\"org\"`\n - `\"user\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"folder", "org", "user"},
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The tier object's name. Left out for a parent folder the caller can't read.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reset": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The tier reset the field to Grafana's built-in default, so it is absent from spec.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"tier"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesMergedSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The stored spec without reset: a merged spec is resolved, so nothing in it is reset.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardPreferencesDashboardDefaults{}.OpenAPIModelName()),
+						},
+					},
+					"panels": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardPreferencesPanelDefaults{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardPreferencesDashboardDefaults{}.OpenAPIModelName(), DashboardPreferencesPanelDefaults{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardPreferencesPanelDefaults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -7263,12 +7378,12 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"id": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+							Description: "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -7585,7 +7700,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 					},
 					"elements": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
+							Description: "The key is the element ID. It identifies the cell: comments and other references anchor to it",
+							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{

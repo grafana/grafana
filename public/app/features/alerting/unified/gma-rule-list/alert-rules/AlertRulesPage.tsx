@@ -14,6 +14,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
@@ -22,6 +23,7 @@ import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters'
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
@@ -29,7 +31,6 @@ function AlertRulesPage() {
 
   useTrackRuleListPageView('alert', mode);
 
-  const { navId, pageNav } = useAlertRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
@@ -46,7 +47,9 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <RuleSequenceDrawerProvider>
+            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
         </Stack>
       </Box>
     </AlertingPageWrapper>

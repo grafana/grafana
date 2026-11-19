@@ -24,7 +24,11 @@ func TestDatasourceProxyQueryPermissions(t *testing.T) {
 		{"another datasource", []accesscontrol.Permission{{Action: datasources.ActionQuery, Scope: "datasources:uid:ds-2"}}, false},
 		{"datasource wildcard", []accesscontrol.Permission{{Action: datasources.ActionQuery, Scope: "datasources:*"}}, true},
 		{"global wildcard", []accesscontrol.Permission{{Action: datasources.ActionQuery, Scope: "*"}}, true},
-		{"datasource admin does not imply query", []accesscontrol.Permission{{Action: "datasources:admin", Scope: "datasources:uid:ds-1"}}, false},
+		{"query action set", []accesscontrol.Permission{{Action: "datasources:query", Scope: "datasources:uid:ds-1"}}, true},
+		{"edit action set", []accesscontrol.Permission{{Action: "datasources:edit", Scope: "datasources:uid:ds-1"}}, true},
+		{"admin action set", []accesscontrol.Permission{{Action: "datasources:admin", Scope: "datasources:uid:ds-1"}}, true},
+		{"admin action set on another datasource", []accesscontrol.Permission{{Action: "datasources:admin", Scope: "datasources:uid:ds-2"}}, false},
+		{"read does not imply query", []accesscontrol.Permission{{Action: datasources.ActionRead, Scope: "datasources:uid:ds-1"}}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			service := NewTestService("user-1", tc.permissions, nil)

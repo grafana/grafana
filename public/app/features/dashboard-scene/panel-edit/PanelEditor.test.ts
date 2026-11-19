@@ -10,15 +10,13 @@ import {
   type DataTransformerConfig,
   FieldType,
   LoadingState,
-  VariableRefresh,
   type PanelPlugin,
   store,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { locationService } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -31,11 +29,9 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
-  TestVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { ModalsContext } from '@grafana/ui';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -44,24 +40,21 @@ import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { edit } from '../actions/utils/edit';
-import { ConditionalRenderingData } from '../conditional-rendering/conditions/ConditionalRenderingData';
-import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
-import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
-import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { DashboardGridItem, type DashboardGridItemState } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataPane/PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryEditor/QueryEditorContext';
@@ -71,7 +64,6 @@ import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
-import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 
 const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
@@ -86,6 +78,7 @@ let pluginPromise: Promise<PanelPlugin> | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
@@ -492,27 +485,6 @@ describe('PanelEditor', () => {
   });
 
   describe('When changes are made', () => {
-    it.each<Partial<DashboardGridItemState>>([{ variableName: 'server' }, { maxPerRow: 2 }, { repeatDirection: 'v' }])(
-      'detects unsaved repeat settings %j and becomes clean when restored',
-      async (change) => {
-        const { panelEditor, gridItem } = await setup({});
-        const original = gridItem.state;
-        expect(panelEditor.hasUnsavedChanges()).toBe(false);
-
-        gridItem.setState(change);
-        expect(panelEditor.hasUnsavedChanges()).toBe(true);
-        expect(panelEditor.state.isDirty).toBe(true);
-
-        gridItem.setState({
-          variableName: original.variableName,
-          maxPerRow: original.maxPerRow,
-          repeatDirection: original.repeatDirection,
-        });
-        expect(panelEditor.hasUnsavedChanges()).toBe(false);
-        expect(panelEditor.state.isDirty).toBe(false);
-      }
-    );
-
     it('Should set state to dirty', async () => {
       const { panelEditor, panel } = await setup({});
 
@@ -551,6 +523,346 @@ describe('PanelEditor', () => {
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('Reporting query option changes', () => {
+    let panelSettingChanged: jest.SpyInstance;
+
+    beforeEach(() => {
+      panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
+    });
+
+    afterEach(() => {
+      panelSettingChanged.mockRestore();
+      setTestFlags({});
+    });
+
+    it('reports a query option changed in the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), maxDataPoints: 100 });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'change_query_option',
+        source: 'panel_editor',
+        panel_type: 'text',
+        panel_id: 1,
+        option: 'max_data_points',
+        editor: 'classic',
+      });
+    });
+
+    it('does not report hide time info that the classic query editor drops for lack of a time range', async () => {
+      const { panelEditor, panel } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), timeRange: { hide: true } });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(panelSettingChanged).not.toHaveBeenCalled();
+    });
+
+    it('reports a query option changed in the next query editor', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      if (!(dataPane instanceof PanelDataPaneNext)) {
+        throw new Error('Expected the next data pane');
+      }
+
+      dataPane.onQueryOptionsChange({
+        queries: [],
+        dataSource: { uid: 'ds1' },
+        maxDataPoints: 500,
+        timeRange: { from: '1h' },
+      });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ item: 'change_query_option', option: 'relative_time', editor: 'next' })
+      );
+    });
+  });
+
+  describe('Reporting the close and discard interactions', () => {
+    const NO_CHANGES = {
+      changed: false,
+      changed_options: false,
+      changed_field_config: false,
+      changed_overrides: false,
+      changed_queries: false,
+      changed_transformations: false,
+      changed_panel_info: false,
+      changed_repeat: false,
+      saved_in_editor: false,
+      panel_type: 'text',
+      panel_id: 1,
+      is_new_panel: false,
+      is_library_panel: false,
+      query_change_count: 0,
+      query_editor: 'classic',
+      isDynamicDashboard: true,
+    };
+
+    const reported = (name: string) =>
+      jest
+        .mocked(reportInteraction)
+        .mock.calls.filter(([interactionName]) => interactionName === name)
+        .map(([, properties, options]) => ({ properties, options }));
+
+    const closeEditor = () => {
+      deactivate!();
+      deactivate = undefined;
+    };
+
+    beforeEach(() => {
+      jest.mocked(reportInteraction).mockClear();
+    });
+
+    it('reports a non-silent close with no changed areas when nothing was edited', async () => {
+      await setup();
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...NO_CHANGES, outcome: 'kept' }, options: undefined },
+      ]);
+      expect(reported('panel_edit_discarded')).toEqual([]);
+    });
+
+    it('reports the areas the user changed when the editor closes', async () => {
+      const { panel } = await setup();
+
+      panel.setState({ title: 'changed title', options: { content: 'Hello' } });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        {
+          properties: {
+            ...NO_CHANGES,
+            changed: true,
+            changed_options: true,
+            changed_panel_info: true,
+            outcome: 'kept',
+          },
+          options: undefined,
+        },
+      ]);
+    });
+
+    it('does not count the default query the editor adds to a panel without data as a change', async () => {
+      const { panel } = await setup({ withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toHaveLength(1);
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...NO_CHANGES, outcome: 'kept' });
+    });
+
+    it('reports a discard with the discarded areas, then a close with the discarded outcome', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_queries: true };
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...discardedChanges, outcome: 'discarded' }, options: undefined },
+      ]);
+    });
+
+    it('keeps the areas changed before a save inside the editor in the close event', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_queries: true,
+        saved_in_editor: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports a discard after a save inside the editor with only the areas changed since the save', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_panel_info: true, saved_in_editor: true };
+      expect(getQueryRunnerFor(panel)?.state.maxDataPoints).toBe(123);
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...discardedChanges, outcome: 'discarded' });
+    });
+
+    it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
+      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      try {
+        const libraryPanel = new LibraryPanelBehavior({
+          uid: 'lib-uid',
+          name: 'Library panel',
+          isLoaded: true,
+          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+        });
+        const { panelEditor } = await setup({ libraryPanel });
+
+        panelEditor.onConfirmSaveLibraryPanel();
+        closeEditor();
+
+        expect(saveLibPanel).toHaveBeenCalledTimes(1);
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          saved_in_editor: true,
+          is_library_panel: true,
+          outcome: 'kept',
+        });
+      } finally {
+        saveLibPanel.mockRestore();
+      }
+    });
+
+    it('reports a discarded new panel as a new panel with the discarded outcome', async () => {
+      const { panelEditor } = await setup({ isNewPanel: true });
+
+      panelEditor.onDiscard();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        is_new_panel: true,
+        outcome: 'discarded',
+      });
+    });
+
+    it('reports a repeat change made in the editor', async () => {
+      const { gridItem } = await setup();
+
+      gridItem.setState({ variableName: 'server' });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_repeat: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports the next query editor when the panel was edited with it', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          query_editor: 'next',
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('reports a dashboard without dynamic layouts as not dynamic', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          isDynamicDashboard: false,
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('counts query edits less than two seconds apart as one', async () => {
+      const { panelEditor } = await setup();
+
+      panelEditor.recordQueryEdit(10_000);
+      panelEditor.recordQueryEdit(11_500);
+      panelEditor.recordQueryEdit(13_000);
+      panelEditor.recordQueryEdit(15_500);
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        query_change_count: 2,
+        outcome: 'kept',
+      });
+    });
+
+    it('counts a query edit reported by the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryEdited();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toMatchObject({ query_change_count: 1 });
+    });
+
+    it('counts a query edit reported by the next query editor', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      try {
+        const { panelEditor } = await setup();
+        const { dataPane } = panelEditor.state;
+        if (!(dataPane instanceof PanelDataPaneNext)) {
+          throw new Error('Expected the next data pane');
+        }
+
+        dataPane.onQueryEdited();
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toMatchObject({
+          query_change_count: 1,
+          query_editor: 'next',
+        });
+      } finally {
+        setTestFlags({});
+      }
     });
   });
 
@@ -599,635 +911,6 @@ describe('PanelEditor', () => {
   });
 
   describe('Handling library panels', () => {
-    it.each(['query', 'options'])('preserves unsaved library panel %s edits across dashboard save', async (edit) => {
-      const libraryPanel = new LibraryPanelBehavior({
-        uid: 'lib-uid',
-        name: 'Library panel',
-        isLoaded: true,
-        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
-      });
-      const { panelEditor, panel } = await setup({ libraryPanel });
-      expect(panelEditor.hasUnsavedChanges()).toBe(false);
-      expect(panelEditor.state.isDirty).not.toBe(true);
-
-      if (edit === 'query') {
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
-      } else {
-        panel.setState({ options: { content: 'Edited library content' } });
-      }
-      expect(panelEditor.hasUnsavedChanges()).toBe(true);
-      expect(panelEditor.state.isDirty).toBe(true);
-
-      panelEditor.dashboardSaved();
-      expect(panelEditor.hasUnsavedChanges()).toBe(true);
-      expect(panelEditor.state.isDirty).toBe(true);
-    });
-
-    it.each([false, true])(
-      'advances the saved layout dirty baseline while retaining unsaved library content (auto=%s)',
-      async (auto) => {
-        const { panelEditor, panel, layout } = await setupLibraryLayout(auto);
-        layout.setState({ variableName: 'server' });
-        if (layout instanceof DashboardGridItem) {
-          layout.setState({ maxPerRow: 2 });
-        } else {
-          layout.setState({ fitContent: true });
-        }
-        panelEditor.dashboardSaved();
-        expect(panelEditor.hasUnsavedChanges()).toBe(false);
-        expect(panelEditor.state.isDirty).toBe(false);
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
-        panelEditor.dashboardSaved();
-        expect(panelEditor.hasUnsavedChanges()).toBe(true);
-        expect(panelEditor.state.isDirty).toBe(true);
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A' }] });
-        expect(panelEditor.hasUnsavedChanges()).toBe(false);
-        expect(panelEditor.state.isDirty).toBe(false);
-      }
-    );
-
-    it.each([
-      { auto: false, action: 'discard' },
-      { auto: true, action: 'discard' },
-      { auto: false, action: 'undo' },
-      { auto: true, action: 'undo' },
-    ])('restores saved library repeats after unlink then $action (auto=$auto)', async ({ auto, action }) => {
-      setTestFlags({ dashboardNewLayouts: true });
-      const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(auto);
-      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
-      layout.setRepeatByVariable('server');
-      if (layout instanceof DashboardGridItem) {
-        layout.handleVariableName();
-      }
-      layout.handleEditChange();
-      panelEditor.dashboardSaved();
-      panelEditor.onConfirmUnlinkLibraryPanel();
-      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
-      if (action === 'discard') {
-        panelEditor.onDiscard();
-      } else {
-        deactivate?.();
-        dashboard.setState({ editPanel: undefined });
-        deactivate = activateFullSceneTree(dashboard);
-        dashboard.state.sidebar.undoAction();
-      }
-      const restored = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
-      expect(restored).toHaveLength(3);
-      for (const copy of restored) {
-        expect(getLibraryPanelBehavior(copy)?.state.uid).toBe('lib-uid');
-        expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A' }]);
-      }
-      if (action === 'undo') {
-        dashboard.state.sidebar.redoAction();
-        const unlinked = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
-        expect(unlinked).toHaveLength(3);
-        for (const copy of unlinked) {
-          expect(getLibraryPanelBehavior(copy)).toBeUndefined();
-          expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A', expression: 'dirty' }]);
-        }
-        dashboard.state.sidebar.undoAction();
-        expect(layout.state.repeatedPanels).toHaveLength(2);
-        expect(getLibraryPanelBehavior(layout.state.body)?.state.uid).toBe('lib-uid');
-      }
-    });
-
-    it.each<{ schemaVersion: 'v1' | 'v2'; preferLibraryTitle: boolean; action: string; savedTitle: string }>(
-      ['v1', 'v2'].flatMap((schemaVersion) => {
-        if (schemaVersion !== 'v1' && schemaVersion !== 'v2') {
-          throw new Error('Unexpected schema');
-        }
-        return [false, true].flatMap((preferLibraryTitle) =>
-          ['discard', 'undo'].flatMap((action) =>
-            ['Second saved title', ''].map((savedTitle) => ({ schemaVersion, preferLibraryTitle, action, savedTitle }))
-          )
-        );
-      })
-    )(
-      'retains the authoritative saved title after $action ($schemaVersion, library title=$preferLibraryTitle, saved=$savedTitle)',
-      async ({ schemaVersion, preferLibraryTitle, action, savedTitle }) => {
-        setTestFlags({ dashboardNewLayouts: true, [FlagKeys.PreferLibraryPanelTitle]: preferLibraryTitle });
-        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(false, schemaVersion);
-        dashboard.updatePanelTitle(panel, 'Saved title');
-        panelEditor.dashboardSaved();
-        const titleOnlyDirty = panelEditor.hasUnsavedChanges();
-        dashboard.updatePanelTitle(panel, savedTitle);
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
-        layout.setRepeatByVariable('server');
-        layout.handleEditChange();
-        const model = dashboard.serializer.getSaveModel(dashboard);
-        if ('panels' in model) {
-          expect(model.panels?.[0].title).toBe(savedTitle);
-        } else {
-          expect(Object.values(model.elements)).toEqual([
-            expect.objectContaining({ kind: 'LibraryPanel', spec: expect.objectContaining({ title: savedTitle }) }),
-          ]);
-        }
-        panelEditor.dashboardSaved();
-        expect(panelEditor.hasUnsavedChanges()).toBe(true);
-        dashboard.updatePanelTitle(panel, 'Later title');
-        if (action === 'discard') {
-          panelEditor.onDiscard();
-        } else {
-          deactivate?.();
-          dashboard.setState({ editPanel: undefined });
-          deactivate = activateFullSceneTree(dashboard);
-          dashboard.state.sidebar.undoAction();
-        }
-        expect(layout.state.body.state.title).toBe(preferLibraryTitle ? 'original title' : savedTitle);
-        expect(layout.state.body.state.hoverHeader ?? false).toBe(!preferLibraryTitle && savedTitle === '');
-        expect(titleOnlyDirty).toBe(preferLibraryTitle);
-        expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A' }]);
-        expect(layout.state.variableName).toBe(schemaVersion === 'v1' ? undefined : 'server');
-        if (action === 'undo') {
-          dashboard.state.sidebar.redoAction();
-          expect(layout.state.body.state.title).toBe('Later title');
-          expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A', expression: 'dirty' }]);
-        }
-      }
-    );
-
-    it.each([false, true])(
-      'keeps live repeat expansion from shifting siblings again on Discard (loading=%s)',
-      async (loading) => {
-        setTestFlags({ dashboardNewLayouts: true });
-        const pending = loading
-          ? new TestVariable({
-              name: 'server',
-              query: 'initial',
-              isMulti: true,
-              value: ['A', 'B'],
-              text: ['A', 'B'],
-              delayMs: 0,
-              refresh: VariableRefresh.onTimeRangeChanged,
-              optionsToReturn: ['A', 'B', 'C', 'D'].map((value) => ({ value, label: value })),
-            })
-          : undefined;
-        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(false, 'v2', pending);
-        if (!(layout instanceof DashboardGridItem) || !(layout.parent instanceof SceneGridLayout)) {
-          throw new Error('Expected grid');
-        }
-        const variable = dashboard.state.$variables?.getByName('server');
-        if (!(variable instanceof CustomVariable) && !(variable instanceof TestVariable)) {
-          throw new Error('Expected server variable');
-        }
-        variable.changeValueTo(['A', 'B']);
-        layout.setRepeatByVariable('server');
-        layout.handleVariableName();
-        layout.setState({ repeatDirection: 'v', itemHeight: 10, x: 0, y: 0, width: 12 });
-        layout.handleEditChange();
-        expect(layout.state.height).toBe(20);
-        const following = new DashboardGridItem({
-          y: 20,
-          x: 0,
-          width: 12,
-          height: 5,
-          body: new VizPanel({ key: 'panel-2', pluginId: 'text' }),
-        });
-        layout.parent.setState({ children: [...layout.parent.state.children, following] });
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
-        panelEditor.dashboardSaved();
-        variable.changeValueTo(['A', 'B', 'C', 'D']);
-        await waitFor(() => expect(layout.state.height).toBe(40));
-        expect(following.state.y).toBe(40);
-        if (pending) {
-          pending.setState({ delayMs: undefined });
-          const timeRange = dashboard.state.$timeRange;
-          if (!(timeRange instanceof SceneTimeRange)) {
-            throw new Error('Expected time range');
-          }
-          timeRange.setState({ from: 'now-5h' });
-          await waitFor(() => expect(pending.state.loading).toBe(true));
-        }
-        panelEditor.onDiscard();
-        expect(following.state.y).toBe(40);
-        if (loading) {
-          expect(layout.state.repeatedPanels).toBeUndefined();
-          pending?.signalUpdateCompleted();
-        }
-        await waitFor(() => expect(layout.state.repeatedPanels).toHaveLength(3));
-        expect(layout.state.height).toBe(40);
-        expect(following.state.y).toBe(40);
-        for (const copy of [layout.state.body, ...(layout.state.repeatedPanels ?? [])]) {
-          expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A' }]);
-        }
-      }
-    );
-
-    it.each<{ schemaVersion: 'v1' | 'v2' }>([{ schemaVersion: 'v1' }, { schemaVersion: 'v2' }])(
-      'keeps only actually persisted $schemaVersion library repeat changes after save',
-      async ({ schemaVersion }) => {
-        setTestFlags({ dashboardNewLayouts: true });
-        const libraryPanel = new LibraryPanelBehavior({
-          uid: 'lib-uid',
-          name: 'Library panel',
-          isLoaded: true,
-          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
-        });
-        const { dashboard, panelEditor, gridItem } = await setup({ libraryPanel, schemaVersion });
-        gridItem.setRepeatByVariable('server');
-        gridItem.handleEditChange();
-        const saved = dashboard.serializer.getSaveModel(dashboard);
-        if ('panels' in saved) {
-          expect(saved.panels?.[0].libraryPanel).toEqual({ uid: 'lib-uid', name: 'Library panel' });
-          expect(saved.panels?.[0]).not.toHaveProperty('repeat');
-        } else {
-          expect(saved.layout).toMatchObject({
-            kind: 'GridLayout',
-            spec: { items: [{ spec: { repeat: { value: 'server' } } }] },
-          });
-        }
-        panelEditor.dashboardSaved();
-        expect(panelEditor.hasUnsavedChanges()).toBe(schemaVersion === 'v1');
-        expect(panelEditor.state.isDirty).toBe(schemaVersion === 'v1');
-        panelEditor.onDiscard();
-        expect(gridItem.state.variableName).toBe(schemaVersion === 'v1' ? undefined : 'server');
-        expect(gridItem.state.repeatedPanels?.length ?? 0).toBe(schemaVersion === 'v1' ? 0 : 2);
-      }
-    );
-
-    it.each([
-      { auto: false, savedRepeat: false, action: 'discard' },
-      { auto: true, savedRepeat: false, action: 'discard' },
-      { auto: false, savedRepeat: true, action: 'discard' },
-      { auto: true, savedRepeat: true, action: 'discard' },
-      { auto: false, savedRepeat: false, action: 'undo' },
-      { auto: true, savedRepeat: false, action: 'undo' },
-      { auto: false, savedRepeat: true, action: 'undo' },
-      { auto: true, savedRepeat: true, action: 'undo' },
-    ])(
-      'restores saved repeat enablement and dependencies after $action (auto=$auto, enabled=$savedRepeat)',
-      async ({ auto, savedRepeat, action }) => {
-        setTestFlags({ dashboardNewLayouts: true });
-        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(auto);
-        const variables = dashboard.state.$variables;
-        if (!(variables instanceof SceneVariableSet)) {
-          throw new Error('Expected dashboard variables');
-        }
-        variables.setState({
-          variables: [
-            ...variables.state.variables,
-            new CustomVariable({
-              name: 'other',
-              query: 'X,Y',
-              isMulti: true,
-              value: ['X', 'Y'],
-              text: ['X', 'Y'],
-            }),
-          ],
-        });
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
-        layout.setRepeatByVariable(savedRepeat ? 'server' : undefined);
-        layout.handleEditChange();
-        panelEditor.dashboardSaved();
-        layout.setRepeatByVariable('other');
-        layout.handleEditChange();
-        expect(layout.state.repeatedPanels).toHaveLength(1);
-        // Restore while inactive, before sidebar actions can repair repeat state.
-        deactivate?.();
-        deactivate = undefined;
-        if (action === 'discard') {
-          panelEditor.onDiscard();
-        } else {
-          dashboard.setState({ editPanel: undefined });
-          deactivate = activateFullSceneTree(dashboard);
-          dashboard.state.sidebar.undoAction();
-        }
-        const checkRestored = () => {
-          expect(layout.state.variableName).toBe(savedRepeat ? 'server' : undefined);
-          const copies = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
-          expect(copies).toHaveLength(savedRepeat ? 3 : 1);
-          copies.forEach((copy, index) => {
-            expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A' }]);
-            expect(copy.state.$variables?.getByName('other')).toBeUndefined();
-            expect(copy.state.$variables?.getByName('server')?.getValue()).toBe(
-              savedRepeat ? ['A', 'B', 'C'][index] : undefined
-            );
-          });
-          if (layout instanceof AutoGridItem) {
-            expect(layout.state.repeatedConditionalRendering?.length ?? 0).toBe(savedRepeat ? 2 : 0);
-            expect(layout.state.conditionalRendering?.getTarget()).toBe(layout.state.body);
-          }
-        };
-        checkRestored();
-        if (action === 'discard' && layout instanceof DashboardGridItem) {
-          const height = layout.state.height;
-          const itemHeight = layout.state.itemHeight;
-          layout.setState({ height: 42 });
-          expect(layout.state.itemHeight).toBe(itemHeight);
-          layout.setState({ height });
-        }
-        if (action === 'undo') {
-          dashboard.state.sidebar.redoAction();
-          expect(layout.state.variableName).toBe('other');
-          expect(
-            [layout.state.body, ...(layout.state.repeatedPanels ?? [])].map(
-              (copy) => getQueryRunnerFor(copy)?.state.queries
-            )
-          ).toEqual([[{ refId: 'A', expression: 'dirty' }], [{ refId: 'A', expression: 'dirty' }]]);
-          dashboard.state.sidebar.undoAction();
-          checkRestored();
-        }
-        deactivate?.();
-        dashboard.setState({ editPanel: undefined });
-        deactivate = activateFullSceneTree(dashboard);
-        checkRestored();
-        const other = variables.getByName('other');
-        if (!(other instanceof CustomVariable)) {
-          throw new Error('Expected other variable');
-        }
-        other.changeValueTo(['Y']);
-        checkRestored();
-        const server = variables.getByName('server');
-        if (!(server instanceof CustomVariable)) {
-          throw new Error('Expected server variable');
-        }
-        server.changeValueTo(['C']);
-        await waitFor(() => expect(layout.state.repeatedPanels?.length ?? 0).toBe(0));
-        expect(layout.state.body.state.$variables?.getByName('server')?.getValue()).toBe(savedRepeat ? 'C' : undefined);
-      }
-    );
-
-    it.each([
-      { auto: false, action: 'discard' },
-      { auto: false, action: 'undo' },
-      { auto: true, action: 'discard' },
-      { auto: true, action: 'undo' },
-    ])('keeps saved layout and original library content after $action (auto=$auto)', async ({ auto, action }) => {
-      setTestFlags({ dashboardNewLayouts: true });
-      const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(auto);
-      layout.setState({ variableName: 'server' });
-      if (layout instanceof DashboardGridItem) {
-        layout.setState({ maxPerRow: 2, repeatDirection: 'v' });
-      } else {
-        layout.setState({ fitContent: true });
-        layout.state.conditionalRendering?.setState({
-          visibility: 'hide',
-          conditions: [new ConditionalRenderingData({ value: true, result: undefined })],
-        });
-      }
-      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
-      panelEditor.dashboardSaved();
-      layout.setState({ variableName: undefined });
-      if (layout instanceof DashboardGridItem) {
-        layout.setState({ maxPerRow: 3, repeatDirection: 'h' });
-      } else {
-        layout.setState({ fitContent: false });
-        layout.state.conditionalRendering?.changeVisibility('show');
-      }
-      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '3' }] });
-      if (action === 'discard') {
-        panelEditor.onDiscard();
-      } else {
-        deactivate?.();
-        deactivate = undefined;
-        dashboard.setState({ editPanel: undefined });
-        deactivate = activateFullSceneTree(dashboard);
-        dashboard.state.sidebar.undoAction();
-      }
-      expect(layout.state.variableName).toBe('server');
-      if (layout instanceof DashboardGridItem) {
-        expect(layout.state).toMatchObject({ maxPerRow: 2, repeatDirection: 'v' });
-      } else {
-        expect(layout.state.fitContent).toBe(true);
-        expect(layout.state.conditionalRendering?.serialize()).toMatchObject({
-          spec: {
-            visibility: 'hide',
-            items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
-          },
-        });
-      }
-      expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A' }]);
-      if (action === 'undo') {
-        dashboard.state.sidebar.redoAction();
-        expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A', expression: '3' }]);
-      }
-    });
-
-    it.each([
-      { auto: false, action: 'discard' },
-      { auto: false, action: 'undo' },
-      { auto: true, action: 'discard' },
-      { auto: true, action: 'undo' },
-    ])(
-      'rebuilds every saved library repeat from clean content after $action (auto=$auto)',
-      async ({ auto, action }) => {
-        setTestFlags({ dashboardNewLayouts: true });
-        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(auto);
-        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
-        layout.setRepeatByVariable('server');
-        if (layout instanceof DashboardGridItem) {
-          layout.handleVariableName();
-        }
-        layout.handleEditChange();
-        expect(layout.state.repeatedPanels).toHaveLength(2);
-        for (const copy of layout.state.repeatedPanels ?? []) {
-          expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A', expression: 'dirty' }]);
-        }
-        if (layout instanceof DashboardGridItem) {
-          layout.setState({ maxPerRow: 2, itemHeight: 7, repeatDirection: 'h' });
-        } else {
-          layout.setState({ fitContent: true });
-          layout.state.conditionalRendering?.changeVisibility('hide');
-        }
-        layout.handleEditChange();
-        let following: DashboardGridItem | undefined;
-        if (layout instanceof DashboardGridItem && layout.parent instanceof SceneGridLayout) {
-          layout.setState({ x: 0, y: 4 });
-          following = new DashboardGridItem({
-            x: 0,
-            y: 18,
-            width: 12,
-            height: 6,
-            body: new VizPanel({ key: 'panel-2', pluginId: 'text' }),
-          });
-          layout.parent.setState({ children: [...layout.parent.state.children, following] });
-        }
-        panelEditor.dashboardSaved();
-        expect(panelEditor.hasUnsavedChanges()).toBe(true);
-        if (layout instanceof DashboardGridItem) {
-          layout.setState({ height: 20 });
-        }
-        if (action === 'discard') {
-          panelEditor.onDiscard();
-        } else {
-          deactivate?.();
-          deactivate = undefined;
-          dashboard.setState({ editPanel: undefined });
-          deactivate = activateFullSceneTree(dashboard);
-          dashboard.state.sidebar.undoAction();
-        }
-        const assertRepeats = (expression: string | undefined, values: string[]) => {
-          const panels = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
-          expect(panels).toHaveLength(values.length);
-          expect(panels.map((copy) => getQueryRunnerFor(copy)?.state.queries)).toEqual(
-            values.map(() => [expression ? { refId: 'A', expression } : { refId: 'A' }])
-          );
-          panels.forEach((copy, index) => {
-            expect(copy.state.$variables?.getByName('server')?.getValue()).toBe(values[index]);
-          });
-          if (layout instanceof AutoGridItem) {
-            expect(layout.state.fitContent).toBe(true);
-            expect(layout.state.conditionalRendering?.getTarget()).toBe(panels[0]);
-            expect(layout.state.repeatedConditionalRendering).toHaveLength(values.length - 1);
-            layout.state.repeatedConditionalRendering?.forEach((condition, index) => {
-              expect(condition.getTarget()).toBe(panels[index + 1]);
-              expect(condition.state.visibility).toBe('hide');
-            });
-          } else {
-            expect(layout.state).toMatchObject({
-              variableName: 'server',
-              maxPerRow: 2,
-              repeatDirection: 'h',
-              itemHeight: expression ? 10 : 7,
-              width: 24,
-              x: 0,
-              y: 4,
-            });
-            expect(layout.state.height).toBe(expression ? 20 : values.length > 2 ? 14 : 7);
-            expect(following?.state.y).toBe(18);
-          }
-        };
-        assertRepeats(undefined, ['A', 'B', 'C']);
-        // Exercise an inactive restore followed by the same-value activation cache path.
-        deactivate?.();
-        deactivate = activateFullSceneTree(dashboard);
-        assertRepeats(undefined, ['A', 'B', 'C']);
-        if (layout instanceof DashboardGridItem) {
-          const itemHeights: Array<number | undefined> = [];
-          const resize = layout.subscribeToState((state, previous) => {
-            if (state.itemHeight !== previous.itemHeight) {
-              itemHeights.push(state.itemHeight);
-            }
-          });
-          layout.setState({ height: 18 });
-          expect(layout.state.itemHeight).toBe(9);
-          layout.setState({ height: 14 });
-          expect(itemHeights).toEqual([9, 7]);
-          resize.unsubscribe();
-        }
-        if (action === 'undo') {
-          for (let cycle = 0; cycle < 3; cycle++) {
-            dashboard.state.sidebar.redoAction();
-            assertRepeats('dirty', ['A', 'B', 'C']);
-            dashboard.state.sidebar.undoAction();
-            assertRepeats(undefined, ['A', 'B', 'C']);
-          }
-        }
-        const variable = dashboard.state.$variables?.getByName('server');
-        if (!(variable instanceof CustomVariable)) {
-          throw new Error('Expected server variable');
-        }
-        variable.changeValueTo(['B', 'C']);
-        await waitFor(() => expect(layout.state.repeatedPanels).toHaveLength(1));
-        assertRepeats(undefined, ['B', 'C']);
-      }
-    );
-
-    it.each(['discard', 'undo'])(
-      'restores ad hoc transformations matching the retained library content after %s',
-      async (action) => {
-        setTestFlags({ dashboardNewLayouts: true });
-        const libraryPanel = new LibraryPanelBehavior({
-          uid: 'lib-uid',
-          name: 'Library panel',
-          isLoaded: true,
-          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'table' } },
-        });
-        const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
-        const hideC: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { C: true } } }];
-        const changed: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { A: true } } }];
-        const { dashboard, panel, panelEditor, gridItem } = await setup({
-          libraryPanel,
-          pluginId: 'table',
-          initialTableTransformations: hideB,
-          schemaVersion: 'v2',
-        });
-        const transformer = panel.state.$data;
-        if (!(transformer instanceof SceneDataTransformer)) {
-          throw new Error('Expected transformer');
-        }
-        transformer.setState({ transformations: changed });
-        panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideC);
-        gridItem.setState({ maxPerRow: 2 });
-        panelEditor.dashboardSaved();
-        gridItem.setState({ maxPerRow: 3 });
-        if (action === 'discard') {
-          panelEditor.onDiscard();
-        } else {
-          deactivate?.();
-          deactivate = undefined;
-          dashboard.setState({ editPanel: undefined });
-          deactivate = activateFullSceneTree(dashboard);
-          dashboard.state.sidebar.undoAction();
-        }
-        const restored = gridItem.state.body;
-        expect(gridItem.state.maxPerRow).toBe(2);
-        expect(restored.state.$data?.state).toMatchObject({ transformations: [] });
-        expect(restored.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
-        if (action === 'undo') {
-          dashboard.state.sidebar.redoAction();
-          expect(gridItem.state.body.state.$data?.state).toMatchObject({ transformations: changed });
-          expect(gridItem.state.body.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideC);
-        }
-      }
-    );
-
-    it('resets a formerly linked panel baseline when the dashboard saves its unlinked content', async () => {
-      const libraryPanel = new LibraryPanelBehavior({
-        uid: 'lib-uid',
-        name: 'Library panel',
-        isLoaded: true,
-        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
-      });
-      const { panelEditor, panel } = await setup({ libraryPanel });
-      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
-      panelEditor.onConfirmUnlinkLibraryPanel();
-      panelEditor.dashboardSaved();
-      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
-      expect(panelEditor.hasUnsavedChanges()).toBe(false);
-      expect(panelEditor.state.isDirty).toBe(false);
-    });
-
-    it('requests the library save prompt when leaving after a dashboard save with unsaved library queries', async () => {
-      const libraryPanel = new LibraryPanelBehavior({
-        uid: 'lib-uid',
-        name: 'Library panel',
-        isLoaded: true,
-        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
-      });
-      const { dashboard, panelEditor, panel } = await setup({ libraryPanel });
-      const previousLocation = locationService.getLocation();
-      locationService.push('/d/library-draft?editPanel=1');
-      const showModal = jest.fn();
-      const view = render(
-        createElement(
-          ModalsContext.Provider,
-          {
-            value: { component: null, props: {}, showModal, hideModal: jest.fn() },
-          },
-          createElement(DashboardPrompt, { dashboard })
-        )
-      );
-      try {
-        act(() => {
-          getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
-          panelEditor.dashboardSaved();
-          locationService.partial({ editPanel: null });
-        });
-        expect(showModal).toHaveBeenCalledWith(
-          SaveLibraryVizPanelModal,
-          expect.objectContaining({
-            isUnsavedPrompt: true,
-            libraryPanel,
-          })
-        );
-        expect(locationService.getLocation().search).toBe('?editPanel=1');
-      } finally {
-        view.unmount();
-        locationService.replace(previousLocation);
-      }
-    });
-
     it('should call the api with the updated panel', async () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
@@ -1295,7 +978,6 @@ describe('PanelEditor', () => {
       });
       const { dashboard, panel, panelEditor, gridItem } = await setup({ libraryPanel });
       panelEditor.onConfirmUnlinkLibraryPanel();
-      expect(panelEditor.hasUnsavedChanges()).toBe(true);
       expect(getLibraryPanelBehavior(panel)).toBeUndefined();
       deactivate!();
       deactivate = undefined;
@@ -1338,6 +1020,26 @@ describe('PanelEditor', () => {
 
       expect(panel.state.$behaviors?.length).toBe(1);
       expect(panel.state.$behaviors![0]).toBe(otherBehavior);
+    });
+
+    it('reports clicking Save and Unlink on a library panel from the panel editor', () => {
+      const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+      });
+      new DashboardGridItem({ body: panel });
+      const editScene = buildPanelEditScene(panel);
+
+      editScene.onSaveLibraryPanel();
+      editScene.onUnlinkLibraryPanel();
+
+      expect(track.mock.calls).toEqual([
+        ['save_library_panel', 1, 'panel_editor', 'text'],
+        ['unlink_library_panel', 1, 'panel_editor', 'text'],
+      ]);
+      track.mockRestore();
     });
   });
 
@@ -1475,8 +1177,6 @@ describe('PanelEditor', () => {
 });
 
 interface SetupOptions {
-  repeatVariable?: TestVariable;
-  schemaVersion?: 'v1' | 'v2';
   activateFullTree?: boolean;
   activateNoticesFirst?: boolean;
   isNewPanel?: boolean;
@@ -1531,31 +1231,27 @@ async function setup(options: SetupOptions = {}) {
   const gridItem = new DashboardGridItem({ body: panel, variableName: options.repeatByVariable });
 
   const panelEditor = buildPanelEditScene(panel, options.isNewPanel);
-  const dashboard = new DashboardScene(
-    {
-      editPanel: panelEditor,
-      isEditing: true,
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      $variables: new SceneVariableSet({
-        variables: [
-          options.repeatVariable ??
-            new CustomVariable({
-              name: 'server',
-              query: 'A,B,C',
-              isMulti: true,
-              value: ['A', 'B', 'C'],
-              text: ['A', 'B', 'C'],
-            }),
-        ],
-      }),
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          children: [gridItem],
+  const dashboard = new DashboardScene({
+    editPanel: panelEditor,
+    isEditing: true,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({
+      variables: [
+        new CustomVariable({
+          name: 'server',
+          query: 'A,B,C',
+          isMulti: true,
+          value: ['A', 'B', 'C'],
+          text: ['A', 'B', 'C'],
         }),
+      ],
+    }),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [gridItem],
       }),
-    },
-    options.schemaVersion
-  );
+    }),
+  });
 
   panelEditor.debounceSaveModelDiff = false;
 
@@ -1576,35 +1272,6 @@ async function setup(options: SetupOptions = {}) {
   }
 
   return { dashboard, panel, gridItem, panelEditor, pluginResolve, deactivatePanel, deactivateNotices };
-}
-
-async function setupLibraryLayout(auto: boolean, schemaVersion: 'v1' | 'v2' = 'v2', repeatVariable?: TestVariable) {
-  const libraryPanel = new LibraryPanelBehavior({
-    uid: 'lib-uid',
-    name: 'Library panel',
-    isLoaded: true,
-    _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
-  });
-  const fixture = await setup({ libraryPanel, schemaVersion, repeatVariable });
-  if (!auto) {
-    return { ...fixture, layout: fixture.gridItem };
-  }
-  deactivate?.();
-  deactivate = undefined;
-  const panel = fixture.panel.clone();
-  const layout = new AutoGridItem({ body: panel });
-  fixture.dashboard.setState({
-    editPanel: undefined,
-    body: new AutoGridLayoutManager({
-      layout: new AutoGridLayout({ children: [layout], templateColumns: '1fr', rowGap: 0, columnGap: 0 }),
-    }),
-  });
-  const panelEditor = buildPanelEditScene(panel);
-  panelEditor.debounceSaveModelDiff = false;
-  fixture.dashboard.setState({ editPanel: panelEditor });
-  deactivate = activateFullSceneTree(fixture.dashboard);
-  await waitFor(() => expect(panelEditor.state.isInitializing).toBe(false));
-  return { ...fixture, panel, panelEditor, layout };
 }
 
 function MountedTransformationEditor() {

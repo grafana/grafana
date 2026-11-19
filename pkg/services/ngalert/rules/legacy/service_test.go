@@ -37,6 +37,89 @@ func (f *fakeListAuthz) HasAccessInFolder(ctx context.Context, user identity.Req
 	return f.HasAccessInFolderFunc(ctx, user, folder)
 }
 
+type fakeUpdateAuthz struct {
+	ruleAccessControlService
+}
+
+func (fakeUpdateAuthz) CanWriteAllRules(context.Context, identity.Requester) (bool, error) {
+	return true, nil
+}
+
+type transactionManagerFunc func(context.Context, func(context.Context) error) error
+
+func (f transactionManagerFunc) InTransaction(ctx context.Context, work func(context.Context) error) error {
+	return f(ctx, work)
+}
+
+func TestUpdateAlertRulePersistencePreconditions(t *testing.T) {
+	const baselineVersion = int64(7)
+	stored := models.RuleGen.GenerateRef()
+	stored.Version = baselineVersion
+	stored.NotificationSettings = nil
+	updated := stored.Copy()
+	updated.Title += " updated"
+	requester := &user.SignedInUser{OrgID: stored.OrgID}
+
+	t.Run("transaction retry preserves the original baseline", func(t *testing.T) {
+		stored := stored.Copy()
+		store := fakes.NewRuleStore(t)
+		store.Rules[stored.OrgID] = []*models.AlertRule{stored}
+		retry := errors.New("retry transaction")
+		var persisted *models.AlertRule
+		store.Hook = func(cmd any) error {
+			updates, ok := cmd.([]models.UpdateRule)
+			if !ok {
+				return nil
+			}
+			if updates[0].Existing.Version != baselineVersion {
+				return rulestore.ErrOptimisticLock
+			}
+			if persisted == nil {
+				persisted = stored.Copy()
+				updates[0].Existing.Version++
+				updates[0].Existing.Title = "temporary title"
+				return retry
+			}
+			persisted = updates[0].New.Copy()
+			return nil
+		}
+		xact := transactionManagerFunc(func(ctx context.Context, work func(context.Context) error) error {
+			if err := work(ctx); !errors.Is(err, retry) {
+				return err
+			}
+			return work(ctx)
+		})
+		service := &LegacyRuleService{
+			ruleStore: store, provenanceStore: fakes.NewFakeProvisioningStore(),
+			xact: xact, authz: fakeUpdateAuthz{},
+		}
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Title, persisted.Title)
+		require.Equal(t, baselineVersion, stored.Version)
+	})
+
+	t.Run("optimistic lock failure after the read is preserved", func(t *testing.T) {
+		stored := stored.Copy()
+		store := fakes.NewRuleStore(t)
+		store.Rules[stored.OrgID] = []*models.AlertRule{stored}
+		store.Hook = func(cmd any) error {
+			if _, ok := cmd.([]models.UpdateRule); ok {
+				return rulestore.ErrOptimisticLock
+			}
+			return nil
+		}
+		provenance := fakes.NewFakeProvisioningStore()
+		provenance.SetManagerPropertiesFunc = func(context.Context, models.Provisionable, int64, utils.ManagerProperties) error {
+			t.Fatal("failed rule persistence must not change manager properties")
+			return nil
+		}
+		service := &LegacyRuleService{ruleStore: store, provenanceStore: provenance, xact: store, authz: fakeUpdateAuthz{}}
+		_, err := service.UpdateAlertRule(context.Background(), requester, *updated, utils.ManagerProperties{})
+		require.ErrorIs(t, err, rulestore.ErrOptimisticLock)
+	})
+}
+
 func TestListAlertRules(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}

@@ -95,7 +95,7 @@ describe('RELOAD_FROM_SERVER', () => {
       const editor = buildPanelEditScene(panel);
       const context = contextFor({ isDirty: false, isEditing: true, editPanel: editor });
 
-      expect(editor.hasUnsavedChanges()).toBe(false);
+      expect(editor.hasUnsavedChangesForReload()).toBe(false);
       expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({ data: { reloaded: true } });
       jest.mocked(reloadKeepingEditMode).mockClear();
 
@@ -123,9 +123,9 @@ describe('RELOAD_FROM_SERVER', () => {
       };
       jest.mocked(getPendingChangesHistory).mockReturnValue(history);
       const context = contextFor({ isDirty: true, isEditing: true, editPanel: editor });
-      expect(editor.hasUnsavedChanges()).toBe(false);
+      expect(editor.hasUnsavedChangesForReload()).toBe(false);
       item.setState({ isHidden: true });
-      expect(editor.hasUnsavedChanges()).toBe(false);
+      expect(editor.hasUnsavedChangesForReload()).toBe(false);
       expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({ data: { reloaded: true } });
       jest.mocked(reloadKeepingEditMode).mockClear();
 
@@ -161,7 +161,7 @@ describe('RELOAD_FROM_SERVER', () => {
     });
     const item = new DashboardGridItem({ body: panel });
     const editor = buildPanelEditScene(panel);
-    expect(editor.hasUnsavedChanges()).toBe(false);
+    expect(editor.hasUnsavedChangesForReload()).toBe(false);
     const dashboard = new DashboardScene(
       {
         uid: 'abc',
@@ -179,10 +179,10 @@ describe('RELOAD_FROM_SERVER', () => {
         elements: { 'panel-1': { kind: 'Panel', spec: { subtitle: 'Original subtitle' } } },
       });
     }
-    expect(editor.hasUnsavedChanges()).toBe(false);
+    expect(editor.hasUnsavedChangesForReload()).toBe(false);
     const context = contextFor({ isDirty: false, isEditing: true, editPanel: editor });
     panel.setState({ subtitle });
-    expect(editor.hasUnsavedChanges()).toBe(schemaVersion === 'v2');
+    expect(editor.hasUnsavedChangesForReload()).toBe(schemaVersion === 'v2');
     expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({
       data: schemaVersion === 'v2' ? { reloaded: false, reason: 'unsaved-changes' } : { reloaded: true },
     });
@@ -191,7 +191,7 @@ describe('RELOAD_FROM_SERVER', () => {
     }
     jest.mocked(reloadKeepingEditMode).mockClear();
     panel.setState({ subtitle: 'Original subtitle' });
-    expect(editor.hasUnsavedChanges()).toBe(false);
+    expect(editor.hasUnsavedChangesForReload()).toBe(false);
     expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({ data: { reloaded: true } });
   });
 
@@ -212,7 +212,7 @@ describe('RELOAD_FROM_SERVER', () => {
       elements: { 'panel-1': { kind: 'LibraryPanel' } },
     });
     panel.setState({ subtitle: 'Changed subtitle' });
-    expect(editor.hasUnsavedChanges()).toBe(false);
+    expect(editor.hasUnsavedChangesForReload()).toBe(false);
   });
 
   it.each<{ schemaVersion: 'v1' | 'v2' }>([{ schemaVersion: 'v1' }, { schemaVersion: 'v2' }])(
@@ -236,8 +236,8 @@ describe('RELOAD_FROM_SERVER', () => {
       );
       runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
       editor.dashboardSaved();
-      expect(editor.hasUnsavedChanges()).toBe(true);
-      expect(editor.state.isDirty).toBe(true);
+      expect(editor.hasUnsavedChangesForReload()).toBe(true);
+      expect(editor.state.isDirty).toBe(false);
       expect(
         await reloadFromServerCommand.handler({}, contextFor({ isDirty: false, isEditing: true, editPanel: editor }))
       ).toMatchObject({ data: { reloaded: false, reason: 'unsaved-changes' } });

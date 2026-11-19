@@ -39,6 +39,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -4047,6 +4048,100 @@ func TestServerAuthorizeBeforeFetchValues(t *testing.T) {
 		names = append(names, obj.GetName())
 	}
 	require.Equal(t, []string{"aaa", "bbb"}, names)
+}
+
+// With filtered results the next stored item may not be in the response, so the
+// token must point at the last item returned and paging must resume after it.
+func TestServerListContinueTokenPointsAtLastReturnedItem(t *testing.T) {
+	for _, authorizeBeforeFetch := range []bool{false, true} {
+		for _, keysOnly := range []bool{false, true} {
+			t.Run(fmt.Sprintf("authorizeBeforeFetch=%v/keysOnly=%v", authorizeBeforeFetch, keysOnly), func(t *testing.T) {
+				backend := setupTestStorageBackend(t)
+				ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+					Type:      authlib.TypeUser,
+					UserID:    123,
+					UserUID:   "u123",
+					Namespace: appsNamespace.Namespace,
+				})
+				for _, name := range []string{"aaa", "bbb", "ccc", "ddd"} {
+					seedResource(t, backend, ctx, name, "")
+				}
+
+				access := newNamespaceRecordingAccessClient()
+				access.denied["bbb"] = true
+				access.denied["ddd"] = true
+				srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+					Backend:                     backend,
+					AccessClient:                access,
+					AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+				})
+				require.NoError(t, err)
+				t.Cleanup(srv.cancel)
+
+				var names []string
+				token := ""
+				for range 5 {
+					req := appsCollectionRequest(keysOnly)
+					req.Limit = 1
+					req.NextPageToken = token
+					rsp, err := srv.List(ctx, req)
+					require.NoError(t, err)
+					for _, item := range rsp.Items {
+						if keysOnly {
+							names = append(names, item.Name)
+							continue
+						}
+						obj := &unstructured.Unstructured{}
+						require.NoError(t, obj.UnmarshalJSON(item.Value))
+						names = append(names, obj.GetName())
+					}
+					token = rsp.NextPageToken
+					if token == "" {
+						break
+					}
+
+					decoded, err := GetContinueToken(token)
+					require.NoError(t, err)
+					require.Equal(t, names[len(names)-1], decoded.Name, "the token must name the last returned item")
+				}
+				require.Empty(t, token)
+				require.Equal(t, []string{"aaa", "ccc"}, names)
+			})
+		}
+	}
+}
+
+// A token from a server that predates the exclusive cursor must reach clients
+// as 400, not 410: client-go pagers answer 410 with one unpaginated list, which
+// this server truncates to the default page size.
+func TestServerListRejectsPreExclusiveContinueTokenAsBadRequest(t *testing.T) {
+	for _, authorizeBeforeFetch := range []bool{false, true} {
+		t.Run(fmt.Sprintf("authorizeBeforeFetch=%v", authorizeBeforeFetch), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+				Type:      authlib.TypeUser,
+				UserID:    123,
+				UserUID:   "u123",
+				Namespace: appsNamespace.Namespace,
+			})
+			rv := seedResource(t, backend, ctx, "aaa", "")
+
+			srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+				Backend:                     backend,
+				AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+			})
+			require.NoError(t, err)
+			t.Cleanup(srv.cancel)
+
+			req := appsCollectionRequest(false)
+			req.NextPageToken = preExclusiveContinueToken(t, "aaa", rv, false)
+			rsp, err := srv.List(ctx, req)
+			require.Nil(t, rsp)
+			res := rpcErrorResult(t, err)
+			require.Equal(t, int32(http.StatusBadRequest), res.Code)
+			require.Equal(t, string(metav1.StatusReasonBadRequest), res.Reason)
+		})
+	}
 }
 
 func TestServerListKeysOnly(t *testing.T) {

@@ -686,7 +686,7 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p r')!.onTrigger();
 
         expect(emitSpy).not.toHaveBeenCalled();
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'keyboard');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'keyboard', 'text');
       });
 
       it('still duplicates the panel with p d', () => {
@@ -695,7 +695,7 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p d')!.onTrigger();
 
         expect(emitSpy).not.toHaveBeenCalled();
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'keyboard');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'keyboard', 'text');
         expect(duplicatePanel).toHaveBeenCalled();
       });
 
@@ -932,7 +932,12 @@ describe('setupKeyboardShortcuts', () => {
 
         getBinding('p c')!.onTrigger();
 
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', expect.any(Number), 'keyboard');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+          'copy',
+          expect.any(Number),
+          'keyboard',
+          'table'
+        );
       });
 
       it('does nothing when no panel is focused', () => {

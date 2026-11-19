@@ -42,7 +42,7 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
     // is defaults the scene filled in since, which reloading loses nothing of, unless an edit failed
     // to record.
     if (
-      scene.state.editPanel?.hasUnsavedChanges() ||
+      scene.state.editPanel?.hasUnsavedChangesForReload() ||
       (scene.state.isDirty && !getPendingChangesHistory(scene.state)) ||
       hasUnrecordedPendingChange(scene)
     ) {

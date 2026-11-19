@@ -1514,9 +1514,29 @@
         "records": "Записи",
         "to": "в"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Правила записи не найдены",
@@ -1597,10 +1617,17 @@
         "view-list": "Список",
         "wildcard-in-text": "Текст поискового запроса не может содержать * или %."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1825,17 +1852,18 @@
         "autosync-rules-error-title": "Ошибка импорта правил",
         "autosync-rules-imported-note": "Выбранные правила оповещения также были импортированы.",
         "autosync-rules-note": "Выбранные правила оповещения также будут импортированы.",
-        "autosync-success-body": "Автосинхронизация включена. Перенаправление...",
+        "autosync-success-body": "",
         "autosync-success-title": "Автосинхронизация включена",
         "autosync-title": "Подтвердите автосинхронизацию",
         "body": "Начать импорт? Это действие приведет к созданию новых ресурсов в Grafana Alerting.",
         "confirm": "Начать импорт",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Ошибка импорта",
         "importing-body": "Выполняется импорт ресурсов в Grafana Alerting. Подождите...",
         "importing-title": "Импорт...",
-        "success-body": "Ресурсы импортированы. Перенаправление...",
+        "success-body": "",
         "success-title": "Импорт выполнен",
         "title": "Подтвердите импорт"
       },
@@ -2432,6 +2460,7 @@
       "contact-points": "Точки контакта",
       "notification-policies": "Политики уведомлений",
       "recently-deleted": "Последние удаленные",
+      "recording-rules": "",
       "templates": "Шаблоны",
       "time-intervals": "Временные интервалы"
     },
@@ -6316,8 +6345,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Данные",
@@ -6514,9 +6542,6 @@
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Специальные преобразования отключены в режиме редактирования"
     },
     "plan-building-overlay": {
       "quip-corners": "Скругляем углы панели…",
@@ -7810,11 +7835,7 @@
       "usage-count_other": "Используется на {{count}} дашбордах"
     },
     "lifecycle": {
-      "applied": "Ваши изменения применены к {{title}}",
-      "apply": "Применить",
-      "apply-body": "Их увидят все пользователи с доступом. Вы можете восстановить предыдущую версию из истории версий.",
-      "apply-failed": "Не удалось применить изменения. Повторите попытку или сначала сравните их.",
-      "apply-needs-edit": "Для применения изменений требуются права на редактирование «{{title}}». Вы можете просмотреть изменения, но не применить их.",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Черновик",
       "breadcrumb-pending-changes": "Ожидающие изменения",
       "change-added": "Добавлено",
@@ -7846,7 +7867,6 @@
       "draft-discarded": "",
       "draft-title": "Черновик",
       "edited-dashboard": "",
-      "highlight-changes": "Выделить изменения на дашборде",
       "pending-body": "Предпросмотр ожидающих изменений. Их можете видеть только вы.",
       "pending-body-source": "Предпросмотр ожидающих изменений в {{source}}. Их можете видеть только вы.",
       "pending-changes-changed": "",
@@ -7855,15 +7875,18 @@
       "pending-stale": "Дашборд был обновлен после внесения вами изменений",
       "pending-title": "Ожидающие изменения",
       "preview-changes": "Предпросмотр изменений",
-      "rebase": "Перебазировать",
       "record-pending-change-failed": "",
       "save": "Сохранить",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Показать исходный дашборд",
-      "stop-highlighting-changes": "Прекратить выделение изменений",
-      "apply-title_one": "Применить {{count}} изменение к «{{title}}»?",
-      "apply-title_few": "Применить {{count}} изменения к «{{title}}»?",
-      "apply-title_many": "Применить {{count}} изменений к «{{title}}»?",
-      "apply-title_other": "Применить {{count}} изменения к «{{title}}»?"
+      "save-pending-title_one": "",
+      "save-pending-title_few": "",
+      "save-pending-title_many": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Добавить ссылку",
@@ -8117,6 +8140,12 @@
       "confirmText-restore-version": "Да, восстановить до версии {{version}}",
       "title-restore-version": "Восстановление версии"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Разрешить",
       "allow-tooltip": "Загружать контент из выбранных источников на указанных панелях, пока вкладка не будет закрыта.",
@@ -8328,6 +8357,12 @@
       "switch-options": "Варианты переключения",
       "value-pair-type": "Тип пары значений",
       "value-pair-type-description": "Выберите тип значений для состояний переключателя"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Значение по умолчанию"
@@ -13655,6 +13690,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Навигационная цепочка"
     },
@@ -13670,14 +13730,6 @@
         "open-all": "Открыть ИИ-помощников и приложения боковой панели"
       },
       "floating-resize": "Изменить ширину боковой панели"
-    },
-    "fullscreen-workspace": {
-      "enter": "Войти в рабочее пространство",
-      "error-exit": "Выйти из рабочего пространства",
-      "error-message": "Не удалось загрузить рабочее пространство Grafana Assistant.",
-      "error-reload": "Перезагрузить страницу",
-      "error-title": "Рабочее пространство недоступно",
-      "workspace": "Рабочее пространство"
     },
     "help": {
       "aria-label": "Справка",
@@ -13715,6 +13767,7 @@
       "tv-alert": "Чтобы выйти из режима киоска, нажмите ESC"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Закрыть меню",
       "customise": "Настроить навигацию",
       "customise-cancel": "Отменить",
@@ -13882,8 +13935,10 @@
       "drag-handle": "Перетащите для изменения порядка",
       "duplicate": "Дублировать блок",
       "frame": {
-        "aria-label-collapsed": "Свернутый блок: {{name}}",
-        "aria-label-panel": "Блок визуализации: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13971,7 +14026,7 @@
       "submit": "Добавить в блокнот",
       "success": "Панель добавлена в {{title}}",
       "success-cells": "Добавлено в {{title}}",
-      "success-link": "Просмотр блокнота",
+      "success-open-link": "",
       "tag-placeholder": "Фильтр по меткам",
       "target-description": "Выберите место для добавления панели.",
       "target-existing": "Существующий блокнот",
@@ -14145,7 +14200,8 @@
       "swatch-placeholder-aria-label": "Выбрать цвет, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Цветовые ряды по"
+      "color-by-label": "Цветовые ряды по",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Значение вне допустимого диапазона ({{range}})",
@@ -14651,6 +14707,9 @@
     },
     "empty-state": {
       "message": "Плагины не найдены"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Для получения более подробной информации об ошибке проверьте консоль.",
@@ -15813,6 +15872,8 @@
       "header-title": "Заголовок",
       "header-type": "Тип",
       "missing-folder-metadata": "Отсутствует файл метаданных папки",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Поиск по пути или заголовку",
       "source": "Источник",
       "status-filter-aria-label": "Сортировать по статусу",
