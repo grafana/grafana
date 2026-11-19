@@ -128,7 +128,13 @@ describe('ManagedResourceBadge', () => {
       setPermissions({ isEditor: false, canManageRepositories: false });
       mockRepositories([makeRepository()]);
 
-      render(<ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
+      render(
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
+      );
 
       // Wait for the repository lookup to settle, then confirm no trigger appeared.
       await waitFor(() => expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument());
@@ -140,7 +146,11 @@ describe('ManagedResourceBadge', () => {
       mockRepositories([makeRepository()]);
 
       const { user } = render(
-        <ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
       );
 
       const trigger = await screen.findByRole('button', { name: 'Managed resource actions' });
@@ -157,7 +167,11 @@ describe('ManagedResourceBadge', () => {
       mockRepositories([makeRepository({ path: 'grafana' })]);
 
       const { user } = render(
-        <ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
       );
 
       await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
@@ -192,7 +206,13 @@ describe('ManagedResourceBadge', () => {
       setPermissions({ isEditor: true });
       mockRepositories([makeRepository()]);
 
-      render(<ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
+      render(
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
+      );
 
       const trigger = await screen.findByRole('button', { name: 'Managed resource actions' });
       expect(trigger).not.toHaveAttribute('title');
@@ -204,7 +224,11 @@ describe('ManagedResourceBadge', () => {
       mockRepositories([makeRepository()]);
 
       const { user } = render(
-        <ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
       );
 
       await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
@@ -219,7 +243,11 @@ describe('ManagedResourceBadge', () => {
       mockRepositories([makeRepository()]);
 
       const { user } = render(
-        <ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
       );
 
       await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
@@ -233,7 +261,11 @@ describe('ManagedResourceBadge', () => {
       mockRepositories([makeRepository({ type: 'local', url: undefined, branch: undefined })]);
 
       const { user } = render(
-        <ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
       );
 
       await user.click(await screen.findByRole('button', { name: 'Managed resource actions' }));
@@ -246,7 +278,13 @@ describe('ManagedResourceBadge', () => {
       setPermissions({ isEditor: true, canManageRepositories: true });
       mockRepositories([]);
 
-      render(<ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
+      render(
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
+      );
 
       await waitFor(() => expect(screen.getByTestId('icon-exclamation-triangle')).toBeInTheDocument());
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -256,7 +294,13 @@ describe('ManagedResourceBadge', () => {
       setPermissions({ isEditor: true, canManageRepositories: true });
       config.provisioningEnabled = false;
 
-      render(<ManagedResourceBadge managerKind={ManagerKind.Repo} repositoryName="my-repo" sourcePath="dashboards/foo.json" />);
+      render(
+        <ManagedResourceBadge
+          managerKind={ManagerKind.Repo}
+          repositoryName="my-repo"
+          sourcePath="dashboards/foo.json"
+        />
+      );
 
       expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
