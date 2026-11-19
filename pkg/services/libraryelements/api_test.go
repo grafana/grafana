@@ -63,6 +63,23 @@ func TestWriteErrorPreservesLegacyFolderNotFoundMessage(t *testing.T) {
 	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
 }
 
+func TestCreateHandlerMissingFolderIsBadRequest(t *testing.T) {
+	// The folder service's not-found error carries a 404 errutil status.
+	notFound := folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+	service := &LibraryElementService{folderService: &foldertest.FakeService{ExpectedError: notFound}}
+	body := `{"folderUid":"missing","name":"panel","kind":1,"model":{}}`
+	reqContext := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodPost, "/api/library-elements", strings.NewReader(body))},
+		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+	reqContext.Req.Header.Set("Content-Type", "application/json")
+
+	resp := service.createHandler(reqContext)
+
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+	require.JSONEq(t, `{"message":"failed to get folder"}`, string(resp.Body()))
+}
+
 func TestWriteErrorMapsCreateNotFoundToMissingFolderWhenAggregationStripsDetails(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	reqContext := &contextmodel.ReqContext{

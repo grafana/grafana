@@ -35,15 +35,25 @@ type chunkedRefError struct {
 	refID  string
 	status backend.Status
 	err    error
+	source backend.ErrorSource
 }
 
 func (w *errorRecordingChunkedWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	if err != nil {
-		w.mu.Lock()
-		w.errs = append(w.errs, chunkedRefError{refID: refID, status: status, err: err})
-		w.mu.Unlock()
+	source := backend.ErrorResponseWithErrorSource(err).ErrorSource
+	if source == "" && backend.IsDownstreamError(err) {
+		source = backend.ErrorSourceDownstream
 	}
+	w.recordError(refID, status, err, source)
 	return w.ChunkedDataWriter.WriteError(ctx, refID, status, err)
+}
+
+func (w *errorRecordingChunkedWriter) recordError(refID string, status backend.Status, err error, source backend.ErrorSource) {
+	if err == nil {
+		return
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.errs = append(w.errs, chunkedRefError{refID: refID, status: status, err: err, source: source})
 }
 
 // OnChunk keeps the wrapper transparent to the raw HTTP streaming path: coreplugin
@@ -57,13 +67,7 @@ func (w *errorRecordingChunkedWriter) OnChunk(chunk *pluginv2.QueryChunkedDataRe
 		return errors.New("chunked writer does not support raw chunks")
 	}
 	if chunk != nil && chunk.Error != "" {
-		w.mu.Lock()
-		w.errs = append(w.errs, chunkedRefError{
-			refID:  chunk.RefId,
-			status: backend.Status(chunk.Status),
-			err:    errors.New(chunk.Error),
-		})
-		w.mu.Unlock()
+		w.recordError(chunk.RefId, backend.Status(chunk.Status), errors.New(chunk.Error), backend.ErrorSource(chunk.ErrorSource))
 	}
 	return raw.OnChunk(chunk)
 }

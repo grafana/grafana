@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// A federated PreRank search can authorize several indexes concurrently.
-// Accumulate locally and update histograms once per executed search.
+// A federated search can authorize several indexes concurrently. Accumulate
+// locally and update histograms once per executed search.
 type searchAuthObservation struct {
 	metrics *resource.BleveIndexMetrics
 	checks  atomic.Int64
@@ -26,15 +26,10 @@ func withSearchAuthObservation(access authlib.AccessClient, metrics *resource.Bl
 	return access, observation
 }
 
-func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRank, cursorFallback bool) func(*resourcepb.ResourceSearchResponse, error) {
-	mode := "pre_rank"
+func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) func(*resourcepb.ResourceSearchResponse, error) {
+	mode := "post_rank"
 	if access == nil {
 		mode = "none"
-	} else if postRank {
-		mode = "post_rank"
-	}
-	if cursorFallback {
-		o.metrics.SearchAuthEvents.WithLabelValues("cursor_fallback").Inc()
 	}
 	started := time.Now()
 	return func(result *resourcepb.ResourceSearchResponse, err error) {
@@ -57,7 +52,7 @@ func searchAuthQueryType(req *resourcepb.ResourceSearchRequest) string {
 
 func (o *searchAuthObservation) observe(mode, queryType string, started time.Time, result *resourcepb.ResourceSearchResponse, err error) {
 	outcome := "success"
-	if err != nil || result == nil || result.Error != nil {
+	if err != nil || result == nil {
 		outcome = "error"
 	} else {
 		o.metrics.SearchAuthReturned.WithLabelValues(mode, queryType).Observe(float64(len(result.Rows)))

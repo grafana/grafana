@@ -46,7 +46,7 @@ export function Migrate() {
     isError: isFoldersError,
     failedKinds,
     refetch: refetchFolders,
-  } = useMigrationData(contentKinds);
+  } = useMigrationData(contentKinds, availableResources);
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
@@ -183,7 +183,7 @@ export function Migrate() {
                 {t(
                   'provisioning.migrate.partial-error-body',
                   "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
-                  { kinds: failedKinds.map((kind) => kind.pluralLabel()).join(', ') }
+                  { kinds: failedKinds.map((kind) => kind.getPluralLabel()).join(', ') }
                 )}
                 {hasUnmanaged &&
                   (hasRepo ? (

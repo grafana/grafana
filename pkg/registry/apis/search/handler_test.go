@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -150,8 +151,8 @@ func TestHandler_FolderTreePropagatesUnsupportedBackend(t *testing.T) {
 	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
 	require.NoError(t, err)
 	for name, client := range map[string]*fakeIndexClient{
-		"payload":   {resp: &resourcepb.ResourceSearchResponse{Error: result}},
-		"transport": {err: grpcStatus.Err()},
+		"transport":                   {err: grpcStatus.Err()},
+		"transport with partial body": {resp: &resourcepb.ResourceSearchResponse{TotalHits: 1}, err: grpcStatus.Err()},
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
@@ -231,8 +232,12 @@ func TestHandler_PropagatesBackendErrorResult(t *testing.T) {
 	require.ErrorAs(t, resource.StatusError(result), &statusErr)
 	want := statusErr.Status()
 	for name, client := range map[string]*fakeIndexClient{
-		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
-		"grpc details": {err: grpcStatus.Err()},
+		"grpc details":         {err: grpcStatus.Err()},
+		"wrapped grpc details": {err: fmt.Errorf("search: %w", grpcStatus.Err())},
+		"grpc details with partial response": {
+			resp: &resourcepb.ResourceSearchResponse{TotalHits: 1, Rows: []*resourcepb.ResourceSearchRow{{}}},
+			err:  grpcStatus.Err(),
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))

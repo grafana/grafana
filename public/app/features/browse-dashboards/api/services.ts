@@ -1,7 +1,5 @@
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
+import { config } from '@grafana/runtime';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -10,13 +8,10 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { resolveStarredFolders } from 'app/features/stars/folders';
-import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
 import {
-  addStarredFolderPrefix,
   addTeamFolderPrefix,
   getFolderURL,
   isSharedWithMe,
@@ -28,16 +23,7 @@ import {
 
 import { PAGE_SIZE } from './constants';
 
-async function searchOldAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {
-  const backendSrv = getBackendSrv();
-  return await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
-    parentUid: parentUID,
-    page,
-    limit: pageSize,
-  });
-}
-
-async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
+async function searchFolders(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<NestedFolderDTO[]> {
   const results = await getGrafanaSearcher().search({
     kind: ['folder'],
     location: parentUID || 'general',
@@ -73,11 +59,7 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)) {
-      folders = await searchNewAPI(parentUID, page, pageSize);
-    } else {
-      folders = await searchOldAPI(parentUID, page, pageSize);
-    }
+    folders = await searchFolders(parentUID, page, pageSize);
   }
 
   return folders.map(({ uid, title, managedBy }) => {
@@ -191,31 +173,5 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
     parentUID: TEAM_FOLDERS_UID,
     url: getFolderURL(hit.name),
     ownerReference: folderOwners.get(hit.name),
-  }));
-}
-
-/**
- * Reads the user's explicitly-starred folders from the collections stars API and resolves them to
- * folder items directly under the virtual "Starred folders" root. Returns prefixed UIDs so the browse
- * tree keeps independent expand/collapse state from the same folder elsewhere in the tree.
- */
-export async function listStarredFolders(): Promise<DashboardViewItem[]> {
-  // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need requests
-  // here not to be cached.
-  const stars = await dispatch(
-    collectionsAPIv1alpha1.endpoints.listStars.initiate(
-      { fieldSelector: userStarsFieldSelector() },
-      { forceRefetch: true }
-    )
-  ).unwrap();
-
-  const folders = await resolveStarredFolders(findStarredNames(stars, 'folder.grafana.app', 'Folder'));
-  return folders.map((folder) => ({
-    kind: 'folder' as const,
-    // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.
-    uid: addStarredFolderPrefix(folder.uid),
-    title: folder.title,
-    parentUID: STARRED_FOLDERS_UID,
-    url: getFolderURL(folder.uid),
   }));
 }

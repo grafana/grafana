@@ -168,7 +168,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
 			require.NoError(c, err)
-			require.Nil(c, rsp.Error)
 			require.NoError(c, stored.UnmarshalJSON(rsp.Value))
 			url, _, _ := unstructured.NestedString(stored.Object, "spec", "url")
 			require.Equal(c, "http://fake.url", url, "includes the update")
@@ -187,10 +186,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Resource:  key.Resource,
 			Name:      key.Name,
 		}
-		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: pluginKey})
-		readErr := resource.ErrorFromResponse(rsp.GetError(), err)
-		require.Error(t, readErr)
-		errorResult := resource.AsErrorResult(readErr)
+		_, err = storage.Read(svcCtx, &resourcepb.ReadRequest{Key: pluginKey})
+		require.Error(t, err)
+		errorResult := resource.AsErrorResult(err)
 		require.NotNil(t, errorResult)
 		require.Equal(t, int32(http.StatusNotFound), errorResult.Code)
 
@@ -210,7 +208,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, list.Error)
 		require.Len(t, list.Items, 1)
 	})
 

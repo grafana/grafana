@@ -11,7 +11,7 @@ import { isMergedUngroupedGroup } from '../../hooks/useCombinedRuleNamespaces';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { makeFolderLink } from '../../utils/misc';
 import { groups } from '../../utils/navigation';
 import {
@@ -20,6 +20,7 @@ import {
   isFederatedRuleGroup,
   rulerRuleType,
 } from '../../utils/rules';
+import { getRulesSourceName, isCloudRulesSource } from '../../utils/rulesSource';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';

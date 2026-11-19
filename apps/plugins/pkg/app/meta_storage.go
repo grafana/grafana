@@ -107,7 +107,7 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
+	logger := s.logger.WithContext(ctx).With(append([]any{"requestNamespace", ns.Value}, meta.CallerLogArgs(ctx)...)...)
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {
@@ -213,7 +213,7 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
-	logger := s.logger.WithContext(ctx).With("requestNamespace", ns.Value)
+	logger := s.logger.WithContext(ctx).With(append([]any{"requestNamespace", ns.Value}, meta.CallerLogArgs(ctx)...)...)
 
 	pluginClient, err := s.getClient(ctx)
 	if err != nil {

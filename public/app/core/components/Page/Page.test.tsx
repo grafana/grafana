@@ -5,7 +5,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { type NavModelItem, PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { contextSrv, RedirectToUrlKey } from 'app/core/services/context_srv';
 import { getLoginSectionTitle } from 'app/core/services/loginSectionTitle';

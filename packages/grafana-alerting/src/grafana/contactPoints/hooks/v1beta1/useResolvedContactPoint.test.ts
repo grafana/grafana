@@ -33,14 +33,14 @@ describe('useResolvedContactPoint', () => {
     const { result } = renderResolved('slack-oncall');
 
     await waitFor(() => expect(result.current.status).toBe('found'));
-    expect(result.current.selectorValue).toBe('uid-1');
+    expect(result.current.selectedContactPointId).toBe('uid-1');
   });
 
   it('is not found for a title that matches none', async () => {
     const { result } = renderResolved('gone');
 
     await waitFor(() => expect(result.current.status).toBe('notFound'));
-    expect(result.current.selectorValue).toBeNull();
+    expect(result.current.selectedContactPointId).toBeNull();
   });
 
   it('is unusable, with no selector value, for a contact point that cannot be used', async () => {
@@ -53,14 +53,14 @@ describe('useResolvedContactPoint', () => {
     const { result } = renderResolved('imported');
 
     await waitFor(() => expect(result.current.status).toBe('unusable'));
-    expect(result.current.selectorValue).toBeNull();
+    expect(result.current.selectedContactPointId).toBeNull();
   });
 
   it('is resolving until the list has loaded', async () => {
     const { result } = renderResolved('slack-oncall');
 
     expect(result.current.status).toBe('resolving');
-    expect(result.current.selectorValue).toBeNull();
+    expect(result.current.selectedContactPointId).toBeNull();
 
     await waitFor(() => expect(result.current.status).toBe('found'));
   });
@@ -74,7 +74,7 @@ describe('useResolvedContactPoint', () => {
     );
 
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
-    expect(result.current.resolved).toEqual({ status: 'unset', selectorValue: null });
+    expect(result.current.resolved).toEqual({ status: 'unset', selectedContactPointId: null });
   });
 
   it('reports an error when the list failed to load, not "not found"', async () => {
@@ -83,7 +83,7 @@ describe('useResolvedContactPoint', () => {
     const { result } = renderResolved('slack-oncall');
 
     await waitFor(() => expect(result.current.status).toBe('error'));
-    expect(result.current.selectorValue).toBeNull();
+    expect(result.current.selectedContactPointId).toBeNull();
   });
 
   it('reports an error even when no receiver is given', async () => {
@@ -109,7 +109,7 @@ describe('useResolvedContactPoint', () => {
     });
 
     await waitFor(() => expect(result.current.list.isError).toBe(true));
-    expect(result.current.resolved).toEqual({ status: 'found', selectorValue: 'uid-1' });
+    expect(result.current.resolved).toEqual({ status: 'found', selectedContactPointId: 'uid-1' });
   });
 
   it('recovers on window focus after the initial fetch failed', async () => {
@@ -124,7 +124,7 @@ describe('useResolvedContactPoint', () => {
     });
 
     await waitFor(() => expect(result.current.status).toBe('found'));
-    expect(result.current.selectorValue).toBe('uid-1');
+    expect(result.current.selectedContactPointId).toBe('uid-1');
     stopListening();
   });
 });

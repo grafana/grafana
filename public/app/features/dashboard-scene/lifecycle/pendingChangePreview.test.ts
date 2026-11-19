@@ -10,11 +10,10 @@ import {
   getPendingChangePreview,
   getPendingChangesHistory,
   type PendingChangesHistory,
-  isHighlightingChanges,
   loadPendingChangePreview,
   previewedDashboardUid,
-  setHighlightingChanges,
   showOriginal,
+  stopPreviewingPendingChanges,
   withoutPendingChangesPreview,
 } from './pendingChangePreview';
 
@@ -95,39 +94,25 @@ describe('loadPendingChangePreview', () => {
   });
 });
 
-// The page keeps the choice in its URL, so a plugin linking to it can tell what it shows.
 describe('showing the saved dashboard instead of the pending changes', () => {
   afterEach(() => locationService.push('/'));
 
-  it('is the dashboard page URL', async () => {
+  it('is never the page, even from a URL that asked for it before', async () => {
     registerLoaders(async () => pending);
-    locationService.push('/d/abc?pendingChanges=chat-1');
-    const reload = jest.fn(async () => undefined);
+    locationService.push('/d/abc?pendingChanges=chat-1&pendingChangesView=original');
 
-    await showOriginal('page', 'abc', 'chat-1', true, reload);
-    expect(locationService.getSearchObject()).toMatchObject({
-      pendingChanges: 'chat-1',
-      pendingChangesView: 'original',
-    });
-    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
-    // The embedded view keeps its own choice.
-    await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
-
-    await showOriginal('page', 'abc', 'chat-1', false, reload);
-    expect(locationService.getSearchObject().pendingChangesView).toBeUndefined();
-    // The page reloads itself when its URL changes.
-    expect(reload).not.toHaveBeenCalled();
+    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
   });
 
   it('is remembered for the tab by the embedded view, which reloads itself', async () => {
     registerLoaders(async () => pending);
     const reload = jest.fn(async () => undefined);
 
-    await showOriginal('embedded', 'abc', 'chat-1', true, reload);
+    await showOriginal('abc', 'chat-1', true, reload);
     await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
     await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
 
-    await showOriginal('embedded', 'abc', 'chat-1', false, reload);
+    await showOriginal('abc', 'chat-1', false, reload);
     expect(reload).toHaveBeenCalledTimes(2);
   });
 });
@@ -206,17 +191,24 @@ describe('a new dashboard proposed as pending changes', () => {
   });
 });
 
-describe('highlighting the pending changes', () => {
-  beforeEach(() => window.sessionStorage.clear());
+describe('closing pending changes that were applied or discarded', () => {
+  afterEach(() => locationService.push('/'));
 
-  it('is on by default, keeps being turned off for the tab per dashboard and pending changes, and resets once they are cleared', () => {
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
+  // Else the page would still name them, and another conversation's pending changes wouldn't open on it.
+  it('takes them out of the page URL', () => {
+    locationService.push('/d/abc?orgId=1&pendingChanges=chat-1&pendingChangesView=original');
 
-    setHighlightingChanges('dash', 'chat-1', false);
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
-    expect(isHighlightingChanges('dash', 'chat-2')).toBe(true);
+    expect(stopPreviewingPendingChanges()).toBe(true);
 
-    clearPendingChangePreview('dash', 'chat-1');
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
+    expect(locationService.getLocation().pathname).toBe('/d/abc');
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
+  });
+
+  it('leaves a URL that names none as it is', () => {
+    locationService.push('/d/abc?orgId=1');
+
+    expect(stopPreviewingPendingChanges()).toBe(false);
+
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
   });
 });

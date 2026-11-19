@@ -1,8 +1,8 @@
 import { render, screen, type RenderResult } from '@testing-library/react';
-import tinycolor from 'tinycolor2';
 
 import {
   type Field,
+  type GrafanaTheme2,
   FieldType,
   MappingType,
   ThemeContext,
@@ -13,9 +13,20 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
-import { getTagColorsFromName } from '../../../../utils/tags';
+import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
+
+// Refreshed pills are Tags, which take their colors from inline custom properties.
+const expectTagColors = (element: HTMLElement, background: string, text: string) => {
+  expect(element.style.getPropertyValue('--tag-background')).toBe(background);
+  expect(element.style.getPropertyValue('--tag-text')).toBe(text);
+};
+
+const expectBaseColor = (element: HTMLElement, baseColor: string, theme?: GrafanaTheme2) => {
+  const variables = getTagColorVariables(baseColor, theme);
+  expectTagColors(element, variables['--tag-background'], variables['--tag-text']);
+};
 
 describe('PillCell', () => {
   const theme = createTheme();
@@ -203,10 +214,7 @@ describe('PillCell', () => {
   });
 
   describe('Visual refresh', () => {
-    it.each([
-      ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
-      ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
-    ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
+    it.each(['dark', 'light'] as const)('renders mapped pills with contrasting colors in %s mode', (mode) => {
       const theme = createTheme({ colors: { mode } });
       theme.flags.visualDesignRefresh = true;
       const field = fieldWithValues(['error']);
@@ -218,7 +226,7 @@ describe('PillCell', () => {
           <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
         </ThemeContext.Provider>
       );
-      expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+      expectBaseColor(screen.getByText('error'), '#ff0000', theme);
     });
 
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
@@ -243,11 +251,8 @@ describe('PillCell', () => {
       for (const text of ['value1', 'value2']) {
         const pill = screen.getByText(text);
         const { background, text: textColor } = getTagColorsFromName(text, refreshTheme);
-        expect(pill).toHaveStyle({
-          backgroundColor: background,
-          color: textColor,
-          borderRadius: refreshTheme.shape.radius.pill,
-        });
+        expectTagColors(pill, background, textColor);
+        expect(pill).toHaveStyle({ borderRadius: refreshTheme.shape.radius.pill });
       }
     });
 
@@ -261,10 +266,10 @@ describe('PillCell', () => {
       // Thresholds is the default mode, but it has no categorical palette for coloring pills.
       const { background, text } = getTagColorsFromName('value1', refreshTheme);
       renderRefreshed(field);
-      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+      expectTagColors(screen.getByText('value1'), background, text);
     });
 
-    it('derives a contrasting tonal pair from a fixed field color', () => {
+    it('keeps a fixed field color as the background and derives contrasting text', () => {
       const mockField = fieldWithValues(['value1']);
       const fixed = {
         ...mockField,
@@ -272,14 +277,23 @@ describe('PillCell', () => {
       } satisfies Field;
 
       renderRefreshed(fixed);
-      const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).not.toBe(
-        tinycolor(refreshTheme.visualization.getColorByName('red')).toRgbString()
-      );
-      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+      expectBaseColor(screen.getByText('value1'), refreshTheme.visualization.getColorByName('red'), refreshTheme);
     });
 
-    it('honours a categorical field palette over the tag colors', () => {
+    it('outlines transparent mapped pills', () => {
+      const field = fieldWithValues(['none']);
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { none: { color: 'transparent' } } }];
+      field.display = () => ({ text: 'none', color: 'rgba(255, 255, 255, 0)', numeric: 0 });
+
+      renderRefreshed(field);
+      const pill = screen.getByText('none');
+      expectBaseColor(pill, 'rgba(255, 255, 255, 0)', refreshTheme);
+      expect(pill).toHaveStyle({
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
+      });
+    });
+
+    it('keeps a categorical field palette as the background', () => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
@@ -288,9 +302,7 @@ describe('PillCell', () => {
 
       renderRefreshed(classic);
       const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
-      const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).not.toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
-      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+      expectBaseColor(screen.getByText('value1'), getColorByStringHash(palette, 'value1'), refreshTheme);
     });
   });
 

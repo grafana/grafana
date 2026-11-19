@@ -23,7 +23,7 @@ description: Learn about the features of a Grafana dashboard
 weight: 100
 image_maps:
   - key: annotated-dashboard
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-image-map-v13.1.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-imagemap-v13.3.png
     alt: An annotated image of a Grafana dashboard
     points:
       - x_coord: 8
@@ -108,9 +108,9 @@ image_maps:
       - x_coord: 98
         y_coord: 20
         content: |
-          **Edit**
+          **Dashboard mode selector**
 
-          Enter edit mode, so you can make changes and access dashboard settings.
+          Click to select either **Viewing** or **Editing** dashboard mode.
       - x_coord: 98
         y_coord: 27
         content: |

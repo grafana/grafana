@@ -440,14 +440,9 @@ describe('LogLineDetails', () => {
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
-    expect(screen.getByText('Links')).toBeInTheDocument();
-    expect(screen.getByText('traceId')).toBeInTheDocument();
-    expect(screen.getByText('link title')).toBeInTheDocument();
-    expect(screen.queryByText('1234')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Link value'));
-
-    expect(screen.getByText('1234')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'link title' })).toHaveAttribute('href', 'localhost:3210/1234');
+    expect(screen.getByText('userId')).toBeInTheDocument();
   });
 
   test('should show the correct log details fields, links and labels for DataFrameType.LogLines frames', async () => {
@@ -510,16 +505,16 @@ describe('LogLineDetails', () => {
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
     expect(screen.getByText('Fields')).toBeInTheDocument();
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
 
     // Don't show additional fields for DataFrameType.LogLines
     expect(screen.queryByText('shouldNotShowFieldName')).not.toBeInTheDocument();
     expect(screen.queryByText('shouldNotShowFieldValue')).not.toBeInTheDocument();
 
-    // Show labels and links
+    // Show labels, and the derived link in the summary
     expect(screen.getByText('label1')).toBeInTheDocument();
     expect(screen.getByText('value1')).toBeInTheDocument();
-    expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'link' })).toHaveAttribute('href', 'localhost:3210/shouldShowLinkValue');
   });
 
   test('should load plugin links for logs view resource attributes extension point', () => {
@@ -988,7 +983,8 @@ describe('LogLineDetails', () => {
 
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'tempo' })).toHaveAttribute('href', '/explore');
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Trace'));
@@ -1125,7 +1121,8 @@ describe('LogLineDetails', () => {
 
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'tempo' })).toHaveAttribute('href', '/explore');
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Trace'));

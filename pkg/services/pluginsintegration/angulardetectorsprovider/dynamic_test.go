@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -383,43 +384,44 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 		})
 
 		t.Run("runs the job periodically", func(t *testing.T) {
-			const tcRuns = 3
+			synctest.Test(t, func(t *testing.T) {
+				const tcRuns = 3
 
-			lastJobTime := time.Now()
-			var jobCalls counter
-			const jobInterval = time.Millisecond * 20
-			done := make(chan struct{})
-			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
-				now := time.Now()
-				assert.WithinDuration(t, now, lastJobTime, jobInterval*2)
-				lastJobTime = now
+				lastJobTime := time.Now()
+				var jobCalls counter
+				const jobInterval = time.Millisecond * 20
+				done := make(chan struct{})
+				gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
+					now := time.Now()
+					assert.WithinDuration(t, now, lastJobTime, jobInterval*2)
+					lastJobTime = now
 
-				jobCalls.inc()
-				if jobCalls.calls() == tcRuns {
-					// this is done ONLY once
-					done <- struct{}{}
-					close(done)
+					jobCalls.inc()
+					if jobCalls.calls() == tcRuns {
+						// this is done ONLY once
+						done <- struct{}{}
+						close(done)
+					}
+				})
+				svc := provideDynamic(t, "http://gcom.invalid")
+				svc.httpClient.Transport = gcom.newInMemoryTransport()
+
+				bg := newBackgroundServiceScenario(svc)
+				t.Cleanup(bg.close)
+				// Refresh cache right before running the service, so we skip the initial run
+				require.NoError(t, svc.store.Set(context.Background(), mockGCOMPatterns))
+				bg.run(context.Background())
+				select {
+				case <-time.After(time.Second * 10):
+					t.Fatal("timeout")
+				case <-done:
+					break
 				}
+				bg.exitAndWait()
+
+				require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
+				require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
 			})
-			srv := gcom.newHTTPTestServer()
-			t.Cleanup(srv.Close)
-			svc := provideDynamic(t, srv.URL)
-
-			bg := newBackgroundServiceScenario(svc)
-			t.Cleanup(bg.close)
-			// Refresh cache right before running the service, so we skip the initial run
-			require.NoError(t, svc.store.Set(context.Background(), mockGCOMPatterns))
-			bg.run(context.Background())
-			select {
-			case <-time.After(time.Second * 10):
-				t.Fatal("timeout")
-			case <-done:
-				break
-			}
-			bg.exitAndWait()
-
-			require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
-			require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
 		})
 
 		t.Run("IsDisabled", func(t *testing.T) {
@@ -549,11 +551,28 @@ type gcomScenario struct {
 	httpCalls       counter
 }
 
+func (s *gcomScenario) handle(w http.ResponseWriter, r *http.Request) {
+	s.httpCalls.inc()
+	s.httpHandlerFunc(w, r)
+}
+
 func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.httpCalls.inc()
-		s.httpHandlerFunc(w, r)
-	}))
+	return httptest.NewServer(http.HandlerFunc(s.handle))
+}
+
+// newInMemoryTransport serves requests without a network listener. synctest does not
+// treat goroutines blocked on network I/O as durably blocked, so a real server would
+// stop the fake clock from advancing.
+func (s *gcomScenario) newInMemoryTransport() http.RoundTripper {
+	return handlerRoundTripper(s.handle)
+}
+
+type handlerRoundTripper http.HandlerFunc
+
+func (h handlerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	rec := httptest.NewRecorder()
+	h(rec, req)
+	return rec.Result(), nil
 }
 
 func newEtagGCOMScenario(etag string) *gcomScenario {

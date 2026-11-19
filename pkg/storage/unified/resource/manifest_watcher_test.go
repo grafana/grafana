@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -401,6 +402,25 @@ func TestManifestWatcher_EmptyListKeepsPreviousSet(t *testing.T) {
 	})
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
+}
+
+func TestManifestWatcher_EmptyListLogsAtDebugNotWarn(t *testing.T) {
+	// #137058: an install with no app manifests is empty for as long as it
+	// runs, so the empty case (both the per-source line and the cycle line)
+	// logs at debug on every poll, never warn. A list failure, tested
+	// elsewhere, stays an error.
+	empty := func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, &unstructured.UnstructuredList{}, nil
+	}
+	client := fakeManifestClient()
+	client.PrependReactor("list", "appmanifests", empty)
+	logger := &logtest.Fake{}
+	w := newManifestWatcher(appManifestSources(client), 0, nil, logger, nil)
+
+	w.runPollCycle(t.Context())
+	w.runPollCycle(t.Context())
+	require.Equal(t, 0, logger.WarnLogs.Calls, "an empty list is a normal state, not a warning")
+	require.Equal(t, 4, logger.DebugLogs.Calls, "each empty poll logs the source and cycle lines at debug")
 }
 
 func TestManifestWatcher_RecordsMetrics(t *testing.T) {

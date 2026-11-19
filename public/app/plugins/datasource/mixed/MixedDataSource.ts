@@ -12,7 +12,7 @@ import {
   LoadingState,
   type ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceInstance, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
@@ -27,6 +27,8 @@ export interface BatchedQueries {
   datasource: Promise<DataSourceApi>;
   queries: DataQuery[];
   scopedVars: ScopedVars;
+  /** The data source uid, used to name the data source in the error when it cannot be loaded. */
+  uid?: string;
 }
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -92,15 +94,20 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
             continue;
           }
 
-          const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
+          const scopedVars: ScopedVars = {
+            ...request.scopedVars,
+            [variable.name]: { value: uid, text: undefined },
+          };
 
           batches.push({
-            datasource: getDataSourceSrv().get(uid),
+            // Keep batch construction sync. Set the display name before the query runs.
+            datasource: getDataSourceInstance(uid).then((api) => {
+              scopedVars[variable.name] = { value: uid, text: api.name };
+              return api;
+            }),
             queries: cloneDeep(queries),
-            scopedVars: {
-              ...request.scopedVars,
-              [variable.name]: { value: uid, text: dsSettings?.name },
-            },
+            scopedVars,
+            uid,
           });
         }
 
@@ -110,11 +117,12 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     if (datasourceUid !== '') {
       batches.push({
-        datasource: getDataSourceSrv().get(datasourceUid),
+        datasource: getDataSourceInstance(datasourceUid),
         queries: cloneDeep(queries),
         scopedVars: {
           ...request.scopedVars,
         },
+        uid: datasourceUid,
       });
     }
 
@@ -140,21 +148,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
               };
             }),
             toArray(),
-            catchError((err) => {
-              err = toDataQueryError(err);
-              err.message = `${api.name}: ${err.message}`;
-
-              return of<DataQueryResponse[]>([
-                {
-                  data: [],
-                  state: LoadingState.Error,
-                  error: err,
-                  key: mixedRequestId(i, dsRequest.requestId),
-                },
-              ]);
-            })
+            catchError((err) => of([toErrorResponse(err, api.name, mixedRequestId(i, dsRequest.requestId))]))
           );
-        })
+        }),
+        // A data source that fails to load fails only its own batch, so the other queries still render.
+        catchError((err) =>
+          of([toErrorResponse(err, query.uid ?? 'Data source', mixedRequestId(i, request.requestId))])
+        )
       )
     );
 
@@ -185,6 +185,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     return responses;
   }
+}
+
+function toErrorResponse(err: unknown, dataSourceName: string, key: string): DataQueryResponse {
+  const error = toDataQueryError(err);
+  error.message = `${dataSourceName}: ${error.message}`;
+
+  return { data: [], state: LoadingState.Error, error, key };
 }
 
 function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
