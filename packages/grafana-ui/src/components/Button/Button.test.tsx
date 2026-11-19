@@ -12,6 +12,13 @@ const setup = (jsx: JSX.Element) => {
 };
 
 describe('Button', () => {
+  it('stays a button when it is given an href', () => {
+    const untypedProps: Record<string, unknown> = { href: undefined };
+    render(<Button {...untypedProps}>Click me</Button>);
+    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
   it('should fire onClick when not disabled', async () => {
     const onClick = jest.fn();
     const { user } = setup(<Button onClick={onClick}>Click me</Button>);

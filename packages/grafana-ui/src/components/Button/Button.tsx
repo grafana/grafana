@@ -6,11 +6,10 @@ import { type GrafanaTheme2, type ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { type IconName, type IconSize, type IconType } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { type ComponentSize } from '../../types/size';
+import { AbstractButton, type IconElementProps } from '../AbstractButton/AbstractButton';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
@@ -85,76 +84,31 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
-    const buttonStyles = cx(
-      styles.button,
-      {
-        [styles.disabled]: disabled,
-      },
-      className
-    );
-
-    const hasTooltip = Boolean(tooltip);
-
-    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
-
-    // In order to standardise Button please always consider using IconButton when you need a button with an icon only
-    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
-    const button = (
-      <button
-        className={buttonStyles}
+    return (
+      <AbstractButton
+        ref={ref}
+        className={cx(styles.button, { [styles.disabled]: disabled }, className)}
+        icon={icon}
+        iconSize={size}
+        iconPlacement={iconPlacement}
+        iconClassName={styles.icon}
+        contentClassName={styles.content}
+        tooltip={tooltip}
+        tooltipPlacement={tooltipPlacement}
+        disabled={disabled}
+        aria-label={ariaLabel}
         type={type}
-        onClick={disabled ? undefined : onClick}
+        onClick={onClick}
         {...otherProps}
-        // In order for the tooltip to be accessible when disabled,
-        // we need to set aria-disabled instead of the native disabled attribute
-        aria-disabled={hasTooltip && disabled}
-        disabled={!hasTooltip && disabled}
-        ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
+        as="button"
       >
-        {iconPlacement === 'left' && iconComponent}
-        {children && <span className={styles.content}>{children}</span>}
-        {iconPlacement === 'right' && iconComponent}
-      </button>
+        {children}
+      </AbstractButton>
     );
-
-    if (tooltip) {
-      return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-          {button}
-        </Tooltip>
-      );
-    }
-
-    return button;
   }
 );
 
 Button.displayName = 'Button';
-
-type IconElementProps = {
-  className?: string;
-  size?: IconSize;
-};
-
-interface IconRendererProps {
-  icon?: IconName | React.ReactElement<IconElementProps>;
-  size?: IconSize;
-  className?: string;
-  iconType?: IconType;
-}
-export const IconRenderer = ({ icon, size, className, iconType }: IconRendererProps) => {
-  if (!icon) {
-    return null;
-  }
-  if (React.isValidElement(icon)) {
-    return React.cloneElement(icon, {
-      className,
-      size,
-    });
-  }
-  return <Icon name={icon} size={size} className={className} type={iconType} />;
-};
 
 export interface StyleProps {
   size: ComponentSize;
