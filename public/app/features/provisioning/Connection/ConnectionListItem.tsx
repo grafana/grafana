@@ -5,7 +5,7 @@ import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
-import { ManagedBadge } from '../components/ManagedBadge';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { CONNECTIONS_URL } from '../constants';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
@@ -48,7 +48,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
           {isManagedConnection && (
-            <ManagedBadge
+            <ManagedResourceBadge
               isReadOnly={isReadOnly}
               managerKind={getManagerKind(connection)}
               name={getManagerIdentity(connection)}

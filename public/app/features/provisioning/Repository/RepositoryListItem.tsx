@@ -11,7 +11,7 @@ import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ManagedBadge } from '../components/ManagedBadge';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
@@ -87,7 +87,7 @@ export function RepositoryListItem({ repository }: Props) {
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
           {isManagedRepo && (
-            <ManagedBadge
+            <ManagedResourceBadge
               isReadOnly={isConfigReadOnly}
               managerKind={getManagerKind(repository)}
               name={getManagerIdentity(repository)}

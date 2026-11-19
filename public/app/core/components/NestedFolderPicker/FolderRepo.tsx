@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
 import { ManagerKind } from 'app/features/apiserver/types';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import {
   RepoViewStatus,
@@ -40,7 +40,7 @@ export const FolderRepo = memo(function FolderRepo({
   }
 
   return (
-    <ManagedBadge
+    <ManagedResourceBadge
       managerKind={ManagerKind.Repo}
       name={repository?.title || repository?.name}
       isOrphaned={status === RepoViewStatus.Orphaned}

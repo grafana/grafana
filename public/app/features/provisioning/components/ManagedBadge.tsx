@@ -1,7 +1,9 @@
-import { textUtil } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, type BadgeProps, Dropdown, IconButton, Menu, Stack, Text } from '@grafana/ui';
+import { Badge, type BadgeColor, Dropdown, Icon, type IconName, Menu, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -9,7 +11,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PROVISIONING_URL } from '../constants';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
-import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
 import { splitSourcePath } from './utils/path';
@@ -21,10 +22,9 @@ interface ManagedBadgeProps {
   name?: string;
   /** Repository-managed resource whose backing repository no longer exists. */
   isOrphaned?: boolean;
-  isReadOnly?: boolean;
   /**
-   * Manager identity (`grafana.app/managerId`). When set for a repository-managed resource, a
-   * menu button next to the badge exposes permission-gated actions (source file, repository admin).
+   * Manager identity (`grafana.app/managerId`). When set for a repository-managed resource, the
+   * badge becomes a dropdown exposing permission-gated actions (source file, repository admin).
    */
   repositoryName?: string;
   /**
@@ -41,61 +41,49 @@ interface ManagedBadgeProps {
  * `managerKind` is omitted/unknown. Use it for any resource that `getManagerKind`/`isManaged`
  * reports as managed so the styling stays consistent.
  *
- * When `repositoryName` is provided for a repository-managed resource, a menu button next to the
- * badge lists the available actions: a link to the resource's source file in the
+ * When `repositoryName` is provided for a repository-managed resource, the badge turns into a
+ * click-activated dropdown with the available actions: a link to the resource's source file in the
  * git provider (Editors/Admins, when `sourcePath` resolves to a browsable URL) and a link to the
  * repository administration page (repository managers with `provisioning.repositories:write`).
- * Users without any available action (e.g. Viewers) get the badge alone.
+ * Users without any available action (e.g. Viewers) get the plain, non-interactive badge.
  */
-export function ManagedBadge({
-  managerKind,
-  name,
-  isOrphaned = false,
-  isReadOnly = false,
-  repositoryName,
-  sourcePath,
-}: ManagedBadgeProps) {
+export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
   if (config.provisioningEnabled && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
-    return (
-      <RepoManagedBadge name={name} isReadOnly={isReadOnly} repositoryName={repositoryName} sourcePath={sourcePath} />
-    );
+    return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
   }
 
-  return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} isReadOnly={isReadOnly} />;
+  return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} />;
 }
 
 /** Plain, non-interactive badge with a hover tooltip. */
-function StaticManagedBadge(props: ManagedBadgeProps) {
-  return <Badge {...getBadgeDisplay(props)} />;
+function StaticManagedBadge({ managerKind, name, isOrphaned = false }: ManagedBadgeProps) {
+  const { color, icon, tooltip } = getBadgeDisplay({ managerKind, name, isOrphaned });
+  return <Badge color={color} icon={icon} tooltip={tooltip} />;
 }
 
 interface RepoManagedBadgeProps {
   name?: string;
-  isReadOnly: boolean;
   repositoryName: string;
   sourcePath?: string;
 }
 
 /**
  * Repository-managed variant: resolves the repository view (viewer-safe endpoint) and, when the
- * user has any permitted action, renders a menu button next to the badge.
+ * user has any permitted action, renders the badge as a dropdown trigger.
  */
-function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: RepoManagedBadgeProps) {
+function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadgeProps) {
+  const styles = useStyles2(getStyles);
   const { repository, status } = useGetResourceRepositoryView({ name: repositoryName });
 
-  const display = getBadgeDisplay({
+  const isOrphaned = status === RepoViewStatus.Orphaned;
+  const displayName = repository?.title || name || repositoryName;
+  const { color, icon, tooltip } = getBadgeDisplay({
     managerKind: ManagerKind.Repo,
-    name: repository?.title || name || repositoryName,
-    isOrphaned: status === RepoViewStatus.Orphaned,
-    isReadOnly,
+    name: displayName,
+    isOrphaned,
   });
-  const badge = <Badge {...display} />;
-
-  if (!repository) {
-    return badge;
-  }
 
   const { filePath, fragmentRef } = splitSourcePath(sourcePath);
 
@@ -103,7 +91,7 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
   // (getRepoFileUrl resolves to undefined for local/generic-git). Prefer the ref the resource was
   // loaded from (provisioning previews) over the repository's configured branch.
   const rawSourceUrl =
-    contextSrv.isEditor && filePath
+    contextSrv.isEditor && repository && filePath
       ? getRepoFileUrl({
           repoType: repository.type,
           url: repository.url,
@@ -117,91 +105,103 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
   // Repository administration link, for repository managers. Deliberately gated on write:
   // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it),
   // so it would match every logged-in user.
-  const manageUrl = contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
-    ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name)}`
-    : undefined;
+  const manageUrl =
+    repository && contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
+      ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name ?? repositoryName)}`
+      : undefined;
 
-  if (!sourceUrl && !manageUrl) {
-    return badge;
+  if (isOrphaned || (!sourceUrl && !manageUrl)) {
+    return <Badge color={color} icon={icon} tooltip={tooltip} />;
   }
 
   return (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      {badge}
-      <Dropdown
-        overlay={
-          <Menu
-            header={
-              <Text variant="bodySmall" color="secondary">
-                {display.tooltip}
-              </Text>
-            }
-          >
-            {manageUrl && (
-              <Menu.Item
-                icon="cog"
-                label={t('provisioning.managed-badge.manage-repository', 'Manage repository')}
-                url={manageUrl}
-              />
-            )}
-            {sourceUrl && (
-              <Menu.Item
-                icon={getRepositoryTypeIcon(repository.type)}
-                label={t('provisioning.managed-badge.view-source', 'View source')}
-                url={sourceUrl}
-                target="_blank"
-              />
-            )}
-          </Menu>
-        }
-      >
-        <IconButton
-          name="ellipsis-v"
-          aria-label={t('provisioning.managed-badge.actions', 'Managed resource actions')}
-          aria-haspopup="menu"
-        />
-      </Dropdown>
-    </Stack>
+    <Dropdown
+      overlay={
+        <Menu
+          header={
+            <Text variant="bodySmall" color="secondary">
+              {tooltip}
+            </Text>
+          }
+        >
+          {sourceUrl && (
+            <Menu.Item
+              icon="external-link-alt"
+              label={t('provisioning.managed-badge.view-source-file', 'View source file')}
+              url={sourceUrl}
+              target="_blank"
+            />
+          )}
+          {manageUrl && (
+            <Menu.Item
+              icon="cog"
+              label={t('provisioning.managed-badge.manage-repository', 'Manage repository')}
+              url={manageUrl}
+            />
+          )}
+        </Menu>
+      }
+    >
+      <button type="button" className={styles.trigger} aria-label={tooltip} aria-haspopup="menu">
+        <Badge color={color} icon={icon} text={<Icon name="angle-down" size="sm" />} tooltip={tooltip} />
+      </button>
+    </Dropdown>
   );
 }
 
-function getBadgeDisplay({
-  managerKind,
-  name,
-  isOrphaned,
-  isReadOnly,
-}: ManagedBadgeProps): Pick<BadgeProps, 'color' | 'icon' | 'role' | 'aria-label'> & { tooltip: string } {
-  if (managerKind === ManagerKind.Repo && isOrphaned) {
-    return { color: 'orange', icon: 'exclamation-triangle', tooltip: getOrphanedRepositoryTooltip() };
-  }
+function getBadgeDisplay({ managerKind, name, isOrphaned }: ManagedBadgeProps): {
+  color: BadgeColor;
+  icon: IconName;
+  tooltip: string;
+} {
+  let color: BadgeColor = 'purple';
+  let icon: IconName = 'exchange-alt';
+  let tooltip: string;
 
-  const managedBy = getManagedByTooltip(managerKind, name);
-  if (!isReadOnly) {
-    return { color: 'purple', icon: 'exchange-alt', tooltip: managedBy };
-  }
-
-  const tooltip = t('provisioning.managed-badge.read-only', 'Read only, {{managedBy}}', {
-    managedBy,
-    interpolation: { escapeValue: false },
-  });
-  return { color: 'purple', icon: 'exchange-alt-lock', tooltip, role: 'img', 'aria-label': tooltip };
-}
-
-function getManagedByTooltip(managerKind?: ManagerKind, name?: string): string {
   switch (managerKind) {
     case ManagerKind.Terraform:
-      return t('provisioning.managed-badge.terraform', 'Managed by: Terraform');
+      tooltip = t('provisioning.managed-badge.terraform', 'Managed by: Terraform');
+      break;
     case ManagerKind.Kubectl:
-      return t('provisioning.managed-badge.kubectl', 'Managed by: Kubectl');
+      tooltip = t('provisioning.managed-badge.kubectl', 'Managed by: Kubectl');
+      break;
     case ManagerKind.Plugin:
-      return t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
+      tooltip = t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
+      break;
     case ManagerKind.FileProvisioning:
-      return t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
+      tooltip = t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
+      break;
     case ManagerKind.ClassicFP:
-      return t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
+      tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
+      break;
     case ManagerKind.Repo:
-      return getManagedByRepositoryTooltip(name);
+      if (isOrphaned) {
+        color = 'orange';
+        icon = 'exclamation-triangle';
+        tooltip = getOrphanedRepositoryTooltip();
+      } else {
+        tooltip = getManagedByRepositoryTooltip(name);
+      }
+      break;
     default:
-      return t('provisioning.managed-badge.provisioned', 'Provisioned');
+      tooltip = t('provisioning.managed-badge.provisioned', 'Provisioned');
   }
+
+  return { color, icon, tooltip };
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  trigger: css({
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    display: 'inline-flex',
+    cursor: 'pointer',
+
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '2px',
+      borderRadius: theme.shape.radius.sm,
+    },
+  }),
+});

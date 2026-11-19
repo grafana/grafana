@@ -24,6 +24,7 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
+import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
 import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
 import { DashboardInteractions } from '../utils/interactions';
@@ -176,6 +177,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             active={openPane instanceof DashboardOutline}
           />
           {dashboardNewLayoutsEnabled && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
+          {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />
           {viewPanel && viewPanelPane && (
