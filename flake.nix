@@ -118,7 +118,7 @@
         {
           revision,
           sourceDateEpoch,
-          useGoBuildCache ? false,
+          ci ? false,
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -221,7 +221,7 @@
                   runHook postInstallCheck
                 '';
               }
-              // lib.optionalAttrs useGoBuildCache {
+              // lib.optionalAttrs ci {
                 postConfigure = ''
                   if [ -w /grafana-go-cache ]; then
                     export GOCACHE=/grafana-go-cache
@@ -288,11 +288,11 @@
                 '';
               };
             in
-            lib.nameValuePair target { inherit backend tarball; };
+            lib.nameValuePair target { inherit backend tarball pluginArchives; };
           targetPackages = builtins.listToAttrs (map mkTargetPackages targets);
           inherit (targetPackages.${nativeTarget}) backend tarball;
         in
-        lib.concatMapAttrs (target: { backend, tarball }: {
+        lib.concatMapAttrs (target: { backend, tarball, ... }: {
           "backend-${target}" = backend;
           "tarball-${target}" = tarball;
         }) targetPackages
@@ -303,6 +303,18 @@
             name = "grafana-release-tarballs-${version}";
             paths = lib.mapAttrsToList (_: target: target.tarball) targetPackages;
           };
+        }
+        // lib.optionalAttrs ci {
+          plugin-archives =
+            let
+              archives = lib.concatMap (target: builtins.attrValues target.pluginArchives) (
+                builtins.attrValues targetPackages
+              );
+            in
+            (pkgs.linkFarmFromDrvs "grafana-plugin-archives" archives).overrideAttrs {
+              # Enable cache hits for the link farm and its archive closure.
+              allowSubstitutes = true;
+            };
         }
       ) systems;
     in
@@ -318,10 +330,10 @@
       ciPackages = packageBuilders.x86_64-linux {
         revision = "unknown";
         sourceDateEpoch = "1";
-        useGoBuildCache = true;
+        ci = true;
       };
       ciJobs = lib.filterAttrs (
-        name: _: name == "frontend" || lib.hasPrefix "backend-" name
+        name: _: name == "frontend" || name == "plugin-archives" || lib.hasPrefix "backend-" name
       ) self.ciPackages;
     };
 }
