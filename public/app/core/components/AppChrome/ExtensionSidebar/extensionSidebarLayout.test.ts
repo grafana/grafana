@@ -269,12 +269,6 @@ describe('extensionSidebarLayout', () => {
     });
   });
 
-  it('forgets the declared floating heights when the sidebar closes or shows another extension', () => {
-    setFloatingExtensionSidebarHeightOptions({ minHeight: 400, collapsedHeight: 100 });
-    notifyExtensionSidebarClosed();
-    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
-  });
-
   it('keeps the floating heights the extension declares, telling subscribers only when they change', () => {
     expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
     const listener = jest.fn();

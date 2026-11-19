@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   useMemo,
   useRef,
@@ -49,6 +50,7 @@ import {
   releaseFloatingExtensionSidebarHolds,
   resolveExtensionSidebarDockSide,
   resolveExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -371,6 +373,9 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       notifyExtensionSidebarClosed();
     }
   }, [dockedComponentId]);
+  // The sizes were the shown extension's. A layout cleanup runs before the next extension's effects, where it declares
+  // its own; the close notice above runs after them, so clearing there would drop that declaration.
+  useLayoutEffect(() => () => setFloatingExtensionSidebarHeightOptions(null), [dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {

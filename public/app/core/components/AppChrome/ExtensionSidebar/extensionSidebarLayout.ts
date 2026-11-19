@@ -286,8 +286,6 @@ export function onExtensionSidebarClosed(listener: () => void): () => void {
 
 /** @internal Called by `ExtensionSidebarContextProvider` when the open sidebar closes. */
 export function notifyExtensionSidebarClosed(): void {
-  // The sizes were the closed extension's; the next one declares its own.
-  setFloatingExtensionSidebarHeightOptions(null);
   [...closeListeners].forEach((listener) => listener());
 }
 

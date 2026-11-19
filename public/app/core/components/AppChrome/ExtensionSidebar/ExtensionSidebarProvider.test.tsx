@@ -1,6 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render as rtlRender, screen, act, waitFor } from '@testing-library/react';
-import { type ReactElement, type ReactNode } from 'react';
+import { type ReactElement, type ReactNode, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
@@ -10,6 +10,7 @@ import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionS
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
+  type FloatingExtensionSidebarHeightOptions,
   holdFloatingExtensionSidebar,
   onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
@@ -601,6 +602,60 @@ describe('ExtensionSidebarProvider', () => {
       act(() => screen.getByRole('button', { name: 'Reset' }).click());
       expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
       expect(window.localStorage.getItem(FLOATING_HEIGHT_KEY)).toBeNull();
+    });
+
+    it('forgets the sizes when the sidebar closes or shows another extension, keeping the ones the next declares', () => {
+      const declared: Record<string, FloatingExtensionSidebarHeightOptions | undefined> = {
+        [mockComponent.title]: { minHeight: 400 },
+        [mockDifferentComponent.title]: { minHeight: 300 },
+      };
+      // Declares as it mounts, as an extension calling setSizing from an effect does.
+      const Extension = ({ title }: { title: string }) => {
+        useEffect(() => {
+          const options = declared[title];
+          if (options) {
+            setFloatingExtensionSidebarHeightOptions(options);
+          }
+        }, [title]);
+        return null;
+      };
+      const Sidebar = () => {
+        const { dockedComponentId, floatingHeightOptions } = useExtensionSidebarContext();
+        const title = getComponentMetaFromComponentId(dockedComponentId ?? '')?.componentTitle;
+        return (
+          <>
+            {title && <Extension key={title} title={title} />}
+            <div data-testid="height-options">{JSON.stringify(floatingHeightOptions)}</div>
+          </>
+        );
+      };
+      render(
+        <ExtensionSidebarContextProvider>
+          <Sidebar />
+        </ExtensionSidebarContextProvider>
+      );
+      const options = () => screen.getByTestId('height-options');
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":300}');
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(options()).toHaveTextContent('null');
+
+      declared[mockDifferentComponent.title] = undefined;
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('null');
     });
   });
 
