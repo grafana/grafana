@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 import { locationService } from '@grafana/runtime';
 import { QueryVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -13,6 +14,7 @@ import { savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { captureSavedViewState } from './state';
 
 jest.mock('./api', () => ({
+  ...jest.requireActual('./api'),
   savedDashboardViewsApi: {
     listForDashboard: jest.fn(),
     create: jest.fn(),
@@ -61,8 +63,37 @@ function renderPane(savedViews?: SavedDashboardView[]) {
 }
 
 describe('SavedViewsPane', () => {
+  beforeEach(() => {
+    contextSrv.isSignedIn = true;
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('anonymous viewers', () => {
+    beforeEach(() => {
+      contextSrv.isSignedIn = false;
+    });
+
+    it('can apply views but sees no way to change them', async () => {
+      const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+      act(() => scene.setState({ viewFilter: 'view-1' }));
+
+      expect(screen.queryByRole('button', { name: 'Save new' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'My view' }));
+      expect(scene.state.viewFilter).toBe('view-1');
+    });
+  });
+
+  it('caps the new view title at the length the API accepts', async () => {
+    renderPane([]);
+    await userEvent.click(screen.getByRole('button', { name: 'Save new' }));
+
+    expect(screen.getByRole('textbox', { name: 'New view title' })).toHaveAttribute('maxlength', '100');
   });
 
   it('shows a loading state and fetches views when not yet loaded', async () => {

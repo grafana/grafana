@@ -18,6 +18,9 @@ function client() {
   });
 }
 
+// Matches the backend's bound on spec.name.
+export const MAX_VIEW_NAME_LENGTH = 100;
+
 export const savedDashboardViewsApi = {
   // The selector scopes results to one dashboard; it isn't the permission check (FilterList is).
   async listForDashboard(dashboardUID: string): Promise<SavedDashboardView[]> {

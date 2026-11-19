@@ -30,10 +30,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { MAX_VIEW_NAME_LENGTH, savedDashboardViewsApi, type SavedDashboardView } from './api';
 import { loadSavedViews } from './loadSavedViews';
 import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
 
@@ -118,6 +119,9 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       </div>
     );
   }
+
+  // Anonymous viewers can apply views but not change the shared ones; the API rejects their writes.
+  const canEdit = contextSrv.isSignedIn;
 
   // A view is only "active" once the URL says so; its save button is enabled once the dashboard drifts from it.
   const selectedView = savedViews.find((v) => v.metadata.name === viewFilter);
@@ -288,6 +292,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                               <Input
                                 autoFocus
                                 aria-label={t('dashboard.sidebar.saved-views.edit-title-aria-label', 'View title')}
+                                maxLength={MAX_VIEW_NAME_LENGTH}
                                 value={editName}
                                 onChange={(e) => setEditName(e.currentTarget.value)}
                                 onKeyDown={(e) => {
@@ -326,7 +331,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           </button>
                         )}
 
-                        {isSelected && !isEditingTitle && (
+                        {isSelected && !isEditingTitle && canEdit && (
                           <IconButton
                             name="save"
                             tooltip={t('dashboard.sidebar.saved-views.save-changes', 'Save changes')}
@@ -335,7 +340,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                           />
                         )}
 
-                        {!isEditingTitle && (
+                        {!isEditingTitle && canEdit && (
                           <Dropdown
                             overlay={
                               <Menu>
@@ -372,6 +377,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                       <Input
                         autoFocus
                         aria-label={t('dashboard.sidebar.saved-views.new-title-aria-label', 'New view title')}
+                        maxLength={MAX_VIEW_NAME_LENGTH}
                         placeholder={t('dashboard.sidebar.saved-views.new-name-placeholder', 'New view name')}
                         value={draftName}
                         onChange={(e) => setDraftName(e.currentTarget.value)}
@@ -393,24 +399,26 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         </Box>
       </ScrollContainer>
 
-      <div className={styles.footer}>
-        <Stack justifyContent="flex-end" gap={1}>
-          {isDrafting ? (
-            <>
-              <Button variant="secondary" onClick={cancelDraft} disabled={busy}>
-                {t('dashboard.sidebar.saved-views.save-new-cancel', 'Cancel')}
+      {canEdit && (
+        <div className={styles.footer}>
+          <Stack justifyContent="flex-end" gap={1}>
+            {isDrafting ? (
+              <>
+                <Button variant="secondary" onClick={cancelDraft} disabled={busy}>
+                  {t('dashboard.sidebar.saved-views.save-new-cancel', 'Cancel')}
+                </Button>
+                <Button variant="primary" onClick={handleDraftConfirm} disabled={!draftName.trim() || busy}>
+                  {t('dashboard.sidebar.saved-views.save-new-confirm', 'Confirm')}
+                </Button>
+              </>
+            ) : (
+              <Button icon="plus" variant="primary" onClick={startDraft} disabled={busy}>
+                {t('dashboard.sidebar.saved-views.save-new', 'Save new')}
               </Button>
-              <Button variant="primary" onClick={handleDraftConfirm} disabled={!draftName.trim() || busy}>
-                {t('dashboard.sidebar.saved-views.save-new-confirm', 'Confirm')}
-              </Button>
-            </>
-          ) : (
-            <Button icon="plus" variant="primary" onClick={startDraft} disabled={busy}>
-              {t('dashboard.sidebar.saved-views.save-new', 'Save new')}
-            </Button>
-          )}
-        </Stack>
-      </div>
+            )}
+          </Stack>
+        </div>
+      )}
 
       {pendingDelete && (
         <ConfirmModal
