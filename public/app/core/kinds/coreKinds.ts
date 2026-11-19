@@ -5,8 +5,8 @@ import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
+import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { CONNECTIONS_ROUTE, PROVISIONING_ROUTE } from './routes';
 import { type KindInfo, type LabelOptions } from './types';
 
 // Every page path is built here, so the object name is encoded in one place
@@ -74,7 +74,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.repository.label', 'repository')),
     getPluralLabel: label(() => t('core-kinds.repository.label-plural', 'repositories')),
     icon: 'code-branch',
-    getRoute: page(PROVISIONING_ROUTE),
+    getRoute: page(PROVISIONING_URL),
   },
   connection: {
     group: PROVISIONING_API_GROUP,
@@ -83,7 +83,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.connection.label', 'connection')),
     getPluralLabel: label(() => t('core-kinds.connection.label-plural', 'connections')),
     icon: 'plug',
-    getRoute: page(CONNECTIONS_ROUTE, '/edit'),
+    getRoute: page(CONNECTIONS_URL, '/edit'),
   },
   datasource: {
     // Each data source plugin serves its own `{plugin}.datasource.grafana.app`
