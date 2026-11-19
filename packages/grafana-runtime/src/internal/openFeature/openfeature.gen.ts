@@ -376,6 +376,8 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  ResponsiveTimePickerTabs: "responsiveTimePickerTabs",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
   /** Enables Saved queries (query library) RBAC permissions */
@@ -2415,6 +2417,17 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("responsiveTimePickerTabs", false, options).value;
 };
 
 /**
