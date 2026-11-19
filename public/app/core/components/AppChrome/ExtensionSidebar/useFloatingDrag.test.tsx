@@ -9,6 +9,7 @@ import {
   FLOATING_SNAP_DURATION_MS,
   useDockedDrag,
   useFloatingDrag,
+  useFloatingHeightRoom,
 } from './useFloatingDrag';
 
 jest.mock('@grafana/runtime', () => ({
@@ -658,6 +659,49 @@ it.each([
   unmount();
   render(<Floating />);
   expect(floating().style.transform).toBe('translate(0px, -300px)');
+});
+
+describe('the room a remembered height is held to', () => {
+  // In ExtensionSidebar's order: the room is read before the drag places the box.
+  function FloatingWithRoom() {
+    const [element, setElement] = useState<HTMLDivElement | null>(null);
+    const room = useFloatingHeightRoom(element);
+    useFloatingDrag(element, {
+      dockWidth: 360,
+      dockHeight: 320,
+      onDock,
+      canDockLeft: () => false,
+      canDockBottom: () => false,
+      canCollapse: () => false,
+      onCollapse,
+    });
+    return (
+      <div ref={setElement} data-testid="floating">
+        <span data-testid="room">{room}</span>
+      </div>
+    );
+  }
+  const room = () => screen.getByTestId('room');
+
+  it('reaches up to the gutter under the top bar, for a box kept at its bottom edge', () => {
+    render(<FloatingWithRoom />);
+    // 744 at the bottom, less the 8px gutter.
+    expect(room()).toHaveTextContent('736');
+  });
+
+  it('reaches down to the gutter above the page bottom, for a box left in the top half', () => {
+    window.localStorage.setItem(
+      'grafana.navigation.extensionSidebarFloatingOffset',
+      JSON.stringify({ x: 0, y: 100, anchor: 'top' })
+    );
+    render(<FloatingWithRoom />);
+    expect(floating().style.transform).toBe('translate(0px, -400px)');
+    // Its top edge at 100 stays, so it can grow down to 760.
+    expect(room()).toHaveTextContent('660');
+
+    resizeBox({ top: 500, height: 244 });
+    expect(room()).toHaveTextContent('660');
+  });
 });
 
 it('moves only by its handle, with the primary button, following the pointer that grabbed it', () => {

@@ -811,8 +811,8 @@ export function getFloatingHeightRoom(element: HTMLElement): number {
 }
 
 /**
- * `getFloatingHeightRoom` for `element`, kept current as the window resizes, so a height remembered in a taller window
- * still fits under the top bar. `Infinity` without an element.
+ * The most height the floating sidebar `element` can be given where the user left it, kept current as the window
+ * resizes, so a height remembered in a taller window still fits on the page. `Infinity` without an element.
  */
 export function useFloatingHeightRoom(element: HTMLElement | null): number {
   const [room, setRoom] = useState(Infinity);
@@ -820,12 +820,26 @@ export function useFloatingHeightRoom(element: HTMLElement | null): number {
     if (!element) {
       return;
     }
-    const update = () => setRoom(getFloatingHeightRoom(element));
+    const update = () => setRoom(getPlacedFloatingHeightRoom(element));
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, [element]);
   return element ? room : Infinity;
+}
+
+/**
+ * Kept at its top edge, the container grows downward, so its room runs from that edge, placed no higher than the
+ * gutter, down to the gutter above the page content's bottom. Read from the stored placement rather than measured,
+ * since the room is first read before the container is placed. Kept at its bottom edge, it is `getFloatingHeightRoom`.
+ */
+function getPlacedFloatingHeightRoom(element: HTMLElement): number {
+  const placement = readStoredPlacement();
+  if (placement.anchor === 'bottom') {
+    return getFloatingHeightRoom(element);
+  }
+  const content = contentEdges();
+  return Math.max(0, Math.floor(content.bottom - GUTTER - (content.top + Math.max(GUTTER, placement.y))));
 }
 
 function contentEdges(): { left: number; top: number; right: number; bottom: number } {
