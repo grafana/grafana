@@ -14,7 +14,10 @@ function page(base: string, suffix = '') {
   return (name: string) => `${base}/${encodeURIComponent(name)}${suffix}`;
 }
 
-// Titles are derived from the mid-sentence label here, so no reader changes a label's case itself
+// Translations hold the label as it reads mid-sentence. A title only uppercases the first letter,
+// which is safe in every language. Lowercasing a title is not: German capitalizes every noun, so
+// "Ordner" would become the misspelled "ordner". Readers ask for a form here instead of changing
+// the case themselves.
 function label(translate: () => string) {
   return ({ upperFirst: upper = true }: LabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
 }
