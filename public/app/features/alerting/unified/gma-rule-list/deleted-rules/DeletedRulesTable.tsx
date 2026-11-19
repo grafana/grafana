@@ -1,18 +1,19 @@
-import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
 
+import { type DeletedRule } from './types';
+
 interface DeletedRulesTableProps {
-  rules: AlertRule[];
+  rules: DeletedRule[];
   /** Pre-resolved folder paths: uid → display path string (override for tests) */
   folderPaths: Record<string, string>;
   /** Pre-resolved user names from IAM getDisplayMapping: uid → display name */
   userNames: Record<string, string>;
-  onReview: (rule: AlertRule) => void;
-  onRestore: (rule: AlertRule) => void;
+  onReview: (rule: DeletedRule) => void;
+  onRestore: (rule: DeletedRule) => void;
   hasMore: boolean;
   isLoadingMore: boolean;
   onLoadMore: () => void;
@@ -37,7 +38,7 @@ export function DeletedRulesTable({
     );
   }
 
-  const columns: Array<Column<AlertRule>> = [
+  const columns: Array<Column<DeletedRule>> = [
     {
       id: 'title',
       header: t('alerting.recently-deleted.table.title', 'Title'),
@@ -102,7 +103,7 @@ export function DeletedRulesTable({
 
   return (
     <Stack direction="column" gap={2}>
-      <InteractiveTable columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
+      <InteractiveTable<DeletedRule> columns={columns} data={rules} getRowId={(rule) => rule.metadata?.name ?? ''} />
       {hasMore && (
         <Button variant="secondary" onClick={onLoadMore} disabled={isLoadingMore}>
           {isLoadingMore ? <Spinner /> : <Trans i18nKey="alerting.recently-deleted.load-more">Load more</Trans>}

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Collapse, Drawer, Stack, Text } from '@grafana/ui';
@@ -8,8 +7,10 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
 
+import { type DeletedRule } from './types';
+
 interface ReviewDrawerProps {
-  rule: AlertRule;
+  rule: DeletedRule;
   deletedByName?: string;
   onClose: () => void;
   onJsonOpen?: () => void;
