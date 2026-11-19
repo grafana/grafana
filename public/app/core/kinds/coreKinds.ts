@@ -93,7 +93,8 @@ export const CORE_KINDS = {
     getRoute: page(CONNECTIONS_URL, '/edit'),
   },
   datasource: {
-    // Each data source plugin serves its own `{plugin}.datasource.grafana.app`
+    // Not a served group: each plugin serves its own `{plugin}.datasource.grafana.app`, and the
+    // backend reports every data source under this group, which all of those end in
     group: 'datasource.grafana.app',
     collectionGroup: true,
     kind: 'DataSource',
