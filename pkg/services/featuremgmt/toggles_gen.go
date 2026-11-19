@@ -1022,6 +1022,10 @@ const (
 	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
 	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
 
+	// FlagAlertingRecordingRuleSeriesState
+	// Track the series written by recording rules in the alert state manager and persist them, so stale markers survive restarts and rule moves. Do not enable it until the recording rule uses the tracker.
+	FlagAlertingRecordingRuleSeriesState = "alerting.recordingRuleSeriesState"
+
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"

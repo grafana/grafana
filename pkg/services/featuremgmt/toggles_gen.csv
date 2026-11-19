@@ -382,6 +382,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-28,grafana.thresholdsInterpolation,GA,@grafana/dashboards-squad,false,false,true
 2026-07-28,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-07-28,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
+2026-11-18,alerting.recordingRuleSeriesState,experimental,@grafana/alerting-squad,false,false,false
 2026-08-04,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
 2026-08-12,grafana.pluginPathNesting,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false

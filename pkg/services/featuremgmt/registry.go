@@ -3299,6 +3299,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "alerting.recordingRuleSeriesState",
+			Description:  "Track the series written by recording rules in the alert state manager and persist them, so stale markers survive restarts and rule moves. Do not enable it until the recording rule uses the tracker.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "alerting.stateManagerRequireWarm",
 			Description:  "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
 			Stage:        FeatureStageExperimental,

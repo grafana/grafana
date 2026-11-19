@@ -162,6 +162,23 @@
     },
     {
       "metadata": {
+        "name": "alerting.recordingRuleSeriesState",
+        "resourceVersion": "1795022259568",
+        "creationTimestamp": "2026-11-18T16:37:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 17:17:39.568866 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Track the series written by recording rules in the alert state manager and persist them, so stale markers survive restarts and rule moves. Do not enable it until the recording rule uses the tracker.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleQuality",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-14T12:42:32Z"
