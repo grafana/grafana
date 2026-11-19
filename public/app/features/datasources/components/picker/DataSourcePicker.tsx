@@ -187,7 +187,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const modalCycleIdRef = useRef<string | null>(null);
 
   // Ends the open cycle, reporting how it ended. Without an interaction name the cycle is handed off
-  // to an event the journey already listens to (select_ds, or the advanced modal's dismiss).
+  // to select_ds, which the journey already listens to.
   const endCycle = useCallback(
     (interaction?: string, properties: Record<string, unknown> = {}) => {
       // A pending search belongs to this cycle, so send it before the cycle ends
