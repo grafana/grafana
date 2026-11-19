@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Suspense } from 'react';
+import { Suspense, useCallback } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,8 @@ export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-
  * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`
  */
 interface StandalonePromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  /** A promise that rejects keeps the prompt's text and pills. Older plugin versions do not wait on it. */
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   hideModeSelector?: boolean;
   mode?: string;
@@ -24,7 +25,7 @@ interface StandalonePromptProps {
 }
 
 interface DashboardLandingPromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   className?: string;
   hostContextItems?: ChatContextItem[];
@@ -52,6 +53,15 @@ export function DashboardLandingPrompt({
   onHostContextItemRemove,
 }: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
+  const submit = useCallback(
+    (prompt: string, contextItems: ChatContextItem[]) => {
+      const result = onSubmit(prompt, contextItems);
+      // An older plugin drops the promise, so its rejection must not surface as unhandled.
+      result?.catch(() => {});
+      return result;
+    },
+    [onSubmit]
+  );
 
   if (!Prompt) {
     return isLoading ? <PromptLoadingSlot /> : null;
@@ -60,7 +70,7 @@ export function DashboardLandingPrompt({
   return (
     <Suspense fallback={<PromptLoadingSlot />}>
       <Prompt
-        onSubmit={onSubmit}
+        onSubmit={submit}
         placeholder={
           placeholder ??
           t(

@@ -1,13 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { type ChatContextItem } from '@grafana/assistant';
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type ChatContextItem, checkLimits } from '@grafana/assistant';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { buildAssistantPrompt } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
@@ -27,6 +29,22 @@ const PROMPT_OVERLAP = 24;
 
 /** Below this the page scrolls instead of squeezing the template grid to nothing. */
 const MIN_HEIGHT_WITH_TEMPLATES = 360;
+
+/** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
+async function findHandoffProblem(): Promise<string | undefined> {
+  if (!contextSrv.isSignedIn) {
+    return t('dashboard.empty.assistant-sign-in', 'Sign in to use the Assistant.');
+  }
+  try {
+    const { isLimitReached } = await checkLimits();
+    if (isLimitReached) {
+      return t('dashboard.empty.assistant-limit-reached', "You have used all of this month's Assistant prompts.");
+    }
+  } catch {
+    return t('dashboard.empty.assistant-unreachable', 'Could not reach the Assistant. Try sending again.');
+  }
+  return undefined;
+}
 
 /**
  * True once the prompt shows its text box. The prompt is a plugin component that loads its own code after the
@@ -140,7 +158,14 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   };
 
   const onSubmitPrompt = useCallback(
-    (prompt: string, submittedContextItems: ChatContextItem[]) => {
+    async (prompt: string, submittedContextItems: ChatContextItem[]) => {
+      // The Assistant reports nothing back once it has the prompt, so check before handing it over: a failed handoff
+      // must leave the prompt, the picked template and the templates as they were.
+      const problem = await findHandoffProblem();
+      if (problem) {
+        appEvents.publish({ type: AppEvents.alertError.name, payload: [problem] });
+        throw new Error(problem);
+      }
       // A plugin version without host pills never sends the template back, so make sure it travels.
       const templateItem = template?.contextItem;
       const contextItems =

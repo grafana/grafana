@@ -15,7 +15,7 @@ jest.mock('@grafana/runtime', () => ({
 const usePluginComponentMock = jest.mocked(usePluginComponent);
 
 interface CapturedPromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   hideModeSelector?: boolean;
   mode?: string;
@@ -82,11 +82,29 @@ describe('DashboardLandingPrompt', () => {
     expect(usePluginComponentMock).toHaveBeenCalledWith(STANDALONE_PROMPT_COMPONENT_ID);
     expect(received).toHaveLength(1);
     expect(received[0]).toEqual({
-      onSubmit,
+      onSubmit: expect.any(Function),
       placeholder: 'Describe your dashboard. This will open the assistant chat and start a conversation.',
       hideModeSelector: true,
       mode: 'dashboarding',
     });
+    received[0].onSubmit('monitor checkout', []);
+    expect(onSubmit).toHaveBeenCalledWith('monitor checkout', []);
+  });
+
+  it('hands a refused send back to the plugin, so it keeps the prompt', async () => {
+    const received: CapturedPromptProps[] = [];
+    const Prompt = (props: CapturedPromptProps) => {
+      received.push(props);
+      return null;
+    };
+    usePluginComponentMock.mockReturnValue({
+      component: Prompt,
+      isLoading: false,
+    } as unknown as ReturnType<typeof usePluginComponent>);
+
+    render(<DashboardLandingPrompt onSubmit={() => Promise.reject(new Error('Could not reach the Assistant'))} />);
+
+    await expect(received[0].onSubmit('monitor checkout', [])).rejects.toThrow('Could not reach the Assistant');
   });
 
   it('renders nothing when the plugin prompt is unavailable', () => {

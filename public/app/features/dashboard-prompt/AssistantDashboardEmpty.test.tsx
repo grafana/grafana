@@ -3,7 +3,9 @@ import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 import { isFloatingExtensionSidebarHeld } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
@@ -15,13 +17,19 @@ jest.mock('./handoff', () => ({
   startPlanningInAssistant: jest.fn(),
 }));
 
+const mockCheckLimits = jest.fn();
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  checkLimits: () => mockCheckLimits(),
+}));
+
 jest.mock('./datasources', () => ({
   getPromptDatasources: () => [{ uid: 'prom-default', type: 'prometheus', name: 'Prometheus' }],
 }));
 
-let latestOnSubmit: ((prompt: string, contextItems: ChatContextItem[]) => void) | undefined;
+let latestOnSubmit: ((prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>) | undefined;
 interface LandingPromptProps {
-  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void | Promise<void>;
   placeholder?: string;
   hostContextItems?: ChatContextItem[];
   onHostContextItemRemove?: (id: string) => void;
@@ -78,6 +86,8 @@ describe('AssistantDashboardEmpty', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     latestOnSubmit = undefined;
+    contextSrv.isSignedIn = true;
+    mockCheckLimits.mockResolvedValue({ count: 0, limit: 0, month: '2026-11', isLimitReached: false });
     latestPromptProps = undefined;
     latestTemplatesProps = undefined;
     Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
@@ -96,7 +106,7 @@ describe('AssistantDashboardEmpty', () => {
     expect(addNewPanel).toHaveBeenCalledTimes(1);
   });
 
-  it('derives planning summaries from context data and forwards the original selection', () => {
+  it('derives planning summaries from context data and forwards the original selection', async () => {
     renderEmpty();
     const contextItems: ChatContextItem[] = [
       {
@@ -124,9 +134,7 @@ describe('AssistantDashboardEmpty', () => {
       },
     ];
 
-    act(() => {
-      latestOnSubmit?.('monitor checkout', contextItems);
-    });
+    await act(() => latestOnSubmit?.('monitor checkout', contextItems));
 
     expect(mockStartPlanning).toHaveBeenCalledWith({
       request: 'monitor checkout',
@@ -138,13 +146,11 @@ describe('AssistantDashboardEmpty', () => {
     expect(mockStartPlanning.mock.calls[0][0].context).toBe(contextItems);
   });
 
-  it('holds the floating Assistant hidden while its own prompt stands in, until the prompt is submitted', () => {
+  it('holds the floating Assistant hidden while its own prompt stands in, until the prompt is submitted', async () => {
     renderEmpty();
     expect(isFloatingExtensionSidebarHeld()).toBe(true);
 
-    act(() => {
-      latestOnSubmit?.('monitor checkout', []);
-    });
+    await act(() => latestOnSubmit?.('monitor checkout', []));
 
     expect(isFloatingExtensionSidebarHeld()).toBe(false);
   });
@@ -157,12 +163,10 @@ describe('AssistantDashboardEmpty', () => {
     expect(isFloatingExtensionSidebarHeld()).toBe(false);
   });
 
-  it('falls back to every datasource when the user picked none', () => {
+  it('falls back to every datasource when the user picked none', async () => {
     renderEmpty();
 
-    act(() => {
-      latestOnSubmit?.('monitor checkout', []);
-    });
+    await act(() => latestOnSubmit?.('monitor checkout', []));
 
     expect(mockStartPlanning).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -243,11 +247,11 @@ describe('AssistantDashboardEmpty', () => {
       expect(latestPromptProps?.hostContextItems).toEqual([]);
     });
 
-    it('plans from the template alone when the prompt is sent empty', () => {
+    it('plans from the template alone when the prompt is sent empty', async () => {
       renderEmpty();
       act(() => latestTemplatesProps?.onSelectTemplate(red));
 
-      act(() => latestOnSubmit?.('', [red.contextItem]));
+      await act(() => latestOnSubmit?.('', [red.contextItem]));
 
       expect(mockStartPlanning).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -259,11 +263,53 @@ describe('AssistantDashboardEmpty', () => {
       expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
     });
 
-    it('still sends the template when the prompt did not hand it back', () => {
+    describe('when the Assistant cannot take the prompt', () => {
+      async function submitRefused(reason: string) {
+        const publish = jest.spyOn(appEvents, 'publish');
+        renderEmpty();
+        act(() => latestTemplatesProps?.onSelectTemplate(red));
+
+        let refusal: unknown;
+        await act(async () => {
+          try {
+            await latestOnSubmit?.('add a latency panel', [red.contextItem]);
+          } catch (error) {
+            refusal = error;
+          }
+        });
+
+        expect(refusal).toEqual(new Error(reason));
+
+        expect(mockStartPlanning).not.toHaveBeenCalled();
+        expect(publish).toHaveBeenCalledWith(expect.objectContaining({ payload: [reason] }));
+        // Nothing resets: the picked template and the templates stay, and the rejection keeps the prompt's text.
+        expect(latestTemplatesProps?.selectedTemplateId).toBe('grafana:1');
+        expect(screen.getByTestId('landing-templates')).toBeInTheDocument();
+        expect(isFloatingExtensionSidebarHeld()).toBe(true);
+      }
+
+      it('keeps everything as it was when the Assistant cannot be reached', async () => {
+        mockCheckLimits.mockRejectedValue(new Error('Failed to check limits'));
+        await submitRefused('Could not reach the Assistant. Try sending again.');
+      });
+
+      it("keeps everything as it was when this month's prompts are used up", async () => {
+        mockCheckLimits.mockResolvedValue({ count: 10, limit: 10, month: '2026-11', isLimitReached: true });
+        await submitRefused("You have used all of this month's Assistant prompts.");
+      });
+
+      it('asks an anonymous visitor to sign in first', async () => {
+        contextSrv.isSignedIn = false;
+        await submitRefused('Sign in to use the Assistant.');
+        expect(mockCheckLimits).not.toHaveBeenCalled();
+      });
+    });
+
+    it('still sends the template when the prompt did not hand it back', async () => {
       renderEmpty();
       act(() => latestTemplatesProps?.onSelectTemplate(red));
 
-      act(() => latestOnSubmit?.('add a latency panel', []));
+      await act(() => latestOnSubmit?.('add a latency panel', []));
 
       expect(mockStartPlanning).toHaveBeenCalledWith(
         expect.objectContaining({ request: 'add a latency panel', context: [red.contextItem] })
