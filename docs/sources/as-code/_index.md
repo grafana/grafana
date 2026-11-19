@@ -113,9 +113,7 @@ Use the following table to find the tool that fits your workflow. You can combin
 
 ## Additional as code tools
 
-[`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) is the Grafana command-line tool for provisioning Grafana and Grafana Cloud resources. You can pull resources into JSON or YAML files, keep them in version control, and push them back to one or more Grafana instances from your terminal or a CI/CD pipeline. Explicit commands, structured output, and predictable exit codes make changes repeatable and reviewable, whether you run `gcx` yourself or hand it to an AI agent.
-
-You can also provision resources with other [AI tools](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/):
+[`gcx`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/) is the Grafana command-line tool for provisioning Grafana and Grafana Cloud resources. You can also provision resources with other [AI tools](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/):
 
 - **Grafana Assistant:** Create and update dashboards in plain language, directly in the Grafana UI. Refer to [Grafana Assistant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/).
 - **MCP servers:** Let an external AI client, such as Claude, Cursor, or VS Code with Copilot, manage dashboards, folders, alerting, and other resources through the Model Context Protocol. Refer to [MCP server](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/mcp/).
