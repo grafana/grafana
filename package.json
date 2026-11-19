@@ -364,7 +364,7 @@
     "moment": "2.31.0",
     "monaco-editor": "0.34.1",
     "moveable": "0.53.0",
-    "nanoid": "^5.0.9",
+    "nanoid": "^6.0.0",
     "node-forge": "^1.4.0",
     "ol": "^10.10.0",
     "ol-ext": "4.0.39",
