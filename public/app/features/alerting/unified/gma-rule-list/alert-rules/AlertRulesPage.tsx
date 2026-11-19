@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Divider, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
@@ -17,12 +17,14 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
@@ -30,7 +32,6 @@ function AlertRulesPage() {
 
   useTrackRuleListPageView('alert', mode);
 
-  const { navId, pageNav } = useAlertRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
@@ -47,9 +48,15 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <RuleSequenceDrawerProvider>
-            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-          </RuleSequenceDrawerProvider>
+          <Stack direction="row" gap={2}>
+            <AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />
+            <Divider direction="vertical" spacing={0} />
+            <Box flex={1} minWidth={0}>
+              <RuleSequenceDrawerProvider>
+                <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+              </RuleSequenceDrawerProvider>
+            </Box>
+          </Stack>
         </Stack>
       </Box>
     </AlertingPageWrapper>

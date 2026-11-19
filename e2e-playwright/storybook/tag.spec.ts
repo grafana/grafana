@@ -92,6 +92,24 @@ for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_da
     expect(labelBox!.x + labelBox!.width).toBeLessThanOrEqual(removeBox!.x);
   });
 
+  test(`removable tags are 24px tall with default text in ${theme}`, async ({ page }) => {
+    await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
+    const removable = page.getByRole('button', { name: 'Remove tag: Removable', exact: true }).locator('..');
+    const both = page.getByRole('button', { name: 'Remove tag: Both actions', exact: true }).locator('..');
+
+    for (const tag of [removable, both]) {
+      expect(await tag.evaluate((element) => element.getBoundingClientRect().height)).toBe(24);
+    }
+  });
+
+  test(`the remove button uses the tag foreground in ${theme}`, async ({ page }) => {
+    await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
+    const label = page.getByRole('button', { name: 'Both actions', exact: true });
+    const remove = page.getByRole('button', { name: 'Remove tag: Both actions', exact: true });
+
+    await expect(remove).toHaveCSS('color', await label.evaluate((element) => getComputedStyle(element).color));
+  });
+
   test(`removable tag hover feedback stays on the individual action in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
     const label = page.getByRole('button', { name: 'Both actions', exact: true });

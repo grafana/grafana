@@ -27,9 +27,9 @@ weight: 400
 
 ## Before you begin
 
-1. [Install `gcx`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/).
+1. [Install `gcx`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/installation/).
 
-1. [Authenticate `gcx`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/) with the preferred method for your Grafana instance.
+1. [Authenticate `gcx`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/authentication/) with the preferred method for your Grafana instance.
 
 1. To check which configuration `gcx` uses, run:
 

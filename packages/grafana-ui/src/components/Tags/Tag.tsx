@@ -1,6 +1,6 @@
 import { cx, css } from '@emotion/css';
 import { useMergeRefs } from '@floating-ui/react';
-import { forwardRef, type HTMLAttributes } from 'react';
+import { type CSSProperties, forwardRef, type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -11,7 +11,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
-import { getTagColor, getTagColorsFromName } from '../../utils/tags';
+import { getTagColorIndexFromName, getTagColorVariables } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -37,10 +37,15 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 }
 
 const TagComponent = forwardRef<HTMLElement, Props>(
-  ({ name, onClick, onRemove, disabled, icon, className, colorIndex, baseColor, ...rest }, ref) => {
+  ({ name, onClick, onRemove, disabled, icon, className, colorIndex, baseColor, style, ...rest }, ref) => {
     const rootRef = useMergeRefs([ref]);
     const theme = useTheme2();
-    const styles = getTagStyles(theme, name, colorIndex, baseColor);
+    const styles = useStyles2(getTagStyles);
+    // Colors are inline custom properties so the class stays the same for every tag color.
+    const colorStyle: CSSProperties = {
+      ...getTagColorVariables(baseColor ?? colorIndex ?? getTagColorIndexFromName(name, theme), theme),
+      ...style,
+    };
 
     const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
       event.preventDefault();
@@ -62,12 +67,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
     if (onRemove) {
       const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, ...wrapperProps } = rest;
       return (
-        <span
-          {...(onClick ? wrapperProps : rest)}
-          aria-disabled={disabled || rest['aria-disabled']}
-          className={classes}
-          ref={rootRef}
-        >
+        <span {...(onClick ? wrapperProps : rest)} className={classes} style={colorStyle} ref={rootRef}>
           {onClick ? (
             <button
               type="button"
@@ -103,12 +103,20 @@ const TagComponent = forwardRef<HTMLElement, Props>(
     }
 
     return onClick ? (
-      <button {...rest} type="button" disabled={disabled} className={classes} onClick={onTagClick} ref={rootRef}>
+      <button
+        {...rest}
+        type="button"
+        disabled={disabled}
+        className={classes}
+        style={colorStyle}
+        onClick={onTagClick}
+        ref={rootRef}
+      >
         {icon && <Icon name={icon} />}
         {name}
       </button>
     ) : (
-      <span {...rest} className={classes} ref={rootRef}>
+      <span {...rest} className={classes} style={colorStyle} ref={rootRef}>
         {icon && <Icon name={icon} />}
         {name}
       </span>
@@ -135,10 +143,8 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, baseColor?: string) => {
+const getTagStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const color = baseColor ?? colorIndex;
-  const { background, text } = color === undefined ? getTagColorsFromName(name, theme) : getTagColor(color, theme);
   const label = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -146,7 +152,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
     gap: '3px',
   };
   return {
-    removable: css({ display: 'inline-flex', alignItems: 'center', gap: theme.spacing(0.5) }),
+    removable: css({ display: 'inline-flex', alignItems: 'center', gap: theme.spacing(0.5), paddingBlock: 0 }),
     label: css(label),
     labelButton: css({
       ...label,
@@ -165,7 +171,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
       color: 'inherit',
     }),
     remove: css({
-      color: text,
+      color: 'var(--tag-text)',
       margin: 0,
       minWidth: theme.spacing(3),
       minHeight: theme.spacing(3),
@@ -182,8 +188,8 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
         fontSize: theme.typography.size.sm,
         lineHeight: theme.typography.bodySmall.lineHeight,
         verticalAlign: 'baseline',
-        backgroundColor: background,
-        color: text,
+        backgroundColor: 'var(--tag-background)',
+        color: 'var(--tag-text)',
         whiteSpace: 'pre',
         textShadow: 'none',
         padding: '3px 6px',

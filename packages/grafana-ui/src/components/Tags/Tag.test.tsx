@@ -1,11 +1,18 @@
 import { css } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, type JSX } from 'react';
+import { createRef, type CSSProperties, type JSX } from 'react';
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
+import { getTagColorVariables } from '../../utils/tags';
+
 import { Tag } from './Tag';
+
+const getColorVariables = (element: HTMLElement) => ({
+  '--tag-background': element.style.getPropertyValue('--tag-background'),
+  '--tag-text': element.style.getPropertyValue('--tag-text'),
+});
 
 const setup = (jsx: JSX.Element) => {
   return {
@@ -17,7 +24,7 @@ const setup = (jsx: JSX.Element) => {
 const mockOnClick = jest.fn();
 
 describe('Tag', () => {
-  it('exposes the disabled state on removable tags', () => {
+  it('exposes the native disabled state without adding wrapper ARIA', () => {
     const onRemove = jest.fn();
     const { rerender } = render(<Tag name="service" title="Tag details" onRemove={onRemove} />);
 
@@ -26,7 +33,8 @@ describe('Tag', () => {
 
     rerender(<Tag name="service" title="Tag details" onRemove={onRemove} disabled />);
 
-    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Remove tag: service' })).toBeDisabled();
+    expect(screen.getByTitle('Tag details')).not.toHaveAttribute('aria-disabled');
   });
 
   it.each([false, true])('preserves custom ARIA attributes when removable is %s', (removable) => {
@@ -44,7 +52,7 @@ describe('Tag', () => {
 
     rerender(<Tag {...props} disabled />);
 
-    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', removable ? 'true' : 'false');
+    expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-disabled', 'false');
     expect(screen.getByTitle('Tag details')).toHaveAttribute('aria-describedby', 'tag-description');
   });
 
@@ -56,10 +64,8 @@ describe('Tag', () => {
       </ThemeContext.Provider>
     );
 
-    expect(screen.getByText('service')).toHaveStyle({
-      color: theme.components.tag.colors[0].text,
-      backgroundColor: theme.components.tag.colors[0].background,
-    });
+    expect(screen.getByText('service')).not.toHaveStyle({ color: theme.colors.text.disabled });
+    expect(getColorVariables(screen.getByText('service'))).toEqual(getTagColorVariables(0, theme));
     expect(screen.getByText('service')).not.toHaveAttribute('aria-disabled');
   });
 
@@ -102,8 +108,10 @@ describe('Tag', () => {
 
     expect(screen.getByTitle('Disabled tag')).toHaveStyle({
       color: theme.colors.text.disabled,
-      backgroundColor: theme.components.tag.colors[0].background,
     });
+    expect(getColorVariables(screen.getByTitle('Disabled tag'))['--tag-background']).toBe(
+      theme.components.tag.colors[0].background
+    );
     expect(screen.getByTitle('Disabled tag')).not.toHaveStyle({ opacity: 0.5 });
     expect(screen.getByRole('button', { name: 'Remove tag: service' })).toBeDisabled();
   });
@@ -122,25 +130,6 @@ describe('Tag', () => {
 
     expect(ref.current).toBe(screen.getByTitle('Tag details'));
     expect(ref.current?.tagName).toBe(removable ? 'SPAN' : 'BUTTON');
-  });
-
-  it.each([
-    ['light', false],
-    ['light', true],
-    ['dark', false],
-    ['dark', true],
-  ] as const)('uses the tag foreground for removal in %s mode with refresh %s', (mode, refresh) => {
-    const theme = createTheme({ colors: { mode } });
-    theme.flags.visualDesignRefresh = refresh;
-    render(
-      <ThemeContext.Provider value={theme}>
-        <Tag name="service" colorIndex={0} onRemove={jest.fn()} />
-      </ThemeContext.Provider>
-    );
-
-    expect(screen.getByRole('button', { name: 'Remove tag: service' })).toHaveStyle({
-      color: theme.components.tag.colors[0].text,
-    });
   });
 
   it('isolates removal from an enclosing click action and form submission', async () => {
@@ -211,16 +200,49 @@ describe('Tag', () => {
     expect(onRemove).toHaveBeenCalledWith('service', expect.any(Object));
   });
 
-  it.each([
-    ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
-    ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
-  ] as const)('uses a custom base color in %s mode ahead of the palette index', (mode, backgroundColor, color) => {
+  it.each(['dark', 'light'] as const)('uses a custom base color in %s mode ahead of the palette index', (mode) => {
+    const theme = createTheme({ colors: { mode } });
     render(
-      <ThemeContext.Provider value={createTheme({ colors: { mode } })}>
+      <ThemeContext.Provider value={theme}>
         <Tag name="error" baseColor="#ff0000" colorIndex={2} />
       </ThemeContext.Provider>
     );
-    expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': 'rgb(from #ff0000 r g b / clamp(0, alpha * 1e9, 1))',
+      '--tag-text': getTagColorVariables('#ff0000', theme)['--tag-text'],
+    });
+  });
+
+  it('uses the theme palette for a color index', () => {
+    const theme = createTheme();
+    render(
+      <ThemeContext.Provider value={theme}>
+        <Tag name="error" colorIndex={2} />
+      </ThemeContext.Provider>
+    );
+    const { background, text } = theme.components.tag.colors[2];
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': background,
+      '--tag-text': text,
+    });
+  });
+
+  it('shares one class across tag colors', () => {
+    render(
+      <>
+        <Tag name="red" baseColor="#ff0000" />
+        <Tag name="blue" baseColor="#0000ff" />
+        <Tag name="palette" colorIndex={3} />
+        <Tag name="hashed" />
+      </>
+    );
+    const classNames = new Set(['red', 'blue', 'palette', 'hashed'].map((name) => screen.getByText(name).className));
+    expect(classNames.size).toBe(1);
+  });
+
+  it('lets a passed style override the tag colors', () => {
+    render(<Tag name="error" baseColor="#ff0000" style={{ '--tag-text': 'black' } as CSSProperties} />);
+    expect(getColorVariables(screen.getByText('error'))['--tag-text']).toBe('black');
   });
 
   beforeEach(() => {
