@@ -1,13 +1,13 @@
 package full
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -24,27 +24,27 @@ func triggerExport(t *testing.T, helper *common.GitTestHelper, repo string) *pro
 	return jobObj
 }
 
-// TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled verifies
-// that when the provisioningFolderMetadata feature flag is disabled, each exported
-// folder contains a .keep placeholder (no _folder.json).
-func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled(t *testing.T) {
+func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadata(t *testing.T) {
 	helper := sharedGitHelper(t)
 
-	const repoName = "git-export-no-meta"
+	const (
+		repoName    = "git-export-meta"
+		folderUID   = "git-meta-uid"
+		folderTitle = "git-meta-folder"
+	)
 	helper.CreateExportGitRepo(t, repoName, nil)
 
-	helper.CreateUnmanagedFolderWithName(t, "git-no-meta-uid", "git-no-meta-folder", "")
+	helper.CreateUnmanagedFolderWithName(t, folderUID, folderTitle, "")
 
 	job := triggerExport(t, helper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
-	// Without the feature flag git cannot track an empty directory, so a
-	// .keep placeholder must be committed inside every exported folder.
-	// The files API rejects hidden-file paths, so we verify via the git clone.
-	require.True(t, helper.GitFileExists(t, repoName, "git-no-meta-folder/.keep"),
-		".keep file must be committed for an exported folder when the feature flag is disabled")
-
-	// No _folder.json must be present when the flag is off.
-	_, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{}, "files", "git-no-meta-folder/_folder.json")
-	require.True(t, apierrors.IsNotFound(err), "_folder.json must not exist when the feature flag is disabled")
+	// Read directly from Git because the files API checks ownership of unmanaged resources.
+	data := helper.GitReadFile(t, repoName, folderTitle+"/_folder.json")
+	var manifest foldersV1.Folder
+	require.NoError(t, json.Unmarshal(data, &manifest))
+	require.Equal(t, folderUID, manifest.Name)
+	require.Equal(t, folderTitle, manifest.Spec.Title)
+	require.False(t, helper.GitFileExists(t, repoName, folderTitle+"/.keep"),
+		".keep must not exist when _folder.json is written")
 }

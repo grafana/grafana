@@ -13,9 +13,9 @@ import {
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { getSelectedUIDs, getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
+import { getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
+import { invalidateStarredSearchFor } from 'app/features/stars/api';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -385,9 +385,9 @@ export function useUpdateFolder() {
 
     const result = await updateFolderMutation(payload);
     refresh({ childrenOf: folder.parentUid });
-    // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
-    if (!result.error && folder.title) {
-      dispatch(updateDashboardName({ id: folder.uid, title: folder.title, url: getStarredFolderURL(folder.uid) }));
+    // A rename changes a starred row's label without changing the star set
+    if (!result.error) {
+      dispatch(invalidateStarredSearchFor([folder.uid]));
     }
 
     return {
@@ -461,9 +461,12 @@ function combinedState(
   const results = needsUserData
     ? [result, resultParents, resultAccess, resultUserDisplay]
     : [result, resultParents, resultAccess];
+  // The user names lookup starts one render after the folder arrives. Count that render as loading,
+  // or callers briefly see no folder and no error.
+  const userDataNotRequested = needsUserData && resultUserDisplay.isUninitialized;
   return {
-    isLoading: results.some((r) => r.isLoading),
-    isFetching: results.some((r) => r.isFetching),
+    isLoading: results.some((r) => r.isLoading) || userDataNotRequested,
+    isFetching: results.some((r) => r.isFetching) || userDataNotRequested,
     isSuccess: results.every((r) => r.isSuccess),
     isError: results.some((r) => r.isError),
     // Only one error will be shown. TODO: somehow create a single error out of them?

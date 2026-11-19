@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { getTagColor, getTagColorsFromName } from '../../../../utils/tags';
+import { getTransparentOutlineColor } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
@@ -30,35 +30,39 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
           // carries both the label and the mapped color — call it once and use both.
           const display = field.display!(pill);
           const renderedValue = formattedValueToString(display);
-          const { background, text } = getPillColors(display, renderedValue, field, theme, getTextColorForBackground);
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
-            bgColor: background,
-            color: text,
+            baseColor: getPillBaseColor(display, renderedValue, field, theme),
           };
         })
       : [];
-  }, [value, field, theme, getTextColorForBackground]);
+  }, [value, field, theme]);
 
   if (pills.length === 0) {
     return null;
   }
 
   return pills.map((pill) => {
-    // Pill colors are data-driven (value mappings, a fixed field color, or a hash over the palette),
-    // so they override whatever the element's own styles paint.
+    // Under the visual refresh, pills are Tag components so they match the refreshed tags rendered
+    // everywhere else. Tag derives the text color, and without a base color it hashes the value
+    // over the theme tag palette.
+    if (theme.flags.visualDesignRefresh) {
+      const outline =
+        pill.baseColor !== undefined
+          ? { boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor(pill.baseColor, theme.colors.border.strong)}` }
+          : undefined;
+      return <Tag key={pill.key} name={pill.value} baseColor={pill.baseColor} style={outline} />;
+    }
+
+    const background = pill.baseColor ?? getColorByStringHash(classicColors, pill.value);
     const style = {
-      backgroundColor: pill.bgColor,
-      color: pill.color,
-      border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+      backgroundColor: background,
+      color: getTextColorForBackground(background),
+      border: background === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
     };
 
-    // Under the visual refresh, pills are Tag components so they match the refreshed tags rendered
-    // everywhere else. Tag brings the shape and typography; only the colors come from the data.
-    return theme.flags.visualDesignRefresh ? (
-      <Tag key={pill.key} name={pill.value} style={style} />
-    ) : (
+    return (
       <span key={pill.key} style={style}>
         {pill.value}
       </span>
@@ -69,47 +73,37 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
 interface Pill {
   value: string;
   key: string;
-  bgColor: string;
-  color: string;
+  /** Data-driven pill color; undefined leaves the choice to the palette for the active theme. */
+  baseColor?: string;
 }
 
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
 // FIXME: this does not yet support "shades of a color"
-function getPillColors(
+function getPillBaseColor(
   display: DisplayValue,
   value: string,
   field: Field,
-  theme: GrafanaTheme2,
-  getTextColorForBackground: (color: string) => string
-): { background: string; text: string } {
+  theme: GrafanaTheme2
+): string | undefined {
   const cfg = field.config;
-  const onBackground = (background: string) =>
-    theme.flags.visualDesignRefresh
-      ? getTagColor(background, theme)
-      : { background, text: getTextColorForBackground(background) };
 
   if (cfg.mappings?.length) {
-    return onBackground(display.color ?? FALLBACK_COLOR);
+    return display.color ?? FALLBACK_COLOR;
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
-    return onBackground(theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR));
+    return theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR);
   }
 
   // Only a mode that carries a categorical palette can color pills. Modes that don't — thresholds,
   // which every table field gets by default, and the continuous scales — leave the choice to us.
   const mode = cfg.color && fieldColorModeRegistry.get(cfg.color.mode);
   if (typeof mode?.getColors === 'function') {
-    return onBackground(getColorByStringHash(mode.getColors(theme), value));
+    return getColorByStringHash(mode.getColors(theme), value);
   }
 
-  if (theme.flags.visualDesignRefresh) {
-    const { background, text } = getTagColorsFromName(value, theme);
-    return { background, text };
-  }
-
-  return onBackground(getColorByStringHash(classicColors, value));
+  return undefined;
 }
 
 export const getStyles: TableCellStyles = memoize(

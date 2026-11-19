@@ -32,7 +32,7 @@ import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutMa
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
-import { activateSceneObjectAndParentTree } from '../../utils/utils';
+import { activateSceneObjectAndParentTree, getDashboardSceneFor } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,
@@ -495,6 +495,25 @@ describe('PanelDataQueriesTab', () => {
       expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
     });
 
+    it('counts an edit from a query row toward the panel editor close event', async () => {
+      const modelMock = await createModelMock();
+      const recordQueryEdit = jest.spyOn(getDashboardSceneFor(modelMock).state.editPanel!, 'recordQueryEdit');
+      ds1Mock.components = {
+        QueryEditor: ({ query, onChange }) => (
+          <button onClick={() => onChange({ ...query, queryType: 'edited' })}>Edit query</button>
+        ),
+      };
+      try {
+        render(<PanelDataQueriesTabRendered model={modelMock} />);
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Edit query' }));
+
+        expect(recordQueryEdit).toHaveBeenCalledTimes(1);
+      } finally {
+        delete ds1Mock.components;
+      }
+    });
+
     it('renders add expression button when datasource meta.backend is true', async () => {
       // arrange
       const modelMock = await createModelMock();
@@ -929,6 +948,24 @@ describe('PanelDataQueriesTab', () => {
               seriesCount: 5,
             },
           ]);
+        });
+
+        it('runs the first query added after clearing queries', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          queriesTab.onQueriesChange([]);
+          const runQueries = jest.spyOn(queriesTab.queryRunner, 'runQueries').mockImplementation(() => {});
+          const query = {
+            datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+            refId: 'A',
+            scenarioId: 'random_walk',
+          };
+
+          queriesTab.onQueriesChange([query]);
+          expect(runQueries).toHaveBeenCalledTimes(1);
+          expect(queriesTab.queryRunner.state.queries).toEqual([query]);
+
+          queriesTab.onQueriesChange([{ ...query, seriesCount: 5 }]);
+          expect(runQueries).toHaveBeenCalledTimes(1);
         });
 
         it('does not run the empty query runner after removing the final query', async () => {

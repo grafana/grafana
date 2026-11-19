@@ -6,6 +6,8 @@ import type { Options as LogsTableOptions } from './panelcfg.gen';
 
 export type OnLogsTableOptionsChange = (option: LogsTableOptions & TableOptions) => void;
 export type BuildLinkToLogLine = (logId: string) => string | null;
+export type OnClickFilterStringType = (value: string, refId?: string) => void;
+export type OnClickFilterOutStringType = (value: string, refId?: string) => void;
 export type LabelFilterActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
 
 export function isOnLogsTableOptionsChange(callback: unknown): callback is OnLogsTableOptionsChange {
@@ -13,6 +15,14 @@ export function isOnLogsTableOptionsChange(callback: unknown): callback is OnLog
 }
 
 export function isBuildLinkToLogLine(callback: unknown): callback is BuildLinkToLogLine {
+  return typeof callback === 'function';
+}
+
+export function isOnClickFilterString(callback: unknown): callback is OnClickFilterStringType {
+  return typeof callback === 'function';
+}
+
+export function isOnClickFilterOutString(callback: unknown): callback is OnClickFilterOutStringType {
   return typeof callback === 'function';
 }
 

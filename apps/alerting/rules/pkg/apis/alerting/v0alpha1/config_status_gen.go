@@ -92,6 +92,10 @@ type ConfigV0alpha1StatusExternalRulerSync struct {
 	// in-memory-only dedup cache would otherwise start empty. Internal
 	// bookkeeping; not user-facing.
 	LastAppliedHash *string `json:"lastAppliedHash,omitempty"`
+	// rootFolderUid is the UID of the folder the synced rules live under. The
+	// worker finds the folder by it, so a rename does not stop the sync and a
+	// deleted folder is recreated with the same UID. Internal bookkeeping.
+	RootFolderUid *string `json:"rootFolderUid,omitempty"`
 }
 
 // NewConfigV0alpha1StatusExternalRulerSync creates a new ConfigV0alpha1StatusExternalRulerSync object.

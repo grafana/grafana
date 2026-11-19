@@ -85,6 +85,7 @@ export function EvaluationGroupFieldRow({ enableProvisionedGroups }: { enablePro
                   )}
                 >
                   <Select
+                    selectRef={ref}
                     disabled={!folder?.uid || loadingGroups}
                     inputId={groupInputId}
                     {...field}

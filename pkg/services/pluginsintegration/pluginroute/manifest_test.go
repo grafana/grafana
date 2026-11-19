@@ -45,8 +45,8 @@ func testManifest(t testing.TB) *app.ManifestData {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "TestKind",
-					Plural: "TestKinds",
-					Scope:  "Namespaced",
+					Plural: "TestKinds", Resource: "testkinds",
+					Scope: "Namespaced",
 					Schema: testVersionSchema(t, `{
 						"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},
 						"spec":{"type":"object","additionalProperties":false,"properties":{"testField":{"type":"integer"}},"required":["testField"]}
@@ -58,8 +58,8 @@ func testManifest(t testing.TB) *app.ManifestData {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "TestKind",
-					Plural: "TestKinds",
-					Scope:  "Namespaced",
+					Plural: "TestKinds", Resource: "testkinds",
+					Scope: "Namespaced",
 					// Declared search fields are what enrol a kind in the search
 					// endpoints; the v0alpha1 kind above declares none.
 					SearchFields: []app.ManifestVersionKindSearchField{{

@@ -39,6 +39,10 @@ const (
 	// keep the prefix (just in case)
 	FlagLiveKeepHAPrefixInCloud = "live.keepHAPrefixInCloud"
 
+	// FlagRouterRegisterCoreAPIs
+	// register the wired-in core APIs with the router
+	FlagRouterRegisterCoreAPIs = "router.registerCoreAPIs"
+
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
@@ -82,10 +86,6 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
-
-	// FlagProvisioningFolderMetadata
-	// Allow setting folder metadata for provisioned folders
-	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
 
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
@@ -146,6 +146,10 @@ const (
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
+
+	// FlagFolderPendingDeletionWrites
+	// Record durable pending folder deletions before sending folder deletes to storage
+	FlagFolderPendingDeletionWrites = "folder.pendingDeletionWrites"
 
 	// FlagFolderAsyncCascadeDeleteThroughController
 	// Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete
@@ -487,6 +491,10 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
+	// FlagAlertingRuleQualityTeamPolicies
+	// Enable team-scoped alert rule quality policies, one per team, alongside the org policy.
+	FlagAlertingRuleQualityTeamPolicies = "alerting.ruleQualityTeamPolicies"
+
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
@@ -506,6 +514,10 @@ const (
 	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
+
+	// FlagDatasourcesRejectProvisionedLBACRules
+	// Reject embedded LBAC rules in data source provisioning files
+	FlagDatasourcesRejectProvisionedLBACRules = "datasources.rejectProvisionedLBACRules"
 
 	// FlagDatasourcesTeamHttpHeadersWriteGuard
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
@@ -733,6 +745,10 @@ const (
 	// FlagGrafanaDashboardPreferences
 	// Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
 	FlagGrafanaDashboardPreferences = "grafana.dashboardPreferences"
+
+	// FlagGrafanaDraftDashboards
+	// Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published
+	FlagGrafanaDraftDashboards = "grafana.draftDashboards"
 
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
@@ -1049,4 +1065,8 @@ const (
 	// FlagFoldersParallelDashboardDeleteConcurrency
 	// Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially
 	FlagFoldersParallelDashboardDeleteConcurrency = "folders.parallelDashboardDeleteConcurrency"
+
+	// FlagDatasourcesGatewayRateLimits
+	// Enable support for query gateway rate limits
+	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
 )

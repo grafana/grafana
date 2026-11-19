@@ -93,3 +93,72 @@ func TestManagedObjectsRequireNamespace(t *testing.T) {
 
 	require.Zero(t, storage.listStoredCalls.Load(), "discovery must not run without a namespace")
 }
+
+func TestCountManagedObjectsFiltersByKindAndId(t *testing.T) {
+	const ns = "ns"
+	gr := NamespacedResource{Namespace: ns, Group: "group", Resource: "dashboards"}
+
+	// A manager identity is only unique inside its kind, so the same name can appear
+	// under two kinds at once.
+	counts := []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+		{Kind: "file-provisioning", Id: "bootstrap", Count: 1},
+		{Kind: "repo", Id: "bootstrap", Count: 4},
+		{Kind: "repo", Id: "team-dashboards", Count: 7},
+	}
+
+	tests := []struct {
+		name string
+		kind string
+		id   string
+		want []*resourcepb.CountManagedObjectsResponse_ResourceCount
+	}{
+		{
+			name: "no filter returns everything",
+			want: counts,
+		},
+		{
+			name: "kind only",
+			kind: "repo",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[1], counts[2]},
+		},
+		{
+			name: "id only matches every kind",
+			id:   "bootstrap",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[0], counts[1]},
+		},
+		{
+			name: "kind and id",
+			kind: "repo",
+			id:   "bootstrap",
+			want: []*resourcepb.CountManagedObjectsResponse_ResourceCount{counts[1]},
+		},
+		{
+			name: "no match",
+			kind: "terraform",
+			id:   "bootstrap",
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			search := &mockSearchBackend{
+				cache: map[NamespacedResource]ResourceIndex{
+					gr: &MockResourceIndex{managedCounts: counts},
+				},
+			}
+			storage := &mockStorageBackend{
+				resourceStats: []ResourceStats{{NamespacedResource: gr, Count: 5}},
+			}
+			server := newDiscoveryTestSearchServer(t, storage, search)
+
+			rsp, err := server.CountManagedObjects(t.Context(), &resourcepb.CountManagedObjectsRequest{
+				Namespace: ns,
+				Kind:      tt.kind,
+				Id:        tt.id,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.want, rsp.Items)
+		})
+	}
+}
