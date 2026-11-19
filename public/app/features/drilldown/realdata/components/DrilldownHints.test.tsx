@@ -56,6 +56,35 @@ beforeEach(() => {
   );
 });
 
+it('counts distinct service scopes across all recommendation pages', async () => {
+  const user = userEvent.setup();
+  render(
+    <DrilldownHints
+      hints={[
+        hint,
+        { ...hint, id: 'checkout-latency', title: 'Checkout latency increased', severity: 'slow' },
+        { ...hint, id: 'checkout-staging', scope: { ...hint.scope, env: 'staging' } },
+        { ...hint, id: 'cart-errors', scope: { ...hint.scope, value: 'cart' } },
+      ]}
+    />
+  );
+
+  expect(screen.getByRole('heading', { name: 'Recommendations' })).toBeInTheDocument();
+  expect(screen.getByText('3 services')).toBeInTheDocument();
+  expect(screen.getByText('Detected in the last 30 minutes across your selected signals')).toBeInTheDocument();
+
+  await user.click(screen.getByRole('button', { name: 'next page' }));
+
+  expect(screen.getByRole('button', { name: '2' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByText('3 services')).toBeInTheDocument();
+});
+
+it('uses the singular service count for multiple findings about the same service', () => {
+  render(<DrilldownHints hints={[hint, { ...hint, id: 'checkout-latency', severity: 'slow' }]} />);
+
+  expect(screen.getByText('1 service')).toBeInTheDocument();
+});
+
 it('pages through three findings at a time and investigates the selected finding on a later page', async () => {
   const user = userEvent.setup();
   render(<DrilldownHints hints={paginatedHints.slice(0, 6)} />);
@@ -73,7 +102,7 @@ it('pages through three findings at a time and investigates the selected finding
     'Errors detected in checkout-6',
   ]);
   expect(screen.getByRole('button', { name: '2' })).toHaveAttribute('aria-current', 'page');
-  await user.click(screen.getAllByRole('button', { name: 'Investigate' })[2]);
+  await user.click(screen.getAllByRole('button', { name: /^Ask Grafana Assistant about/ })[2]);
 
   expect(openAssistant).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -89,7 +118,7 @@ it('pages through three findings at a time and investigates the selected finding
 it.each([0, 3])('hides pagination when %i findings fit on one page', (count) => {
   render(<DrilldownHints hints={paginatedHints.slice(0, count)} />);
 
-  expect(screen.getByRole('heading', { name: 'Detected in the last 30 minutes' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Recommendations' })).toBeInTheDocument();
   expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
 });
 
@@ -118,8 +147,18 @@ it.each([
     pluginId: 'grafana-lokiexplore-app',
     datasourceType: 'loki',
     queryField: 'expr',
-    query: '{service_name="checkout"} | deployment_environment_name="prod" | service_namespace="shop"',
+    query:
+      '{service_name="checkout"} | deployment_environment_name="prod" | service_namespace="shop" | detected_level=~"(?i)error|err|fatal|critical"',
     severity: 'errors' as const,
+  },
+  {
+    name: 'Logs',
+    signal: 'logs' as const,
+    pluginId: 'grafana-lokiexplore-app',
+    datasourceType: 'loki',
+    queryField: 'expr',
+    query: '{service_name="checkout"} | deployment_environment_name="prod" | service_namespace="shop"',
+    severity: 'slow' as const,
   },
   {
     name: 'Traces',
@@ -151,7 +190,7 @@ it.each([
       'traces_span_metrics_duration_milliseconds_bucket{span_kind="SPAN_KIND_SERVER",service_name="checkout",deployment_environment_name="prod",service_namespace="shop"}',
     severity: 'slow' as const,
   },
-])('links the $name chip for $severity to its app with the finding scope and time range', (testCase) => {
+])('links the View $name action for $severity to its app with the finding scope and time range', (testCase) => {
   const path = `/a/${testCase.pluginId}/finding`;
   jest.mocked(usePluginLinks).mockReturnValue({
     isLoading: false,
@@ -195,6 +234,9 @@ it.each([
     'href',
     path
   );
+  expect(screen.getByRole('link', { name: `Open ${testCase.name} Drilldown for checkout` })).toHaveTextContent(
+    `View ${testCase.signal}`
+  );
   expect(usePluginLinks).toHaveBeenCalledWith({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     limitPerPlugin: 1,
@@ -212,18 +254,20 @@ it.each([
   });
 });
 
-it('keeps supporting signals visible without a link when their Drilldown app is unavailable', () => {
+it('disables the signal action when its Drilldown app is unavailable', () => {
   render(<DrilldownHints hints={[hint]} />);
 
-  expect(screen.getByText('Logs')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'View logs' })).toBeDisabled();
   expect(screen.queryByRole('link', { name: 'Open Logs Drilldown for checkout' })).not.toBeInTheDocument();
 });
 
 it('shows the supporting signal and opens Assistant with the finding, scope and measured time range', async () => {
   render(<DrilldownHints hints={[hint]} />);
 
-  expect(screen.getByText('Logs')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Investigate' }));
+  expect(screen.getByRole('button', { name: 'View logs' })).toBeInTheDocument();
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Ask Grafana Assistant about Errors detected in checkout' })
+  );
 
   expect(openAssistant).toHaveBeenCalledWith({
     origin: 'grafana/drilldown-home',
@@ -278,7 +322,12 @@ it('passes the matching Drilldown destinations for corroborating signals', async
     />
   );
 
-  await userEvent.click(screen.getByRole('button', { name: 'Investigate' }));
+  expect(screen.getByRole('button', { name: 'View logs' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'View metrics' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'View traces' })).toBeInTheDocument();
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Ask Grafana Assistant about Errors detected in checkout' })
+  );
 
   expect(openAssistant).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -313,7 +362,7 @@ it.each([
   };
   const { rerender } = render(<DrilldownHints hints={[hint]} />);
 
-  expect(screen.getByRole('heading', { name: 'Detected in the last 30 minutes' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Recommendations' })).toBeInTheDocument();
 
   jest.mocked(useAssistant).mockReturnValue({
     isLoading,
@@ -325,14 +374,14 @@ it.each([
 
   rerender(<DrilldownHints hints={[hint]} />);
 
-  expect(screen.queryByRole('heading', { name: 'Detected in the last 30 minutes' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Recommendations' })).not.toBeInTheDocument();
   expect(screen.queryByText('Errors detected in checkout')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Investigate' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^Ask Grafana Assistant about/ })).not.toBeInTheDocument();
 
   jest.mocked(useAssistant).mockReturnValue(availableAssistant);
   rerender(<DrilldownHints hints={[hint]} />);
 
-  expect(screen.getByRole('heading', { name: 'Detected in the last 30 minutes' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Recommendations' })).toBeInTheDocument();
   expect(screen.getByText('Errors detected in checkout')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Investigate' })).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Ask Grafana Assistant about Errors detected in checkout' })).toBeEnabled();
 });

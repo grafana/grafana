@@ -5,6 +5,7 @@ import {
   lokiCount,
   lokiCountRange,
   lokiLabelValues,
+  lokiLabelVolumes,
   lokiLogs,
   lokiInstant,
   promInstant,
@@ -32,6 +33,7 @@ beforeEach(() => {
   jest.mocked(lokiCountRange).mockResolvedValue([]);
   jest.mocked(lokiLogs).mockResolvedValue([]);
   jest.mocked(lokiLabelValues).mockResolvedValue([]);
+  jest.mocked(lokiLabelVolumes).mockReset().mockResolvedValue([]);
   jest.mocked(lokiInstant).mockResolvedValue([]);
   jest.mocked(tempoSearch).mockResolvedValue([]);
   jest.mocked(tempoTagValues).mockResolvedValue([]);
@@ -41,6 +43,60 @@ beforeEach(() => {
 });
 
 afterEach(() => jest.restoreAllMocks());
+
+describe('top log labels', () => {
+  it('ranks the ten largest public labels by volume, excluding unusable values', async () => {
+    locationService.push('/drilldown?var-ds-logs=logs-1');
+    jest
+      .mocked(lokiLabelVolumes)
+      .mockResolvedValue([
+        ...Array.from({ length: 12 }, (_, i) => ({ metric: { [`label_${i}`]: '' }, value: i + 1 })),
+        { metric: { __stream_shard__: '' }, value: 100 },
+        { metric: { invalid: '' }, value: NaN },
+        { metric: { empty: '' }, value: 0 },
+      ]);
+
+    const { topLogLabels } = await loadOverview();
+
+    expect(lokiLabelVolumes).toHaveBeenCalledWith(1700000000, 1700001800);
+    expect(topLogLabels).toEqual([
+      { label: 'label_11', bytes: 12 },
+      { label: 'label_10', bytes: 11 },
+      { label: 'label_9', bytes: 10 },
+      { label: 'label_8', bytes: 9 },
+      { label: 'label_7', bytes: 8 },
+      { label: 'label_6', bytes: 7 },
+      { label: 'label_5', bytes: 6 },
+      { label: 'label_4', bytes: 5 },
+      { label: 'label_3', bytes: 4 },
+      { label: 'label_2', bytes: 3 },
+    ]);
+  });
+
+  it('keeps measured log service coverage when the volume API is disabled', async () => {
+    locationService.push('/drilldown?var-ds-logs=logs-1');
+    jest.mocked(lokiLabelValues).mockResolvedValue(['checkout']);
+    jest.mocked(lokiLabelVolumes).mockRejectedValue(new Error('Volume queries are disabled'));
+
+    const { topLogLabels, signals, scopeValues, notes } = await loadOverview();
+
+    expect(topLogLabels).toEqual([]);
+    expect(scopeValues.service).toEqual(['checkout']);
+    expect(signals.find((signal) => signal.app === 'logs')).toMatchObject({
+      covered: 1,
+      total: 1,
+      notMeasured: false,
+    });
+    expect(notes).toContainEqual({ source: 'logs', message: 'Volume queries are disabled' });
+  });
+
+  it('skips label volumes when no logs data source is selected', async () => {
+    const { topLogLabels } = await loadOverview();
+
+    expect(topLogLabels).toEqual([]);
+    expect(lokiLabelVolumes).not.toHaveBeenCalled();
+  });
+});
 
 describe('findings from selected telemetry', () => {
   it('returns findings beyond the first page while keeping extra log sparkline queries bounded', async () => {

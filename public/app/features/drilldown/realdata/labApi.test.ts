@@ -2,7 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { requireDataSource } from '../dataSources';
 
-import { lokiInstant, tempoTagValues } from './labApi';
+import { lokiInstant, lokiLabelVolumes, tempoTagValues } from './labApi';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -70,4 +70,36 @@ it('reads labelled log error counts from the selected Loki source', async () => 
     { showErrorAlert: false }
   );
   expect(values).toEqual([{ metric: { service_name: 'checkout' }, value: 12 }]);
+});
+
+it('requests label-name volumes across the selected Loki source and time range', async () => {
+  jest.mocked(requireDataSource).mockResolvedValueOnce('logs-uid');
+  get.mockResolvedValue({
+    data: {
+      result: [
+        { metric: { service_name: '' }, value: [1700000000, '2500000'] },
+        { metric: { namespace: '' }, value: [1700000000, '1000000'] },
+      ],
+    },
+  });
+
+  const volumes = await lokiLabelVolumes(1700000000, 1700001800);
+
+  expect(requireDataSource).toHaveBeenLastCalledWith('logs');
+  expect(get).toHaveBeenCalledWith(
+    '/api/datasources/proxy/uid/logs-uid/loki/api/v1/index/volume',
+    {
+      query: '{}',
+      start: '2023-11-14T22:13:20.000Z',
+      end: '2023-11-14T22:43:20.000Z',
+      aggregateBy: 'labels',
+      limit: 100,
+    },
+    undefined,
+    { showErrorAlert: false }
+  );
+  expect(volumes).toEqual([
+    { metric: { service_name: '' }, value: 2500000 },
+    { metric: { namespace: '' }, value: 1000000 },
+  ]);
 });

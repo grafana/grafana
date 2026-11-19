@@ -1,3 +1,4 @@
+import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { type Signal, requireDataSource } from '../dataSources';
@@ -113,6 +114,17 @@ export async function lokiLabelValues(label: string, startSec: number, endSec: n
     end: endSec * 1e9,
   });
   return response.data;
+}
+
+export async function lokiLabelVolumes(startSec: number, endSec: number): Promise<InstantSample[]> {
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/index/volume', {
+    query: '{}',
+    start: dateTime(startSec * 1000).toISOString(),
+    end: dateTime(endSec * 1000).toISOString(),
+    aggregateBy: 'labels',
+    limit: 100,
+  });
+  return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
 }
 
 export interface TempoSearchHit {

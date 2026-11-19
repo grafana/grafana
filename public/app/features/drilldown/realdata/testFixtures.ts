@@ -2,6 +2,7 @@ import { type Overview, type ScopeData } from './liveScenario';
 
 export const emptyOverview: Overview = {
   hints: [],
+  topLogLabels: [],
   scopeValues: { service: [], environment: [], namespace: [] },
   trendMax: 1,
   services: [],

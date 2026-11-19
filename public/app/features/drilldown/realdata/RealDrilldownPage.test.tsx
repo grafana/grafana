@@ -101,6 +101,14 @@ describe('RealDrilldownPage', () => {
     expect(screen.getByRole('button', { name: 'Data sources' })).toBeInTheDocument();
   });
 
+  it('shows top log labels from the loaded overview', () => {
+    setOverview({ ...emptyOverview, topLogLabels: [{ label: 'service_name', bytes: 1000000 }] });
+
+    renderPage();
+
+    expect(screen.getByRole('region', { name: 'Top log labels' })).toHaveTextContent('service_name1 MB');
+  });
+
   it('writes a picked service to the URL and loads its scope', async () => {
     const { user } = renderPage();
 
@@ -158,10 +166,10 @@ describe('RealDrilldownPage', () => {
     expect(screen.queryByText('Scope chosen by Grafana Assistant')).not.toBeInTheDocument();
   });
 
-  it('opens Assistant for Investigate while keeping the overview and its URL', async () => {
+  it('opens Assistant from a recommendation while keeping the overview and its URL', async () => {
     const { user } = renderPage();
 
-    await user.click(screen.getByRole('button', { name: 'Investigate' }));
+    await user.click(screen.getByRole('button', { name: 'Ask Grafana Assistant about checkout errors are up' }));
 
     expect(openAssistant).toHaveBeenCalledTimes(1);
     expect(openAssistant).toHaveBeenCalledWith(

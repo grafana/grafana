@@ -14,6 +14,7 @@ import { DrilldownAskRow } from './components/DrilldownAskRow';
 import { DrilldownEvidence } from './components/DrilldownEvidence';
 import { DrilldownHints } from './components/DrilldownHints';
 import { DrilldownInsights } from './components/DrilldownInsights';
+import { DrilldownLogLabels } from './components/DrilldownLogLabels';
 import { DrilldownScopeSummary } from './components/DrilldownScopeSummary';
 import { DrilldownServices } from './components/DrilldownServices';
 import { DrilldownSignals } from './components/DrilldownSignals';
@@ -173,6 +174,7 @@ export function RealDrilldownPage() {
             <Box paddingTop={2}>
               <Stack direction="column" gap={4}>
                 <DrilldownServices onPick={onPickScope} />
+                <DrilldownLogLabels />
                 <DrilldownSignals appUrls={appUrls} />
               </Stack>
             </Box>

@@ -12,6 +12,7 @@ import {
   lokiCount,
   lokiCountRange,
   lokiLabelValues,
+  lokiLabelVolumes,
   lokiLogs,
   lokiInstant,
   promInstant,
@@ -157,7 +158,7 @@ function serviceScope(labels: Record<string, string>): Scope {
   };
 }
 
-function scopeKey(scope: Scope): string {
+export function scopeKey(scope: Scope): string {
   return JSON.stringify([scope.type, scope.value, scope.env ?? '', scope.namespace ?? '']);
 }
 
@@ -166,6 +167,8 @@ export async function loadOverview(): Promise<Overview> {
   const start = end - OVERVIEW_WINDOW_S;
   const byService = `, ${SERVICE_LABELS}`;
   const notes: Note[] = [];
+  // Label volume is optional: a disabled volume API does not invalidate service coverage from the labels API.
+  const volumeNotes: Note[] = [];
   const sources = {
     metrics: getUrlDataSource('metrics'),
     logs: getUrlDataSource('logs'),
@@ -191,6 +194,7 @@ export async function loadOverview(): Promise<Overview> {
     logErrors,
     errorTraces,
     errorRanges,
+    labelVolumes,
   ] = await Promise.all([
     attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), end)), []),
     attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), start)), []),
@@ -211,6 +215,7 @@ export async function loadOverview(): Promise<Overview> {
     sources.logs ? attempt(notes, 'logs', lokiInstant(logErrorsQuery, end), []) : [],
     sources.traces ? attempt(notes, 'traces', tempoSearch(ERROR_TRACE_QUERY, start, end, MAX_ERROR_TRACES), []) : [],
     sources.metrics ? attempt(notes, 'metrics', promRange(errorsQuery, start, end, 90), []) : [],
+    sources.logs ? attempt(volumeNotes, 'logs', lokiLabelVolumes(start, end), []) : [],
   ]);
 
   // A data source that answers but holds no span metrics measured nothing, which is different from measuring zero.
@@ -566,6 +571,15 @@ export async function loadOverview(): Promise<Overview> {
 
   return {
     hints: rankedHints,
+    topLogLabels: labelVolumes
+      .filter((sample) => finite(sample.value) && sample.value > 0)
+      .flatMap((sample) =>
+        Object.keys(sample.metric)
+          .filter((label) => !label.startsWith('__'))
+          .map((label) => ({ label, bytes: sample.value }))
+      )
+      .sort((a, b) => b.bytes - a.bytes)
+      .slice(0, 10),
     scopeValues: {
       service: [...new Set([...ranked, ...logServices, ...traceServices, ...entities.map((entity) => entity.name)])],
       environment: [...new Set(entities.flatMap((entity) => (entity.env ? [entity.env] : [])))].sort(),
@@ -582,7 +596,7 @@ export async function loadOverview(): Promise<Overview> {
     services,
     signals,
     exampleService: hints[0]?.scope.value ?? ranked[0] ?? entities[0]?.name ?? 'a service',
-    notes,
+    notes: [...notes, ...volumeNotes],
     entities,
   };
 }
@@ -591,7 +605,7 @@ export function getHintDrilldownQuery(hint: Hint, signal: HintEvidence['signal']
   const sel = selectors(hint.scope);
   switch (signal) {
     case 'logs':
-      return sel.loki;
+      return hint.severity === 'errors' ? `${sel.loki} ${ERROR_LOG_FILTER}` : sel.loki;
     case 'traces':
       return `{ ${sel.tempo} && status = error }`;
     case 'metrics':

@@ -5,16 +5,14 @@ import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
-import { Badge, type BadgeColor, Button, Link, Pagination, Stack, Text, useStyles2 } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
+import { Badge, type BadgeColor, Button, Icon, LinkButton, Pagination, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { assistantContext } from '../assistantContext';
-import { type Hint, type HintEvidence, type HintSeverity, HINTS, NOTES, TREND_MAX } from '../liveScenario';
-import { getHintDrilldownQuery } from '../loadScenario';
+import { type Hint, type HintEvidence, type HintSeverity, HINTS, NOTES } from '../liveScenario';
+import { getHintDrilldownQuery, scopeKey } from '../loadScenario';
 
 import { AssistantIcon } from './AssistantIcon';
 import { getAppNames } from './DrilldownInsights';
-import { TrendSparkline, type TrendColor } from './TrendSparkline';
 
 interface Props {
   hints?: Hint[];
@@ -23,10 +21,10 @@ interface Props {
 const PAGE_SIZE = 3;
 
 const SIGNAL_APPS = {
-  metrics: { type: 'prometheus', pluginId: 'grafana-metricsdrilldown-app' },
-  logs: { type: 'loki', pluginId: 'grafana-lokiexplore-app' },
-  traces: { type: 'tempo', pluginId: 'grafana-exploretraces-app' },
-};
+  metrics: { type: 'prometheus', pluginId: 'grafana-metricsdrilldown-app', icon: 'chart-line' },
+  logs: { type: 'loki', pluginId: 'grafana-lokiexplore-app', icon: 'file-alt' },
+  traces: { type: 'tempo', pluginId: 'grafana-exploretraces-app', icon: 'gf-traces' },
+} as const;
 
 export function DrilldownHints({ hints = HINTS }: Props) {
   const styles = useStyles2(getStyles);
@@ -42,6 +40,7 @@ export function DrilldownHints({ hints = HINTS }: Props) {
   const numberOfPages = Math.ceil(hints.length / PAGE_SIZE);
   const currentPage = Math.min(page, Math.max(1, numberOfPages));
   const visibleHints = hints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const serviceCount = new Set(hints.map((hint) => scopeKey(hint.scope))).size;
 
   const onInvestigate = (hint: Hint) =>
     openAssistant?.({
@@ -57,24 +56,38 @@ export function DrilldownHints({ hints = HINTS }: Props) {
 
   return (
     <section className={styles.hints} aria-labelledby="drilldown-hints-title">
-      <Stack gap={1} alignItems="center" justifyContent="space-between" wrap="wrap">
-        <Stack gap={1} alignItems="center" wrap="wrap">
-          <AssistantIcon />
-          <Text element="h2" variant="body" weight="medium" id="drilldown-hints-title">
-            {t('drilldown-real.hints.title', 'Detected in the last 30 minutes')}
-          </Text>
+      <div className={styles.header}>
+        <Stack gap={1} alignItems="center" justifyContent="space-between" wrap="wrap">
+          <Stack gap={1} alignItems="center" wrap="wrap">
+            <Text element="h2" variant="h4" weight="medium" id="drilldown-hints-title">
+              {t('drilldown-real.hints.recommendations-title', 'Recommendations')}
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              {t('drilldown-real.hints.service-count', '', {
+                count: serviceCount,
+                defaultValue_one: '{{count}} service',
+                defaultValue_other: '{{count}} services',
+              })}
+            </Text>
+          </Stack>
+          <Pagination
+            className={styles.pagination}
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={setPage}
+            hideWhenSinglePage
+          />
+        </Stack>
+        <Stack gap={1} alignItems="center">
+          <Icon name="ai-sparkle" size="sm" />
           <Text variant="bodySmall" color="secondary">
-            {t('drilldown-real.hints.telemetry-sources', 'From your selected logs, metrics and traces')}
+            {t(
+              'drilldown-real.hints.recommendations-subtitle',
+              'Detected in the last 30 minutes across your selected signals'
+            )}
           </Text>
         </Stack>
-        <Pagination
-          className={styles.pagination}
-          currentPage={currentPage}
-          numberOfPages={numberOfPages}
-          onNavigate={setPage}
-          hideWhenSinglePage
-        />
-      </Stack>
+      </div>
       {hints.length === 0 && (
         <div className={styles.empty}>
           <Text color="secondary">
@@ -95,44 +108,38 @@ export function DrilldownHints({ hints = HINTS }: Props) {
           const severity = severities[hint.severity];
           return (
             <li key={hint.id} className={styles.hint}>
-              <div className={styles.badge}>
-                <Badge color={severity.badge} text={severity.label} />
-              </div>
-              <Stack direction="column" gap={0.25}>
-                <Text weight="medium">{hint.title}</Text>
+              <div className={styles.details}>
+                <div className={styles.title}>
+                  <Badge className={styles.badge} color={severity.badge} text={severity.label} />
+                  <span className={styles.titleText}>
+                    <Text weight="medium">{hint.title}</Text>
+                  </span>
+                </div>
                 <Text variant="bodySmall" color="secondary">
                   {hint.description}
                 </Text>
-                <Stack gap={0.5} wrap="wrap">
-                  {[...new Map(hint.evidence.map((item) => [item.signal, item])).values()].map((evidence) => (
-                    <BuildSignalLink
-                      key={evidence.signal}
-                      hint={hint}
-                      evidence={evidence}
-                      name={appNames[evidence.signal]}
-                    />
-                  ))}
-                </Stack>
-              </Stack>
-              <div className={styles.trend}>
-                {hint.trend.length > 1 && (
-                  <>
-                    <Text variant="bodySmall" color="secondary">
-                      {hint.trendLabel}
-                    </Text>
-                    <TrendSparkline values={hint.trend} color={severity.trend} height={28} max={TREND_MAX} />
-                  </>
-                )}
               </div>
               <div className={styles.action}>
-                {hint.investigable ? (
-                  <Button size="sm" variant="primary" onClick={() => onInvestigate(hint)}>
-                    {t('drilldown-real.hints.investigate', 'Investigate')}
-                  </Button>
-                ) : (
-                  <Text variant="bodySmall" color="secondary">
-                    {t('drilldown-real.hints.no-action', 'No action needed')}
-                  </Text>
+                {[...new Map(hint.evidence.map((item) => [item.signal, item])).values()].map((evidence) => (
+                  <BuildSignalLink
+                    key={evidence.signal}
+                    hint={hint}
+                    evidence={evidence}
+                    name={appNames[evidence.signal]}
+                  />
+                ))}
+                {hint.investigable && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    fill="text"
+                    icon={<AssistantIcon />}
+                    aria-label={t('drilldown-real.hints.ask-about-finding', 'Ask Grafana Assistant about {{finding}}', {
+                      finding: hint.title,
+                    })}
+                    tooltip={t('drilldown-real.hints.explain-with-assistant', 'Explain with Grafana Assistant')}
+                    onClick={() => onInvestigate(hint)}
+                  />
                 )}
               </div>
             </li>
@@ -144,8 +151,12 @@ export function DrilldownHints({ hints = HINTS }: Props) {
 }
 
 function BuildSignalLink({ hint, evidence, name }: { hint: Hint; evidence: HintEvidence; name: string }) {
-  const styles = useStyles2(getStyles);
   const app = SIGNAL_APPS[evidence.signal];
+  const label = {
+    metrics: t('drilldown-real.hints.view-metrics', 'View metrics'),
+    logs: t('drilldown-real.hints.view-logs', 'View logs'),
+    traces: t('drilldown-real.hints.view-traces', 'View traces'),
+  }[evidence.signal];
   const context = useMemo(
     () => ({
       targets: [
@@ -166,29 +177,31 @@ function BuildSignalLink({ hint, evidence, name }: { hint: Hint; evidence: HintE
     limitPerPlugin: 1,
   });
   const path = links.find((link) => link.pluginId === app.pluginId)?.path;
-  const badge = <Badge color="darkgrey" text={name} />;
-
   return path ? (
-    <Link
+    <LinkButton
       href={path}
-      className={styles.signalLink}
+      size="sm"
+      variant="secondary"
+      icon={app.icon}
       aria-label={t('drilldown-real.hints.open-signal', 'Open {{signal}} Drilldown for {{service}}', {
         signal: name,
         service: hint.scope.value,
       })}
     >
-      {badge}
-    </Link>
+      {label}
+    </LinkButton>
   ) : (
-    badge
+    <Button size="sm" variant="secondary" icon={app.icon} disabled>
+      {label}
+    </Button>
   );
 }
 
-function getSeverities(): Record<HintSeverity, { badge: BadgeColor; trend: TrendColor; label: string }> {
+function getSeverities(): Record<HintSeverity, { badge: BadgeColor; label: string }> {
   return {
-    slow: { badge: 'orange', trend: 'orange', label: t('drilldown-real.hints.severity-slow', 'Slow') },
-    errors: { badge: 'red', trend: 'red', label: t('drilldown-real.hints.severity-errors', 'Errors') },
-    deploy: { badge: 'blue', trend: 'green', label: t('drilldown-real.hints.severity-deploy', 'Deploy') },
+    slow: { badge: 'orange', label: t('drilldown-real.hints.severity-slow', 'Slow') },
+    errors: { badge: 'red', label: t('drilldown-real.hints.severity-errors', 'Errors') },
+    deploy: { badge: 'blue', label: t('drilldown-real.hints.severity-deploy', 'Deploy') },
   };
 }
 
@@ -198,11 +211,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(1.5),
   }),
+  header: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
   list: css({
     listStyle: 'none',
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
     margin: 0,
     padding: 0,
   }),
@@ -212,46 +229,45 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hint: css({
     display: 'grid',
-    gridTemplateColumns: '72px minmax(0, 1fr) 200px 132px',
+    gridTemplateColumns: 'minmax(0, 1fr) auto',
     alignItems: 'center',
-    gap: theme.spacing(2),
-    padding: theme.spacing(1.5, 2),
-    background: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    columnGap: theme.spacing(3),
+    rowGap: theme.spacing(1),
+    padding: theme.spacing(1.25, 1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
     [theme.breakpoints.down('md')]: {
-      gridTemplateColumns: '72px minmax(0, 1fr)',
+      gridTemplateColumns: 'minmax(0, 1fr)',
     },
+  }),
+  details: css({
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+  }),
+  title: css({
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: theme.spacing(1),
+  }),
+  titleText: css({
+    minWidth: 0,
+    overflowWrap: 'anywhere',
   }),
   badge: css({
-    display: 'flex',
-  }),
-  signalLink: css({
-    display: 'inline-flex',
-    borderRadius: theme.shape.radius.pill,
-    '&:hover > div': {
-      borderColor: theme.colors.border.strong,
-    },
-    '&:focus-visible': getFocusStyles(theme),
+    flexShrink: 0,
+    borderRadius: theme.shape.radius.sm,
   }),
   empty: css({
     padding: theme.spacing(2),
     border: `1px dashed ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),
-  trend: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.5),
-    [theme.breakpoints.down('md')]: {
-      gridColumn: '2',
-    },
-  }),
   action: css({
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'flex-end',
-    [theme.breakpoints.down('md')]: {
-      gridColumn: '2',
-    },
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
   }),
 });
