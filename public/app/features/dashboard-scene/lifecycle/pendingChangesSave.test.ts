@@ -13,7 +13,8 @@ import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/re
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { addComposerEnterRequestListener, resetComposerEnterRequestsForTests } from '../composer/composerEntryRequests';
+import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import {
@@ -119,6 +120,64 @@ afterEach(() => {
 });
 
 describe('opening pending changes on the page', () => {
+  // The Assistant's edit opens in Editing for Composer to run over, as Assistant edits in the browser did.
+  describe('with Composer', () => {
+    let activationHandlers: Array<() => void> = [];
+    let stopListening = () => {};
+    const listener = jest.fn();
+
+    beforeEach(() => {
+      activationHandlers = [];
+      listener.mockClear();
+      stopListening = addComposerEnterRequestListener(listener);
+      // Records the scene's activation handlers instead of activating the whole scene.
+      jest.spyOn(DashboardScene.prototype, 'addActivationHandler').mockImplementation((handler) => {
+        activationHandlers.push(() => handler());
+      });
+    });
+
+    afterEach(() => {
+      stopListening();
+      resetComposerEnterRequestsForTests();
+      jest.restoreAllMocks();
+    });
+
+    it('asks the Assistant to enter Composer once the scene is active, once', async () => {
+      setTestFlags({
+        'assistant.dashboard.artifacts': true,
+        dashboardNewLayouts: true,
+        'grafana.dashboardPreviewMode': true,
+        'grafana.dashboardComposer': true,
+      });
+      await openOnPage(pendingChanges());
+      expect(listener).not.toHaveBeenCalled();
+
+      // The last handler is the one opening the pending changes added; activating again asks nothing more.
+      const activate = activationHandlers[activationHandlers.length - 1];
+      activate();
+      activate();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'dash-1' }, { assistantEdit: true });
+    });
+
+    it('adds no activation handler with Composer off', async () => {
+      await openOnPage(pendingChanges());
+      const withoutComposer = activationHandlers.length;
+      activationHandlers = [];
+      setTestFlags({
+        'assistant.dashboard.artifacts': true,
+        dashboardNewLayouts: true,
+        'grafana.dashboardPreviewMode': true,
+        'grafana.dashboardComposer': true,
+      });
+      clearPendingChangePreview('dash-1', 'chat-1');
+      await openOnPage(pendingChanges());
+
+      expect(activationHandlers).toHaveLength(withoutComposer + 1);
+    });
+  });
+
   it('opens them in edit mode, as unsaved changes to the saved version', async () => {
     const scene = await openOnPage(pendingChanges());
 
