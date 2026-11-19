@@ -1,11 +1,16 @@
 import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagScopeFilters } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaScopesDashboardsMegaMenu,
+  useFlagScopeFilters,
+  useFlagResponsiveTimePickerTabs,
+} from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -242,6 +247,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideDashboardControls,
     hidePlaylistNav,
   } = model.useState();
+
+  const tabsEnabled = useFlagResponsiveTimePickerTabs();
+  useEffect(() => {
+    timePicker.setState({ compactDesign: tabsEnabled ? 'tabs' : 'legacy' });
+  }, [timePicker, tabsEnabled]);
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();

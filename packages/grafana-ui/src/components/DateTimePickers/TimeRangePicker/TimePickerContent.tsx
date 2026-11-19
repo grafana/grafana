@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
+import { useWindowSize } from 'react-use';
 
 import {
   type GrafanaTheme2,
@@ -19,15 +20,21 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
+import { type TimeRangePickerProps } from '../TimeRangePicker';
 import { type WeekStart } from '../WeekStartPicker';
 
+import { CompactTimePickerContent } from './CompactTimePickerContent';
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
-interface Props {
+interface Props
+  extends Pick<
+    TimeRangePickerProps,
+    'compactDesign' | 'layout' | 'calendarDisplay' | 'rememberLastTab' | 'defaultTab' | 'hideFiscalYear'
+  > {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
@@ -106,6 +113,19 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     return onChange(mapOptionToTimeRange(timeOption));
   };
 
+  if (!isFullscreen && props.compactDesign === 'tabs') {
+    return (
+      <CompactTimePickerContent
+        {...props}
+        quickOptions={filteredQuickOptions}
+        timeOption={timeOption}
+        searchTerm={searchTerm}
+        onSearch={setSearchQuery}
+        historyOptions={historyOptions}
+      />
+    );
+  }
+
   return (
     <div id="TimePickerContent" ref={setCalendarAnchor} className={cx(styles.container, className)}>
       <div className={styles.body}>
@@ -136,6 +156,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
       </div>
       {!hideTimeZone && isFullscreen && (
         <TimePickerFooter
+          hideFiscalYear={props.hideFiscalYear}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
           onChangeTimeZone={onChangeTimeZone}
@@ -149,7 +170,11 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
 export const TimePickerContent = (props: Props) => {
   const { widthOverride } = props;
   const theme = useTheme2();
-  const isFullscreen = (widthOverride || window.innerWidth) >= theme.breakpoints.values.lg;
+  const { width } = useWindowSize();
+  const isWide = width >= theme.breakpoints.values.lg;
+  const isFullscreen =
+    props.layout === 'wide' ||
+    (props.layout !== 'compact' && (widthOverride ? widthOverride >= theme.breakpoints.values.lg : isWide));
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
@@ -192,6 +217,7 @@ const NarrowScreenForm = (props: NarrowScreenFormProps) => {
               value={value}
               onApply={onChange}
               timeZone={timeZone}
+              calendarDisplay={props.calendarDisplay}
               isFullscreen={false}
               onError={onError}
               weekStart={weekStart}
@@ -241,6 +267,7 @@ const FullScreenForm = (props: FullScreenFormProps) => {
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
           onApply={onChange}
+          calendarDisplay={props.calendarDisplay}
           isFullscreen={true}
           calendarAnchor={calendarAnchor}
           isReversed={isReversed}

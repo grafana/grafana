@@ -160,6 +160,14 @@ describe('DashboardControls', () => {
   });
 
   describe('Component', () => {
+    it.each([true, false])('passes compact design to Scenes when rollout is %s', (enabled) => {
+      setTestFlags({ responsiveTimePickerTabs: enabled });
+      const scene = buildTestScene();
+      renderInGrafanaContext(<scene.Component model={scene} />);
+      expect(scene.state.timePicker.state.compactDesign).toBe(enabled ? 'tabs' : 'legacy');
+      cleanup();
+    });
+
     it('should render', () => {
       const scene = buildTestScene();
       expect(() => {

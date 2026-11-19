@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act, render, screen } from 'test/test-utils';
 
 import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -29,7 +30,19 @@ describe('TimePickerWithHistory', () => {
   };
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     window.localStorage.clear();
+  });
+
+  it.each([true, false])('uses tabbed compact design when rollout is %s', async (enabled) => {
+    setTestFlags({ responsiveTimePickerTabs: enabled });
+    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} layout="compact" />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    if (enabled) {
+      expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('aria-selected', 'true');
+    } else {
+      expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'false');
+    }
   });
 
   it('Should load with no history', async () => {

@@ -64,4 +64,24 @@ export const Basic: StoryFn<typeof TimeRangePicker> = (args) => {
   );
 };
 
+export const Compact = Basic.bind({});
+Compact.args = { compactDesign: 'tabs', layout: 'compact' };
+
+export const Embedded = Basic.bind({});
+Embedded.args = {
+  compactDesign: 'tabs',
+  layout: 'compact',
+  calendarDisplay: 'inline',
+  showHistory: false,
+  rememberLastTab: false,
+  hideTimeZone: true,
+  hideFiscalYear: true,
+};
+
+export const Responsive = Basic.bind({});
+Responsive.args = { compactDesign: 'tabs' };
+
+export const Wide = Basic.bind({});
+Wide.args = { compactDesign: 'tabs', layout: 'wide' };
+
 export default meta;

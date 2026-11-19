@@ -37,6 +37,19 @@ import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
 export interface TimeRangePickerProps {
+  /** Compact presentation. The tabbed design is opt-in. */
+  compactDesign?: 'legacy' | 'tabs';
+  /** Force a layout for embedded pickers, independently of the viewport. */
+  layout?: 'auto' | 'compact' | 'wide';
+  /** Defaults to inline for tabbed compact layout, existing floating/modal behavior otherwise. */
+  calendarDisplay?: 'auto' | 'inline' | 'modal';
+  /** Show supplied history. Defaults to true; persistence remains the caller's responsibility. */
+  showHistory?: boolean;
+  /** Persist the selected compact tab. Defaults to true; disable in sandboxed embeds. */
+  rememberLastTab?: boolean;
+  /** Initial compact tab when no preference is stored. Defaults to relative. */
+  defaultTab?: 'relative' | 'absolute';
+  hideFiscalYear?: boolean;
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
@@ -249,7 +262,13 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
                   history={history}
-                  showHistory
+                  showHistory={props.showHistory ?? true}
+                  compactDesign={props.compactDesign}
+                  layout={props.layout}
+                  calendarDisplay={props.calendarDisplay}
+                  rememberLastTab={props.rememberLastTab}
+                  defaultTab={props.defaultTab}
+                  hideFiscalYear={props.hideFiscalYear}
                   widthOverride={widthOverride}
                   onChangeTimeZone={onChangeTimeZone}
                   onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}

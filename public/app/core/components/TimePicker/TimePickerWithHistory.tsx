@@ -9,6 +9,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagResponsiveTimePickerTabs } from '@grafana/runtime/internal';
 import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
@@ -24,6 +25,14 @@ interface TimePickerHistoryItem {
 }
 
 export const TimePickerWithHistory = (props: Props) => {
+  const tabsEnabled = useFlagResponsiveTimePickerTabs();
+  const pickerProps = {
+    ...props,
+    compactDesign: props.compactDesign ?? (tabsEnabled ? 'tabs' : 'legacy'),
+  } satisfies Props;
+  if (props.showHistory === false) {
+    return <TimeRangePicker {...pickerProps} />;
+  }
   return (
     <LocalStorageValueProvider<unknown> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {
@@ -32,7 +41,7 @@ export const TimePickerWithHistory = (props: Props) => {
 
         return (
           <TimeRangePicker
-            {...props}
+            {...pickerProps}
             history={history}
             onChange={(value) => {
               onAppendToHistory(value, validHistory, onSaveToStore);

@@ -1,5 +1,7 @@
-import { type ReactNode, type Ref, useId, useState } from 'react';
+import { css } from '@emotion/css';
+import { type ReactNode, type Ref, useId, useState, useRef, useLayoutEffect } from 'react';
 
+import { type DateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -8,6 +10,7 @@ import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 
+import { InlineTimePickerCalendar } from './InlineTimePickerCalendar';
 import TimePickerCalendar, { type TimePickerCalendarProps } from './TimePickerCalendar';
 
 interface RangeField {
@@ -23,6 +26,9 @@ interface RangeField {
 }
 
 interface Props {
+  inlineCalendar?: boolean;
+  fullWidth?: boolean;
+  onCalendarOpenChange?: (open: boolean) => void;
   from: RangeField;
   to: RangeField;
   inputWidth?: number;
@@ -32,11 +38,35 @@ interface Props {
 }
 
 /** Shared absolute-range inputs and calendar; callers own parsing, validation, and applying the range. */
-export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar }: Props) {
+export function TimeRangeFields({
+  from,
+  to,
+  inputWidth,
+  onSubmit,
+  fieldSuffix,
+  calendar,
+  inlineCalendar,
+  fullWidth,
+  onCalendarOpenChange,
+}: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
-  const icon = (
+  const [draft, setDraft] = useState<{ from: DateTime; to: DateTime }>();
+  const triggerInputId = useRef(fromId);
+  const restoreInputFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (!isOpen && restoreInputFocus.current) {
+      document.getElementById(triggerInputId.current)?.focus();
+      restoreInputFocus.current = false;
+    }
+  }, [isOpen]);
+  const closeCalendar = () => {
+    restoreInputFocus.current = !!inlineCalendar;
+    setOpen(false);
+    onCalendarOpenChange?.(false);
+  };
+  const icon = (id: string) => (
     <Button
       aria-label={t('time-picker.range-content.open-input-calendar', 'Open calendar')}
       aria-expanded={isOpen}
@@ -44,9 +74,30 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
       icon="calendar-alt"
       variant="secondary"
       type="button"
-      onClick={() => setOpen(true)}
+      onClick={() => {
+        triggerInputId.current = id;
+        setDraft({ from: calendar.from, to: calendar.to });
+        setOpen(true);
+        onCalendarOpenChange?.(true);
+      }}
     />
   );
+
+  if (inlineCalendar && isOpen && draft) {
+    return (
+      <InlineTimePickerCalendar
+        {...calendar}
+        {...draft}
+        onChange={(from, to) => setDraft({ from, to })}
+        onClose={closeCalendar}
+        onApply={(event) => {
+          calendar.onChange(draft.from, draft.to);
+          closeCalendar();
+          calendar.onApply?.(event);
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -56,6 +107,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
       ].map(({ field, label, id }) => (
         <Stack key={id} gap={0}>
           <Field
+            className={fullWidth ? css({ width: '100%' }) : undefined}
             label={field.label ?? label}
             invalid={!!field.error}
             error={field.error}
@@ -77,13 +129,13 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
                   onSubmit?.();
                 }
               }}
-              addonAfter={icon}
+              addonAfter={icon(id)}
             />
           </Field>
           {fieldSuffix}
         </Stack>
       ))}
-      <TimePickerCalendar {...calendar} isOpen={isOpen} onClose={() => setOpen(false)} />
+      <TimePickerCalendar {...calendar} isOpen={isOpen} onClose={closeCalendar} />
     </>
   );
 }
