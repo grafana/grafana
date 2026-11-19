@@ -1,4 +1,5 @@
 import { cx, css } from '@emotion/css';
+import { type CSSObject } from '@emotion/serialize';
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
@@ -139,9 +140,20 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   return icon;
 }
 
+// Variant hover styles must not apply to disabled buttons, so a disabled button looks the same hovered or not.
+// :where() keeps the specificity of a plain :hover, so :active and consumer overrides still win over it.
+const enabledHover = '&:hover:where(:not(:disabled))';
+
+function hoverOnlyWhenEnabled(styles: CSSObject): CSSObject {
+  // Rebuilt in order so the hover rule stays before :active in the generated CSS
+  return Object.fromEntries(
+    Object.entries(styles).map(([selector, value]) => [selector === '&:hover' ? enabledHover : selector, value])
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+  const primaryVariant = hoverOnlyWhenEnabled(getPropertiesForVariant(theme, 'primary', 'solid'));
+  const destructiveVariant = hoverOnlyWhenEnabled(getPropertiesForVariant(theme, 'destructive', 'solid'));
   const background = theme.flags.visualDesignRefresh ? theme.colors.secondary.background : theme.colors.secondary.main;
   const backgroundHover = theme.flags.visualDesignRefresh
     ? theme.colors.secondary.backgroundEmphasis
@@ -151,7 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     background,
 
-    '&:hover': {
+    [enabledHover]: {
       color: theme.colors.text.primary,
       background: backgroundHover,
       border: `1px solid ${theme.colors.secondary.border}`,
@@ -197,12 +209,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         opacity: theme.colors.action.disabledOpacity,
         background: theme.colors.action.disabledBackground,
         boxShadow: 'none',
-
-        '&:hover': {
-          color: theme.colors.text.disabled,
-          background: theme.colors.action.disabledBackground,
-          boxShadow: 'none',
-        },
       },
     }),
     default: css({
@@ -210,7 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'transparent',
       border: `1px solid transparent`,
 
-      '&:hover': {
+      [enabledHover]: {
         color: theme.colors.text.primary,
         background: theme.colors.action.hover,
       },

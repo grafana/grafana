@@ -68,7 +68,6 @@ const (
 
 func EnvOptions() []common.GrafanaOption {
 	return []common.GrafanaOption{
-		common.WithoutProvisioningFolderMetadata,
 		common.WithProvisioningPublicRootURL(WebhookBaseURL),
 		common.WithProvisioningMaxIncrementalChanges(MaxIncrementalChanges),
 	}

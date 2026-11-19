@@ -1,7 +1,12 @@
 import { type NotificationSettings, toRulerNotificationSettings } from '../notificationSettings';
 
+export interface ConvertSourceOption {
+  /** The Grafana screen a request comes from. Grafana counts import calls by it. Leave it out for any other caller. */
+  source?: 'wizard' | 'import_settings';
+}
+
 /** Options for importing rule groups, sent as `X-Grafana-Alerting-*` headers. */
-export interface ConvertRulesOptions {
+export interface ConvertRulesOptions extends ConvertSourceOption {
   /** The data source the rules query. Grafana falls back to its configured default when left out. */
   datasourceUid?: string;
   /** Where recording rules write their results. Defaults to `datasourceUid`. */
@@ -29,7 +34,7 @@ export interface ConvertRulesFolderOptions {
 }
 
 /** Options for importing an Alertmanager config, sent as `X-Grafana-Alerting-*` headers. */
-export interface ConvertAlertmanagerOptions {
+export interface ConvertAlertmanagerOptions extends ConvertSourceOption {
   /** Names the imported config, and the routing tree it produces. A lowercase RFC 1123 subdomain. */
   identifier: string;
   /** Replace an existing imported config even when its identifier differs. */
@@ -69,12 +74,19 @@ export function getConvertRulesHeaders(options: ConvertRulesOptions): Record<str
   if (options.versionMessage) {
     headers['X-Grafana-Alerting-Version-Message'] = options.versionMessage;
   }
+  if (options.source) {
+    headers['X-Grafana-Alerting-Import-Source'] = options.source;
+  }
   // Grafana only checks that this header is present, so any value works.
   if (options.disableProvenance) {
     headers['X-Disable-Provenance'] = 'true';
   }
 
   return headers;
+}
+
+export function getConvertSourceHeaders({ source }: ConvertSourceOption): Record<string, string> {
+  return source ? { 'X-Grafana-Alerting-Import-Source': source } : {};
 }
 
 export function getConvertRulesFolderHeaders({ folderUid }: ConvertRulesFolderOptions): Record<string, string> {
@@ -92,6 +104,9 @@ export function getConvertAlertmanagerHeaders(options: ConvertAlertmanagerOption
   }
   if (options.promote) {
     headers['X-Grafana-Alerting-Promote'] = 'true';
+  }
+  if (options.source) {
+    headers['X-Grafana-Alerting-Import-Source'] = options.source;
   }
 
   return headers;

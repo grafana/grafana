@@ -33,6 +33,7 @@ jest.mock('./analytics/main', () => ({
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
   homepageViewed: jest.fn(),
+  recentActivityShown: jest.fn(),
 }));
 
 jest.mock('./useHomepageSolutions', () => ({
@@ -56,6 +57,7 @@ beforeEach(() => {
 
   // A signed-in org member is the default; the anonymous / no-org tests override this.
   jest.replaceProperty(contextSrv, 'isSignedIn', true);
+  jest.replaceProperty(contextSrv.user, 'uid', 'u000000001');
   jest.replaceProperty(contextSrv.user, 'orgRole', OrgRole.Viewer);
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -433,8 +435,8 @@ describe('HomePage', () => {
 
       const { datasource } = renderWithStubSolution();
 
-      // The rest of the page still renders...
-      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      // The rest of the page still renders, landing on Recent since anonymous users have no stars...
+      expect(await screen.findByRole('tab', { name: /recent/i, selected: true })).toBeInTheDocument();
       // ...without the solutions sections or their placement probes.
       expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'Metrics & infrastructure' })).not.toBeInTheDocument();

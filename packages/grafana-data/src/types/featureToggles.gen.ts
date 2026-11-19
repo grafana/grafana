@@ -435,11 +435,6 @@ export interface FeatureToggles {
   */
   savedQueriesRBAC?: boolean;
   /**
-  * Enables the new Saved queries (query library) modal experience
-  * @default true
-  */
-  newSavedQueriesExperience?: boolean;
-  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -695,11 +690,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
-  /**
-  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
-  * @default true
-  */
-  useScopesNavigationEndpoint?: boolean;
   /**
   * Enable scope search to include all levels of the scope node tree
   * @default false

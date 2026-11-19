@@ -4,10 +4,15 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
 
 import { ValueMappingsEditorModal, type Props } from './ValueMappingsEditorModal';
 
-const setup = async (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [{ value: 'env', label: 'env', origin: 'template' }],
+}));
+
+const setup = async (spy?: jest.Mock, propOverrides?: Partial<Props>, { fieldConfigExpressions = false } = {}) => {
   const props: Props = {
     onClose: jest.fn(),
     onChange: (mappings) => {
@@ -41,7 +46,11 @@ const setup = async (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const view = render(<ValueMappingsEditorModal {...props} />);
+  const view = render(
+    <FieldConfigExpressionsContext.Provider value={fieldConfigExpressions}>
+      <ValueMappingsEditorModal {...props} />
+    </FieldConfigExpressionsContext.Provider>
+  );
   await screen.findAllByTestId('remove-value-mapping');
   return view;
 };
@@ -247,6 +256,33 @@ describe('ValueMappingsEditorModal', () => {
           },
         },
       ]);
+    });
+  });
+
+  describe('in a panel editor that stores expressions', () => {
+    it('suggests dashboard variables for the display text', async () => {
+      const onChangeSpy = jest.fn();
+      await setup(onChangeSpy, undefined, { fieldConfigExpressions: true });
+
+      const [displayText] = screen.getAllByPlaceholderText('Optional display text');
+      await userEvent.clear(displayText);
+      await userEvent.type(displayText, 'Env $');
+      await userEvent.click(await screen.findByText('env'));
+      await userEvent.click(screen.getByText('Update'));
+
+      expect(onChangeSpy).toHaveBeenCalledWith([
+        { type: MappingType.ValueToText, options: { '20': { text: 'Env ${env}', index: 0 } } },
+        { type: MappingType.RangeToText, options: { from: 21, to: 30, result: { text: 'Meh', index: 1 } } },
+      ]);
+    });
+
+    it('keeps the plain text input without expressions', async () => {
+      await setup();
+
+      const [displayText] = screen.getAllByPlaceholderText('Optional display text');
+      await userEvent.type(displayText, '$');
+
+      expect(screen.queryByText('env')).not.toBeInTheDocument();
     });
   });
 });
