@@ -100,7 +100,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+	if (s.cfg.Env == setting.Dev || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage)) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
 			Icon:     "plug",

@@ -207,8 +207,9 @@ function PanelActions({
   const showsPanelActions = canEdit || canExplore || canOpenSettings;
 
   const report = useCallback(
-    (item: PanelActionItem) => DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover'),
-    [panelId]
+    (item: PanelActionItem) =>
+      DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover', panel.state.pluginId),
+    [panel, panelId]
   );
 
   const onToggleExpand = () => {
@@ -238,7 +239,7 @@ function PanelActions({
 
   const onSettings = () => {
     report('settings');
-    dashboard.state.sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    dashboard.state.sidebar.openElementSettings(panel);
   };
 
   const onRemove = () => {

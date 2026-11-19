@@ -9,6 +9,8 @@ import { type SearchQuery } from '../search/service/types';
 
 import { type PlaylistItemUI } from './types';
 
+export const PLAYLISTS_URL = '/playlists';
+
 // `rangeUtil.intervalToMs` only anchors the start, so alone it accepts "30ssdd" and truncates "1.5m".
 const INTERVAL_PATTERN = /^\d+(ms|[smhdwMy])?$/;
 

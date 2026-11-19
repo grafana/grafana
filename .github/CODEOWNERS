@@ -14,6 +14,7 @@
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
 /AGENTS.md @grafana/grafana-team
+/.github/AGENTS.md @grafana/grafana-operator-experience-squad
 /AI_POLICY.md @grafana/grafana-community-support
 /CHANGELOG.md @grafana/grafana-backend-services-squad
 /CLAUDE.md @grafana/grafana-team
@@ -235,6 +236,8 @@
 /pkg/tests/api/swagger/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tests/ha/ @grafana/grafana-search-and-storage
+/pkg/tests/compat/ @grafana/grafana-search-and-storage
+/pkg/tests/compat/folders/ @grafana/grafana-search-and-storage
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-services-squad
 /pkg/util/ @grafana/grafana-backend-services-squad
 /pkg/web/ @grafana/grafana-backend-services-squad
@@ -360,6 +363,7 @@
 /devenv/docker/compose_volume_section.yml @grafana/grafana-backend-services-squad
 /devenv/docker/debtest/ @bergquist
 /devenv/docker/ha-test-unified-alerting/ @grafana/alerting-squad
+/devenv/docker/ha-test-nats/ @grafana/grafana-search-and-storage
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
 /devenv/docker/loadtest/ @grafana/grafana-backend-services-squad
 /devenv/docker/rpmtest/ @grafana/grafana-operator-experience-squad
@@ -940,9 +944,11 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMermaidDiagrams* @grafana/grafana-frontend-navigation @grafana/dataviz-squad
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
+/public/app/core/hooks/useNow.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useStored.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /public/app/core/icons/ @grafana/grafana-frontend-platform
+/public/app/core/kinds/ @grafana/grafana-frontend-navigation
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
@@ -1206,6 +1212,9 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 
 /scripts/codeowners-manifest/ @grafana/dataviz-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
+/scripts/meticulous-coverage-by-codeowner.mjs @grafana/dataviz-squad
+/scripts/meticulous-coverage-report.mjs @grafana/dataviz-squad
+/scripts/meticulous-coverage.test.mjs @grafana/dataviz-squad
 /jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
@@ -1390,6 +1399,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
 /.github/workflows/pr-unified-storage-compatibility.yml @grafana/grafana-search-and-storage
+/.github/workflows/pr-test-compat.yml @grafana/grafana-search-and-storage
+/.github/workflows/run-compat-tests.yml @grafana/grafana-search-and-storage
+/.github/actions/run-compat-phase/ @grafana/grafana-search-and-storage
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad

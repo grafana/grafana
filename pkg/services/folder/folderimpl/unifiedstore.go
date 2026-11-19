@@ -754,8 +754,17 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 	// A resource can be reported twice, by unified storage and by the "sql-fallback"
 	// group. Resources not yet in unified storage still get an entry there with a count
 	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(ds.Counts, func(c folderv1.ResourceStats) bool {
+		return c.Group == "sql-fallback" && c.Resource == "library_elements"
+	})
+
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		current, seen := out[v.Resource]
 		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count

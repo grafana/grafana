@@ -1,8 +1,10 @@
+import { cleanup } from '@testing-library/react';
 import { act, fireEvent, render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ElementSelectionContext, type ElementSelectionContextItem } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -134,6 +136,27 @@ function buildTestSceneWithPanelsInTwoRows() {
   return { scene, rows, panels };
 }
 
+function buildTestSceneWithPanelInRepeatedRow() {
+  const sourcePanel = buildPanel(1);
+  const row = new RowItem({
+    key: 'row-1',
+    layout: DefaultGridLayoutManager.fromVizPanels([sourcePanel]),
+  });
+  const cloneKey = getCloneKey('row-1', 1);
+  const repeatedRow = row.clone({
+    key: cloneKey,
+    repeatSourceKey: 'row-1',
+    layout: row.getLayout().cloneLayout(cloneKey, false),
+  });
+  row.setState({ repeatedRows: [repeatedRow] });
+  const scene = new DashboardScene({
+    isEditing: true,
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+
+  return { scene, clonedPanel: repeatedRow.getLayout().getVizPanels()[0] };
+}
+
 describe('<PanelEditActionsSingle />', () => {
   function renderPanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     const renderResult = render(<PanelEditActionsSingle panel={panel} />);
@@ -201,7 +224,7 @@ describe('<PanelEditActionsSingle />', () => {
 
     await actions.clickSettings();
 
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the panel is a repeat clone and the user clicks Panel settings, the source panel is selected', async () => {
@@ -213,6 +236,16 @@ describe('<PanelEditActionsSingle />', () => {
     expect(scene.state.sidebar.getSelectedObject()).toBe(sourcePanel);
   });
 
+  test('when the user clicks Panel settings inside a repeated row, settings open for the source panel', async () => {
+    const { scene, clonedPanel } = buildTestSceneWithPanelInRepeatedRow();
+    const { actions } = renderPanelEditActionsSingle({ panel: clonedPanel });
+
+    await actions.clickSettings();
+
+    expect(scene.state.sidebar.getSelectedObject()?.state.key).toBe('panel-1');
+    expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+  });
+
   test('when the user clicks Edit visualization, the panel editor is opened', async () => {
     const { panels } = buildTestScene();
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
@@ -221,7 +254,7 @@ describe('<PanelEditActionsSingle />', () => {
     await actions.clickEditVisualization();
 
     expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1 });
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the user clicks Duplicate in Auto grid, the panel is duplicated via its edit action', async () => {
@@ -246,7 +279,7 @@ describe('<PanelEditActionsSingle />', () => {
     await actions.clickDuplicate();
 
     expect(duplicateDefaultGridPanel).toHaveBeenCalledWith(layoutManager, panels[0]);
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover', 'timeseries');
   });
 
   test('when the user clicks Delete and confirms, the panel is removed via its layout manager', async () => {
@@ -267,7 +300,7 @@ describe('<PanelEditActionsSingle />', () => {
     event.payload.onConfirm();
 
     expect(removePanel).toHaveBeenCalledWith(panels[0]);
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover', 'timeseries');
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledTimes(1);
   });
 
@@ -307,7 +340,7 @@ describe('<PanelEditActionsSingle />', () => {
         await actions.clickCopy();
 
         expect(copyPanel).toHaveBeenCalledWith(panels[0]);
-        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', 1, 'edit_popover');
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', 1, 'edit_popover', 'timeseries');
       });
 
       test('shows a Copied tooltip that disappears after 2 seconds', () => {
@@ -558,8 +591,8 @@ describe('<PanelEditActionsBulk />', () => {
     const [event] = mockPublishAppEvent.mock.calls[0];
     event.payload.onConfirm();
 
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
-    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 2, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover', 'timeseries');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 2, 'edit_popover', 'timeseries');
   });
 });
 
@@ -730,23 +763,34 @@ describe('<PanelEditActionsWrapper />', () => {
     });
   });
 
-  describe('when hover popover is not supported', () => {
+  describe.each([
+    { enabled: false, state: 'disabled' },
+    { enabled: true, state: 'enabled' },
+  ])('when hover is unsupported and grafana.dashboardSidebarExplicitOpen is $state', ({ enabled }) => {
     beforeEach(() => {
+      setTestFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
       mockUseHoverPopoverSupported.mockReturnValue(false);
     });
     afterEach(() => {
+      cleanup();
+      setTestFlags({});
       mockUseHoverPopoverSupported.mockReturnValue(true);
     });
 
-    test('when hover popover is not supported and the pointer rests, the floating content is not shown', async () => {
+    test(`when the pointer rests, the floating content is ${enabled ? 'shown' : 'hidden'}`, async () => {
       const { panels } = buildTestScene();
 
       renderPanelEditActionsWrapper({ panel: panels[0] });
 
       await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(screen.queryByRole('button', { name: 'Panel settings' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
+      if (enabled) {
+        expect(screen.getByRole('button', { name: 'Panel settings' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Edit visualization' })).toBeInTheDocument();
+      } else {
+        expect(screen.queryByRole('button', { name: 'Panel settings' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Edit visualization' })).not.toBeInTheDocument();
+      }
     });
   });
 });

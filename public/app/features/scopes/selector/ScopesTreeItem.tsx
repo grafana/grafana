@@ -132,7 +132,7 @@ function ScopeExpandButton({
 
   const buttonId = getTreeItemElementId(scopeNodeId) + '-button';
 
-  const SelectComponent = () => {
+  const renderSelect = () => {
     if (!isSelectable || expanded) {
       return null;
     }
@@ -158,7 +158,7 @@ function ScopeExpandButton({
   };
   return (
     <>
-      <SelectComponent />
+      {renderSelect()}
       <button
         id={buttonId}
         className={styles.expand}

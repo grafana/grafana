@@ -30,7 +30,7 @@ import (
 
 type publicSnapshotStore struct {
 	resourcepb.UnimplementedResourceStoreServer
-	resourcepb.UnimplementedBlobStoreServer
+	resourcepb.UnimplementedBlobStoreStreamingServer
 	reads        []*resourcepb.ReadRequest
 	readMetadata []metadata.MD
 	blobMetadata []metadata.MD
@@ -47,10 +47,13 @@ func (s *publicSnapshotStore) Read(ctx context.Context, req *resourcepb.ReadRequ
 	return &resourcepb.ReadResponse{Value: []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Snapshot","metadata":{"name":"public-key","namespace":"org-2"},"spec":{"deleteKey":"secret"},"blobs":{"dashboard":{"uid":"blob-1"}}}`)}, nil
 }
 
-func (s *publicSnapshotStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-	md, _ := metadata.FromIncomingContext(ctx)
+func (s *publicSnapshotStore) GetBlobStream(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	md, _ := metadata.FromIncomingContext(stream.Context())
 	s.blobMetadata = append(s.blobMetadata, md)
-	return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
+	if err := stream.Send(&resourcepb.GetBlobResponse{ContentType: "application/json"}); err != nil {
+		return err
+	}
+	return stream.Send(&resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)})
 }
 
 // Adapt the production apistore storage interface to the Kubernetes REST getter.
@@ -74,7 +77,7 @@ func TestPublicSnapshotMetadataWithStandaloneRemoteClient(t *testing.T) {
 			server := &publicSnapshotStore{}
 			channel := &inprocgrpc.Channel{}
 			channel.RegisterService(&resourcepb.ResourceStore_ServiceDesc, server)
-			channel.RegisterService(&resourcepb.BlobStore_ServiceDesc, server)
+			channel.RegisterService(&resourcepb.BlobStoreStreaming_ServiceDesc, server)
 			client, err := resourceclient.NewStandaloneRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
 				TokenExchanger: authn.NewStaticTokenExchanger("service-token"),
 			})
