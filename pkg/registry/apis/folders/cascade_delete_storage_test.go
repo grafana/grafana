@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -449,6 +450,9 @@ type fakeFolderStorage struct {
 	deleted  []string
 	stamped  []string
 	getErr   map[string]error
+	// beforeDelete runs at the start of Delete, to simulate a concurrent change.
+	beforeDelete  func()
+	deleteOptions *metav1.DeleteOptions
 }
 
 func (f *fakeFolderStorage) List(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -661,6 +665,10 @@ func (f *fakeFolderStorage) Get(_ context.Context, name string, _ *metav1.GetOpt
 }
 
 func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	if f.beforeDelete != nil {
+		f.beforeDelete()
+	}
+	f.deleteOptions = options
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -1629,6 +1637,58 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{"root"}, store.deleted)
 		require.NotEmpty(t, access.checks)
+	})
+
+	t.Run("the authorized version is pinned as a precondition", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := newStore()
+		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
+		s := &cascadeDeleteStorage{Storage: store, accessClient: &recordingAccessClient{}}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		pre := store.deleteOptions.Preconditions
+		require.NotNil(t, pre)
+		require.Equal(t, apitypes.UID("uid-1"), *pre.UID)
+		require.Equal(t, "7", *pre.ResourceVersion)
+	})
+
+	t.Run("a change after the check fails the delete with a conflict", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := newStore()
+		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
+		store.beforeDelete = func() { store.existing["root"].ResourceVersion = "8" }
+		s := &cascadeDeleteStorage{Storage: store, accessClient: &recordingAccessClient{}}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.True(t, apierrors.IsConflict(err), "got %v", err)
+		require.Empty(t, store.deleted)
+	})
+
+	t.Run("caller preconditions are kept, and a stale one is a conflict", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := newStore()
+		store.existing["root"].UID, store.existing["root"].ResourceVersion = "uid-1", "7"
+		s := &cascadeDeleteStorage{Storage: store, accessClient: &recordingAccessClient{}}
+
+		for _, pre := range []*metav1.Preconditions{
+			{ResourceVersion: ptr.To("6")},
+			{UID: ptr.To(apitypes.UID("other"))},
+		} {
+			opts := forceDelete()
+			opts.Preconditions = pre
+			_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+			require.True(t, apierrors.IsConflict(err), "got %v", err)
+			require.Empty(t, store.deleted)
+		}
+
+		opts := forceDelete()
+		opts.Preconditions = &metav1.Preconditions{ResourceVersion: ptr.To("7")}
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+		require.NoError(t, err)
+		require.Equal(t, []string{"root"}, store.deleted)
+		require.Equal(t, apitypes.UID("uid-1"), *store.deleteOptions.Preconditions.UID, "the UID is pinned too")
+		require.Nil(t, opts.Preconditions.UID, "the caller's options are not modified")
 	})
 
 	t.Run("a dry run runs the check and leaves the folder alone", func(t *testing.T) {

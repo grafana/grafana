@@ -139,6 +139,10 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 			if err := s.checkFolderContentsAccess(ctx, user, ns.Value, name, parentUID); err != nil {
 				return nil, false, err
 			}
+			// The check used this version's parent, so a concurrent move must fail the delete.
+			if options, err = pinToCheckedVersion(options, f); err != nil {
+				return nil, false, err
+			}
 		}
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
@@ -480,6 +484,27 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			return names, nil
 		}
 	}
+}
+
+// pinToCheckedVersion returns options with the UID and resource version of the folder that was
+// authorized as preconditions, so the delete fails with a conflict if the folder changed since. A
+// precondition the caller set must already match that version, or it is a conflict as well.
+func pinToCheckedVersion(options *metav1.DeleteOptions, f *foldersv1.Folder) (*metav1.DeleteOptions, error) {
+	pinned := options.DeepCopy()
+	if pinned.Preconditions == nil {
+		pinned.Preconditions = &metav1.Preconditions{}
+	}
+	uid, rv := f.GetUID(), f.GetResourceVersion()
+	if got := pinned.Preconditions.UID; got != nil && *got != uid {
+		return nil, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), f.GetName(),
+			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *got, uid))
+	}
+	if got := pinned.Preconditions.ResourceVersion; got != nil && *got != rv {
+		return nil, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), f.GetName(),
+			fmt.Errorf("precondition failed: the folder changed since its resource version %s", *got))
+	}
+	pinned.Preconditions.UID, pinned.Preconditions.ResourceVersion = &uid, &rv
+	return pinned, nil
 }
 
 // isCascadeSubfolderDelete reports whether a service is deleting a subfolder of a terminating
