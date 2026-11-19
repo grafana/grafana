@@ -98,7 +98,7 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 // a folder with the cascade finalizer is handed to the cascade controller, whether or not the flag is
 // on, once the requester's access to its contents is checked. Besides the permission to delete the
 // folder itself, the requester needs (see checkFolderContentsAccess):
-//   - alert.rules:delete on the folder
+//   - alert.rules:delete and dashboards:delete on the folder
 //   - folders:write on its parent (General for a root folder)
 //   - variables:delete on the folder, only when global variables are enabled
 //
@@ -600,7 +600,7 @@ type contentsAccessCheck struct {
 }
 
 // checkFolderContentsAccess denies the delete unless the requester may delete the alert rules
-// (alert.rules:delete) and library elements (folders:write) in folderUID; parentUID lets folder
+// (alert.rules:delete), dashboards (dashboards:delete) and library elements (folders:write) in folderUID; parentUID lets folder
 // permissions resolve through inheritance. When global variables are enabled it also requires
 // variables:delete. No-op when no access client is wired (e.g. tests).
 func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, user identity.Requester, namespace, folderUID, parentUID string) error {
@@ -617,9 +617,11 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 	}
 	// One homogeneous Check per resource: a mixed-resource BatchCheck is routed back to RBAC in
 	// Zanzana rollout mode, so tenants mid-rollout would be evaluated by the wrong engine.
+	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
 	checks := []contentsAccessCheck{
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
+		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: dashGVR.Group, Resource: dashGVR.Resource}, folderUID},
 	}
 	if grafanaDashboardGlobalVariablesEnabled(ctx) {
 		varGVR := dashboardV2beta1.VariableResourceInfo.GroupVersionResource()

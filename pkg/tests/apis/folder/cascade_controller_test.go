@@ -398,11 +398,12 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		require.False(t, e.dashboardExists(bad))
 	})
 	// The controller deletes the contents as its own identity, so the requester's access to them is
-	// checked when the delete is requested: alert.rules:delete on the folder and folders:write on its parent.
+	// checked when the delete is requested: alert.rules:delete and dashboards:delete on the folder, and
+	// folders:write on its parent.
 	userWith := func(t *testing.T, name string, extra ...string) *dynamic.DynamicClient {
 		t.Helper()
 		actions := append([]string{folder.ActionFoldersRead, folder.ActionFoldersWrite, folder.ActionFoldersDelete,
-			dashboards.ActionDashboardsRead, dashboards.ActionDashboardsDelete}, extra...)
+			dashboards.ActionDashboardsRead}, extra...)
 		u := helper.CreateUser(name, apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
 			Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: "e2e-" + name + "-top",
 		}})
@@ -411,26 +412,34 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		return c
 	}
 
-	t.Run("a delete without access to the contents is rejected and leaves the folder untouched", func(t *testing.T) {
-		e := newEnv(t)
-		e.createFolder("e2e-denied-top", "")
-		e.createFolder("e2e-denied-a", "e2e-denied-top")
-		e.createFolder("e2e-denied-b", "e2e-denied-a")
-		e.createDashboards("e2e-denied-b", "e2e-denied-b1")
-		e.waitIndexed("e2e-denied-a", 1)
-		// Allowed to delete folders and dashboards, but not alert rules.
-		user := userWith(t, "denied")
+	for _, tc := range []struct {
+		name    string
+		granted []string
+	}{
+		{"alert rules", []string{dashboards.ActionDashboardsDelete}},
+		{"dashboards", []string{accesscontrol.ActionAlertingRuleDelete}},
+	} {
+		t.Run("a delete without delete access to "+tc.name+" is rejected and leaves the folder untouched", func(t *testing.T) {
+			name := "denied-" + strings.ReplaceAll(tc.name, " ", "")
+			e := newEnv(t)
+			e.createFolder("e2e-"+name+"-top", "")
+			e.createFolder("e2e-"+name+"-a", "e2e-"+name+"-top")
+			e.createFolder("e2e-"+name+"-b", "e2e-"+name+"-a")
+			e.createDashboards("e2e-"+name+"-b", "e2e-"+name+"-b1")
+			e.waitIndexed("e2e-"+name+"-a", 1)
+			user := userWith(t, name, tc.granted...)
 
-		startController(t, nil)
-		zero := int64(0)
-		err := user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-denied-a", metav1.DeleteOptions{GracePeriodSeconds: &zero})
-		require.True(t, apierrors.IsForbidden(err), "expected 403: %v", err)
+			startController(t, nil)
+			zero := int64(0)
+			err := user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-"+name+"-a", metav1.DeleteOptions{GracePeriodSeconds: &zero})
+			require.True(t, apierrors.IsForbidden(err), "expected 403: %v", err)
 
-		require.Never(t, func() bool {
-			a := e.getFolder("e2e-denied-a")
-			return a == nil || a.DeletionTimestamp != nil || e.getFolder("e2e-denied-b") == nil || !e.dashboardExists("e2e-denied-b1")
-		}, 3*time.Second, 100*time.Millisecond, "a rejected delete must not mark the folder or touch its contents")
-	})
+			require.Never(t, func() bool {
+				a := e.getFolder("e2e-" + name + "-a")
+				return a == nil || a.DeletionTimestamp != nil || e.getFolder("e2e-"+name+"-b") == nil || !e.dashboardExists("e2e-"+name+"-b1")
+			}, 3*time.Second, 100*time.Millisecond, "a rejected delete must not mark the folder or touch its contents")
+		})
+	}
 
 	t.Run("an authorized delete completes a nested cascade", func(t *testing.T) {
 		e := newEnv(t)
@@ -443,7 +452,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		e.waitIndexed("e2e-allowed-a", 2)
 		e.waitIndexed("e2e-allowed-b", 1)
 		e.waitIndexed("e2e-allowed-c", 1)
-		user := userWith(t, "allowed", accesscontrol.ActionAlertingRuleDelete)
+		user := userWith(t, "allowed", accesscontrol.ActionAlertingRuleDelete, dashboards.ActionDashboardsDelete)
 
 		startController(t, nil)
 		zero := int64(0)

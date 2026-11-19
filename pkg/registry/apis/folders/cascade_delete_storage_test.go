@@ -1859,13 +1859,15 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 	user := &identity.StaticRequester{}
 	folderGVR := foldersv1.FolderResourceInfo.GroupVersionResource()
 	varGVR := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	dashGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
+	dashCheck := contentsAccessCheck{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: dashGVR.Group, Resource: dashGVR.Resource}, "folder"}
 
 	t.Run("nil accessClient is a no-op", func(t *testing.T) {
 		s := &cascadeDeleteStorage{}
 		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent"))
 	})
 
-	t.Run("without global variables, checks alert.rules:delete and folders:write only", func(t *testing.T) {
+	t.Run("without global variables, checks alert.rules:delete, folders:write and dashboards:delete only", func(t *testing.T) {
 		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
 		ac := &recordingAccessClient{}
 		s := &cascadeDeleteStorage{accessClient: ac}
@@ -1873,6 +1875,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		require.Equal(t, []contentsAccessCheck{
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
+			dashCheck,
 		}, ac.checks)
 	})
 
@@ -1884,6 +1887,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		require.Equal(t, []contentsAccessCheck{
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, "folder"},
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: "folder"}, "parent"},
+			dashCheck,
 			{authlib.CheckRequest{Namespace: "default", Verb: utils.VerbDelete, Group: varGVR.Group, Resource: varGVR.Resource}, "folder"},
 		}, ac.checks)
 	})
@@ -1894,7 +1898,18 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 		s := &cascadeDeleteStorage{accessClient: ac}
 		require.NoError(t, s.checkFolderContentsAccess(context.Background(), user, "default", "root", ""))
 		require.Equal(t, folder.GeneralFolderUID, ac.checks[1].folder)
-		require.Equal(t, "root", ac.checks[2].folder)
+		require.Equal(t, "root", ac.checks[2].folder, "dashboards")
+		require.Equal(t, "root", ac.checks[3].folder, "variables")
+	})
+
+	t.Run("denies when dashboards:delete is not allowed", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagGrafanaDashboardGlobalVariables: false})
+		ac := &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool {
+			return req.Resource != dashGVR.Resource
+		}}
+		s := &cascadeDeleteStorage{accessClient: ac}
+		err := s.checkFolderContentsAccess(context.Background(), user, "default", "folder", "parent")
+		require.True(t, apierrors.IsForbidden(err))
 	})
 
 	t.Run("denies when variables:delete is not allowed", func(t *testing.T) {
@@ -1917,7 +1932,7 @@ func TestCheckFolderContentsAccess(t *testing.T) {
 }
 
 func TestCascadeDelete_ForbiddenWithoutVariablesDelete(t *testing.T) {
-	for _, deniedResource := range []string{dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource, cascadeAlertRuleResource} {
+	for _, deniedResource := range []string{dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource, cascadeAlertRuleResource, dashv1.DashboardResourceInfo.GroupVersionResource().Resource} {
 		for _, deniedFolder := range []string{"root", "child"} {
 			t.Run(deniedResource+"/"+deniedFolder, func(t *testing.T) {
 				setOpenFeatureToggles(t, map[string]bool{
