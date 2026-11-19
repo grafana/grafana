@@ -18,7 +18,7 @@
       };
       manifest = builtins.fromJSON (builtins.readFile ./package.json);
       version = lib.replaceStrings [ "-pre" ] [ "-local" ] manifest.version;
-      src = lib.fileset.toSource {
+      backendSrc = lib.fileset.toSource {
         root = ./.;
         fileset = lib.fileset.difference ./. (
           lib.fileset.unions [
@@ -53,6 +53,22 @@
           ./scripts/tsconfig.base.json
           ./tsconfig.json
         ];
+      };
+      pnpmDepsSrc = lib.fileset.toSource {
+        root = ./.;
+        fileset = lib.fileset.unions (
+          [
+            ./package.json
+            ./pnpm-lock.yaml
+            ./pnpm-workspace.yaml
+            ./patches
+          ]
+          ++ map (lib.fileset.fileFilter (file: file.name == "package.json")) [
+            ./packages
+            ./public/app/plugins
+            ./e2e-playwright/test-plugins
+          ]
+        );
       };
       tarballSrc = lib.fileset.toSource {
         root = ./.;
@@ -113,65 +129,67 @@
           goarch = "arm64";
         }
       ];
-      packageBuilders = lib.mapAttrs (
-        system: nativeTarget:
+      mkGrafanaPackages =
         {
+          system,
+          defaultTarget ? systems.${system},
+          version,
+          backendSrc,
+          frontendSrc ? backendSrc,
+          tarballSrc ? backendSrc,
+          sourceRoot ? null,
+          pnpmDepsSrc,
+          pnpmDepsHash ? "sha256-LpVbSMHU4XI7WANB7MRAsoxPMHKDGKxm+JMEtjINTwc=",
+          goVendorHash,
           revision,
           sourceDateEpoch,
+          enterpriseRevision ? null,
           ci ? false,
+          useGoBuildCache ? false,
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           pnpm = pkgs.pnpm_12;
+          enterprise = enterpriseRevision != null;
+          pname = if enterprise then "grafana-enterprise" else "grafana";
+          sourceRootAttrs = lib.optionalAttrs (sourceRoot != null) { inherit sourceRoot; };
 
-          frontend = pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
-            pname = "grafana-frontend";
-            inherit version;
-            src = frontendSrc;
-            strictDeps = true;
-            nativeBuildInputs = [
-              pkgs.nodejs_26
-              pnpm
-              pkgs.pnpmConfigHook
-            ];
-            pnpmDeps = pkgs.fetchPnpmDeps {
-              inherit (finalAttrs) pname;
-              inherit pnpm;
-              src = lib.fileset.toSource {
-                root = ./.;
-                fileset = lib.fileset.unions (
-                  [
-                    ./package.json
-                    ./pnpm-lock.yaml
-                    ./pnpm-workspace.yaml
-                    ./patches
-                  ]
-                  ++ map (lib.fileset.fileFilter (file: file.name == "package.json")) [
-                    ./packages
-                    ./public/app/plugins
-                    ./e2e-playwright/test-plugins
-                  ]
-                );
+          frontend = pkgs.stdenvNoCC.mkDerivation (
+            {
+              pname = "${pname}-frontend";
+              inherit version;
+              src = frontendSrc;
+              strictDeps = true;
+              nativeBuildInputs = [
+                pkgs.nodejs_26
+                pnpm
+                pkgs.pnpmConfigHook
+              ];
+              pnpmDeps = pkgs.fetchPnpmDeps {
+                pname = "grafana-frontend";
+                inherit pnpm;
+                src = pnpmDepsSrc;
+                fetcherVersion = 5;
+                hash = pnpmDepsHash;
               };
-              fetcherVersion = 5;
-              hash = "sha256-LpVbSMHU4XI7WANB7MRAsoxPMHKDGKxm+JMEtjINTwc=";
-            };
-            env = {
-              CI = "true";
-              # Nx's native runner tries to configure a terminal in the headless builder.
-              NX_NATIVE_COMMAND_RUNNER = "false";
-            };
-            buildPhase = ''
-              runHook preBuild
-              bash scripts/build-frontend.sh
-              runHook postBuild
-            '';
-            installPhase = ''
-              runHook preInstall
-              cp -R dist/frontend "$out"
-              runHook postInstall
-            '';
-          });
+              env = {
+                CI = "true";
+                # Nx's native runner tries to configure a terminal in the headless builder.
+                NX_NATIVE_COMMAND_RUNNER = "false";
+              };
+              buildPhase = ''
+                runHook preBuild
+                bash scripts/build-frontend.sh
+                runHook postBuild
+              '';
+              installPhase = ''
+                runHook preInstall
+                cp -R dist/frontend "$out"
+                runHook postInstall
+              '';
+            }
+            // sourceRootAttrs
+          );
 
           mkTargetPackages =
             {
@@ -185,13 +203,19 @@
               executable = "grafana${lib.optionalString (goos == "windows") ".exe"}";
               backend = pkgs.buildGo127Module backendAttrs;
               backendAttrs = {
-                pname = "grafana-backend-${target}";
-                inherit src version;
+                pname = "${pname}-backend-${target}";
+                inherit version;
+                src = backendSrc;
                 # Keep the workspace and download cache shared across all CGO-free targets.
                 proxyVendor = true;
-                vendorHash = "sha256-AL2FPYnTrtAgAsbSzdD7rZ3MreU+/LM2cJWsCpV4O/U=";
-                overrideModAttrs = _: _: { name = "grafana-${version}-go-modules"; };
-                env.CGO_ENABLED = "0";
+                vendorHash = goVendorHash;
+                overrideModAttrs = _: _: { name = "${pname}-${version}-go-modules"; };
+                env = {
+                  CGO_ENABLED = "0";
+                }
+                // lib.optionalAttrs enterprise {
+                  ENTERPRISE_COMMIT_SHA = enterpriseRevision;
+                };
                 doCheck = false;
                 dontStrip = true;
                 meta.mainProgram = executable;
@@ -199,8 +223,8 @@
                   runHook preBuild
                   GOMAXPROCS="$NIX_BUILD_CORES" make build-go OS=${goos} ARCH=${goarch} ARM=${goarm} \
                     BUILD_VERSION=${lib.escapeShellArg version} \
-                    COMMIT_SHA=${revision} \
-                    SOURCE_DATE_EPOCH=${sourceDateEpoch}
+                    COMMIT_SHA=${lib.escapeShellArg revision} \
+                    SOURCE_DATE_EPOCH=${lib.escapeShellArg sourceDateEpoch}
                   runHook postBuild
                 '';
                 installPhase = ''
@@ -221,7 +245,14 @@
                   runHook postInstallCheck
                 '';
               }
-              // lib.optionalAttrs ci {
+              // sourceRootAttrs
+              // lib.optionalAttrs enterprise {
+                nativeBuildInputs = [ pkgs.which ];
+                postInstallCheck = ''
+                  go version -m "$out/bin/${executable}" | grep -Fx $'\tbuild\t-tags=enterprise'
+                '';
+              }
+              // lib.optionalAttrs useGoBuildCache {
                 postConfigure = ''
                   if [ -w /grafana-go-cache ]; then
                     export GOCACHE=/grafana-go-cache
@@ -244,53 +275,59 @@
                   hash = hashes.${variant};
                 }
               ) catalogPlugins;
-              tarball = pkgs.stdenvNoCC.mkDerivation {
-                pname = "grafana-tarball-${target}";
-                inherit version;
-                src = tarballSrc;
-                strictDeps = true;
-                nativeBuildInputs = [
-                  pkgs.gnutar
-                  pkgs.go_1_27
-                  pkgs.jq
-                  pkgs.libarchive
-                ];
-                env = {
-                  OS = goos;
-                  ARCH = goarch;
-                  GOARM = goarm;
-                  BUILD_VERSION = version;
-                  TAR_OPTIONS = "--sort=name --mtime=@${sourceDateEpoch} --owner=0 --group=0 --numeric-owner";
-                };
-                dontConfigure = true;
-                # The fixup audit probes compressed archives for executable files.
-                dontFixup = true;
-                buildPhase = ''
-                  runHook preBuild
-                  mkdir -p dist data/plugins-bundled
-                  install -Dm755 ${backend}/bin/${executable} "bin/${goos}/${goarch}/${executable}"
-                  cp -RL ${frontend} dist/frontend
+              tarball = pkgs.stdenvNoCC.mkDerivation (
+                {
+                  pname = "${pname}-tarball-${target}";
+                  inherit version;
+                  src = tarballSrc;
+                  strictDeps = true;
+                  nativeBuildInputs = [
+                    pkgs.gnutar
+                    pkgs.go_1_27
+                    pkgs.jq
+                    pkgs.libarchive
+                  ];
+                  env = {
+                    OS = goos;
+                    ARCH = goarch;
+                    GOARM = goarm;
+                    BUILD_VERSION = version;
+                    TAR_OPTIONS = "--sort=name --mtime=@${sourceDateEpoch} --owner=0 --group=0 --numeric-owner";
+                  }
+                  // lib.optionalAttrs enterprise {
+                    TARGZ_PACKAGE_NAME = pname;
+                  };
+                  dontConfigure = true;
+                  # The fixup audit probes compressed archives for executable files.
+                  dontFixup = true;
+                  buildPhase = ''
+                    runHook preBuild
+                    mkdir -p dist data/plugins-bundled
+                    install -Dm755 ${backend}/bin/${executable} "bin/${goos}/${goarch}/${executable}"
+                    cp -RL ${frontend} dist/frontend
 
-                  ${lib.concatStringsSep "\n" (
-                    lib.mapAttrsToList (id: archive: ''
-                      bash ${./nix/extract-plugin.sh} ${lib.escapeShellArg id} "${archive}" data/plugins-bundled
-                    '') pluginArchives
-                  )}
-                  chmod -R u+w dist/frontend data/plugins-bundled
-                  bash scripts/build-targz.sh
-                  runHook postBuild
-                '';
-                installPhase = ''
-                  runHook preInstall
-                  mkdir -p "$out"
-                  install -m644 dist/*.tar.gz "$out/"
-                  runHook postInstall
-                '';
-              };
+                    ${lib.concatStringsSep "\n" (
+                      lib.mapAttrsToList (id: archive: ''
+                        bash ${./nix/extract-plugin.sh} ${lib.escapeShellArg id} "${archive}" data/plugins-bundled
+                      '') pluginArchives
+                    )}
+                    chmod -R u+w dist/frontend data/plugins-bundled
+                    bash scripts/build-targz.sh
+                    runHook postBuild
+                  '';
+                  installPhase = ''
+                    runHook preInstall
+                    mkdir -p "$out"
+                    install -m644 dist/*.tar.gz "$out/"
+                    runHook postInstall
+                  '';
+                }
+                // sourceRootAttrs
+              );
             in
             lib.nameValuePair target { inherit backend tarball pluginArchives; };
           targetPackages = builtins.listToAttrs (map mkTargetPackages targets);
-          inherit (targetPackages.${nativeTarget}) backend tarball;
+          inherit (targetPackages.${defaultTarget}) backend tarball;
         in
         lib.concatMapAttrs (target: { backend, tarball, ... }: {
           "backend-${target}" = backend;
@@ -300,7 +337,7 @@
           inherit backend frontend tarball;
           default = tarball;
           release-tarballs = pkgs.symlinkJoin {
-            name = "grafana-release-tarballs-${version}";
+            name = "${pname}-release-tarballs-${version}";
             paths = lib.mapAttrsToList (_: target: target.tarball) targetPackages;
           };
         }
@@ -315,10 +352,30 @@
               # Enable cache hits for the link farm and its archive closure.
               allowSubstitutes = true;
             };
-        }
-      ) systems;
+        };
+      mkGrafanaCIJobs = lib.filterAttrs (
+        name: _: name == "frontend" || name == "plugin-archives" || lib.hasPrefix "backend-" name
+      );
+      packageBuilders = lib.genAttrs (builtins.attrNames systems) (
+        system: args:
+        mkGrafanaPackages (
+          {
+            inherit
+              system
+              version
+              backendSrc
+              frontendSrc
+              tarballSrc
+              pnpmDepsSrc
+              ;
+            goVendorHash = "sha256-AL2FPYnTrtAgAsbSzdD7rZ3MreU+/LM2cJWsCpV4O/U=";
+          }
+          // args
+        )
+      );
     in
     {
+      lib = { inherit mkGrafanaPackages mkGrafanaCIJobs; };
       packages = lib.mapAttrs (
         _: buildPackages:
         buildPackages {
@@ -331,9 +388,8 @@
         revision = "unknown";
         sourceDateEpoch = "1";
         ci = true;
+        useGoBuildCache = true;
       };
-      ciJobs = lib.filterAttrs (
-        name: _: name == "frontend" || name == "plugin-archives" || lib.hasPrefix "backend-" name
-      ) self.ciPackages;
+      ciJobs = mkGrafanaCIJobs self.ciPackages;
     };
 }

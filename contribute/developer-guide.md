@@ -221,6 +221,8 @@ Backend jobs that miss the Hestia cache use a Go compiler cache keyed by target 
 
 The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. To run Grafana locally, extract the archive from `result/` and run `./bin/grafana server` from the extracted directory.
 
+The Enterprise flake uses `lib.mkGrafanaPackages` with its staged source overlay and Go dependency hash. The shared builder supplies the target matrix, frontend and backend build phases, tarball assembly, and plugin selection. `lib.mkGrafanaCIJobs` selects the component packages for the Hestia matrix.
+
 ## Test Grafana
 
 The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.
