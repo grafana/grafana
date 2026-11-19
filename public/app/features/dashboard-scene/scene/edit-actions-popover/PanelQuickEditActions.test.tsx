@@ -1,5 +1,6 @@
 import { render, screen, within } from 'test/test-utils';
 
+import { presetsQuickEdit } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -15,21 +16,21 @@ import { PanelEditActionsSingle } from './PanelEditActions';
 
 const withQuickEdits = getPanelPlugin({ id: 'with-quick-edits' })
   .setPanelOptions((builder) =>
-    builder.addBooleanSwitch({
-      path: 'legend.showLegend',
-      name: 'Visibility',
-      category: ['Legend'],
-      defaultValue: true,
-    })
+    builder
+      .addBooleanSwitch({ path: 'legend.showLegend', name: 'Visibility', category: ['Legend'], defaultValue: true })
+      .addTextInput({ path: 'legend.width', name: 'Width', category: ['Legend'] })
   )
+  .setPresetsSupplier(() => [])
   .setQuickEdits(() => [
     {
       id: 'legend',
       title: 'Legend',
       icon: 'list-ul',
-      optionIds: ['legend.showLegend'],
+      optionIds: ['legend.showLegend', 'legend.width'],
+      labels: { 'legend.width': 'Legend width' },
       summary: ({ options }) => ({ text: options.legend.showLegend ? 'Shown' : 'Hidden' }),
     },
+    presetsQuickEdit(),
   ]);
 
 // Declares a quick edit for an option the plugin never registers, so the panel offers none of it.
@@ -113,4 +114,25 @@ it('closes the quick edit card when its button is pressed again', async () => {
   await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
 
   expect(screen.queryByRole('dialog', { name: 'Legend' })).not.toBeInTheDocument();
+});
+
+it("names an option by the quick edit's label instead of its own name", async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  await user.click(screen.getByRole('button', { name: 'Legend: Shown' }));
+  const card = screen.getByRole('dialog', { name: 'Legend' });
+
+  expect(within(card).getByRole('textbox', { name: 'Legend width' })).toBeInTheDocument();
+  expect(within(card).queryByRole('textbox', { name: 'Width' })).not.toBeInTheDocument();
+});
+
+it('explains that there are no styles to show while the panel has none for its data', async () => {
+  const { user } = setup();
+  await user.click(screen.getByRole('button', { name: 'Quick edits' }));
+
+  await user.click(screen.getByRole('button', { name: 'Style' }));
+
+  const card = screen.getByRole('dialog', { name: 'Style' });
+  expect(within(card).getByText("No styles to show for this panel's data")).toBeInTheDocument();
 });
