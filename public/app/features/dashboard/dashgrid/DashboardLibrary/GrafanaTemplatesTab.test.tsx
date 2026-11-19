@@ -94,6 +94,17 @@ describe('GrafanaTemplatesTab', () => {
       expect(locationService.push).not.toHaveBeenCalled();
     });
 
+    it('opens the picked template with the entry point of the surface it was picked on', async () => {
+      const onSelectTemplate = jest.fn();
+      const { user } = renderTab({ onSelectTemplate, entryPoint: 'emptyDashboardPrompt' });
+
+      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+
+      expect(onSelectTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({ url: expect.stringContaining('sourceEntryPoint=empty_dashboard_prompt') })
+      );
+    });
+
     it('renders nothing when there are no templates, to leave the shared grid alone', async () => {
       server.use(http.get('/api/gnet/dashboards', () => HttpResponse.json({ page: 1, pages: 1, items: [] })));
       const onTemplatesLoad = jest.fn();

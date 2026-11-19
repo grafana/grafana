@@ -11,6 +11,11 @@ export interface DashboardTemplatesTabProps extends TemplateSelectionProps {
    * `loaded` event would re-fire when the user returns to this tab.
    */
   loadedFiredRef: MutableRefObject<boolean>;
+  /**
+   * A `DashboardTemplatesSourceEntryPointMap` key for the surface the list is shown on. Defaults to the template
+   * modal's `source` URL param.
+   */
+  entryPoint?: string;
 }
 
 let InternalDashboardTemplatesTab: ComponentType<DashboardTemplatesTabProps> | null = null;

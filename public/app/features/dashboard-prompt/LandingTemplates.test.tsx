@@ -11,12 +11,14 @@ import { LOAD_WAIT_MS, LandingTemplates } from './LandingTemplates';
 let mockGrafanaCount: number | undefined = 1;
 let mockCustomCount: number | undefined = 1;
 // What the Grafana list was last rendered with.
-let mockGrafanaProps: TemplateSelectionProps = {};
+let mockGrafanaProps: TemplateSelectionProps & { entryPoint?: string } = {};
+// Called with the entry point on every render of the custom list.
+const mockCustomEntryPoint = jest.fn();
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
   return {
-    GrafanaTemplatesTab: (props: TemplateSelectionProps) => {
+    GrafanaTemplatesTab: (props: TemplateSelectionProps & { entryPoint?: string }) => {
       const { onTemplatesLoad } = props;
       mockGrafanaProps = props;
       useMockEffect(() => {
@@ -48,7 +50,8 @@ jest.mock(
 );
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
-const CustomTemplates = ({ onTemplatesLoad }: TemplateSelectionProps) => {
+const CustomTemplates = ({ onTemplatesLoad, entryPoint }: TemplateSelectionProps & { entryPoint?: string }) => {
+  mockCustomEntryPoint(entryPoint);
   useEffect(() => {
     if (mockCustomCount !== undefined) {
       onTemplatesLoad?.(mockCustomCount);
@@ -83,6 +86,13 @@ describe('LandingTemplates', () => {
     const grafana = screen.getByTestId('grafana-card');
     expect(custom.parentElement).toBe(grafana.parentElement);
     expect(custom.compareDocumentPosition(grafana) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('tags both lists with the landing as their entry point', () => {
+    renderTemplates();
+
+    expect(mockGrafanaProps.entryPoint).toBe('emptyDashboardPrompt');
+    expect(mockCustomEntryPoint).toHaveBeenLastCalledWith('emptyDashboardPrompt');
   });
 
   it('searches and sorts the templates from their header', async () => {

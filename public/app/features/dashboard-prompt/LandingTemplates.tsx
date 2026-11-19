@@ -30,6 +30,9 @@ interface Props {
 
 const noop = () => {};
 
+/** Tags the templates' analytics and pages with this surface (a `DashboardTemplatesSourceEntryPointMap` key). */
+const ENTRY_POINT = 'emptyDashboardPrompt';
+
 /** Every card's height: the thumbnail takes what the title and author lines leave. */
 const CARD_HEIGHT = 160;
 /** How much of the next row shows under the last whole one, so a longer list reads as one that scrolls. */
@@ -102,6 +105,7 @@ export function LandingTemplates({
       <DashboardTemplatesTab
         isOpen
         onClose={noop}
+        entryPoint={ENTRY_POINT}
         loadedFiredRef={customLoadedFiredRef}
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
@@ -172,7 +176,7 @@ export function LandingTemplates({
             {renderCustomTemplates()}
             {showGrafanaTemplates && (
               <GrafanaTemplatesTab
-                entryPoint=""
+                entryPoint={ENTRY_POINT}
                 testDataSource={testDataSource}
                 onClose={noop}
                 loadedFiredRef={grafanaLoadedFiredRef}
