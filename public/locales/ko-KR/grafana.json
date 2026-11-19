@@ -2926,6 +2926,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "기록 규칙"
     },
@@ -9758,13 +9789,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "기능 제어",
       "close-tooltip": "기능 제어 닫기",
       "open-tooltip": "기능 제어 열기"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "삭제",
     "description": "테스트 및 개발 목적으로 프런트엔드 기능 플래그를 로컬에서 재정의합니다.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "UI 및 툴바 버튼 제거",
       "tooltip": "정의된 모든 기능 플래그 재정의는 활성 상태로 유지됩니다.<br/> UI를 다시 활성화하려면 URL에 <3>{{ param }}</3>을(를) 사용하세요."
@@ -9774,11 +9809,18 @@
     "flag-type": "플래그 유형",
     "flag-value": "플래그 값",
     "menu": "메뉴 열기",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP 평가",
     "ofrep-reason": "사유: <2>{{reason}} </2>",
     "ofrep-variant": "변형: <2>{{variant}} </2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "저장",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "기능 제어"
   },
   "folder-filter": {
@@ -12361,7 +12403,7 @@
     },
     "description-allow-download": "컨트롤이 활성화된 경우 표시된 로그를 다운로드하는 옵션을 표시합니다.",
     "description-enable-field-selector": "실험적 기능. 로그에 표시되는 필드를 관리하는 컴포넌트를 표시합니다.",
-    "description-enable-infinite-scrolling": "실험적. 로그 목록 하단으로 스크롤하여 더 많은 결과를 요청합니다.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "사전 정의된 색상 구성을 사용하여 로그 라인의 관련 부분을 강조 표시합니다.",
     "description-order": "가장 최근 또는 가장 오래된 로그를 먼저 표시합니다. '가장 오래된 로그부터' 옵션을 선택하면, 화면이 자동으로 아래로 스크롤되어 가장 최근 로그를 표시합니다.",
     "description-prettify-json": "JSON 로그 항목을 들여쓰기와 줄 바꿈으로 형식화합니다.",
@@ -13375,6 +13417,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13487,7 +13532,10 @@
       "aria-label": "신규",
       "new-template-dashboard-button": "템플릿 사용"
     },
-    "rss-button": "블로그 최근 글"
+    "rss-button": "블로그 최근 글",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "뉴스",

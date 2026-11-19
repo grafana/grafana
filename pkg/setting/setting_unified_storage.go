@@ -353,7 +353,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
 	// fed from NATS, 3s otherwise.
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
-	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
