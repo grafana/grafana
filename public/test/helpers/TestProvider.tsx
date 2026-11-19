@@ -1,6 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { type Store } from '@reduxjs/toolkit';
-import * as React from 'react';
+import { useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
@@ -18,7 +18,7 @@ import { type StoreState } from 'app/types/store';
 export interface Props {
   storeState?: Partial<StoreState>;
   store?: Store<StoreState>;
-  children: React.ReactNode;
+  children: ReactNode;
   grafanaContext?: GrafanaContextType;
 }
 
@@ -28,7 +28,10 @@ export interface Props {
  * @deprecated Use `test/test-utils` `render` method instead
  */
 export function TestProvider(props: Props) {
-  const { store = configureStore(props.storeState), children } = props;
+  const { children } = props;
+  // Created once so rerenders keep the same store; RTK Query hooks warn when the store changes under them.
+  const [defaultStore] = useState(() => props.store ?? configureStore(props.storeState));
+  const store = props.store ?? defaultStore;
 
   const context = {
     ...getGrafanaContextMock(),

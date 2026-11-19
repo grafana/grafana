@@ -30,8 +30,8 @@ jest.mock(
 );
 
 const getProviderWraper = () => {
+  const store = configureStore();
   return function Wrapper({ children }: React.PropsWithChildren<{}>) {
-    const store = configureStore();
     const formApi = useForm<TemplateFormValues>({ defaultValues: defaults });
     return (
       <Provider store={store}>
