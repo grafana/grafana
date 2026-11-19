@@ -969,3 +969,30 @@ func TestGetAPIRoutesWithInvalidSearchDeclarations(t *testing.T) {
 	require.Nil(t, b.GetAPIRoutes(gv), "no search, trash or hybrid routes")
 	require.Contains(t, mountedRoutes(b, gv), "namespaces/{namespace}/foobar")
 }
+
+// Proxy routes are served only by the app settings API, so the manifest's API
+// refuses a proxy operation.
+func TestVersionRoutesRefuseProxyOperations(t *testing.T) {
+	proxy := &spec3.Operation{}
+	proxy.AddExtension(definition.ExtensionProxy, definition.ProxyTarget{URL: "https://example"})
+	plain := &spec3.Operation{}
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/mixed": {Get: plain, Post: proxy},
+	}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+
+	var skipped []manifestroutes.Problem
+	routes := b.versionRoutes(gv, func(p manifestroutes.Problem) { skipped = append(skipped, p) })
+	require.Len(t, routes, 1)
+	require.Equal(t, "mixed", routes[0].Path)
+	require.NotNil(t, routes[0].Operations.Get)
+	require.Nil(t, routes[0].Operations.Post, "a proxy operation is not served here")
+
+	require.Len(t, skipped, 1)
+	require.Equal(t, "/mixed", skipped[0].Path)
+	require.Equal(t, http.MethodPost, skipped[0].Method)
+
+	require.NotNil(t, manifest.Versions[1].OpenAPI.Paths["/mixed"].Post, "the shared manifest is not modified")
+}

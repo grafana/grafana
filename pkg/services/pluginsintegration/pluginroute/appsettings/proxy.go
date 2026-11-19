@@ -20,14 +20,21 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	gaprequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/routemux"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
+// SettingsReader reads the settings a proxied request's route templates are
+// filled in from, with a loader for their decrypted secure values.
+type SettingsReader func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
+
+// proxyHandler serves the proxy routes the settings manifest declares, and
+// forwards each request with the route it matched.
 type proxyHandler struct {
 	pluginID             string
-	routes               []*plugins.Route
-	settingsProvider     func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
+	mux                  http.Handler
+	settings             SettingsReader
 	accessControl        ac.AccessControl
 	tracer               tracing.Tracer
 	features             featuremgmt.FeatureToggles
@@ -37,11 +44,10 @@ type proxyHandler struct {
 	SendUserHeader   bool // from cfg
 }
 
-func newProxy(b *Builder) *proxyHandler {
-	return &proxyHandler{
-		pluginID:         b.pluginJSON.ID,
-		routes:           b.pluginJSON.Routes,
-		settingsProvider: b.getSettings,
+func newProxy(b *Builder, routes *proxyRoutes) *proxyHandler {
+	p := &proxyHandler{
+		pluginID:         b.group, // the settings API is served under the plugin ID
+		settings:         b.getSettings,
 		accessControl:    b.opts.AccessControl,
 		DataProxyLogging: b.opts.DataProxyLogging,
 		SendUserHeader:   b.opts.SendUserHeader,
@@ -61,9 +67,20 @@ func newProxy(b *Builder) *proxyHandler {
 			TLSHandshakeTimeout: 10 * time.Second,
 		},
 	}
+	// A request no route matches is answered as the plugin proxy answers one
+	// that matches none of its routes.
+	unmatched := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { p.forward(w, r, nil) })
+	p.mux = routemux.Wrap(b.group, []routemux.Version{routes.version}, routes.handler(p.forward), unmatched, nil)
+	return p
 }
 
 func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.mux.ServeHTTP(w, req)
+}
+
+// forward forwards a request with the first of routes that matches it, or
+// answers 404 when none does.
+func (r *proxyHandler) forward(w http.ResponseWriter, req *http.Request, routes []*plugins.Route) {
 	ctx := req.Context()
 	ns, err := gaprequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -76,7 +93,7 @@ func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	settings, secure, err := r.settingsProvider(ctx)
+	settings, secure, err := r.settings(ctx)
 	if err != nil {
 		_ = errhttp.Write(ctx, err, w)
 		return
@@ -100,7 +117,7 @@ func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// The derive-id-token fallback is only wired for the datasource group today (see
 	// pkg/extensions/apiserver/factory.go); app plugin proxying doesn't need it in ST,
 	// where the edge still mints an id token for every requester.
-	p, err := pluginproxy.NewPluginProxy(ps, r.routes,
+	p, err := pluginproxy.NewPluginProxy(ps, routes,
 		proxyReq, w, user,
 		proxyPath, r.DataProxyLogging, r.SendUserHeader,
 		secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features, nil)
