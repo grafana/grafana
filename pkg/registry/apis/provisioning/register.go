@@ -111,10 +111,10 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	supportedResourceProvider  resources.SupportedResourceProvider
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets            []provisioning.SyncTargetType
+	supportedResourceProvider resources.SupportedResourceProvider
+	allowImageRendering       bool
+	minSyncInterval           time.Duration
 
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
@@ -267,7 +267,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		supportedResourceProvider:                  supportedResourceProvider,
+		supportedResourceProvider:           supportedResourceProvider,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,

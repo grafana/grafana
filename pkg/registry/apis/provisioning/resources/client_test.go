@@ -525,8 +525,8 @@ func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
 	require.NoError(t, err)
 
 	factory := &clientFactory{
-		clientsProvider: &flakyClientsProvider{discovery: servedDiscoveryClient{}},
-		supportedResourceProvider:        NewSupportedResourceProvider(configured),
+		clientsProvider:           &flakyClientsProvider{discovery: servedDiscoveryClient{}},
+		supportedResourceProvider: NewSupportedResourceProvider(configured),
 	}
 
 	supported, err := factory.supportedResources(t.Context())
@@ -592,9 +592,9 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 
 	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
 		return &clientFactory{
-			clientsProvider: &flakyClientsProvider{discovery: discovery},
-			supportedResourceProvider:        NewSupportedResourceProvider(configured),
-			storageGroup:    api,
+			clientsProvider:           &flakyClientsProvider{discovery: discovery},
+			supportedResourceProvider: NewSupportedResourceProvider(configured),
+			storageGroup:              api,
 		}
 	}
 

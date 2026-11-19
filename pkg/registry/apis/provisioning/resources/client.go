@@ -340,8 +340,8 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedReso
 		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	return &clientFactory{
-		clientsProvider: newSingleAPIClients(configProvider),
-		supportedResourceProvider:        supportedResourceProvider,
+		clientsProvider:           newSingleAPIClients(configProvider),
+		supportedResourceProvider: supportedResourceProvider,
 	}
 }
 
@@ -359,9 +359,9 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
-			clientsProvider: newSingleAPIClients(configProvider),
-			supportedResourceProvider:        supportedResourceProvider,
-			storageGroup:    api,
+			clientsProvider:           newSingleAPIClients(configProvider),
+			supportedResourceProvider: supportedResourceProvider,
+			storageGroup:              api,
 		}
 	}
 
