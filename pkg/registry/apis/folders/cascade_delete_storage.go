@@ -98,8 +98,8 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 // walked depth-first: each folder is stamped with a terminating label on the way down, and folders
 // are deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// Delegate when the cascade flag is disabled or the user is not forcing the deletion
-	if !kubernetesFolderCascadeDeleteEnabled(ctx) || !forceDeleteFromDeleteOptions(options) {
+	// Delegate when the user is not forcing the deletion.
+	if !forceDeleteFromDeleteOptions(options) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
 
@@ -116,7 +116,27 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	}
 	// The cascade controller owns deletion of a finalizer folder's subtree, so the delete only has to
 	// mark it terminating; walking the subtree here would bypass the controller's batching and status.
+	// The controller deletes the contents as the service identity, so the requester's access to them
+	// must be verified here, before the folder is marked terminating.
 	if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		parentUID := f.GetAnnotations()[utils.AnnoKeyFolder]
+		// The check is for the user asking for the delete. A service deleting a subfolder is the
+		// controller carrying out a delete that was authorized when it was requested, and it has no
+		// folder permissions of its own to be checked against.
+		if !user.IsIdentityType(authlib.TypeAccessPolicy) {
+			if err := s.checkFolderContentsAccess(ctx, user, ns.Value, name, parentUID); err != nil {
+				return nil, false, err
+			}
+		}
+		return s.Storage.Delete(ctx, name, deleteValidation, options)
+	}
+	// The folder is force-deleted but has no cascade finalizer (that case returned above), so with
+	// cascade delete disabled there is no subtree to walk: delegate to the regular delete.
+	if !kubernetesFolderCascadeDeleteEnabled(ctx) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
 	if deleteValidation != nil {
