@@ -17,12 +17,14 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Capabilities a supported resource can declare. Each names the opt-in state; absence is
@@ -398,6 +400,13 @@ type SupportedResourceProvider interface {
 	Configured() []SupportedResource
 	// Added returns the kinds that the app manifests added.
 	Added() []SupportedResource
+}
+
+func NewRemoteManifestWatcher(supportedResourceProvider SupportedResourceProvider, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+	if cfg.DiscoveryURL == "" {
+		return services.NewIdleService(nil, nil), nil
+	}
+	return resource.NewManifestWatcher(cfg, nil, supportedResourceProvider.Update)
 }
 
 func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {

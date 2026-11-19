@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -31,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/router/routertest"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -165,7 +165,11 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 // The aggregated server is the router: it publishes the app manifests, and it serves each group
 // that has no server URL. Both requests carry a token for the provisioning audience.
 func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
-	router := newStubRouter(t)
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/discovery/v1alpha2/manifests":                          `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
+		"/apis/" + stubRouterGroup + "/v1":                            `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list"]}]}`,
+		"/apis/" + stubRouterGroup + "/v1/namespaces/default/widgets": `{"apiVersion":"example.ext.grafana.app/v1","kind":"WidgetList","items":[]}`,
+	})
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
 
 	factory, err := cfg.Clients()
@@ -184,8 +188,8 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	require.NoError(t, err)
 
 	token := "Bearer token-for-" + apisprovisioning.GROUP
-	require.Equal(t, token, router.accessToken("/apis/discovery/v1alpha2/manifests"))
-	require.Equal(t, token, router.accessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+	require.Equal(t, token, router.AccessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, token, router.AccessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
 }
 
 // Production has no aggregated server yet, so the operators must run with the configured
@@ -413,44 +417,4 @@ func newStubSigner(t *testing.T) *httptest.Server {
 	}))
 	t.Cleanup(signer.Close)
 	return signer
-}
-
-// stubRouter publishes one app manifest that opts the Widget kind in to provisioning, and it
-// serves that kind. It records the access token of each request by path.
-type stubRouter struct {
-	*httptest.Server
-	mu     sync.Mutex
-	tokens map[string]string
-}
-
-func (r *stubRouter) accessToken(path string) string {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.tokens[path]
-}
-
-func newStubRouter(t *testing.T) *stubRouter {
-	t.Helper()
-	responses := map[string]string{
-		"/apis/discovery/v1alpha2/manifests":                          `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
-		"/apis/" + stubRouterGroup + "/v1":                            `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list"]}]}`,
-		"/apis/" + stubRouterGroup + "/v1/namespaces/default/widgets": `{"apiVersion":"example.ext.grafana.app/v1","kind":"WidgetList","items":[]}`,
-	}
-
-	router := &stubRouter{tokens: map[string]string{}}
-	router.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response, ok := responses[r.URL.Path]
-		if !ok {
-			t.Errorf("unexpected router request: %s", r.URL)
-			http.NotFound(w, r)
-			return
-		}
-		router.mu.Lock()
-		router.tokens[r.URL.Path] = r.Header.Get("X-Access-Token")
-		router.mu.Unlock()
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(response))
-	}))
-	t.Cleanup(router.Close)
-	return router
 }
