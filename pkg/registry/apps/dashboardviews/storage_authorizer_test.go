@@ -3,6 +3,7 @@ package dashboardviews
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -433,4 +434,41 @@ func TestReservedAnnotations(t *testing.T) {
 	require.True(t, apierrors.IsBadRequest(authz.BeforeCreate(ctx, managed)))
 	require.True(t, apierrors.IsBadRequest(authz.BeforeUpdate(ctx, viewWithDashboardUID(testDashboardUID), managed)))
 	require.NoError(t, authz.BeforeCreate(ctx, viewWithDashboardUID(testDashboardUID)))
+}
+
+func TestFilterListForGrafanaServiceIdentity(t *testing.T) {
+	authz := newTestAuthorizer()
+	ctx, _ := identity.WithServiceIdentity(withTestNamespace(context.Background(), 1), 0)
+	list := &dashboardviewsv0alpha1.SavedDashboardViewList{
+		Items: []dashboardviewsv0alpha1.SavedDashboardView{*viewWithDashboardUID(testDashboardUID), *viewWithDashboardUID("other")},
+	}
+
+	result, err := authz.FilterList(ctx, list)
+	require.NoError(t, err)
+	filtered, ok := result.(*dashboardviewsv0alpha1.SavedDashboardViewList)
+	require.True(t, ok)
+	assert.Len(t, filtered.Items, 2)
+}
+
+func TestMalformedDashboardUIDs(t *testing.T) {
+	// The resolver would fail on these with a 500; they must be plain denials instead.
+	ac := acimpl.ProvideAccessControl(nil)
+	ac.RegisterScopeAttributeResolver(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(""),
+		accesscontrol.ScopeAttributeResolverFunc(func(context.Context, int64, string) ([]string, error) {
+			return nil, errors.New("invalid name")
+		}))
+	authz := &savedViewStorageAuthorizer{ac: ac, dashboardSvc: fakeDashboardServiceAlwaysFound()}
+	ctx := withTestNamespace(identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgRole: identity.RoleViewer,
+		UserID:  1,
+		OrgID:   1,
+		Permissions: map[int64]map[string][]string{
+			1: {dashboards.ActionDashboardsRead: {folder.ScopeFoldersProvider.GetResourceScopeUID("folder-1")}},
+		},
+	}), 1)
+
+	for _, uid := range []string{"a/b", "..", "50%", strings.Repeat("x", maxDashboardUIDLength+1)} {
+		requireDenied(t, authz.BeforeCreate(ctx, viewWithDashboardUID(uid)))
+		requireDenied(t, authz.AfterGet(ctx, viewWithDashboardUID(uid)))
+	}
 }

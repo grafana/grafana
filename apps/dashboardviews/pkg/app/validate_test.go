@@ -158,21 +158,6 @@ func TestValidateSavedDashboardViewSpecSize(t *testing.T) {
 	}
 }
 
-func TestValidateSavedDashboardViewDashboardUID(t *testing.T) {
-	for _, uid := range []string{"", "a/b", "..", "50%", strings.Repeat("x", maxDashboardUIDRunes+1)} {
-		view := validView()
-		view.Spec.DashboardUID = uid
-		if fields := invalidFields(t, validate(view)); !slices.Contains(fields, "spec.dashboardUID") {
-			t.Fatalf("expected %q to be rejected, got %v", uid, fields)
-		}
-	}
-	view := validView()
-	view.Spec.DashboardUID = strings.Repeat("x", maxDashboardUIDRunes)
-	if err := validate(view); err != nil {
-		t.Fatalf("a %d-character uid was rejected: %v", maxDashboardUIDRunes, err)
-	}
-}
-
 func TestValidateSavedDashboardViewSectionKind(t *testing.T) {
 	view := validView()
 	view.Spec.SectionFilters = []v0alpha1.SavedDashboardViewSavedViewSectionFilter{{SectionKind: "panel", SectionKey: "/tabs/0"}}

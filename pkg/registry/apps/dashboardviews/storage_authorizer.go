@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/validation/path"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -20,6 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
+
+// Dashboard UIDs are resource names.
+const maxDashboardUIDLength = 253
 
 var (
 	logger = log.New("dashboardviews.authz")
@@ -137,6 +141,10 @@ func (s *savedViewStorageAuthorizer) FilterList(ctx context.Context, list runtim
 	if !ok {
 		return nil, storewrapper.ErrUnexpectedType
 	}
+	// Grafana's own service identity, e.g. the validator counting a dashboard's views, sees them all.
+	if identity.IsServiceIdentity(ctx) {
+		return views, nil
+	}
 
 	allowed := make([]dashboardviewsv0alpha1.SavedDashboardView, 0, len(views.Items))
 	// Lists are normally scoped to one dashboard, so this is usually a single lookup.
@@ -201,7 +209,10 @@ func (s *savedViewStorageAuthorizer) checkAccess(ctx context.Context, obj runtim
 	if !ok {
 		return storewrapper.ErrUnexpectedType
 	}
-	if view.Spec.DashboardUID == "" {
+	// A malformed UID can't name a dashboard; deny it before it reaches the scope resolver, which
+	// would fail with a 500. This runs before admission, so the validator can't catch it first.
+	if len(view.Spec.DashboardUID) == 0 || len(view.Spec.DashboardUID) > maxDashboardUIDLength ||
+		len(path.IsValidPathSegmentName(view.Spec.DashboardUID)) > 0 {
 		return errDenied
 	}
 

@@ -9,11 +9,11 @@ import (
 	"unicode/utf8"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/validation/path"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	v0alpha1 "github.com/grafana/grafana/apps/dashboardviews/pkg/apis/dashboardviews/v0alpha1"
@@ -24,7 +24,6 @@ import (
 const (
 	maxSpecBytes         = 64 << 10
 	maxViewsPerDashboard = 100
-	maxDashboardUIDRunes = 253
 	maxNameRunes         = 100
 	maxTimeRangeRunes    = 64
 	maxTextRunes         = 1024
@@ -71,6 +70,7 @@ func (v *validator) validate(ctx context.Context, req *app.AdmissionRequest) err
 	// Concurrent creates can overshoot the cap slightly.
 	count, err := v.countViews(ctx, view.Namespace, view.Spec.DashboardUID, maxViewsPerDashboard)
 	if err != nil {
+		logging.FromContext(ctx).Error("Failed to count saved views", "namespace", view.Namespace, "dashboardUID", view.Spec.DashboardUID, "error", err)
 		return apierrors.NewInternalError(errors.New("could not count the dashboard's saved views"))
 	}
 	if count >= maxViewsPerDashboard {
@@ -90,18 +90,6 @@ func validateSpec(view *v0alpha1.SavedDashboardView) error {
 	} else if len(raw) > maxSpecBytes {
 		// Report this alone: the per-field errors of an oversized spec would be noise.
 		return apierrors.NewInvalid(savedDashboardViewGroupKind, view.Name, field.ErrorList{field.TooLong(spec, "", maxSpecBytes)})
-	}
-
-	uidPath := spec.Child("dashboardUID")
-	switch {
-	case view.Spec.DashboardUID == "":
-		errs = append(errs, field.Required(uidPath, "must not be empty"))
-	case utf8.RuneCountInString(view.Spec.DashboardUID) > maxDashboardUIDRunes:
-		errs = append(errs, field.TooLongCharacters(uidPath, view.Spec.DashboardUID, maxDashboardUIDRunes))
-	default:
-		for _, msg := range path.IsValidPathSegmentName(view.Spec.DashboardUID) {
-			errs = append(errs, field.Invalid(uidPath, view.Spec.DashboardUID, msg))
-		}
 	}
 
 	if strings.TrimSpace(view.Spec.Name) == "" {

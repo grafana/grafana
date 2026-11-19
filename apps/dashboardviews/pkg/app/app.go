@@ -15,6 +15,10 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	// The loopback config leaves APIPath empty, which would send the client to /<group>/<version>.
+	if cfg.KubeConfig.APIPath == "" {
+		cfg.KubeConfig.APIPath = "/apis"
+	}
 	client, err := dashboardviewsv0alpha1.NewSavedDashboardViewClientFromGenerator(k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{}))
 	if err != nil {
 		return nil, err
