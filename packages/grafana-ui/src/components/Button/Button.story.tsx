@@ -5,7 +5,7 @@ import { type ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { allButtonVariants, allButtonFills, Button, type ButtonProps } from './Button';
+import { allButtonVariants, allButtonFills, Button, type ButtonProps, type ButtonVariant } from './Button';
 import mdx from './Button.mdx';
 import { ButtonGroup } from './ButtonGroup';
 
@@ -94,6 +94,18 @@ export const Examples: StoryFn<typeof Button> = () => {
           <Button variant="success" icon="angle-down" aria-label="Expand menu" />
         </ButtonGroup>
         <ButtonGroup>
+          <Button variant="warning" icon="sync">
+            Run query
+          </Button>
+          <Button variant="warning" icon="angle-down" aria-label="Expand menu" />
+        </ButtonGroup>
+        <ButtonGroup>
+          <Button variant="info" icon="sync">
+            Run query
+          </Button>
+          <Button variant="info" icon="angle-down" aria-label="Expand menu" />
+        </ButtonGroup>
+        <ButtonGroup>
           <Button variant="secondary" icon="sync">
             Run query
           </Button>
@@ -113,6 +125,38 @@ export const Examples: StoryFn<typeof Button> = () => {
           </Button>
         </Card.Actions>
       </Card>
+    </Stack>
+  );
+};
+
+const statusVariants: ButtonVariant[] = ['destructive', 'warning', 'info', 'success'];
+
+export const StatusVariants: StoryFn<typeof Button> = () => {
+  return (
+    <Stack direction="column" gap={3}>
+      {allButtonFills.map((buttonFill) => (
+        <Stack alignItems="center" gap={3} key={buttonFill}>
+          {statusVariants.map((variant) => (
+            <Button variant={variant} fill={buttonFill} key={variant}>
+              {variant} {buttonFill}
+            </Button>
+          ))}
+        </Stack>
+      ))}
+      <Stack alignItems="center" gap={3}>
+        {statusVariants.map((variant) => (
+          <Button variant={variant} icon="bell" key={variant}>
+            {variant} with icon
+          </Button>
+        ))}
+      </Stack>
+      <Stack alignItems="center" gap={3}>
+        {statusVariants.map((variant) => (
+          <Button variant={variant} disabled key={variant}>
+            {variant} disabled
+          </Button>
+        ))}
+      </Stack>
     </Stack>
   );
 };
