@@ -2,8 +2,13 @@ package folder
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"sync"
@@ -11,6 +16,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -232,16 +240,53 @@ func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.R
 func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// The controller runs as an access policy authenticated with its own token, as the operator does,
+	// so it only has the permissions that token carries rather than the admin's.
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+			Key: &key.PublicKey, KeyID: "cascade-test-key", Algorithm: string(jose.ES256), Use: "sig",
+		}}})
+	}))
+	t.Cleanup(jwks.Close)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController},
+		ExtJWTJWKSURL:        jwks.URL,
 	})
 	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 	ns := helper.Namespacer(orgID)
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "cascade-test-key"))
+	require.NoError(t, err)
+	token, err := jwt.Signed(signer).Claims(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject: "access-policy:folder-controller", Audience: jwt.Audience{"grafana"},
+			IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: ns,
+			Permissions: []string{
+				"folder.grafana.app/folders:*", "dashboard.grafana.app/dashboards:*",
+			},
+		},
+	}).Serialize()
+	require.NoError(t, err)
+	svcCfg := helper.NewAdminRestConfig()
+	svcCfg.Username, svcCfg.Password = "", ""
+	svcCfg.Wrap(func(next http.RoundTripper) http.RoundTripper {
+		return accessTokenTransport{next: next, token: token}
+	})
+	svc, err := dynamic.NewForConfig(svcCfg)
+	require.NoError(t, err)
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
 	newEnv := func(t *testing.T) *cascadeEnv {
@@ -259,7 +304,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	// that records the statuses it writes.
 	startController := func(t *testing.T, deleter cascadedelete.ChildDeleter) *recordingWriter {
 		t.Helper()
-		clients := cascadedelete.NewDynamicClients(dyn)
+		clients := cascadedelete.NewDynamicClients(svc)
 		if deleter == nil {
 			deleter = clients
 		}
@@ -285,7 +330,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		synced := make(chan struct{})
 		go func() {
 			defer close(feedDone)
-			feedEvents(ctx, dyn.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
+			feedEvents(ctx, svc.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
 		}()
 		t.Cleanup(func() {
 			cancel()
@@ -371,7 +416,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		e.createDashboards("e2e-fail", "e2e-fail-ok1", "e2e-fail-bad", "e2e-fail-ok2")
 		e.waitIndexed("e2e-fail", 3)
 
-		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(dyn)}
+		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(svc)}
 		bad := "e2e-fail-bad"
 		deleter.fail.Store(&bad)
 		startController(t, deleter)
@@ -467,4 +512,15 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		}
 		require.NotNil(t, e.getFolder("e2e-allowed-top"), "the parent must be left alone")
 	})
+}
+
+type accessTokenTransport struct {
+	next  http.RoundTripper
+	token string
+}
+
+func (t accessTokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("X-Access-Token", t.token)
+	return t.next.RoundTrip(req)
 }
