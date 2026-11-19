@@ -71,12 +71,12 @@ export function writeRecentScope(store: Store, scopes: Scope[], scopeNodeId?: st
   const updated = [entry, ...current].slice(0, RECENT_SCOPES_MAX);
 
   try {
-    store.set(RECENT_SCOPES_KEY, JSON.stringify(updated));
+    store.set(RECENT_SCOPES_KEY, JSON.stringify(updated), { throwOnFailure: true });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError' && updated.length > 1) {
       // Retry once with the oldest entry dropped to reclaim space
       try {
-        store.set(RECENT_SCOPES_KEY, JSON.stringify(updated.slice(0, -1)));
+        store.set(RECENT_SCOPES_KEY, JSON.stringify(updated.slice(0, -1)), { throwOnFailure: true });
       } catch {
         return;
       }

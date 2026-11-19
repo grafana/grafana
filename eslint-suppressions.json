@@ -304,19 +304,9 @@
       "count": 1
     }
   },
-  "packages/grafana-flamegraph/src/FlameGraphHeader.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-flamegraph/src/FlameGraphPane.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 4
-    }
-  },
-  "packages/grafana-flamegraph/src/hooks.ts": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
+      "count": 2
     }
   },
   "packages/grafana-o11y-ds-frontend/src/TemporaryAlert.tsx": {
@@ -354,7 +344,7 @@
   },
   "packages/grafana-runtime/src/components/QueryEditorWithMigration.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-runtime/src/config.ts": {
@@ -447,7 +437,7 @@
   },
   "packages/grafana-sql/src/components/visual-query-builder/WhereRow.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
@@ -468,11 +458,6 @@
   "packages/grafana-ui/src/components/CodeMirror/useStableProps.ts": {
     "react-hooks/refs": {
       "count": 3
-    }
-  },
-  "packages/grafana-ui/src/components/ColorPicker/ColorInput.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx": {
@@ -515,11 +500,6 @@
   },
   "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx": {
     "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/DataLinks/DataLinksInlineEditor/DataLinksInlineEditorBase.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -712,27 +692,12 @@
       "count": 6
     }
   },
-  "packages/grafana-ui/src/components/Sidebar/useSidebar.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 13
-    }
-  },
-  "packages/grafana-ui/src/components/Slider/Slider.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx": {
@@ -982,11 +947,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/utils/useComponetInstanceId.ts": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
@@ -995,11 +955,6 @@
   "public/app/core/TableModel.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/core/components/AccessControl/AddPermission.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/core/components/AccessControl/PermissionList.tsx": {
@@ -1028,11 +983,6 @@
   "public/app/core/components/AppChrome/FeatureControl/FeatureControlFlag.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    }
-  },
-  "public/app/core/components/AppChrome/MegaMenu/hooks.ts": {
-    "react-hooks/refs": {
-      "count": 2
     }
   },
   "public/app/core/components/AppChrome/TopBar/useChromeHeaderHeight.ts": {
@@ -1084,33 +1034,13 @@
       "count": 2
     }
   },
-  "public/app/core/components/NestedFolderPicker/useTreeInteractions.ts": {
-    "react-hooks/set-state-in-effect": {
-      "count": 2
-    }
-  },
   "public/app/core/components/OptionsUI/fieldColor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
     }
   },
-  "public/app/core/components/Page/EditableTitle.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/core/components/PluginHelp/PluginHelp.tsx": {
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/QueryOperationRow/QueryOperationRow.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/RolePicker/RolePicker.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -1251,9 +1181,6 @@
   "public/app/features/actions/ParamsEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/actions/utils.ts": {
@@ -1274,11 +1201,6 @@
   "public/app/features/admin/UserLdapSyncInfo.tsx": {
     "@grafana/no-gf-form": {
       "count": 3
-    }
-  },
-  "public/app/features/admin/UserProfile.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/admin/Users/OrgUsersTable.tsx": {
@@ -1360,11 +1282,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/backtesting/BacktestPanel.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1436,11 +1353,6 @@
     }
   },
   "public/app/features/alerting/unified/components/notification-policies/PoliciesTree.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/receivers/PayloadEditor.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -1662,11 +1574,6 @@
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/gma-rule-list/rule-search/RuleSearchInput.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1911,16 +1818,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/DashboardsTree.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/RecentlyViewedDashboards.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/AskAssistantPill.tsx": {
     "react-hooks/refs": {
       "count": 2
@@ -2027,11 +1924,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingVariable.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/embedding/DashboardView.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2088,11 +1980,6 @@
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Body/TransformationTypePicker.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Header/ExperimentalFeedbackButton.tsx": {
-    "react-hooks/refs": {
-      "count": 3
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorContextWrapper.tsx": {
@@ -2363,11 +2250,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/components/StaticOptionsEditor.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/components/SwitchVariableForm.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 3
@@ -2396,11 +2278,6 @@
   "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
     "react-hooks/refs": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/editors/CustomVariableEditor/ModalEditor.tsx": {
-    "react-hooks/refs": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/editors/GroupByVariableEditor.tsx": {
@@ -2727,7 +2604,7 @@
   },
   "public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditorModal.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dimensions/scale.ts": {
@@ -2773,11 +2650,6 @@
       "count": 4
     }
   },
-  "public/app/features/explore/ElapsedTime.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/Explore.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2790,7 +2662,7 @@
   },
   "public/app/features/explore/ExplorePaneContainer.tsx": {
     "react-hooks/refs": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/explore/Graph/ExploreGraph.tsx": {
@@ -2829,11 +2701,6 @@
   },
   "public/app/features/explore/Logs/LogsVolumePanelList.tsx": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/QueriesDrawer/QueriesDrawerContext.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -2893,11 +2760,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordionCategorizedKeyValues.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/LogsLink.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2910,11 +2772,6 @@
   },
   "public/app/features/explore/TraceView/createSpanLink.test.ts": {
     "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/useDetailState.ts": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -2998,11 +2855,6 @@
   "public/app/features/geo/utils/frameVectorSource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/home/DashboardTabs/DashboardTabs.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 2
     }
   },
   "public/app/features/home/Overview/useOverviewPlacement.ts": {
@@ -3147,9 +2999,6 @@
   "public/app/features/migrate-to-cloud/onprem/ConfigureSnapshot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/migrate-to-cloud/onprem/EmptyState/CallToAction/ConnectModal.tsx": {
@@ -3284,11 +3133,6 @@
     }
   },
   "public/app/features/plugins/admin/components/VersionInstallButton.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/VersionList.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -3488,11 +3332,6 @@
       "count": 1
     }
   },
-  "public/app/features/search/hooks/useSearchKeyboardSelection.ts": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "public/app/features/search/page/components/ActionRow.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -3564,11 +3403,6 @@
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/valueMatchersUI.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/calculateHeatmap/editor/AxisEditor.tsx": {
-    "react-hooks/refs": {
       "count": 1
     }
   },
@@ -3777,11 +3611,6 @@
       "count": 3
     }
   },
-  "public/app/features/variables/textbox/TextBoxVariablePicker.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 5
@@ -3953,11 +3782,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/alertlist/AlertInstances.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/alertlist/UnifiedAlertList.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -4008,16 +3832,6 @@
   "public/app/plugins/panel/canvas/components/SetBackground.tsx": {
     "react-hooks/immutability": {
       "count": 2
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/ConnectionSVG.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/components/connections/ConnectionSVG2.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
@@ -4163,11 +3977,6 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/live/LivePublish.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
