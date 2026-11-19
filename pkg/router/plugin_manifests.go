@@ -359,10 +359,13 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 
-	for _, plugin := range deployment.Plugins {
-		for _, manifest := range plugin.Definition.Manifests {
+	for i := range deployment.Plugins {
+		plugin := &deployment.Plugins[i].Definition
+		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
+		definition.MigrateDeprecatedRoutes(plugin.Settings)
+		loadSettingsManifest(ctx, plugin)
 	}
 
 	return deployment, nil

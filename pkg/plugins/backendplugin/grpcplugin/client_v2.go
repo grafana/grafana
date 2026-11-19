@@ -128,7 +128,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	if err != nil {
 		return nil, err
 	}
-	return backend.FromProto().QueryDataResponse(protoResp)
+	return backend.FromProto().ConsumeQueryDataResponse(protoResp)
 }
 
 func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
@@ -253,7 +253,7 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 	}
 
 	// Send the responses as individual chunks
-	rsp, err := backend.FromProto().QueryDataResponse(protoResp)
+	rsp, err := backend.FromProto().ConsumeQueryDataResponse(protoResp)
 	if err != nil {
 		return err
 	}
