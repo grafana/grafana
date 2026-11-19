@@ -181,15 +181,18 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
 // instead, for tests that exercise the rules preview.
 let mockRulesScenario: 'datasource' | 'datasource-filtered' | 'yaml' = 'datasource';
 let mockSeedRulesSource = false;
+// The real step registers the file's validator on the form; the mock does it only when a test sets an error.
+let mockRulesFileError: string | undefined;
 
 jest.mock('./steps/Step2AlertRules', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
   return {
     Step2Content: function Step2Content() {
-      const { setValue } = useFormContext();
+      const { setValue, register } = useFormContext();
       useEffect(() => {
         if (mockRulesScenario === 'yaml') {
+          register('rulesYamlFile', { validate: () => mockRulesFileError ?? true });
           setValue('rulesSource', 'yaml');
           setValue('yamlImportTargetDatasourceUID', 'yaml-target-uid');
           setValue('yamlImportTargetDatasourceName', 'Yaml Target');
@@ -216,7 +219,7 @@ jest.mock('./steps/Step2AlertRules', () => {
         if (mockSeedRulesSource) {
           setValue('rulesDatasourceUID', 'prometheus-uid');
         }
-      }, [setValue]);
+      }, [setValue, register]);
       return null;
     },
     useStep2Validation: () => true,
@@ -1575,6 +1578,27 @@ describe('ImportToGMA wizard — rules from a YAML file', () => {
 
   afterEach(() => {
     mockRulesScenario = 'datasource';
+    mockRulesFileError = undefined;
+  });
+
+  it('stays on the rules step when the file fails its check', async () => {
+    mockRulesFileError = 'No rules found in this file';
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification configuration/i });
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await waitFor(() => expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toBeEnabled());
+    expect(screen.queryByText(/review import/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /import rules/i })).toBeInTheDocument();
   });
 
   it('imports them to the data source chosen for the file', async () => {

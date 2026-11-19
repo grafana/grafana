@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { useFlagAlertingImportAlertmanagerAPI } from '@grafana/runtime/internal';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import { trackImportToGMAWizardStarted, trackImportToGMAWizardStepSkipped } from '../../Analytics';
+import { trackImportToGMAWizardStarted } from '../../Analytics';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useStagedConfig } from '../../settings/import/useStagedConfig';
@@ -25,6 +25,7 @@ import { useCanImportToGMA } from './useCanImportToGMA';
 import { useImportJob } from './useImportJob';
 import { useNotificationsDryRun } from './useNotificationsDryRun';
 import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
+import { useRulesStepNavigation } from './useRulesStepNavigation';
 
 function Wizard({ notificationsLock }: { notificationsLock?: NotificationsLock }) {
   const [searchParams] = useURLSearchParams();
@@ -103,7 +104,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     },
   });
 
-  const { watch, setValue, getValues } = formAPI;
+  const { watch, getValues } = formAPI;
   const step1Completed = watch('step1Completed');
 
   // Permission checks aligned with backend authorization.go
@@ -112,17 +113,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   const dryRun = useNotificationsDryRun(formAPI);
   const step1 = useNotificationsStepNavigation(formAPI, dryRun);
 
-  const handleStep2Next = useCallback((): boolean => {
-    setValue('step2Completed', true);
-    setValue('step2Skipped', false);
-    return true;
-  }, [setValue]);
-
-  const handleStep2Skip = useCallback(() => {
-    setValue('step2Completed', false);
-    setValue('step2Skipped', true);
-    trackImportToGMAWizardStepSkipped({ step: 'rules' });
-  }, [setValue]);
+  const step2 = useRulesStepNavigation(formAPI);
 
   // Step 1 values come from the snapshot validated on Next; the rest is read live.
   const { step1Snapshot } = step1;
@@ -174,8 +165,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
             <Step2Wrapper
               step1Completed={step1Completed}
               canImport={canImportRules}
-              onNext={handleStep2Next}
-              onSkip={handleStep2Skip}
+              onNext={step2.onNext}
+              onSkip={step2.onSkip}
             />
           )}
 

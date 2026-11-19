@@ -2055,6 +2055,7 @@
         "target-datasource-required": "Please select a target data source",
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
+        "yaml-empty-group": "The group \"{{group}}\" has no rules",
         "yaml-error": "Failed to parse YAML file: {{error}}",
         "yaml-file": "Rules YAML file",
         "yaml-no-rules": "No rules found in this file",
