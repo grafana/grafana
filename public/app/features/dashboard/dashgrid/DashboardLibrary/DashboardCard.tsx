@@ -600,12 +600,12 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     thumbnailOverlay,
-    // Quieter than the template modal's cards: the picker sits inside a bordered panel.
+    // Quieter than the template modal's cards: the picker sits inside a bordered panel. Hover only tints the
+    // background, like the viz picker's items, so a picked card keeps its accent border under the pointer.
     selectableCard: css({
       width: '100%',
       borderColor: theme.colors.border.weak,
       '&:hover': {
-        borderColor: theme.colors.border.medium,
         backgroundColor: theme.colors.action.hover,
       },
       [`&:hover .${previewAction}, &:focus-within .${previewAction}`]: {
@@ -629,11 +629,11 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     previewAction,
-    // What CardContainer draws for `isSelected`, so a picked template looks like every selected card. Drawn over
-    // the border, since the picker's scrolling list would clip an outline outside it.
+    // Matches the viz picker's selected item (PanelTypeCard `current`): accent border and selected tint. Only the
+    // colour of the card's own 1px border changes, so nothing is drawn outside the card and nothing moves.
     selectedCard: css({
-      outline: `solid 1px ${theme.colors.accent.border}`,
-      outlineOffset: -1,
+      borderColor: theme.colors.accent.main,
+      backgroundColor: theme.colors.action.selected,
     }),
     // The picker's grid sets the card height; the thumbnail takes what the title and author leave.
     selectableThumbnail: css({
