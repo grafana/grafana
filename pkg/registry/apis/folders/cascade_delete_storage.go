@@ -485,19 +485,14 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 // authorized as preconditions, so the delete fails with a conflict if the folder changed since. A
 // precondition the caller set must already match that version, or it is a conflict as well.
 func pinToCheckedVersion(options *metav1.DeleteOptions, f *foldersv1.Folder) (*metav1.DeleteOptions, error) {
+	if err := checkDeletePreconditions(f, options); err != nil {
+		return nil, err
+	}
 	pinned := options.DeepCopy()
 	if pinned.Preconditions == nil {
 		pinned.Preconditions = &metav1.Preconditions{}
 	}
 	uid, rv := f.GetUID(), f.GetResourceVersion()
-	if got := pinned.Preconditions.UID; got != nil && *got != uid {
-		return nil, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), f.GetName(),
-			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *got, uid))
-	}
-	if got := pinned.Preconditions.ResourceVersion; got != nil && *got != rv {
-		return nil, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), f.GetName(),
-			fmt.Errorf("precondition failed: the folder changed since its resource version %s", *got))
-	}
 	pinned.Preconditions.UID, pinned.Preconditions.ResourceVersion = &uid, &rv
 	return pinned, nil
 }
