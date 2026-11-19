@@ -28,8 +28,8 @@ export const HeaderRow = (props: HeaderRowProps) => {
         return (
           <div
             className={tableStyles.thead}
-            {...headerGroupProps}
             key={key}
+            {...headerGroupProps}
             aria-label={e2eSelectorsTable.header}
             aria-rowindex={1}
             role="row"
