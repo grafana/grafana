@@ -127,6 +127,33 @@ export function buildAssistantPrompt(
   return `Create a new dashboard based on this dashboard template.`;
 }
 
+/** The request when a template open in the editor goes to the Assistant without a prompt of its own. */
+export const OPEN_TEMPLATE_PROMPT = 'Adapt this template to my data sources and adjust its queries as needed.';
+
+/**
+ * Builds the context data for a template already open in the dashboard editor as a new, unsaved dashboard, as Use
+ * template opens it: the Assistant adapts that dashboard in place instead of building one from a description. Uses
+ * `name` rather than `templateName`, as suggested dashboards do, so the Assistant does not create the template again.
+ */
+export function buildOpenTemplateContextData(template: {
+  name: string;
+  description?: string;
+  author?: string;
+}): TemplateContextData {
+  return {
+    name: template.name,
+    description: template.description || undefined,
+    author: template.author,
+    instructions:
+      'This template is open in the dashboard editor as a new, unsaved dashboard. Adapt that dashboard in place: ' +
+      'read it with your dashboard tools, keep its layout, panels and variables unless the user asks for changes, ' +
+      'and point every query that uses TestData, or a data source or metric the user does not have, at ' +
+      "the user's own data sources after checking which metrics they actually expose. Do the same for its " +
+      'variables and annotations. Do not create a new dashboard or load the template again, and do not save the ' +
+      'dashboard: the user reviews and saves it.',
+  };
+}
+
 /**
  * Async function to check if the suggested dashboard assistant is enabled.
  * Checks the feature flag and assistant availability (no tool flag needed for suggested dashboards).

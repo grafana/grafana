@@ -1,6 +1,7 @@
 import { type ChatContextItem, openAssistant } from '@grafana/assistant';
+import { locationService } from '@grafana/runtime';
 
-import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
+import { buildPlanningInstructions, openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
 
 // The repo-wide jest mapping stubs @grafana/assistant with no-op fns, so give
@@ -86,6 +87,36 @@ describe('startPlanningInAssistant', () => {
     expect(context?.[0].node.name).toBe('Dashboard planning instructions');
     expect(context?.[1]).toBe(contextItems[0]);
     expect(context?.[2]).toBe(contextItems[1]);
+  });
+});
+
+describe('openTemplateInAssistant', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('opens the template page, then hands the template to the Assistant without a planning item', () => {
+    const push = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    const templateItem: ChatContextItem = {
+      node: { id: 'template-red', name: 'RED metrics', navigable: false },
+      occurrences: [],
+    };
+
+    openTemplateInAssistant({
+      templateUrl: '/dashboard/template?gnetId=1',
+      prompt: 'add a latency panel',
+      context: [templateItem],
+    });
+
+    expect(push).toHaveBeenCalledWith('/dashboard/template?gnetId=1');
+    expect(openAssistantMock).toHaveBeenCalledWith({
+      origin: PROMPT_ORIGIN,
+      mode: 'dashboarding',
+      autoSend: true,
+      prompt: 'add a latency panel',
+      context: [templateItem],
+    });
+    push.mockRestore();
   });
 });
 

@@ -12,13 +12,13 @@ import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/E
 import { contextSrv } from 'app/core/services/context_srv';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
-import { buildAssistantPrompt } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
+import { OPEN_TEMPLATE_PROMPT } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
 import { LandingTemplates } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
-import { startPlanningInAssistant } from './handoff';
+import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 
 interface Props {
   dashboard: DashboardScene;
@@ -172,8 +172,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         templateItem && !submittedContextItems.some(({ node }) => node.id === templateItem.node.id)
           ? [...submittedContextItems, templateItem]
           : submittedContextItems;
-      // The prompt can be sent empty once a template is attached; the template is then the whole request.
-      const request = prompt.trim() || (template ? buildAssistantPrompt(template.kind) : prompt);
+      const request = prompt.trim();
       const selectedDatasources = contextItems.flatMap(({ node }) => {
         const data = node.data;
         if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
@@ -200,13 +199,23 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         ];
       });
 
-      startPlanningInAssistant({
-        request,
-        displayPrompt: request,
-        datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
-        context: contextItems,
-        dashboards,
-      });
+      if (template) {
+        // As in the template modal: the template opens as Use template opens it, and the Assistant adapts it.
+        openTemplateInAssistant({
+          templateUrl: template.url,
+          // The prompt can be sent empty once a template is attached; the template is then the whole request.
+          prompt: request || OPEN_TEMPLATE_PROMPT,
+          context: contextItems,
+        });
+      } else {
+        startPlanningInAssistant({
+          request,
+          displayPrompt: request,
+          datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
+          context: contextItems,
+          dashboards,
+        });
+      }
 
       setAssistantDriven(true);
       setTemplate(undefined);

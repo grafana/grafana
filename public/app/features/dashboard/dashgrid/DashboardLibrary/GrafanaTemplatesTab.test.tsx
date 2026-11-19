@@ -83,11 +83,12 @@ describe('GrafanaTemplatesTab', () => {
         id: 'grafana:1',
         title: 'RED metrics',
         kind: 'template_dashboard',
+        url: expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1&.*assistantSource=assistant_button$/),
         contextItem: expect.objectContaining({
           type: 'structured',
           hidden: false,
           title: 'RED metrics',
-          data: expect.objectContaining({ templateName: 'RED metrics' }),
+          data: expect.objectContaining({ name: 'RED metrics', description: 'Rate, errors and duration' }),
         }),
       });
       expect(locationService.push).not.toHaveBeenCalled();

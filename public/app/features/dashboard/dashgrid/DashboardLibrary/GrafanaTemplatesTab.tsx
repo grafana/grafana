@@ -23,7 +23,7 @@ import {
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link, type TemplateSelectionProps } from './types';
-import { buildTemplateContextData } from './utils/assistantHelpers';
+import { buildOpenTemplateContextData } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 import { filterTemplates } from './utils/templateFilters';
 
@@ -139,15 +139,27 @@ export const GrafanaTemplatesTab = ({
   };
 
   const selectTemplate = (dashboard: GnetDashboard) => {
+    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
     onSelectTemplate?.({
       id: getGrafanaTemplateSelectionId(dashboard),
       title: dashboard.name,
       kind: 'template_dashboard',
+      // The page Customize with Assistant opens: the template's own dashboard, on TestData.
+      url: getTemplateDashboardUrl(
+        dashboard,
+        testDataSource,
+        sourceEntryPoint,
+        TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON
+      ),
       contextItem: createAssistantContextItem('structured', {
         hidden: false,
         // The prompt pill is narrow: a "Dashboard Template:" prefix leaves no room for the name.
         title: dashboard.name,
-        data: buildTemplateContextData(dashboard, 'template_dashboard'),
+        data: buildOpenTemplateContextData({
+          name: dashboard.name,
+          description: dashboard.description,
+          author: dashboard.orgName || dashboard.userName,
+        }),
       }),
     });
   };

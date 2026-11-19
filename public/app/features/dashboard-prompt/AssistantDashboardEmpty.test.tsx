@@ -11,10 +11,11 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 
 import { AssistantDashboardEmpty } from './AssistantDashboardEmpty';
-import { startPlanningInAssistant } from './handoff';
+import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 
 jest.mock('./handoff', () => ({
   startPlanningInAssistant: jest.fn(),
+  openTemplateInAssistant: jest.fn(),
 }));
 
 const mockCheckLimits = jest.fn();
@@ -71,6 +72,7 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDas
 }));
 
 const mockStartPlanning = jest.mocked(startPlanningInAssistant);
+const mockOpenTemplate = jest.mocked(openTemplateInAssistant);
 
 function renderEmpty() {
   const dashboard = new DashboardScene({
@@ -182,6 +184,7 @@ describe('AssistantDashboardEmpty', () => {
       id: 'grafana:1',
       title: 'RED metrics',
       kind: 'template_dashboard',
+      url: '/dashboard/template?gnetId=1',
       contextItem: {
         node: { id: 'template-red', name: 'Dashboard Template: RED metrics', navigable: false },
         occurrences: [],
@@ -191,6 +194,7 @@ describe('AssistantDashboardEmpty', () => {
       id: 'grafana:2',
       title: 'USE method',
       kind: 'template_dashboard',
+      url: '/dashboard/template?gnetId=2',
       contextItem: {
         node: { id: 'template-use', name: 'Dashboard Template: USE method', navigable: false },
         occurrences: [],
@@ -247,19 +251,18 @@ describe('AssistantDashboardEmpty', () => {
       expect(latestPromptProps?.hostContextItems).toEqual([]);
     });
 
-    it('plans from the template alone when the prompt is sent empty', async () => {
+    it('opens the template and has the Assistant adapt it when the prompt is sent empty', async () => {
       renderEmpty();
       act(() => latestTemplatesProps?.onSelectTemplate(red));
 
       await act(() => latestOnSubmit?.('', [red.contextItem]));
 
-      expect(mockStartPlanning).toHaveBeenCalledWith(
-        expect.objectContaining({
-          request: 'Create a new dashboard based on this dashboard template.',
-          displayPrompt: 'Create a new dashboard based on this dashboard template.',
-          context: [red.contextItem],
-        })
-      );
+      expect(mockOpenTemplate).toHaveBeenCalledWith({
+        templateUrl: '/dashboard/template?gnetId=1',
+        prompt: 'Adapt this template to my data sources and adjust its queries as needed.',
+        context: [red.contextItem],
+      });
+      expect(mockStartPlanning).not.toHaveBeenCalled();
       expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
     });
 
@@ -281,6 +284,7 @@ describe('AssistantDashboardEmpty', () => {
         expect(refusal).toEqual(new Error(reason));
 
         expect(mockStartPlanning).not.toHaveBeenCalled();
+        expect(mockOpenTemplate).not.toHaveBeenCalled();
         expect(publish).toHaveBeenCalledWith(expect.objectContaining({ payload: [reason] }));
         // Nothing resets: the picked template and the templates stay, and the rejection keeps the prompt's text.
         expect(latestTemplatesProps?.selectedTemplateId).toBe('grafana:1');
@@ -311,8 +315,8 @@ describe('AssistantDashboardEmpty', () => {
 
       await act(() => latestOnSubmit?.('add a latency panel', []));
 
-      expect(mockStartPlanning).toHaveBeenCalledWith(
-        expect.objectContaining({ request: 'add a latency panel', context: [red.contextItem] })
+      expect(mockOpenTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: 'add a latency panel', context: [red.contextItem] })
       );
     });
   });
