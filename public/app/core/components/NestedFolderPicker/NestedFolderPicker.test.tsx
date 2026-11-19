@@ -5,7 +5,7 @@ import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
@@ -116,6 +116,16 @@ describe('NestedFolderPicker', () => {
     expect(
       await screen.findByRole('button', { name: `Select folder: ${folderA.item.title} currently selected` })
     ).toBeInTheDocument();
+  });
+
+  it('is disabled when the viewer has no access to the selected folder', async () => {
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
+    );
+
+    render(<NestedFolderPicker onChange={mockOnChange} value={folderA.item.uid} />);
+
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeDisabled();
   });
 
   it('clicking the button opens the folder picker', async () => {

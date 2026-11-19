@@ -20,6 +20,7 @@ type BlobGarbageCollector struct {
 	batchWait time.Duration
 
 	skippedWithoutAge int // blobs of the last Collect with no usable age
+	onDeleted         func(kv.BlobKey)
 }
 
 type BlobGCStore interface {
@@ -128,6 +129,9 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 			if err := g.store.Delete(ctx, kv.BlobDataSection, key); err != nil {
 				errs = append(errs, err)
 				continue
+			}
+			if g.onDeleted != nil {
+				g.onDeleted(bk)
 			}
 		}
 		count++

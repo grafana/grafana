@@ -76,6 +76,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
 import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
+import { type ComposerExitReason } from '../composer/types';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import {
   getPendingChangePreview,
@@ -89,6 +90,7 @@ import {
   recordPendingChange,
   startRecordingPendingChanges,
 } from '../lifecycle/pendingChangesHistory';
+import { discardScenePendingChanges, getPendingChangesDiff } from '../lifecycle/pendingChangesSave';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -113,6 +115,7 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -175,6 +178,11 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import {
+  type AdHocTransformationsByPanelKey,
+  collectAdHocTransformations,
+  restoreAdHocTransformations,
+} from './panel-actions/adHocTransformations';
 import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
 import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
@@ -255,6 +263,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * State before editing started
    */
   private _initialState?: DashboardSceneState;
+  private _initialAdHocTransformations?: AdHocTransformationsByPanelKey;
   /**
    * Url state before editing started
    */
@@ -278,6 +287,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     assistantChanges: boolean;
     manualEdits: Map<string, number>;
     aiEdits: Map<string, number>;
+    /** A Composer session was open at some point in the period. */
+    composerUsed: boolean;
   };
 
   public trackModePickerShown() {
@@ -310,6 +321,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       assistantChanges: false,
       manualEdits: new Map(),
       aiEdits: new Map(),
+      composerUsed: false,
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -345,6 +357,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
       manual_edits: editCounts(this._editSession.manualEdits),
       ai_edits: editCounts(this._editSession.aiEdits),
+      composer_used: this._editSession.composerUsed,
     };
   }
 
@@ -635,7 +648,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
       bindKeys();
-      this.closeComposerSession();
+      this.closeComposerSession('mode_change');
     });
 
     // Panel actions ask for their ad hoc changes to be saved with an event, so they do not import the dashboard's saving code.
@@ -652,8 +665,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // Leaving the dashboard ends Composer, and drops a request to enter it that Assistant has not taken
       // yet; the cached scene must not come back in it.
       clearPendingComposerEnterRequest();
-      this.exitComposerMode();
-      this.closeComposerSession();
+      this.exitComposerMode('navigation');
+      this.closeComposerSession('navigation');
       composerSubscription.unsubscribe();
       promoteAdHocChangesSubscription.unsubscribe();
       window.removeEventListener('pagehide', onPageHide);
@@ -837,6 +850,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // transient: the build's first write enters edit mode while it is still up, and discarding
       // must not bring it back with nothing left to end it.
       this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+      this._initialAdHocTransformations = collectAdHocTransformations(this);
       this._initialUrlState = locationService.getLocation();
 
       this.setState({
@@ -868,7 +882,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     if (mode !== 'composer' && isComposerMode(this.state)) {
-      this.exitComposerMode();
+      this.exitComposerMode('mode_change');
       if (getDashboardMode(this.state) === mode) {
         return true;
       }
@@ -886,7 +900,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (mode === 'view' && isNewDashboard(this.state)) {
       if (trigger === 'picker') {
-        this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        if (this.showsPendingChangesForEditing()) {
+          // A draft is saved or discarded on the way out, as Exit edit does.
+          this.exitEditMode({ skipConfirm: false });
+        } else {
+          this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        }
       }
       return false;
     }
@@ -900,6 +919,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // A switch into any other non-view mode is blocked
     if (mode !== 'view' && isMobileEditDeprecated()) {
       notifyMobileEditNotAvailable();
+      return false;
+    }
+    // Viewing would show the pending changes as if they were saved: they are saved or discarded on
+    // the way out, as Exit edit does.
+    if (trigger === 'picker' && previous !== 'view' && mode === 'view' && this.showsPendingChangesForEditing()) {
+      this.exitEditMode({ skipConfirm: false });
       return false;
     }
     if (
@@ -965,7 +990,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public openFullEditor() {
     // A manual-edit entry point (edit panel URL, settings) leaves Composer first.
-    this.exitComposerMode();
+    this.exitComposerMode('manual_edit');
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -992,13 +1017,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return false;
     }
     this._composer = { session, modeBefore };
+    this.markComposerUsed();
     return true;
   }
 
+  /** Over Viewing there is no edit period yet: it starts when Composer switches to Editing, and is marked then. */
+  private markComposerUsed() {
+    if (this._editSession) {
+      this._editSession.composerUsed = true;
+    }
+  }
+
   /** Leaves Composer for the mode it is over: Editing, or what it was entered from. Never saves or discards. */
-  public exitComposerMode() {
+  public exitComposerMode(reason?: ComposerExitReason) {
     if (!isComposerMode(this.state)) {
       return;
+    }
+    if (reason) {
+      this._composer?.session.noteExitReason(reason);
     }
     const modeBefore = this._composer?.modeBefore;
     const mode: DashboardMode = isComposerEditing(this.state) ? 'edit' : modeBefore === 'agent' ? 'agent' : 'view';
@@ -1035,6 +1071,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('user', 'picker')) {
         return;
       }
+      this.markComposerUsed();
       this.setState({ composerEditing: true });
       return;
     }
@@ -1077,6 +1114,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('assistant', 'assistant')) {
         return false;
       }
+      this.markComposerUsed();
       this.setState({ composerEditing: true });
     }
     return true;
@@ -1108,7 +1146,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   public leaveComposer() {
     if (!this.getComposerSession()?.assistantWorking) {
-      this.exitComposerMode();
+      this.exitComposerMode('toolbar_button');
       return;
     }
     appEvents.publish(
@@ -1120,7 +1158,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         ),
         yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
         noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
-        onConfirm: () => this.exitComposerMode(),
+        onConfirm: () => this.exitComposerMode('toolbar_button'),
       })
     );
   }
@@ -1129,9 +1167,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return isComposerMode(this.state) ? this._composer?.session : undefined;
   }
 
-  private closeComposerSession() {
+  private closeComposerSession(reason?: ComposerExitReason) {
     const composer = this._composer;
     this._composer = undefined;
+    if (reason) {
+      composer?.session.noteExitReason(reason);
+    }
     composer?.session.close();
   }
 
@@ -1254,6 +1295,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       isDirty: false,
       overlay: undefined,
     });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
     // Detect edits made during the save before its redirect can leave the dashboard.
     this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
@@ -1273,10 +1315,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Edits that skipped the edit actions, which record each change, are recorded as one here, and
     // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
     const history = getPendingChangesHistory(this.state);
+    if (history && !restoreInitialState && (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+    }
+    if (!skipConfirm && !restoreInitialState && this.showsPendingChangesForEditing()) {
+      this.confirmLeavingPendingChanges();
+      return;
+    }
     if (history && !restoreInitialState) {
-      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
-        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
-      }
       this.exitEditModeConfirmed(false);
       return;
     }
@@ -1309,6 +1355,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         })
       );
     }
+  }
+
+  /**
+   * Pending changes on the page are unsaved changes: leaving edit mode saves or discards them, as it
+   * would edits made by hand. With nothing left to save, they are discarded without asking: not while
+   * an edit is still on its way to their plugin, which the recorded changes don't show yet.
+   */
+  private confirmLeavingPendingChanges() {
+    if (!isNewDashboard(this.state) && !hasActualSaveChanges(this) && !hasUnrecordedPendingChange(this)) {
+      void discardScenePendingChanges(this);
+      return;
+    }
+    this.showUnsavedChangesDialog(
+      () => {
+        if (this.state.isEditing) {
+          this.exitEditModeConfirmed(false);
+        }
+      },
+      () => void discardScenePendingChanges(this)
+    );
   }
 
   private showUnsavedChangesDialog(onSaveSuccess: () => void, onDiscard: () => void) {
@@ -1367,9 +1433,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (restoreInitialState) {
+      const adHocTransformations = collectAdHocTransformations(this);
       // Restore initial state and disable editing
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
+      restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
+      // The baseline can be taken before a lookup started on the live tree resolves.
+      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1389,10 +1459,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(false);
   }
 
-  /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
+  /**
+   * Whether edits are recorded in the history of pending changes to a saved dashboard: Save saves
+   * them through the plugin that keeps them (see pendingChangesSave.ts).
+   */
   public recordsToPendingChanges(): boolean {
     const preview = getScenePendingChangePreview(this.state);
     return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
+  }
+
+  /**
+   * Whether the scene changed since its edits to pending changes were last recorded, by an edit that
+   * skipped the edit actions, which record each change.
+   */
+  public hasUnrecordedEdits(): boolean {
+    if (!this.state.isDirty) {
+      return false;
+    }
+    const changes = this.getChangesSinceLoad();
+    return Boolean(changes.diffCount || changes.hasFolderChanges || changes.hasPredefinedVariablesChanges);
+  }
+
+  /** Whether the dashboard page shows pending changes, or a draft, as its unsaved changes. */
+  private showsPendingChangesForEditing(): boolean {
+    const preview = getScenePendingChangePreview(this.state);
+    return Boolean(
+      this.state.isEditing &&
+        !this.state.meta.isEmbedded &&
+        preview?.previewing &&
+        (preview.pending.history || proposesNewDashboard(preview.pending))
+    );
   }
 
   /**
@@ -1424,6 +1520,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
   }
 
@@ -1438,6 +1535,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // Their plugin discards them, and the saved dashboard opens for editing in their place.
+    if (this.showsPendingChangesForEditing() && this.recordsToPendingChanges()) {
+      void discardScenePendingChanges(this, { keepEditing: true });
+      return;
+    }
+
     this.endEditPeriod('discarded');
 
     // Stop tracking while we reset state.
@@ -1448,6 +1551,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.deactivateSidebar();
 
     const { mode } = this.state;
+    const adHocTransformations = collectAdHocTransformations(this);
     const { loadingView, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
@@ -1467,8 +1571,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+    restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
+    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1552,6 +1658,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
+    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
@@ -1578,10 +1685,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // Edits to pending changes are recorded as they're made; Apply saves them to the dashboard.
-    // A new dashboard's are saved as the dashboard, here.
-    if (this.recordsToPendingChanges() && !saveAsCopy && !saveAsDashboardTemplate) {
-      return;
+    // Changes to pending changes are measured from what their plugin recorded: as Exit edit does, an
+    // edit not recorded yet is recorded first, and the drawer shows it once that lands.
+    const history = getPendingChangesHistory(this.state);
+    if (
+      history &&
+      !saveAsCopy &&
+      this.recordsToPendingChanges() &&
+      (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))
+    ) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
     }
 
     const overlay = this.state.overlay;
@@ -2476,6 +2589,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
+    // Save saves pending changes as their plugin keeps them: what it would save is measured from the
+    // saved version.
+    return getPendingChangesDiff(this) ?? this.getChangesSinceLoad(saveTimeRange, saveVariables, saveRefresh);
+  }
+
+  /** Changes from the dashboard as loaded, or as its pending changes were last recorded. */
+  private getChangesSinceLoad(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean) {
     const rawJson = this.getRawJsonFromEditor();
     return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh, rawJson });
   }

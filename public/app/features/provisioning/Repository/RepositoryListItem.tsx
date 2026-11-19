@@ -12,7 +12,6 @@ import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedBadge } from '../components/ManagedBadge';
 import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
-import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import {
@@ -22,8 +21,8 @@ import {
   isManaged,
   isProvisioningResourceReadOnly,
 } from '../utils/managedResource';
-import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getIsReadOnlyWorkflows, getRepositoryEditUrl, getRepositoryResourcesUrl } from '../utils/repository';
+import { getKindInfoByStat, resourceKindInfos } from '../utils/resourceKinds';
 import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
@@ -103,24 +102,18 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.description && <Text>{spec.description}</Text>}
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => {
-                const info = getKindInfoByStat(stat);
-                const icon = info?.icon ?? 'file-alt';
-                const label = `${stat.count} ${stat.resource}`;
-                // Known kinds link to where the repository's resources live; unknown
-                // kinds have no destination, so render a non-interactive badge.
-                const href = info ? getRepositoryRoute(info, repository) : undefined;
-
-                return href ? (
-                  <LinkButton key={index} fill="outline" size="md" variant="secondary" icon={icon} href={href}>
-                    {label}
-                  </LinkButton>
-                ) : (
-                  <Button key={index} fill="outline" size="md" variant="secondary" icon={icon} disabled>
-                    {label}
-                  </Button>
-                );
-              })}
+              {status.stats.map((stat, index) => (
+                <LinkButton
+                  key={index}
+                  fill="outline"
+                  size="md"
+                  variant="secondary"
+                  icon={getKindInfoByStat(stat)?.icon ?? 'file-alt'}
+                  href={getRepositoryResourcesUrl(name, stat.resource)}
+                >
+                  {`${stat.count} ${stat.resource}`}
+                </LinkButton>
+              ))}
             </Stack>
           )}
         </Stack>
@@ -132,7 +125,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={1} direction="row">
           <LinkButton
             icon="eye"
-            href={`${PROVISIONING_URL}/${name}`}
+            href={resourceKindInfos.repository.getRoute(name)}
             variant="primary"
             size="md"
             data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
@@ -144,7 +137,7 @@ export function RepositoryListItem({ repository }: Props) {
             variant="secondary"
             icon="download-alt"
             size="md"
-            onClick={() => exportResourceAsJson(repository, 'Repository')}
+            onClick={() => exportResourceAsJson(repository, resourceKindInfos.repository.kind)}
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>
@@ -158,7 +151,7 @@ export function RepositoryListItem({ repository }: Props) {
             <LinkButton
               variant="secondary"
               icon="cog"
-              href={`${PROVISIONING_URL}/${name}/edit`}
+              href={getRepositoryEditUrl(name)}
               size="md"
               onClick={() => {
                 reportInteraction('grafana_provisioning_repository_settings_opened', {

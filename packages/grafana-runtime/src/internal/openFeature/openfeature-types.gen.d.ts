@@ -66,7 +66,6 @@ declare module "@openfeature/core" {
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
     | "savedQueriesRBAC"
-    | "newSavedQueriesExperience"
     | "dashboardLibrary"
     | "suggestedDashboards"
     | "dashboardValidatorApp"
@@ -121,6 +120,7 @@ declare module "@openfeature/core" {
     | "azureResourcePickerUpdates"
     | "heatmapNegativeLogBuckets"
     | "pieChartGradientColorScheme"
+    | "dataviz.reverseColorScheme"
     | "pluginInsights"
     | "transformationsEmptyPlaceholder"
     | "plugins.useMTPlugins"
@@ -159,10 +159,10 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.cmdkHybridSearch"
+    | "grafana.cmdkHybridSearchSkipRerank"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
-    | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"
@@ -182,6 +182,7 @@ declare module "@openfeature/core" {
     | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
+    | "grafana.navigationAdminSubNav"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.configFromQueryDynamicName"
@@ -197,6 +198,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.extensionSidebarFloating"
+    | "grafana.extensionSidebarPlacements"
+    | "grafana.megaMenuPeekAndDock"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
@@ -207,7 +210,10 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
-    | "datasources.gatewayRateLimits";
+    | "datasources.gatewayRateLimits"
+    | "plugins.disableMTPluginsFallback"
+    | "grafana.logsInfiniteScrollTop"
+    | "grafana.dashboardQuestions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

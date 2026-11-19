@@ -39,6 +39,7 @@ export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedCo
       // Force-replace so the preview isn't blocked by a 409 from the staged config's own identifier.
       forceReplace: true,
       promote: true,
+      source: 'import_settings',
     });
   }, [dryRun]);
 
