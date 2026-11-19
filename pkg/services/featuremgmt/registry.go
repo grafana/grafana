@@ -2336,7 +2336,7 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "kubernetesUsersReadApi",
