@@ -59,7 +59,7 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
   useEffect(() => {
     const applyEnumConfig = () => {
       const textValues = enumRows.map((value) => value);
-      const conversions = options.conversions;
+      const conversions = [...options.conversions];
       const enumConfig: EnumFieldConfig = { text: textValues };
       conversions[transformIndex] = { ...conversions[transformIndex], enumConfig };
 

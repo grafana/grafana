@@ -329,10 +329,16 @@ However, you can change this default in the dashboard settings.
 In the auto grid layout, panels are automatically sized and positioned as you add them.
 There are default parameters to constrain the layout, and you can update these to have more control over the display:
 
-- **Min column width**: Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.
-- **Max columns**: Set a number up to 10.
-- **Row height**: Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels.
-- **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options).
+| Option            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Min column width  | Choose from **Standard**, **Narrow**, **Wide**, or **Custom**, for which you can enter the minimum width in pixels.                                                                                                                                                                                                                                                                                                                                                                                      |
+| Max columns       | Set a number up to 10.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Row height        | Choose from **Standard**, **Short**, **Tall**, and **Custom**, for which you can enter the row height in pixels. The named sizes are the same as for **Row height**: **Short** is 168 pixels, **Standard** is 320 pixels, and **Tall** is 512 pixels.                                                                                                                                                                                                                                                    |
+| Fill screen       | <p>Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options)).</p><p>When **Fill screen** is toggled on, the [Auto fit](#auto-fit-panels-to-content) option isn't available.</p> |
+| Auto fit          | Toggle the switch on to size panels to their content instead of to a fixed row height. This option is available only when the **Fill screen** option is toggled off, and Grafana hides **Fill screen** when **Auto fit** is toggled on. For more information, refer to [Auto fit panels to content](#auto-fit-panels-to-content). (Public preview)                                                                                                                                                       |
+| Min height        | Only displayed when **Auto fit** is toggled on. The smallest height a panel can have. Choose from **None**, **Short**, **Standard**, **Tall**, or **Custom**. For **Custom**, enter a height in pixels from 50 to 2000. When you select **None**, a panel can shrink to the height of its content.                                                                                                                                                                                                       |
+| Max height        | Only displayed when **Auto fit** is toggled on. The largest height to which a panel can grow. Choose from **Unlimited**, **Short**, **Standard**, **Tall**, or **Custom**. For **Custom**, enter a height in pixels from 50 to 10000. The default is **Unlimited**.                                                                                                                                                                                                                                      |
+| Match row heights | Only displayed when **Auto fit** is toggled on. Controls how panels that share a row line up. This option is on by default, which stretches all panels in a row to the height of the tallest panel. Turn it off to have each panel keep its own height. Panels that don't auto fit maintain the row height.                                                                                                                                                                                              |
 
 If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
 
@@ -344,6 +350,37 @@ If you're working in a tab, the layout type indicator is automatically displayed
 {{< figure src="/media/docs/grafana/dashboards/screenshot-auto-layout-indicators-v13.3.png" max-width="750px" alt="Dashboard showing auto layout indicators" >}}
 
 For repeated panels, this interaction is available on the last panel in the group.
+
+#### Auto fit panels to content
+
+{{< docs/public-preview product="Auto fit" featureFlag="`grafana.dashboardsAutoHeightPanels`" >}}
+
+By default, the auto grid layout gives every panel the same fixed height, which you set with **Row height**.
+With the **Auto fit** option enabled, each panel sets its height to match its content, within a minimum and maximum height range that you choose.
+For example, when you lower the **Min height** selection, a short text panel doesn't leave empty space.
+Alternatively, when you set the **Max height** to **Unlimited**, a long table can show all of its rows without an inner scroll bar.
+
+Auto fit only works with the table and text visualizations.
+Other visualizations keep the row height, even when you turn on **Auto fit**.
+
+##### Auto fit behavior
+
+- **Unsupported panels**: Rows that include a panel that doesn't support auto fit are always at least as tall as the row height.
+- **Shorter rows**: In rows where every panel auto fits, setting **Min height** lower than the row height makes the row shorter, so there's no empty space below short panels.
+- **Content overflow**: If a panel's content is taller than the **Max height** setting, the panel stops growing. The panel header stays in place, and the content scrolls.
+- **Pagination**: Panels that paginate their content work differently. For example, when you turn on **Enable pagination** in the options of a table panel with a max height, the panel shows as many rows per page as will fit.
+  With **Max height** set to **Unlimited**, the panel grows to show all of its content, so there's no page height to fit.
+
+##### Override auto fit for a panel
+
+You can override the layout setting for individual table and text panels.
+When you select a panel with one of these visualizations, the **Auto fit** section in the sidebar offers the following choices:
+
+- **Default**: The panel follows the layout setting.
+- **On**: The panel fits to its content, even when **Auto fit** is off for the layout.
+- **Off**: The panel keeps the row height, even when **Auto fit** is on for the layout.
+
+Repeated panels use the same setting as the panel they repeat.
 
 ### Update panel layout
 

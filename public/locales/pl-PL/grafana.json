@@ -2998,6 +2998,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Reguła rejestracji"
     },
@@ -9974,13 +10005,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Sterowanie funkcjami",
       "close-tooltip": "Zamknij sterowanie funkcjami",
       "open-tooltip": "Otwórz sterowanie funkcjami"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Usuń",
     "description": "Zastąp lokalnie flagi funkcji interfejsu do celów testowania i tworzenia oprogramowania.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Usuń interfejs użytkownika i przycisk paska narzędzi",
       "tooltip": "Wszelkie zdefiniowane zastąpienia flag funkcji pozostaną aktywne.<br/> Użyj parametru <3>{{ param }}</3> w adresie URL, aby ponownie włączyć interfejs użytkownika."
@@ -9990,11 +10025,18 @@
     "flag-type": "Typ flagi",
     "flag-value": "Wartość flagi",
     "menu": "Otwórz menu",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "Ocena OFREP",
     "ofrep-reason": "Powód: <2>{{reason}}</2>",
     "ofrep-variant": "Wariant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Zapisz",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Sterowanie funkcjami"
   },
   "folder-filter": {
@@ -12667,7 +12709,7 @@
     },
     "description-allow-download": "Gdy elementy sterujące są włączone, wyświetlaj opcję pobierania logów na ekranie.",
     "description-enable-field-selector": "Funkcja eksperymentalna. Pokazuje komponent do zarządzania wyświetlanymi polami z logów.",
-    "description-enable-infinite-scrolling": "Eksperymentalne. Poproś o więcej wyników, przewijając do dołu listy logów.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Użyj wstępnie zdefiniowanego schematu kolorowania, aby wyróżnić odpowiednie części wierszy logów.",
     "description-order": "Wyświetlanie logów od najnowszych lub najstarszych. Po wybraniu opcji „Najpierw najstarsze” widok automatycznie przewija się do najnowszych logów u dołu.",
     "description-prettify-json": "Formatowanie wpisów logów JSON za pomocą znaków wcięcia i podziału wiersza.",
@@ -13690,6 +13732,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13802,7 +13847,10 @@
       "aria-label": "Nowy",
       "new-template-dashboard-button": "Użyj szablonu"
     },
-    "rss-button": "Najnowsze na blogu"
+    "rss-button": "Najnowsze na blogu",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Aktualności",

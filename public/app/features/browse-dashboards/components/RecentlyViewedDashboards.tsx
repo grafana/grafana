@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -43,10 +43,12 @@ export function RecentlyViewedDashboards() {
     setIsOpen(open);
   };
 
-  useEffect(() => {
-    // Auto collapse on small screens and expand on larger screens
+  // Auto collapse on small screens and expand on larger screens
+  const [prevIsMediumScreen, setPrevIsMediumScreen] = useState(isMediumScreen);
+  if (prevIsMediumScreen !== isMediumScreen) {
+    setPrevIsMediumScreen(isMediumScreen);
     setIsOpen(!isMediumScreen);
-  }, [isMediumScreen]);
+  }
 
   if (recentDashboards.length === 0) {
     return null;

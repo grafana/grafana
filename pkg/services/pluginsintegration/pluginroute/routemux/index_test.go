@@ -1,4 +1,4 @@
-package pluginroute
+package routemux
 
 import (
 	"testing"
@@ -28,7 +28,7 @@ func TestRouteIndexCandidate(t *testing.T) {
 			"/nodes/{name}/rebuild/{step}":                 get,
 		}},
 	}
-	routes, problems := manifestroutes.Parse(version, routeOptions)
+	routes, problems := manifestroutes.Parse(version, manifestroutes.Options{})
 	require.Empty(t, problems)
 	index := newRouteIndex("g.ext.grafana.app")
 	for _, route := range routes {
