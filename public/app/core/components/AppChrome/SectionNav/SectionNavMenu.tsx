@@ -15,7 +15,9 @@ interface Props {
 export function SectionNavMenu({ label, groups, activeId }: Props) {
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
-  const active = groups.flatMap((group) => group.children ?? []).find((item) => item.id === activeId);
+  const active = groups
+    .flatMap((group) => group.children ?? [])
+    .find((item) => activeId !== undefined && item.id === activeId);
 
   const menu = (
     <Menu ariaLabel={label}>
@@ -29,7 +31,7 @@ export function SectionNavMenu({ label, groups, activeId }: Props) {
                 url={item.url}
                 label={item.text}
                 icon={item.icon}
-                active={item.id === activeId}
+                active={activeId !== undefined && item.id === activeId}
               />
             ))}
           </Menu.Group>

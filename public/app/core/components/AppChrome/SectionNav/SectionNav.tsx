@@ -19,7 +19,7 @@ export function SectionNav({ label, groups, activeId }: Props) {
           <h2 className={styles.heading}>{group.text}</h2>
           <ul className={styles.list}>
             {(group.children ?? []).map((item) => (
-              <SectionNavLink key={item.id ?? item.url} item={item} isActive={item.id === activeId} />
+              <SectionNavLink key={item.id ?? item.url} item={item} isActive={activeId !== undefined && item.id === activeId} />
             ))}
           </ul>
         </div>
