@@ -23,7 +23,7 @@ import { isNotFoundError } from '../api/util';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { K8sAnnotations } from '../utils/k8s/constants';
 import { NO_GROUP_PREFIX } from '../utils/rules';
-import { parsePrometheusDuration } from '../utils/time';
+import { formatPrometheusDuration, parsePrometheusDuration } from '../utils/time';
 
 import { areQueriesTransformableToSimpleCondition } from './formProcessing';
 
@@ -134,11 +134,16 @@ function alertRuleDTO({ spec }: AlertRule, definition: GrafanaRuleDefinition): R
       notification_settings: toRulerNotificationSettings(fromRuleNotificationSettings(spec.notificationSettings)),
       missing_series_evals_to_resolve: spec.missingSeriesEvalsToResolve,
     },
-    for: spec.for,
-    keep_firing_for: spec.keepFiringFor,
+    for: toPromDuration(spec.for),
+    keep_firing_for: toPromDuration(spec.keepFiringFor),
     labels: spec.labels,
     annotations: spec.annotations,
   };
+}
+
+// The rules API returns Go durations ("40m0s"); the editor's quick picks match "40m".
+function toPromDuration(duration?: string) {
+  return duration && formatPrometheusDuration(parsePrometheusDuration(duration));
 }
 
 function toAlertQuery(refId: string, expression: AlertRuleExpression): AlertQuery {
