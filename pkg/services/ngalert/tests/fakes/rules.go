@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -862,4 +863,24 @@ func (f *RuleStore) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUI
 	}
 
 	return nil
+}
+
+func (f *RuleStore) CalculateChanges(ctx context.Context, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateChanges(ctx, f, groupKey, submittedRules)
+}
+
+func (f *RuleStore) CalculateRuleCreate(ctx context.Context, rule *models.AlertRule) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleCreate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleUpdate(ctx context.Context, rule *models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleUpdate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleDelete(ctx context.Context, ruleKey models.AlertRuleKey) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleDelete(ctx, f, ruleKey)
+}
+
+func (f *RuleStore) CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *models.ListAlertRulesQuery) ([]*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleGroupsDelete(ctx, f, orgID, query)
 }

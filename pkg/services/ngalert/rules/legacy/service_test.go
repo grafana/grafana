@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -227,14 +228,14 @@ func TestListAlertRules(t *testing.T) {
 type fakeDeleteAuthz struct {
 	ruleAccessControlService
 	canWriteAll   bool
-	authorizeFunc func(delta *rulestore.GroupDelta) error
+	authorizeFunc func(delta *ngrulesvc.GroupDelta) error
 }
 
 func (f *fakeDeleteAuthz) CanWriteAllRules(context.Context, identity.Requester) (bool, error) {
 	return f.canWriteAll, nil
 }
 
-func (f *fakeDeleteAuthz) AuthorizeRuleGroupWrite(_ context.Context, _ identity.Requester, delta *rulestore.GroupDelta) error {
+func (f *fakeDeleteAuthz) AuthorizeRuleGroupWrite(_ context.Context, _ identity.Requester, delta *ngrulesvc.GroupDelta) error {
 	if f.authorizeFunc == nil {
 		return nil
 	}
@@ -351,7 +352,7 @@ func TestDeleteAlertRules(t *testing.T) {
 			e := setup(t)
 			e.authz.canWriteAll = false
 			forbidden := errors.New("forbidden")
-			e.authz.authorizeFunc = func(delta *rulestore.GroupDelta) error {
+			e.authz.authorizeFunc = func(delta *ngrulesvc.GroupDelta) error {
 				if delta.Delete[0].UID == e.rules[2].UID {
 					return forbidden
 				}
