@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { Box, Divider, Stack } from '@grafana/ui';
@@ -6,7 +8,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
-import { FieldLabelWithTooltip, SidebarField, SidebarSection } from '../../rule-list/filter/RulesFilterSidebar';
+import { SidebarField, SidebarSection } from '../../rule-list/filter/RulesFilterSidebar';
 import {
   ChoiceFilter,
   DataSourceFilter,
@@ -34,6 +36,9 @@ interface AlertRulesFilterSidebarProps {
  */
 export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFilterSidebarProps) {
   const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
+  const contactPointId = useId();
+  const dashboardId = useId();
+
   const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) =>
     onApply(setFilters(query, alertRuleSearchSchema, changes));
 
@@ -92,18 +97,16 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
         <SidebarSection>
           {canViewContactPoints && (
             <SidebarField
-              label={
-                <FieldLabelWithTooltip
-                  label={t('alerting.gma-rule-list.sidebar.contact-point', 'Contact point')}
-                  tooltip={t(
-                    'alerting.gma-rule-list.sidebar.contact-point-description',
-                    'Rules that route straight to it, not through a notification policy'
-                  )}
-                  tooltipTitle={t('alerting.gma-rule-list.sidebar.contact-point-help', 'Contact point filter help')}
-                />
-              }
+              htmlFor={contactPointId}
+              label={t('alerting.gma-rule-list.sidebar.contact-point', 'Contact point')}
+              tooltip={t(
+                'alerting.gma-rule-list.sidebar.contact-point-description',
+                'Rules that route straight to it, not through a notification policy'
+              )}
+              tooltipTitle={t('alerting.gma-rule-list.sidebar.contact-point-help', 'Contact point filter help')}
             >
               <ContactPointSelector
+                id={contactPointId}
                 placeholder={t('alerting.gma-rule-list.sidebar.contact-point-placeholder', 'Select contact point')}
                 value={filter.contactPoint}
                 isClearable
@@ -120,8 +123,9 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
         </SidebarSection>
         <Divider spacing={0} />
         <SidebarSection>
-          <SidebarField label={t('alerting.gma-rule-list.sidebar.dashboard', 'Dashboard')}>
+          <SidebarField label={t('alerting.gma-rule-list.sidebar.dashboard', 'Dashboard')} htmlFor={dashboardId}>
             <DashboardPicker
+              inputId={dashboardId}
               // The picker keeps its own selection and ignores a cleared value, so a new value remounts it.
               key={filter.dashboardUid ?? ''}
               value={filter.dashboardUid}

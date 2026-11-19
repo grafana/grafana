@@ -110,6 +110,39 @@ describe('AlertRulesFilterSidebar', () => {
     expect(searchInput()).toHaveValue('cpu state:pending label:team=api');
   });
 
+  it('names the dashboard picker by its label', async () => {
+    renderPage('');
+
+    expect(await screen.findByRole('combobox', { name: 'Dashboard' })).toBeInTheDocument();
+  });
+
+  it('keeps the help icon out of the label, so it is not part of the field name', async () => {
+    renderPage('');
+
+    expect((await screen.findByTitle('Folder filter help')).closest('label')).toBeNull();
+  });
+
+  it('moves a choice with the arrow keys, from a single tab stop on the checked option', async () => {
+    const { user } = renderPage('cpu');
+    const health = await screen.findByRole('radiogroup', { name: 'Health' });
+    const radio = (name: string) => within(health).getByRole('radio', { name });
+    const tabStops = () =>
+      within(health)
+        .getAllByRole('radio')
+        .filter((option) => option.tabIndex === 0);
+    expect(tabStops()).toEqual([radio('All')]);
+
+    radio('All').focus();
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(searchParam()).toBe('cpu health:ok'));
+    expect(radio('OK')).toHaveFocus();
+    expect(tabStops()).toEqual([radio('OK')]);
+
+    await user.keyboard('{ArrowUp}{ArrowUp}');
+    await waitFor(() => expect(searchParam()).toBe('cpu health:unknown'));
+    expect(radio('Unknown')).toHaveFocus();
+  });
+
   it('applies the rule name on blur, replacing only the title text', async () => {
     const { user } = renderPage('cpu state:firing');
     const ruleName = await screen.findByRole('textbox', { name: 'Rule name' });

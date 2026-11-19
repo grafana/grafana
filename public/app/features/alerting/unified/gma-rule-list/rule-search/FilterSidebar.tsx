@@ -7,12 +7,7 @@ import { useDataSourceInstanceList } from '@grafana/runtime';
 import { Combobox, Input, MultiCombobox } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import {
-  FieldLabelWithTooltip,
-  SidebarField,
-  ToggleButtonGroup,
-  type ToggleOption,
-} from '../../rule-list/filter/RulesFilterSidebar';
+import { SidebarField, ToggleButtonGroup, type ToggleOption } from '../../rule-list/filter/RulesFilterSidebar';
 
 import { type HealthValue } from './sharedRuleFilter';
 
@@ -89,13 +84,9 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
   return (
     <SidebarField
       htmlFor={id}
-      label={
-        <FieldLabelWithTooltip
-          label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
-          tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
-          tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
-        />
-      }
+      label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
+      tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
     >
       <MultiCombobox<string>
         id={id}
@@ -193,16 +184,12 @@ export function PolicyFilter({
   return (
     <SidebarField
       htmlFor={id}
-      label={
-        <FieldLabelWithTooltip
-          label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
-          tooltip={t(
-            'alerting.gma-rule-list.sidebar.policy-description',
-            'Rules routed through it, not straight to a contact point'
-          )}
-          tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
-        />
-      }
+      label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
+      tooltip={t(
+        'alerting.gma-rule-list.sidebar.policy-description',
+        'Rules routed through it, not straight to a contact point'
+      )}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
     >
       <Combobox
         id={id}

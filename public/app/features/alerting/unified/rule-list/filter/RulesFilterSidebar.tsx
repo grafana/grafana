@@ -315,31 +315,27 @@ function FilterSidebarForm({
           </SidebarField>
 
           <SidebarField
-            label={
-              <FieldLabelWithTooltip
-                label={<Trans i18nKey="alerting.search.property.data-source">Data source</Trans>}
-                tooltip={
-                  <div>
-                    <p>
-                      <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
-                        are stored and evaluated in the data source itself.
-                      </Trans>
-                    </p>
-                    <p>
-                      <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                        alert rules in the Grafana UI as well as in the data source where they were configured.
-                      </Trans>
-                    </p>
-                  </div>
-                }
-                tooltipTitle={t(
-                  'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                  'Search by data sources help'
-                )}
-              />
+            label={<Trans i18nKey="alerting.search.property.data-source">Data source</Trans>}
+            tooltip={
+              <div>
+                <p>
+                  <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                    Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are
+                    stored and evaluated in the data source itself.
+                  </Trans>
+                </p>
+                <p>
+                  <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                    In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert
+                    rules in the Grafana UI as well as in the data source where they were configured.
+                  </Trans>
+                </p>
+              </div>
             }
+            tooltipTitle={t(
+              'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
+              'Search by data sources help'
+            )}
           >
             <Controller
               name="dataSourceNames"
@@ -365,18 +361,14 @@ function FilterSidebarForm({
         <SidebarSection>
           {canRenderContactPointSelector && (
             <SidebarField
-              label={
-                <FieldLabelWithTooltip
-                  label={<Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>}
-                  tooltip={
-                    <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                      Filters alert rules which route directly to the selected contact point. Alert rules routed to
-                      notification policies will not be displayed.
-                    </Trans>
-                  }
-                  tooltipTitle={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
-                />
+              label={<Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>}
+              tooltip={
+                <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                  Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                  notification policies will not be displayed.
+                </Trans>
               }
+              tooltipTitle={t('alerting.rules-filter.contact-point-tooltip-title', 'Contact point filter help')}
             >
               <Controller
                 name="contactPoint"
@@ -412,18 +404,14 @@ function FilterSidebarForm({
             </SidebarField>
           )}
           <SidebarField
-            label={
-              <FieldLabelWithTooltip
-                label={<Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>}
-                tooltip={
-                  <Trans i18nKey="alerting.rules-filter.policy-tooltip">
-                    Filters alert rules which route to the selected notification policy tree. Alert rules using direct
-                    contact point routing will not be displayed.
-                  </Trans>
-                }
-                tooltipTitle={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
-              />
+            label={<Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>}
+            tooltip={
+              <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                Filters alert rules which route to the selected notification policy tree. Alert rules using direct
+                contact point routing will not be displayed.
+              </Trans>
             }
+            tooltipTitle={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
           >
             <Controller
               name="policy"
@@ -550,20 +538,16 @@ function FilterSidebarForm({
             <div className={styles.divider} />
             <SidebarSection>
               <SidebarField
-                label={
-                  <FieldLabelWithTooltip
-                    label={<Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>}
-                    tooltip={
-                      <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources-tooltip">
-                        Shows or hides data sources that have no alert rules configured.
-                      </Trans>
-                    }
-                    tooltipTitle={t(
-                      'alerting.rules-filter-sidebar.empty-data-sources-tooltip-title',
-                      'Empty data sources filter help'
-                    )}
-                  />
+                label={<Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources">Empty data sources</Trans>}
+                tooltip={
+                  <Trans i18nKey="alerting.rules-filter-sidebar.empty-data-sources-tooltip">
+                    Shows or hides data sources that have no alert rules configured.
+                  </Trans>
                 }
+                tooltipTitle={t(
+                  'alerting.rules-filter-sidebar.empty-data-sources-tooltip-title',
+                  'Empty data sources filter help'
+                )}
                 labelId="filter-label-empty-data-sources"
               >
                 <ToggleButtonGroup<boolean>
@@ -599,44 +583,30 @@ export function SidebarSection({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SidebarField({
-  label,
-  children,
-  labelId,
-  htmlFor,
-}: {
+type SidebarFieldProps = {
   label: React.ReactNode;
   children: React.ReactNode;
   labelId?: string;
   htmlFor?: string;
-}) {
+} & ({ tooltip?: never; tooltipTitle?: never } | { tooltip: PropsOf<typeof Tooltip>['content']; tooltipTitle: string });
+
+export function SidebarField({ label, children, labelId, htmlFor, tooltip, tooltipTitle }: SidebarFieldProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.field}>
-      <Label id={labelId} htmlFor={htmlFor} className={styles.fieldLabel}>
-        {label}
-      </Label>
+      <Stack gap={0.5} alignItems="center">
+        <Label id={labelId} htmlFor={htmlFor} className={styles.fieldLabel}>
+          {label}
+        </Label>
+        {/* Outside the label, so its title isn't part of the control's name. */}
+        {tooltip && (
+          <Tooltip content={tooltip}>
+            <Icon name="info-circle" size="sm" title={tooltipTitle} />
+          </Tooltip>
+        )}
+      </Stack>
       <div className={styles.fieldValue}>{children}</div>
     </div>
-  );
-}
-
-export function FieldLabelWithTooltip({
-  label,
-  tooltip,
-  tooltipTitle,
-}: {
-  label: React.ReactNode;
-  tooltip: PropsOf<typeof Tooltip>['content'];
-  tooltipTitle: string;
-}) {
-  return (
-    <Stack gap={0.5} alignItems="center">
-      <span>{label}</span>
-      <Tooltip content={tooltip}>
-        <Icon name="info-circle" size="sm" title={tooltipTitle} />
-      </Tooltip>
-    </Stack>
   );
 }
 
@@ -662,17 +632,34 @@ export function ToggleButtonGroup<T>({
   'aria-labelledby': labelledBy,
 }: ToggleButtonGroupProps<T>) {
   const styles = useStyles2(getStyles);
+  const checkedIndex = options.findIndex((opt) => opt.value === value);
+  // One tab stop per group; arrows move the choice, like native radio buttons.
+  const focusIndex = Math.max(checkedIndex, 0);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const step = ARROW_STEPS[event.key];
+    if (!step) {
+      return;
+    }
+    event.preventDefault();
+    const next = (index + step + options.length) % options.length;
+    event.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus();
+    onChange(options[next].value);
+  };
+
   return (
     <div role="radiogroup" aria-labelledby={labelledBy}>
       <Stack direction="column" gap={0.5}>
-        {options.map((opt) => {
-          const isActive = opt.value === value;
+        {options.map((opt, index) => {
+          const isActive = index === checkedIndex;
           return (
             <button
               key={String(opt.value)}
               type="button"
               role="radio"
               aria-checked={isActive}
+              tabIndex={index === focusIndex ? 0 : -1}
+              onKeyDown={(event) => onKeyDown(event, index)}
               className={cx(styles.toggleButton, isActive && styles.toggleButtonActive)}
               onClick={() => onChange(opt.value)}
             >
@@ -692,6 +679,8 @@ export function ToggleButtonGroup<T>({
     </div>
   );
 }
+
+const ARROW_STEPS: Record<string, number | undefined> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
 
 function getStyles(theme: GrafanaTheme2) {
   return {
