@@ -323,10 +323,9 @@ export type ListDashboardApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateDashboardApiResponse = /** status 200 OK */
-  | Dashboard
-  | /** status 201 Created */ Dashboard
-  | /** status 202 Accepted */ Dashboard;
+export type CreateDashboardApiResponse =
+  /** status 200 OK */
+  Dashboard | /** status 201 Created */ Dashboard | /** status 202 Accepted */ Dashboard;
 export type CreateDashboardApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -438,10 +437,9 @@ export type ListLibraryPanelApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateLibraryPanelApiResponse = /** status 200 OK */
-  | LibraryPanel
-  | /** status 201 Created */ LibraryPanel
-  | /** status 202 Accepted */ LibraryPanel;
+export type CreateLibraryPanelApiResponse =
+  /** status 200 OK */
+  LibraryPanel | /** status 201 Created */ LibraryPanel | /** status 202 Accepted */ LibraryPanel;
 export type CreateLibraryPanelApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1188,6 +1186,8 @@ export type DataResponse = {
   [key: string]: any;
 };
 export type LibraryPanelSpec = {
+  /** Panel settings without a dedicated spec field. An empty object clears these settings. */
+  additionalProperties?: Unstructured;
   /** The default datasource type */
   datasource?: DataSourceRef;
   /** Library panel description */

@@ -2948,6 +2948,14 @@
           "fieldConfig"
         ],
         "properties": {
+          "additionalProperties": {
+            "description": "Panel settings without a dedicated spec field. An empty object clears these settings.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
           "datasource": {
             "description": "The default datasource type",
             "allOf": [
