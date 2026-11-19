@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -40,12 +42,20 @@ func TestNewDefaultController_AppendsExtraHandlersAfterTheDefaults(t *testing.T)
 	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard, kindTagged}, kinds(extended))
 }
 
-func TestNewDefaultControllerWithOptions_PreservesHandlersAndRecovery(t *testing.T) {
+func TestNewDefaultControllerWithOptions_PreservesHandlersRecoveryAndMetrics(t *testing.T) {
 	pending := NewPendingClient(nil)
-	c := NewDefaultControllerWithOptions(nil, nil, []ControllerOption{WithPendingRecovery(pending)}, KindHandler{Kind: kindTagged})
+	reg := prometheus.NewPedanticRegistry()
+	c := NewDefaultControllerWithOptions(nil, nil, []ControllerOption{WithPendingRecovery(pending), WithPendingMetrics(reg)}, KindHandler{Kind: kindTagged})
 	t.Cleanup(c.ShutDown)
 
 	require.Same(t, pending, c.pending)
+	require.NotNil(t, c.pendingMetrics)
+	count, err := testutil.GatherAndCount(reg,
+		"grafana_folder_deletion_observed_duration_seconds",
+		"grafana_folder_deletion_duration_skipped_total",
+	)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
 	kinds := make([]ChildKind, 0, len(c.reconciler.Handlers))
 	for _, h := range c.reconciler.Handlers {
 		kinds = append(kinds, h.Kind)

@@ -1042,6 +1042,16 @@ describe('PanelEditor', () => {
   });
 
   describe('PanelDataPane', () => {
+    it('allows reload after default query setup and protects a subsequent query edit', async () => {
+      const { panel, panelEditor } = await setup({ pluginId: 'timeseries', withoutData: true });
+      const runner = getQueryRunnerFor(panel)!;
+      expect(runner.state.queries).toEqual([{ refId: 'A' }]);
+      expect(panelEditor.hasUnsavedChangesForReload()).toBe(false);
+
+      runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      expect(panelEditor.hasUnsavedChangesForReload()).toBe(true);
+    });
+
     it.each([true, false])('honors skipDefaultQuery=%s when opening a panel without data', async (skipDefaultQuery) => {
       const { panel } = await setup({ pluginSkipDataQuery: false, skipDefaultQuery, withoutData: true });
       expect(getQueryRunnerFor(panel)?.state.queries).toEqual(skipDefaultQuery ? [] : [{ refId: 'A' }]);

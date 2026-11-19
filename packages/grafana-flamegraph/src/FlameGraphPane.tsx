@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { escapeStringForRegex } from '@grafana/data';
 
@@ -88,18 +88,22 @@ const FlameGraphPane = ({
 
   const styles = getStyles(Boolean(fillHeight));
 
-  useLayoutEffect(() => {
+  const [prevDataContainer, setPrevDataContainer] = useState(dataContainer);
+  if (prevDataContainer !== dataContainer) {
+    setPrevDataContainer(dataContainer);
     setCollapsedMap(dataContainer.getCollapsedMap());
-  }, [dataContainer]);
+  }
 
-  useEffect(() => {
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     if (resetKey !== undefined && resetKey > 0) {
       setFocusedItemData(undefined);
       setRangeMin(0);
       setRangeMax(1);
       setLocalSandwichItem(undefined);
     }
-  }, [resetKey]);
+  }
 
   useEffect(() => {
     if (!keepFocusOnDataChange) {

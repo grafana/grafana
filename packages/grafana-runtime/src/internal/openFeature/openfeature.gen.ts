@@ -1287,10 +1287,10 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  *
  * **Details:**
  * - flag key: `flameGraph.tableNg`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("flameGraph.tableNg", false, options).value;
+  return useFlag("flameGraph.tableNg", true, options).value;
 };
 
 /**
@@ -2332,10 +2332,10 @@ export const useFlagQueryeditorCoauthoringUi = (options?: ReactFlagEvaluationOpt
  *
  * **Details:**
  * - flag key: `rawPrometheus.tableNg`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("rawPrometheus.tableNg", false, options).value;
+  return useFlag("rawPrometheus.tableNg", true, options).value;
 };
 
 /**
@@ -2563,10 +2563,10 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `table.inspectDataTableNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.inspectDataTableNG", false, options).value;
+  return useFlag("table.inspectDataTableNG", true, options).value;
 };
 
 /**

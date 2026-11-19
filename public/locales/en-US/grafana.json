@@ -1629,6 +1629,7 @@
         "dashboard": "Dashboard",
         "datasource": "Query data source",
         "datasource-placeholder": "Select data sources",
+        "filters": "Filters",
         "folder": "Folder",
         "folder-description": "Rules directly in this folder",
         "folder-help": "Folder filter help",
@@ -1648,6 +1649,8 @@
         "label-value-placeholder": "value",
         "label-value-unset": "none",
         "labels": "Labels",
+        "metric": "Recorded metric",
+        "metric-placeholder": "Exact metric name",
         "operator-absent": "absent",
         "operator-absent-description": "Lacks this label",
         "operator-equal": "Equals",
@@ -1672,7 +1675,9 @@
         "state-firing": "Firing",
         "state-normal": "Normal",
         "state-pending": "Pending",
-        "state-recovering": "Recovering"
+        "state-recovering": "Recovering",
+        "target-datasource": "Target data source",
+        "target-datasource-placeholder": "Select data source"
       },
       "status": {
         "error": "Failed to evaluate rule",
@@ -4910,9 +4915,10 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions": {
+      "no-access": "You do not have permission to view the permissions of this folder."
+    },
     "folder-permissions-exposed": {
-      "loading": "Loading...",
-      "no-access": "You do not have permission to view the permissions of this folder.",
       "not-found": "Unable to load this folder."
     },
     "folder-picker": {
@@ -5712,6 +5718,36 @@
         "version": "Version"
       },
       "view-json-diff": "View JSON diff to see all changes"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "connection",
+      "label-plural": "connections"
+    },
+    "dashboard": {
+      "label": "dashboard",
+      "label-plural": "dashboards"
+    },
+    "datasource": {
+      "label": "data source",
+      "label-plural": "data sources"
+    },
+    "folder": {
+      "label": "folder",
+      "label-plural": "folders"
+    },
+    "librarypanel": {
+      "label": "library panel",
+      "label-plural": "library panels"
+    },
+    "playlist": {
+      "label": "playlist",
+      "label-plural": "playlists"
+    },
+    "repository": {
+      "label": "repository",
+      "label-plural": "repositories"
     }
   },
   "correlations": {
@@ -15181,9 +15217,6 @@
       "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
     },
-    "folder-permissions": {
-      "loading": "Loading..."
-    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -15689,22 +15722,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
-    },
-    "resource-kind": {
-      "connection": "connection",
-      "connections": "Connections",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboards",
-      "datasource": "data source",
-      "datasources": "Data sources",
-      "folder": "folder",
-      "folders": "Folders",
-      "library-panel": "library panel",
-      "library-panels": "Library panels",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "Repositories",
-      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16641,8 +16658,6 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
       "type-header": "Type"
     },
     "search-input": {
