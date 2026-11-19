@@ -16,7 +16,7 @@ function page(base: string, suffix = '') {
 
 // Titles are derived from the mid-sentence label here, so no reader changes a label's case itself
 function label(translate: () => string) {
-  return (options: LabelOptions = {}) => (options.upperFirst ? upperFirst(translate()) : translate());
+  return ({ upperFirst: upper = true }: LabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
 }
 
 /**

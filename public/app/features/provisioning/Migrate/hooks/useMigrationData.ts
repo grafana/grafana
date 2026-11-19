@@ -171,7 +171,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
-          title: kind.getPluralLabel({ upperFirst: true }),
+          title: kind.getPluralLabel(),
           path: [],
           resourceCount: unmanaged.length,
           directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),

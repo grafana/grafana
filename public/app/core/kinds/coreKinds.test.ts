@@ -11,10 +11,10 @@ describe('getRoute', () => {
 });
 
 describe('labels', () => {
-  it('read mid-sentence by default and start with a capital on request', () => {
-    expect(CORE_KINDS.librarypanel.getLabel()).toBe('library panel');
-    expect(CORE_KINDS.librarypanel.getLabel({ upperFirst: true })).toBe('Library panel');
-    expect(CORE_KINDS.datasource.getPluralLabel({ upperFirst: true })).toBe('Data sources');
+  it('start with a capital by default and read mid-sentence on request', () => {
+    expect(CORE_KINDS.librarypanel.getLabel()).toBe('Library panel');
+    expect(CORE_KINDS.librarypanel.getLabel({ upperFirst: false })).toBe('library panel');
+    expect(CORE_KINDS.datasource.getPluralLabel()).toBe('Data sources');
   });
 });
 

@@ -455,7 +455,7 @@ function makeTypeColumn(
       // anything else shows its kind
       const coreKind = findKindBySearchKind(kind);
       if (coreKind) {
-        txt = coreKind.getLabel({ upperFirst: true });
+        txt = coreKind.getLabel();
         icon = coreKind.icon;
       } else if (kind === 'panel') {
         icon = `${PluginIconName.panel}`;

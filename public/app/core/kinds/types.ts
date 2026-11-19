@@ -1,7 +1,10 @@
 import { type IconName } from '@grafana/data';
 
 export interface LabelOptions {
-  /** Uppercases the first letter and leaves the rest as translated, for a title or a table cell. */
+  /**
+   * Uppercases the first letter and leaves the rest as translated, as a title or a table cell shows
+   * it. On by default; `false` gives the label as it reads inside a sentence.
+   */
   upperFirst?: boolean;
 }
 
@@ -28,12 +31,12 @@ export interface KindInfo {
   /** The kind string dashboard search rows carry. Absent when the kind is not in that index. */
   searchKind?: string;
   /**
-   * Translated name as it reads mid-sentence: "dashboard". `upperFirst` gives the form a title shows.
-   * Never lowercase a label: some languages, such as German, capitalize every noun. A function, so
-   * it translates at render and not at module load.
+   * Translated name: "Dashboard", or "dashboard" as it reads mid-sentence with `upperFirst: false`.
+   * The translation holds the mid-sentence form. Never lowercase a label: some languages, such as
+   * German, capitalize every noun. A function, so it translates at render and not at module load.
    */
   getLabel: (options?: LabelOptions) => string;
-  /** The plural of `getLabel`: "dashboards". */
+  /** The plural of `getLabel`: "Dashboards". */
   getPluralLabel: (options?: LabelOptions) => string;
   icon: IconName;
   /**

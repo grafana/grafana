@@ -83,7 +83,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
     const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
     return Array.from(resources, (value) => ({
-      label: getKindInfoByResource(value)?.getPluralLabel({ upperFirst: true }) ?? value,
+      label: getKindInfoByResource(value)?.getPluralLabel() ?? value,
       value,
     }));
   }, [resourcesQuery.data?.items]);

@@ -78,11 +78,11 @@ describe('resourceKinds registry', () => {
   });
 
   it('names each kind as it reads mid-sentence', () => {
-    expect(resourceKindInfos.folder.getLabel()).toBe('folder');
-    expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
-    expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
-    expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
-    expect(resourceKindInfos.datasource.getLabel()).toBe('data source');
+    expect(resourceKindInfos.folder.getLabel({ upperFirst: false })).toBe('folder');
+    expect(resourceKindInfos.dashboard.getLabel({ upperFirst: false })).toBe('dashboard');
+    expect(resourceKindInfos.playlist.getLabel({ upperFirst: false })).toBe('playlist');
+    expect(resourceKindInfos.librarypanel.getLabel({ upperFirst: false })).toBe('library panel');
+    expect(resourceKindInfos.datasource.getLabel({ upperFirst: false })).toBe('data source');
   });
 
   it('every kind exposes a translated plural label and a list function', () => {
