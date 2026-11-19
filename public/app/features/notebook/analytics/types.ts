@@ -2,6 +2,8 @@ import { type EventProperty } from '@grafana/runtime/unstable';
 
 import { type NotebookBlockType } from '../scene/layout-notebook/edit/NotebookBlockTypeMenu';
 
+import { type NotebookSourceApp } from './captureSource';
+
 // One EventProperty interface per notebook event, plus the property groups that several events send.
 //
 // Share a group when one reader in shape.ts computes it in one go, and every event means the same
@@ -193,6 +195,8 @@ export interface NotebookNewStartedProperties extends EventProperty {
 }
 
 export interface NotebookCreatedProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** Bounded app label captured before the write, present only for plugin-origin captures. */
+  source_app?: NotebookSourceApp;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Which surface the notebook was created from. */
@@ -355,6 +359,8 @@ type NotebookAddedCellType = (typeof NOTEBOOK_ADDED_CELL_TYPE)[keyof typeof NOTE
  * The panel properties are only there for a panel. A markdown cell has nothing to say about them.
  */
 export interface NotebookCellAddedFromAddToNotebookProperties extends EventProperty, Partial<AddedPanelProperties> {
+  /** Bounded app label captured before the write, present only for plugin-origin captures. */
+  source_app?: NotebookSourceApp;
   /** Identifier and join key for this notebook. */
   notebookUid: string;
   /** Whether the appended cell is a panel or markdown. */
@@ -424,6 +430,8 @@ export const NOTEBOOK_ADD_FAILED_REASON = {
 export type NotebookAddFailedReason = (typeof NOTEBOOK_ADD_FAILED_REASON)[keyof typeof NOTEBOOK_ADD_FAILED_REASON];
 
 export interface NotebookAddFailedProperties extends EventProperty {
+  /** Bounded app label captured before submission, present only for plugin-origin captures. */
+  source_app?: NotebookSourceApp;
   /** Identifier and join key for the target notebook. Empty when the submit was creating one. */
   notebookUid: string;
   /** Which surface the panel was sent from. */
@@ -434,6 +442,13 @@ export interface NotebookAddFailedProperties extends EventProperty {
   reason: NotebookAddFailedReason;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
   lockTimeRange: boolean;
+}
+
+export interface NotebookAddOpenedProperties extends EventProperty {
+  /** Surface that opened the shared capture picker. */
+  source: NotebookEntryPoint;
+  /** Bounded app label, present only when a plugin opened the picker. */
+  source_app?: NotebookSourceApp;
 }
 
 export const NOTEBOOK_INCIDENT_ACTION = {

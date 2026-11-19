@@ -1,6 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
+import { StrictMode } from 'react';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { onInteraction, setEchoSrv } from '@grafana/runtime';
+import { locationService, onInteraction, setEchoSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -162,7 +163,57 @@ describe('AddPanelToNotebookModalBody', () => {
     createWithContent.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
   });
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => {
+    jest.clearAllMocks();
+    act(() => locationService.push('/'));
+  });
+
+  it('reports one picker open and retains its source for failed submissions after navigation', async () => {
+    setEchoSrv(new Echo());
+    const opened: unknown[] = [];
+    const failures: unknown[] = [];
+    const stopOpened = onInteraction('grafana_notebook_add_to_notebook_opened', (event) => opened.push(event));
+    const stopFailed = onInteraction('grafana_notebook_add_to_notebook_failed', (event) => failures.push(event));
+    const props = {
+      buildPanel: jest.fn(async () => panel()),
+      onDismiss: jest.fn(),
+      entryPoint: 'plugin' as const,
+      isLibraryPanel: false,
+      capturedTimeRange: RELATIVE_CAPTURE,
+    };
+    try {
+      const { user, rerender } = render(
+        <StrictMode>
+          <AddPanelToNotebookModalBody {...props} />
+        </StrictMode>,
+        { historyOptions: { initialEntries: ['/a/grafana-app-observability-app/service/private-service'] } }
+      );
+      rerender(
+        <StrictMode>
+          <AddPanelToNotebookModalBody {...props} />
+        </StrictMode>
+      );
+      expect(opened).toEqual([expect.objectContaining({ source: 'plugin', source_app: 'app_o11y' })]);
+      act(() => locationService.push('/a/grafana-k6-app/tests/123'));
+      createWithContent.mockRejectedValueOnce(new Error('denied'));
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'Investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+      await waitFor(() =>
+        expect(failures).toEqual([expect.objectContaining({ source_app: 'app_o11y', reason: 'write_failed' })])
+      );
+      expect(createWithContent).toHaveBeenCalledWith(
+        { title: 'Investigation' },
+        expect.any(Array),
+        'plugin',
+        'user',
+        false,
+        'app_o11y'
+      );
+    } finally {
+      stopOpened();
+      stopFailed();
+    }
+  });
 
   // The create route refuses a name that is already taken, and it checks against the picker's rows —
   // which are empty until the first page lands and keep filling after it.
@@ -1010,7 +1061,8 @@ describe('AddPanelToNotebookModalBody', () => {
           ],
           'plugin',
           'assistant',
-          false
+          false,
+          'other_plugin'
         )
       );
       expect(mockCreateSuccessNotification).toHaveBeenCalledWith(

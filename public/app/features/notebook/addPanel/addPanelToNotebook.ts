@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 
+import { readNotebookSourceApp } from '../analytics/captureSource';
 import { NotebookAnalytics } from '../analytics/main';
 import {
   NOTEBOOK_ADD_FAILED_REASON,
@@ -132,7 +133,8 @@ export async function addToExistingNotebook(
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
-  lockTimeRange = false
+  lockTimeRange = false,
+  sourceApp = readNotebookSourceApp(entryPoint)
 ): Promise<AddedToNotebook> {
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
@@ -144,7 +146,8 @@ export async function addToExistingNotebook(
       entryPoint,
       firstPosition + index,
       cell.kind === 'panel' ? addedPanel(cell) : undefined,
-      lockTimeRange
+      lockTimeRange,
+      ...(sourceApp ? ([sourceApp] as const) : [])
     );
   });
 
@@ -156,7 +159,8 @@ export async function createNotebookWithContent(
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
-  lockTimeRange = false
+  lockTimeRange = false,
+  sourceApp = readNotebookSourceApp(entryPoint)
 ): Promise<AddedToNotebook> {
   const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
 
@@ -168,7 +172,8 @@ export async function createNotebookWithContent(
     entryPoint,
     spec.layout.spec.cells.length,
     panels.length === 1 ? addedPanel(panels[0]) : undefined,
-    lockTimeRange
+    lockTimeRange,
+    ...(sourceApp ? ([sourceApp] as const) : [])
   );
 
   return { uid: created.uid, title: spec.title };
