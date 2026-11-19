@@ -142,6 +142,18 @@ for (const theme of [
   'visual_refresh_light',
   'visual_refresh_dark',
 ]) {
+  test(`clickable tag text retains contrast on hover in ${theme}`, async ({ page }) => {
+    await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
+    const clickable = page.getByRole('button', { name: 'Clickable', exact: true });
+    await clickable.hover();
+
+    const { violations } = await new AxeBuilder({ page }).include('button').withRules(['color-contrast']).analyze();
+    expect(
+      violations.flatMap(({ nodes }) => nodes.map(({ html, failureSummary }) => ({ html, failureSummary })))
+    ).toEqual([]);
+    await expect(clickable).toHaveCSS('text-decoration-line', 'underline');
+  });
+
   test(`tag labels retain text contrast with one action hovered or disabled in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
     await expect(page.getByRole('button', { name: 'Remove tag: Disabled removal', exact: true })).toBeDisabled();

@@ -209,7 +209,7 @@ const getTagStyles = (theme: GrafanaTheme2) => {
     ),
     hover: css({
       '&:hover': {
-        opacity: 0.85,
+        textDecoration: 'underline',
         cursor: 'pointer',
       },
     }),
