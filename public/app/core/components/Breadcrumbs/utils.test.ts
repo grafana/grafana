@@ -1,4 +1,5 @@
 import { type GrafanaConfig, locationUtil, type NavModelItem } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { buildBreadcrumbs } from './utils';
 
@@ -197,6 +198,39 @@ describe('breadcrumb utils', () => {
         };
         expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
           { text: 'My page', href: '/grafana/my-page' },
+        ]);
+      });
+    });
+
+    describe('with the Administration section nav', () => {
+      const cfg: NavModelItem = { id: 'cfg', text: 'Administration', url: '/admin' };
+      const access: NavModelItem = {
+        id: 'cfg/access',
+        text: 'Users and access',
+        url: '/admin/access',
+        parentItem: cfg,
+      };
+      const users: NavModelItem = { id: 'global-users', text: 'Users', url: '/admin/users', parentItem: access };
+
+      afterEach(() => setTestFlags({}));
+
+      it('names the overview pages without linking to them', () => {
+        setTestFlags({ 'grafana.navigationAdminSubNav': true });
+
+        expect(buildBreadcrumbs(users)).toEqual([
+          { text: 'Administration' },
+          { text: 'Users and access' },
+          { text: 'Users', href: '/admin/users' },
+        ]);
+      });
+
+      it('links them as usual when the toggle is off', () => {
+        setTestFlags({ 'grafana.navigationAdminSubNav': false });
+
+        expect(buildBreadcrumbs(users)).toEqual([
+          { text: 'Administration', href: '/admin' },
+          { text: 'Users and access', href: '/admin/access' },
+          { text: 'Users', href: '/admin/users' },
         ]);
       });
     });
