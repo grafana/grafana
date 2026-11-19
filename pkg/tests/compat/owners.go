@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"golang.org/x/mod/modfile"
 )
@@ -24,7 +25,8 @@ var reported sync.Map
 // Paths are repository-relative directories, most specific first. The first one
 // with its own CODEOWNERS entry wins; otherwise the last one resolves to its
 // closest parent entry. An apps/<app> path also checks the CODEOWNERS of the
-// grafana-enterprise checkout the build uses, which keeps its apps in pkg/apps/<app>.
+// grafana-enterprise checkout the build uses, which keeps its apps in pkg/apps/<app>
+// or pkg/registry/<app>.
 //
 // Call it on a top-level test with the package path to cover failures outside any
 // subtest. That report is skipped when a subtest already named its owners, because
@@ -32,6 +34,10 @@ var reported sync.Map
 func ReportOwners(t *testing.T, paths ...string) {
 	t.Helper()
 	root, _, isSubtest := strings.Cut(t.Name(), "/")
+	if deadline, ok := t.Deadline(); ok && !isSubtest {
+		stop := watchTimeout(t.Name(), deadline, paths)
+		t.Cleanup(func() { stop() })
+	}
 	t.Cleanup(func() {
 		if !isSubtest {
 			defer reported.Delete(root)
@@ -68,8 +74,50 @@ func logOwners(t *testing.T, paths []string) {
 	}
 	t.Logf("owned by %s", owners)
 	if summary := os.Getenv("GITHUB_STEP_SUMMARY"); summary != "" {
-		appendLine(t, summary, fmt.Sprintf("- `%s` failed, owned by %s\n", t.Name(), owners))
+		if err := appendLine(summary, fmt.Sprintf("- `%s`%s failed, owned by %s\n", t.Name(), phaseLabel(), owners)); err != nil {
+			t.Logf("could not write job summary: %v", err)
+		}
 	}
+}
+
+// watchTimeout names the owners of a phase that is about to hit the test timeout. The
+// testing package then panics outside the running test, which never runs its cleanups,
+// so nothing else would report a hung phase. It returns the function that cancels the
+// watch once the test ended in time.
+func watchTimeout(name string, deadline time.Time, paths []string) (stop func() bool) {
+	remaining := time.Until(deadline)
+	// Early enough to write before the panic ends the process.
+	timer := time.AfterFunc(remaining-min(10*time.Second, remaining/10), func() {
+		owners, err := lookupOwners(paths)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s is about to time out; could not look up owners: %v\n", name, err)
+			return
+		}
+		fmt.Fprintf(os.Stderr, "%s is about to time out, owned by %s\n", name, owners)
+		if summary := os.Getenv("GITHUB_STEP_SUMMARY"); summary != "" {
+			if err := appendLine(summary, fmt.Sprintf("- `%s`%s timed out, owned by %s\n", name, phaseLabel(), owners)); err != nil {
+				fmt.Fprintf(os.Stderr, "could not write job summary: %v\n", err)
+			}
+		}
+	})
+	return timer.Stop
+}
+
+// phaseLabel names the version and the round trip a phase runs in, like " (newer,
+// upgrade-rollback)", because a phase runs once per version and a summary entry
+// would not say which one failed. It is empty for a run outside the workflow.
+func phaseLabel() string {
+	var parts []string
+	if role := os.Getenv(EnvRole); role != "" {
+		parts = append(parts, role)
+	}
+	if dir := os.Getenv(EnvDir); dir != "" {
+		parts = append(parts, filepath.Base(dir))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " (" + strings.Join(parts, ", ") + ")"
 }
 
 // PackagePath returns the repository-relative path of the current test package, or ""
@@ -163,8 +211,11 @@ func resolveOwners(paths []string, oss, enterprise map[string]string) (string, e
 			return owners, nil
 		}
 		if app, ok := strings.CutPrefix(p, "apps/"); ok {
-			if owners, ok := enterprise["pkg/apps/"+app]; ok {
-				return owners, nil
+			// Enterprise keeps some apps in pkg/apps and others in pkg/registry.
+			for _, dir := range []string{"pkg/apps/", "pkg/registry/"} {
+				if owners, ok := enterprise[dir+app]; ok {
+					return owners, nil
+				}
 			}
 		}
 		if i < len(paths)-1 {
@@ -196,15 +247,14 @@ func repoRoot() (string, error) {
 	}
 }
 
-func appendLine(t *testing.T, file, line string) {
-	t.Helper()
+func appendLine(file, line string) error {
 	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) // #nosec G304 G703 -- job summary file named by GitHub Actions
 	if err != nil {
-		t.Logf("could not write job summary: %v", err)
-		return
+		return err
 	}
-	defer func() { _ = f.Close() }()
 	if _, err := f.WriteString(line); err != nil {
-		t.Logf("could not write job summary: %v", err)
+		_ = f.Close()
+		return err
 	}
+	return f.Close()
 }

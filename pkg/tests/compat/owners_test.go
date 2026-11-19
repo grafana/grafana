@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -61,7 +62,7 @@ func TestLookupOwnersUsesEnterpriseCheckout(t *testing.T) {
 	writeTree(t, root, map[string]string{
 		"grafana/.github/CODEOWNERS":           "/apps/alerting/ @org/alerting\n/pkg/tests/compat/ @org/compat\n",
 		"grafana/go.mod":                       "module github.com/grafana/grafana\n\nreplace github.com/grafana/grafana-enterprise => ../enterprise\n",
-		"enterprise/.github/CODEOWNERS":        "/pkg/apps/queries @org/sharing\n/pkg/apps/alerting @org/wrong\n",
+		"enterprise/.github/CODEOWNERS":        "/pkg/apps/queries @org/sharing\n/pkg/apps/alerting @org/wrong\n/pkg/registry/sandboxsettings @org/sandbox\n",
 		"grafana/pkg/tests/compat/smoke/.keep": "",
 	})
 	t.Chdir(filepath.Join(root, "grafana", "pkg", "tests", "compat", "smoke"))
@@ -70,6 +71,10 @@ func TestLookupOwnersUsesEnterpriseCheckout(t *testing.T) {
 	got, err := lookupOwners([]string{smoke + "/testdata/queries.grafana.app", "apps/queries", smoke})
 	require.NoError(t, err)
 	require.Equal(t, "@org/sharing", got, "an app only Enterprise owns")
+
+	got, err = lookupOwners([]string{smoke + "/testdata/sandboxsettings.grafana.app", "apps/sandboxsettings", smoke})
+	require.NoError(t, err)
+	require.Equal(t, "@org/sandbox", got, "an app Enterprise keeps in its registry")
 
 	got, err = lookupOwners([]string{smoke + "/testdata/alerting.grafana.app", "apps/alerting", smoke})
 	require.NoError(t, err)
@@ -120,12 +125,14 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		mode string
+		args []string
 		want int
 	}{
-		{"a failure outside any subtest names the package owners", "phase", 1},
-		{"a failing subtest is not reported a second time by its phase", "subtest", 1},
-		{"a failure reported at once is not reported a second time by its phase", "now", 1},
-		{"a passing phase reports nothing", "pass", 0},
+		{"a failure outside any subtest names the package owners", "phase", nil, 1},
+		{"a failing subtest is not reported a second time by its phase", "subtest", nil, 1},
+		{"a failure reported at once is not reported a second time by its phase", "now", nil, 1},
+		{"a phase that hits the test timeout names the package owners", "hang", []string{"-test.timeout=3s"}, 1},
+		{"a passing phase reports nothing", "pass", nil, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// A repository of its own, so the owner does not depend on the real CODEOWNERS, and a
@@ -137,9 +144,11 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 				"pkg/tests/compat/.keep": "",
 			})
 			summary := filepath.Join(repo, "summary.md")
-			cmd := exec.Command(self, "-test.run=^TestReportOwnersHelper$", "-test.count=1") // #nosec G204 -- re-runs this test binary
+			args := append([]string{"-test.run=^TestReportOwnersHelper$", "-test.count=1"}, tc.args...)
+			cmd := exec.Command(self, args...) // #nosec G204 -- re-runs this test binary
 			cmd.Dir = pkg
-			cmd.Env = append(os.Environ(), "COMPAT_REPORT_OWNERS_MODE="+tc.mode, "GITHUB_STEP_SUMMARY="+summary)
+			cmd.Env = append(os.Environ(), "COMPAT_REPORT_OWNERS_MODE="+tc.mode, "GITHUB_STEP_SUMMARY="+summary,
+				EnvRole+"=newer", EnvDir+"="+filepath.Join(repo, "upgrade-rollback"))
 			out, _ := cmd.CombinedOutput() // a failing helper exits non-zero, which is the point
 			require.Equal(t, tc.want, strings.Count(string(out), owner), string(out))
 			written, err := os.ReadFile(summary) // #nosec G304 -- file in the test's temp dir
@@ -149,6 +158,7 @@ func TestReportOwnersPhaseAndSubtests(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tc.want, strings.Count(string(written), owner), string(written))
+			require.Contains(t, string(written), "(newer, upgrade-rollback)", "which version and round trip failed")
 		})
 	}
 }
@@ -163,6 +173,9 @@ func TestReportOwnersHelper(t *testing.T) {
 	switch mode {
 	case "phase":
 		t.Fatal("phase failure")
+	case "hang":
+		// Stays here until the test timeout fires, like a phase stuck on a lock.
+		time.Sleep(time.Hour)
 	case "now":
 		ReportOwnersNow(t, PackagePath(t))
 		t.Fatal("failure reported at once")
