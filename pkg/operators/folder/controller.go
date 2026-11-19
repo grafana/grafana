@@ -64,7 +64,10 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	folders := dynamic.New(restClient)
 	var controllerOptions []cascadedelete.ControllerOption
 	if deps.Config.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").MustBool(false) {
-		controllerOptions = append(controllerOptions, cascadedelete.WithPendingRecovery(cascadedelete.NewPendingClient(folders)))
+		controllerOptions = append(controllerOptions,
+			cascadedelete.WithPendingRecovery(cascadedelete.NewPendingClient(folders)),
+			cascadedelete.WithPendingMetrics(deps.Registerer),
+		)
 	}
 	controller := cascadedelete.NewDefaultControllerWithOptions(groupRouter{
 		byGroup:  map[string]dynamic.Interface{dashboardGVR.Group: dynamic.New(dashboardClient)},
