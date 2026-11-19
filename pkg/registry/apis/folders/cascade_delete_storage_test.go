@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"testing"
 	"testing/synctest"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
@@ -21,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -177,6 +180,160 @@ func TestPendingDeleteAuthorizesOriginalCaller(t *testing.T) {
 }
 
 func allowPendingDelete(context.Context, *foldersv1.Folder) error { return nil }
+
+type deadlineDeleteStorage struct {
+	*fakeFolderStorage
+	delete func(context.Context) (runtime.Object, bool, error)
+}
+
+func (s deadlineDeleteStorage) Delete(ctx context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return s.delete(ctx)
+}
+
+func withoutRealTimeErrorBackoff(t *testing.T) {
+	t.Helper()
+	// The Kubernetes late-request logger's global backoff uses a real clock.
+	// Keep it out of synctest; all bubble goroutines finish before restoration.
+	handlers := utilruntime.ErrorHandlers
+	utilruntime.ErrorHandlers = nil
+	t.Cleanup(func() { utilruntime.ErrorHandlers = handlers })
+}
+
+func TestPendingDeleteDeadline(t *testing.T) {
+	withoutRealTimeErrorBackoff(t)
+	for _, tc := range []struct {
+		name          string
+		callerTimeout time.Duration
+		cancelCaller  bool
+		cooperative   bool
+	}{
+		{name: "uncooperative storage"},
+		{name: "cooperative storage", cooperative: true},
+		{name: "earlier caller deadline", callerTimeout: 10 * time.Second},
+		{name: "caller cancellation", cancelCaller: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				release := make(chan struct{})
+				defer close(release)
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				if tc.callerTimeout > 0 {
+					var stop context.CancelFunc
+					ctx, stop = context.WithTimeout(ctx, tc.callerTimeout)
+					defer stop()
+				}
+				store := deadlineDeleteStorage{
+					fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": {ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "a"}}}},
+					delete: func(ctx context.Context) (runtime.Object, bool, error) {
+						if tc.cooperative {
+							<-ctx.Done()
+							return nil, false, ctx.Err()
+						}
+						<-release
+						return nil, true, nil
+					},
+				}
+				pending := &fakePendingStorage{}
+				wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: pendingRecorder(pending)}
+				result := make(chan error, 1)
+				go func() {
+					_, _, err := wrapped.Delete(apirequest.WithNamespace(ctx, "default"), "reports", nil, nil)
+					result <- err
+				}()
+				synctest.Wait()
+				if tc.cancelCaller {
+					cancel()
+				} else if tc.callerTimeout > 0 {
+					<-time.After(tc.callerTimeout)
+				} else {
+					<-time.After(time.Minute)
+				}
+				synctest.Wait()
+				select {
+				case err := <-result:
+					require.True(t, apierrors.IsTimeout(err), "expected caller-visible timeout, got %v", err)
+				default:
+					t.Fatal("delete still waiting on storage after its deadline")
+				}
+				require.NotNil(t, pending.entry, "timeout must retain durable intent")
+			})
+		})
+	}
+}
+
+func TestPendingDeleteDeadlineStartsAfterRecordingAndPreservesResult(t *testing.T) {
+	withoutRealTimeErrorBackoff(t)
+	storageErr := errors.New("delete failed")
+	for _, tc := range []struct {
+		name         string
+		deleted      bool
+		err          error
+		cancelCaller bool
+		statusObject bool
+		panicStorage bool
+	}{
+		{name: "deleted", deleted: true},
+		{name: "failure status object preserves original tuple", deleted: true, statusObject: true},
+		{name: "storage panic propagates", panicStorage: true},
+		{name: "not deleted"},
+		{name: "error with deleted", deleted: true, err: storageErr},
+		{name: "error without deleted", err: storageErr},
+		{name: "cancellation wins over success", deleted: true, cancelCaller: true},
+		{name: "cancellation wins over unrelated error", deleted: true, err: storageErr, cancelCaller: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				want := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "reports", UID: "a"}}
+				var result runtime.Object = want
+				if tc.statusObject {
+					result = &metav1.Status{Status: metav1.StatusFailure, Reason: metav1.StatusReasonConflict, Code: http.StatusConflict}
+				}
+				store := deadlineDeleteStorage{
+					fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"reports": want}},
+					delete: func(ctx context.Context) (runtime.Object, bool, error) {
+						deadline, ok := ctx.Deadline()
+						assert.True(t, ok)
+						assert.Equal(t, time.Minute, time.Until(deadline))
+						if tc.cancelCaller {
+							// Cancel before publishing the storage result so either finisher
+							// select outcome must yield the caller-visible timeout.
+							cancel()
+						}
+						if tc.panicStorage {
+							panic(http.ErrAbortHandler)
+						}
+						return result, tc.deleted, tc.err
+					},
+				}
+				wrapped := &pendingDeleteStorage{Storage: store, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(ctx context.Context, _ *foldersv1.Folder) error {
+					_, bounded := ctx.Deadline()
+					require.False(t, bounded)
+					<-time.After(2 * time.Minute)
+					return ctx.Err()
+				}}
+				if tc.panicStorage {
+					require.PanicsWithValue(t, http.ErrAbortHandler, func() {
+						_, _, _ = wrapped.Delete(ctx, "reports", nil, nil)
+					})
+					return
+				}
+				obj, deleted, err := wrapped.Delete(ctx, "reports", nil, nil)
+				if tc.cancelCaller {
+					require.True(t, apierrors.IsTimeout(err), "expected timeout instead of storage result, got %v", err)
+					require.Nil(t, obj)
+					require.False(t, deleted)
+					return
+				}
+				require.Same(t, result, obj)
+				require.Equal(t, tc.deleted, deleted)
+				require.Equal(t, tc.err, err)
+			})
+		})
+	}
+}
 
 func TestPendingDeleteRecordsBeforeStorage(t *testing.T) {
 	for _, mode := range []string{"success", "failure", "dry run", "disabled"} {

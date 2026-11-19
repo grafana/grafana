@@ -528,6 +528,33 @@ func TestFetchPluginManifestsMigratesDeprecatedRoutes(t *testing.T) {
 	require.Equal(t, app.ManifestVersionRoutes{}, got.Routes) //nolint:staticcheck // SA1019: checking it is cleared.
 }
 
+// The settings manifest from the feed is migrated as the manifests are, or
+// its deprecated routes would be read as none.
+func TestFetchPluginManifestsMigratesSettingsRoutes(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	plugin["jsonData"].(map[string]any)["type"] = "app"
+	plugin["settings"] = map[string]any{
+		"appName": "example-app", "group": "example-app", "preferredVersion": definition.SettingsAPIVersion,
+		"versions": []any{map[string]any{
+			"name": definition.SettingsAPIVersion, "served": true,
+			"routes": map[string]any{"namespaced": map[string]any{
+				"/app/{name}/resources/ping": map[string]any{"get": map[string]any{"responses": map[string]any{"200": map[string]any{"description": "OK"}}}},
+			}},
+		}},
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+
+	deployment, err := fetchPluginManifests(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	got := deployment.Plugins[0].Definition.Settings.Versions[0]
+	require.Contains(t, got.OpenAPI.Paths, definition.SettingsResourcesRoot+"/ping")
+}
+
 func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 	entry := func(id, group string) string {
 		return `{"definition": {"jsonData": {"id": "` + id + `", "type": "app"}, "manifests": [{

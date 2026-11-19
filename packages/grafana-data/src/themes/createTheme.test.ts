@@ -64,4 +64,12 @@ describe('createTheme', () => {
       }
     }
   );
+
+  it.each(['visual_refresh_dark', 'visual_refresh_light'])('provides accessible tag colors for %s', (themeId) => {
+    const theme = getThemeById(themeId);
+
+    for (const { background, text } of theme.components.tag.colors) {
+      expect(getContrastRatio(text, background)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });
