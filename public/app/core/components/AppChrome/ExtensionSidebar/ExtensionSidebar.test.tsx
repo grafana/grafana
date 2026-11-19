@@ -8,7 +8,7 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 
 import { ExtensionSidebar } from './ExtensionSidebar';
 import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
-import { setExtensionSidebarDockSide, setExtensionSidebarPresentation } from './extensionSidebarLayout';
+import { setExtensionSidebarPlacement } from './extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
 import { useDockedDrag, useFloatingDrag } from './useFloatingDrag';
 
@@ -24,8 +24,7 @@ jest.mock('./ExtensionSidebarProvider', () => ({
 
 jest.mock('./extensionSidebarLayout', () => ({
   ...jest.requireActual('./extensionSidebarLayout'),
-  setExtensionSidebarPresentation: jest.fn(),
-  setExtensionSidebarDockSide: jest.fn(),
+  setExtensionSidebarPlacement: jest.fn(),
 }));
 
 jest.mock('./useFloatingDrag', () => ({
@@ -211,12 +210,8 @@ describe('ExtensionSidebar', () => {
 
       mockUseFloatingDrag.mock.lastCall?.[1].onDock(side);
 
-      expect(setExtensionSidebarDockSide).toHaveBeenCalledWith(side);
-      expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('docked');
-      // The side is set first, so the sidebar never shows docked on the other one.
-      expect(jest.mocked(setExtensionSidebarDockSide).mock.invocationCallOrder[0]).toBeLessThan(
-        jest.mocked(setExtensionSidebarPresentation).mock.invocationCallOrder[0]
-      );
+      // Reported as a drag, apart from a layout chosen from a menu.
+      expect(setExtensionSidebarPlacement).toHaveBeenCalledWith(side, 'drag');
     });
 
     it('offers the left and bottom docks only while the sidebar can float', () => {
@@ -369,7 +364,7 @@ describe('ExtensionSidebar', () => {
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeInstanceOf(HTMLElement);
       expect(mockUseDockedDrag.mock.lastCall?.[1]).toMatchObject({ floatingWidth: 480, dockSide: 'right' });
       mockUseDockedDrag.mock.lastCall?.[1].onFloat();
-      expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('floating');
+      expect(setExtensionSidebarPlacement).toHaveBeenCalledWith('floating', 'drag');
     });
 
     it("lines up with the page's card when docked at the bottom, with the visual refresh", () => {
@@ -410,8 +405,7 @@ describe('ExtensionSidebar', () => {
       expect(mockUseDockedDrag.mock.lastCall?.[1]).toMatchObject({ dockWidth: 420 });
       mockUseDockedDrag.mock.lastCall?.[1].onDock('left');
 
-      expect(setExtensionSidebarDockSide).toHaveBeenCalledWith('left');
-      expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('docked');
+      expect(setExtensionSidebarPlacement).toHaveBeenCalledWith('left', 'drag');
     });
 
     it('offers the left and bottom docks only while placements are on', () => {

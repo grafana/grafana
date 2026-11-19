@@ -2564,9 +2564,6 @@
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
