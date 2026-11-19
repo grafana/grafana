@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 
@@ -310,17 +311,27 @@ func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	// it will either obtain the lock immediately and return true,
 	// or return false if the lock cannot be acquired immediately.
 	query := "SELECT pg_try_advisory_lock(?)"
-	var success bool
+	deadline := time.Now().Add(time.Duration(cfg.Timeout) * time.Second)
 
-	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
-	if err != nil {
-		return err
-	}
-	if !success {
-		return ErrLockDB
-	}
+	for {
+		var success bool
+		_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
+		if err != nil {
+			return err
+		}
+		if success {
+			return nil
+		}
 
-	return nil
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return ErrLockDB
+		}
+		time.Sleep(min(100*time.Millisecond, remaining))
+		if !time.Now().Before(deadline) {
+			return ErrLockDB
+		}
+	}
 }
 
 // OrderBy normalizes ordering so that nulls end up last in sorting, which they do by default in both sqlite and mysql but not postgres
