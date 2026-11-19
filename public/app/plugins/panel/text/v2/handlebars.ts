@@ -77,6 +77,8 @@ interface RowSource {
   displayValues?: Array<FieldDisplayValue | undefined>;
 }
 
+// `display` depends on row object identity. Helpers that sort or filter rows must preserve
+// the original row objects; cloning them loses their source and makes `display` render nothing.
 const rowSources = new WeakMap<object, RowSource>();
 
 export function getFieldNames(frame: DataFrame, series: DataFrame[]): string[] {
