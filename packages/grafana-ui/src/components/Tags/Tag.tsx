@@ -131,7 +131,7 @@ const TagSkeleton: SkeletonComponent = ({ rootProps }) => {
 };
 
 /**
- * Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
+ * Use `Tag` to display a short metadata label, such as a category or environment in search results.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-tag--docs
  */
