@@ -4,11 +4,11 @@ import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Badge, type BadgeColor, Dropdown, Icon, type IconName, Menu, Text, useStyles2 } from '@grafana/ui';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PROVISIONING_URL } from '../constants';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
@@ -107,7 +107,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
   // so it would match every logged-in user.
   const manageUrl =
     repository && contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
-      ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name ?? repositoryName)}`
+      ? CORE_KINDS.repository.getRoute(repository.name ?? repositoryName)
       : undefined;
 
   if (isOrphaned || (!sourceUrl && !manageUrl)) {

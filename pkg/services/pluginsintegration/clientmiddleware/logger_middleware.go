@@ -124,6 +124,7 @@ func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.Qu
 					"refID", re.refID,
 					"status", int(re.status),
 					"error", re.err,
+					"statusSource", re.source.String(),
 					"target", m.pluginTarget(ctx, req.PluginContext),
 				)
 			}

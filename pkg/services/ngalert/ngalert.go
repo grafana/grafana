@@ -407,6 +407,7 @@ func (ng *AlertNG) init() error {
 		RuleStore:            ng.ruleService,
 		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
+		SeriesBudget:         state.NewSeriesBudget(ng.Cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries),
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,

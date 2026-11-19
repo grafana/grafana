@@ -349,6 +349,126 @@ describe('entering and leaving Composer', () => {
   });
 });
 
+describe('why a session ended', () => {
+  it.each([
+    ['the plugin', (_scene: DashboardScene, session: ComposerSession) => session.exit(), 'plugin_exit'],
+    ['the toolbar button', (scene: DashboardScene) => scene.leaveComposer(), 'toolbar_button'],
+    ['the mode picker', (scene: DashboardScene) => scene.setDashboardMode('view', 'picker'), 'mode_change'],
+    ['openFullEditor', (scene: DashboardScene) => scene.openFullEditor(), 'manual_edit'],
+    [
+      'discarding the edit session',
+      (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true }),
+      'mode_change',
+    ],
+  ])('names %s on the aborted signal', (_name, leave, reason) => {
+    const scene = setup();
+    const session = enter(scene);
+
+    leave(scene, session);
+
+    expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe(reason);
+  });
+
+  it('names the scene deactivating as navigation', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    deactivate();
+    deactivate = () => {};
+
+    expect(session.signal.reason).toBe('navigation');
+  });
+
+  it('names the Composer flag turning off', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    await act(async () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false }));
+
+    expect(session.signal.reason).toBe('flag_off');
+  });
+
+  it('reports the first reason named, as the path that started the exit', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    session.noteExitReason('toolbar_button');
+    session.exit('sidebar_closed');
+
+    expect(session.signal.reason).toBe('toolbar_button');
+  });
+});
+
+describe('edit periods that used Composer', () => {
+  const tracked = () => jest.spyOn(DashboardInteractions, 'editPeriodEnded');
+
+  it('marks a period Composer was entered over', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it.each([
+    ['the user', (scene: DashboardScene) => scene.setComposerEditing(true)],
+    ['Assistant', (scene: DashboardScene) => scene.startComposerEditingForAssistant()],
+  ])('marks the period %s started by switching Composer from Viewing to Editing', (_name, switchToEditing) => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene, 'view');
+      switchToEditing(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves a period Composer never touched unmarked', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      scene.setDashboardMode('edit');
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves the next period unmarked when Composer was used only in the one before', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      enter(scene).exit();
+      scene.exitEditMode({ skipConfirm: true });
+      ended.mockClear();
+
+      scene.setDashboardMode('edit');
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+});
+
 describe('checked apply', () => {
   it('applies inside the edit session, bumps the revision and supports native undo after exit', async () => {
     const scene = setup();

@@ -191,6 +191,18 @@ func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
 	return total, nil
 }
 
+func (f *RuleStore) CountByOrg(_ context.Context) (map[int64]int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	counts := make(map[int64]int64, len(f.Rules))
+	for orgID, rules := range f.Rules {
+		if len(rules) > 0 {
+			counts[orgID] = int64(len(rules))
+		}
+	}
+	return counts, nil
+}
+
 func (f *RuleStore) CountRuleGroups(_ context.Context, orgID int64) (int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -82,7 +83,7 @@ func TestPermissionCacheTracing(t *testing.T) {
 			}
 			ctx := t.Context()
 			if tc.shadow {
-				ctx = WithPermissionShadow(ctx)
+				ctx = shadow.WithContext(ctx)
 			}
 			var loadParent trace.SpanContext
 			failure := errors.New("private-database-error")
