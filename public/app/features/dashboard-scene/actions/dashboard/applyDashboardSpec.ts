@@ -16,7 +16,6 @@ import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManage
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
-import { resolveAdHocMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -102,8 +101,6 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyDashboardMode();
 
-      resolveAdHocMultiValueOperators(scene);
-
       scene.state.sidebar.refreshAfterRebuild();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
@@ -180,7 +177,6 @@ export function swapInReloadedDashboard(scene: DashboardScene, reloaded: Dashboa
     isDirty: false,
   });
   scene.applyDashboardMode();
-  resolveAdHocMultiValueOperators(scene);
   scene.state.sidebar.refreshAfterRebuild();
   syncRebuiltChildrenFromUrl(scene, urlUpdates);
   // A dashboard without URL sync (an embedded one) keeps its open tabs only in the tree just replaced.

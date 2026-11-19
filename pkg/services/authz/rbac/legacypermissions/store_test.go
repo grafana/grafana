@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -16,7 +17,7 @@ func TestIntegrationPermissionStorePermissionsForActions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	database := db.NewTestStore(t)
-	store := permissionStore{sql: database}
+	store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 
 	direct := ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:direct"}
 	write := ac.Permission{Action: "dashboards:write", Scope: "dashboards:uid:direct"}
@@ -117,7 +118,6 @@ func TestIntegrationPermissionStorePermissionsForActions(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := store.permissionsForActions(t.Context(), tc.query, tc.actions)
-
 			require.NoError(t, err)
 			require.ElementsMatch(t, tc.want, got)
 		})
