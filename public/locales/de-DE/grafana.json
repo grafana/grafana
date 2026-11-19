@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Aufnahmeregel"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Funktionssteuerung",
       "close-tooltip": "Funktionssteuerung schließen",
       "open-tooltip": "Funktionssteuerung öffnen"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Löschen",
     "description": "Überschreiben Sie für Test- und Entwicklungszwecke Frontend-Feature-Flags lokal.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "Benutzeroberfläche und Symbolleistenschaltfläche entfernen",
       "tooltip": "Alle festgelegten Feature-Flag-Überschreibungen bleiben aktiv.<br/> Verwenden Sie <3>{{ param }}</3> in der URL zur erneuten Aktivierung der Benutzeroberfläche."
@@ -9846,11 +9881,18 @@
     "flag-type": "Flag-Typ",
     "flag-value": "Flag-Wert",
     "menu": "Menü öffnen",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP-Evaluierung",
     "ofrep-reason": "Grund: <2>{{reason}}</2>",
     "ofrep-variant": "Variante: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Speichern",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Funktionssteuerung"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Wenn Steuerelemente aktiviert sind, wird eine Option für den Download der gezeigten Logs angezeigt.",
     "description-enable-field-selector": "Experimentell. Eine Komponente anzeigen, um die angezeigten Felder aus den Logs zu verwalten.",
-    "description-enable-infinite-scrolling": "Experimentell. Fordern Sie weitere Ergebnisse an, indem Sie zum Ende der Logs-Liste scrollen.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Nutzen Sie ein vordefiniertes Farbschema, um relevante Teile der Logzeilen hervorzuheben.",
     "description-order": "Neueste oder älteste Logs zuerst anzeigen. Wenn „Älteste zuerst“ ausgewählt ist, scrollt die Ansicht automatisch zu den neuesten Logs am unteren Rand.",
     "description-prettify-json": "JSON-Log-Einträge mit Einrückung und Zeilenumbrüchen formatieren.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Neu",
       "new-template-dashboard-button": "Vorlage verwenden"
     },
-    "rss-button": "Das Neueste aus dem Blog"
+    "rss-button": "Das Neueste aus dem Blog",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Nachrichten",

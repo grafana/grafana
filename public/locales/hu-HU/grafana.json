@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
+    },
     "recording-rule": {
       "term": "Felvételi szabály"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "Funkcióvezérlő",
       "close-tooltip": "Funkcióvezérlő bezárása",
       "open-tooltip": "Funkcióvezérlő megnyitása"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "Törlés",
     "description": "A frontend funkciójelzőinek helyi felülírása tesztelési és fejlesztési célokra.",
+    "disable-overrides": "",
     "dismiss": {
       "label": "A felhasználói felület és az eszköztár gombjának eltávolítása",
       "tooltip": "Minden meghatározott funkciójelző-felülbírálás aktív marad.<br/> Használja a(z) <3>{{ param }}</3> elemet az URL-ben a felhasználói felület újbóli engedélyezéséhez."
@@ -9846,11 +9881,18 @@
     "flag-type": "Jelző típusa",
     "flag-value": "Jelző értéke",
     "menu": "Menü megnyitása",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP-értékelés",
     "ofrep-reason": "Indoklás: <2>{{reason}}</2>",
     "ofrep-variant": "Változat: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "Mentés",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "Funkcióvezérlő"
   },
   "folder-filter": {
@@ -12463,7 +12505,7 @@
     },
     "description-allow-download": "Amikor a vezérlők engedélyezve vannak, a kijelzőn megjelenik a naplók letöltésének lehetősége.",
     "description-enable-field-selector": "Kísérleti. Egy olyan összetevő megjelenítése, amellyel a naplókból származó megjelenített mezők kezelhetők.",
-    "description-enable-infinite-scrolling": "Kísérleti. További eredmények kéréséhez görgessen a naplók listájának aljára.",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "Egy előre definiált színsémát használhat a naplósorok releváns részeinek kiemeléséhez.",
     "description-order": "A legújabb vagy a legrégebbi naplóbejegyzések megjelenítése először. Ha a Legrégebbiek elöl lehetőség van kiválasztva, a nézet automatikusan a legalsó, legújabb naplókhoz lesz görgetve.",
     "description-prettify-json": "JSON-naplóbejegyzések formázása behúzással és sortörésekkel.",
@@ -13480,6 +13522,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
     "assistant-toolbar-button": {
       "arrange-window": "",
       "assistant-page": "",
@@ -13592,7 +13637,10 @@
       "aria-label": "Új",
       "new-template-dashboard-button": "Sablon használata"
     },
-    "rss-button": "Újdonságok a blogról"
+    "rss-button": "Újdonságok a blogról",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "Hírek",

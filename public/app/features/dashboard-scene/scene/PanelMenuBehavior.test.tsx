@@ -39,6 +39,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { onRemovePanel, panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
@@ -855,6 +856,37 @@ describe('panelMenuBehavior', () => {
           const subMenu = items.find((i) => i.text === 'More...')?.subMenu ?? [];
           const item = [...items, ...subMenu].find((i) => i.text === itemText);
           item?.onClick?.({} as React.MouseEvent);
+
+          expect(track).toHaveBeenCalledTimes(1);
+          expect(track).toHaveBeenCalledWith(reportedItem, 12, 'panel', 'table');
+        } finally {
+          track.mockRestore();
+        }
+      }
+    );
+
+    it.each([
+      { itemText: 'Unlink library panel', reportedItem: 'unlink_library_panel', isLibrary: true },
+      { itemText: 'Replace library panel', reportedItem: 'replace_library_panel', isLibrary: true },
+      { itemText: 'New library panel', reportedItem: 'new_library_panel', isLibrary: false },
+    ])(
+      'reports $reportedItem when $itemText is clicked in the panel menu',
+      async ({ itemText, reportedItem, isLibrary }) => {
+        const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+        try {
+          const { scene, menu, panel } = await buildTestScene({});
+          scene.setState({ isEditing: true });
+          jest.spyOn(scene, 'showModal').mockImplementation();
+          jest.spyOn(scene, 'onShowAddLibraryPanelDrawer').mockImplementation();
+          if (isLibrary) {
+            panel.setState({ $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'Library' })] });
+          }
+          panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+          menu.activate();
+          await new Promise((r) => setTimeout(r, 1));
+
+          const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+          moreMenu.find((i) => i.text === itemText)?.onClick?.({} as React.MouseEvent);
 
           expect(track).toHaveBeenCalledTimes(1);
           expect(track).toHaveBeenCalledWith(reportedItem, 12, 'panel', 'table');

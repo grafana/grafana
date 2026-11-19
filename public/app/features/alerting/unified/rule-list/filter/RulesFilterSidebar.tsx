@@ -588,7 +588,7 @@ function FilterSidebarForm({
 // Section & field layout helpers
 // ---------------------------------------------------------------------------
 
-function SidebarSection({ children }: { children: React.ReactNode }) {
+export function SidebarSection({ children }: { children: React.ReactNode }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.section}>
@@ -599,19 +599,21 @@ function SidebarSection({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SidebarField({
+export function SidebarField({
   label,
   children,
   labelId,
+  htmlFor,
 }: {
   label: React.ReactNode;
   children: React.ReactNode;
   labelId?: string;
+  htmlFor?: string;
 }) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.field}>
-      <Label id={labelId} className={styles.fieldLabel}>
+      <Label id={labelId} htmlFor={htmlFor} className={styles.fieldLabel}>
         {label}
       </Label>
       <div className={styles.fieldValue}>{children}</div>
@@ -619,7 +621,7 @@ function SidebarField({
   );
 }
 
-function FieldLabelWithTooltip({
+export function FieldLabelWithTooltip({
   label,
   tooltip,
   tooltipTitle,
@@ -638,7 +640,7 @@ function FieldLabelWithTooltip({
   );
 }
 
-interface ToggleOption<T> {
+export interface ToggleOption<T> {
   label: string;
   value: T;
   icon?: PropsOf<typeof Icon>['name'];
@@ -653,7 +655,12 @@ interface ToggleButtonGroupProps<T> {
   'aria-labelledby': string;
 }
 
-function ToggleButtonGroup<T>({ options, value, onChange, 'aria-labelledby': labelledBy }: ToggleButtonGroupProps<T>) {
+export function ToggleButtonGroup<T>({
+  options,
+  value,
+  onChange,
+  'aria-labelledby': labelledBy,
+}: ToggleButtonGroupProps<T>) {
   const styles = useStyles2(getStyles);
   return (
     <div role="radiogroup" aria-labelledby={labelledBy}>

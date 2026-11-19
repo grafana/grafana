@@ -246,6 +246,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
           iconClassName: 'link-broken',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'unlink_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
                 panelRef: panel.getRef(),
@@ -258,6 +264,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
           iconClassName: 'library-panel',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'replace_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
         });
@@ -266,6 +278,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
           iconClassName: 'plus-square',
           onClick: () => {
+            DashboardInteractions.panelActionClicked(
+              'new_library_panel',
+              getPanelIdForVizPanel(panel),
+              'panel',
+              panel.state.pluginId
+            );
             openShareDrawer(dashboard, {
               shareView: shareDashboardType.libraryPanel,
               panelRef: panel.getRef(),
