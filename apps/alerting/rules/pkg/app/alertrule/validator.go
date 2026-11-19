@@ -127,6 +127,13 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Aler
 			}
 		}
 
+		// The name can't change, so an existing rule is not re-checked against rules added later.
+		if req.Action == resource.AdmissionActionCreate {
+			if err := util.ValidateRuleName(r.Name); err != nil {
+				return err
+			}
+		}
+
 		if err := util.ValidateTitle("alert rule", r.Spec.Title); err != nil {
 			return err
 		}

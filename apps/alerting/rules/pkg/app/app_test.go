@@ -348,6 +348,8 @@ func TestAlertRuleValidation_Errors(t *testing.T) {
 	}), "want query expression requires relative time range error")
 
 	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.AlertRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
 	assert.Error(t, mk(func(r *v1.AlertRule) { r.Spec.Title = "" }), "want empty title error")
 }
 
@@ -361,6 +363,8 @@ func TestAlertRuleValidation_StoreParityOnUpdate(t *testing.T) {
 	}
 
 	require.NoError(t, update(func(r *v1.AlertRule) {}))
+	// The name can't change on update, so it is only checked when the rule is created.
+	require.NoError(t, update(func(r *v1.AlertRule) { r.Name = "has.dot" }))
 	assert.Error(t, update(func(r *v1.AlertRule) {
 		r.Labels[v1.GroupLabelKey] = strings.Repeat("g", v1.AlertRuleMaxRuleGroupNameLength+1)
 	}), "want group name too long error")
@@ -526,6 +530,8 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 	}), "want query expression requires relative time range error")
 
 	// A check the legacy rule store makes when it writes a rule.
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = "has.dot" }), "want invalid name characters error")
+	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Name = strings.Repeat("a", v1.AlertRuleMaxNameLength+1) }), "want name too long error")
 	assert.Error(t, mk(func(r *v1.RecordingRule) { r.Spec.Title = "" }), "want empty title error")
 }
 
