@@ -83,8 +83,10 @@ func syncPluginCallerPermissions(t *testing.T, delegated []string, held []access
 
 	pluginAuth, err := pluginauth.ProvideConfig(cfg)
 	require.NoError(t, err)
+
 	client := clients.ProvideExtendedJWTWithPluginAuth(cfg, tracing.InitializeTracerForTest(), pluginAuth)
 	request := &authn.Request{HTTPRequest: &http.Request{Header: http.Header{"X-Access-Token": {token}}}}
+
 	ident, err := client.Authenticate(context.Background(), request)
 	require.NoError(t, err)
 	require.Equal(t, delegated, ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions)
@@ -94,8 +96,10 @@ func syncPluginCallerPermissions(t *testing.T, delegated []string, held []access
 			return held, nil
 		},
 	}
+
 	sync := authnsync.ProvideRBACSync(cfg, ac, tracing.InitializeTracerForTest(), permreg.ProvidePermissionRegistry(t))
 	require.NoError(t, sync.SyncPermissionsHook(context.Background(), ident, request))
+
 	return ident
 }
 
