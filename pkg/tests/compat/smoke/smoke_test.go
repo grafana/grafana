@@ -1,0 +1,626 @@
+// Package smoke runs a CRUD smoke test across versions for every resource the
+// server serves, without any per-resource test code.
+package smoke
+
+import (
+	"bytes"
+	"cmp"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"maps"
+	"os"
+	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+
+	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/compat"
+)
+
+func TestMain(m *testing.M) {
+	compat.Main(m)
+}
+
+// written records one object the setup version created. The later phases read
+// this list instead of guessing what the other version wrote.
+type written struct {
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Version  string `json:"version"`
+	Name     string `json:"name"`
+	// Spec and ResourceVersion as the setup version read the object back after creating it.
+	Spec            json.RawMessage `json:"spec"`
+	ResourceVersion string          `json:"resourceVersion"`
+	// Updated is set by the update phase once it rewrote the object's metadata. It stays
+	// unset for resources the other version does not serve or stores in legacy storage,
+	// so the verify phase only expects that metadata where it was written.
+	Updated bool `json:"updated"`
+	// UpdatedIn is the API version the update phase wrote the object in.
+	UpdatedIn string `json:"updatedIn,omitempty"`
+}
+
+const (
+	touchedLabel      = "compat.grafana.app/touched"
+	patchedAnnotation = "compat.grafana.app/patched"
+	// serverNamedAnnotation in a fixture leaves metadata.name empty on create, for
+	// resources whose server derives the name from the spec.
+	serverNamedAnnotation = "compat.grafana.app/server-named"
+)
+
+// TestCompatSetup creates one object per resource.
+func TestCompatSetup(t *testing.T) {
+	dir := compat.Dir(t)
+	h := compat.NewHelper(t)
+	f := readSkipFile(t)
+	skips, stale := f.resolve()
+	served := compat.Served(t, h)
+	ctx := context.Background()
+
+	for _, entry := range unservedSkipEntries(f, served, extensions.IsEnterprise) {
+		t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
+	}
+
+	for gr, flag := range stale {
+		t.Run("stale-skip/"+gr.String(), func(t *testing.T) {
+			t.Fatalf("the %s feature flag is on in this build, so remove %s from feature_flags in skip.yaml to test it", flag, gr)
+		})
+	}
+
+	var out []written
+	for _, gr := range slices.SortedFunc(maps.Keys(served), compareGR) {
+		if reason, ok := skips[gr]; ok {
+			t.Logf("skipping %s: %s", gr, reason)
+			continue
+		}
+		t.Run(gr.String(), func(t *testing.T) {
+			obj := newObject(t, h, gr, served[gr])
+			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+			require.NoError(t, err)
+
+			client := resourceClient(h, gr, gv.Version)
+			created, err := client.Create(ctx, obj, metav1.CreateOptions{})
+			require.NoError(t, err, "add a fixture in %s or an entry in skip.yaml", fixturePath(gr))
+			got, err := client.Get(ctx, created.GetName(), metav1.GetOptions{})
+			require.NoError(t, err)
+			out = append(out, written{
+				Group: gr.Group, Resource: gr.Resource, Version: gv.Version, Name: got.GetName(),
+				Spec: specJSON(t, got), ResourceVersion: got.GetResourceVersion(),
+			})
+		})
+	}
+	writeManifest(t, dir, out)
+}
+
+// TestCompatUpdate runs on the other version: it reads every object, rewrites it with
+// an update and a patch, and checks that stale writes are rejected.
+func TestCompatUpdate(t *testing.T) {
+	dir := compat.Dir(t)
+	entries := readManifest(t, dir)
+	h := compat.NewHelper(t)
+	f := readSkipFile(t)
+	skips, _ := f.resolve()
+	served := compat.Served(t, h)
+	ctx := context.Background()
+
+	for i, e := range entries {
+		gr := e.gr()
+		t.Run(gr.String(), func(t *testing.T) {
+			res := servedOrSkip(t, served, skips, e)
+			vc := newVersionCheck(t, gr, f)
+			readEverywhere(t, h, e, res, vc)
+			vc.done()
+
+			// Write in this version's preferred version, as clients do, so an object stored in
+			// another version is converted on the way.
+			client := resourceClient(h, gr, res.Versions[0])
+			entries[i].UpdatedIn = res.Versions[0]
+			obj, err := client.Get(ctx, e.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			setLabel(obj, touchedLabel, "true")
+			updated, err := client.Update(ctx, obj, metav1.UpdateOptions{})
+			require.NoError(t, err, "update%s", hint(e, res))
+			if reason, ok := f.LegacyStorage[gr.String()]; ok {
+				// Legacy stores drop labels, so a kept label means the resource moved to a store
+				// that gets the full checks.
+				require.NotEqual(t, "true", updated.GetLabels()[touchedLabel], "%s keeps labels now; remove it from legacy_storage in skip.yaml so it gets the full checks", gr)
+				t.Logf("legacy storage, skipping metadata, stale write and patch checks: %s", reason)
+				return
+			}
+			require.Equal(t, "true", updated.GetLabels()[touchedLabel], "update dropped the label; if the storage cannot keep labels, list the resource under legacy_storage in skip.yaml")
+
+			if reason, ok := f.StaleWritesAccepted[gr.String()]; ok {
+				// Rewriting the same content with the old resourceVersion is harmless if accepted.
+				stale := updated.DeepCopy()
+				stale.SetResourceVersion(e.ResourceVersion)
+				_, err = client.Update(ctx, stale, metav1.UpdateOptions{})
+				require.NoError(t, acceptedStaleWriteError(gr, err))
+				t.Logf("skipping stale write checks: %s", reason)
+			} else {
+				// The label is a real change, so the setup version's resourceVersion is stale now.
+				require.NotEqual(t, e.ResourceVersion, updated.GetResourceVersion(), "update did not advance the resourceVersion")
+				stale := updated.DeepCopy()
+				stale.SetResourceVersion(e.ResourceVersion)
+				_, err = client.Update(ctx, stale, metav1.UpdateOptions{})
+				require.True(t, apierrors.IsConflict(err), "stale update: expected a conflict, got %v", err)
+				err = client.Delete(ctx, e.Name, metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &e.ResourceVersion}})
+				require.True(t, apierrors.IsConflict(err), "stale delete: expected a conflict, got %v", err)
+			}
+
+			before, err := client.Get(ctx, e.Name, metav1.GetOptions{})
+			require.NoError(t, err, "get after rejected stale writes")
+			patch := fmt.Sprintf(`{"metadata":{"annotations":{%q:"true"}}}`, patchedAnnotation)
+			_, err = client.Patch(ctx, e.Name, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+			require.NoError(t, err, "patch%s", hint(e, res))
+			after, err := client.Get(ctx, e.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NoError(t, sameSpecError(specJSON(t, before), specJSON(t, after)), "a metadata patch changed the spec")
+			require.Equal(t, "true", after.GetAnnotations()[patchedAnnotation])
+			require.Equal(t, "true", after.GetLabels()[touchedLabel])
+			entries[i].Updated = true
+		})
+	}
+	writeManifest(t, dir, entries)
+}
+
+// TestCompatVerify runs on the setup version again, after the other version rewrote
+// every object: the spec must read back exactly as it was written. Then it deletes
+// everything and checks the objects are gone.
+func TestCompatVerify(t *testing.T) {
+	dir := compat.Dir(t)
+	entries := readManifest(t, dir)
+	h := compat.NewHelper(t)
+	f := readSkipFile(t)
+	skips, _ := f.resolve()
+	served := compat.Served(t, h)
+	ctx := context.Background()
+
+	for _, e := range entries {
+		gr := e.gr()
+		t.Run(gr.String(), func(t *testing.T) {
+			res := servedOrSkip(t, served, skips, e)
+			vc := newVersionCheck(t, gr, f)
+			readEverywhere(t, h, e, res, vc)
+			vc.done()
+
+			got, err := resourceClient(h, gr, e.Version).Get(ctx, e.Name, metav1.GetOptions{})
+			require.NoError(t, err)
+			requireServedAs(t, newVersionCheck(t, gr, f), got, gr.WithVersion(e.Version).GroupVersion().String(), "get", e.Version)
+			if e.UpdatedIn == "" || e.UpdatedIn == e.Version {
+				require.NoError(t, sameSpecError(e.Spec, specJSON(t, got)), "spec changed after the other version read or rewrote the object")
+			} else {
+				// Converting to another API version and back may drop empty fields and add
+				// defaults, but must keep every value that was set.
+				require.NoError(t, preservationErrorJSON(e.Spec, specJSON(t, got)))
+			}
+			if e.Updated {
+				require.Equal(t, "true", got.GetLabels()[touchedLabel], "label from the other version")
+				require.Equal(t, "true", got.GetAnnotations()[patchedAnnotation], "annotation from the other version")
+			}
+		})
+	}
+
+	// Delete in reverse creation order, so objects that reference others (rules in a
+	// folder) go before what they reference.
+	for _, e := range slices.Backward(entries) {
+		gr := e.gr()
+		t.Run("delete/"+gr.String(), func(t *testing.T) {
+			res := servedOrSkip(t, served, skips, e)
+			client := resourceClient(h, gr, res.Versions[0])
+			require.NoError(t, client.Delete(ctx, e.Name, metav1.DeleteOptions{}), "delete%s", hint(e, res))
+			_, err := client.Get(ctx, e.Name, metav1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "get after delete: expected not found, got %v", err)
+			list, err := client.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.False(t, slices.ContainsFunc(list.Items, named(e.Name)), "list still contains %s after delete", e.Name)
+		})
+	}
+}
+
+func (e written) gr() schema.GroupResource {
+	return schema.GroupResource{Group: e.Group, Resource: e.Resource}
+}
+
+func resourceClient(h *apis.K8sTestHelper, gr schema.GroupResource, version string) dynamic.ResourceInterface {
+	return h.GetResourceClient(apis.ResourceClientArgs{User: h.Org1.Admin, GVR: gr.WithVersion(version)}).Resource
+}
+
+// servedOrSkip returns how this version serves the resource of an entry the other version
+// wrote. It skips the entry when this version skips the resource itself, for example
+// behind a feature flag that is off here, or does not serve it at all. The newer version
+// must keep serving what the older one wrote, unless its skip.yaml says why not.
+func servedOrSkip(t *testing.T, served map[schema.GroupResource]compat.Resource, skips map[schema.GroupResource]string, e written) compat.Resource {
+	t.Helper()
+	gr := e.gr()
+	if reason, ok := skips[gr]; ok {
+		t.Skipf("this version skips %s: %s", gr, reason)
+	}
+	res, ok := served[gr]
+	if !ok {
+		if compat.IsNewer() {
+			t.Fatalf("the older version wrote %s, which the newer version no longer serves; if that is intended within the compatibility window, list it in skip.yaml with the reason", gr)
+		}
+		t.Skipf("%s is not served by this version", gr)
+	}
+	if compat.IsNewer() && !slices.Contains(res.Versions, e.Version) {
+		t.Fatalf("the older version wrote %s in %s, which the newer version no longer serves", gr, e.Version)
+	}
+	return res
+}
+
+// readEverywhere gets the object in every version this server serves and finds it in a list.
+func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.Resource, vc *versionCheck) {
+	t.Helper()
+	ctx := context.Background()
+	for _, v := range res.Versions {
+		gv := e.gr().WithVersion(v).GroupVersion().String()
+		obj, err := resourceClient(h, e.gr(), v).Get(ctx, e.Name, metav1.GetOptions{})
+		require.NoError(t, err, "get in %s%s", v, hint(e, res))
+		requireServedAs(t, vc, obj, gv, "get", v)
+
+		list, err := resourceClient(h, e.gr(), v).List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "list in %s%s", v, hint(e, res))
+		vc.check(gv, list.GetAPIVersion(), "list", v)
+		i := slices.IndexFunc(list.Items, named(e.Name))
+		require.GreaterOrEqual(t, i, 0, "list in %s does not contain %s", v, e.Name)
+		requireServedAs(t, vc, &list.Items[i], gv, "list item", v)
+	}
+}
+
+// versionCheck checks the apiVersion the server returns for a resource. For a resource
+// listed under api_version_mismatch it only logs a mismatch, but then requires one, so
+// the entry is removed once the server is fixed.
+type versionCheck struct {
+	t          *testing.T
+	gr         schema.GroupResource
+	waiver     apiVersionWaiver
+	mismatched bool
+}
+
+func newVersionCheck(t *testing.T, gr schema.GroupResource, f skipFile) *versionCheck {
+	return &versionCheck{t: t, gr: gr, waiver: f.APIVersionMismatch[gr.String()]}
+}
+
+// check compares the apiVersion returned by one kind of read ("get", "list", or
+// "list item") in one version. Only the exact read and version an entry names is waived.
+func (c *versionCheck) check(want, got, read, version string) {
+	c.t.Helper()
+	if want == got {
+		return
+	}
+	if !c.waiver.covers(read, version) {
+		require.Equal(c.t, want, got, "%s in %s: apiVersion", read, version)
+	}
+	c.mismatched = true
+	c.t.Logf("%s in %s: got apiVersion %s, known issue: %s", read, version, got, c.waiver.Reason)
+}
+
+func (c *versionCheck) done() {
+	c.t.Helper()
+	if c.waiver.Read != "" && !c.mismatched {
+		c.t.Errorf("%s returns the requested apiVersion now; remove it from api_version_mismatch in skip.yaml", c.gr)
+	}
+}
+
+// requireServedAs fails when the server did not return the object in the requested version:
+// either it kept another apiVersion, or it reports in status.conversion that it could not
+// convert. A failed conversion still reads successfully, with a placeholder spec, so the
+// status is the only sign of it.
+func requireServedAs(t *testing.T, vc *versionCheck, obj *unstructured.Unstructured, apiVersion, read, version string) {
+	t.Helper()
+	vc.check(apiVersion, obj.GetAPIVersion(), read, version)
+	what := read + " in " + version
+	failed, _, _ := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
+	if failed {
+		msg, _, _ := unstructured.NestedString(obj.Object, "status", "conversion", "error")
+		t.Fatalf("%s: conversion failed: %s", what, msg)
+	}
+}
+
+// hint explains the most likely cause when this version cannot handle an object at all.
+func hint(e written, res compat.Resource) string {
+	if slices.Contains(res.Versions, e.Version) {
+		return ""
+	}
+	return fmt.Sprintf("; stored in %s, which this version does not serve (preferred and max API versions must not go beyond what the oldest running version serves)", e.Version)
+}
+
+// acceptedStaleWriteError checks the result of a stale update on a resource listed under
+// stale_writes_accepted: it must succeed, and a conflict means the entry is no longer needed.
+func acceptedStaleWriteError(gr schema.GroupResource, err error) error {
+	if apierrors.IsConflict(err) {
+		return fmt.Errorf("%s rejects stale writes now; remove it from stale_writes_accepted in skip.yaml", gr)
+	}
+	if err != nil {
+		return fmt.Errorf("stale update of %s, listed under stale_writes_accepted, failed: %w", gr, err)
+	}
+	return nil
+}
+
+// sameSpecError reports whether two specs differ in any value. Numbers stay json.Number,
+// so integers beyond float64 precision are still compared exactly.
+func sameSpecError(want, got []byte) error {
+	w, err := decodeJSON(want)
+	if err != nil {
+		return err
+	}
+	g, err := decodeJSON(got)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(w, g) {
+		return fmt.Errorf("spec: expected %s, got %s", want, got)
+	}
+	return nil
+}
+
+// preservationErrorJSON decodes two specs and reports the first value in want that is
+// missing or different in got; see preservationError. Numbers stay json.Number, so
+// integers beyond float64 precision are still compared exactly.
+func preservationErrorJSON(want, got []byte) error {
+	w, err := decodeJSON(want)
+	if err != nil {
+		return err
+	}
+	g, err := decodeJSON(got)
+	if err != nil {
+		return err
+	}
+	return preservationError(w, g, "spec")
+}
+
+func decodeJSON(raw []byte) (any, error) {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	var v any
+	err := dec.Decode(&v)
+	return v, err
+}
+
+// preservationError reports the first value in want that is missing or different in got.
+// A conversion may drop empty values (null, "", false, [], and objects holding only empty
+// values) and add fields, but a value that is still there must not change.
+func preservationError(want, got any, path string) error {
+	switch w := want.(type) {
+	case map[string]any:
+		g, ok := got.(map[string]any)
+		if !ok {
+			return fmt.Errorf("%s: expected an object, got %v", path, got)
+		}
+		for k, v := range w {
+			gv, ok := g[k]
+			if !ok {
+				if isEmpty(v) {
+					continue
+				}
+				return fmt.Errorf("%s.%s was lost", path, k)
+			}
+			if err := preservationError(v, gv, path+"."+k); err != nil {
+				return err
+			}
+		}
+	case []any:
+		g, ok := got.([]any)
+		if !ok || len(g) != len(w) {
+			return fmt.Errorf("%s: expected %v, got %v", path, want, got)
+		}
+		for i := range w {
+			if err := preservationError(w[i], g[i], fmt.Sprintf("%s[%d]", path, i)); err != nil {
+				return err
+			}
+		}
+	default:
+		if !reflect.DeepEqual(want, got) {
+			return fmt.Errorf("%s: expected %v, got %v", path, want, got)
+		}
+	}
+	return nil
+}
+
+func isEmpty(v any) bool {
+	switch x := v.(type) {
+	case nil:
+		return true
+	case string:
+		return x == ""
+	case bool:
+		return !x
+	case map[string]any:
+		for _, v := range x {
+			if !isEmpty(v) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		return len(x) == 0
+	}
+	return false
+}
+
+func named(name string) func(unstructured.Unstructured) bool {
+	return func(o unstructured.Unstructured) bool { return o.GetName() == name }
+}
+
+func setLabel(obj *unstructured.Unstructured, key, value string) {
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	labels[key] = value
+	obj.SetLabels(labels)
+}
+
+func specJSON(t *testing.T, obj *unstructured.Unstructured) json.RawMessage {
+	t.Helper()
+	raw, err := json.Marshal(obj.Object["spec"])
+	require.NoError(t, err)
+	return raw
+}
+
+func writeManifest(t *testing.T, dir string, entries []written) {
+	t.Helper()
+	raw, err := json.MarshalIndent(entries, "", "  ")
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(manifestPath(dir), raw, 0o600))
+}
+
+func readManifest(t *testing.T, dir string) []written {
+	t.Helper()
+	raw, err := os.ReadFile(manifestPath(dir))
+	require.NoError(t, err, "run TestCompatSetup first")
+	var entries []written
+	require.NoError(t, json.Unmarshal(raw, &entries))
+	return entries
+}
+
+// newObject loads testdata/<group>/<resource>.yaml when present. Otherwise it builds
+// an object with an empty spec in the preferred version, which is enough for
+// resources without required spec fields.
+func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res compat.Resource) *unstructured.Unstructured {
+	t.Helper()
+	name := "compat-smoke-" + gr.Resource
+
+	if _, err := os.Stat(fixturePath(gr)); err == nil {
+		obj := h.LoadYAMLOrJSONFile(fixturePath(gr))
+		annotations := obj.GetAnnotations()
+		if _, serverNamed := annotations[serverNamedAnnotation]; serverNamed {
+			delete(annotations, serverNamedAnnotation)
+			obj.SetAnnotations(annotations)
+		} else if obj.GetName() == "" {
+			obj.SetName(name)
+		}
+		return obj
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		require.NoError(t, err)
+	}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{}}}
+	obj.SetAPIVersion(gr.WithVersion(res.Versions[0]).GroupVersion().String())
+	obj.SetKind(res.Kind)
+	obj.SetName(name)
+	return obj
+}
+
+// skipFile is skip.yaml. Every map is keyed by "<resource>.<group>"; the values are
+// reasons, except in FeatureFlags, where they are the flag the resource needs.
+type skipFile struct {
+	FeatureFlags        map[string]string           `yaml:"feature_flags"`
+	All                 map[string]string           `yaml:"all"`
+	OSS                 map[string]string           `yaml:"oss"`
+	Enterprise          map[string]string           `yaml:"enterprise"`
+	LegacyStorage       map[string]string           `yaml:"legacy_storage"`
+	APIVersionMismatch  map[string]apiVersionWaiver `yaml:"api_version_mismatch"`
+	StaleWritesAccepted map[string]string           `yaml:"stale_writes_accepted"`
+}
+
+// apiVersionWaiver is an api_version_mismatch entry: the server returns another apiVersion
+// for one kind of read in one version.
+type apiVersionWaiver struct {
+	Version string `yaml:"version"`
+	Read    string `yaml:"read"`
+	Reason  string `yaml:"reason"`
+}
+
+func (w apiVersionWaiver) covers(read, version string) bool {
+	return w.Read != "" && w.Read == read && w.Version == version
+}
+
+// unservedSkipEntries lists skip.yaml entries, as "<section>: <resource>.<group>", for
+// resources this build does not serve, so they are removed when a resource goes away. The
+// Enterprise build serves everything OSS does, so it checks every section but oss; the
+// OSS build checks all and oss.
+func unservedSkipEntries(f skipFile, served map[schema.GroupResource]compat.Resource, enterprise bool) []string {
+	sections := map[string][]string{"all": keysOf(f.All)}
+	if enterprise {
+		sections["enterprise"] = keysOf(f.Enterprise)
+		sections["feature_flags"] = keysOf(f.FeatureFlags)
+		sections["legacy_storage"] = keysOf(f.LegacyStorage)
+		sections["stale_writes_accepted"] = keysOf(f.StaleWritesAccepted)
+		sections["api_version_mismatch"] = keysOf(f.APIVersionMismatch)
+	} else {
+		sections["oss"] = keysOf(f.OSS)
+	}
+	var out []string
+	for name, keys := range sections {
+		for _, key := range keys {
+			if _, ok := served[schema.ParseGroupResource(key)]; !ok {
+				out = append(out, name+": "+key)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+func keysOf[V any](m map[string]V) []string {
+	return slices.Collect(maps.Keys(m))
+}
+
+func readSkipFile(t *testing.T) skipFile {
+	t.Helper()
+	raw, err := os.ReadFile("skip.yaml")
+	require.NoError(t, err)
+	var f skipFile
+	dec := yaml.NewDecoder(bytes.NewReader(raw))
+	dec.KnownFields(true)
+	require.NoError(t, dec.Decode(&f))
+	return f
+}
+
+// resolve returns why this build skips each resource it skips: those skipped in every
+// build, those skipped in this build (oss or enterprise), and those behind a feature
+// flag that is off in the running server. Call it after the server started, so flags
+// evaluate as the server evaluates them. stale lists the feature_flags entries whose
+// flag is on, which should be tested instead.
+func (f skipFile) resolve() (skips map[schema.GroupResource]string, stale map[schema.GroupResource]string) {
+	reasons := map[string]string{}
+	maps.Copy(reasons, f.All)
+	if extensions.IsEnterprise {
+		maps.Copy(reasons, f.Enterprise)
+	} else {
+		maps.Copy(reasons, f.OSS)
+	}
+	skips = map[schema.GroupResource]string{}
+	stale = map[schema.GroupResource]string{}
+	for key, reason := range reasons {
+		skips[schema.ParseGroupResource(key)] = reason
+	}
+	ctx := context.Background()
+	for key, flag := range f.FeatureFlags {
+		gr := schema.ParseGroupResource(key)
+		if openfeature.NewDefaultClient().Boolean(ctx, flag, false, openfeature.TransactionContext(ctx)) {
+			stale[gr] = flag
+			continue
+		}
+		skips[gr] = fmt.Sprintf("writes need the %s feature flag, which is off in this build", flag)
+	}
+	return skips, stale
+}
+
+func fixturePath(gr schema.GroupResource) string {
+	return filepath.Join("testdata", gr.Group, gr.Resource+".yaml")
+}
+
+func manifestPath(dir string) string {
+	return filepath.Join(dir, "smoke.json")
+}
+
+func compareGR(a, b schema.GroupResource) int {
+	return cmp.Or(strings.Compare(a.Group, b.Group), strings.Compare(a.Resource, b.Resource))
+}

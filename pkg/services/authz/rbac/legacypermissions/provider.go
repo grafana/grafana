@@ -30,7 +30,7 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 	return loader
 }
 
-func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
+func ProvideClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
 	return NewEmbeddedClient(loader, cfg)
 }
 

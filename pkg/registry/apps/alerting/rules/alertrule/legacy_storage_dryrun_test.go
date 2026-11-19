@@ -78,6 +78,10 @@ func (f *dryRunFixture) seed(t *testing.T, name string) *v1beta1.AlertRule {
 	t.Helper()
 	created, err := f.storage.Create(f.ctx, newDryRunRule(name, "original"), nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
+	// The real store assigns the version on insert, which the fake doesn't.
+	for _, r := range f.ruleStore.Rules[1] {
+		r.Version = 1
+	}
 	f.ruleStore.RecordedOps = nil
 	return created.(*v1beta1.AlertRule)
 }

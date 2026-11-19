@@ -18,7 +18,7 @@ import {
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { SupportingQueryType } from 'app/features/loki-helpers/types';
+import { LokiQueryDirection, SupportingQueryType } from 'app/features/loki-helpers/types';
 import { type ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
 
@@ -359,12 +359,12 @@ describe('runLoadMoreLogsQueries', () => {
     {
       name: 'the older-logs endNs bound',
       range: { from: 1_000, to: 20_000, endNs: '20000000010' },
-      nanoseconds: { endNs: '20000000010' },
+      nanoseconds: { endNs: '20000000010', direction: LokiQueryDirection.Backward },
     },
     {
       name: 'the newer-logs startNs bound',
       range: { from: 40_000, to: 100_000, startNs: '40000000001' },
-      nanoseconds: { startNs: '40000000001' },
+      nanoseconds: { startNs: '40000000001', direction: LokiQueryDirection.Forward },
     },
     {
       name: 'no nanosecond bound',

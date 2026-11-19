@@ -101,6 +101,10 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	created, err := s.Create(ctx, newDryRunRecordingRule("stored", "original"), nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	stored := created.(*v1beta1.RecordingRule)
+	// The real store assigns the version on insert, which the fake doesn't.
+	for _, r := range ruleStore.Rules[1] {
+		r.Version = 1
+	}
 	ruleStore.RecordedOps = nil
 
 	_, err = s.Create(ctx, newDryRunRecordingRule("stored", "other"), nil, &metav1.CreateOptions{DryRun: dryRun})

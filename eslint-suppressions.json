@@ -2785,11 +2785,6 @@
       "count": 1
     }
   },
-  "public/app/features/dimensions/editors/URLPickerTab.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
   "public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor.tsx": {
     "react-hooks/immutability": {
       "count": 2
@@ -2975,11 +2970,6 @@
   },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/LogsLink.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
