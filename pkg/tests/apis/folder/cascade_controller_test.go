@@ -25,8 +25,13 @@ import (
 	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -391,5 +396,66 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		deleter.fail.Store(nil)
 		poll(t, func() bool { return e.getFolder("e2e-fail") == nil })
 		require.False(t, e.dashboardExists(bad))
+	})
+	// The controller deletes the contents as its own identity, so the requester's access to them is
+	// checked when the delete is requested: alert.rules:delete on the folder and folders:write on its parent.
+	userWith := func(t *testing.T, name string, extra ...string) *dynamic.DynamicClient {
+		t.Helper()
+		actions := append([]string{folder.ActionFoldersRead, folder.ActionFoldersWrite, folder.ActionFoldersDelete,
+			dashboards.ActionDashboardsRead, dashboards.ActionDashboardsDelete}, extra...)
+		u := helper.CreateUser(name, apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+			Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: "e2e-" + name + "-top",
+		}})
+		c, err := dynamic.NewForConfig(u.NewRestConfig())
+		require.NoError(t, err)
+		return c
+	}
+
+	t.Run("a delete without access to the contents is rejected and leaves the folder untouched", func(t *testing.T) {
+		e := newEnv(t)
+		e.createFolder("e2e-denied-top", "")
+		e.createFolder("e2e-denied-a", "e2e-denied-top")
+		e.createFolder("e2e-denied-b", "e2e-denied-a")
+		e.createDashboards("e2e-denied-b", "e2e-denied-b1")
+		e.waitIndexed("e2e-denied-a", 1)
+		// Allowed to delete folders and dashboards, but not alert rules.
+		user := userWith(t, "denied")
+
+		startController(t, nil)
+		zero := int64(0)
+		err := user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-denied-a", metav1.DeleteOptions{GracePeriodSeconds: &zero})
+		require.True(t, apierrors.IsForbidden(err), "expected 403: %v", err)
+
+		require.Never(t, func() bool {
+			a := e.getFolder("e2e-denied-a")
+			return a == nil || a.DeletionTimestamp != nil || e.getFolder("e2e-denied-b") == nil || !e.dashboardExists("e2e-denied-b1")
+		}, 3*time.Second, 100*time.Millisecond, "a rejected delete must not mark the folder or touch its contents")
+	})
+
+	t.Run("an authorized delete completes a nested cascade", func(t *testing.T) {
+		e := newEnv(t)
+		e.createFolder("e2e-allowed-top", "")
+		e.createFolder("e2e-allowed-a", "e2e-allowed-top")
+		e.createFolder("e2e-allowed-b", "e2e-allowed-a")
+		e.createFolder("e2e-allowed-c", "e2e-allowed-b")
+		e.createDashboards("e2e-allowed-a", "e2e-allowed-a1")
+		e.createDashboards("e2e-allowed-c", "e2e-allowed-c1")
+		e.waitIndexed("e2e-allowed-a", 2)
+		e.waitIndexed("e2e-allowed-b", 1)
+		e.waitIndexed("e2e-allowed-c", 1)
+		user := userWith(t, "allowed", accesscontrol.ActionAlertingRuleDelete)
+
+		startController(t, nil)
+		zero := int64(0)
+		require.NoError(t, user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-allowed-a", metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+		poll(t, func() bool { return e.getFolder("e2e-allowed-a") == nil })
+		for _, name := range []string{"e2e-allowed-b", "e2e-allowed-c"} {
+			require.Nil(t, e.getFolder(name), "folder %s should be gone", name)
+		}
+		for _, d := range []string{"e2e-allowed-a1", "e2e-allowed-c1"} {
+			require.False(t, e.dashboardExists(d), "dashboard %s should be gone", d)
+		}
+		require.NotNil(t, e.getFolder("e2e-allowed-top"), "the parent must be left alone")
 	})
 }

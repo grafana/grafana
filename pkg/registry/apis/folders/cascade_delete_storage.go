@@ -96,11 +96,16 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 
 // Delete removes a folder and, when cascade delete is enabled, its entire subtree. A forced delete of
 // a folder with the cascade finalizer is handed to the cascade controller, whether or not the flag is
-// on, once the requester's access to its contents is checked. For other folders the subtree is
-// walked depth-first: each folder is stamped with a terminating label on the way down, and folders
-// are deleted on the way back up once they have no remaining child folders (i.e. leaves first).
+// on, once the requester's access to its contents is checked. Besides the permission to delete the
+// folder itself, the requester needs (see checkFolderContentsAccess):
+//   - alert.rules:delete on the folder
+//   - folders:write on its parent (General for a root folder)
+//   - variables:delete on the folder, only when global variables are enabled
+//
+// For other folders the subtree is walked depth-first: each folder is stamped with a terminating
+// label on the way down, and folders are deleted on the way back up once they have no remaining
+// child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// Delegate when the user is not forcing the deletion.
 	if !forceDeleteFromDeleteOptions(options) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
