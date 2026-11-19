@@ -1,24 +1,6 @@
 import { omit } from 'lodash';
 
-import {
-  type FieldConfigPropertyItem,
-  type FieldConfigSource,
-  type PanelPlugin,
-  standardEditorsRegistry,
-} from '@grafana/data';
-import { getVarMappingKind, type VarMappingKind } from '@grafana/data/internal';
-
-/**
- * The kind of expression the panel editor lets a property take, or `undefined` for none. Only the
- * standard number editor is swapped for the expression input, so sliders and the editors plugins
- * pair with `numberOverrideProcessor` stay as they are.
- */
-export function getVarMappingEditingKind(
-  item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'editor'>
-): VarMappingKind | undefined {
-  const kind = getVarMappingKind(item);
-  return kind === 'number' && item.editor !== standardEditorsRegistry.getIfExists('number')?.editor ? undefined : kind;
-}
+import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
 
 /**
  * Sets or clears `defaults.varMappings[id]`. Unlike `updateDefaultFieldConfigValue`, `id` is the

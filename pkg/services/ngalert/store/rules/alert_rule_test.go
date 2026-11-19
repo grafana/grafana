@@ -635,6 +635,33 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 }
 
+func TestIntegration_CountByOrg(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.NewTestStore(t)
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+	counts, err := store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, counts)
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
+	for range 2 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(1)))
+	}
+	for range 3 {
+		_ = createRule(t, store, gen.With(gen.WithOrgID(2)))
+	}
+
+	counts, err = store.CountByOrg(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, map[int64]int64{1: 2, 2: 3}, counts)
+}
+
 func TestIntegration_CountRuleGroups(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 

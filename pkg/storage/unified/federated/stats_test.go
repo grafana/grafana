@@ -358,6 +358,30 @@ func TestIntegrationLegacyTableIsStale(t *testing.T) {
 		}))
 	})
 
+	t.Run("library panels migration makes legacy counts stale without config", func(t *testing.T) {
+		ctx := context.Background()
+		testDB, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		require.NoError(t, migrations.EnsureMigrationLogTable(ctx, testDB, cfg))
+		helper, err := legacysql.NewDatabaseProvider(testDB)(ctx)
+		require.NoError(t, err)
+		s := &LegacyStatsGetter{}
+		require.NoError(t, testDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			stale, err := s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+
+			_, err = sess.Exec("INSERT INTO "+helper.Table(migrationLogTable)+" ("+helper.DB.Quote("migration_id")+", "+
+				helper.DB.Quote("sql")+", "+helper.DB.Quote("success")+", "+helper.DB.Quote("error")+", "+
+				helper.DB.Quote("timestamp")+") VALUES (?, ?, ?, ?, ?)",
+				libraryPanelMigration, "test", true, "", time.Now())
+			require.NoError(t, err)
+			stale, err = s.legacyTableIsStale(sess, helper, libraryPanelResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+			return nil
+		}))
+	})
+
 	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
 		s := &LegacyStatsGetter{}
 		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {

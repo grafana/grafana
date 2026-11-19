@@ -142,6 +142,10 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	if hasPath {
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
 	}
+	// Pass the same validation keys that Grafana uses, so the plugin accepts the same tokens.
+	if validationKeys := p.marketplaceLicensing.ValidationKeys(); validationKeys != "" {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_VALIDATION_KEY", validationKeys))
+	}
 	return variables
 }
 

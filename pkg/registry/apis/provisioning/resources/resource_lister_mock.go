@@ -143,65 +143,6 @@ func (_c *MockResourceLister_RepositoryStats_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// Stats provides a mock function with given fields: ctx, namespace
-func (_m *MockResourceLister) Stats(ctx context.Context, namespace string) (*v0alpha1.ResourceStats, error) {
-	ret := _m.Called(ctx, namespace)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Stats")
-	}
-
-	var r0 *v0alpha1.ResourceStats
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*v0alpha1.ResourceStats, error)); ok {
-		return rf(ctx, namespace)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *v0alpha1.ResourceStats); ok {
-		r0 = rf(ctx, namespace)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v0alpha1.ResourceStats)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, namespace)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockResourceLister_Stats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Stats'
-type MockResourceLister_Stats_Call struct {
-	*mock.Call
-}
-
-// Stats is a helper method to define mock.On call
-//   - ctx context.Context
-//   - namespace string
-func (_e *MockResourceLister_Expecter) Stats(ctx interface{}, namespace interface{}) *MockResourceLister_Stats_Call {
-	return &MockResourceLister_Stats_Call{Call: _e.mock.On("Stats", ctx, namespace)}
-}
-
-func (_c *MockResourceLister_Stats_Call) Run(run func(ctx context.Context, namespace string)) *MockResourceLister_Stats_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockResourceLister_Stats_Call) Return(_a0 *v0alpha1.ResourceStats, _a1 error) *MockResourceLister_Stats_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockResourceLister_Stats_Call) RunAndReturn(run func(context.Context, string) (*v0alpha1.ResourceStats, error)) *MockResourceLister_Stats_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewMockResourceLister creates a new instance of MockResourceLister. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockResourceLister(t interface {

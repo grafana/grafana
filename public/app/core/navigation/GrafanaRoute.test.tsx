@@ -104,7 +104,7 @@ describe('GrafanaRoute', () => {
     expect(await screen.findByTestId('page-fallback-loader')).toBeInTheDocument();
   });
 
-  it('restarts the pod check when navigating between non-allow-listed routes after an error', async () => {
+  it('restarts the pod check when navigating between routes after an error', async () => {
     server.use(http.get('/_/status', () => HttpResponse.error()));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
@@ -138,6 +138,54 @@ describe('GrafanaRoute', () => {
     });
 
     expect(startSpy).toHaveBeenCalledTimes(2);
+
+    stPodReady.stop();
+  });
+
+  it('starts polling on allow-listed routes without suspending the route', async () => {
+    server.use(http.get('/_/status', () => HttpResponse.json({ status: 'starting' })));
+    await act(async () => {
+      setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
+    });
+
+    const stPodReady = new StPodReadyService();
+    const startSpy = jest.spyOn(stPodReady, 'start');
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    await act(async () => {
+      render(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/dashboards/foo' }}
+          route={{ component: () => <div data-testid="real-page" />, path: '/dashboards/*' }}
+        />,
+        { wrapper }
+      );
+    });
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(stPodReady.getStatus()).toBe(StPodStatus.Waiting));
+    expect(await screen.findByTestId('real-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('page-fallback-loader')).not.toBeInTheDocument();
+
+    stPodReady.stop();
+  });
+
+  it('does not start polling when the mt fallback flag is not configured', async () => {
+    const stPodReady = new StPodReadyService();
+    const startSpy = jest.spyOn(stPodReady, 'start');
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    await act(async () => {
+      render(
+        <GrafanaRoute
+          location={{ ...mockLocation, pathname: '/explore' }}
+          route={{ component: () => <div />, path: '/explore' }}
+        />,
+        { wrapper }
+      );
+    });
+
+    expect(startSpy).not.toHaveBeenCalled();
 
     stPodReady.stop();
   });

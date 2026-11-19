@@ -122,16 +122,9 @@ func (b *APIBuilder) storageForVersion(
 ) (*preferencesStorage, error) {
 	storage := map[string]rest.Storage{}
 
-	var store grafanarest.Storage
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, prefs, opts.OptsGetter)
 	if err != nil {
 		return nil, err
-	}
-	if b.legacyPrefs != nil && opts.DualWriteBuilder != nil {
-		store, err = opts.DualWriteBuilder(prefs.GroupResource(), b.legacyPrefs, store)
-		if err != nil {
-			return nil, err
-		}
 	}
 	wrappedStorage := &preferencesStorage{
 		Storage:      store,

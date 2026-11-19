@@ -42,15 +42,44 @@ export function ValidationStatus({ state, result }: ValidationStatusProps) {
   if (state === 'error' && result) {
     return (
       <Alert severity="error" title={t('alerting.import-to-gma.step1.validation-error', 'Validation failed')}>
-        <Text>
-          {result.error ||
-            t('alerting.import-to-gma.step1.validation-error-desc', 'Failed to validate the configuration.')}
-        </Text>
+        <ErrorDetails error={result.error} />
       </Alert>
     );
   }
 
   return null;
+}
+
+/**
+ * The backend can report several strict-decoding errors in one newline-separated message:
+ * the first line is the summary and each following line is one error.
+ */
+function ErrorDetails({ error }: { error?: string }) {
+  const [summary, ...details] = (error ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!summary) {
+    return (
+      <Text>{t('alerting.import-to-gma.step1.validation-error-desc', 'Failed to validate the configuration.')}</Text>
+    );
+  }
+
+  return (
+    <Stack direction="column" gap={1}>
+      <Text>{summary}</Text>
+      {details.length > 0 && (
+        <Box element="ul" margin={0} paddingLeft={3}>
+          {details.map((detail, index) => (
+            <Text key={index} element="li">
+              {detail}
+            </Text>
+          ))}
+        </Box>
+      )}
+    </Stack>
+  );
 }
 
 /**

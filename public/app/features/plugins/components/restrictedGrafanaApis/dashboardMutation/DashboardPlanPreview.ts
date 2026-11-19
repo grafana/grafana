@@ -1,8 +1,9 @@
 import { type UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
+import { parseRenderPlanPayload, payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { dashboardPlanEditingEnabled } from 'app/features/dashboard-scene/scene/dashboardModes';
 import {
   clearPendingPlanBuild,
   setPendingPlanBuild,
@@ -49,7 +50,9 @@ export class DashboardPlanPreview {
   }
 
   async render(payload: unknown): Promise<MutationResult> {
-    const parsed = payloads.renderPlan.safeParse(payload);
+    // Without plan editing its fields are stripped, so a preview ignores ids and positions as an older
+    // core would.
+    const parsed = parseRenderPlanPayload(payload, { editing: dashboardPlanEditingEnabled() });
     if (!parsed.success) {
       return { success: false, error: parsed.error.message, changes: [] };
     }
