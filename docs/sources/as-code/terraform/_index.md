@@ -63,4 +63,5 @@ The following table lists the Grafana areas and Grafana Cloud products that have
 
 - **Grafana Assistant:** You can run [Grafana Assistant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-assistant/) in self-managed Grafana by connecting it to a Grafana Cloud stack, but the Terraform resources require a Grafana Cloud stack with Assistant enabled.
 - **Plugins:** The `grafana_cloud_plugin_installation` resource only works with Grafana Cloud stacks. To install plugins in self-managed Grafana, refer to [Install a plugin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/plugin-install/).
+
 {{< /admonition >}}
