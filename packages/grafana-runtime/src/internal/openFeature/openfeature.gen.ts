@@ -274,6 +274,8 @@ export const FlagKeys = {
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enable tabs and an inline calendar in the compact time range picker */
+  GrafanaResponsiveTimePickerTabs: "grafana.responsiveTimePickerTabs",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
   GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -376,8 +378,6 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
-  /** Enable tabs and an inline calendar in the compact time range picker */
-  ResponsiveTimePickerTabs: "responsiveTimePickerTabs",
   /** Enables the new role picker drawer design */
   RolePickerDrawer: "rolePickerDrawer",
   /** Enables Saved queries (query library) RBAC permissions */
@@ -1859,6 +1859,17 @@ export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEv
 };
 
 /**
+ * Enable tabs and an inline calendar in the compact time range picker
+ *
+ * **Details:**
+ * - flag key: `grafana.responsiveTimePickerTabs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.responsiveTimePickerTabs", false, options).value;
+};
+
+/**
  * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
  *
  * **Details:**
@@ -2417,17 +2428,6 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
-};
-
-/**
- * Enable tabs and an inline calendar in the compact time range picker
- *
- * **Details:**
- * - flag key: `responsiveTimePickerTabs`
- * - default value: `false`
- */
-export const useFlagResponsiveTimePickerTabs = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("responsiveTimePickerTabs", false, options).value;
 };
 
 /**

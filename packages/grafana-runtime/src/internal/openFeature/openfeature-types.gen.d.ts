@@ -10,7 +10,7 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
-    | "responsiveTimePickerTabs"
+    | "grafana.responsiveTimePickerTabs"
     | "panelTitleSearch"
     | "publicDashboardsEmailSharing"
     | "canvasPanelNesting"

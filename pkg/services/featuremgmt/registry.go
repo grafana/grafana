@@ -18,7 +18,7 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "responsiveTimePickerTabs",
+			Name:        "grafana.responsiveTimePickerTabs",
 			Description: "Enable tabs and an inline calendar in the compact time range picker",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendNavigation,

@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import {
   useFlagGrafanaScopesDashboardsMegaMenu,
   useFlagScopeFilters,
-  useFlagResponsiveTimePickerTabs,
+  useFlagGrafanaResponsiveTimePickerTabs,
 } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
@@ -248,7 +248,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hidePlaylistNav,
   } = model.useState();
 
-  const tabsEnabled = useFlagResponsiveTimePickerTabs();
+  const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();

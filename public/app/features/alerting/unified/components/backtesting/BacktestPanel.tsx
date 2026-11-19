@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type DataFrameJSON, type GrafanaTheme2, type TimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagResponsiveTimePickerTabs } from '@grafana/runtime/internal';
+import { useFlagGrafanaResponsiveTimePickerTabs } from '@grafana/runtime/internal';
 import {
   Alert,
   Icon,
@@ -35,7 +35,7 @@ interface BacktestPanelProps {
 
 export function BacktestPanel({ ruleDefinition, initialTimeRange }: BacktestPanelProps) {
   const styles = useStyles2(getStyles);
-  const tabsEnabled = useFlagResponsiveTimePickerTabs();
+  const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
   const [timeRange, setTimeRange] = useState<TimeRange>(
     initialTimeRange || rangeUtil.convertRawToRange({ from: 'now-15m', to: 'now' })
   );

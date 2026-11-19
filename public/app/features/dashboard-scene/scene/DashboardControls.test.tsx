@@ -161,7 +161,7 @@ describe('DashboardControls', () => {
 
   describe('Component', () => {
     it.each([true, false])('renders compact tabs through Scenes when rollout is %s', async (enabled) => {
-      setTestFlags({ responsiveTimePickerTabs: enabled });
+      setTestFlags({ 'grafana.responsiveTimePickerTabs': enabled });
       const previousWidth = window.innerWidth;
       window.innerWidth = 375;
       try {

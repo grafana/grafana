@@ -35,7 +35,7 @@ describe('TimePickerWithHistory', () => {
   });
 
   it.each([true, false])('uses tabbed compact design when rollout is %s', async (enabled) => {
-    setTestFlags({ responsiveTimePickerTabs: enabled });
+    setTestFlags({ 'grafana.responsiveTimePickerTabs': enabled });
     render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} layout="compact" />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
     if (enabled) {
