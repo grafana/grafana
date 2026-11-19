@@ -19,7 +19,7 @@ func validateGroupLabels(r, oldRule *model.RecordingRule, action resource.Admiss
 	if oldRule != nil {
 		oldLabels = oldRule.Labels
 	}
-	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action, util.GroupWritesRequested(r.Annotations))
 }
 
 func validateFolderAndSequenceMembership(ctx context.Context, r *model.RecordingRule, oldRule *model.RecordingRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
