@@ -77,7 +77,7 @@ To create a dashboard from a template, follow these steps:
 {{< admonition type="note" >}}
 Custom dashboard templates is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-To try it out, enable the `grafana.customDashboardTemplates` feature toggle.
+To try it out, enable the `dashboardTemplates` and `grafana.customDashboardTemplates` feature toggles.
 
 Custom dashboard templates is only available in Grafana Cloud and Enterprise.
 {{< /admonition >}}
