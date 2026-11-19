@@ -67,15 +67,19 @@ func pendingObject(name, uid string) *unstructured.Unstructured {
 
 func TestController_PendingCompletionMetrics(t *testing.T) {
 	for _, tc := range []struct {
-		name        string
-		stamp       string
-		replacement bool
-		count       uint64
-		sum         float64
-		skipped     float64
+		name           string
+		stamp          string
+		replacement    bool
+		removeDelay    time.Duration
+		removeNotFound bool
+		count          uint64
+		sum            float64
+		skipped        float64
 	}{
 		{name: "captured start includes scan delay", stamp: "1999-12-31T23:55:00Z", count: 1, sum: 300},
 		{name: "replacement UID", stamp: "1999-12-31T23:55:00Z", replacement: true, count: 1, sum: 300},
+		{name: "cleanup latency excluded", stamp: "1999-12-31T23:55:00Z", removeDelay: 10 * time.Second, count: 1, sum: 300},
+		{name: "removed elsewhere", stamp: "1999-12-31T23:55:00Z", removeNotFound: true},
 		{name: "absent start", skipped: 1},
 		{name: "invalid start", stamp: "invalid", skipped: 1},
 		{name: "future start", stamp: "2000-01-01T00:01:00Z", count: 1},
@@ -92,7 +96,17 @@ func TestController_PendingCompletionMetrics(t *testing.T) {
 				}
 				pending := NewPendingClient(newFake(obj))
 				reg := prometheus.NewPedanticRegistry()
-				c := NewController(m, nil, nil, WithPendingRecovery(pending), WithPendingMetrics(reg))
+				store := retryPendingStore{PendingStore: pending, remove: func(ctx context.Context, entry *pendingv1alpha1.PendingFolderDeletion) error {
+					time.Sleep(tc.removeDelay)
+					if err := pending.Remove(ctx, entry); err != nil {
+						return err
+					}
+					if tc.removeNotFound {
+						return apierrors.NewNotFound(pendingGVR.GroupResource(), entry.Name)
+					}
+					return nil
+				}}
+				c := NewController(m, nil, nil, WithPendingRecovery(store), WithPendingMetrics(reg))
 				defer c.queue.ShutDown()
 				require.NoError(t, c.reconcilePending(context.Background(), pendingQueuePrefix+testNamespace+"/"+obj.GetName()))
 				_, err := pending.Get(context.Background(), testNamespace, obj.GetName())
@@ -108,6 +122,7 @@ func TestController_PendingCompletionMetrics(t *testing.T) {
 					case "grafana_folder_deletion_observed_duration_seconds":
 						require.Equal(t, "HISTOGRAM", family.GetType().String())
 						require.Equal(t, "Time from folder deletion timestamp until reconciliation observes completion, including scan delay. Samples are best effort.", family.GetHelp())
+						require.NotNil(t, metric.GetHistogram().Schema, "native histograms must be enabled")
 						require.Equal(t, tc.count, metric.GetHistogram().GetSampleCount())
 						require.Equal(t, tc.sum, metric.GetHistogram().GetSampleSum())
 						bounds := make([]float64, 0, len(metric.GetHistogram().Bucket))
@@ -341,6 +356,7 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 		store := retryPendingStore{PendingStore: pending, remove: func(ctx context.Context, entry *pendingv1alpha1.PendingFolderDeletion) error {
 			removals++
 			if removals == 1 {
+				require.NoError(t, pending.Capture(ctx, entry, metav1.NewTime(time.Now().Add(-time.Minute))))
 				return apierrors.NewConflict(pendingGVR.GroupResource(), entry.Name, errors.New("concurrent capture"))
 			}
 			if removals == 2 {
@@ -348,7 +364,8 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 			}
 			return pending.Remove(ctx, entry)
 		}}
-		c := NewController(getter, nil, nil, WithPendingRecovery(store))
+		reg := prometheus.NewPedanticRegistry()
+		c := NewController(getter, nil, nil, WithPendingRecovery(store), WithPendingMetrics(reg))
 		stop := run(c)
 		defer stop()
 		synctest.Wait()
@@ -358,6 +375,14 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err))
 		require.Equal(t, 4, reads)
 		require.Equal(t, 3, removals)
+		require.Zero(t, testutil.ToFloat64(c.pendingMetrics.skipped), "failed cleanup before timestamp capture must not count as skipped")
+		families, err := reg.Gather()
+		require.NoError(t, err)
+		for _, family := range families {
+			if family.GetName() == "grafana_folder_deletion_observed_duration_seconds" {
+				require.EqualValues(t, 1, family.Metric[0].GetHistogram().GetSampleCount(), "cleanup retries must produce only one observation")
+			}
+		}
 	})
 }
 

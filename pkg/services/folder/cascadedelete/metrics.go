@@ -19,22 +19,25 @@ func WithPendingMetrics(reg prometheus.Registerer) ControllerOption {
 		factory := promauto.With(reg)
 		c.pendingMetrics = &pendingMetrics{
 			duration: factory.NewHistogram(prometheus.HistogramOpts{
-				Name:    "grafana_folder_deletion_observed_duration_seconds",
-				Help:    "Time from folder deletion timestamp until reconciliation observes completion, including scan delay. Samples are best effort.",
-				Buckets: []float64{1, 10, 30, 60, 300, 600, 1800, 3600, 21600, 86400},
+				Name:                            "grafana_folder_deletion_observed_duration_seconds",
+				Help:                            "Time from folder deletion timestamp until reconciliation observes completion, including scan delay. Samples are best effort.",
+				Buckets:                         []float64{1, 10, 30, 60, 300, 600, 1800, 3600, 21600, 86400},
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}),
 			skipped: factory.NewCounter(prometheus.CounterOpts{Name: "grafana_folder_deletion_duration_skipped_total", Help: "Completed pending folder deletions without a usable captured deletion timestamp."}),
 		}
 	}
 }
 
-func (m *pendingMetrics) completed(entry *pendingv1alpha1.PendingFolderDeletion) {
+func (m *pendingMetrics) completed(entry *pendingv1alpha1.PendingFolderDeletion, observedAt time.Time) {
 	if m == nil {
 		return
 	}
 	if entry.Spec.DeletionTimestamp != nil {
 		if start, err := time.Parse(time.RFC3339Nano, *entry.Spec.DeletionTimestamp); err == nil {
-			m.duration.Observe(max(0, time.Since(start).Seconds()))
+			m.duration.Observe(max(0, observedAt.Sub(start).Seconds()))
 			return
 		}
 	}

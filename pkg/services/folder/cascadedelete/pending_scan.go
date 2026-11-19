@@ -89,9 +89,12 @@ func (c *Controller) reconcilePending(ctx context.Context, key string) error {
 	}
 	f, err := c.folders.Get(ctx, namespace, entry.Spec.FolderName)
 	if apierrors.IsNotFound(err) || (err == nil && string(f.UID) != entry.Spec.FolderUID) {
-		// Observation is best effort: a crash or conditional cleanup retry may lose or duplicate a sample.
-		c.pendingMetrics.completed(entry)
+		observedAt := time.Now()
 		err = c.pending.Remove(ctx, entry)
+		if err == nil {
+			// Cleanup and observation are not atomic; a crash between them can lose a sample.
+			c.pendingMetrics.completed(entry, observedAt)
+		}
 		if apierrors.IsNotFound(err) {
 			return nil
 		}
