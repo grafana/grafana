@@ -1,5 +1,3 @@
-import { useId } from 'react';
-
 import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { Box, Divider, Stack } from '@grafana/ui';
@@ -8,15 +6,18 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
+import { FieldLabelWithTooltip, SidebarField, SidebarSection } from '../../rule-list/filter/RulesFilterSidebar';
 import {
-  FieldLabelWithTooltip,
-  SidebarField,
-  SidebarSection,
-  ToggleButtonGroup,
-} from '../../rule-list/filter/RulesFilterSidebar';
-import { ChoiceFilter, DataSourceFilter, FolderFilter, PolicyFilter, TextFilter } from '../rule-search/FilterSidebar';
+  ChoiceFilter,
+  DataSourceFilter,
+  FolderFilter,
+  HealthFilter,
+  PluginRulesFilter,
+  PolicyFilter,
+  TextFilter,
+} from '../rule-search/FilterSidebar';
 import { LabelMatchersFilter } from '../rule-search/LabelMatchersFilter';
-import { setFilterValues } from '../rule-search/setFilterValues';
+import { setFilters } from '../rule-search/setFilterValues';
 import { formatLabelMatcher } from '../rule-search/sharedFilters';
 
 import { type AlertFilterKey, type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
@@ -33,15 +34,8 @@ interface AlertRulesFilterSidebarProps {
  */
 export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFilterSidebarProps) {
   const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
-  const pluginsLabelId = useId();
-
-  const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) => {
-    const newQuery = Object.entries(changes).reduce((currentQuery, [filterKey, values]) => {
-      const newValues = values.filter((value) => value !== undefined);
-      return setFilterValues(currentQuery, alertRuleSearchSchema, filterKey, newValues);
-    }, query);
-    onApply(newQuery);
-  };
+  const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) =>
+    onApply(setFilters(query, alertRuleSearchSchema, changes));
 
   return (
     <Box width={32} shrink={0} paddingBottom={2}>
@@ -147,17 +141,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
         </SidebarSection>
         <Divider spacing={0} />
         <SidebarSection>
-          <ChoiceFilter
-            label={t('alerting.gma-rule-list.sidebar.health', 'Health')}
-            value={filter.health}
-            onChange={(health) => apply({ health: [health] })}
-            options={[
-              { label: t('alerting.gma-rule-list.sidebar.health-ok', 'OK'), value: 'ok' },
-              { label: t('alerting.gma-rule-list.sidebar.health-nodata', 'No data'), value: 'nodata' },
-              { label: t('alerting.gma-rule-list.sidebar.health-error', 'Error'), value: 'error' },
-              { label: t('alerting.gma-rule-list.sidebar.health-unknown', 'Unknown'), value: 'unknown' },
-            ]}
-          />
+          <HealthFilter health={filter.health} onChange={(health) => apply({ health: [health] })} />
           <ChoiceFilter
             label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
             value={filter.paused}
@@ -166,17 +150,10 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
           />
         </SidebarSection>
         <Divider spacing={0} />
-        <SidebarField label={t('alerting.gma-rule-list.sidebar.plugin-rules', 'Plugin rules')} labelId={pluginsLabelId}>
-          <ToggleButtonGroup<boolean>
-            aria-labelledby={pluginsLabelId}
-            value={filter.hidePluginRules}
-            onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
-            options={[
-              { label: t('alerting.gma-rule-list.sidebar.plugin-rules-show', 'Show'), value: false },
-              { label: t('alerting.gma-rule-list.sidebar.plugin-rules-hide', 'Hide'), value: true },
-            ]}
-          />
-        </SidebarField>
+        <PluginRulesFilter
+          hide={filter.hidePluginRules}
+          onChange={(hide) => apply({ plugins: [hide ? 'hide' : undefined] })}
+        />
       </Stack>
     </Box>
   );

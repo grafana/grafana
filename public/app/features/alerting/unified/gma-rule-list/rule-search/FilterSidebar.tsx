@@ -14,6 +14,8 @@ import {
   type ToggleOption,
 } from '../../rule-list/filter/RulesFilterSidebar';
 
+import { type HealthValue } from './sharedRuleFilter';
+
 /** One choice of a few, plus All for no filter. */
 export function ChoiceFilter<Value extends string>({
   label,
@@ -130,6 +132,45 @@ export function DataSourceFilter({
         value={value}
         placeholder={t('alerting.gma-rule-list.sidebar.datasource-placeholder', 'Select data sources')}
         onChange={(selected) => onChange(selected.map((option) => option.value))}
+      />
+    </SidebarField>
+  );
+}
+
+export function HealthFilter({
+  health,
+  onChange,
+}: {
+  health: HealthValue | undefined;
+  onChange: (health: HealthValue | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.health', 'Health')}
+      value={health}
+      onChange={onChange}
+      options={[
+        { label: t('alerting.gma-rule-list.sidebar.health-ok', 'OK'), value: 'ok' },
+        { label: t('alerting.gma-rule-list.sidebar.health-nodata', 'No data'), value: 'nodata' },
+        { label: t('alerting.gma-rule-list.sidebar.health-error', 'Error'), value: 'error' },
+        { label: t('alerting.gma-rule-list.sidebar.health-unknown', 'Unknown'), value: 'unknown' },
+      ]}
+    />
+  );
+}
+
+export function PluginRulesFilter({ hide, onChange }: { hide: boolean; onChange: (hide: boolean) => void }) {
+  const labelId = useId();
+  return (
+    <SidebarField label={t('alerting.gma-rule-list.sidebar.plugin-rules', 'Plugin rules')} labelId={labelId}>
+      <ToggleButtonGroup<boolean>
+        aria-labelledby={labelId}
+        value={hide}
+        onChange={onChange}
+        options={[
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-show', 'Show'), value: false },
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-hide', 'Hide'), value: true },
+        ]}
       />
     </SidebarField>
   );
