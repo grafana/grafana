@@ -1,6 +1,7 @@
 import { type AdHocVariableFilter } from '@grafana/data';
 import {
   AdHocFiltersVariable,
+  CustomVariable,
   QueryVariable,
   SceneTimeRange,
   SceneVariableSet,
@@ -52,6 +53,63 @@ describe('captureSavedViewState', () => {
     expect(captureSavedViewState(scene).variables[0].filters).toEqual([
       { key: 'host', operator: '=|', value: 'a', values: ['a', 'b'] },
     ]);
+  });
+
+  it('keeps display labels so an applied filter shows the same chip it was saved with', () => {
+    const labeled = { key: 'host_id', keyLabel: 'Host', operator: '=', value: 'h-1', valueLabels: ['Server A'] };
+    const source = new DashboardScene({
+      uid: 'dash-1',
+      $variables: new SceneVariableSet({
+        variables: [new AdHocFiltersVariable({ name: 'adhocFilter', datasource: null, filters: [labeled] })],
+      }),
+    });
+    const spec = captureSavedViewState(source);
+    expect(spec.variables[0].filters).toEqual([labeled]);
+
+    const target = buildScene({ adhocFilters: [] });
+    applySavedViewState(target, spec);
+
+    const adhoc = target.state.$variables?.getByName('adhocFilter');
+    if (!(adhoc instanceof AdHocFiltersVariable)) {
+      throw new Error('expected an ad hoc variable');
+    }
+    expect(adhoc.state.filters).toEqual([labeled]);
+  });
+
+  it('stores scalar values as strings, since the schema only accepts strings', () => {
+    const scene = new DashboardScene({
+      uid: 'dash-1',
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({ name: 'size', query: '5', value: 5, text: '5' }),
+          new CustomVariable({ name: 'mixed', query: '1,b', value: [1, 'b'], text: ['1', 'b'], isMulti: true }),
+        ],
+      }),
+    });
+
+    expect(captureSavedViewState(scene).variables).toEqual([
+      { name: 'size', type: 'custom', value: '5' },
+      { name: 'mixed', type: 'custom', value: ['1', 'b'] },
+    ]);
+  });
+
+  it('skips a variable whose value has no string form to restore', () => {
+    const scene = new DashboardScene({
+      uid: 'dash-1',
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'fmt',
+            query: '',
+            value: ['a', { formatter: () => 'x' }],
+            text: ['a', 'x'],
+            isMulti: true,
+          }),
+        ],
+      }),
+    });
+
+    expect(captureSavedViewState(scene).variables).toEqual([]);
   });
 });
 

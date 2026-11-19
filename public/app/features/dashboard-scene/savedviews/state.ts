@@ -1,5 +1,5 @@
 import { dateMath, getTimeZone, type TimeRange, type TimeZone } from '@grafana/data';
-import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable, type VariableValue } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -36,23 +36,36 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
     return {
       name: variable.state.name,
       type: variable.state.type,
-      filters: variable.state.filters.map(({ key, operator, value, values }) => ({
+      filters: variable.state.filters.map(({ key, operator, value, values, keyLabel, valueLabels }) => ({
         key,
         operator,
         value,
         ...(values ? { values } : {}),
+        ...(keyLabel !== undefined ? { keyLabel } : {}),
+        ...(valueLabels ? { valueLabels } : {}),
       })),
     };
   }
   if (variable instanceof MultiValueVariable) {
-    return {
-      name: variable.state.name,
-      type: variable.state.type,
-      value: variable.state.value,
-    };
+    const value = toStoredValue(variable.state.value);
+    return value === undefined ? undefined : { name: variable.state.name, type: variable.state.type, value };
   }
   // Other kinds (constant, textbox, ...) aren't captured.
   return undefined;
+}
+
+// The schema stores strings only; a custom formatter value has no string form to restore from.
+function toStoredValue(value: VariableValue): string | string[] | undefined {
+  const values = Array.isArray(value) ? value : [value];
+  const stored = values.filter(isScalar).map(String);
+  if (stored.length !== values.length) {
+    return undefined;
+  }
+  return Array.isArray(value) ? stored : stored[0];
+}
+
+function isScalar(value: unknown): value is string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
 /** The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene. */
