@@ -1648,6 +1648,8 @@
         "label-value-placeholder": "value",
         "label-value-unset": "none",
         "labels": "Labels",
+        "metric": "Recorded metric",
+        "metric-placeholder": "Exact metric name",
         "operator-absent": "absent",
         "operator-absent-description": "Lacks this label",
         "operator-equal": "Equals",
@@ -1672,7 +1674,9 @@
         "state-firing": "Firing",
         "state-normal": "Normal",
         "state-pending": "Pending",
-        "state-recovering": "Recovering"
+        "state-recovering": "Recovering",
+        "target-datasource": "Target data source",
+        "target-datasource-placeholder": "Select data source"
       },
       "status": {
         "error": "Failed to evaluate rule",

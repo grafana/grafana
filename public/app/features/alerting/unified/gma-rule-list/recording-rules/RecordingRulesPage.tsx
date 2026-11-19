@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Divider, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
@@ -16,6 +16,7 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 import { RecordingRulesListView } from './RecordingRulesListView';
 import { type RecordingRuleFilter, recordingRuleSearchSchema } from './recordingRuleFilters';
@@ -46,9 +47,15 @@ function RecordingRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <RuleSequenceDrawerProvider>
-            <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-          </RuleSequenceDrawerProvider>
+          <Stack direction="row" gap={2}>
+            <RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />
+            <Divider direction="vertical" spacing={0} />
+            <Box flex={1} minWidth={0}>
+              <RuleSequenceDrawerProvider>
+                <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+              </RuleSequenceDrawerProvider>
+            </Box>
+          </Stack>
         </Stack>
       </Box>
     </AlertingPageWrapper>
