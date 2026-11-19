@@ -10,9 +10,55 @@ import { type TableNGApi } from './types';
  */
 const LAYOUT_ALIGN_FRAMES = 2;
 
+/**
+ * One pin loop per scroll container. A later scroll on that container cancels the
+ * frame that has not run yet, so an older edge pin cannot snap the grid back.
+ */
+type PendingPin = {
+  frame: number;
+  generation: number;
+};
+
+const pendingPins = new WeakMap<HTMLElement, PendingPin>();
+let nextPinGeneration = 0;
+
 export function alignGridScroll(element: HTMLElement, edge: 'start' | 'end'): void {
   const maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
   element.scrollTop = edge === 'start' ? 0 : maxScroll;
+}
+
+function cancelPendingPin(element: HTMLElement): void {
+  const pending = pendingPins.get(element);
+  if (pending == null) {
+    return;
+  }
+  cancelAnimationFrame(pending.frame);
+  pendingPins.delete(element);
+}
+
+function schedulePin(element: HTMLElement, edge: 'start' | 'end'): void {
+  cancelPendingPin(element);
+  const generation = ++nextPinGeneration;
+  let remaining = LAYOUT_ALIGN_FRAMES;
+
+  const pin = () => {
+    if (pendingPins.get(element)?.generation !== generation) {
+      return;
+    }
+    alignGridScroll(element, edge);
+    remaining -= 1;
+    // A scroll listener can start a new scroll while this pin is running.
+    if (pendingPins.get(element)?.generation !== generation) {
+      return;
+    }
+    if (remaining > 0) {
+      pendingPins.set(element, { generation, frame: requestAnimationFrame(pin) });
+    } else {
+      pendingPins.delete(element);
+    }
+  };
+
+  pendingPins.set(element, { generation, frame: requestAnimationFrame(pin) });
 }
 
 /**
@@ -29,21 +75,17 @@ export function scrollToDisplayedRow(
     return;
   }
 
-  grid.scrollToCell({ rowIdx });
   const element = grid.element;
+  if (element) {
+    cancelPendingPin(element);
+  }
+
+  grid.scrollToCell({ rowIdx });
   if (!element || edge == null) {
     return;
   }
 
-  let remaining = LAYOUT_ALIGN_FRAMES;
-  const pin = () => {
-    alignGridScroll(element, edge);
-    remaining -= 1;
-    if (remaining > 0) {
-      requestAnimationFrame(pin);
-    }
-  };
-  requestAnimationFrame(pin);
+  schedulePin(element, edge);
 }
 
 export function useTableScrollHandle(
@@ -58,6 +100,7 @@ export function useTableScrollHandle(
         if (displayedRowCount <= 0) {
           const element = gridRef.current?.element;
           if (element) {
+            cancelPendingPin(element);
             alignGridScroll(element, 'start');
           }
           return;

@@ -72,6 +72,54 @@ describe('scrollToDisplayedRow', () => {
     expect(scroller.scrollTop).toBe(0);
   });
 
+  it('does not let a pending edge pin overwrite a later scroll in the same tick', () => {
+    const scroller = makeScrollElement(() => 450);
+    const scrollToCell = jest.fn(({ rowIdx }: { rowIdx: number }) => {
+      scroller.scrollTop = rowIdx === 4 ? 80 : 125;
+    });
+    const grid = { element: scroller.element, scrollToCell };
+
+    scrollToDisplayedRow(grid, 4, 'end');
+    scrollToDisplayedRow(grid, 1);
+    jest.runAllTimers();
+
+    expect(scrollToCell).toHaveBeenNthCalledWith(1, { rowIdx: 4 });
+    expect(scrollToCell).toHaveBeenNthCalledWith(2, { rowIdx: 1 });
+    expect(scroller.scrollTop).toBe(125);
+  });
+
+  it('pins the edge requested last when both scrolls happen in the same tick', () => {
+    const scroller = makeScrollElement(() => 450);
+    const scrollToCell = jest.fn(() => {
+      scroller.scrollTop = 40;
+    });
+    const grid = { element: scroller.element, scrollToCell };
+
+    scrollToDisplayedRow(grid, 4, 'end');
+    scrollToDisplayedRow(grid, 0, 'start');
+    jest.runAllTimers();
+
+    expect(scroller.scrollTop).toBe(0);
+  });
+
+  it('does not cancel a pin on a different scroll container', () => {
+    const first = makeScrollElement(() => 450);
+    const second = makeScrollElement(() => 450);
+    const scrollFirst = jest.fn(() => {
+      first.scrollTop = 10;
+    });
+    const scrollSecond = jest.fn(() => {
+      second.scrollTop = 10;
+    });
+
+    scrollToDisplayedRow({ element: first.element, scrollToCell: scrollFirst }, 3, 'end');
+    scrollToDisplayedRow({ element: second.element, scrollToCell: scrollSecond }, 1);
+    jest.runAllTimers();
+
+    expect(first.scrollTop).toBe(350);
+    expect(second.scrollTop).toBe(10);
+  });
+
   it('does not move the scroll position when scrolling a row into view', () => {
     const scroller = makeScrollElement(() => 450);
     scroller.scrollTop = 40;
