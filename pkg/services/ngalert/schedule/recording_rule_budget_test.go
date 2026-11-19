@@ -178,6 +178,41 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 		h.assertAccounting()
 	})
 
+	t.Run("small drops that add up to a big one shrink the map, and the count starts over", func(t *testing.T) {
+		h := newStaleHarness(t)
+		h.rule.budget = state.NewSeriesBudget(0)
+		all := make([]map[string]string, 0, 64)
+		for i := range 64 {
+			all = append(all, instance(fmt.Sprint(i)))
+		}
+		h.ev.resp = seriesResponse(all...)
+		h.tick()
+		target := seriesTarget{dsUID: "ds-1", orgID: 123, name: "my_metric"}
+		mapOf := func() uintptr { return reflect.ValueOf(h.rule.written[target]).Pointer() }
+		h.failWrite = true
+
+		// Every output is half of the one before and no tick drops more than half of what is left.
+		first := mapOf()
+		h.ev.resp = seriesResponse(all[:32]...)
+		h.tick()
+		require.Equal(t, first, mapOf(), "32 of 64 is not yet more than half gone")
+
+		h.ev.resp = seriesResponse(all[:16]...)
+		h.tick()
+		require.NotEqual(t, first, mapOf(), "16 of 64 is, although each tick dropped only half")
+		shrunk := mapOf()
+		h.assertAccounting()
+
+		h.ev.resp = seriesResponse(all[:8]...)
+		h.tick()
+		require.Equal(t, shrunk, mapOf(), "the count started over at 16")
+
+		h.ev.resp = seriesResponse(all[:4]...)
+		h.tick()
+		require.NotEqual(t, shrunk, mapOf())
+		h.assertAccounting()
+	})
+
 	t.Run("rules share one budget", func(t *testing.T) {
 		budget := state.NewSeriesBudget(3)
 		h1, h2 := newStaleHarness(t), newStaleHarness(t)

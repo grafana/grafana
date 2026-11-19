@@ -72,7 +72,10 @@ type recordingRule struct {
 	// only through commitWritten and untrack, so the two cannot drift.
 	written writtenSeries
 	held    int
-	budget  SeriesBudget
+	// How many series written had when its map was last built or compacted. Deleting entries
+	// does not shrink a map, so this is what its capacity is sized for.
+	writtenSized int
+	budget       SeriesBudget
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -444,6 +447,7 @@ func (r *recordingRule) commitWritten(next writtenSeries, logger log.Logger) {
 		logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held)
 	}
 	r.written = next
+	r.writtenSized = r.held
 	r.metrics.RecordingRuleTrackedSeries.Add(float64(admitted))
 }
 
@@ -478,12 +482,12 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "reason", reason, "error", err)
 	}
 
-	removed := missing.size()
 	r.untrack(missing)
-	if removed > r.held {
+	if r.held*2 < r.writtenSized {
 		// If the data write fails, commitWritten does not replace the map, and it would keep
 		// the capacity of series whose room other rules can already use.
 		r.written = r.written.compacted()
+		r.writtenSized = r.held
 	}
 }
 
