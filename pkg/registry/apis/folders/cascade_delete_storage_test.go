@@ -1631,6 +1631,34 @@ func TestCascadeDelete_FinalizerFolderChecksContentsAccess(t *testing.T) {
 		require.NotEmpty(t, access.checks)
 	})
 
+	t.Run("a dry run runs the check and leaves the folder alone", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		opts := forceDelete()
+		opts.DryRun = []string{metav1.DryRunAll}
+
+		denied := newStore()
+		s := &cascadeDeleteStorage{Storage: denied, accessClient: &recordingAccessClient{allow: func(req authlib.CheckRequest, _ string) bool { return req.Resource != cascadeAlertRuleResource }}}
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+
+		allowed := newStore()
+		s = &cascadeDeleteStorage{Storage: allowed, accessClient: &recordingAccessClient{}}
+		_, _, err = s.Delete(ctxWithNamespace(), "root", nil, opts)
+		require.NoError(t, err)
+		require.Empty(t, allowed.deleted)
+		require.Contains(t, allowed.existing, "root")
+	})
+
+	t.Run("without an access client the check is skipped, as in the synchronous path", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := newStore()
+		s := &cascadeDeleteStorage{Storage: store}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Equal(t, []string{"root"}, store.deleted)
+	})
+
 	t.Run("checks the requester even with the cascade flag off", func(t *testing.T) {
 		// validateOnDelete allows a forced delete of a finalizer folder whatever the flag says.
 		setKubernetesFolderCascadeDeleteToggle(t, false)
