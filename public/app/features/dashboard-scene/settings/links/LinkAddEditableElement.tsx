@@ -38,6 +38,7 @@ export function openAddLinkPane(dashboard: DashboardSceneLike) {
   const element = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 
   linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
+  dashboard.state.sidebar.openElementSettings(element);
 }
 
 function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {

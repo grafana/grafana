@@ -14,6 +14,7 @@
           {
             "kind": "Thing",
             "plural": "things",
+            "resource": "things",
             "scope": "Namespaced",
             "folderScoped": false,
             "schemas": {
@@ -75,6 +76,7 @@
           {
             "kind": "Widget",
             "plural": "widgets",
+            "resource": "widgets",
             "scope": "Namespaced",
             "schemas": {
               "Widget": {

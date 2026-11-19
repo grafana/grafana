@@ -21,6 +21,28 @@ import (
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+func TestLegacyRequesterContextWirePresence(t *testing.T) {
+	empty, cacheKey, namespace := "", "caller-cache-key", "stacks-12"
+	for _, tc := range []struct {
+		name           string
+		key, namespace *string
+	}{
+		{"absent", nil, nil}, {"empty", &empty, &empty}, {"values", &cacheKey, &namespace},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &legacyTransportServer{handle: func(req *authzv1.LegacyGetUserPermissionsRequest, _ authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
+				require.Equal(t, tc.key, req.Identity.CacheKey)
+				require.Equal(t, tc.namespace, req.Identity.RequesterNamespace)
+				return nil
+			}}
+			req := legacyRequest()
+			req.Identity.CacheKey, req.Identity.RequesterNamespace = tc.key, tc.namespace
+			_, err := newLegacyTransportClient(t, server).LegacyGetUserPermissions(t.Context(), legacyCaller("stacks-12", "authz.grafana.app/legacyuserpermissions:get"), req)
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestClient_LegacyGetUserPermissionsWireSnapshot(t *testing.T) {
 	server := &legacyTransportServer{handle: func(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
 		if req.Namespace != "stacks-12" || !req.GlobalOrg || req.Identity.Uid != "8" || req.Identity.GetInternalId() != 7 {
@@ -159,7 +181,7 @@ func TestLegacyAuthzServiceIsSeparate(t *testing.T) {
 		require.NotEqual(t, "LegacyGetUserPermissions", stream.StreamName)
 	}
 
-	_, modernImplementsLegacy := any((*authzlib.ClientImpl)(nil)).(Service)
+	_, modernImplementsLegacy := any((*authzlib.ClientImpl)(nil)).(LegacyUserPermissionsClient)
 	require.False(t, modernImplementsLegacy)
 	_, legacyImplementsAccess := any((*LegacyClient)(nil)).(types.AccessClient)
 	require.False(t, legacyImplementsAccess)

@@ -93,7 +93,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.sidebar.selectObject(variable);
+    dashboard.state.sidebar.openElementSettings(variable);
   }, [variable]);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -173,7 +173,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -204,7 +208,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.verticalContainer,
@@ -232,7 +240,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
   return (
     <>
       {editorModal}
-      <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+      <EditActionsPopover
+        keyboardAccessible
+        disabled={!isVariableEditable(variable) && !predefinedOrigin}
+        content={editActions}
+      >
         <div
           className={cx(
             styles.container,
