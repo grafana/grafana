@@ -196,7 +196,9 @@ export const GrafanaTemplatesTab = ({
     : dashboards;
 
   const cards = loading
-    ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
+    ? Array.from({ length: 4 }).map((_, index) => (
+        <DashboardCard.Skeleton key={index} fluid={Boolean(onSelectTemplate)} />
+      ))
     : shownDashboards.map((dashboard) => {
         const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
         const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';

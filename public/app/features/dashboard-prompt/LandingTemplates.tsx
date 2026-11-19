@@ -172,7 +172,7 @@ export function LandingTemplates({
           )}
         </div>
       )}
-      <div className={styles.list}>
+      <div className={cx(styles.list, isEmpty && styles.listEmpty)}>
         {isEmpty && (
           <p className={styles.empty}>
             <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
@@ -264,11 +264,16 @@ function getStyles(theme: GrafanaTheme2) {
         display: 'none',
       },
     }),
-    // One row and a sliver of the next; the rest scrolls.
+    // One row and a sliver of the next; the rest scrolls. A set height, so a search that matches less does not move
+    // the page, centered on its content.
     list: css({
-      maxHeight: `calc(${CARD_HEIGHT}px + ${gap} + ${peek} + ${listPaddingTop})`,
+      height: `calc(${CARD_HEIGHT}px + ${gap} + ${peek} + ${listPaddingTop})`,
       overflowY: 'auto',
       paddingTop: listPaddingTop,
+    }),
+    // Just the "No templates available" line.
+    listEmpty: css({
+      height: 'auto',
     }),
     // As many columns as fit at the minimum card width, four at most.
     grid: css({
