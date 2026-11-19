@@ -1,6 +1,11 @@
 import { type ChangeEvent } from 'react';
 
-import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
+import {
+  type PanelOptionsEditorBuilder,
+  type PanelQuickEdit,
+  standardEditorsRegistry,
+  type StatsPickerConfigSettings,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
@@ -115,4 +120,43 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
     });
   }
+}
+
+/**
+ * The legend options most often changed, as a quick edit for panels that use {@link addLegendOptions}.
+ *
+ * @alpha
+ */
+export function legendQuickEdit(): PanelQuickEdit<OptionsWithLegend> {
+  return {
+    id: 'legend',
+    title: t('grafana-ui.builder.legend.category', 'Legend'),
+    icon: 'list-ul',
+    optionIds: ['legend.showLegend', 'legend.displayMode', 'legend.placement', 'legend.calcs'],
+    summary: ({ options }) => {
+      const { legend } = options;
+      if (!legend || legend.showLegend === false) {
+        return { text: t('grafana-ui.builder.legend.quick-edit.hidden', 'Hidden') };
+      }
+      const mode =
+        legend.displayMode === LegendDisplayMode.Table
+          ? t('grafana-ui.builder.legend.mode-options.label-table', 'Table')
+          : t('grafana-ui.builder.legend.mode-options.label-list', 'List');
+      const placement =
+        legend.placement === 'right'
+          ? t('grafana-ui.builder.legend.placement-options.label-right', 'Right')
+          : t('grafana-ui.builder.legend.placement-options.label-bottom', 'Bottom');
+      const parts = [mode, placement];
+      if (legend.calcs?.length) {
+        parts.push(
+          t('grafana-ui.builder.legend.quick-edit.values', '', {
+            count: legend.calcs.length,
+            defaultValue_one: '{{count}} value',
+            defaultValue_other: '{{count}} values',
+          })
+        );
+      }
+      return { text: parts.join(', ') };
+    },
+  };
 }

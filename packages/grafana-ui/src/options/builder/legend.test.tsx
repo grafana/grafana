@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PanelOptionsEditorBuilder, standardEditorsRegistry } from '@grafana/data';
 import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
 
-import { addLegendOptions } from './legend';
+import { addLegendOptions, legendQuickEdit } from './legend';
 
 // The builder resolves the editor component for built-in editors (boolean/radio/number)
 // from the standard editors registry, which the grafana-ui package can't populate from
@@ -123,5 +123,28 @@ describe('addLegendOptions', () => {
       expect(showIf(item, legend({ showLegend: true, displayMode: LegendDisplayMode.List }))).toBe(false);
       expect(showIf(item, legend({ showLegend: false, displayMode: LegendDisplayMode.Table }))).toBe(false);
     });
+  });
+});
+
+describe('legendQuickEdit', () => {
+  it('names only options that addLegendOptions registers', () => {
+    const ids = buildItems().map((item) => item.id);
+    expect(legendQuickEdit().optionIds.filter((id) => !ids.includes(id))).toEqual([]);
+  });
+
+  it.each([
+    { desc: 'a hidden legend', config: legend({ showLegend: false }), text: 'Hidden' },
+    { desc: 'mode and placement', config: legend(), text: 'List, Bottom' },
+    {
+      desc: 'the number of values',
+      config: legend({ displayMode: LegendDisplayMode.Table, placement: 'right', calcs: ['mean', 'max'] }),
+      text: 'Table, Right, 2 values',
+    },
+  ])('summarizes $desc', ({ config, text }) => {
+    const summary = legendQuickEdit().summary?.({
+      options: { legend: config },
+      fieldConfig: { defaults: {}, overrides: [] },
+    });
+    expect(summary).toEqual({ text });
   });
 });
