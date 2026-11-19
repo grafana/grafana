@@ -145,11 +145,11 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => {
           '~ label': visualRefreshEnabled
             ? {
                 background: theme.colors.accent.subtleBackground,
-                borderColor: theme.colors.accent.border,
+                borderColor: theme.colors.accent.text,
 
                 '&:hover': {
                   background: theme.colors.accent.subtleBackground,
-                  borderColor: theme.colors.accent.border,
+                  borderColor: theme.colors.accent.text,
                 },
               }
             : {
