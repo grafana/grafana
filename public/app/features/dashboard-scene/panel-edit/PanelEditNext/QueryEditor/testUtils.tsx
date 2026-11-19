@@ -89,6 +89,7 @@ export const mockActions: QueryEditorActions = {
   changeDataSource: jest.fn(),
   toggleQueryHide: jest.fn(),
   onQueryOptionsChange: jest.fn(),
+  onQueryEdited: jest.fn(),
   addTransformation: jest.fn(),
   deleteTransformation: jest.fn(),
   toggleTransformationDisabled: jest.fn(),
