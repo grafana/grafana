@@ -1,4 +1,5 @@
-import { render, screen } from 'test/test-utils';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -32,6 +33,8 @@ const defaultOptions: Options = {
 
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
+
+testWithStarsUser();
 
 describe('DashList', () => {
   it('renders different groups of dashboards', async () => {
@@ -85,15 +88,16 @@ describe('DashList', () => {
       ...defaultOptions,
       showStarred: true,
     });
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(folderA_dashbdD.item.title, true);
 
     await user.click(starButton);
 
-    expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    // The row leaves once the stars refetch re-searches, not on a local state write
+    await waitFor(() => {
+      expect(screen.queryByText(folderA_dashbdD.item.title)).not.toBeInTheDocument();
+    });
   });
 
   it('allows starring a dashboard', async () => {
@@ -103,9 +107,7 @@ describe('DashList', () => {
       showSearch: true,
     });
 
-    const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
-    });
+    const { user } = render(<DashList {...props} />);
 
     const starButton = await findStarButton(dashbdE.item.title, false);
 

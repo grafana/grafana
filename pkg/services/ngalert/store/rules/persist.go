@@ -26,6 +26,8 @@ type NamespaceStore interface {
 	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
 	GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
 	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
+	// GetOrCreateNamespaceByUID returns the namespace with the given UID, creating it with that UID and title when it does not exist.
+	GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
 	// GetNamespaceChildren returns all children (first level) of the namespace with the given id.
 	GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error)
 	RuleNamespaceLookup
@@ -44,6 +46,7 @@ type RuleGroupReader interface {
 // RuleCounter counts rules for quota reporting.
 type RuleCounter interface {
 	Count(ctx context.Context, orgID int64) (int64, error)
+	CountByOrg(ctx context.Context) (map[int64]int64, error)
 }
 
 // RuleGroupCounter counts distinct rule group names for usage reporting.

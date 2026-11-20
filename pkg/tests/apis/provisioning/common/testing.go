@@ -441,6 +441,13 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, job *unstructured.Unstru
 	require.NotEmpty(t, repo)
 
 	var lastResult *unstructured.Unstructured
+	// EventuallyWithT fails via FailNow, which still runs deferred calls, so this
+	// only fires when the job never reached the historic store.
+	defer func() {
+		if lastResult == nil {
+			h.logUnarchivedJob(t, job)
+		}
+	}()
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		result, err := h.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{},
 			"jobs", string(job.GetUID()))
@@ -460,6 +467,43 @@ func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, job *unstructured.Unstru
 	require.NotNil(t, lastResult, "expected job result to be non-nil")
 
 	return lastResult
+}
+
+// logUnarchivedJob explains why a job never showed up in the historic store by
+// checking whether it is still in the active store. Job names are deterministic,
+// so the UID is compared to rule out a namesake.
+func (h *ProvisioningTestHelper) logUnarchivedJob(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+
+	// t.Context() is already cancelled by the time a timed-out wait unwinds.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	name := job.GetName()
+	active, err := h.Jobs.Resource.Get(ctx, name, metav1.GetOptions{})
+	switch {
+	case apierrors.IsNotFound(err):
+		t.Logf("job %q (uid %s) is gone from the active store and was never archived", name, job.GetUID())
+	case err != nil:
+		t.Logf("job %q: could not inspect the active store: %v", name, err)
+	case active.GetUID() != job.GetUID():
+		t.Logf("job %q: active store holds a different job (uid %s, expected %s)", name, active.GetUID(), job.GetUID())
+	default:
+		state, _, _ := unstructured.NestedString(active.Object, "status", "state")
+		claim := active.GetLabels()[jobs.LabelJobClaim]
+		if claim == "" {
+			t.Logf("job %q is still active and was never claimed (status.state=%q)", name, state)
+			return
+		}
+		// The claim label is the claim time in unix millis; the owner token is deliberately not logged.
+		claimedAt, parseErr := strconv.ParseInt(claim, 10, 64)
+		if parseErr != nil {
+			t.Logf("job %q is still active and claimed (status.state=%q, unparsable claim %q)", name, state, claim)
+			return
+		}
+		t.Logf("job %q is still active and claimed %s ago (status.state=%q)",
+			name, time.Since(time.UnixMilli(claimedAt)).Round(time.Second), state)
+	}
 }
 
 func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
@@ -1544,11 +1588,6 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 // Useful for debugging a test in development.
 //
 
-// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
-func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types
@@ -1659,6 +1698,15 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 		// informer resyncs on its own interval, so pin both to resync.
 		opts.ProvisioningControllerResyncInterval = resync
 		opts.ProvisioningJobPollInterval = resync
+	}
+}
+
+// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
+// list and the repository stats are read from. Off by default, so a test keeps the shipped
+// "search" reader unless it says otherwise.
+func WithResourceLister(mode string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResourceLister = mode
 	}
 }
 
@@ -2719,10 +2767,20 @@ func (h *ProvisioningTestHelper) UpdateGithubConnection(
 	}
 
 	var res *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+	// The controller can write status between the caller's read and this update.
+	// Each attempt uses the latest resourceVersion so a conflict can resolve.
+	err = RetryOnConflict(t, func() error {
+		latest, getErr := h.Connections.Resource.Get(t.Context(), connection.GetName(), metav1.GetOptions{})
+		if getErr != nil {
+			return getErr
+		}
+		connection.SetResourceVersion(latest.GetResourceVersion())
 		res, err = h.Connections.Resource.Update(t.Context(), connection, metav1.UpdateOptions{FieldValidation: "Strict"})
-		require.NoError(collect, err)
-	}, WaitTimeoutDefault, WaitIntervalDefault, "connection should be updated")
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }

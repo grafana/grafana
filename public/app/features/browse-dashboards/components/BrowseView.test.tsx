@@ -10,6 +10,7 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import * as useFolderDocsModule from 'app/features/provisioning/hooks/useFolderDocs';
 import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -246,6 +247,7 @@ describe('browse-dashboards BrowseView', () => {
 
     it('does not show the Create dashboard CTA on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       render(
         <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
       );

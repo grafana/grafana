@@ -153,6 +153,46 @@ func (st RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	return f, created, nil
 }
 
+// GetOrCreateNamespaceByUID returns the folder with the caller-owned UID, even if
+// it was renamed, or creates it. Only folder.ErrAccessDenied (the store's empty
+// result) counts as missing, so a transient error never recreates a folder.
+func (st RuleStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	if uid == "" {
+		return nil, false, fmt.Errorf("uid is empty")
+	}
+	if title == "" {
+		return nil, false, fmt.Errorf("title is empty")
+	}
+
+	existing, err := st.GetNamespaceByUID(ctx, uid, orgID, user)
+	if err == nil {
+		return existing.ToFolderReference(), false, nil
+	}
+	if !errors.Is(err, folder.ErrAccessDenied) {
+		return nil, false, fmt.Errorf("look up folder by uid: %w", err)
+	}
+
+	newFolder, err := st.FolderService.Create(ctx, &folder.CreateFolderCommand{
+		UID:          uid,
+		OrgID:        orgID,
+		Title:        title,
+		SignedInUser: user,
+		ParentUID:    parentUID,
+	})
+	if err != nil {
+		// Another replica may have created the folder between our lookup and create.
+		existing, lookupErr := st.GetNamespaceByUID(ctx, uid, orgID, user)
+		if lookupErr == nil {
+			return existing.ToFolderReference(), false, nil
+		}
+		return nil, false, fmt.Errorf("failed to get or create folder: %w", errors.Join(
+			fmt.Errorf("create folder: %w", err),
+			fmt.Errorf("lookup folder: %w", lookupErr),
+		))
+	}
+	return newFolder.ToFolderReference(), true, nil
+}
+
 // generateAlertingFolderUID creates a deterministic UID for folders
 // based on the title and parent UID to avoid race conditions when multiple
 // identical folders are created concurrently

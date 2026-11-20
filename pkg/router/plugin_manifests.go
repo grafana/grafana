@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -169,7 +168,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				return t.pluginClients(entry.Host, connectionID, manifest)
 			}
 
-			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil)
+			// Only the operator-configured core source may serve core groups.
+			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil, t.source == sourceCore)
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
@@ -248,8 +248,6 @@ func (p *pluginConnections) pluginClients(host, pluginID string, manifest *app.M
 		ResourceClient:    pluginv2.NewResourceClient(conn),
 		DataClient:        pluginv2.NewDataClient(conn),
 		StreamClient:      pluginv2.NewStreamClient(conn),
-		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
 	}, clientV3, nil
 }
 
@@ -361,25 +359,13 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 
-	// Move any deprecated singular manifest properties to the multiple flavor
-	// nolint:staticcheck
 	for i := range deployment.Plugins {
-		plugin := &deployment.Plugins[i]
-		if plugin.Definition.Manifest == nil {
-			continue // OK
-		}
-		// The plural entry is authoritative when both formats contain the same group.
-		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
-			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
-		}) {
-			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
-		}
-		plugin.Definition.Manifest = nil
-	}
-	for _, plugin := range deployment.Plugins {
-		for _, manifest := range plugin.Definition.Manifests {
+		plugin := &deployment.Plugins[i].Definition
+		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
+		definition.MigrateDeprecatedRoutes(plugin.Settings)
+		loadSettingsManifest(ctx, plugin)
 	}
 
 	return deployment, nil

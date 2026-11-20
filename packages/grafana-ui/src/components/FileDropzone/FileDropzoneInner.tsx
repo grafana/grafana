@@ -21,6 +21,23 @@ import type { BackwardsCompatibleDropzoneOptions, DropzoneFile, FileDropzoneProp
 import { FileDropzoneDefaultChildren } from './FileDropzoneDefaultChildren';
 import { FileListItem } from './FileListItem';
 
+function getUniqueErrors(rejectedFiles: FileRejection[]): FileError[] {
+  let errors: FileError[] = [];
+  rejectedFiles.map((rejectedFile) => {
+    rejectedFile.errors.map((newError) => {
+      if (
+        errors.findIndex((presentError) => {
+          return presentError.code === newError.code && presentError.message === newError.message;
+        }) === -1
+      ) {
+        errors.push(newError);
+      }
+    });
+  });
+
+  return errors;
+}
+
 export function FileDropzoneInner({
   options,
   children,
@@ -61,7 +78,7 @@ export function FileDropzoneInner({
         setFiles((oldFiles) => [...oldFiles, ...customFiles]);
       }
 
-      setErrors(rejectedFiles);
+      setErrorMessages(getUniqueErrors(rejectedFiles));
 
       if (options?.onDrop) {
         options.onDrop(acceptedFiles, rejectedFiles, event);
@@ -140,23 +157,6 @@ export function FileDropzoneInner({
     }
     return <FileListItem key={file.id} file={file} removeFile={removeFile} />;
   });
-
-  const setErrors = (rejectedFiles: FileRejection[]) => {
-    let errors: FileError[] = [];
-    rejectedFiles.map((rejectedFile) => {
-      rejectedFile.errors.map((newError) => {
-        if (
-          errors.findIndex((presentError) => {
-            return presentError.code === newError.code && presentError.message === newError.message;
-          }) === -1
-        ) {
-          errors.push(newError);
-        }
-      });
-    });
-
-    setErrorMessages(errors);
-  };
 
   const renderErrorMessages = (errors: FileError[]) => {
     const size = formattedValueToString(formattedSize);

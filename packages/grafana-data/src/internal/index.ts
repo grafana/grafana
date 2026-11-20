@@ -10,7 +10,25 @@
  *
  */
 
-export { actionsOverrideProcessor } from '../field/overrides/processors';
+export {
+  actionsOverrideProcessor,
+  getVarMappingKind,
+  getVarMappingOptions,
+  hasVarMappingVariableReference,
+  interpolateVarMapping,
+  isInVarMappingRange,
+  resolveVarMappingText,
+  isVarMappingExpressionInput,
+  type VarMappingKind,
+} from '../field/overrides/processors';
+export { setVarMappingsEnabledResolver } from '../field/fieldOverrides';
+export {
+  clearCustomFieldConfig,
+  clearCustomVarMappings,
+  isVarMappingProp,
+  unwrapVarMappingPropId,
+  wrapVarMappingPropId,
+} from '../panel/getPanelOptionsWithDefaults';
 export { nullToUndefThreshold } from '../transformations/transformers/nulls/nullToUndefThreshold';
 export { applyNullInsertThreshold } from '../transformations/transformers/nulls/nullInsertThreshold';
 export {
@@ -136,3 +154,6 @@ export {
 export { getPillElements } from '../transformations/matchers/pillElements';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
 export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';
+
+export { getFieldColorPalette } from '../field/fieldColor';
+export { getValueMappingResult, isNumeric } from '../utils/valueMappings';
