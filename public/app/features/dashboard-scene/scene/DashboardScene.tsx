@@ -796,6 +796,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
+  /** Drops an in-flight refreshPredefinedVariables() so its result is not applied to the current variable set. */
+  public cancelPredefinedVariablesRefresh() {
+    this._predefinedVariablesRefreshId++;
+  }
+
   /** Persist the cross-dashboard variable selection annotation and re-inject. */
   public setUseCrossDashboardVariables(selection: UseCrossDashboardVariables): Promise<void> {
     return persistUseCrossDashboardVariables(this, selection);
