@@ -74,6 +74,40 @@ type SupportedResource struct {
 	// Collection is the group an expanded member's objects are stored under, empty for a
 	// resource that serves its own group. The managed-object index reports a member under it.
 	Collection string
+	// InProcess serves this kind from inside this process, when set.
+	InProcess *InProcessKind
+}
+
+// InProcessKind is a kind this process serves itself. Provisioning addresses it through the
+// given client instead of the API server, so the kind works on an instance that does not serve
+// its group: secure values are stored by a service OSS wires but an API only Enterprise serves.
+// Discovery cannot answer for such a group, so the version and plural come with the client.
+type InProcessKind struct {
+	// GroupVersionResource is the versioned, plural resource the client addresses.
+	GroupVersionResource schema.GroupVersionResource
+	// Client builds a namespaced client over the in-process service.
+	Client InProcessClient
+}
+
+// InProcessClient builds a namespaced client for a kind served inside this process. It is the
+// shape of the secrets client (registry/apis/secret.SecureValueClient), taken structurally so
+// provisioning keeps no dependency on the service behind it.
+type InProcessClient interface {
+	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
+}
+
+// ServeInProcess marks the declared kind gvk names as served in process, and reports whether it
+// was declared at all. A kind nobody declared is left alone: the client would never be reached,
+// and the pipeline must not act on a resource the configuration left out.
+func ServeInProcess(supported []SupportedResource, gvk schema.GroupVersionKind, gvr schema.GroupVersionResource, client InProcessClient) bool {
+	for i, r := range supported {
+		if r.GroupKind == gvk.GroupKind() {
+			supported[i].InProcess = &InProcessKind{GroupVersionResource: gvr, Client: client}
+			return true
+		}
+	}
+
+	return false
 }
 
 // IsActive reports whether the resource is acted on by the pipeline (the default).
@@ -476,6 +510,17 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 		return info.client, info.gvr, nil
 	}
 
+	served, err := c.inProcess(ctx, func(r SupportedResource) bool {
+		return r.GroupKind == gvk.GroupKind() &&
+			(gvk.Version == "" || gvk.Version == r.InProcess.GroupVersionResource.Version)
+	})
+	if err != nil {
+		return nil, schema.GroupVersionResource{}, err
+	}
+	if served != nil {
+		return served.client, served.gvr, nil
+	}
+
 	dynamic, discovery, err := c.clientsProvider.GetClientsForKind(ctx, gvk)
 	if err != nil {
 		return nil, schema.GroupVersionResource{}, fmt.Errorf("get clients for resource %s: %w", gvk.String(), err)
@@ -518,6 +563,38 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 	return info.client, info.gvr, nil
 }
 
+// inProcess returns the client for the first declared kind this process serves itself that
+// matches, nil when none does. matches sees only a kind that has one, so it may read InProcess.
+// The caller holds the mutex.
+func (c *resourceClients) inProcess(ctx context.Context, matches func(SupportedResource) bool) (*clientInfo, error) {
+	for _, r := range c.supportedResources {
+		if r.InProcess == nil || !matches(r) {
+			continue
+		}
+
+		gvr := r.InProcess.GroupVersionResource
+		gvk := gvr.GroupVersion().WithKind(r.Kind)
+		if info, ok := c.byKind[gvk]; ok && info.client != nil {
+			return info, nil
+		}
+
+		client, err := r.InProcess.Client.Client(ctx, c.namespace)
+		if err != nil {
+			return nil, fmt.Errorf("get in-process client for %s: %w", gvk.String(), err)
+		}
+
+		info := &clientInfo{gvk: gvk, gvr: gvr, client: client}
+		c.byKind[gvk] = info
+		c.byKind[gvk.GroupKind().WithVersion("")] = info
+		c.byResource[gvr] = info
+		c.byResource[gvr.GroupResource().WithVersion("")] = info
+
+		return info, nil
+	}
+
+	return nil, nil
+}
+
 // ForResource returns a client for a resource.
 // If the resource has a version, it will be used.
 // If the resource does not have a version, the preferred version will be used.
@@ -528,6 +605,18 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	info, ok := c.byResource[gvr]
 	if ok && info.client != nil {
 		return info.client, info.gvk, nil
+	}
+
+	served, err := c.inProcess(ctx, func(r SupportedResource) bool {
+		declared := r.InProcess.GroupVersionResource
+		return declared.Group == gvr.Group && declared.Resource == gvr.Resource &&
+			(gvr.Version == "" || gvr.Version == declared.Version)
+	})
+	if err != nil {
+		return nil, schema.GroupVersionKind{}, err
+	}
+	if served != nil {
+		return served.client, served.gvk, nil
 	}
 
 	dynamic, discovery, err := c.clientsProvider.GetClientsForResource(ctx, gvr)

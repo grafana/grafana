@@ -8,16 +8,20 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
 // secureValuesField is the top-level object field where kinds declare inline
 // secure values (common.InlineSecureValues).
 const secureValuesField = "secure"
 
-// ErrSecureValuesNotAllowed matches a rejection by checkSecureValues. Callers
-// that reserve quota ahead of a write use it to tell this pre-write rejection,
-// which creates nothing, from a failure that may have written.
+// ErrSecureValuesNotAllowed matches a rejection by checkSecureValues, and is what the export
+// write returns for a secret, which no repository is handed. Callers that reserve quota ahead
+// of a write use it to tell this pre-write rejection, which creates nothing, from a failure
+// that may have written.
 var ErrSecureValuesNotAllowed = errors.New("secure values not allowed in this repository type")
 
 // secureValuesRejection tags the rejection for ErrSecureValuesNotAllowed while
@@ -30,7 +34,8 @@ func (secureValuesRejection) Is(target error) bool { return target == ErrSecureV
 func (e secureValuesRejection) Unwrap() error { return e.error }
 
 // checkSecureValues rejects content that writes to the secret store when the
-// repository type does not allow it.
+// repository type does not allow it: a resource carrying inline secure values, and a
+// resource of the secrets group, which is the secret itself.
 //
 // Call this only where a repository is accepting content. Reading a file to
 // learn which resource it refers to -- a delete, or the revision a write
@@ -39,6 +44,14 @@ func (e secureValuesRejection) Unwrap() error { return e.error }
 func checkSecureValues(parsed *ParsedResource) error {
 	if parsed.Repo.Type.AllowsSecureValues() {
 		return nil
+	}
+
+	if isSecretResource(parsed.GVK.GroupKind()) {
+		return secureValuesRejection{NewResourceValidationError(field.Forbidden(
+			field.NewPath("kind"),
+			fmt.Sprintf("%s resources hold a secret and cannot be provisioned from a %s repository",
+				parsed.GVK.Kind, parsed.Repo.Type),
+		))}
 	}
 
 	keys := secureValueWrites(parsed.Obj.Object)
@@ -51,6 +64,12 @@ func checkSecureValues(parsed *ParsedResource) error {
 		fmt.Sprintf("secure values (%s) cannot be created or removed from a %s repository; only references to existing secure values are allowed",
 			strings.Join(keys, ", "), parsed.Repo.Type),
 	))}
+}
+
+// isSecretResource reports whether a kind is served by the secrets group, whose objects are
+// secrets rather than resources that merely reference one.
+func isSecretResource(gk schema.GroupKind) bool {
+	return gk.Group == secret.APIGroup
 }
 
 // secureValueWrites returns, sorted, the secure values in obj that write to the

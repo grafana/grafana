@@ -392,6 +392,10 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 
+	// Where the secrets API is not served, a declared secrets kind is addressed in process
+	// instead: enough for a local repository, the only one allowed to carry a secret.
+	serveSecureValues(supportedResources)
+
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	maxJobBodySize := cfg.ProvisioningMaxJobBodySize

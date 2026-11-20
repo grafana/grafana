@@ -604,3 +604,55 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 		require.Equal(t, "datasource.grafana.app", supported[1].Collection)
 	})
 }
+
+// stubInProcessClient records how a kind served in process is asked for its client.
+type stubInProcessClient struct {
+	iface     dynamic.ResourceInterface
+	namespace string
+	calls     int
+}
+
+func (s *stubInProcessClient) Client(_ context.Context, namespace string) (dynamic.ResourceInterface, error) {
+	s.namespace = namespace
+	s.calls++
+
+	return s.iface, nil
+}
+
+func TestResourceClients_ForKindServedInProcess(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "secret.grafana.app", Version: "v1beta1", Kind: "SecureValue"}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "securevalues"}
+	stub := &stubInProcessClient{iface: &MockDynamicResourceInterface{}}
+
+	supported := []SupportedResource{{GroupKind: gvk.GroupKind()}}
+	require.True(t, ServeInProcess(supported, gvk, gvr, stub), "the declared kind should be matched")
+
+	// The factory has no config provider: resolving through discovery would panic, so every
+	// assertion below also pins that the API server is never asked for this kind.
+	clients, err := NewClientFactory(nil, supported...).Clients(context.Background(), "default")
+	require.NoError(t, err)
+
+	for _, ask := range []schema.GroupVersionKind{gvk, {Group: gvk.Group, Kind: gvk.Kind}} {
+		client, got, err := clients.ForKind(context.Background(), ask)
+		require.NoError(t, err, "asking for %s should resolve in process", ask)
+		assert.Equal(t, gvr, got, "the plural resource comes from the declaration, not discovery")
+		assert.Same(t, stub.iface, client)
+	}
+
+	client, gotGVK, err := clients.ForResource(context.Background(), gvr)
+	require.NoError(t, err)
+	assert.Equal(t, gvk, gotGVK)
+	assert.Same(t, stub.iface, client)
+
+	assert.Equal(t, "default", stub.namespace, "the client is scoped to the repository's namespace")
+	assert.Equal(t, 1, stub.calls, "the resolved client is cached")
+}
+
+func TestServeInProcessLeavesUndeclaredKinds(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "secret.grafana.app", Version: "v1beta1", Kind: "SecureValue"}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "securevalues"}
+
+	supported := []SupportedResource{{GroupKind: playlistKind}}
+	assert.False(t, ServeInProcess(supported, gvk, gvr, &stubInProcessClient{}))
+	assert.Nil(t, supported[0].InProcess)
+}

@@ -17,6 +17,7 @@ func TestReadProvisioningResources(t *testing.T) {
 			"dashboard.grafana.app/Dashboard:folder",
 			"dashboard.grafana.app/LibraryPanel:folder:disabled",
 			"playlist.grafana.app/Playlist:disabled",
+			"secret.grafana.app/SecureValue:disabled",
 		}, cfg.ProvisioningResources)
 	})
 

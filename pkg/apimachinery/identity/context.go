@@ -219,6 +219,12 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"teams:read",           // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 	"plugins.app:access",   // pluginaccesscontrol.ActionAppAccess
+	// Provisioning a resource of the secrets group writes the secret itself. Read returns
+	// metadata only; decryption stays on its own custom verb.
+	"secret.securevalues:create", // secret.ActionSecretSecureValuesCreate
+	"secret.securevalues:read",   // secret.ActionSecretSecureValuesRead
+	"secret.securevalues:write",  // secret.ActionSecretSecureValuesWrite
+	"secret.securevalues:delete", // secret.ActionSecretSecureValuesDelete
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
