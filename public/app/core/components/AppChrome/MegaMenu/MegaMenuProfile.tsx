@@ -17,7 +17,12 @@ interface Props {
 export function MegaMenuProfile({ profileNode }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
-  const { renderMenu, drawers } = useProfileMenu({ profileNode, onToggleKioskMode: chrome.onToggleKioskMode });
+  // The row already names the user, so the menu has no header.
+  const { renderMenu, drawers } = useProfileMenu({
+    profileNode,
+    onToggleKioskMode: chrome.onToggleKioskMode,
+    hideHeader: true,
+  });
   const { name, login, orgName, gravatarUrl } = contextSrv.user;
 
   return (
@@ -40,7 +45,6 @@ export function MegaMenuProfile({ profileNode }: Props) {
           ) : (
             <Icon name="user" size="lg" className={styles.avatar} />
           )}
-          <Icon name="angle-down" className={styles.chevron} />
         </button>
       </Dropdown>
       {drawers}
@@ -59,9 +63,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     gap: theme.spacing(1),
     height: theme.spacing(5),
+    // The navigation items' box and padding, so the name starts where a section heading above it does.
     margin: theme.spacing(0, 1, 1),
-    // The name starts where a section heading above it does, and the chevron lines up with the section's controls.
-    padding: theme.spacing(0, 0.5),
+    padding: theme.spacing(0, 1),
     textAlign: 'left',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
@@ -87,9 +91,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   org: css({
     color: theme.colors.text.secondary,
-  }),
-  chevron: css({
-    color: theme.colors.text.secondary,
-    flexShrink: 0,
   }),
 });

@@ -17,6 +17,8 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 interface ProfileMenuOptions {
   profileNode: NavModelItem;
   onToggleKioskMode: () => void;
+  /** Leaves out the header naming the user, for a trigger that already shows their name. */
+  hideHeader?: boolean;
 }
 
 interface ProfileMenu {
@@ -27,7 +29,7 @@ interface ProfileMenu {
 }
 
 /** The signed-in user's menu: their profile pages, theme, kiosk mode, news and signing out. */
-export function useProfileMenu({ profileNode, onToggleKioskMode }: ProfileMenuOptions): ProfileMenu {
+export function useProfileMenu({ profileNode, onToggleKioskMode, hideHeader }: ProfileMenuOptions): ProfileMenu {
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
   const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
   const { components } = usePluginComponents({
@@ -35,7 +37,7 @@ export function useProfileMenu({ profileNode, onToggleKioskMode }: ProfileMenuOp
   });
 
   const renderMenu = () => (
-    <TopNavBarMenu node={profileNode}>
+    <TopNavBarMenu node={profileNode} hideHeader={hideHeader}>
       <>
         <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
         <Menu.Item

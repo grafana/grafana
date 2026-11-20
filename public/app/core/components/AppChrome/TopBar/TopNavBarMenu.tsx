@@ -9,9 +9,11 @@ import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 export interface TopNavBarMenuProps {
   node: NavModelItem;
   children?: React.ReactNode;
+  /** Leaves out the header naming the node, for a menu whose trigger already shows it. */
+  hideHeader?: boolean;
 }
 
-export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps) {
+export function TopNavBarMenu({ node: nodePlain, children, hideHeader = false }: TopNavBarMenuProps) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(nodePlain), false);
 
@@ -22,13 +24,15 @@ export function TopNavBarMenu({ node: nodePlain, children }: TopNavBarMenuProps)
   return (
     <Menu
       header={
-        // this is needed to prevent bubbling the event to `Menu` and then closing when highlighting header text
-        // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-        <div onClick={(e) => e.stopPropagation()} className={styles.header}>
-          <div>{node.text}</div>
-          {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
-        </div>
+        hideHeader ? undefined : (
+          // this is needed to prevent bubbling the event to `Menu` and then closing when highlighting header text
+          // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div onClick={(e) => e.stopPropagation()} className={styles.header}>
+            <div>{node.text}</div>
+            {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}
+          </div>
+        )
       }
     >
       {node.children?.map((item) => {

@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -101,7 +101,18 @@ describe('MegaMenuProfile', () => {
     const menu = await screen.findByRole('menu');
     expect(screen.queryByRole('menuitem', { name: /sign out/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('menuitem')).toHaveLength(3);
-    expect(Array.from(menu.children)).toHaveLength(4);
+    // Only the items: the row that opens the menu names the user, so the menu has no header.
+    expect(Array.from(menu.children)).toHaveLength(3);
+  });
+
+  it('opens a menu without a header naming the user, which the row already shows', async () => {
+    render(<MegaMenuProfile {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /profile/i }));
+
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
+    expect(within(menu).queryByText('Test User')).not.toBeInTheDocument();
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {

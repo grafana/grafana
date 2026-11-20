@@ -304,7 +304,7 @@ export const MegaMenu = memo(
             {section && (
               <>
                 {sectionCollapsed ? (
-                  <hr className={styles.dividerLine} />
+                  <hr className={styles.sectionDivider} />
                 ) : (
                   <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
                 )}
@@ -314,7 +314,7 @@ export const MegaMenu = memo(
               </>
             )}
           </div>
-          {(showFooter || showProfile) && <hr className={styles.dividerLine} />}
+          {(showFooter || showProfile) && <hr className={showProfile ? styles.sectionDivider : styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
               {editMode && (
@@ -424,6 +424,15 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       flexShrink: 0,
       height: 1,
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
+      margin: theme.spacing(1),
+    }),
+    // A plain line between the navigation, the plugin section and the profile, as the resize handle draws, in place
+    // of the footer divider's fade.
+    sectionDivider: css({
+      border: 'none',
+      flexShrink: 0,
+      height: 1,
+      background: theme.colors.border.weak,
       margin: theme.spacing(1),
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls
