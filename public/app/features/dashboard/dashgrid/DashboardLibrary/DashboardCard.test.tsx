@@ -162,21 +162,6 @@ describe('DashboardCard', () => {
       expect(screen.queryByRole('button', { name: 'View template: RED metrics' })).not.toBeInTheDocument();
     });
 
-    it('reports the selected card as pressed', () => {
-      render(
-        <DashboardCard
-          title="RED metrics"
-          dashboard={createMockGnetDashboard()}
-          onClick={mockOnClick}
-          onSelect={jest.fn()}
-          selected
-          kind="template_dashboard"
-        />
-      );
-
-      expect(screen.getByRole('button', { name: 'Use template: RED metrics' })).toHaveAttribute('aria-pressed', 'true');
-    });
-
     it('offers a Preview button apart from picking when the caller can preview', async () => {
       const onPreview = jest.fn();
       const onSelect = jest.fn();

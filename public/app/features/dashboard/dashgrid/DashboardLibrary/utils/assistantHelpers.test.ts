@@ -127,6 +127,7 @@ describe('assistantHelpers', () => {
         data: { name: 'RED metrics', description: 'Rate, errors and duration' },
       });
       expect(item).not.toHaveProperty('data.templateName');
+      expect(item).toHaveProperty('data.instructions', expect.stringContaining('Adapt that dashboard in place'));
     });
   });
 });

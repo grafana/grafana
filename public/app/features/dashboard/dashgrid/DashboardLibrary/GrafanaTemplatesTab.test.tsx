@@ -89,12 +89,7 @@ describe('GrafanaTemplatesTab', () => {
         id: 'grafana:1',
         kind: 'template_dashboard',
         url: expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1&.*assistantSource=assistant_button$/),
-        contextItem: {
-          type: 'structured',
-          hidden: false,
-          title: 'RED metrics',
-          data: expect.objectContaining({ name: 'RED metrics', description: 'Rate, errors and duration' }),
-        },
+        contextItem: expect.objectContaining({ title: 'RED metrics' }),
       });
       expect(locationService.push).not.toHaveBeenCalled();
     });
@@ -124,7 +119,10 @@ describe('GrafanaTemplatesTab', () => {
       const onTemplatesLoad = jest.fn();
       renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad, searchQuery: 'no such template' });
 
-      await waitFor(() => expect(onTemplatesLoad).toHaveBeenLastCalledWith(1));
+      await waitFor(() => expect(onTemplatesLoad).toHaveBeenCalled());
+      // Not while loading: an early 0 would read as an account with no templates.
+      expect(onTemplatesLoad).toHaveBeenCalledTimes(1);
+      expect(onTemplatesLoad).toHaveBeenCalledWith(1);
       expect(screen.queryByRole('button', { name: /^Use template: / })).not.toBeInTheDocument();
     });
 

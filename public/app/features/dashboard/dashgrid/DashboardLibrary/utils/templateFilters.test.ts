@@ -31,5 +31,7 @@ describe('filterTemplates', () => {
       'Kubernetes cluster',
       'apache',
     ]);
+    // Clearing the sort brings back the loaded order.
+    expect(templates.map(getTitle)).toEqual(['Node exporter', 'apache', 'Kubernetes cluster']);
   });
 });
