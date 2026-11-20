@@ -36,6 +36,7 @@ export interface TableData {
 export enum ColorScheme {
   ValueBased = 'valueBased',
   PackageBased = 'packageBased',
+  SpaceBased = 'spaceBased',
 }
 
 export enum ColorSchemeDiff {
@@ -44,6 +45,17 @@ export enum ColorSchemeDiff {
 }
 
 export type TextAlign = 'left' | 'right';
+
+export enum FrameType {
+  Kernel = 'kernel',
+  User = 'user',
+  Unknown = 'unknown',
+}
+
+export enum DataSourceType {
+  PprofPyroscope = 'pprof-pyroscope',
+  Unknown = 'unknown',
+} 
 
 export interface ProfileTooltipData {
   percentValue: number;
