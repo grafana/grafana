@@ -16,14 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type ruleAccessControlService interface {
 	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error
 	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []accesscontrol.ReceiverRef) error
 	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
@@ -216,7 +216,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, err
 		}
 	} else {
-		delta, err := rulestore.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+		delta, err := service.ruleStore.CalculateRuleCreate(ctx, &rule)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
 		}
@@ -398,15 +398,15 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 				NamespaceUID: namespaceUID,
 				RuleGroup:    ruleGroup,
 			}
-			ruleDeltas := make([]rulestore.RuleDelta, 0, len(ruleList))
+			ruleDeltas := make([]ngrulesvc.RuleDelta, 0, len(ruleList))
 			for _, upd := range updateRules {
 				updNew := upd.New
-				ruleDeltas = append(ruleDeltas, rulestore.RuleDelta{
+				ruleDeltas = append(ruleDeltas, ngrulesvc.RuleDelta{
 					Existing: upd.Existing,
 					New:      &updNew,
 				})
 			}
-			delta := &rulestore.GroupDelta{
+			delta := &ngrulesvc.GroupDelta{
 				GroupKey: groupKey,
 				AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
 					groupKey: ruleList,
@@ -517,7 +517,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	q = filterOpts.apply(q)
 	q.OrgID = user.GetOrgID()
 
-	deltas, err := rulestore.CalculateRuleGroupsDelete(ctx, service.ruleStore, user.GetOrgID(), &q)
+	deltas, err := service.ruleStore.CalculateRuleGroupsDelete(ctx, user.GetOrgID(), &q)
 	if err != nil {
 		return err
 	}
@@ -543,7 +543,7 @@ func (service *AlertRuleService) DeleteRuleGroups(ctx context.Context, user iden
 	})
 }
 
-func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*rulestore.GroupDelta, error) {
+func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Requester, group models.AlertRuleGroup) (*ngrulesvc.GroupDelta, error) {
 	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
 	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
 	if group.Rules == nil {
@@ -581,16 +581,16 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		}
 		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
-	delta, err := rulestore.CalculateChanges(ctx, service.ruleStore, key, rules)
+	delta, err := service.ruleStore.CalculateChanges(ctx, key, rules)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
 	// Refresh all calculated fields across all rules.
-	return rulestore.UpdateCalculatedRuleFields(delta), nil
+	return ngrulesvc.UpdateCalculatedRuleFields(delta), nil
 }
 
-func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *rulestore.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *ngrulesvc.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
 	// Group replace does not flow through CreateAlertRule/UpdateAlertRule.
 	mutated := make([]*models.AlertRule, 0, len(delta.New)+len(delta.Update))
 	mutated = append(mutated, delta.New...)
@@ -703,7 +703,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		storedRule = existing
 	} else {
 		// Provisioning updates treat IsPaused as authoritative, even when false, rather than inheriting the stored value.
-		delta, err := rulestore.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule, HasPause: true})
+		delta, err := service.ruleStore.CalculateRuleUpdate(ctx, &models.AlertRuleWithOptionals{AlertRule: rule, HasPause: true})
 		if err != nil {
 			return models.AlertRule{}, err
 		}
@@ -821,7 +821,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 		return err
 	}
 	if !can {
-		delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
+		delta, err := service.ruleStore.CalculateRuleDelete(ctx, rule.GetKey())
 		if err != nil {
 			if errors.Is(err, models.ErrAlertRuleNotFound) {
 				// Rule already gone; return early so non-admin users

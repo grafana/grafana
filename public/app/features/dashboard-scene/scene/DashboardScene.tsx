@@ -115,7 +115,6 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -321,7 +320,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       assistantChanges: false,
       manualEdits: new Map(),
       aiEdits: new Map(),
-      composerUsed: false,
+      // A save ends a period without leaving Composer, so the next one can start with Composer already open.
+      composerUsed: this.getComposerSession() !== undefined,
     };
     DashboardInteractions.editPeriodStarted({
       dashboard_uid: this.state.uid,
@@ -796,6 +796,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
+  /** Drops an in-flight refreshPredefinedVariables() so its result is not applied to the current variable set. */
+  public cancelPredefinedVariablesRefresh() {
+    this._predefinedVariablesRefreshId++;
+  }
+
   /** Persist the cross-dashboard variable selection annotation and re-inject. */
   public setUseCrossDashboardVariables(selection: UseCrossDashboardVariables): Promise<void> {
     return persistUseCrossDashboardVariables(this, selection);
@@ -1021,7 +1026,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   }
 
-  /** Over Viewing there is no edit period yet: it starts when Composer switches to Editing, and is marked then. */
+  /** Marks the period already running when Composer opens. One that starts while Composer is open is marked as it starts. */
   private markComposerUsed() {
     if (this._editSession) {
       this._editSession.composerUsed = true;
@@ -1071,7 +1076,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('user', 'picker')) {
         return;
       }
-      this.markComposerUsed();
       this.setState({ composerEditing: true });
       return;
     }
@@ -1114,7 +1118,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       } else if (!this.onEnterEditMode('assistant', 'assistant')) {
         return false;
       }
-      this.markComposerUsed();
       this.setState({ composerEditing: true });
     }
     return true;
@@ -1438,8 +1441,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
       restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
-      // The baseline can be taken before a lookup started on the live tree resolves.
-      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1574,7 +1575,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
-    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1658,7 +1658,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
-    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;

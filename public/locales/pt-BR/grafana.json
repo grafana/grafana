@@ -1555,7 +1555,7 @@
           "label": "Correspondência de rótulos: label:key (existe), label:!key (ausente), label:key=value (igual), label:key!=value (diferente), label:key=~re (regex), label:key!~re (não é regex). Coloque entre aspas um valor com espaços: label:team=\"a b\".",
           "metric": "Nome da métrica registrada (correspondência exata).",
           "panel-id": "Painel ao qual a regra está vinculada. Os IDs de painel são locais do painel. Associe-os ao painel:.",
-          "paused": "Se a regra está ou não pausada (verdadeiro/falso).",
+          "paused": "",
           "plugins": "plugins:hide exclui regras criadas por plug-ins.",
           "policy": "Política de notificação nomeada (mutuamente exclusiva com contactPoint:).",
           "rule": "Busca de texto no título da regra (equivalente a texto livre).",
@@ -1571,7 +1571,6 @@
         "invalid-tokens": "Não foi possível aplicar alguns filtros: {{tokens}}",
         "invalid-value": "Use um destes valores para {{key}}: {{values}}",
         "label": "Buscar",
-        "not-paused-unavailable": "A filtragem por \"não pausado\" ainda não está disponível.",
         "placeholder": "Pesquise por nome ou insira uma consulta de filtro…",
         "property": {
           "contact-point": "Ponto de contato",
@@ -1618,6 +1617,65 @@
         "loading-rules": "Carregando regras",
         "refresh-error": "Falha ao atualizar os resultados",
         "retry": "Tentar novamente"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "Falha ao avaliar a regra",
@@ -4857,6 +4915,12 @@
     "folder-owners": {
       "owned-by": "Pertence a:"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Selecionar pasta: {{ label }} atualmente selecionada",
       "button-label": "Selecionar pasta",
@@ -5654,6 +5718,36 @@
         "version": "Versão"
       },
       "view-json-diff": "Visualizar JSON diff para ver todas as alterações"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -7976,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Consulta"
-    },
-    "query-editor-banner": {
-      "description-classic": "Experimente a experiência aprimorada de edição de consultas.",
-      "description-new": "Boas-vindas à experiência aprimorada de edição de consultas.",
-      "dismiss": "Ignorar",
-      "downgrade-title": "Novo editor de consultas",
-      "give-feedback": "Enviar feedback",
-      "go-back": "Voltar para a versão clássica",
-      "try-it": "Experimente",
-      "upgrade-title": "Novo editor disponível"
     },
     "query-variable-editor": {
       "modal": {
@@ -11411,6 +11495,9 @@
       },
       "wrapping-disabled-warning": "A quebra de texto está desativada para esta coluna porque um valor é muito longo. Use Inspecionar valor para ver o conteúdo completo."
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Tags"
     },
@@ -13564,7 +13651,8 @@
         "open": "Abrir {{title}}",
         "open-all": "Abrir assistentes de IA e aplicativos da barra lateral"
       },
-      "floating-resize": "Redimensionar largura da barra lateral"
+      "floating-resize": "Redimensionar largura da barra lateral",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Ajuda",
@@ -13828,6 +13916,8 @@
       "cancel": "Cancelar",
       "card-author": "Por {{author}}",
       "card-updated": "Atualizado {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Nome do bloco de anotações",
       "create-name-required": "O nome do bloco de anotações é obrigatório",
       "create-name-taken": "Já existe um bloco de anotações com este nome",
@@ -13846,6 +13936,8 @@
       "lock-time-range-description": "Mantenha esta visualização na janela em que ela foi capturada. Quando desbloqueada, ela segue o intervalo de tempo do bloco de anotações.",
       "lock-time-ranges": "Bloquear os painéis nos intervalos de tempo que foram mostrados",
       "lock-time-ranges-description": "Mantenha cada visualização na janela em que ela foi capturada. Quando desbloqueadas, elas seguem o intervalo de tempo do bloco de anotações.",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Em ordem alfabética (A-Z)",
       "sort-label": "Ordenar blocos de anotações",
@@ -15131,9 +15223,6 @@
       "success-title": "Metadados da pasta corrigidos com sucesso",
       "title": "Corrigir metadados da pasta"
     },
-    "folder-permissions": {
-      "loading": "Carregando…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nenhum resultado corresponde à sua consulta",
       "partial-managed": "{{managedCount}}/{{resourceCount}} recursos gerenciados pela sincronização do Git.",
@@ -15288,13 +15377,16 @@
       "path-required": "O diretório do repositório é obrigatório"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Gerenciado por: provisionamento de arquivos",
       "file-provisioning": "",
       "kubectl": "Gerenciado por: Kubectl",
       "manage-repository": "Gerenciar repositório",
       "plugin": "Gerenciado por: Plug-in {{id}}",
       "provisioned": "Provisionado",
+      "read-only": "",
       "terraform": "Gerenciado por: Terraform",
+      "view-source": "",
       "view-source-file": "Visualizar arquivo de origem"
     },
     "managed-by-repository-tooltip": "Gerenciado por: repositório",
@@ -15477,8 +15569,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Preencha previamente o título do pull request nas caixas de diálogo de salvamento a partir do modelo acima e defina o modo somente leitura para ela.",
       "description-title-template": "Modelo para o título do pull request aberto pelo fluxo de trabalho da branch. Espaços reservados disponíveis: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Deixe em branco para usar a primeira linha da mensagem de commit.",
@@ -15508,9 +15598,6 @@
       "message-resource_other": "Sua conta está limitada a {{count}} recursos sincronizados por repositório.",
       "message-resource-onprem_one": "Sua instância está limitada a {{count}} recurso sincronizado por repositório.",
       "message-resource-onprem_other": "Sua instância está limitada a {{count}} recursos sincronizados por repositório."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso é somente leitura e é provisionado por meio do provisionamento de arquivos. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é somente leitura e é provisionado por meio do Git. Para fazer qualquer alteração, atualize o repositório conectado. Para modificar as configurações, acesse Administração > Provisionamento > Repositórios.",
@@ -15639,22 +15726,6 @@
       "pure-git": "Git puro",
       "pure-git-description": "Conectar a qualquer repositório do Git",
       "pure-git-tooltip": "Conecta-se a qualquer repositório do Git usando o protocolo Smart HTTP v2. Fluxo de trabalho de sincronização básico, sem recursos específicos do provedor (webhooks, comentários em PRs, links diretos)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "painel de controle",
-      "dashboards": "Painéis",
-      "datasource": "",
-      "datasources": "",
-      "folder": "pasta",
-      "folders": "Pastas",
-      "library-panel": "painel da biblioteca",
-      "library-panels": "painéis da biblioteca",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16222,12 +16293,6 @@
       "width-of-panel": "Largura do painel"
     },
     "edit-query-name": "Editar nome da consulta",
-    "experimental-button": {
-      "aria-label": "Opções de recursos em teste",
-      "back-to-classic": "Voltar para o editor clássico",
-      "give-feedback": "Enviar feedback",
-      "tooltip": "Opções de recursos em teste"
-    },
     "header": {
       "alert": "Alerta",
       "enter-stacked-view": "",
@@ -16597,8 +16662,6 @@
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Tags",
-      "type-dashboard": "Painel de controle",
-      "type-folder": "Pasta",
       "type-header": "Tipo"
     },
     "search-input": {
