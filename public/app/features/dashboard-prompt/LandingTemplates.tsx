@@ -21,11 +21,19 @@ interface Props {
   showCustomTemplates: boolean;
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
-  /** Called with whether the lists turned out to have no templates, so the host can start the panel closed. */
-  onEmptyChange?: (isEmpty: boolean) => void;
+  /**
+   * Called once every list has loaded, with how many templates each offers (a list that is not shown has no count),
+   * so the host can start the panel closed when there are none and report what was on offer.
+   */
+  onTemplatesCount?: (counts: TemplateCounts) => void;
   /** Keeps the panel out of sight until the prompt shows its text box, holding its place so the page does not shift. */
   hidden?: boolean;
   className?: string;
+}
+
+export interface TemplateCounts {
+  custom?: number;
+  grafana?: number;
 }
 
 const noop = () => {};
@@ -80,13 +88,13 @@ export function LandingTemplates({
   showCustomTemplates,
   onSelectTemplate,
   selectedTemplateId,
-  onEmptyChange,
+  onTemplatesCount,
   hidden,
   className,
 }: Props) {
   const styles = useStyles2(getStyles);
   // Undefined until each list reports how many templates it shows.
-  const [counts, setCounts] = useState<{ custom?: number; grafana?: number }>({});
+  const [counts, setCounts] = useState<TemplateCounts>({});
   // The template modal's search and sort, applied to every list.
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<TemplateSortOrder>();
@@ -113,11 +121,13 @@ export function LandingTemplates({
   const loaded = allLoaded || (waitedLong && total > 0);
   const isEmpty = allLoaded && total === 0;
   useEffect(() => {
-    onEmptyChange?.(isEmpty);
-  }, [isEmpty, onEmptyChange]);
-  // One per list, as in the template modal, so each reports `loaded` once for this page.
-  const customLoadedFiredRef = useRef(false);
-  const grafanaLoadedFiredRef = useRef(false);
+    if (allLoaded) {
+      onTemplatesCount?.(counts);
+    }
+  }, [allLoaded, counts, onTemplatesCount]);
+  // Pre-set so the lists send no `loaded` events here: the panel shows on every new-dashboard visit, which page views
+  // already count, and the prompt's send event carries the counts.
+  const loadedFiredRef = useRef(true);
 
   // Rendered through a function, as in the template modal: the tab comes from a registry at render time.
   const renderCustomTemplates = () => {
@@ -129,7 +139,7 @@ export function LandingTemplates({
         isOpen
         onClose={noop}
         entryPoint={ENTRY_POINT}
-        loadedFiredRef={customLoadedFiredRef}
+        loadedFiredRef={loadedFiredRef}
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
         onTemplatesLoad={onCustomTemplatesLoad}
@@ -195,7 +205,7 @@ export function LandingTemplates({
                 entryPoint={ENTRY_POINT}
                 testDataSource={testDataSource}
                 onClose={noop}
-                loadedFiredRef={grafanaLoadedFiredRef}
+                loadedFiredRef={loadedFiredRef}
                 onSelectTemplate={onSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
                 onTemplatesLoad={onGrafanaTemplatesLoad}

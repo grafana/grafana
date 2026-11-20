@@ -16,7 +16,7 @@ import { OPEN_TEMPLATE_PROMPT } from 'app/features/dashboard/dashgrid/DashboardL
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
-import { LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
+import { LandingTemplates, LandingTemplatesToggle, type TemplateCounts } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
 import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
 
@@ -145,7 +145,9 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   // lists have no templates; a person's own toggle wins.
   const templatesId = useId();
   const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState<boolean>();
-  const [templatesEmpty, setTemplatesEmpty] = useState(false);
+  const [templateCounts, setTemplateCounts] = useState<TemplateCounts>();
+  const templatesEmpty =
+    templateCounts !== undefined && (templateCounts.custom ?? 0) + (templateCounts.grafana ?? 0) === 0;
   const templatesOpen = templatesOpenedByUser ?? !templatesEmpty;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
@@ -243,9 +245,12 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       reportInteraction('dashboard_prompt_planning_started', {
         source: 'empty_dashboard',
         templateKind: template?.kind,
+        // What the templates panel offered, to read template use against each account's own templates.
+        customTemplateCount: templateCounts?.custom,
+        grafanaTemplateCount: templateCounts?.grafana,
       });
     },
-    [template]
+    [template, templateCounts]
   );
 
   useEffect(() => {
@@ -297,7 +302,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           <LandingTemplates
             id={templatesId}
             isOpen={templatesOpen}
-            onEmptyChange={setTemplatesEmpty}
+            onTemplatesCount={setTemplateCounts}
             hidden={!promptReady}
             className={styles.templates}
             testDataSource={testDataSource}

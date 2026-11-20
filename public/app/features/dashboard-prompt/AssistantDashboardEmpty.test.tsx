@@ -3,6 +3,7 @@ import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
+import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { isFloatingExtensionSidebarHeld } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
@@ -23,6 +24,11 @@ const mockCheckLimits = jest.fn();
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   checkLimits: () => mockCheckLimits(),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
 }));
 
 jest.mock('./datasources', () => ({
@@ -58,7 +64,7 @@ interface LandingTemplatesProps {
   isOpen: boolean;
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
-  onEmptyChange?: (isEmpty: boolean) => void;
+  onTemplatesCount?: (counts: { custom?: number; grafana?: number }) => void;
   hidden?: boolean;
 }
 let latestTemplatesProps: LandingTemplatesProps | undefined;
@@ -256,7 +262,7 @@ describe('AssistantDashboardEmpty', () => {
     it('starts the templates closed when the lists have none', () => {
       renderEmpty();
 
-      act(() => latestTemplatesProps?.onEmptyChange?.(true));
+      act(() => latestTemplatesProps?.onTemplatesCount?.({ custom: 0, grafana: 0 }));
 
       expect(latestTemplatesProps?.isOpen).toBe(false);
       expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'false');
@@ -287,6 +293,21 @@ describe('AssistantDashboardEmpty', () => {
 
       expect(latestTemplatesProps?.selectedTemplateId).toBeUndefined();
       expect(latestPromptProps?.hostContextItems).toEqual([]);
+    });
+
+    it('reports the picked template and how many templates were on offer with the prompt', async () => {
+      renderEmpty();
+      act(() => latestTemplatesProps?.onTemplatesCount?.({ custom: 3, grafana: 12 }));
+      act(() => latestTemplatesProps?.onSelectTemplate(red));
+
+      await act(() => latestOnSubmit?.('', [red.contextItem]));
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboard_prompt_planning_started', {
+        source: 'empty_dashboard',
+        templateKind: 'template_dashboard',
+        customTemplateCount: 3,
+        grafanaTemplateCount: 12,
+      });
     });
 
     it('opens the template and has the Assistant adapt it when the prompt is sent empty', async () => {

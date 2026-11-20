@@ -206,24 +206,6 @@ describe('GrafanaTemplatesTab', () => {
       );
     });
 
-    it('reports the load once, placed on the prompt', async () => {
-      const loaded = jest.spyOn(TemplateDashboardInteractions, 'loaded').mockResolvedValue();
-      const loadedFiredRef = { current: false };
-      renderTab({ onSelectTemplate: jest.fn(), entryPoint: 'emptyDashboardPrompt', loadedFiredRef });
-
-      await waitFor(() =>
-        expect(loaded).toHaveBeenCalledWith({
-          numberOfItems: 1,
-          contentKinds: ['template_dashboard'],
-          datasourceTypes: ['grafana-testdata-datasource'],
-          sourceEntryPoint: 'empty_dashboard_prompt',
-          eventLocation: 'empty_dashboard_prompt',
-        })
-      );
-      expect(loaded).toHaveBeenCalledTimes(1);
-      expect(loadedFiredRef.current).toBe(true);
-    });
-
     it('marks the selected template', async () => {
       renderTab({ onSelectTemplate: jest.fn(), selectedTemplateId: 'grafana:1' });
 

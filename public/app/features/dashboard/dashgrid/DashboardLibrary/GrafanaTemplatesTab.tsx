@@ -73,7 +73,7 @@ export const GrafanaTemplatesTab = ({
   }, []);
 
   const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
-  // A picker sits under the new-dashboard prompt, so its events name that place, not the template modal's.
+  // A picker sits under the new-dashboard prompt, so its clicks name that place, not the template modal's.
   const eventLocation = onSelectTemplate
     ? EVENT_LOCATIONS.EMPTY_DASHBOARD_PROMPT
     : EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE;
@@ -89,21 +89,13 @@ export const GrafanaTemplatesTab = ({
       numberOfItems: dashboards.length,
       contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
       datasourceTypes: [String(testDataSource?.type)],
-      sourceEntryPoint,
-      eventLocation,
+      sourceEntryPoint: DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown',
+      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
     };
     isAnalyticsFrameworkEnabled
       ? NewTemplateDashboardInteractions.loaded(properties)
       : TemplateDashboardInteractions.loaded(properties);
-  }, [
-    loading,
-    dashboards,
-    sourceEntryPoint,
-    eventLocation,
-    testDataSource?.type,
-    isAnalyticsFrameworkEnabled,
-    loadedFiredRef,
-  ]);
+  }, [loading, dashboards, entryPoint, testDataSource?.type, isAnalyticsFrameworkEnabled, loadedFiredRef]);
 
   useEffect(() => {
     if (!loading) {
