@@ -436,8 +436,8 @@ github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add h1:uvDiO+HucdyuXsQ
 github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add/go.mod h1:/9R8cKylpkYtY+XVr7laVnqaCekVn994o6+Hd34cqxo=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1jqwo5dV64QO5i5QdMomnJQmIbW7ueGZb88=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
-github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
-github.com/grafana/dataplane/sdata v0.0.9/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
+github.com/grafana/dataplane/sdata v0.0.10 h1:mQaAfxW8O0H6Y/RHB0OABhG0CGSoCQuitFe5F5Q0KSQ=
+github.com/grafana/dataplane/sdata v0.0.10/go.mod h1:4qLpEPuzPgut9vEumHBa4cHgmZ+bPv8KJ+Kjlfy9Xh8=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
 github.com/grafana/grafana-app-sdk v0.63.2 h1:wk6G3fF+f0w0Nr+wCJXQIH0f5SRU77+A76xX2Qj9mJI=

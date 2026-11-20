@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -234,17 +235,42 @@ func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user i
 	if err != nil {
 		return false, err
 	}
-	check := authlib.CheckRequest{
+	req := authlib.CheckRequest{
 		Namespace: ns.Value,
 		Group:     b.GetGroupVersion().Group,
 		Resource:  "datasources",
 		Name:      uid,
 		Verb:      action,
 	}
-	if action == datasources.ActionQuery {
-		check.Subresource = "query"
-		check.Verb = utils.VerbCreate
+	// Route actions describe the required permission independently of the proxied HTTP method.
+	if check, ok := proxyRouteChecks[action]; ok {
+		req.Subresource, req.Verb = check.subresource, check.verb
 	}
-	result, err := b.accessClient.Check(ctx, user, check, "")
+	result, err := b.accessClient.Check(ctx, user, req, "")
 	return result.Allowed, err
+}
+
+type proxyRouteCheck struct {
+	subresource string
+	verb        string
+}
+
+// proxyRouteChecks maps plugin route actions (reqAction) to the datasource
+// subresource and verb that pkg/services/authz/rbac/mapper.go resolves back to
+// the same action, scoped to datasources:uid:<UID>. Unlisted actions are sent
+// as-is and rejected by authz as unsupported verbs.
+var proxyRouteChecks = map[string]proxyRouteCheck{
+	datasources.ActionQuery:                                {"query", utils.VerbCreate},
+	datasources.ActionRead:                                 {"", utils.VerbGet},
+	datasources.ActionDelete:                               {"", utils.VerbDelete},
+	datasources.ActionPermissionsRead:                      {"", utils.VerbGetPermissions},
+	datasources.ActionPermissionsWrite:                     {"", utils.VerbSetPermissions},
+	"datasources.caching:read":                             {"caching", utils.VerbGet},
+	"datasources.caching:write":                            {"caching", utils.VerbUpdate},
+	accesscontrol.ActionAlertingRuleExternalRead:           {"alertrules", utils.VerbGet},
+	accesscontrol.ActionAlertingRuleExternalWrite:          {"alertrules", utils.VerbUpdate},
+	accesscontrol.ActionAlertingInstancesExternalRead:      {"alertinstances", utils.VerbGet},
+	accesscontrol.ActionAlertingInstancesExternalWrite:     {"alertinstances", utils.VerbUpdate},
+	accesscontrol.ActionAlertingNotificationsExternalRead:  {"alertnotifications", utils.VerbGet},
+	accesscontrol.ActionAlertingNotificationsExternalWrite: {"alertnotifications", utils.VerbUpdate},
 }

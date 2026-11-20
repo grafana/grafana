@@ -115,7 +115,6 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -192,6 +191,7 @@ import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-co
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
   isArrangingPlan,
+  canArrangeLayout,
   isFullDashboardEditing,
   isDashboardReviewing,
   type DashboardSceneLike,
@@ -631,7 +631,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const presentationSubscription = this.subscribeToState((state, previousState) => {
       if (
         isDashboardReviewing(state) &&
-        (state.body !== previousState.body || state.sidebar !== previousState.sidebar)
+        (state.body !== previousState.body ||
+          state.sidebar !== previousState.sidebar ||
+          state.composerEditing !== previousState.composerEditing)
       ) {
         this.applyDashboardMode();
       }
@@ -795,6 +797,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
+  }
+
+  /** Drops an in-flight refreshPredefinedVariables() so its result is not applied to the current variable set. */
+  public cancelPredefinedVariablesRefresh() {
+    this._predefinedVariablesRefreshId++;
   }
 
   /** Persist the cross-dashboard variable selection annotation and re-inject. */
@@ -1177,7 +1184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public applyDashboardMode() {
     const fullEditing = isFullDashboardEditing(this.state);
-    this.state.body.editModeChanged?.(fullEditing);
+    this.state.body.editModeChanged?.(canArrangeLayout(this.state));
     if (this.state.isEditing) {
       this.activateSidebar();
     }
@@ -1437,8 +1444,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
       restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
-      // The baseline can be taken before a lookup started on the live tree resolves.
-      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1556,7 +1561,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     // Ensure the restored layout stays editable.
-    restoredState.body.editModeChanged?.(isFullDashboardEditing(this.state));
+    restoredState.body.editModeChanged?.(canArrangeLayout(this.state));
 
     this.setState({
       ...restoredState,
@@ -1573,7 +1578,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
-    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1657,7 +1661,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
-    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
