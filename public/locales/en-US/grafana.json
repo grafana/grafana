@@ -1999,6 +1999,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-error": "Could not read the rules file",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Rules",
         "skipped": "Skipped",
