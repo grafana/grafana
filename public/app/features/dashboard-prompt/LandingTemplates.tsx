@@ -59,11 +59,13 @@ interface ToggleProps {
 
 /** Opens and closes the templates panel, from the prompt's toolbar next to its + button. */
 export function LandingTemplatesToggle({ isOpen, onToggle, controls }: ToggleProps) {
+  const styles = useStyles2(getToggleStyles);
   return (
     <Button
       size="sm"
       variant="secondary"
       fill="text"
+      className={cx(styles.toggle, isOpen && styles.toggleOpen)}
       aria-expanded={isOpen}
       aria-controls={controls}
       onClick={onToggle}
@@ -225,6 +227,26 @@ export function LandingTemplates({
       </div>
     </section>
   );
+}
+
+// As the edit pane's collapsible sections: the label is secondary until the panel opens, and a click leaves no
+// background behind (a text button keeps its hover look while focused), so it reads as a section, not a dropdown.
+function getToggleStyles(theme: GrafanaTheme2) {
+  return {
+    toggle: css({
+      color: theme.colors.text.secondary,
+      '&:focus:not(:hover)': {
+        background: 'transparent',
+        color: theme.colors.text.secondary,
+      },
+    }),
+    toggleOpen: css({
+      color: theme.colors.text.primary,
+      '&:focus:not(:hover)': {
+        color: theme.colors.text.primary,
+      },
+    }),
+  };
 }
 
 function getStyles(theme: GrafanaTheme2) {
