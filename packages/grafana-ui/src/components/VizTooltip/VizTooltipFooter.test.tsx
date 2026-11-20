@@ -53,6 +53,7 @@ describe('VizTooltipFooter', () => {
     );
 
     expect(screen.getByRole('menuitem', { name: 'Link' })).toHaveAttribute('href', 'https://example.com/d/abc');
+    expect(screen.getByText('Link')).toHaveStyle({ color: createTheme().colors.text.link });
   });
 
   it('should render ad hoc filter button and fire onclick', async () => {

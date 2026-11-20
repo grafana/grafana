@@ -154,7 +154,7 @@ export const VizTooltipFooter = ({
               }
             }}
           >
-            <DataLinkMenuItems links={dataLinks} />
+            <DataLinkMenuItems links={dataLinks} variant="link" />
           </Menu>
         ))}
       {!hasOneClickLink && renderActions(actions, styles)}

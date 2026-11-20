@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { MenuItem, type MenuItemProps } from './MenuItem';
@@ -119,6 +120,13 @@ describe('MenuItem', () => {
   it('renders with expected role when URL and role are passed', async () => {
     render(<MenuItem label="URL Item" url="/some-url" role="menuitem" />);
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
+  });
+
+  it('keeps menu semantics while rendering the link variant with link text color', () => {
+    render(<MenuItem label="External link" url="https://example.com" variant="link" />);
+
+    expect(screen.getByRole('menuitem', { name: 'External link' })).toBeInTheDocument();
+    expect(screen.getByText('External link')).toHaveStyle({ color: createTheme().colors.text.link });
   });
 
   it('renders extra component if provided', async () => {

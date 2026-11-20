@@ -27,11 +27,16 @@ import { SubMenu } from './SubMenu';
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
 /** @internal */
+export type MenuItemVariant = 'default' | 'link';
+
+/** @internal */
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
   /** Overrides the parent menu density. */
   size?: 'sm' | 'md';
+  /** Visual treatment for the menu item. */
+  variant?: MenuItemVariant;
   /** Description of item */
   description?: string;
   /** Aria label for accessibility support */
@@ -80,6 +85,7 @@ export const MenuItem = React.memo(
       url,
       icon,
       label,
+      variant = 'default',
       description,
       ariaLabel,
       ariaChecked,
@@ -129,6 +135,7 @@ export const MenuItem = React.memo(
     const itemStyle = cx(
       {
         [styles.item]: true,
+        [styles.link]: variant === 'link' && !destructive && !disabled,
         [styles.active]: isActive,
         [styles.disabled]: disabled,
         [styles.destructive]: destructive && !disabled,
@@ -234,7 +241,13 @@ export const MenuItem = React.memo(
               aria-hidden
             />
           )}
-          <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
+          <span
+            className={cx(styles.ellipsis, styles.label, {
+              [styles.linkLabel]: variant === 'link' && !destructive && !disabled,
+            })}
+          >
+            {label}
+          </span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
@@ -273,6 +286,7 @@ MenuItem.displayName = 'MenuItem';
 const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
+  const linkLabel = css({ color: theme.colors.text.link });
 
   return {
     item: css({
@@ -306,6 +320,16 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
         color: theme.colors.text.primary,
       }
     ),
+    link: css({
+      color: theme.colors.text.link,
+      '&:hover, &:focus-visible': {
+        color: theme.colors.text.link,
+        [`.${linkLabel}`]: {
+          textDecoration: 'underline',
+        },
+      },
+    }),
+    linkLabel,
     active: css({
       background: theme.colors.action.hover,
       // needed to show active items in forced colors mode
