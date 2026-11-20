@@ -42,6 +42,8 @@ runs:
             echo "checked out ${GITHUB_HEAD_REF}"
           elif git checkout ${GITHUB_BASE_REF}; then
             echo "checked out ${GITHUB_BASE_REF}"
+          elif [[ "$GITHUB_BASE_REF" == *'#vendor' ]] && git checkout "${GITHUB_BASE_REF%#vendor}"; then
+            echo "checked out ${GITHUB_BASE_REF%#vendor}"
           else
             git checkout main
           fi
