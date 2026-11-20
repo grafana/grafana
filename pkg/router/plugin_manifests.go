@@ -190,6 +190,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			// An HTTP operator is reached through baasbridge, with no gRPC
 			// connection to hold.
 			if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
+				backend.routedLive = t.source == sourcePlugins && t.grpcConfig.TLS != nil &&
+					!t.grpcConfig.TLS.InsecureSkipVerify && len(t.grpcConfig.TLS.Certificates) > 0
 				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
 			}
 

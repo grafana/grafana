@@ -157,7 +157,7 @@ func parsePluginGRPCTLS(section *setting.DynamicSection) (*tls.Config, error) {
 	insecureSkipVerify := section.Key("tls_insecure").MustBool(false)
 	serverName := section.Key("tls_server_name").MustString("")
 	if !section.Key("tls_enabled").MustBool(false) {
-		if caFile != "" || insecureSkipVerify || serverName != "" {
+		if caFile != "" || insecureSkipVerify || serverName != "" || section.Key("tls_client_cert_file").String() != "" || section.Key("tls_client_key_file").String() != "" {
 			return nil, fmt.Errorf("tls_ca_file, tls_insecure and tls_server_name require tls_enabled")
 		}
 		return nil, nil
@@ -165,6 +165,18 @@ func parsePluginGRPCTLS(section *setting.DynamicSection) (*tls.Config, error) {
 	tlsCfg, err := buildAggregateTLSConfig(caFile, insecureSkipVerify)
 	if err != nil {
 		return nil, fmt.Errorf("tls_ca_file: %w", err)
+	}
+	certFile := section.Key("tls_client_cert_file").String()
+	keyFile := section.Key("tls_client_key_file").String()
+	if certFile != "" || keyFile != "" {
+		if insecureSkipVerify {
+			return nil, fmt.Errorf("client certificate requires server verification")
+		}
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return nil, fmt.Errorf("router backend client certificate: %w", err)
+		}
+		tlsCfg.Certificates = []tls.Certificate{cert}
 	}
 	tlsCfg.ServerName = serverName
 	return tlsCfg, nil

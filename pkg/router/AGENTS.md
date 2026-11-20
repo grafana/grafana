@@ -554,3 +554,28 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
 - `specs/2026-10-23-router-review-plan.md`: open work.
+
+## Plugin Live ingress
+
+The standalone router can serve the three plugin v2 Stream RPCs. Its Live
+listener is disabled until `[router.live] listen_address` and a space-separated
+`plugin_groups` mapping (for example `example-live-app=liveexample.ext.grafana.app`)
+are set. Configure the router server certificate with `[grpc_server] use_tls`,
+`cert_file`, `cert_key` and a dedicated `client_ca_file`. Only that CA may issue
+stack workload credentials, each with exactly one DNS SAN of the form
+`stack-<decimal stack ID>`. This design trusts each single-tenant Grafana to
+authenticate users within its own stack and supports org 1. Certificate
+expiry cancels its streams.
+
+The router looks up the installed group, holds its handler until the call
+finishes, and cancels streams on retirement. A managed plugin from
+`plugins_url` with verified backend TLS and a client certificate can receive
+these requests. Supply `tls_client_cert_file` and `tls_client_key_file` under
+`[router.backend_grpc]`. The operator verifies the router's workload identity.
+A publish has no application-level retry.
+
+The calling Grafana opts in under `[live.plugin_router]` using `plugin_ids`
+(space-separated), `address`, `ca_file`, `cert_file` and `key_file`.
+`server_name` optionally overrides the TLS verification name. Resource calls,
+health checks and data-source streams retain their existing routing. The
+browser keeps its existing Grafana Live WebSocket and channel addresses.

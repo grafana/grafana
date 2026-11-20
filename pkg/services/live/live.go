@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/live/pluginrouter"
 	"io"
 	"net/http"
 	"net/url"
@@ -404,6 +405,10 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
+	g.pluginRouter, err = pluginrouter.New(cfg)
+	if err != nil {
+		return nil, err
+	}
 	g.registerUsageMetrics()
 
 	return g, nil
@@ -497,6 +502,7 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	Features              featuremgmt.FeatureToggles
 	DataSourceCache       datasources.CacheService
+	pluginRouter          *pluginrouter.Client
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 
@@ -555,6 +561,7 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
+	defer g.pluginRouter.Close()
 	eGroup, eCtx := errgroup.WithContext(ctx)
 
 	eGroup.Go(func() error {
@@ -1046,9 +1053,18 @@ func (g *GrafanaLive) handleWatchScope() (model.ChannelHandlerFactory, error) {
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
-	streamHandler, err := g.getStreamPlugin(ctx, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+	streamHandler, routed := g.pluginRouter.Handler(namespace)
+	if routed {
+		p, ok := g.pluginStore.Plugin(ctx, namespace)
+		if !ok || !p.IsApp() || !p.Backend || !p.Streaming {
+			return nil, fmt.Errorf("app plugin %s does not support streaming", namespace)
+		}
+	} else {
+		var err error
+		streamHandler, err = g.getStreamPlugin(ctx, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+		}
 	}
 	return features.NewPluginRunner(
 		namespace,
