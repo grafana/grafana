@@ -988,10 +988,6 @@ func TestKVWatchIdleResourceBookmarksFollowOtherResources(t *testing.T) {
 	}
 }
 
-// Legacy SQL polls collections independently, so a lower RV can arrive after a
-// higher one. A watch from "now" that falls back to the broadcaster's view must
-// start above every event it will not replay.
-
 type failingListKVWatchBackend struct {
 	unseededKVWatchBackend
 }
