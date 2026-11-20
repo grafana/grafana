@@ -75,6 +75,7 @@ import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistor
 import { setPendingChangesPageClose, setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { openPendingChangesForEditing } from '../lifecycle/pendingChangesSave';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { loadSavedViews } from '../savedviews/loadSavedViews';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
@@ -597,6 +598,15 @@ abstract class DashboardScenePageStateManagerBase<T>
     await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+
+    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches lazily.
+    if (
+      scene &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
+      typeof locationService.getSearchObject().viewFilter === 'string'
+    ) {
+      await loadSavedViews(scene);
+    }
 
     return scene;
   }

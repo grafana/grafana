@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   useFlagGrafanaPanelActionsPopover,
+  useFlagGrafanaSavedDashboardViews,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
@@ -60,6 +61,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const feedbackButton = useFlagFeedbackButton();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const savedViewsEnabled = useFlagGrafanaSavedDashboardViews();
 
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
@@ -165,6 +167,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
         )}
         <div className={styles.viewGroup}>
           {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
+          {savedViewsEnabled && hasUid && !isEmbedded && !meta.isSnapshot && (
+            <SavedViewsSidebarButton sidebar={sidebar} openPane={openPane} />
+          )}
           <Sidebar.Button
             icon="list-ui-alt"
             onClick={() => {
@@ -311,6 +316,35 @@ function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel;
 
   // Without the actions popover, the pane holds the only "Back to dashboard" button, so it always has content.
   return !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel) ? children : null;
+}
+
+function SavedViewsSidebarButton({
+  sidebar,
+  openPane,
+}: {
+  sidebar: DashboardSidebarLike;
+  openPane: DashboardSidebarPane | undefined;
+}) {
+  const onClick = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { SavedViewsPane } = await import(
+        /* webpackChunkName: "dashboard-saved-views" */ '../savedviews/SavedViewsPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new SavedViewsPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  return (
+    <Sidebar.Button
+      icon="saved-views"
+      onClick={onClick}
+      title={t('dashboard.sidebar.saved-views.title', 'Views')}
+      tooltip={t('dashboard.sidebar.saved-views.tooltip', 'Saved views')}
+      active={openPane?.getId() === 'saved-views'}
+    />
+  );
 }
 
 function renderEnterpriseItems() {

@@ -5,6 +5,8 @@ import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
+import { type SavedDashboardView } from '../../savedviews/api';
+import { type SavedDashboardViewSpec } from '../../savedviews/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
@@ -102,6 +104,15 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * Viewing (it only asks, and there is nothing to save). Unset outside Composer.
    */
   composerEditing?: boolean;
+  /** Saved Dashboard Views for this dashboard, fetched once on load (see loadSavedViews.ts). */
+  savedViews?: SavedDashboardView[];
+  /** metadata.name of the currently-applied Saved View, if any — mirrors `?viewFilter=`. */
+  viewFilter?: string;
+  /**
+   * Time range and variable state captured on the first URL sync pass. Saved views fall back to
+   * this for anything they don't capture.
+   */
+  savedViewBaseline?: SavedDashboardViewSpec;
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
