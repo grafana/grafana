@@ -315,7 +315,7 @@ func TestDeleteAlertRules(t *testing.T) {
 
 		e.authz.canWriteAll = false
 		forbidden := errors.New("forbidden")
-		e.authz.authorizeFunc = func(*rulestore.GroupDelta) error { return forbidden }
+		e.authz.authorizeFunc = func(*ngrulesvc.GroupDelta) error { return forbidden }
 		require.ErrorIs(t, e.service.DeleteAlertRules(context.Background(), u, e.rules, nil, true), forbidden)
 	})
 
