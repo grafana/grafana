@@ -1,18 +1,29 @@
-import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+
+import {
+  type AlertRule,
+  type RecordingRule,
+  generatedAPI as rulesAPIv0alpha1,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import {
   buildAlertRuleResource,
   buildRecordingRuleResource,
 } from '../components/rule-editor/alert-rule-form/formValuesToAppPlatform';
+import { setupMswServer } from '../mockApi';
 import { mockDataQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
+import { getAlertRuleHandler, mockK8sAlertRule } from '../mocks/server/handlers/k8s/alertRules.k8s';
 import { setupDataSources } from '../testSetup/datasources';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { getDefaultFormValues } from './formDefaults';
-import { k8sRuleToRuleWithLocation } from './useK8sRuleWithLocation';
+import { k8sRuleToRuleWithLocation, useK8sRuleWithLocation } from './useK8sRuleWithLocation';
+
+const server = setupMswServer();
 
 setupDataSources(mockDataSource({ uid: 'abc123', type: 'prometheus' }));
 
@@ -148,5 +159,27 @@ describe('k8sRuleToRuleWithLocation', () => {
 
     expect(group.name).toBe('cpu-group');
     expect(isUngroupedRuleGroup(group.name)).toBe(false);
+  });
+});
+
+describe('useK8sRuleWithLocation', () => {
+  it('ignores a cached copy of the rule and waits for the one fetched when the editor opens', async () => {
+    const withVersion = (title: string, resourceVersion: string) => {
+      const rule = mockK8sAlertRule({ uid: 'rule-uid', title });
+      return { ...rule, metadata: { ...rule.metadata, resourceVersion } };
+    };
+    const store = configureStore();
+    await store.dispatch(
+      rulesAPIv0alpha1.util.upsertQueryData('getAlertRule', { name: 'rule-uid' }, withVersion('cached title', '7'))
+    );
+    server.use(getAlertRuleHandler([withVersion('server title', '8')]));
+
+    const { result } = renderHook(() => useK8sRuleWithLocation('rule-uid', 'alert'), {
+      wrapper: getWrapper({ store }),
+    });
+
+    expect(result.current).toEqual({ loading: true });
+    await waitFor(() => expect(result.current.resourceVersion).toBe('8'));
+    expect(result.current.result?.rule).toMatchObject({ grafana_alert: { title: 'server title' } });
   });
 });

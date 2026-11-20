@@ -73,7 +73,10 @@ describe('RecordingRuleActions', () => {
     setRuleFolderAccess(canWrite);
     renderActions(rule);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('kind=recording')
+    );
     await userEvent.click(screen.getByRole('button', { name: 'More' }));
     expect(await screen.findByRole('menuitem', { name: /Pause/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Duplicate/i })).toBeInTheDocument();
