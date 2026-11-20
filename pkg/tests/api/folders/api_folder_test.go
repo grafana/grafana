@@ -20,6 +20,7 @@ import (
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -748,7 +749,7 @@ func createFolderPermissionUser(
 		Password:       user.Password(login),
 		OrgID:          orgID,
 	})
-	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	store := resourcepermissions.NewStore(env.Cfg, legacysql.NewDatabaseProvider(env.SQLStore), featuremgmt.WithFeatures())
 	for _, grant := range grants {
 		_, err := store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, grant, nil)
 		require.NoError(t, err)

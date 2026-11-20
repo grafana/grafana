@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
@@ -56,7 +58,7 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideReceiverPermissionsService(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, dbProvider legacysql.LegacyDatabaseProvider, events bus.Bus, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -85,13 +87,13 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, dbProvider, events, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}
-	receivers := &ReceiverPermissionsService{Service: srv, sql: sql, ac: service, log: log.New("resourcepermissions.receivers")}
-	sql.Bus().AddEventListener(receivers.onPermissionsCopied)
-	sql.Bus().AddEventListener(receivers.onDefaultPermissionsSet)
+	receivers := &ReceiverPermissionsService{Service: srv, dbProvider: dbProvider, ac: service, log: log.New("resourcepermissions.receivers")}
+	events.AddEventListener(receivers.onPermissionsCopied)
+	events.AddEventListener(receivers.onDefaultPermissionsSet)
 	return receivers, nil
 }
 
@@ -99,9 +101,9 @@ var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(n
 
 type ReceiverPermissionsService struct {
 	*resourcepermissions.Service
-	ac  accesscontrol.Service
-	sql db.DB
-	log log.Logger
+	ac         accesscontrol.Service
+	dbProvider legacysql.LegacyDatabaseProvider
+	log        log.Logger
 }
 
 // receiverPermissionsCopied is an in-process notification, not a durable delivery record.
@@ -171,8 +173,14 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
 	newResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
+	// The transaction must be on the database the permission store resolves for ctx, so the
+	// reads and writes below join it.
+	dbHelper, err := r.dbProvider(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("get legacy DB: %w", err)
+	}
 	var copied int
-	err := r.sql.InTransaction(ctx, func(ctx context.Context) error {
+	err = dbHelper.DB.InTransaction(ctx, func(ctx context.Context) error {
 		currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
 		if err != nil {
 			return err

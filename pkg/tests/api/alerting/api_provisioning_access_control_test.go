@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -885,7 +886,7 @@ func setupProvisioningAccessControlTest(t *testing.T) provisioningTestEnv {
 	return provisioningTestEnv{
 		grafanaListedAddr: grafanaListedAddr,
 		adminClient:       newAlertingApiClient(grafanaListedAddr, "admin", "admin"),
-		permissionsStore:  resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures()),
+		permissionsStore:  resourcepermissions.NewStore(env.Cfg, legacysql.NewDatabaseProvider(env.SQLStore), featuremgmt.WithFeatures()),
 		env:               env,
 	}
 }

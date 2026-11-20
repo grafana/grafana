@@ -640,7 +640,7 @@ func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
+	return NewStore(cfg, legacysql.NewDatabaseProvider(sql), featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -760,7 +760,7 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, _, _ := setupTestEnv(t)
+			store, sql, _ := setupTestEnv(t)
 
 			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
 				{
@@ -804,7 +804,7 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 			err = store.DeleteResourcePermissions(context.Background(), tt.orgID, &tt.command)
 			require.NoError(t, err)
 
-			permissions := retrievePermissionsHelper(store, t)
+			permissions := retrievePermissionsHelper(sql, t)
 
 			for _, p := range tt.shouldExist {
 				assert.Contains(t, permissions, p)
@@ -966,10 +966,10 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			store, _, _ := setupTestEnv(t)
+			store, sql, _ := setupTestEnv(t)
 
 			// Populate store with existing permissions
-			setPermissionsHelper(store, test.existingPermissions, t)
+			setPermissionsHelper(sql, test.existingPermissions, t)
 
 			// Set new permission
 			_, err := store.SetResourcePermissions(context.Background(), test.orgID, []SetResourcePermissionsCommand{
@@ -987,16 +987,16 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 			require.NoError(t, err)
 
 			// Get permissions directly from DB to verify
-			permissions := retrievePermissionsHelper(store, t)
+			permissions := retrievePermissionsHelper(sql, t)
 
 			require.ElementsMatch(t, test.expectedPermissions, permissions)
 		})
 	}
 }
 
-func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
+func retrievePermissionsHelper(sql db.DB, t *testing.T) []orgPermission {
 	permissions := []orgPermission{}
-	err := store.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 		err := sess.SQL(`
     SELECT permission.*, role.org_id
     FROM permission
@@ -1010,8 +1010,8 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 	return permissions
 }
 
-func setPermissionsHelper(store *store, permissions []accesscontrol.Permission, t *testing.T) {
-	err := store.sql.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+func setPermissionsHelper(sqlDB db.DB, permissions []accesscontrol.Permission, t *testing.T) {
+	err := sqlDB.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 		sql := "INSERT INTO permission(role_id, action, scope, created, updated, kind, attribute, identifier) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 		for _, p := range permissions {
 			kind, attribute, identifier := p.SplitScope()
