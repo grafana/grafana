@@ -64,7 +64,8 @@ async function findHandoffProblem(): Promise<string | undefined> {
 function useHasTextbox(ref: RefObject<HTMLElement | null>) {
   const [hasTextbox, setHasTextbox] = useState(false);
 
-  useEffect(() => {
+  // Before paint, so a prompt already there does not show the page's loader for a frame.
+  useLayoutEffect(() => {
     const element = ref.current;
     if (!element) {
       return;
