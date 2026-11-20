@@ -10,10 +10,9 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	v0alpha1 "github.com/grafana/grafana/apps/userstorage/pkg/apis/userstorage/v0alpha1"
 )
