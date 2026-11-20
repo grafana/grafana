@@ -1999,6 +1999,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-error": "Could not read the rules file",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Rules",
         "skipped": "Skipped",
@@ -2012,7 +2013,8 @@
         "will-import-config": "Will import this configuration",
         "will-import-rules": "Will import rules",
         "will-import-rules-count_one": "Will import {{count}} rules",
-        "will-import-rules-count_other": "Will import {{count}} rules"
+        "will-import-rules-count_other": "Will import {{count}} rules",
+        "yaml-datasource": "Data source"
       },
       "rules-preview": "Alert rules preview",
       "source": {
@@ -2117,9 +2119,14 @@
         "target-datasource-required": "Please select a target data source",
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
+        "yaml-empty-group": "The group \"{{group}}\" has no rules",
         "yaml-error": "Failed to parse YAML file: {{error}}",
         "yaml-file": "Rules YAML file",
-        "yaml-required": "Please select a file"
+        "yaml-no-rules": "No rules found in this file",
+        "yaml-required": "Please select a file",
+        "yaml-target-datasource": "Data source",
+        "yaml-target-datasource-desc": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "yaml-target-datasource-required": "Please select a data source"
       },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {

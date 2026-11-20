@@ -15,7 +15,7 @@ import { type ImportFormValues } from './types';
 interface Step2WrapperProps {
   step1Completed: boolean;
   canImport: boolean;
-  onNext: () => boolean;
+  onNext: () => boolean | Promise<boolean>;
   onSkip: () => void;
 }
 
