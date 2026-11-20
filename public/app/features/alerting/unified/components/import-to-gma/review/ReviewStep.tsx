@@ -225,7 +225,8 @@ function hasYamlUpload(source: string, file: File | null): file is File {
 
 export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImport }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
-  const { setActiveStep } = useStepperState();
+  const { steps, setActiveStep } = useStepperState();
+  const hasNotificationsStep = steps.some(({ id }) => id === StepKey.Notifications);
 
   const { willImportNotifications, willImportRules, willEnableAutoSync } = getImportPlan(formData);
   const notificationsPreview = useNotificationsPreview(formData, { enabled: willImportNotifications });
@@ -287,49 +288,51 @@ export function ReviewStep({ formData, onStartImport, dryRunResult, rulesToImpor
       ) : (
         <Stack direction="column" gap={2}>
           {/* Notifications Summary Card */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Text variant="h5" element="h3">
-                {t('alerting.import-to-gma.review.notifications-title', 'Notification Configuration')}
-              </Text>
-              {willEnableAutoSync && (
-                <Badge
-                  color="green"
-                  icon="sync"
-                  text={t('alerting.import-to-gma.review.autosync-badge', 'Will sync continuously')}
+          {hasNotificationsStep && (
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Text variant="h5" element="h3">
+                  {t('alerting.import-to-gma.review.notifications-title', 'Notification Configuration')}
+                </Text>
+                {willEnableAutoSync && (
+                  <Badge
+                    color="green"
+                    icon="sync"
+                    text={t('alerting.import-to-gma.review.autosync-badge', 'Will sync continuously')}
+                  />
+                )}
+                {!willEnableAutoSync && willImportNotifications && (
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <Text variant="bodySmall" color="secondary">
+                      {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
+                    </Text>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="eye"
+                      onClick={notificationsPreview.open}
+                      disabled={notificationsPreview.schemasLoading}
+                      aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
+                    >
+                      {t('alerting.import-to-gma.review.preview', 'Preview')}
+                    </Button>
+                  </Stack>
+                )}
+                {formData.step1Skipped && (
+                  <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
+                )}
+              </div>
+              <div className={styles.cardContent}>
+                <NotificationsCardContent
+                  formData={formData}
+                  autoSyncActive={willEnableAutoSync}
+                  willImportNotifications={willImportNotifications}
+                  dryRunResult={dryRunResult}
+                  styles={styles}
                 />
-              )}
-              {!willEnableAutoSync && willImportNotifications && (
-                <Stack direction="row" gap={1} alignItems="center">
-                  <Text variant="bodySmall" color="secondary">
-                    {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
-                  </Text>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon="eye"
-                    onClick={notificationsPreview.open}
-                    disabled={notificationsPreview.schemasLoading}
-                    aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
-                  >
-                    {t('alerting.import-to-gma.review.preview', 'Preview')}
-                  </Button>
-                </Stack>
-              )}
-              {formData.step1Skipped && (
-                <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
-              )}
+              </div>
             </div>
-            <div className={styles.cardContent}>
-              <NotificationsCardContent
-                formData={formData}
-                autoSyncActive={willEnableAutoSync}
-                willImportNotifications={willImportNotifications}
-                dryRunResult={dryRunResult}
-                styles={styles}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Rules Summary Card */}
           <div className={styles.card}>

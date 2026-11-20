@@ -4,23 +4,18 @@ import { useLocalStorage, useToggle } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagAlertingMigrationWizardUI } from '@grafana/runtime/internal';
 import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { WatchersBanner } from '../components/WatchersBanner';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
-import { StepKey } from '../components/import-to-gma/Wizard/types';
+import { canImportRulesToGMA } from '../components/import-to-gma/useCanImportToGMA';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
-import { ALERTING_IMPORT_SETTINGS_URL } from '../settings/navigation';
-import { isAdmin } from '../utils/environment';
 import { ALERTING_PATHS } from '../utils/navigation';
 
 import { FilterView } from './FilterView';
@@ -84,17 +79,7 @@ export function RuleListActions() {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  const hasImportToGMAPermissions =
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
-
-  // The migration wizard replaces the rules-only import tool. It lives on the admin-only Settings > Import
-  // tab, so with it on this item opens its rules step, for admins only.
-  const migrationWizardEnabled = useFlagAlertingMigrationWizardUI();
-  const canImportRulesToGMA = hasImportToGMAPermissions && (!migrationWizardEnabled || isAdmin());
-  const importRulesUrl = migrationWizardEnabled
-    ? `${ALERTING_IMPORT_SETTINGS_URL}?step=${StepKey.Rules}`
-    : ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES;
+  const canImportRules = canImportRulesToGMA();
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
@@ -115,11 +100,11 @@ export function RuleListActions() {
             />
           )}
           {/* Not gated on auto-sync: this imports rules only, which the sync worker never touches. */}
-          {canImportRulesToGMA && (
+          {canImportRules && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
               icon="upload"
-              url={importRulesUrl}
+              url={ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES}
             />
           )}
         </Menu.Group>
@@ -141,14 +126,7 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [
-      canCreateGrafanaRules,
-      canCreateCloudRules,
-      canImportRulesToGMA,
-      importRulesUrl,
-      canExportRules,
-      toggleShowExportDrawer,
-    ]
+    [canCreateGrafanaRules, canCreateCloudRules, canImportRules, canExportRules, toggleShowExportDrawer]
   );
 
   return (

@@ -1,9 +1,11 @@
-import { type PropsWithChildren, createContext, memo, useCallback, useContext, useState } from 'react';
+import { type PropsWithChildren, createContext, memo, useCallback, useContext, useMemo, useState } from 'react';
 
 import { getWizardSteps } from './steps';
-import { StepKey, StepState, type VisitedSteps } from './types';
+import { StepKey, StepState, type VisitedSteps, type WizardStep } from './types';
 
 interface StepperStateContextValue {
+  /** The steps of this wizard, in order */
+  steps: WizardStep[];
   /** Mark a step as visited */
   setVisitedStep: (id: StepKey) => void;
   /** Map of step IDs to their visited state */
@@ -30,10 +32,13 @@ const StepperStateContext = createContext<StepperStateContextValue | null>(null)
 
 interface StepperStateProviderProps extends PropsWithChildren {
   initialStep?: StepKey;
+  /** Drop the notifications step, for users who can only import rules. Opens on the rules step. */
+  rulesOnly?: boolean;
 }
 
 export const StepperStateProvider = memo<StepperStateProviderProps>(
-  ({ children, initialStep = StepKey.Notifications }) => {
+  ({ children, rulesOnly = false, initialStep = rulesOnly ? StepKey.Rules : StepKey.Notifications }) => {
+    const steps = useMemo(() => getWizardSteps({ rulesOnly }), [rulesOnly]);
     const [activeStep, setActiveStep] = useState<StepKey>(initialStep);
     const [visitedSteps, setVisitedSteps] = useState<VisitedSteps>({
       [StepKey.Notifications]: StepState.Idle,
@@ -44,7 +49,7 @@ export const StepperStateProvider = memo<StepperStateProviderProps>(
     // Steps before the one the wizard opens on count as skipped, so the sidebar still lets the user move
     // forward from there. Nothing from a skipped step is imported.
     const [skippedSteps, setSkippedSteps] = useState<Partial<Record<StepKey, boolean>>>(() =>
-      getSkippedStepsBefore(initialStep)
+      getSkippedStepsBefore(initialStep, steps)
     );
     const [errorSteps, setErrorSteps] = useState<Partial<Record<StepKey, boolean>>>({});
 
@@ -88,6 +93,7 @@ export const StepperStateProvider = memo<StepperStateProviderProps>(
     return (
       <StepperStateContext.Provider
         value={{
+          steps,
           setVisitedStep,
           visitedSteps,
           activeStep,
@@ -108,8 +114,8 @@ export const StepperStateProvider = memo<StepperStateProviderProps>(
 
 StepperStateProvider.displayName = 'StepperStateProvider';
 
-function getSkippedStepsBefore(step: StepKey): Partial<Record<StepKey, boolean>> {
-  const stepIds = getWizardSteps().map(({ id }) => id);
+function getSkippedStepsBefore(step: StepKey, steps: WizardStep[]): Partial<Record<StepKey, boolean>> {
+  const stepIds = steps.map(({ id }) => id);
   const earlierSteps = stepIds.slice(0, Math.max(stepIds.indexOf(step), 0));
   return Object.fromEntries(earlierSteps.map((id) => [id, true]));
 }

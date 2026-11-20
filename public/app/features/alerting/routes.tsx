@@ -2,10 +2,16 @@ import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
+import {
+  type GrafanaRouteComponent,
+  type GrafanaRouteComponentProps,
+  type RouteDescriptor,
+} from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess } from './routePermissions';
+import { canImportRulesToGMA } from './unified/components/import-to-gma/useCanImportToGMA';
 import {
   isImportWizardEnabled,
   isNotificationHistoryEnabled,
@@ -313,12 +319,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-datasource-managed-rules',
-      // With the wizard on this only redirects to the admin-only Settings > Import tab.
-      roles: migrationWizardEnabled
-        ? () => ['Admin']
-        : evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]),
+      roles: () => (canImportRulesToGMA() ? [] : ['Reject']),
+      // Admins get the full wizard in Settings > Import; everyone else, who can't open Settings, gets rules only.
       component: migrationWizardEnabled
-        ? () => <Navigate replace to={`${ALERTING_IMPORT_SETTINGS_URL}?step=rules`} />
+        ? ImportRulesRoute
         : importAlertingComponent(
             () =>
               import(
@@ -491,6 +495,21 @@ function importAlertingComponent(loader: () => Promise<unknown>): GrafanaRouteCo
   const featureDisabledPageLoader = () =>
     import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled');
   return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);
+}
+
+const LazyImportRulesPage = importAlertingComponent(() =>
+  import(
+    /* webpackChunkName: "AlertingImportRules" */ 'app/features/alerting/unified/components/import-to-gma/ImportToGMA'
+  ).then(({ ImportRulesPage }) => ({ default: ImportRulesPage }))
+);
+
+function ImportRulesRoute(props: GrafanaRouteComponentProps) {
+  // The same check as the Settings route's ['Admin'] guard, so nobody is redirected to a page that rejects them.
+  return contextSrv.hasRole('Admin') ? (
+    <Navigate replace to={`${ALERTING_IMPORT_SETTINGS_URL}?step=rules`} />
+  ) : (
+    <LazyImportRulesPage {...props} />
+  );
 }
 
 function RedirectToImportSettings() {
