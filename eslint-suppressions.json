@@ -2432,7 +2432,7 @@
   },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts": {

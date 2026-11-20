@@ -14,7 +14,7 @@ interface TemplateDashboardsAvailability {
   showCustomTemplates: boolean;
   /** Either source is available — use this to gate entry points and the modal mount. */
   isAvailable: boolean;
-  /** The datasource lookup is still running, so `showGrafanaTemplates` may still turn true. */
+  /** The test datasource lookup is still running, so `showGrafanaTemplates` may still turn true. */
   isLoading: boolean;
 }
 
@@ -33,11 +33,12 @@ export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailabil
 
   // Skip the lookup entirely when the Grafana-provisioned path is disabled — passing `undefined`
   // returns the full list, which is wasted work since we'd discard the result.
+  const grafanaTemplatesEnabled = Boolean(config.featureToggles.dashboardTemplates);
   const { items, isLoading } = useDataSourceInstanceList(
-    config.featureToggles.dashboardTemplates ? { type: 'grafana-testdata-datasource' } : undefined
+    grafanaTemplatesEnabled ? { type: 'grafana-testdata-datasource' } : undefined
   );
 
-  const testDataSource = config.featureToggles.dashboardTemplates && !isLoading ? items[0] : undefined;
+  const testDataSource = grafanaTemplatesEnabled && !isLoading ? items[0] : undefined;
   const showGrafanaTemplates = Boolean(testDataSource);
 
   return {
@@ -45,6 +46,6 @@ export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailabil
     showGrafanaTemplates,
     showCustomTemplates,
     isAvailable: showGrafanaTemplates || showCustomTemplates,
-    isLoading,
+    isLoading: grafanaTemplatesEnabled && isLoading,
   };
 }

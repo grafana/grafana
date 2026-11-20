@@ -190,7 +190,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   }, []);
   // Until the availability lookup is done the panel may still come, so an open one waits for it too.
   const panelWaits =
-    (showTemplates || (availabilityLoading && !assistantDriven)) &&
+    (showTemplates || (availabilityLoading && !assistantDriven && !promptMissing)) &&
     templatesOpen &&
     (!promptReady || availabilityLoading);
   const waiting = panelWaits && !waitedForPrompt;

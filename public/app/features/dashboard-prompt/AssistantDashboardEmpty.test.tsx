@@ -388,6 +388,16 @@ describe('AssistantDashboardEmpty', () => {
       expect(screen.getByRole('heading')).toBeVisible();
     });
 
+    it('does not wait for the template lookup when the Assistant plugin has no prompt', () => {
+      window.localStorage.setItem(OPEN_KEY, 'true');
+      mockPromptComponent = { component: undefined, isLoading: false };
+      Object.assign(mockAvailability, { isAvailable: false, isLoading: true });
+
+      renderEmpty();
+
+      expect(screen.getByRole('heading')).toBeVisible();
+    });
+
     it('offers no templates when the Assistant plugin has no prompt for them', () => {
       window.localStorage.setItem(OPEN_KEY, 'true');
       mockPromptComponent = { component: undefined, isLoading: false };
