@@ -119,22 +119,29 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
           icon = mappingResult.icon;
         }
       }
-    } else if (field.type === FieldType.enum) {
-      // Apply enum display handling if field is enum type and no mappings are specified
-      if (value == null) {
-        return {
-          text: '',
-          numeric: NaN,
-        };
-      }
+    }
 
-      const enumIndex = +value;
-      if (config && config.type && config.type.enum) {
+    if (field.type === FieldType.enum) {
+      // Apply enum display handling for whatever the value mappings did not set
+      if (value == null) {
+        if (text == null && color == null) {
+          return {
+            text: '',
+            numeric: NaN,
+          };
+        }
+      } else if (config && config.type && config.type.enum) {
+        const enumIndex = +value;
         const { text: enumText, color: enumColor } = config.type.enum;
 
-        text = enumText ? enumText[enumIndex] : `${value}`;
+        if (text == null) {
+          text = enumText ? enumText[enumIndex] : `${value}`;
+        }
+
         // If no color specified in enum field config we will fallback to iterating through the theme palette
-        color = enumColor ? enumColor[enumIndex] : undefined;
+        if (color == null) {
+          color = enumColor ? enumColor[enumIndex] : undefined;
+        }
 
         if (color == null) {
           const namedColor = palette[enumIndex % palette.length];
