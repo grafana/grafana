@@ -28,7 +28,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') || github.ref_name == 'macabu/ci-profile-compile-once' }}
 
 permissions: {}
 
@@ -91,19 +91,16 @@ jobs:
         run: bash ./scripts/ci/backend-tests/run-sql-integration-shard.sh --sqlite "$SHARD"
 
   mysql:
-    # Run this workflow only for PRs from forks
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    # OSS tests run on fork PRs and on the dedicated compile-once benchmark branch.
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) || (github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'macabu/ci-profile-compile-once')
     strategy:
-      matrix:
-        shard: [
-           1/16,  2/16,  3/16,  4/16,
-           5/16,  6/16,  7/16,  8/16,
-           9/16, 10/16, 11/16, 12/16,
-          13/16, 14/16, 15/16, 16/16,
-        ]
+      matrix: >-
+        ${{ fromJSON(github.ref_name == 'macabu/ci-profile-compile-once' &&
+          '{"shard":["15/16"],"compile_once":[false,true]}' ||
+          '{"shard":["1/16","2/16","3/16","4/16","5/16","6/16","7/16","8/16","9/16","10/16","11/16","12/16","13/16","14/16","15/16","16/16"],"compile_once":[false]}') }}
       fail-fast: false
 
-    name: MySQL (${{ matrix.shard }})
+    name: MySQL (${{ matrix.shard }})${{ matrix.compile_once && ' compile once' || '' }}
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
@@ -138,6 +135,7 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          GRAFANA_CI_COMPILE_ONCE: ${{ matrix.compile_once }}
         run: bash ./scripts/ci/backend-tests/run-sql-integration-shard.sh "$SHARD"
       - name: Cleanup MySQL
         if: always()
@@ -238,15 +236,18 @@ jobs:
 
   mysql-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
-    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    if: github.ref_name != 'macabu/ci-profile-compile-once' && ((github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false))
     strategy:
-      matrix: >-
-        ${{ fromJSON(github.ref_name == 'macabu/ci-profile-compile-once' &&
-          '{"shard":["15/16"],"compile_once":[false,true]}' ||
-          '{"shard":["1/16","2/16","3/16","4/16","5/16","6/16","7/16","8/16","9/16","10/16","11/16","12/16","13/16","14/16","15/16","16/16"],"compile_once":[false]}') }}
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
       fail-fast: false
 
-    name: MySQL Enterprise (${{ matrix.shard }})${{ matrix.compile_once && ' compile once' || '' }}
+    name: MySQL Enterprise (${{ matrix.shard }})
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
@@ -293,7 +294,6 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
-          GRAFANA_CI_COMPILE_ONCE: ${{ matrix.compile_once }}
         run: bash ./scripts/ci/backend-tests/run-sql-integration-shard.sh "$SHARD" ../grafana-enterprise
       - name: Cleanup MySQL
         if: always()

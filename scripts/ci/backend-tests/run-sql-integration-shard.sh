@@ -42,19 +42,41 @@ while IFS= read -r package; do
 done <<< "$packages"
 
 run_compiled_tests() {
-    local binaries package_dirs go_root pkg dir started status=0
+    local binaries package_dirs go_root pkg dir name parent started status=0
+    local -a batch=() collisions=()
+    local -A seen=() binary_paths=()
     binaries=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/sql-integration.XXXXXXXX")
     package_dirs=$(CGO_ENABLED=0 go list "${build_tags[@]}" -f '{{.ImportPath}}{{"\t"}}{{.Dir}}' "$@")
     go_root=$(go env GOROOT)
 
+    # A directory output uses Go's default binary name, which can collide within a shard.
+    while IFS=$'\t' read -r pkg dir; do
+        name=${pkg##*/}
+        if [[ "$name" =~ ^v([2-9]|[1-9][0-9]+)$ && "$pkg" == */* ]]; then
+            parent=${pkg%/*}
+            name=${parent##*/}
+        fi
+        if [[ "${seen[$name]:-}" ]]; then
+            binary_paths["$pkg"]="$binaries/duplicate.${#collisions[@]}"
+            collisions+=("$pkg")
+        else
+            seen["$name"]=1
+            binary_paths["$pkg"]="$binaries/$name.test"
+            batch+=("$pkg")
+        fi
+    done <<< "$package_dirs"
+
     echo "Compiling test binaries"
-    CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "$binaries/" "$@"
+    CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "$binaries/" "${batch[@]}"
+    for pkg in "${collisions[@]}"; do
+        CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "${binary_paths[$pkg]}" "$pkg"
+    done
     echo "Running compiled tests"
     while IFS=$'\t' read -r pkg dir; do
         started=$SECONDS
         if (
             cd "$dir" &&
-                PATH="$go_root/bin:$PATH" CGO_ENABLED=0 "$binaries/${pkg##*/}.test" -test.paniconexit0 -test.timeout=12m -test.run '^TestIntegration'
+                PATH="$go_root/bin:$PATH" CGO_ENABLED=0 "${binary_paths[$pkg]}" -test.paniconexit0 -test.timeout=12m -test.run '^TestIntegration'
         ) > "$binaries/test.log" 2>&1; then
             printf 'ok\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
         else
