@@ -27,7 +27,7 @@ permissions: {}
 
 env:
   RELEASE_BRANCH: nx-release-branch--main
-  PR_TITLE: 'Release: Frontend packages'
+  PR_TITLE: 'chore: Release frontend packages'
 
 jobs:
   # Finishes the last release in three jobs, in this order: plan works out which tags the merged version pull request

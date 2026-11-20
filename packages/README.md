@@ -69,7 +69,7 @@ The `Release NPM independent packages` workflow runs when a change to an indepen
 
 1. `plan` finds the merged version pull request that is still labelled `nx-release:pending` and works out which packages it released, and so which `<name>@<version>` tags are missing.
 2. `tag` creates those tags with the shared `create-release-tag.yml` workflow, one tag at a time. Tags that already exist are skipped.
-3. `release` starts after the tags exist, relabels the version pull request `nx-release:tagged`, and then opens or updates one pull request titled `Release: Frontend packages`, from the `nx-release-branch--main` branch and labelled `nx-release:pending`, with the new versions and changelog entries. Nx counts the commits since the last tag, which is why the tags come first.
+3. `release` starts after the tags exist, relabels the version pull request `nx-release:tagged`, and then opens or updates one pull request titled `chore: Release frontend packages`, from the `nx-release-branch--main` branch and labelled `nx-release:pending`, with the new versions and changelog entries. The title is a conventional commit of the `chore` type, so the squash-merged release commit never counts as a change when Nx works out the next version or the changelog. Nx counts the commits since the last tag, which is why the tags come first.
 4. `publish` also starts after the tags exist, and builds, validates and publishes just the tagged packages to npm. It does not wait for the `release` job.
 
 Merging the version pull request releases the packages.
