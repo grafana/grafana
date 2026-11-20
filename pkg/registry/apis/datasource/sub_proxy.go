@@ -172,12 +172,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			respondError(err)
 			return
 		}
-		// The apiserver chain does not carry request metadata. Provide it so the shared
-		// reverse proxy can record whether a failure came from the datasource. This
-		// follows dependency resolution, which must receive the connect context as is.
-		req = req.WithContext(requestmeta.SetRequestMetaData(req.Context(), requestmeta.RequestMetaData{
-			StatusSource: requestmeta.StatusSourceServer,
-		}))
+		req = req.WithContext(requestmeta.EnsureRequestMetaData(req.Context()))
 		if deps.GrafanaConfig != nil {
 			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
 		}

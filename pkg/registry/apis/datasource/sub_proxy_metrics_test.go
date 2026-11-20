@@ -13,6 +13,7 @@ import (
 	"k8s.io/component-base/metrics/legacyregistry"
 
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -125,6 +126,20 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		reg, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
 		require.Equal(t, http.StatusInternalServerError, rec.Code, "the response status is not rewritten")
 		requireSeries(t, reg, series{"500", proxymetrics.SourceDownstream})
+	})
+
+	t.Run("outer middleware sees the same downstream 503 as the proxy", func(t *testing.T) {
+		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		defer target.Close()
+
+		ctx := requestmeta.SetRequestMetaData(proxyTestContext(), requestmeta.RequestMetaData{StatusSource: requestmeta.StatusSourceServer})
+		reg, _, rec := serve(t, providerFor(target.URL), ctx)
+
+		require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+		requireSeries(t, reg, series{"503", proxymetrics.SourceDownstream})
+		require.Equal(t, requestmeta.StatusSourceDownstream, requestmeta.GetRequestMetaData(ctx).StatusSource)
 	})
 
 	t.Run("an unreachable datasource is downstream", func(t *testing.T) {
