@@ -96,6 +96,8 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
 
 describe('DashboardControls', () => {
   afterEach(() => {
+    // Unmount before the flag reset, which would otherwise update the mounted OpenFeature hooks outside act().
+    cleanup();
     setTestFlags({});
   });
 
@@ -482,7 +484,6 @@ describe('DashboardControls', () => {
     });
 
     afterEach(() => {
-      cleanup();
       jest.clearAllMocks();
     });
 
@@ -1087,8 +1088,6 @@ describe('DashboardControls', () => {
     });
 
     afterEach(() => {
-      // Unmount before the global flag reset, which would otherwise update the mounted OpenFeature hook outside act().
-      cleanup();
       mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
     });
 
