@@ -63,7 +63,8 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
-	return newLoader(legacysql.NewDatabaseProvider(sql), catalog, actionResolver, cache, cfg, features, license, zanzana)
+	return newLoader(legacysql.NewDatabaseProvider(sql), actionResolver, cache, cfg, features, zanzana,
+		WithLicensing(license), WithRoleCatalog(catalog))
 }
 
 // NewEnforcedLoader follows standalone AuthZ's SQL-backed policy without a local
@@ -74,28 +75,44 @@ func NewEnforcedLoader(database legacysql.LegacyDatabaseProvider, actions ac.Act
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	zanzana MigratedPermissions, scopeResolver legacyscopes.ScopeResolver,
 ) *Loader {
-	loader := newLoader(database, nil, actions, cache, cfg, features, nil, zanzana)
+	loader := newLoader(database, actions, cache, cfg, features, zanzana)
 	loader.enforced = true
 	loader.scopeResolver = scopeResolver
 	return loader
 }
 
-func newLoader(database legacysql.LegacyDatabaseProvider, catalog *RoleCatalog, actionResolver ac.ActionResolver,
+type LoaderOption func(*Loader)
+
+func WithLicensing(license licensing.Licensing) LoaderOption {
+	return func(loader *Loader) {
+		loader.license = license
+	}
+}
+
+func WithRoleCatalog(catalog *RoleCatalog) LoaderOption {
+	return func(loader *Loader) {
+		loader.catalog = catalog
+	}
+}
+
+func newLoader(database legacysql.LegacyDatabaseProvider, actionResolver ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	license licensing.Licensing, zanzana MigratedPermissions,
+	zanzana MigratedPermissions, options ...LoaderOption,
 ) *Loader {
-	return &Loader{
+	loader := &Loader{
 		store:             permissionStore{database: database},
-		catalog:           catalog,
 		actions:           actionResolver,
 		cache:             cache,
 		cfg:               cfg,
 		features:          features,
 		openFeatureClient: openfeature.NewDefaultClient(),
-		license:           license,
 		zanzana:           zanzana,
 		log:               log.New("authz.legacypermissions"),
 	}
+	for _, option := range options {
+		option(loader)
+	}
+	return loader
 }
 
 func (l *Loader) enforcementEnabled() bool {
