@@ -21,6 +21,8 @@ When using a button please always follow a11y rules (e.g. W3C Recommendation [3.
 
 ### Don'ts
 
+- Don't strip a `Button`'s padding and border to make it look inline. Use [`InlineButton` for inline actions](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/guidance/patterns/inline-actions.md) or `TextLink` for navigation.
+
 - Do not use two primary buttons in a button group.
 - Do not use buttons with icons and buttons without icons in a button group.
 - Do not have more than one primary action.
