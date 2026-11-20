@@ -311,9 +311,6 @@ func TestIntegrationNotebooksSearchRequiresFeatureFlag(t *testing.T) {
 	})
 }
 
-// createNotebook writes the smallest notebook the admission chain accepts: a
-// title, no elements, and a NotebookLayout (validateNotebook rejects any other
-// layout kind).
 // createNotebookWithCells creates a notebook with one Markdown cell and one code cell, in that
 // order in the layout.
 func createNotebookWithCells(
@@ -363,6 +360,9 @@ func createNotebookWithCells(
 	return out
 }
 
+// createNotebook writes the smallest notebook the admission chain accepts: a
+// title, no elements, and a NotebookLayout (validateNotebook rejects any other
+// layout kind).
 func createNotebook(
 	t *testing.T,
 	ctx context.Context,
