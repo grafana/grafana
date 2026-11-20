@@ -345,6 +345,15 @@ describe('ImportToGMA wizard — user who can only import rules', () => {
 });
 
 describe('ImportRulesPage — user who can also write notifications', () => {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+    ]);
+  });
+
   // Notification imports end in Settings > Import, which only admins can open, so this page stays rules only.
   it('shows only the rules and review steps', async () => {
     render(<ImportRulesPage />);
