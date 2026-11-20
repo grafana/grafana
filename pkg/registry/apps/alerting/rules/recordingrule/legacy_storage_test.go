@@ -22,8 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -40,7 +40,7 @@ func (fakeRuleAccessControl) AuthorizeAccessToRuleGroup(context.Context, identit
 func (fakeRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) error {
 	return nil
 }
-func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
+func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *ngrulesvc.GroupDelta) error {
 	return nil
 }
 func (fakeRuleAccessControl) AuthorizeNotificationSettings(context.Context, identity.Requester, []ngalertac.ReceiverRef) error {
@@ -142,12 +142,13 @@ func TestDeleteCollection(t *testing.T) {
 		require.Len(t, ruleStore.Rules[1], 3)
 	})
 
-	t.Run("rejects dry-run requests without deleting", func(t *testing.T) {
+	t.Run("dry-run returns the matching rules without deleting", func(t *testing.T) {
 		s, ruleStore := setup(t)
 
-		_, err := s.DeleteCollection(deleteCollectionTestContext(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, &internalversion.ListOptions{})
+		out, err := s.DeleteCollection(deleteCollectionTestContext(), nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}}, &internalversion.ListOptions{})
 
-		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.NoError(t, err)
+		require.Len(t, out.(*v1beta1.RecordingRuleList).Items, 3)
 		require.Len(t, ruleStore.Rules[1], 3)
 	})
 

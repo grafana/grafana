@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -106,6 +107,16 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	data, err := json.Marshal(newRule.Status)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to marshal status: %w", err)
+	}
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		// What the re-read below would return: the stored rule with the new status.
+		stored, ok := old.(*v1beta1.AlertRule)
+		if !ok {
+			return nil, false, fmt.Errorf("expected AlertRule but got %T", old)
+		}
+		out := stored.DeepCopy()
+		out.Status = newRule.Status
+		return out, false, nil
 	}
 	if err := s.statusWriter.SaveAlertRuleStatus(ctx, info.OrgID, name, data); err != nil {
 		return nil, false, err
