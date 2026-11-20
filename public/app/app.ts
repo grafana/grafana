@@ -13,6 +13,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { setVarMappingsEnabledResolver } from '@grafana/data/internal';
 import { DEFAULT_LANGUAGE, t } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
@@ -230,6 +231,7 @@ export class GrafanaApp {
           import('./core/journeys/panelEdit'),
           import('./core/journeys/datasourceConfigure'),
           import('./core/journeys/exploreToDashboard'),
+          import('./core/journeys/datasourcePickerSelect'),
         ]);
 
         // Warn about registry entries that have no start trigger wired up
@@ -248,6 +250,9 @@ export class GrafanaApp {
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
+      setVarMappingsEnabledResolver(() =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false)
+      );
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 

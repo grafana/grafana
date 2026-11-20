@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
@@ -216,12 +216,13 @@ export function useSidebarSavedState<T = number | boolean>(
 ) {
   const [state, setState] = React.useState<T>(() => readFromStore(persistenceKey, subKey, defaultValue));
 
-  useEffect(() => {
+  // Re-read from storage when the persistence key changes, but not when defaultValue changes
+  // to avoid overriding a user-persisted value.
+  const [prevKeys, setPrevKeys] = React.useState({ persistenceKey, subKey });
+  if (prevKeys.persistenceKey !== persistenceKey || prevKeys.subKey !== subKey) {
+    setPrevKeys({ persistenceKey, subKey });
     setState(readFromStore(persistenceKey, subKey, defaultValue));
-    // Re-read from storage when the persistence key changes, but not when defaultValue changes
-    // to avoid overriding a user-persisted value.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [persistenceKey, subKey]);
+  }
 
   const setPersisted = useCallback(
     (cb: (prevState: T) => T) => {
