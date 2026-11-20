@@ -420,6 +420,59 @@ func TestSecureValues_Token(t *testing.T) {
 	}
 }
 
+func TestSecureValues_NotFoundSentinel(t *testing.T) {
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
+		Secure: provisioning.ConnectionSecure{
+			Token: common.InlineSecureValue{Name: "token-ref"},
+		},
+	}
+
+	t.Run("missing token wraps both ErrSecretNotFound and ErrTokenNotFound", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.ErrorIs(t, err, connection.ErrSecretNotFound)
+		require.ErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("per-item not-found error wraps ErrTokenNotFound", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResultWithError(errors.New("not found")),
+		}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.ErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("per-item non-not-found error is surfaced, not treated as missing", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResultWithError(errors.New("not authorized")),
+		}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("transient service error is not treated as not-found", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{err: errors.New("service down")}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("missing private key does not carry ErrTokenNotFound", func(t *testing.T) {
+		pkConn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
+			Secure:     provisioning.ConnectionSecure{PrivateKey: common.InlineSecureValue{Name: "pk-ref"}},
+		}
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
+		_, err := decrypter(pkConn).PrivateKey(context.Background())
+		require.ErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+}
+
 func TestSecureValues_MultipleFields(t *testing.T) {
 	t.Run("should decrypt all fields independently", func(t *testing.T) {
 		conn := &provisioning.Connection{

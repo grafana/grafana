@@ -176,6 +176,10 @@ type ConnectionStatus struct {
 
 	// The connection health status
 	Health HealthStatus `json:"health"`
+
+	// Token holds metadata about the last generated connection token, used to avoid
+	// regenerating a token whose secret was written recently but is not yet readable.
+	Token TokenStatus `json:"token,omitempty"`
 }
 
 func (ConnectionStatus) OpenAPIModelName() string {
