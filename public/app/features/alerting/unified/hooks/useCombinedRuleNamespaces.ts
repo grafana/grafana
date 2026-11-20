@@ -566,13 +566,7 @@ export function useCombinedRules(
   // cache results per rules source, so we only recalculate those for which results have actually changed
   const cache = useRef<Record<string, CacheValue>>({});
 
-  const rulesSource = getRulesSourceByName(GRAFANA_RULES_SOURCE_NAME);
-
   const rules = useMemo(() => {
-    if (!rulesSource) {
-      return [];
-    }
-
     const cached = cache.current[GRAFANA_RULES_SOURCE_NAME];
     if (cached && cached.promRules === promRuleNs && cached.rulerRules === rulerRules) {
       return cached.result;
@@ -582,7 +576,7 @@ export function useCombinedRules(
     // first get all the ruler rules from the data source
     Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
       const namespace: CombinedRuleNamespace = {
-        rulesSource,
+        rulesSource: GRAFANA_RULES_SOURCE_NAME,
         name: namespaceName,
         groups: [],
       };
@@ -601,7 +595,7 @@ export function useCombinedRules(
     // then correlate with prometheus rules
     promRuleNs?.forEach(({ name: namespaceName, groups }) => {
       const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
-        rulesSource,
+        rulesSource: GRAFANA_RULES_SOURCE_NAME,
         name: namespaceName,
         groups: [],
       });
@@ -613,7 +607,7 @@ export function useCombinedRules(
 
     cache.current[GRAFANA_RULES_SOURCE_NAME] = { promRules: promRuleNs, rulerRules, result };
     return result;
-  }, [promRuleNs, rulerRules, rulesSource]);
+  }, [promRuleNs, rulerRules]);
 
   return {
     loading: isLoadingPromRules || isLoadingRulerRules,

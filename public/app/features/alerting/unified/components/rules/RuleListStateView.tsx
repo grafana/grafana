@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
 import { Counter, LoadingBar, Pagination, Stack } from '@grafana/ui';
@@ -6,11 +6,12 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { type CombinedRule, type CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem';
 import { ListSection } from '../../rule-list/components/ListSection';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { hashRule } from '../../utils/rule-id';
@@ -146,7 +147,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 
 function useDataSourcesLoadingState() {
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const [rulesDataSources] = useState(getRulesDataSources);
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = useDataSourcesForRules();
 
   const grafanaLoading = useUnifiedAlertingSelector((state) => {
     const promLoading = isAsyncRequestStatePending(state.promRules[GRAFANA_RULES_SOURCE_NAME]);
@@ -155,7 +156,8 @@ function useDataSourcesLoadingState() {
     return promLoading || rulerLoading;
   });
 
-  const externalDataSourcesLoading = rulesDataSources.some((ds) => isAsyncRequestStatePending(promRules[ds.name]));
+  const externalDataSourcesLoading =
+    isLoadingRulesSources || rulesDataSources.some((ds) => isAsyncRequestStatePending(promRules[ds.name]));
 
   const loading = grafanaLoading || externalDataSourcesLoading;
 

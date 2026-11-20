@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
@@ -12,10 +12,11 @@ import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useDataSourcesForRules } from '../../hooks/useDataSourcesForRules';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
-import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { getRulesSourceUid } from '../../utils/datasource';
 import { ALERTING_PATHS } from '../../utils/navigation';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
@@ -32,7 +33,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
 
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-  const [rulesDataSources] = useState(getRulesDataSources);
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = useDataSourcesForRules();
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
@@ -42,7 +43,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
-  const hasDataSourcesLoading = dataSourcesLoading.length > 0;
+  const hasDataSourcesLoading = isLoadingRulesSources || dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
 
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(
@@ -97,7 +98,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
         />
       ))}
 
-      {!hasDataSourcesConfigured && (
+      {!isLoadingRulesSources && !hasDataSourcesConfigured && (
         <p>
           <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
             There are no Prometheus or Loki data sources configured

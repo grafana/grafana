@@ -1,4 +1,4 @@
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { RuleListStateView } from 'app/features/alerting/unified/components/rules/RuleListStateView';
@@ -73,8 +73,10 @@ describe('RuleListStateView', () => {
     expect(screen.queryByText(badge === 'Imported' ? 'Provisioned' : 'Imported')).not.toBeInTheDocument();
   });
 
-  it('renders differing prom rule states correctly and does not crash with missing state', () => {
+  it('renders differing prom rule states correctly and does not crash with missing state', async () => {
     render(<RuleListStateView namespaces={namespaces} />);
+    // The loading bar shows until the rules source list loads.
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
 
     expect(screen.getByRole('treeitem', { name: 'Firing 1' })).toBeInTheDocument();
     expect(screen.getByRole('treeitem', { name: 'Pending 1' })).toBeInTheDocument();
