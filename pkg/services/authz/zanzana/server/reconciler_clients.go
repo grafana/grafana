@@ -2,10 +2,22 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
+	"time"
 
+	"go.opentelemetry.io/otel"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
+	k8stracing "k8s.io/component-base/tracing"
 
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -29,6 +41,8 @@ func (c reconcilerClients) ForResource(ctx context.Context, namespace string, gv
 	if err != nil {
 		return nil, err
 	}
+	cfg = rest.CopyConfig(cfg)
+	cfg.Wrap(k8stracing.WrapperFor(otel.GetTracerProvider()))
 	discovery, err := client.NewDiscoveryClient(cfg)
 	if err != nil {
 		return nil, err
@@ -40,5 +54,29 @@ func (c reconcilerClients) ForResource(ctx context.Context, namespace string, gv
 	if err != nil {
 		return nil, err
 	}
-	return dyn.Resource(gvr).Namespace(namespace), nil
+	return retryingList{dyn.Resource(gvr).Namespace(namespace)}, nil
+}
+
+var listBackoff = wait.Backoff{Duration: 100 * time.Millisecond, Factor: 2, Jitter: 0.1, Steps: 8, Cap: 5 * time.Second}
+
+type retryingList struct {
+	dynamic.ResourceInterface
+}
+
+func (c retryingList) List(ctx context.Context, opts metav1.ListOptions) (list *unstructured.UnstructuredList, err error) {
+	err = retry.OnError(listBackoff, isTransientError, func() error {
+		list, err = c.ResourceInterface.List(ctx, opts)
+		return err
+	})
+	return list, err
+}
+
+func isTransientError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	_, isOpErr := errors.AsType[*net.OpError](err)
+	return apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
+		apierrors.IsTooManyRequests(err) || apierrors.IsTimeout(err) ||
+		utilnet.IsTimeout(err) || isOpErr
 }
