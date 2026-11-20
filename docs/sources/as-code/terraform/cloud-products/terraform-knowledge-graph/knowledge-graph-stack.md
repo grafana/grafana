@@ -20,6 +20,10 @@ aliases:
 
 The Knowledge Graph stack resource manages the full onboarding flow for your Grafana Cloud stack. It provisions API tokens, configures datasets based on available metrics, and enables the stack.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 By default, datasets are auto-configured based on detected metrics. To manually configure datasets, for example when your metrics use non-standard label names, use the `dataset` block.
 
 ## Before you begin

@@ -19,6 +19,10 @@ aliases:
 
 Suppressed assertions configurations allow you to disable specific alerts or assertions based on label matching in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/). This is useful for maintenance windows, test environments, or when you want to temporarily suppress certain types of alerts.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 For information about suppressing insights in the Knowledge Graph UI, refer to [Suppress insights](/docs/grafana-cloud/knowledge-graph/troubleshoot-infra-apps/suppress-insights/).
 
 ## Basic suppressed assertions configuration

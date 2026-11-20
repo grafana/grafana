@@ -18,6 +18,10 @@ aliases:
 
 Learn how to add a data source, a dashboard, and a folder to a Grafana Cloud stack using Terraform.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Prerequisites
 
 Before you begin, ensure you have the following:

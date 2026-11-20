@@ -22,6 +22,10 @@ aliases:
 
 You can configure Git Sync via the Grafana provisioning app platform using Terraform.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 To do so, follow these steps:
 
 1. Read [Before you begin](#before-you-begin).

@@ -29,6 +29,10 @@ This guide shows you how to manage [saved queries](https://grafana.com/docs/graf
 Saved queries are only available on Grafana Enterprise and Grafana Cloud.
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Before you begin
 
 Before you begin, ensure you have the following:

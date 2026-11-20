@@ -19,6 +19,10 @@ aliases:
 
 Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using Terraform and GitHub Actions.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Prerequisites
 
 Before you begin, ensure you have the following:

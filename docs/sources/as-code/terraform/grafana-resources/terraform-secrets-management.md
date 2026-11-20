@@ -25,6 +25,10 @@ aliases:
 Use the Terraform Grafana provider to create and manage secure values in [Grafana Secrets Management](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/manage-secrets/) as code.
 With Terraform, you keep secrets such as API keys, tokens, passwords, and certificates in version-controlled, declarative infrastructure alongside the rest of your Grafana stack.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 This guide covers _secure values_, which you manage with the [`grafana_apps_secret_securevalue_v1beta1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_secret_securevalue_v1beta1) resource.
 By default, Grafana stores secure values in the built-in _system keeper_, which requires no setup.
 If you configure an additional keeper and set it as the active keeper for your namespace, Grafana stores new secure values there automatically.

@@ -19,6 +19,10 @@ aliases:
 
 This guide shows you how to install plugins in Grafana Cloud using Terraform. For more information about Grafana plugins, refer to the [Find and use Grafana plugins](/docs/grafana-cloud/introduction/find-and-use-plugins/) documentation.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Before you begin
 
 Before you begin, ensure you have the following:

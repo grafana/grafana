@@ -20,6 +20,10 @@ aliases:
 Learn how to use Terraform to manage [Grafana Frontend Observability](https://grafana.com/docs/grafana-cloud/frontend-observability/) resources, such as your applications.
 This guide shows you how to create an access policy and a token for the Frontend Observability API, and how to use them to create a Frontend Observability app.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Before you begin
 
 Before you begin, ensure you have the following:

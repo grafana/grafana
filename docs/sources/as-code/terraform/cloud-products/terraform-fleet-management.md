@@ -26,6 +26,10 @@ aliases:
 Learn how to create [Grafana Fleet Management](https://grafana.com/docs/grafana-cloud/send-data/fleet-management/) collectors and pipelines in Grafana Cloud using Terraform.
 This guide shows you how to create an access policy and a token for Fleet Management, preregister a collector with remote attributes, and create a configuration pipeline.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 Fleet Management supports [Grafana Alloy](https://grafana.com/docs/alloy/latest/) and the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/).
 The two collector types connect to Fleet Management differently and use different configuration syntax, so this guide shows both paths side by side.
 Follow the Alloy steps, the OpenTelemetry Collector steps, or both if you're managing a mixed fleet.

@@ -20,6 +20,10 @@ aliases:
 
 Profile configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define how continuous profiling data is queried and correlated with entities. You can specify data sources, entity matching rules, and label mappings for performance profiling.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 For information about configuring profile correlation in the Knowledge Graph UI, refer to [Configure profiles correlation](/docs/grafana-cloud/knowledge-graph/configure/profiles-correlation/).
 
 ## Basic profile configuration

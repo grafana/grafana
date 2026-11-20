@@ -19,6 +19,10 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/get-started
 
 Learn how to configure the Grafana Terraform provider for a self-managed Grafana OSS or Grafana Enterprise instance, and add a data source, a folder, and a dashboard to it.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 ## Before you begin
 
 Before you begin, ensure you have the following:
