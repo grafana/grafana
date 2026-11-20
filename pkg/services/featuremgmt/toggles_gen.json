@@ -5622,6 +5622,19 @@
     },
     {
       "metadata": {
+        "name": "provisioning.routerClient",
+        "resourceVersion": "1795192880924",
+        "creationTimestamp": "2026-11-20T16:41:20Z"
+      },
+      "spec": {
+        "description": "Sends the requests of the provisioning operators for all API groups through the router at aggregated_server_url, instead of the dedicated dashboards, folders and provisioning URLs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.userAttribution",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-10T09:02:18Z",
