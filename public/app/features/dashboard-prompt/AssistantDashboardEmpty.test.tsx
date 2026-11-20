@@ -269,14 +269,12 @@ describe('AssistantDashboardEmpty', () => {
       expect(panel()).toBeVisible();
     });
 
-    it('drops the toggle when the lists have no templates', () => {
+    it('keeps the toggle when the lists have no templates, so the panel can say so', () => {
       renderEmpty();
-      reportCounts({ custom: 0, grafana: 2 });
-      expect(toggle()).toBeInTheDocument();
 
       reportCounts({ custom: 0, grafana: 0 });
 
-      expect(queryToggle()).not.toBeInTheDocument();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
       expect(panel()).not.toBeVisible();
     });
 
@@ -288,16 +286,6 @@ describe('AssistantDashboardEmpty', () => {
 
       expect(toggle()).toHaveAttribute('aria-expanded', 'true');
       expect(panel()).toBeVisible();
-    });
-
-    it('keeps the toggle a person used to close a panel with no templates', async () => {
-      window.localStorage.setItem(OPEN_KEY, 'true');
-      const { user } = renderEmpty();
-      reportCounts({ custom: 0, grafana: 0 });
-
-      await user.click(toggle());
-
-      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
     });
 
     it("keeps what the last visit found when this visit's custom list does not report", () => {

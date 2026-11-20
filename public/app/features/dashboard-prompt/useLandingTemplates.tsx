@@ -32,14 +32,9 @@ export function useLandingTemplates({ showCustomTemplates }: { showCustomTemplat
     }
   }, [customTemplates]);
 
-  // The toggle goes once the lists turn out to have no templates, unless the panel has been open on this visit: it
-  // then says so in place, and a person who closes it keeps the control they just used.
-  const [wasOpen, setWasOpen] = useState(isOpen);
-  const noTemplates = counts !== undefined && (counts.custom ?? 0) + (counts.grafana ?? 0) === 0;
   const toggle = useCallback(() => {
     store.set(OPEN_KEY, !isOpen);
     setOpenedByUser(!isOpen);
-    setWasOpen(true);
   }, [isOpen]);
   const renderToggle = useCallback(
     () => <LandingTemplatesToggle isOpen={isOpen} onToggle={toggle} controls={panelId} />,
@@ -62,7 +57,7 @@ export function useLandingTemplates({ showCustomTemplates }: { showCustomTemplat
     selected,
     removePill,
     clearSelection,
-    renderToggle: noTemplates && !wasOpen ? undefined : renderToggle,
+    renderToggle,
     panelProps: {
       id: panelId,
       isOpen,
