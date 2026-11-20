@@ -24,9 +24,9 @@ interface Props {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
   /**
-   * Called once the cards can show, with how many templates each list offers (a list that is not shown, or has not
-   * reported, has no count): when every list has loaded, or after a short wait when the loaded ones have templates.
-   * The host shows the panel only when there are some, and reports what was on offer.
+   * Called once every list has loaded, or after `LOAD_WAIT_MS` with the ones that have, with how many templates each
+   * offers (a list that is not shown, or has not reported, has no count), and again as late lists report. The host
+   * waits for it to show the page, shows the panel only when there are templates, and reports what was on offer.
    */
   onTemplatesCount?: (counts: TemplateCounts) => void;
   className?: string;
@@ -46,8 +46,8 @@ const ENTRY_POINT = 'emptyDashboardPrompt';
 const CARD_HEIGHT = 160;
 /** How much of the next row shows under the first, so a longer list reads as one that scrolls. */
 const NEXT_ROW_PEEK = 0.1;
-/** How long the cards wait for every list before showing the ones that have loaded. */
-export const LOAD_WAIT_MS = 3000;
+/** How long the page waits for every list before going ahead with the ones that have loaded. */
+export const LOAD_WAIT_MS = 1500;
 
 interface ToggleProps {
   isOpen: boolean;
@@ -108,8 +108,7 @@ export function LandingTemplates({
   const hasCustomTemplates = Boolean(DashboardTemplatesTab);
   const allLoaded =
     (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
-  const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
-  // A slow list must not hold back the cards the others loaded.
+  // A slow list must not hold back the page or the cards the others loaded.
   const [waitedLong, setWaitedLong] = useState(false);
   useEffect(() => {
     if (allLoaded) {
@@ -118,7 +117,7 @@ export function LandingTemplates({
     const timeout = setTimeout(() => setWaitedLong(true), LOAD_WAIT_MS);
     return () => clearTimeout(timeout);
   }, [allLoaded]);
-  const loaded = allLoaded || (waitedLong && total > 0);
+  const loaded = allLoaded || waitedLong;
   useEffect(() => {
     if (loaded) {
       onTemplatesCount?.(counts);

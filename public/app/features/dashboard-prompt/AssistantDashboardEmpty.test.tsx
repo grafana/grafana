@@ -48,6 +48,7 @@ let latestPromptProps: LandingPromptProps | undefined;
 let mockPromptLoaded = true;
 
 jest.mock('./DashboardLandingPrompt', () => ({
+  PROMPT_HEIGHT: 91,
   DashboardLandingPrompt: (props: LandingPromptProps) => {
     latestOnSubmit = props.onSubmit;
     latestPromptProps = props;
@@ -243,16 +244,27 @@ describe('AssistantDashboardEmpty', () => {
       );
     });
 
-    it('waits for the prompt to show its text box too', async () => {
-      mockPromptLoaded = false;
-      const { dashboard, rerender } = renderEmpty();
-      reportCounts({ custom: 1, grafana: 2 });
+    it('keeps the page out of sight behind a spinner until the lists report, then shows it in place', () => {
+      renderEmpty();
+      const heading = screen.getByRole('heading', { hidden: true });
+      expect(heading).not.toBeVisible();
+      // In a browser it shows over the hidden block, which jsdom's visibility check does not model.
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+
+      reportCounts({ custom: 0, grafana: 2 });
+
+      expect(heading).toBeVisible();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    });
+
+    it('keeps the page as it first showed when a list reports later', () => {
+      renderEmpty();
+      reportCounts({ grafana: 0 });
+
+      reportCounts({ grafana: 0, custom: 3 });
+
+      expect(queryToggle()).not.toBeInTheDocument();
       expect(screen.getByTestId('landing-templates')).not.toBeVisible();
-
-      mockPromptLoaded = true;
-      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
-
-      await waitFor(() => expect(screen.getByTestId('landing-templates')).toBeVisible());
     });
 
     it('keeps the templates and their toggle out when the lists have none', () => {
@@ -273,10 +285,11 @@ describe('AssistantDashboardEmpty', () => {
       expect(screen.getByTestId('landing-templates')).not.toBeVisible();
     });
 
-    it('does not list templates when none are available', () => {
+    it('does not list templates when none are available, and shows the page at once', () => {
       Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
       renderEmpty();
 
+      expect(screen.getByRole('heading')).toBeVisible();
       expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Start from a template' })).not.toBeInTheDocument();
     });

@@ -38,6 +38,9 @@ interface DashboardLandingPromptProps {
   renderHostActions?: () => ReactNode;
 }
 
+/** The plugin's text box with one line of text: the loading slot takes it, and the host keeps it as a floor. */
+export const PROMPT_HEIGHT = 91;
+
 function PromptLoadingSlot() {
   const styles = useStyles2(getStyles);
 
@@ -99,7 +102,7 @@ function getStyles(_theme: GrafanaTheme2) {
   return {
     slot: css({
       width: '100%',
-      height: 100,
+      height: PROMPT_HEIGHT,
     }),
     loadingSlot: css({
       display: 'flex',

@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type ChatContextItem, checkLimits } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -15,7 +15,7 @@ import { type TemplateSelection } from 'app/features/dashboard/dashgrid/Dashboar
 import { OPEN_TEMPLATE_PROMPT } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardLandingPrompt } from './DashboardLandingPrompt';
+import { DashboardLandingPrompt, PROMPT_HEIGHT } from './DashboardLandingPrompt';
 import { LandingTemplates, LandingTemplatesToggle, type TemplateCounts } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
 import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
@@ -54,49 +54,18 @@ async function findHandoffProblem(): Promise<string | undefined> {
 }
 
 /**
- * True once the prompt shows its text box. The prompt is a plugin component that loads its own code after the
- * page, behind its own Suspense, so its text box rendering is the only signal the host gets.
- */
-function useHasTextbox(ref: RefObject<HTMLElement | null>) {
-  const [hasTextbox, setHasTextbox] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) {
-      return;
-    }
-    const check = () => Boolean(element.querySelector('[role="textbox"], textarea'));
-    if (check()) {
-      setHasTextbox(true);
-      return;
-    }
-    const observer = new MutationObserver(() => {
-      if (check()) {
-        observer.disconnect();
-        setHasTextbox(true);
-      }
-    });
-    observer.observe(element, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return hasTextbox;
-}
-
-/**
  * Sizes the landing to at least the whole area its dashboard scrolls in, from the top edge to the bottom, so its
  * content sits in that area with the free space split around it (`FREE_SPACE_ABOVE`, `FREE_SPACE_BELOW`). The
  * dashboard body grows with its content, so no CSS height chain reaches this far down, and the empty-state
  * wrapper's top padding is pulled back into the area (`pullUp`).
  */
-function useFitToScrollArea(enabled: boolean) {
+function useFitToScrollArea() {
   const ref = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState<{ height: number; pullUp: number }>();
 
   useLayoutEffect(() => {
     const element = ref.current;
-    if (!enabled || !element) {
-      setFit(undefined);
+    if (!element) {
       return;
     }
     const update = () => {
@@ -124,7 +93,7 @@ function useFitToScrollArea(enabled: boolean) {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [enabled]);
+  }, []);
 
   return { ref, fit };
 }
@@ -143,20 +112,25 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
-  const promptRef = useRef<HTMLDivElement>(null);
-  const promptReady = useHasTextbox(promptRef);
+  const { ref: fitRef, fit } = useFitToScrollArea();
   const [templateCounts, setTemplateCounts] = useState<TemplateCounts>();
-  // The page keeps its plain layout until there are templates to offer: while the prompt and the lists load, and for
-  // good when the lists have none. Then a toggle next to the prompt's + button opens the panel under the prompt.
-  const withTemplates =
-    showTemplates && promptReady && (templateCounts?.custom ?? 0) + (templateCounts?.grafana ?? 0) > 0;
-  const { ref: fitRef, fit } = useFitToScrollArea(withTemplates);
+  // The block is shaped by the first counts the lists report (within LOAD_WAIT_MS), so it shows once and never moves:
+  // whether there is a toggle, and whether the panel starts open, only when the account has templates of its own. A
+  // list that reports later does not change it. Until then the block waits out of sight.
+  const [firstCounts, setFirstCounts] = useState<TemplateCounts>();
+  const onTemplatesCount = useCallback((counts: TemplateCounts) => {
+    setTemplateCounts(counts);
+    setFirstCounts((current) => current ?? counts);
+  }, []);
+  const ready = !showTemplates || firstCounts !== undefined;
+  const firstCustom = firstCounts?.custom ?? 0;
+  const withTemplates = showTemplates && firstCustom + (firstCounts?.grafana ?? 0) > 0;
   const templatesId = useId();
-  // Open by default only when the account has templates of its own; the person's last toggle wins over that.
+  // The person's last toggle wins over the default.
   const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState(() =>
     store.exists(TEMPLATES_OPEN_KEY) ? store.getBool(TEMPLATES_OPEN_KEY, false) : undefined
   );
-  const templatesOpen = templatesOpenedByUser ?? (templateCounts?.custom ?? 0) > 0;
+  const templatesOpen = templatesOpenedByUser ?? firstCustom > 0;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -278,17 +252,23 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     >
       <div
         ref={contentRef}
-        className={cx(styles.content, withTemplates && styles.contentWithTemplates)}
+        className={cx(styles.content, !ready && styles.contentWaiting)}
         style={heldHeight ? { minHeight: heldHeight } : undefined}
+        aria-busy={!ready || undefined}
       >
-        <div className={cx(styles.top, withTemplates && styles.topWithTemplates)}>
-          <div className={cx(styles.heading, withTemplates && styles.headingWithTemplates)}>
+        {!ready && (
+          <div className={styles.waiting}>
+            <Spinner size="xl" />
+          </div>
+        )}
+        <div className={styles.top}>
+          <div className={styles.heading}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
             <h2 className={styles.title}>
               <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
             </h2>
           </div>
-          <div ref={promptRef} className={styles.prompt}>
+          <div className={styles.prompt}>
             <DashboardLandingPrompt
               onSubmit={onSubmitPrompt}
               placeholder={
@@ -309,7 +289,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
           <LandingTemplates
             id={templatesId}
             isOpen={withTemplates && templatesOpen}
-            onTemplatesCount={setTemplateCounts}
+            onTemplatesCount={onTemplatesCount}
             className={styles.templates}
             testDataSource={testDataSource}
             showGrafanaTemplates={showGrafanaTemplates}
@@ -365,19 +345,14 @@ function getStyles(theme: GrafanaTheme2) {
         flex: `${FREE_SPACE_BELOW} 0 0`,
       },
     }),
+    // As wide as the dashboard area lets it, with or without templates; the empty-state wrapper sets the cap.
     content: css({
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(4),
       width: '100%',
-      maxWidth: 660,
-      padding: theme.spacing(6, 4),
-    }),
-    contentWithTemplates: css({
-      // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
-      maxWidth: 'none',
-      paddingTop: theme.spacing(3),
-      paddingBottom: theme.spacing(3),
+      padding: theme.spacing(3, 4),
       [theme.breakpoints.down('sm')]: {
         // On a phone the scroll area already insets the page, so the prompt and templates take the full width.
         paddingLeft: 0,
@@ -385,23 +360,29 @@ function getStyles(theme: GrafanaTheme2) {
         paddingBottom: theme.spacing(6),
       },
     }),
+    // Laid out but out of sight, so it shows in place once it is ready.
+    contentWaiting: css({
+      visibility: 'hidden',
+    }),
+    waiting: css({
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      visibility: 'visible',
+    }),
     top: css({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(3),
     }),
+    // The icon belongs to the heading, closer to it than the heading is to the prompt.
     heading: css({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: theme.spacing(2),
-    }),
-    // With the templates, the icon belongs to the heading, closer to it than the heading is to the prompt.
-    topWithTemplates: css({
-      gap: theme.spacing(3),
-    }),
-    headingWithTemplates: css({
       gap: theme.spacing(1),
     }),
     appsIcon: css({
@@ -419,6 +400,8 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       zIndex: 1,
       width: '100%',
+      // The plugin's text box is shorter while its code loads; the floor keeps the block from moving as it does.
+      minHeight: PROMPT_HEIGHT,
     }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({

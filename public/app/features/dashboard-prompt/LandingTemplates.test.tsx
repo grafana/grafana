@@ -172,15 +172,16 @@ describe('LandingTemplates', () => {
       expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1 });
     });
 
-    it('keeps waiting while no list has shown a card', () => {
+    it('tells its host after the wait even when no list has reported, so the page does not wait on it', () => {
       mockCustomCount = undefined;
       mockGrafanaCount = undefined;
       const onTemplatesCount = jest.fn();
       renderTemplates({ onTemplatesCount });
+      expect(onTemplatesCount).not.toHaveBeenCalled();
 
       act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
 
-      expect(onTemplatesCount).not.toHaveBeenCalled();
+      expect(onTemplatesCount).toHaveBeenLastCalledWith({});
     });
   });
 
