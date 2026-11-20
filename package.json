@@ -341,7 +341,7 @@
     "handlebars": "4.7.10",
     "history": "4.10.1",
     "html-to-image": "1.11.13",
-    "i18next": "^26.3.6",
+    "i18next": "^27.0.0",
     "idb": "^8.0.3",
     "immer": "11.2.10",
     "immutable": "5.2.1",
