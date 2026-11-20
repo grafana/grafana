@@ -128,7 +128,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory.loopback = &reconcilerAPIServer{config: restConfig.GetRestConfig}
+			clientFactory.loopback = restConfig
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -155,7 +155,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			}
 
 			// Build per-group REST configs with group-specific audiences
-			clientFactory.byGroup = make(map[string]*reconcilerAPIServer)
+			configProviders := make(map[string]apiserver.RestConfigProvider)
 			apiServerURLs := map[string]string{
 				"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
@@ -185,10 +185,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 					),
 				}
 
-				clientFactory.byGroup[group] = &reconcilerAPIServer{config: func(context.Context) (*clientrest.Config, error) {
+				configProviders[group] = apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
 					return standaloneRestConfig, nil
-				}}
+				})
 			}
+
+			clientFactory.byGroup = configProviders
 		}
 	}
 
