@@ -165,6 +165,9 @@ jobs:
           # settings, which are not worth the restore.
           cache-build: ${{ inputs.edition == 'enterprise' && 'true' || 'false' }}
 
+      - name: Test the compatibility phase runner
+        run: bash .github/actions/run-compat-phase/test.sh
+
       - name: Summarize the tested versions
         env:
           EDITION: ${{ inputs.edition }}

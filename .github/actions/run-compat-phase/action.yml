@@ -83,10 +83,15 @@ runs:
             fi
             # Report the package once per failed phase, even if some resources already reported.
             # Resolve its owners from the CODEOWNERS in review, independently of the phase process.
-            owners="$(cd "$NEWER_CHECKOUT/pkg/tests/compat/$pkg" && GRAFANA_COMPAT_PRINT_OWNERS=1 "$newer" 2> /dev/null)" || owners=""
+            owners="$(cd "$NEWER_CHECKOUT/pkg/tests/compat/$pkg" && GRAFANA_COMPAT_PRINT_OWNERS=1 "$newer")" || owners=""
             if [ -n "$owners" ]; then
-              echo "- \`$pkg/$TEST\` ($role, $(basename "$GRAFANA_COMPAT_DIR")) $reason, package owned by $owners" >> "$GITHUB_STEP_SUMMARY"
+              ownership="package owned by $owners"
+            else
+              echo "::warning::Could not resolve package owners for $pkg"
+              ownership="owners unknown"
             fi
+            printf '%s\n' "- \`$pkg/$TEST\` ($role, $(basename "$GRAFANA_COMPAT_DIR")) $reason, $ownership" \
+              | tee -a "$LOG" "$GITHUB_STEP_SUMMARY"
           fi
         done
         # A missing build or no package in common must not pass as a green phase, even when
