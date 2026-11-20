@@ -592,6 +592,16 @@ After you apply the changes in the Terraform configurations and run your collect
 
   {{< figure alt="A dashboard in Grafana Cloud which shows OTLP host metrics data, including a graph for memory usage." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-host-metrics.png" >}}
 
+## Other data sources
+
+The Grafana provider also includes the following Fleet Management data sources, which you can use to read collectors that are already registered.
+These data sources require provider version 3.22.3 or later.
+
+| Data source                                                                                                                                           | Description                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`grafana_fleet_management_collector`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/fleet_management_collector)   | Reads a single collector by ID.                      |
+| [`grafana_fleet_management_collectors`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/fleet_management_collectors) | Lists all collectors registered in Fleet Management. |
+
 ## Summary
 
 In this guide, you created an access policy and a token for Fleet Management, registered an Alloy instance or OpenTelemetry Collector with remote attributes, and created a configuration pipeline based on collector type, all using Terraform.

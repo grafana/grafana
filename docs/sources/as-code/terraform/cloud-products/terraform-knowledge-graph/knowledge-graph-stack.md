@@ -102,11 +102,11 @@ variable "stack_region" {
 }
 ```
 
-Replace the following values:
+Set the following variables, for example in a `terraform.tfvars` file:
 
-- _`<STACK_ID>`_ with your Grafana Cloud stack ID
-- _`<STACK_SLUG>`_ with your Grafana Cloud stack slug
-- _`<STACK_REGION>`_ with the region of your Grafana Cloud stack, for example `prod-us-east-0`
+- `stack_id`: Your Grafana Cloud stack ID
+- `stack_slug`: Your Grafana Cloud stack slug
+- `stack_region`: The region of your Grafana Cloud stack, for example `prod-us-east-0`
 
 ## Basic stack configuration with auto-detected datasets
 

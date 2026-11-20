@@ -303,8 +303,8 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    To configure the mute timing and contact point previously created in the notification policy tree, replace the following field values:
-   - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
-   - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
+   - `<terraform_contact_point_name>` with the terraform name of the previously defined contact point.
+   - `<terraform_mute_timing_name>` with the terraform name of the previously defined mute timing.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 

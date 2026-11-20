@@ -348,7 +348,7 @@ Consider the following best practices when configuring thresholds with Terraform
 After applying the Terraform configuration, verify that:
 
 - Threshold configurations are applied in your Knowledge Graph instance
-- Configurations appear in the Knowledge Graph UI under **Observability > Rules > Threshold**
+- Configurations appear in the Knowledge Graph UI under **Observability > Rules > Thresholds**
 - Request thresholds correctly identify breaches for specified services
 - Resource thresholds trigger at appropriate severity levels
 - Health thresholds accurately reflect service status
