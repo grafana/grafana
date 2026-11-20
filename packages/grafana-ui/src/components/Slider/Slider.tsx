@@ -1,8 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from '@rc-component/slider';
-import { useState, useCallback, type ChangeEvent, type FocusEvent, useEffect } from 'react';
-import { usePrevious } from 'react-use';
+import { useState, useCallback, type ChangeEvent, type FocusEvent } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -97,15 +96,13 @@ export const Slider = ({
   const numericValue = clampToAllowedValue(min, max, step, stripAndParseNumber(inputValue));
 
   // State synchronization. This is a hack since we have to maintain our own source of truth for the text input
-  const previousValue = usePrevious(value);
-  const externalValueChanged = value !== previousValue && value !== numericValue;
-  useEffect(() => {
-    if (externalValueChanged && value !== undefined) {
-      // This only causes a re-render if the value is actually different, which should
-      // only happen if the value is externally changed
+  const [previousValue, setPreviousValue] = useState(value);
+  if (value !== previousValue) {
+    setPreviousValue(value);
+    if (value !== numericValue && value !== undefined) {
       setInputValue(String(value));
     }
-  }, [externalValueChanged, value]);
+  }
 
   const dragHandleAriaLabel =
     ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Use arrow keys to change the value');

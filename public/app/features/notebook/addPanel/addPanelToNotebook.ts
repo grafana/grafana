@@ -126,25 +126,33 @@ async function appendThroughScene(
  *
  * `lockTimeRange` is what the person chose in the modal, passed on for the events and nothing else:
  * the cells already carry whatever it did to them.
+ *
+ * `hasText` says the first cell is the text the person typed in the modal. It is reported as a flag on
+ * the events of the cells it came with rather than as a cell event of its own.
  */
 export async function addToExistingNotebook(
   uid: string,
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
-  lockTimeRange = false
+  lockTimeRange = false,
+  hasText = false
 ): Promise<AddedToNotebook> {
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
   // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
   // Markdown too: a chat answer sends its text alongside its panels.
   cells.forEach((cell, index) => {
+    if (hasText && index === 0) {
+      return;
+    }
     NotebookAnalytics.cellAddedFromAddToNotebook(
       uid,
       entryPoint,
       firstPosition + index,
       cell.kind === 'panel' ? addedPanel(cell) : undefined,
-      lockTimeRange
+      lockTimeRange,
+      hasText
     );
   });
 
@@ -156,7 +164,8 @@ export async function createNotebookWithContent(
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
   source: AppendedCellSource = 'user',
-  lockTimeRange = false
+  lockTimeRange = false,
+  hasText = false
 ): Promise<AddedToNotebook> {
   const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
 
@@ -168,7 +177,8 @@ export async function createNotebookWithContent(
     entryPoint,
     spec.layout.spec.cells.length,
     panels.length === 1 ? addedPanel(panels[0]) : undefined,
-    lockTimeRange
+    lockTimeRange,
+    hasText
   );
 
   return { uid: created.uid, title: spec.title };

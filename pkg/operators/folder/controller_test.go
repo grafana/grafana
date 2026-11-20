@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,16 +26,44 @@ import (
 )
 
 func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		recovery, resource bool
+	}{
+		{name: "default off"},
+		{name: "resource alone does not enable recovery", resource: true},
+		{name: "recovery opt in", recovery: true, resource: true},
+		{name: "recovery with unavailable resource", recovery: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			testFolderControllerOwnsNATSSubscriber(t, tc.recovery, tc.resource)
+		})
+	}
+}
+
+func testFolderControllerOwnsNATSSubscriber(t *testing.T, recovery, resource bool) {
+	t.Helper()
 	srv, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true})
 	require.NoError(t, err)
 	go srv.Start()
 	t.Cleanup(func() { srv.Shutdown(); srv.WaitForShutdown() })
 	require.True(t, srv.ReadyForConnections(5*time.Second))
 
+	pendingRequests := make(chan string, 1)
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.URL.Path == "/" {
 			_, _ = io.WriteString(w, `{"data":{"token":"test-access-token"}}`)
+			return
+		}
+		if strings.Contains(r.URL.Path, "pendingfolderdeletions") {
+			pendingRequests <- r.Method + " " + r.URL.RequestURI()
+			if !resource {
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = io.WriteString(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":"NotFound","code":404}`)
+				return
+			}
+			_, _ = io.WriteString(w, `{"apiVersion":"folder.grafana.app/v1alpha1","kind":"PendingFolderDeletionList","items":[]}`)
 			return
 		}
 		_, _ = io.WriteString(w, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyResponse","resourceVersion":"1","items":[]}`)
@@ -49,6 +78,10 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 	// Dialing is lazy, so nothing needs to listen here.
 	cfg.SectionWithEnvOverrides("unified_storage").Key("grpc_address").SetValue("127.0.0.1:1")
 
+	cfg.PendingDeletionResourceEnabled = resource
+	if recovery {
+		cfg.SectionWithEnvOverrides("operator").Key("pending_deletion_recovery").SetValue("true")
+	}
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	health := server.NewHealthNotifier()
@@ -67,6 +100,14 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 		stats, err := srv.Varz(nil)
 		return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0, err
 	}))
+	if recovery {
+		select {
+		case request := <-pendingRequests:
+			require.Equal(t, "GET /apis/folder.grafana.app/v1alpha1/pendingfolderdeletions?limit=100", request)
+		case <-time.After(5 * time.Second):
+			t.Fatal("startup recovery did not scan pending entries")
+		}
+	}
 	cancel()
 	select {
 	case err := <-done:
@@ -76,6 +117,7 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 		t.Fatal("folder controller did not stop")
 	}
 	require.Eventually(t, func() bool { return srv.NumClients() == 0 }, time.Second, time.Millisecond)
+	require.Empty(t, pendingRequests, "disabled recovery must not scan; enabled recovery must not repeat before its period")
 }
 
 func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
