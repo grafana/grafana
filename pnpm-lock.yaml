@@ -1101,8 +1101,8 @@ importers:
         specifier: ^0.3.12
         version: 0.3.12
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.2(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react@19.2.8)
       react-refresh:
         specifier: ^0.18.0
         version: 0.18.0
@@ -1827,8 +1827,8 @@ importers:
         specifier: '>=19'
         version: 19.2.8
       react-i18next:
-        specifier: ^17.0.9
-        version: 17.0.15(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^18.0.0
+        version: 18.0.2(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -13208,6 +13208,20 @@ packages:
       react-dom:
         optional: true
       react-native:
+        optional: true
+      typescript:
+        optional: true
+
+  react-i18next@18.0.2:
+    resolution: {integrity: sha512-g7YfBxTDC9dYdEsb3F7o0pRr6jg14f08U5G6N3DTUqSgGt/nq7AYf279ESRjE3Dy+Q/YG7OGVd7vtiylxTfV4w==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@types/react': '*'
+      i18next: '>= 27.0.1'
+      react: '>= 18.0.0'
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      '@types/react':
         optional: true
       typescript:
         optional: true
@@ -27792,6 +27806,15 @@ snapshots:
     optionalDependencies:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 6.0.2
+
+  react-i18next@18.0.2(@types/react@19.2.18)(@typescript/typescript6@6.0.2)(i18next@26.4.2(@typescript/typescript6@6.0.2))(react@19.2.8):
+    dependencies:
+      html-parse-stringify: 4.0.1
+      i18next: 26.4.2(@typescript/typescript6@6.0.2)
+      react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.18
+      typescript: '@typescript/typescript6@6.0.2'
 
   react-immutable-proptypes@2.2.0(immutable@5.2.1):
     dependencies:
