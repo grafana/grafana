@@ -383,6 +383,21 @@ describe('AppChrome', () => {
       expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
     });
 
+    it('lets focus into what it opened into the portal container, such as a menu its profile or section opens', async () => {
+      const user = userEvent.setup();
+      setup(<Page navId="child1">Children</Page>, { withPortalContainer: true });
+      await user.click(await screen.findByRole('button', { name: 'Main menu' }));
+      expect(await screen.findByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+      // A dropdown the menu opens renders into the portal container, outside the menu, and moves focus to its items.
+      const menuItem = document.createElement('button');
+      menuItem.textContent = 'Menu item';
+      getPortalContainer().appendChild(menuItem);
+      act(() => menuItem.focus());
+
+      expect(menuItem).toHaveFocus();
+    });
+
     describe('with grafana.megaMenuPeekAndDock on', () => {
       beforeEach(async () => {
         await act(async () => {

@@ -22,6 +22,9 @@ interface Props {}
 /** The backdrop is presentational: it has no role or name. */
 export const MEGA_MENU_BACKDROP_TESTID = 'mega-menu-backdrop';
 
+/** Marks content that React Aria's focus containment treats as inside every scope. */
+const TOP_LAYER_ATTRIBUTE = 'data-react-aria-top-layer';
+
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
@@ -66,6 +69,19 @@ export function AppChromeMenu({}: Props) {
     },
     ref
   );
+
+  // Focus stays in the open menu, but the menu owns its portal content here too: a dropdown its profile or a section
+  // opens there has to take focus. React Aria's containment counts anything under [data-react-aria-top-layer] as
+  // inside the scope, so the container carries it while the menu contains focus.
+  const containsFocus = isOpen && !isPeek;
+  useEffect(() => {
+    const portalContainer = getPortalContainer();
+    if (!containsFocus || portalContainer === document.body || portalContainer.hasAttribute(TOP_LAYER_ATTRIBUTE)) {
+      return;
+    }
+    portalContainer.setAttribute(TOP_LAYER_ATTRIBUTE, '');
+    return () => portalContainer.removeAttribute(TOP_LAYER_ATTRIBUTE);
+  }, [containsFocus]);
 
   // A peek has no backdrop, so a press outside it reaches the page as well as closing it.
   const closePeekOnPressOutside = useEffectEvent((event: PointerEvent) => {
@@ -125,7 +141,11 @@ export function AppChromeMenu({}: Props) {
             ref={backdropRef}
             className={styles.backdrop}
             data-testid={MEGA_MENU_BACKDROP_TESTID}
+            role="presentation"
             {...underlayProps}
+            // The backdrop sits in the portal container, which React Aria counts as inside the menu while it contains
+            // focus, so a press on it closes the menu here rather than as a press outside.
+            onClick={onClose}
           />
         </CSSTransition>
       </OverlayContainer>
