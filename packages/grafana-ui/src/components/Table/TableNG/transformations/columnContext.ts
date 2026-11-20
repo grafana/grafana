@@ -1,4 +1,5 @@
 import { cacheFieldDisplayNames, FrameMatcherID, type DataFrame, type MatcherConfig } from '@grafana/data';
+import { getFieldReferences } from '@grafana/data/internal';
 
 import { getDisplayName, getVisibleFields } from '../utils';
 
@@ -77,7 +78,13 @@ export function prepareColumnContext(
   if (new Set(catalog).size !== catalog.length || new Set(displayNames).size !== displayNames.length) {
     return;
   }
-  return { catalog, displayNames, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
+  const references = getFieldReferences(frame);
+  return {
+    catalog,
+    displayNames,
+    references: visibleIndexes.map((index) => references[index]),
+    frameFilter: getFrameFilter(sourceSeries, sourceIndex),
+  };
 }
 
 function translateNames(from: string[], to: string[], names: Iterable<string>): string[] {

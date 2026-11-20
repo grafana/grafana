@@ -225,9 +225,85 @@ it('shows changed upstream column order without losing ad-hoc visibility', async
   await waitFor(() =>
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['A', 'C'])
   );
-  expect(transformations[0].options).toEqual({ indexByName: {}, excludeByName: { B: true }, renameByName: {} });
+  expect(transformations[0].options).toEqual({
+    indexByName: {},
+    excludeByName: { B: true },
+    renameByName: {},
+    referenceByName: { B: { name: 'B' } },
+  });
   expect(screen.getByRole('checkbox', { name: 'Show B' })).not.toBeChecked();
   expect(set).toHaveBeenCalledTimes(1);
+});
+
+it('keeps hidden and reordered columns on the same column when an upstream transformation renames it', async () => {
+  let source = createDataFrame({
+    refId: 'A',
+    fields: ['host', 'region', 'value'].map((name) => ({ name, type: FieldType.string, values: [name] })),
+  });
+  let transformations: readonly DataTransformerConfig[] = [];
+  const listeners = new Set<() => void>();
+  const set = jest.fn((_owner: string, next: readonly DataTransformerConfig[]) => {
+    transformations = next;
+    listeners.forEach((listener) => listener());
+  });
+  const adHocTransformations = {
+    get: () => transformations,
+    set,
+    getSourceSeries: () => [source],
+    subscribe: (_owner: string, listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+  const table = () => {
+    const props = getPanelProps<TableOptions>(
+      { frameIndex: 0, showHeader: true, showColumnsSidebar: true },
+      { fieldConfig: { defaults: {}, overrides: [] }, width: 800, replaceVariables: (value) => value }
+    );
+    props.data = {
+      state: LoadingState.Done,
+      timeRange: props.timeRange,
+      series: applyFieldOverrides({
+        data: [source],
+        fieldConfig: props.fieldConfig,
+        fieldConfigRegistry: plugin.fieldConfigRegistry,
+        theme: createTheme(),
+        replaceVariables: props.replaceVariables,
+      }),
+    };
+    return (
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <PanelContextProvider value={{ eventsScope: 'table', eventBus: new EventBusSrv(), adHocTransformations }}>
+          <TablePanel {...props} />
+        </PanelContextProvider>
+      </OpenFeatureProvider>
+    );
+  };
+
+  const { rerender } = render(table());
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Hide host' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Reorder region' }));
+  await userEvent.keyboard('{ArrowUp}');
+  expect(headers()).toEqual(['region', 'value']);
+  set.mockClear();
+
+  source = {
+    ...source,
+    fields: source.fields.map((field) =>
+      field.name === 'host'
+        ? {
+            ...field,
+            config: { ...field.config, displayName: 'Host name' },
+            state: { ...field.state, displayName: 'Host name' },
+          }
+        : field
+    ),
+  };
+  rerender(table());
+
+  expect(headers()).toEqual(['region', 'value']);
+  expect(screen.getByRole('checkbox', { name: 'Show Host name' })).not.toBeChecked();
+  expect(set).not.toHaveBeenCalled();
 });
 
 describe('with display name overrides', () => {

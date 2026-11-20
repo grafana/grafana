@@ -51,6 +51,25 @@ it('cross-filters from all other active fields and preserves original row indice
   );
 });
 
+it('matches a filter to its field when the field reports empty labels', () => {
+  const labelled = createDataFrame({
+    fields: frame.fields.map((field) => ({ ...field, labels: {} })),
+  });
+  const result = transformTableFilters(rows, labelled.fields, [valueFilter('category', ['A'])]);
+
+  expect(result.filteredRows.map((row) => row.__index)).toEqual([0, 1]);
+  expect(result.crossFilterOrder).toHaveLength(1);
+});
+
+it('matches a filter to its field by name when its reference is malformed', () => {
+  const filter = valueFilter('category', ['A']);
+  filter.options.filters[0].field = { name: 3 } as never;
+  const result = transformTableFilters(rows, frame.fields, [filter]);
+
+  expect(result.filteredRows.map((row) => row.__index)).toEqual([0, 1]);
+  expect(result.crossFilterOrder).toHaveLength(1);
+});
+
 it('applies nested filters only to their parent row', () => {
   const filters = [valueFilter('category', ['A'], 7)];
 

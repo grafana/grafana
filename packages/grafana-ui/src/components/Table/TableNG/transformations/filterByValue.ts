@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import {
   type DataFrame,
   type DataTransformerConfig,
@@ -8,7 +6,9 @@ import {
   DataTransformerID,
 } from '@grafana/data';
 import {
+  getFieldReferenceKey,
   getRowIdentity,
+  isFieldReference,
   FilterByValueType,
   FilterByValueMatch,
   type FilterByValueConfig,
@@ -34,8 +34,9 @@ export function matchesTableFilter(config: FilterByValueConfig, field: Field, pa
   return (
     config.options.target?.parentIndex === parentIndex &&
     config.options.filters.some((predicate) =>
-      predicate.field
-        ? predicate.field.name === field.name && isEqual(predicate.field.labels, field.labels)
+      isFieldReference(predicate.field)
+        ? getFieldReferenceKey({ name: predicate.field.name, labels: predicate.field.labels }) ===
+          getFieldReferenceKey({ name: field.name, labels: field.labels })
         : predicate.fieldName === (field.state?.displayName ?? field.name)
     )
   );
