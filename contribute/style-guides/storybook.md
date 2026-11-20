@@ -116,6 +116,12 @@ import { MyComponent } from './MyComponent';
 <ArgTypes of={MyComponent} />;
 ```
 
+#### Linking to more guidance
+
+Give the recommendation in the component page so readers don't need to follow a link to act on it. If a longer explanation applies to just that component, place it beside the MDX with the same basename: for example, `Checkbox.mdx` and `Checkbox.guidance.md`. Don't create an empty companion.
+
+For a choice that spans components, name the shared guide after the task, as in [inline actions](../../packages/grafana-ui/src/guidance/patterns/inline-actions.md). Link to the guide where readers make that choice. In Storybook MDX, use a full GitHub file URL for Markdown that Storybook doesn't publish; a source-relative link won't resolve there.
+
 ### MDX file without a relationship to a component
 
 An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page.
