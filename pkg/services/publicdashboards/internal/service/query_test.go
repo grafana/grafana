@@ -1442,6 +1442,16 @@ func TestSanitizeDataV2(t *testing.T) {
 											},
 										},
 									},
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"rawQuery": "SELECT mean(value) FROM cpu WHERE time > now() - 1h",
+													"refId":    "B",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -1470,10 +1480,14 @@ func TestSanitizeDataV2(t *testing.T) {
 
 		panel2Queries := simplejson.NewFromAny(elements["panel-2"]).
 			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
-		require.Len(t, panel2Queries, 1)
+		require.Len(t, panel2Queries, 2)
 		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
 		assert.Empty(t, q3spec.Get("query").MustString())
 		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+
+		q4spec := simplejson.NewFromAny(panel2Queries[1]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, q4spec.Get("rawQuery").MustString())
+		assert.Equal(t, "B", q4spec.Get("refId").MustString())
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
@@ -1510,6 +1524,86 @@ func TestSanitizeDataV2(t *testing.T) {
 			},
 		})
 		require.NotPanics(t, func() { sanitizeDataV2(data) })
+	})
+}
+
+func TestSanitizeData(t *testing.T) {
+	t.Run("removes expr, query, rawSql, rawQuery from panels and nested collapsed rows", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"id": 1,
+					"targets": []interface{}{
+						map[string]interface{}{
+							"expr":       "rate(http_requests_total[5m])",
+							"refId":      "A",
+							"datasource": "prometheus",
+						},
+						map[string]interface{}{
+							"rawSql": "SELECT * FROM users",
+							"refId":  "B",
+							"format": "table",
+						},
+						map[string]interface{}{
+							"query": "SELECT * FROM logs",
+							"refId": "C",
+						},
+						map[string]interface{}{
+							"rawQuery": "SELECT mean(value) FROM cpu WHERE time > now() - 1h",
+							"refId":    "D",
+						},
+					},
+				},
+				map[string]interface{}{
+					"id":        2,
+					"type":      "row",
+					"collapsed": true,
+					"panels": []interface{}{
+						map[string]interface{}{
+							"id": 3,
+							"targets": []interface{}{
+								map[string]interface{}{
+									"rawQuery": "from(bucket: \"telegraf\") |> range(start: -1h)",
+									"refId":    "E",
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeData(data)
+
+		panels := data.Get("panels").MustArray()
+		require.Len(t, panels, 2)
+
+		panel1Targets := simplejson.NewFromAny(panels[0]).Get("targets").MustArray()
+		require.Len(t, panel1Targets, 4)
+
+		t1 := simplejson.NewFromAny(panel1Targets[0])
+		assert.Empty(t, t1.Get("expr").MustString())
+		assert.Equal(t, "A", t1.Get("refId").MustString())
+		assert.Equal(t, "prometheus", t1.Get("datasource").MustString())
+
+		t2 := simplejson.NewFromAny(panel1Targets[1])
+		assert.Empty(t, t2.Get("rawSql").MustString())
+		assert.Equal(t, "B", t2.Get("refId").MustString())
+		assert.Equal(t, "table", t2.Get("format").MustString())
+
+		t3 := simplejson.NewFromAny(panel1Targets[2])
+		assert.Empty(t, t3.Get("query").MustString())
+		assert.Equal(t, "C", t3.Get("refId").MustString())
+
+		t4 := simplejson.NewFromAny(panel1Targets[3])
+		assert.Empty(t, t4.Get("rawQuery").MustString())
+		assert.Equal(t, "D", t4.Get("refId").MustString())
+
+		rowPanels := simplejson.NewFromAny(panels[1]).Get("panels").MustArray()
+		require.Len(t, rowPanels, 1)
+		rowTarget := simplejson.NewFromAny(simplejson.NewFromAny(rowPanels[0]).Get("targets").MustArray()[0])
+		assert.Empty(t, rowTarget.Get("rawQuery").MustString())
+		assert.Equal(t, "E", rowTarget.Get("refId").MustString())
 	})
 }
 

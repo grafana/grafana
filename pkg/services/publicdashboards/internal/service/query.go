@@ -442,6 +442,19 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	}
 }
 
+var queryFieldsToSanitize = []string{
+	"expr",
+	"query",
+	"rawSql",
+	"rawQuery",
+}
+
+func sanitizeQuerySpec(target *simplejson.Json) {
+	for _, field := range queryFieldsToSanitize {
+		target.Del(field)
+	}
+}
+
 // sanitizeData removes the query expressions from the dashboard data
 func sanitizeData(data *simplejson.Json) {
 	for _, panelObj := range data.Get("panels").MustArray() {
@@ -456,9 +469,7 @@ func sanitizeData(data *simplejson.Json) {
 
 		for _, targetObj := range panel.Get("targets").MustArray() {
 			target := simplejson.NewFromAny(targetObj)
-			target.Del("expr")
-			target.Del("query")
-			target.Del("rawSql")
+			sanitizeQuerySpec(target)
 		}
 	}
 }
@@ -472,9 +483,7 @@ func sanitizeDataV2(data *simplejson.Json) {
 		for _, queryObj := range queries {
 			query := simplejson.NewFromAny(queryObj)
 			dataQuerySpec := query.Get("spec").Get("query").Get("spec")
-			dataQuerySpec.Del("expr")
-			dataQuerySpec.Del("query")
-			dataQuerySpec.Del("rawSql")
+			sanitizeQuerySpec(dataQuerySpec)
 		}
 	}
 }
