@@ -220,12 +220,14 @@ describe('AssistantDashboardEmpty', () => {
       },
     };
 
+    const OPEN_KEY = 'grafana.dashboard.landing.templatesOpen';
     const reportCounts = (counts: { custom?: number; grafana?: number }) =>
       act(() => latestTemplatesProps?.onTemplatesCount?.(counts));
     const queryToggle = () => screen.queryByRole('button', { name: 'Start from a template' });
 
     beforeEach(() => {
       Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
+      window.localStorage.removeItem(OPEN_KEY);
     });
 
     it('loads the templates out of the layout, with no toggle, until the lists report some', () => {
@@ -262,6 +264,23 @@ describe('AssistantDashboardEmpty', () => {
       expect(queryToggle()).not.toBeInTheDocument();
     });
 
+    it('starts the templates closed when the account has no templates of its own', () => {
+      renderEmpty();
+
+      reportCounts({ custom: 0, grafana: 5 });
+
+      expect(queryToggle()).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+    });
+
+    it('does not list templates when none are available', () => {
+      Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
+      renderEmpty();
+
+      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Start from a template' })).not.toBeInTheDocument();
+    });
+
     it("opens and closes the templates from a toggle next to the prompt's + button", async () => {
       const { user } = renderEmpty();
       reportCounts({ custom: 1, grafana: 2 });
@@ -276,6 +295,23 @@ describe('AssistantDashboardEmpty', () => {
 
       await user.click(toggle);
       expect(latestTemplatesProps?.isOpen).toBe(true);
+    });
+
+    it('keeps the templates as the person last left them on the next visit', async () => {
+      const first = renderEmpty();
+      reportCounts({ custom: 1, grafana: 2 });
+      await first.user.click(screen.getByRole('button', { name: 'Start from a template' }));
+      first.unmount();
+
+      const second = renderEmpty();
+      reportCounts({ custom: 1, grafana: 2 });
+      expect(queryToggle()).toHaveAttribute('aria-expanded', 'false');
+      await second.user.click(screen.getByRole('button', { name: 'Start from a template' }));
+      second.unmount();
+
+      renderEmpty();
+      reportCounts({ custom: 0, grafana: 2 });
+      expect(queryToggle()).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('attaches the picked template to the prompt and swaps it on the next pick', () => {

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type ChatContextItem, checkLimits } from '@grafana/assistant';
-import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -33,6 +33,9 @@ const PROMPT_OVERLAP = 24;
  */
 const FREE_SPACE_ABOVE = 1;
 const FREE_SPACE_BELOW = 2;
+
+/** How the person last left the templates panel, open or closed, kept for their next visit. */
+const TEMPLATES_OPEN_KEY = 'grafana.dashboard.landing.templatesOpen';
 
 /** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
 async function findHandoffProblem(): Promise<string | undefined> {
@@ -149,7 +152,11 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     showTemplates && promptReady && (templateCounts?.custom ?? 0) + (templateCounts?.grafana ?? 0) > 0;
   const { ref: fitRef, fit } = useFitToScrollArea(withTemplates);
   const templatesId = useId();
-  const [templatesOpen, setTemplatesOpen] = useState(true);
+  // Open by default only when the account has templates of its own; the person's last toggle wins over that.
+  const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState(() =>
+    store.exists(TEMPLATES_OPEN_KEY) ? store.getBool(TEMPLATES_OPEN_KEY, false) : undefined
+  );
+  const templatesOpen = templatesOpenedByUser ?? (templateCounts?.custom ?? 0) > 0;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -160,7 +167,8 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     if (height !== undefined) {
       setHeld({ fit, height });
     }
-    setTemplatesOpen(!templatesOpen);
+    store.set(TEMPLATES_OPEN_KEY, !templatesOpen);
+    setTemplatesOpenedByUser(!templatesOpen);
   }, [fit, templatesOpen]);
   const renderTemplatesToggle = useCallback(
     () => <LandingTemplatesToggle isOpen={templatesOpen} onToggle={onTemplatesToggle} controls={templatesId} />,
