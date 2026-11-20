@@ -1056,41 +1056,71 @@ func TestWatchNegativeSinceReplaysCache(t *testing.T) {
 	}
 }
 
-// Without the current RV there is no safe start for a watch from "now":
-// notification RVs can be ahead of writes that commit later.
-func TestWatchFromNowFailsWithoutCurrentRV(t *testing.T) {
-	for _, backendType := range []string{"legacy", "kv"} {
-		t.Run(backendType, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				events := make(chan *WrittenEvent)
-				defer close(events)
-				var backend StorageBackend = &legacyWatchBackend{events: events}
-				if backendType == "kv" {
-					backend = &failingListKVWatchBackend{unseededKVWatchBackend{events: events}}
-				}
-				srv := initWatchServerWithSeededWatches(t, backend, false)
-				events <- bookmarkWrittenEvent(200)
-				synctest.Wait()
+func TestLegacyWatchFromNowWithoutCurrentRV(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events := make(chan *WrittenEvent)
+		defer close(events)
+		srv := initWatchServerWithSeededWatches(t, &legacyWatchBackend{events: events}, false)
 
-				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
-				defer cancel()
-				req := bookmarkWatchRequest()
-				req.Since = 0
-				stream := newMockWatchServer(ctx)
-				done := make(chan error, 1)
-				go func() { done <- srv.Watch(req, stream) }()
-				synctest.Wait()
-				select {
-				case err := <-done:
-					require.Equal(t, codes.Unavailable, status.Code(err), "got %v", err)
-					require.NotContains(t, status.Convert(err).Message(), errUnimplemented.Error(), "backend errors must stay on the server")
-				default:
-					t.Fatal("the watch started without a safe cursor")
-				}
-				require.Empty(t, stream.events)
-			})
-		})
-	}
+		events <- bookmarkWrittenEvent(100)
+		foreign := bookmarkWrittenEvent(200)
+		foreign.Key.Resource = "other"
+		events <- foreign
+		synctest.Wait()
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.Options.Key.Namespace = ""
+		req.Since = 0
+		req.AllowWatchBookmarks = false
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+		require.Empty(t, done, "the watch must stay open when list is unavailable")
+		require.Empty(t, stream.events, "a watch from now must not replay its cache")
+
+		// Another collection's higher RV cannot filter out a live event.
+		events <- bookmarkWrittenEvent(150)
+		synctest.Wait()
+		require.Len(t, stream.events, 1)
+		event := <-stream.events
+		require.Equal(t, resourcepb.WatchEvent_ADDED, event.Type)
+		require.Equal(t, int64(150), event.Resource.Version)
+		cancel()
+		require.NoError(t, <-done)
+	})
+}
+
+// Without the current RV there is no safe start for a fresh KV watch:
+// notification RVs can be ahead of writes that commit later.
+func TestKVWatchFromNowFailsWithoutCurrentRV(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events := make(chan *WrittenEvent)
+		defer close(events)
+		backend := &failingListKVWatchBackend{unseededKVWatchBackend{events: events}}
+		srv := initWatchServerWithSeededWatches(t, backend, false)
+		events <- bookmarkWrittenEvent(200)
+		synctest.Wait()
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.Since = 0
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			require.Equal(t, codes.Unavailable, status.Code(err), "got %v", err)
+			require.NotContains(t, status.Convert(err).Message(), errUnimplemented.Error(), "backend errors must stay on the server")
+		default:
+			t.Fatal("the watch started without a safe cursor")
+		}
+		require.Empty(t, stream.events)
+	})
 }
 
 // A watch only takes cross-collection progress from events the broadcaster

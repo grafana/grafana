@@ -2405,14 +2405,18 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
 		if err != nil {
-			// The broadcaster's view is no safe start: notifications can be
-			// ahead of writes that commit after the watch starts, which it
-			// would then skip. Let the client retry.
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			s.log.Warn("watch: failed to fetch current RV from backend", "err", err)
-			return status.Error(codes.Unavailable, "watch: current resource version is unavailable")
+			if isKVBackend {
+				// KV notifications can be ahead of writes that commit after the watch starts.
+				s.log.Warn("watch: failed to fetch current RV from backend", "err", err)
+				return status.Error(codes.Unavailable, "watch: current resource version is unavailable")
+			}
+			// Some legacy backends cannot list this scope. We subscribed without
+			// replay, so use live delivery from registration as the start.
+			s.log.Debug("watch: starting live stream without current RV", "err", err)
+			rv = 0
 		}
 		mostRecentRV = rv
 	} else {
