@@ -103,6 +103,7 @@ export function setupRuleListBackend({
         return intercepted;
       }
 
+      const scope = nameFilterValues(body.where);
       // Like the index, a folder matches when its title contains every word of the text, ignoring case.
       const words = leaves(body.where)
         .find((leaf) => leaf.text)
@@ -110,6 +111,7 @@ export function setupRuleListBackend({
         .split(/\s+/);
       const listed = folders
         .filter((folder) => allRules.some((rule) => parentOf(rule) === nameOf(folder)))
+        .filter((folder) => !scope || scope.includes(nameOf(folder)))
         .filter((folder) => !words || words.every((word) => folder.spec.title.toLowerCase().includes(word)))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
@@ -217,6 +219,10 @@ function leaves(where?: SearchWhere): SearchWhere[] {
     return [];
   }
   return where.and ?? [where];
+}
+
+function nameFilterValues(where?: SearchWhere) {
+  return leaves(where).find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
 }
 
 function folderFilterValues(where?: SearchWhere) {

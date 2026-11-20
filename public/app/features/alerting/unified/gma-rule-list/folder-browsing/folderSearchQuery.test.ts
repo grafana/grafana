@@ -19,10 +19,20 @@ describe('buildFolderListSearchQuery', () => {
   });
 
   it('keeps the label selector when scoping to a folder name and passes the continue token', () => {
-    const query = buildFolderListSearchQuery('alert', 'tok', 'Team 01');
+    const query = buildFolderListSearchQuery('alert', 'tok', { folder: 'Team 01', folderUids: [] });
 
     expect(query.labelSelector).toEqual({ matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } });
     expect(query.where).toEqual({ text: { value: 'Team 01' } });
     expect(query.continue).toBe('tok');
+  });
+
+  it.each([
+    [{ folderUids: ['f1', 'f2'] }, { filter: { field: 'name', operator: 'In', values: ['f1', 'f2'] } }],
+    [
+      { folder: 'team', folderUids: ['f1'] },
+      { and: [{ text: { value: 'team' } }, { filter: { field: 'name', operator: 'In', values: ['f1'] } }] },
+    ],
+  ])('scopes the listing for %j', (scope, where) => {
+    expect(buildFolderListSearchQuery('alert', undefined, scope).where).toEqual(where);
   });
 });

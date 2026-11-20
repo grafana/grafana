@@ -52,6 +52,11 @@ describe('parsing', () => {
     },
     { name: 'the last folder', query: 'folder:f1 folder:"My Folder"', filter: { folder: 'My Folder' } },
     {
+      name: 'several folder UIDs beside a folder name',
+      query: 'folderUid:f1 folder:Team folderUid:f2',
+      filter: { folder: 'Team', folderUids: ['f1', 'f2'] },
+    },
+    {
       name: 'several data sources',
       query: 'datasource:ds-1 datasource:ds-2',
       filter: { dataSourceUids: ['ds-1', 'ds-2'] },
@@ -157,6 +162,7 @@ describe('feedback', () => {
 
   it.each([
     ['datasource:__expr__', 'datasource'],
+    ['folderUid:f*', 'folderUid'],
     ['datasource:"my ds"', 'datasource'],
     ['label:team=a*', 'label'],
     ['label:!!team', 'label'],

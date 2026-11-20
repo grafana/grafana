@@ -12,7 +12,7 @@ import {
   type SharedRuleFilter,
 } from './sharedRuleFilter';
 
-export type SharedFilterKey = 'rule' | 'folder' | 'datasource' | 'label' | 'plugins' | 'health';
+export type SharedFilterKey = 'rule' | 'folder' | 'folderUid' | 'datasource' | 'label' | 'plugins' | 'health';
 
 /** The filters both pages support. */
 export const sharedFilters = {
@@ -40,6 +40,18 @@ export const sharedFilters = {
       filter.folder = value;
       return true;
     },
+  },
+  folderUid: {
+    key: 'folderUid',
+    label: () => t('alerting.gma-rule-list.search.property.folder-uid', 'Folder UID'),
+    description: () =>
+      t('alerting.gma-rule-list.search.help.folder-uid', 'Folder UID. Several match rules in any of them.'),
+    example: 'folderUid:folder-uid',
+    apply: (filter, value) => {
+      filter.folderUids.push(value);
+      return true;
+    },
+    feedback: (filter) => (filter.folderUids.some(hasWildcard) ? 'invalid' : undefined),
   },
   datasource: {
     key: 'datasource',

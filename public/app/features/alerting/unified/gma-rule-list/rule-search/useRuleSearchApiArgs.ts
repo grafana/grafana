@@ -23,7 +23,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
     lookUp
       ? {
           searchQuery: {
-            ...buildFolderListSearchQuery(kind, undefined, filter.folder),
+            ...buildFolderListSearchQuery(kind, undefined, filter),
             limit: FOLDER_NAME_LOOKUP_LIMIT,
           },
         }
@@ -40,7 +40,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
       return { filter, folderUids: [inFolderUid] };
     }
     if (filter.folder === undefined) {
-      return { filter, folderUids: [] };
+      return { filter, folderUids: filter.folderUids };
     }
     return lookedUpUids?.length ? { filter, folderUids: lookedUpUids } : undefined;
   }, [skip, inFolderUid, filter, lookedUpUids]);

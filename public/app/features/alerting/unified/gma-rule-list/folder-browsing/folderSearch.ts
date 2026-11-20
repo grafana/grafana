@@ -4,7 +4,7 @@ import { generatedAPI as folderAPI } from '@grafana/api-clients/rtkq/folder/v1be
 
 import { type RuleKind } from '../shared/ruleKind';
 
-import { buildFolderListSearchQuery } from './folderSearchQuery';
+import { type FolderScope, buildFolderListSearchQuery } from './folderSearchQuery';
 
 export { useSearchRuleFoldersInfiniteQuery };
 
@@ -41,11 +41,7 @@ type FolderSearchResponse = z.infer<typeof folderSearchResponseSchema>;
  */
 const folderSearchAPI = folderAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRuleFolders: build.infiniteQuery<
-      FolderSearchPage,
-      { kind: RuleKind; folderName?: string },
-      string | undefined
-    >({
+    searchRuleFolders: build.infiniteQuery<FolderSearchPage, { kind: RuleKind } & FolderScope, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
@@ -55,7 +51,7 @@ const folderSearchAPI = folderAPI.injectEndpoints({
       query: ({ queryArg, pageParam }) => ({
         url: '/folders/search',
         method: 'POST',
-        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderName),
+        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg),
       }),
       rawResponseSchema: folderSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.

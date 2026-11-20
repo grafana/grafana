@@ -8,6 +8,7 @@ export interface SharedRuleFilter {
   text: string[];
   /** A folder name as typed; it matches folders by title text. */
   folder?: string;
+  folderUids: string[];
   /** Query datasource UIDs. */
   dataSourceUids: string[];
   labels: SearchLabelMatcher[];
@@ -15,7 +16,7 @@ export interface SharedRuleFilter {
   health?: HealthValue;
 }
 
-/** The rule search filters folders by UID only, so the `filter.folder` name is resolved to `folderUids` first. */
+/** The rule search filters folders by UID only, so a `filter.folder` name is resolved to `folderUids` first. */
 export interface RuleSearchApiArgs<Filter extends SharedRuleFilter> {
   filter: Filter;
   folderUids: string[];
@@ -25,6 +26,7 @@ export interface RuleSearchApiArgs<Filter extends SharedRuleFilter> {
 export function createRulesApiFilter(overrides: Partial<SharedRuleFilter> = {}): SharedRuleFilter {
   return {
     text: [],
+    folderUids: [],
     dataSourceUids: [],
     labels: [],
     hidePluginRules: false,

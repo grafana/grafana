@@ -307,6 +307,34 @@ describe('AlertRulesPage folder names', () => {
     ]);
   });
 
+  it('lists the rules of every folderUid in List mode', async () => {
+    renderWithSearch('folderUid:db-alerts folderUid:team-01', 'list');
+
+    expect(await screen.findByText('DB down')).toBeInTheDocument();
+    expect(screen.getByText('Team 01 latency')).toBeInTheDocument();
+    expect(screen.queryByText('Pod crash looping')).not.toBeInTheDocument();
+  });
+
+  it('lists only the rules of a folderUid whose folder also matches the name in List mode', async () => {
+    renderWithSearch('folder:Alerts folderUid:k8s-alerts folderUid:team-01', 'list');
+
+    expect(await screen.findByText('Pod crash looping')).toBeInTheDocument();
+    expect(screen.queryByText('DB down')).not.toBeInTheDocument();
+    expect(screen.queryByText('Team 01 latency')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { search: 'folderUid:k8s-alerts folderUid:team-01', folders: ['Alerts', 'Team 01'] },
+    { search: 'folder:Alerts folderUid:k8s-alerts folderUid:team-01', folders: ['Alerts'] },
+  ])('shows only the folders $folders in Folders mode for $search', async ({ search, folders }) => {
+    renderWithSearch(search);
+
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows.map((row) => within(row).getAllByRole('link')[0].textContent)).toEqual(folders);
+    expect(await within(rows[0]).findByText('Kubernetes')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Folders/ })).toBeChecked();
+  });
+
   it('names the rejected filter when a looked-up folder comes before it in the rule search', async () => {
     server.use(
       http.post(ruleSearchUrl('alert'), () =>

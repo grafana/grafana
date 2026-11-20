@@ -83,7 +83,9 @@ export function buildSharedLeaves({
   }
 
   if (folderUids.length > 0) {
-    leaves.push({ key: 'folder', leaf: { filter: { field: 'folder', operator: 'In', values: folderUids } } });
+    // Looked-up UIDs come from the name; otherwise they are the typed `folderUid:` values.
+    const key = filter.folder === undefined ? 'folderUid' : 'folder';
+    leaves.push({ key, leaf: { filter: { field: 'folder', operator: 'In', values: folderUids } } });
   }
 
   if (filter.dataSourceUids.length > 0) {

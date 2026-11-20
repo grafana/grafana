@@ -28,7 +28,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -43,7 +43,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -55,7 +55,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -69,7 +69,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -87,7 +87,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView folderName={folderName} />
+        <AlertRulesFoldersView scope={{ folder: folderName, folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -99,7 +99,7 @@ describe('AlertRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -119,7 +119,7 @@ describe('AlertRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -140,7 +140,7 @@ describe('AlertRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <AlertRulesFoldersView />
+        <AlertRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 

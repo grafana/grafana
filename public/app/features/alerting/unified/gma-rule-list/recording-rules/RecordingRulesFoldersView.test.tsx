@@ -33,7 +33,7 @@ describe('RecordingRulesFoldersView', () => {
     setup();
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -55,7 +55,7 @@ describe('RecordingRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -70,7 +70,7 @@ describe('RecordingRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -90,7 +90,7 @@ describe('RecordingRulesFoldersView', () => {
 
     render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView folderName={folderName} />
+        <RecordingRulesFoldersView scope={{ folder: folderName, folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 
@@ -102,7 +102,7 @@ describe('RecordingRulesFoldersView', () => {
 
     const { user } = render(
       <RuleSequenceDrawerProvider>
-        <RecordingRulesFoldersView />
+        <RecordingRulesFoldersView scope={{ folderUids: [] }} />
       </RuleSequenceDrawerProvider>
     );
 

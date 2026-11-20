@@ -11,14 +11,16 @@ files without adding anything.
   `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
 - **`key:value`** filters: `folder:` takes a folder name, or part of it, and matches every folder whose
   title contains each of its words, ignoring case, like the old list's `namespace:`. The rule search
-  then searches the matching folders by UID. `datasource:` takes UIDs and matches them exactly.
+  then searches the matching folders by UID. `folderUid:` and `datasource:` take UIDs and match them
+  exactly; the sidebar's folder picker writes `folderUid:`. With both folder filters, a folder must
+  match the name and be one of the UIDs.
 - **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
   `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
   `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash
   is an ordinary character, so a value can't contain a quote.
 - **Repeats**: a single-value filter keeps its last value, so `state:firing state:normal` is
   `state:normal`. `folder:` is single-value too, since the folder search takes one text query.
-  Data sources, labels and title words add up.
+  Folder UIDs, data sources, labels and title words add up.
 - **Case**: `state:`, `health:` and `paused:` values ignore case. Keys don't: `State:firing` is title
   text.
 
