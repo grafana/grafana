@@ -41,12 +41,17 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.46.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.33.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.3 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.19.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.2 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.9.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.37.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.42.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.49.0 // indirect
 	github.com/aws/smithy-go v1.28.1 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
@@ -133,7 +138,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 // indirect
+	github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293 // indirect
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // indirect
 	github.com/grafana/dataplane/sdata v0.0.10 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
@@ -236,9 +241,9 @@ require (
 	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.74.0 // indirect
-	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.19.0 // indirect
 	github.com/prometheus/procfs v0.23.0 // indirect
+	github.com/prometheus/sigv4 v0.4.1 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20261013103202-7c8a61a7a736 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
 	github.com/redis/go-redis/v9 v9.22.0 // indirect
@@ -255,7 +260,6 @@ require (
 	github.com/stretchr/objx v0.8.0 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
-	github.com/trivago/tgo v1.0.7 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -369,7 +373,7 @@ replace (
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 
-	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623
+	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6
 )
 
 // This was retracted, but seems to be known by the Go module proxy, and is
