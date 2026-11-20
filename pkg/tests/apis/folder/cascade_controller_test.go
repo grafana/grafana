@@ -2,8 +2,13 @@ package folder
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"sync"
@@ -11,6 +16,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,8 +33,13 @@ import (
 	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -227,16 +240,53 @@ func feedEvents(ctx context.Context, client dynamic.ResourceInterface, h cache.R
 func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// The controller runs as an access policy authenticated with its own token, as the operator does,
+	// so it only has the permissions that token carries rather than the admin's.
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{
+			Key: &key.PublicKey, KeyID: "cascade-test-key", Algorithm: string(jose.ES256), Use: "sig",
+		}}})
+	}))
+	t.Cleanup(jwks.Close)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController},
+		ExtJWTJWKSURL:        jwks.URL,
 	})
 	dyn, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 	ns := helper.Namespacer(orgID)
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key},
+		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "cascade-test-key"))
+	require.NoError(t, err)
+	token, err := jwt.Signed(signer).Claims(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject: "access-policy:folder-controller", Audience: jwt.Audience{"grafana"},
+			IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: ns,
+			Permissions: []string{
+				"folder.grafana.app/folders:*", "dashboard.grafana.app/dashboards:*",
+			},
+		},
+	}).Serialize()
+	require.NoError(t, err)
+	svcCfg := helper.NewAdminRestConfig()
+	svcCfg.Username, svcCfg.Password = "", ""
+	svcCfg.Wrap(func(next http.RoundTripper) http.RoundTripper {
+		return accessTokenTransport{next: next, token: token}
+	})
+	svc, err := dynamic.NewForConfig(svcCfg)
+	require.NoError(t, err)
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
 
 	newEnv := func(t *testing.T) *cascadeEnv {
@@ -254,7 +304,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 	// that records the statuses it writes.
 	startController := func(t *testing.T, deleter cascadedelete.ChildDeleter) *recordingWriter {
 		t.Helper()
-		clients := cascadedelete.NewDynamicClients(dyn)
+		clients := cascadedelete.NewDynamicClients(svc)
 		if deleter == nil {
 			deleter = clients
 		}
@@ -280,7 +330,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		synced := make(chan struct{})
 		go func() {
 			defer close(feedDone)
-			feedEvents(ctx, dyn.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
+			feedEvents(ctx, svc.Resource(folderGVR).Namespace(ns), ctrl.Handler(), synced)
 		}()
 		t.Cleanup(func() {
 			cancel()
@@ -366,7 +416,7 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		e.createDashboards("e2e-fail", "e2e-fail-ok1", "e2e-fail-bad", "e2e-fail-ok2")
 		e.waitIndexed("e2e-fail", 3)
 
-		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(dyn)}
+		deleter := &faultyDeleter{ChildDeleter: cascadedelete.NewDynamicClients(svc)}
 		bad := "e2e-fail-bad"
 		deleter.fail.Store(&bad)
 		startController(t, deleter)
@@ -392,4 +442,85 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 		poll(t, func() bool { return e.getFolder("e2e-fail") == nil })
 		require.False(t, e.dashboardExists(bad))
 	})
+	// The controller deletes the contents as its own identity, so the requester's access to them is
+	// checked when the delete is requested: alert.rules:delete and dashboards:delete on the folder, and
+	// folders:write on its parent.
+	userWith := func(t *testing.T, name string, extra ...string) *dynamic.DynamicClient {
+		t.Helper()
+		actions := append([]string{folder.ActionFoldersRead, folder.ActionFoldersWrite, folder.ActionFoldersDelete,
+			dashboards.ActionDashboardsRead}, extra...)
+		u := helper.CreateUser(name, apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+			Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: "e2e-" + name + "-top",
+		}})
+		c, err := dynamic.NewForConfig(u.NewRestConfig())
+		require.NoError(t, err)
+		return c
+	}
+
+	for _, tc := range []struct {
+		name    string
+		granted []string
+	}{
+		{"alert rules", []string{dashboards.ActionDashboardsDelete}},
+		{"dashboards", []string{accesscontrol.ActionAlertingRuleDelete}},
+	} {
+		t.Run("a delete without delete access to "+tc.name+" is rejected and leaves the folder untouched", func(t *testing.T) {
+			name := "denied-" + strings.ReplaceAll(tc.name, " ", "")
+			e := newEnv(t)
+			e.createFolder("e2e-"+name+"-top", "")
+			e.createFolder("e2e-"+name+"-a", "e2e-"+name+"-top")
+			e.createFolder("e2e-"+name+"-b", "e2e-"+name+"-a")
+			e.createDashboards("e2e-"+name+"-b", "e2e-"+name+"-b1")
+			e.waitIndexed("e2e-"+name+"-a", 1)
+			user := userWith(t, name, tc.granted...)
+
+			startController(t, nil)
+			zero := int64(0)
+			err := user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-"+name+"-a", metav1.DeleteOptions{GracePeriodSeconds: &zero})
+			require.True(t, apierrors.IsForbidden(err), "expected 403: %v", err)
+
+			require.Never(t, func() bool {
+				a := e.getFolder("e2e-" + name + "-a")
+				return a == nil || a.DeletionTimestamp != nil || e.getFolder("e2e-"+name+"-b") == nil || !e.dashboardExists("e2e-"+name+"-b1")
+			}, 3*time.Second, 100*time.Millisecond, "a rejected delete must not mark the folder or touch its contents")
+		})
+	}
+
+	t.Run("an authorized delete completes a nested cascade", func(t *testing.T) {
+		e := newEnv(t)
+		e.createFolder("e2e-allowed-top", "")
+		e.createFolder("e2e-allowed-a", "e2e-allowed-top")
+		e.createFolder("e2e-allowed-b", "e2e-allowed-a")
+		e.createFolder("e2e-allowed-c", "e2e-allowed-b")
+		e.createDashboards("e2e-allowed-a", "e2e-allowed-a1")
+		e.createDashboards("e2e-allowed-c", "e2e-allowed-c1")
+		e.waitIndexed("e2e-allowed-a", 2)
+		e.waitIndexed("e2e-allowed-b", 1)
+		e.waitIndexed("e2e-allowed-c", 1)
+		user := userWith(t, "allowed", accesscontrol.ActionAlertingRuleDelete, dashboards.ActionDashboardsDelete)
+
+		startController(t, nil)
+		zero := int64(0)
+		require.NoError(t, user.Resource(folderGVR).Namespace(ns).Delete(context.Background(), "e2e-allowed-a", metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+		poll(t, func() bool { return e.getFolder("e2e-allowed-a") == nil })
+		for _, name := range []string{"e2e-allowed-b", "e2e-allowed-c"} {
+			require.Nil(t, e.getFolder(name), "folder %s should be gone", name)
+		}
+		for _, d := range []string{"e2e-allowed-a1", "e2e-allowed-c1"} {
+			require.False(t, e.dashboardExists(d), "dashboard %s should be gone", d)
+		}
+		require.NotNil(t, e.getFolder("e2e-allowed-top"), "the parent must be left alone")
+	})
+}
+
+type accessTokenTransport struct {
+	next  http.RoundTripper
+	token string
+}
+
+func (t accessTokenTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("X-Access-Token", t.token)
+	return t.next.RoundTrip(req)
 }

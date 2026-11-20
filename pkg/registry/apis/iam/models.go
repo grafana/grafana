@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -118,6 +119,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// authInfoStorage is set when the AuthInfo API is registered; the user delete cascades to it.
 	authInfoStorage rest.Storage
+	// userPreferences is nil when there is no dashboard API to call; the user delete cascades to it.
+	userPreferences dashboardpreferences.UserCleaner
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
