@@ -15,25 +15,26 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestProvideConnectionFactoryFromConfigEnablesAllOSSTypesByDefault(t *testing.T) {
-	extras := ProvideProvisioningOSSConnectionExtras(&setting.Cfg{}, nil, nil, nil, prometheus.NewRegistry())
-	expected := make([]provisioning.ConnectionType, 0, len(extras))
-	for _, extra := range extras {
-		expected = append(expected, extra.Type())
-	}
-
-	factory, err := ProvideConnectionFactoryFromConfig(&setting.Cfg{}, tracing.NewNoopTracerService(), extras)
-	require.NoError(t, err)
-	require.ElementsMatch(t, expected, factory.Types())
-}
-
 func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 	configuredType := provisioning.ConnectionType("configured")
+	configuredExtra := connection.NewMockExtra(t)
+	configuredExtra.On("Type").Return(configuredType)
+	extras := ProvideProvisioningOSSConnectionExtras(&setting.Cfg{}, nil, nil, nil, prometheus.NewRegistry())
+	ossTypes := make([]provisioning.ConnectionType, 0, len(extras))
+	for _, extra := range extras {
+		ossTypes = append(ossTypes, extra.Type())
+	}
+	extras = append(extras, configuredExtra)
+
 	tests := []struct {
 		name     string
 		types    []string
 		expected []provisioning.ConnectionType
 	}{
+		{
+			name:     "defaults to all OSS connection types",
+			expected: ossTypes,
+		},
 		{
 			name:     "uses configured connection types",
 			types:    []string{string(configuredType)},
@@ -43,16 +44,6 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			extras := make([]connection.Extra, 0, 2)
-			for _, connectionType := range []provisioning.ConnectionType{
-				provisioning.GithubConnectionType,
-				configuredType,
-			} {
-				extra := connection.NewMockExtra(t)
-				extra.On("Type").Return(connectionType)
-				extras = append(extras, extra)
-			}
-
 			factory, err := ProvideConnectionFactoryFromConfig(&setting.Cfg{ProvisioningConnectionTypes: tt.types}, tracing.NewNoopTracerService(), extras)
 			require.NoError(t, err)
 			require.ElementsMatch(t, tt.expected, factory.Types())
