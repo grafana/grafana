@@ -46,11 +46,20 @@ export const useMenuFocus = ({
   }, [localRef, focusedItem, autoFocus]);
 
   // Reconcile replacement items before paint without moving focus on parent updates.
+  // DOM children can change without any hook input changing, so this must run after every commit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const menuItems = localRef.current?.querySelectorAll<HTMLElement>('[data-role="menuitem"]:not([data-disabled])');
+    const itemCount = menuItems?.length ?? 0;
+    const reconciledFocusedItem = focusedItem === UNFOCUSED || focusedItem < itemCount ? focusedItem : itemCount - 1;
+
     menuItems?.forEach((menuItem, i) => {
-      menuItem.tabIndex = i === focusedItem ? 0 : -1;
+      menuItem.tabIndex = i === reconciledFocusedItem ? 0 : -1;
     });
+
+    if (reconciledFocusedItem !== focusedItem) {
+      setFocusedItem(reconciledFocusedItem);
+    }
   });
 
   useEffectOnce(() => {
@@ -75,10 +84,12 @@ export const useMenuFocus = ({
         setFocusedItem(modulo(focusedItem + 1, menuItemsCount));
         break;
       case 'ArrowLeft':
-        event.preventDefault();
-        event.stopPropagation();
-        setFocusedItem(UNFOCUSED);
-        close?.();
+        if (close) {
+          event.preventDefault();
+          event.stopPropagation();
+          setFocusedItem(UNFOCUSED);
+          close();
+        }
         break;
       case 'Home':
         event.preventDefault();

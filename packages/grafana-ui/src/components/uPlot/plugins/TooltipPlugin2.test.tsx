@@ -198,6 +198,19 @@ describe('TooltipPlugin2', () => {
     });
   });
 
+  it('does not constrain unpinned tooltip height', async () => {
+    const { setSeriesCallback, initCallback, mockUPlot } = setUp(undefined, {
+      render: () => <div style={{ minHeight: 1200 }}>Tooltip content</div>,
+    });
+    await act(async () => {
+      initCallback(mockUPlot);
+      setSeriesCallback(mockUPlot, 1);
+    });
+
+    const surface = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+    expect(surface).not.toHaveStyle({ maxHeight: 'calc(100vh - 32px)' });
+  });
+
   it('keeps the pinned close button outside scrolling content and dismisses on click', async () => {
     const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
       maxWidth: 320,

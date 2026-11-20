@@ -88,3 +88,40 @@ it('keeps replacement items reachable by Tab without stealing focus', async () =
   await user.tab();
   expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
 });
+
+it('keeps a tab stop when the focused item is removed', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (labels: string[]) => (
+    <Menu autoFocus={false}>
+      {labels.map((label) => (
+        <MenuItem key={label} label={label} />
+      ))}
+    </Menu>
+  );
+  const { rerender } = render(renderMenu(['First', 'Second', 'Third']));
+
+  await user.tab();
+  await user.keyboard('{End}');
+  expect(screen.getByRole('menuitem', { name: 'Third' })).toHaveFocus();
+
+  rerender(renderMenu(['First']));
+
+  expect(screen.getByRole('menuitem', { name: 'First' })).toHaveAttribute('tabindex', '0');
+});
+
+it('keeps the current item tabbable when ArrowLeft has no submenu to close', async () => {
+  const user = userEvent.setup();
+  render(
+    <Menu autoFocus={false}>
+      <MenuItem label="First" />
+    </Menu>
+  );
+
+  await user.tab();
+  const item = screen.getByRole('menuitem', { name: 'First' });
+  expect(item).toHaveFocus();
+
+  await user.keyboard('{ArrowLeft}');
+
+  expect(item).toHaveAttribute('tabindex', '0');
+});

@@ -765,7 +765,9 @@ export const TooltipPlugin2 = ({
     return createPortal(
       <div className={styles.tooltipWrapper} style={style} aria-live="polite" aria-atomic="true" ref={domRef}>
         {isPinned && <CloseButton onClick={dismiss} />}
-        <VizTooltipWrapper maxWidth={maxWidth}>{contents}</VizTooltipWrapper>
+        <VizTooltipWrapper maxWidth={maxWidth} scrollable={isPinned}>
+          {contents}
+        </VizTooltipWrapper>
       </div>,
       portalRoot.current
     );
