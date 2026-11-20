@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -61,6 +62,8 @@ func New(proxy Proxy, logger log.Logger, upstreamPath, login, accept string) *Cl
 // user rather than relying on one already present in ctx.
 func (c *Client) Get(ctx context.Context, ds *datasources.DataSource) (Result, error) {
 	svcCtx, _ := identity.WithServiceIdentity(ctx, ds.OrgID)
+	// Background requests bypass the middleware that installs mutable status-source metadata.
+	svcCtx = requestmeta.SetRequestMetaData(svcCtx, requestmeta.RequestMetaData{StatusSource: requestmeta.StatusSourceServer})
 
 	// The proxy strips /api/datasources/proxy/uid/<uid>/ to derive the upstream path.
 	proxyURL := fmt.Sprintf("/api/datasources/proxy/uid/%s/%s", ds.UID, strings.TrimPrefix(c.upstreamPath, "/"))

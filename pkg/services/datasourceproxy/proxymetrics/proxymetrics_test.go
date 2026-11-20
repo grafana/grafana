@@ -37,14 +37,15 @@ func TestClassifySource(t *testing.T) {
 	}
 }
 
-func TestMetrics_Observe(t *testing.T) {
+func TestMetrics_RecordMetricsAndLog(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := New(reg, VariantMT)
 
-	m.Observe(Observation{PluginID: "prometheus", Status: 200, Source: SourceServer, Duration: time.Second})
-	m.Observe(Observation{PluginID: "prometheus", Status: 200, Source: SourceServer, Duration: time.Second})
-	m.Observe(Observation{PluginID: "prometheus", Status: 502, Source: SourceDownstream, Duration: time.Second})
-	m.Observe(Observation{Status: 42, Source: "bogus", Duration: time.Millisecond})
+	for _, uid := range []string{"prom-east", "prom-west"} {
+		m.RecordMetricsAndLog(Observation{PluginID: "prometheus", Log: LogFields{DatasourceUID: uid}, Status: 200, Source: SourceServer, Duration: time.Second})
+	}
+	m.RecordMetricsAndLog(Observation{PluginID: "prometheus", Status: 502, Source: SourceDownstream, Duration: time.Second})
+	m.RecordMetricsAndLog(Observation{Status: 42, Source: "bogus", Duration: time.Millisecond})
 
 	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "200", SourceServer)))
 	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "502", SourceDownstream)))
@@ -52,15 +53,22 @@ func TestMetrics_Observe(t *testing.T) {
 
 	families, err := reg.Gather()
 	require.NoError(t, err)
+	wantLabels := map[string][]string{
+		"grafana_datasource_proxy_requests_total":           {"variant", "plugin_id", "status_code", "status_source"},
+		"grafana_datasource_proxy_request_duration_seconds": {"variant", "plugin_id", "status_class"},
+	}
+	require.Len(t, families, len(wantLabels))
 	for _, f := range families {
+		require.Len(t, f.GetMetric(), 3, f.GetName())
 		for _, metric := range f.GetMetric() {
-			var variant string
+			var labels []string
 			for _, l := range metric.GetLabel() {
+				labels = append(labels, l.GetName())
 				if l.GetName() == "variant" {
-					variant = l.GetValue()
+					require.Equal(t, VariantMT, l.GetValue(), f.GetName())
 				}
 			}
-			require.Equal(t, VariantMT, variant, f.GetName())
+			require.ElementsMatch(t, wantLabels[f.GetName()], labels, f.GetName())
 		}
 	}
 }
@@ -81,15 +89,15 @@ func TestMetrics_Logging(t *testing.T) {
 		return m, fake
 	}
 	obs := Observation{
-		PluginID: "prometheus", DatasourceUID: "ds1", Namespace: "stacks-1", Method: http.MethodPost,
-		Path: "api/v1/query_range?query=secret_metric", Status: 200, Source: SourceServer,
+		PluginID: "prometheus", Status: 200, Source: SourceServer,
+		Log: LogFields{DatasourceUID: "ds1", Namespace: "stacks-1", Method: http.MethodPost, Path: "api/v1/query_range?query=secret_metric"},
 	}
 
 	t.Run("a datasource failure is always logged, without the query string", func(t *testing.T) {
 		m, fake := newMetrics()
 		o := obs
 		o.Status, o.Source = 502, SourceDownstream
-		m.Observe(o)
+		m.RecordMetricsAndLog(o)
 		require.Equal(t, 1, fake.WarnLogs.Calls)
 		require.Contains(t, fake.WarnLogs.Ctx, "datasourceUid")
 		require.Contains(t, fake.WarnLogs.Ctx, "api/v1/query_range")
@@ -100,9 +108,9 @@ func TestMetrics_Logging(t *testing.T) {
 		m, fake := newMetrics()
 		o := obs
 		o.Status = 500
-		m.Observe(o)
+		m.RecordMetricsAndLog(o)
 		o.Status, o.Source = 499, SourceClient
-		m.Observe(o)
+		m.RecordMetricsAndLog(o)
 		require.Equal(t, 2, fake.WarnLogs.Calls)
 	})
 
@@ -110,10 +118,10 @@ func TestMetrics_Logging(t *testing.T) {
 		m, fake := newMetrics()
 		o := obs
 		for range sampleEvery - 1 {
-			m.Observe(o)
+			m.RecordMetricsAndLog(o)
 		}
 		o.Status = 404
-		m.Observe(o)
+		m.RecordMetricsAndLog(o)
 		require.Equal(t, 1, fake.InfoLogs.Calls, "one request in sampleEvery is logged")
 		require.Zero(t, fake.WarnLogs.Calls)
 	})
@@ -121,7 +129,7 @@ func TestMetrics_Logging(t *testing.T) {
 
 func TestNilMetricsIsNoop(t *testing.T) {
 	var m *Metrics
-	require.NotPanics(t, func() { m.Observe(Observation{Status: 200}) })
+	require.NotPanics(t, func() { m.RecordMetricsAndLog(Observation{Status: 200}) })
 }
 
 func TestStatusRecorder(t *testing.T) {

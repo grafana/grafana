@@ -117,7 +117,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		r.builder.proxyMetrics.Observe(proxymetrics.Observation{
+		r.builder.proxyMetrics.RecordMetricsAndLog(proxymetrics.Observation{
 			PluginID: r.builder.pluginJSON.ID,
 			Status:   http.StatusInternalServerError,
 			Source:   proxymetrics.SourceServer,
@@ -140,15 +140,17 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			if errStatus != 0 {
 				status = errStatus
 			}
-			r.builder.proxyMetrics.Observe(proxymetrics.Observation{
-				PluginID:      r.builder.pluginJSON.ID,
-				DatasourceUID: name,
-				Namespace:     k8srequest.NamespaceValue(req.Context()),
-				Method:        req.Method,
-				Path:          proxyPathFromRequest(req, name),
-				Status:        status,
-				Source:        proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
-				Duration:      time.Since(start),
+			r.builder.proxyMetrics.RecordMetricsAndLog(proxymetrics.Observation{
+				PluginID: r.builder.pluginJSON.ID,
+				Status:   status,
+				Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
+				Duration: time.Since(start),
+				Log: proxymetrics.LogFields{
+					DatasourceUID: name,
+					Namespace:     k8srequest.NamespaceValue(req.Context()),
+					Method:        req.Method,
+					Path:          proxyPathFromRequest(req, name),
+				},
 			})
 		}()
 
