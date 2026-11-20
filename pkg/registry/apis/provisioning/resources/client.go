@@ -258,8 +258,7 @@ type ResourceClients interface {
 }
 
 type clientsProvider interface {
-	GetClientsForKind(ctx context.Context, gvk schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error)
-	GetClientsForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error)
+	Clients(ctx context.Context) (dynamic.Interface, client.DiscoveryClient, error)
 }
 
 // NewClientFactory creates a ClientFactory. The supported set is the configured list of
@@ -512,7 +511,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 		return info.client, info.gvr, nil
 	}
 
-	dynamic, discovery, err := c.clientsProvider.GetClientsForKind(ctx, gvk)
+	dynamic, discovery, err := c.clientsProvider.Clients(ctx)
 	if err != nil {
 		return nil, schema.GroupVersionResource{}, fmt.Errorf("get clients for resource %s: %w", gvk.String(), err)
 	}
@@ -566,7 +565,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 		return info.client, info.gvk, nil
 	}
 
-	dynamic, discovery, err := c.clientsProvider.GetClientsForResource(ctx, gvr)
+	dynamic, discovery, err := c.clientsProvider.Clients(ctx)
 	if err != nil {
 		return nil, schema.GroupVersionKind{}, fmt.Errorf("get clients for kind %s: %w", gvr.String(), err)
 	}
@@ -818,7 +817,7 @@ func discoveryKinds(provider clientsProvider, configured []SupportedResource, ho
 	}
 
 	return func(ctx context.Context) ([]schema.GroupKind, error) {
-		_, discoveryClient, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
+		_, discoveryClient, err := provider.Clients(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("get discovery client for collection expansion: %w", err)
 		}

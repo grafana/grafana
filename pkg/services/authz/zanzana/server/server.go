@@ -125,11 +125,11 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 		s.globalSem = semaphore.NewWeighted(int64(zanzanaCfg.MaxConcurrentRequests))
 	}
 
-	var clientFactory reconciler.ClientFactory
+	var clientFactory reconcilerClients
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory = client.NewAPIClients(restConfig)
+			clientFactory.loopback = client.NewAPIClients(restConfig)
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -156,7 +156,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			}
 
 			// Build per-group REST configs with group-specific audiences
-			groupClients := make(client.GroupClients)
+			clientFactory.byGroup = make(map[string]*client.APIClients)
 			apiServerURLs := map[string]string{
 				"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
@@ -186,12 +186,10 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 					),
 				}
 
-				groupClients[group] = client.NewAPIClients(apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
+				clientFactory.byGroup[group] = client.NewAPIClients(apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
 					return standaloneRestConfig, nil
 				}))
 			}
-
-			clientFactory = groupClients
 		}
 	}
 

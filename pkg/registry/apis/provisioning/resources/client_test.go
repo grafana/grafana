@@ -191,7 +191,7 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 	})
 
 	clients := client.NewAPIClients(provider)
-	dyn, _, err := clients.GetClientsForResource(context.Background(), schema.GroupVersionResource{})
+	dyn, _, err := clients.Clients(context.Background())
 	require.NoError(t, err)
 
 	// Start a sampled span so there is an active SpanContext for the propagator to inject.
@@ -494,7 +494,7 @@ type flakyClientsProvider struct {
 	discovery client.DiscoveryClient
 }
 
-func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
+func (p *flakyClientsProvider) Clients(context.Context) (dynamic.Interface, client.DiscoveryClient, error) {
 	p.calls++
 	if p.err != nil {
 		return nil, nil, p.err
@@ -503,10 +503,6 @@ func (p *flakyClientsProvider) GetClientsForKind(context.Context, schema.GroupVe
 		return nil, p.discovery, nil
 	}
 	return nil, emptyDiscoveryClient{}, nil
-}
-
-func (p *flakyClientsProvider) GetClientsForResource(context.Context, schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
-	return nil, nil, p.err
 }
 
 type emptyDiscoveryClient struct{ client.DiscoveryClient }

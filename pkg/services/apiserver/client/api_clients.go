@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -26,7 +25,7 @@ func NewAPIClients(configProvider restcfg.RestConfigProvider) *APIClients {
 	return &APIClients{configProvider: configProvider}
 }
 
-func (p *APIClients) onlyOnce(ctx context.Context) error {
+func (p *APIClients) Clients(ctx context.Context) (dynamic.Interface, DiscoveryClient, error) {
 	p.once.Do(func() {
 		restConfig, e := p.configProvider.GetRestConfig(ctx)
 		if e != nil {
@@ -58,47 +57,8 @@ func (p *APIClients) onlyOnce(ctx context.Context) error {
 		}
 	})
 
-	return p.initErr
-}
-
-func (p *APIClients) GetClientsForKind(ctx context.Context, _ schema.GroupVersionKind) (dynamic.Interface, DiscoveryClient, error) {
-	if err := p.onlyOnce(ctx); err != nil {
-		return nil, nil, fmt.Errorf("get clients: %w", err)
+	if p.initErr != nil {
+		return nil, nil, p.initErr
 	}
-
 	return p.dynamic, p.discovery, nil
-}
-
-func (p *APIClients) GetClientsForResource(ctx context.Context, _ schema.GroupVersionResource) (dynamic.Interface, DiscoveryClient, error) {
-	if err := p.onlyOnce(ctx); err != nil {
-		return nil, nil, fmt.Errorf("get clients: %w", err)
-	}
-
-	return p.dynamic, p.discovery, nil
-}
-
-func (p *APIClients) ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
-	dyn, discovery, err := p.GetClientsForResource(ctx, gvr)
-	if err != nil {
-		return nil, err
-	}
-	if gvr.Version == "" {
-		gvr, _, err = discovery.GetPreferredVersion(ctx, gvr.GroupResource())
-	} else {
-		_, err = discovery.GetKindForResource(gvr)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return NewRetryResourceInterface(dyn.Resource(gvr).Namespace(namespace), DefaultRetryBackoff()), nil
-}
-
-type GroupClients map[string]*APIClients
-
-func (groups GroupClients) ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
-	server := groups[gvr.Group]
-	if server == nil {
-		return nil, fmt.Errorf("no client for API group %s", gvr.Group)
-	}
-	return server.ForResource(ctx, namespace, gvr)
 }
