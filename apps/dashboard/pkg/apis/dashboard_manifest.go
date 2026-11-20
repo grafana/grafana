@@ -1033,6 +1033,14 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaNotebookv2beta1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "content",
+							Type:         "string",
+							Capabilities: []string{"text"},
+							Description:  "The text of the notebook's Markdown cells",
+						},
+					},
 				},
 
 				{

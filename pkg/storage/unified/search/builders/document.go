@@ -93,7 +93,12 @@ func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles Dashboard
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
+	notebooks, err := GetNotebookSearchBuilder(registry)
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules, notebooks}, nil
 }
 
 // iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
