@@ -9,7 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
-import { adaptSignatureHelp } from './providerAdapters';
+import { adaptSignatureHelp, adaptSyntaxHighlighting } from './providerAdapters';
 import { signatureHelp } from './signatureHelp';
 import { createCodeEditorTheme } from './theme';
 import { isThemeOverrides } from './themeOverrides';
@@ -61,6 +61,7 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
   const {
     value,
     language,
+    syntaxHighlighting,
     sqlDialect,
     height = '200px',
     onChange,
@@ -94,6 +95,10 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
   const basicSetup = useShallowStable(basicSetupProp);
 
   const completionExtensions = useCompletionExtensions(props);
+  const syntaxHighlightingExtension = useMemo(
+    () => (syntaxHighlighting ? [adaptSyntaxHighlighting(syntaxHighlighting)] : []),
+    [syntaxHighlighting]
+  );
   const signatureHelpExtension = useMemo(() => {
     const provider = publicSignatureHelp ? adaptSignatureHelp(publicSignatureHelp) : signatureHelpProvider;
     return provider ? [signatureHelp(provider, { theme })] : [];
@@ -118,6 +123,7 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
       keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }]),
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
+      ...syntaxHighlightingExtension,
       ...completionExtensions,
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(placeholder ? [placeholderExtension(placeholder)] : []),
@@ -129,6 +135,7 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
       ariaLabel,
       ariaLabelledby,
       languageExtension,
+      syntaxHighlightingExtension,
       completionExtensions,
       lineWrapping,
       placeholder,

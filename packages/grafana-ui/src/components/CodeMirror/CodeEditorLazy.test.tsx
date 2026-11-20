@@ -2,10 +2,15 @@ import { EditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VariableOrigin } from '@grafana/data';
+import { createTheme, VariableOrigin } from '@grafana/data';
 
 import { CodeMirrorEditor, InternalCodeMirrorEditor } from './CodeEditorLazy';
-import { type CodeMirrorCompletionContext, type CodeMirrorEditorProps, type SignatureHelpProvider } from './types';
+import {
+  type CodeMirrorCompletionContext,
+  type CodeMirrorEditorProps,
+  type CodeMirrorHighlightProvider,
+  type SignatureHelpProvider,
+} from './types';
 
 const signature =
   (name: string): SignatureHelpProvider =>
@@ -30,6 +35,32 @@ describe('CodeMirrorEditor', () => {
     render(<CodeMirrorEditor {...props} />);
 
     expect(await screen.findByText('Write a query')).toBeInTheDocument();
+  });
+
+  it('highlights custom syntax and updates it as the query changes', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    const highlight: CodeMirrorHighlightProvider = (text) =>
+      Array.from(text.matchAll(/\b(?:service|region)\b/g), ({ 0: word, index }) => ({
+        from: index,
+        to: index + word.length,
+        kind: 'keyword',
+      }));
+    const color = createTheme().components.codeEditor.keyword;
+    const { rerender } = render(
+      <CodeMirrorEditor value="service(id)" onChange={onChange} syntaxHighlighting={highlight} />
+    );
+
+    expect(await screen.findByText('service')).toHaveStyle({ color });
+
+    const textbox = screen.getByRole('textbox');
+    await user.click(textbox);
+    await user.keyboard('{End} region');
+    expect(await screen.findByText('region')).toHaveStyle({ color });
+
+    rerender(<CodeMirrorEditor value="service(id) region" onChange={onChange} />);
+    await waitFor(() => expect(screen.queryByText('region')).not.toBeInTheDocument());
+    expect(textbox).toHaveTextContent('service(id) region');
   });
 
   it('applies a completion described through the public context and result', async () => {

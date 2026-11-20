@@ -91,6 +91,26 @@ export type CodeMirrorBasicSetup = boolean | CodeMirrorBasicSetupOptions;
 
 export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
 
+export interface CodeMirrorHighlightRange {
+  /** Inclusive start and exclusive end as UTF-16 offsets into the document. */
+  from: number;
+  to: number;
+  kind:
+    | 'keyword'
+    | 'identifier'
+    | 'property'
+    | 'function'
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'operator'
+    | 'punctuation'
+    | 'comment';
+}
+
+/** Returns the text ranges to highlight using Grafana's editor theme. */
+export type CodeMirrorHighlightProvider = (text: string) => readonly CodeMirrorHighlightRange[];
+
 export interface CodeMirrorDiffEditorProps {
   original: string;
   modified: string;
@@ -217,6 +237,11 @@ export interface CodeMirrorEditorProps {
    * Syntax highlighting and language-aware behavior to enable.
    */
   language?: CodeMirrorEditorLanguage;
+  /**
+   * Computes custom syntax highlights from the current text. Keep the provider
+   * stable between renders: a new one reconfigures the editor.
+   */
+  syntaxHighlighting?: CodeMirrorHighlightProvider;
   /**
    * SQL dialect to use when `language` is `'sql'`. Controls dialect-specific
    * syntax highlighting and keyword completion. Defaults to `'standardSql'`.
