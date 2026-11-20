@@ -1395,11 +1395,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaFolderAndLabelsStep.tsx": {
-    "react-hooks/static-components": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
