@@ -27,13 +27,18 @@ type TestRemoteWriteTarget struct {
 }
 
 func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
+	return NewTestRemoteWriteTargetWithPath(t, RemoteWriteEndpoint)
+}
+
+// NewTestRemoteWriteTargetWithPath creates a test server that expects requests at the given path.
+func NewTestRemoteWriteTargetWithPath(t *testing.T, expectedPath string) *TestRemoteWriteTarget {
 	t.Helper()
 
 	target := &TestRemoteWriteTarget{
 		RequestsCount:   0,
 		LastRequestBody: "",
 		LastHeaders:     http.Header{},
-		ExpectedPath:    RemoteWriteEndpoint,
+		ExpectedPath:    expectedPath,
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
