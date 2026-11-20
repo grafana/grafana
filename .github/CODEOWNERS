@@ -810,6 +810,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/plugins/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-frontend-navigation
+/packages/grafana-api-clients/src/clients/rtkq/search/ @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # @grafana/openapi
@@ -828,6 +829,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-openapi/src/apis/plugins.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/preferences.* @grafana/grafana-catalog
 /packages/grafana-openapi/src/apis/provisioning.* @grafana/grafana-frontend-navigation
+/packages/grafana-openapi/src/apis/search.* @grafana/grafana-frontend-navigation
 /packages/grafana-openapi/src/apis/shorturl.* @grafana/sharing-squad
 
 
