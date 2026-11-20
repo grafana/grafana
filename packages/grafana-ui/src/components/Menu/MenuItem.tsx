@@ -323,10 +323,9 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
     link: css({
       color: theme.colors.text.primary,
       '&:hover, &:focus-visible': {
+        background: 'none',
         color: theme.colors.text.primary,
-        [`.${linkLabel}`]: {
-          textDecoration: 'underline',
-        },
+        textDecoration: 'underline',
       },
     }),
     linkLabel,

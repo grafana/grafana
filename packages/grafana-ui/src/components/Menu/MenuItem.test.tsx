@@ -122,11 +122,14 @@ describe('MenuItem', () => {
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
 
-  it('keeps menu semantics while rendering the link variant with menu text color', () => {
+  it('keeps menu semantics while rendering the link variant without a background', () => {
     render(<MenuItem label="External link" url="https://example.com" variant="link" />);
 
     const menuTextColor = createTheme().colors.text.primary;
-    expect(screen.getByRole('menuitem', { name: 'External link' })).toHaveStyle({ color: menuTextColor });
+    expect(screen.getByRole('menuitem', { name: 'External link' })).toHaveStyle({
+      background: 'none',
+      color: menuTextColor,
+    });
     expect(screen.getByText('External link')).toHaveStyle({ color: menuTextColor });
   });
 
