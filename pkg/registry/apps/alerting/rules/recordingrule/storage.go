@@ -10,8 +10,7 @@ import (
 
 func NewStorage(legacySvc legacy.LegacyRuleService, namespacer request.NamespaceMapper) grafanarest.Storage {
 	return &legacyStorage{
-		service:        legacySvc,
-		namespacer:     namespacer,
+		rules:          legacy.NewRecordingRules(&legacySvc, namespacer),
 		tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 	}
 }

@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -300,7 +301,7 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 			return err
 		}
 		// The legacy store makes this check on every write, so make it even when the references below can't be checked.
-		settingsModel, err := alertrule.ConvertNotificationSettings(&ns)
+		settingsModel, err := legacy.ConvertNotificationSettings(&ns)
 		if err != nil {
 			return err
 		}
@@ -473,9 +474,9 @@ func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified 
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	default:
 		return nil
 	}

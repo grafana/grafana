@@ -1,8 +1,7 @@
-package alertrule
+package legacy
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -22,17 +21,27 @@ import (
 )
 
 var (
-	errInvalidRule = fmt.Errorf("rule is not a alerting rule")
+	ErrNotAlertingRule = fmt.Errorf("rule is not a alerting rule")
 )
 
-func convertToK8sResource(
+var alertRuleKind = v1beta1.AlertRuleKind()
+
+// alertRuleTypeMeta is the TypeMeta the registry derives for the AlertRule resource.
+func alertRuleTypeMeta() metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       alertRuleKind.Kind(),
+		APIVersion: alertRuleKind.Group() + "/" + alertRuleKind.Version(),
+	}
+}
+
+func AlertRuleToK8s(
 	orgID int64,
 	rule *ngmodels.AlertRule,
 	managerProps utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
 ) (*v1beta1.AlertRule, error) {
 	if rule.Type() != ngmodels.RuleTypeAlerting {
-		return nil, errInvalidRule
+		return nil, ErrNotAlertingRule
 	}
 	interval, err := prom_model.ParseDuration(fmt.Sprintf("%ds", rule.IntervalSeconds))
 	if err != nil {
@@ -51,12 +60,13 @@ func convertToK8sResource(
 	k8sRule := &v1beta1.AlertRule{
 		// The apiserver converts the object to the requested version, which
 		// starts from the version named here.
-		TypeMeta: ResourceInfo.TypeMeta(),
+		TypeMeta: alertRuleTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			UID:             types.UID(rule.GUID),
 			Namespace:       namespaceMapper(orgID),
 			ResourceVersion: fmt.Sprint(rule.Version),
+			Generation:      rule.Version,
 			Labels:          make(map[string]string),
 		},
 		Spec: v1beta1.AlertRuleSpec{
@@ -107,10 +117,10 @@ func convertToK8sResource(
 	}
 
 	for _, query := range rule.Data {
-		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
+		k8sRule.Spec.Expressions[query.RefID] = alertRuleExpressionToK8s(query, rule)
 	}
 
-	if ns := convertToK8sNotificationSettings(rule); ns != nil {
+	if ns := alertRuleNotificationSettingsToK8s(rule); ns != nil {
 		k8sRule.Spec.NotificationSettings = ns
 	}
 
@@ -159,9 +169,9 @@ func convertToK8sResource(
 	return k8sRule, nil
 }
 
-// convertToK8sNotificationSettings maps the domain rule's routing configuration into k8s
+// alertRuleNotificationSettingsToK8s maps the domain rule's routing configuration into k8s
 // notification settings. It returns nil when the rule has no routing configured.
-func convertToK8sNotificationSettings(rule *ngmodels.AlertRule) *v1beta1.AlertRuleNotificationSettings {
+func alertRuleNotificationSettingsToK8s(rule *ngmodels.AlertRule) *v1beta1.AlertRuleNotificationSettings {
 	if setting := rule.ContactPointRouting(); setting != nil {
 		simplifiedRouting := v1beta1.AlertRuleSimplifiedRouting{
 			Type:     v1beta1.AlertRuleNotificationSettingsTypeSimplifiedRouting,
@@ -236,7 +246,7 @@ func ConvertToK8sExecErrState(state ngmodels.ExecutionErrorState) (v1beta1.Alert
 	}
 }
 
-func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) v1beta1.AlertRuleExpression {
+func alertRuleExpressionToK8s(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) v1beta1.AlertRuleExpression {
 	expression := v1beta1.AlertRuleExpression{
 		Model: query.Model,
 	}
@@ -259,7 +269,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 	return expression
 }
 
-func convertToK8sResources(
+func AlertRulesToK8s(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	managerPropsMap map[string]utils.ManagerProperties,
@@ -274,7 +284,7 @@ func convertToK8sResources(
 	}
 	for _, rule := range rules {
 		managerProps := managerPropsMap[rule.UID]
-		k8sRule, err := convertToK8sResource(orgID, rule, managerProps, namespaceMapper)
+		k8sRule, err := AlertRuleToK8s(orgID, rule, managerProps, namespaceMapper)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to k8s resource: %w", err)
 		}
@@ -283,10 +293,10 @@ func convertToK8sResources(
 	return k8sRules, nil
 }
 
-// convertVersionToK8sResource converts an AlertRuleVersion into a k8s AlertRule resource.
+// alertRuleVersionToK8s converts an AlertRuleVersion into a k8s AlertRule resource.
 // The version's revision message is preserved on the message annotation so callers iterating
 // history can display per-revision context the same way the unified storage history list does.
-func convertVersionToK8sResource(
+func alertRuleVersionToK8s(
 	orgID int64,
 	version *ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
@@ -294,7 +304,7 @@ func convertVersionToK8sResource(
 	if version == nil {
 		return nil, fmt.Errorf("nil version")
 	}
-	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, utils.ManagerProperties{}, namespaceMapper)
+	k8sRule, err := AlertRuleToK8s(orgID, &version.AlertRule, utils.ManagerProperties{}, namespaceMapper)
 	if err != nil {
 		return nil, err
 	}
@@ -308,20 +318,21 @@ func convertVersionToK8sResource(
 	return k8sRule, nil
 }
 
-// convertVersionsToK8sResources converts a list of AlertRuleVersion into a k8s AlertRuleList.
+// AlertRuleVersionsToK8s converts a list of AlertRuleVersion into a k8s AlertRuleList.
 // The Version on each rule is reflected via ResourceVersion so paginating clients can identify revisions.
-func convertVersionsToK8sResources(
+// Recording rule versions share storage with alerting rules, so they are skipped.
+func AlertRuleVersionsToK8s(
 	orgID int64,
 	versions []*ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
 ) (*v1beta1.AlertRuleList, error) {
 	out := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0, len(versions))}
 	for _, v := range versions {
-		k8sRule, err := convertVersionToK8sResource(orgID, v, namespaceMapper)
+		if v == nil || v.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
+		k8sRule, err := alertRuleVersionToK8s(orgID, v, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, errInvalidRule) {
-				continue
-			}
 			return nil, fmt.Errorf("failed to convert version to k8s resource: %w", err)
 		}
 		out.Items = append(out.Items, *k8sRule)
@@ -329,25 +340,25 @@ func convertVersionsToK8sResources(
 	return out, nil
 }
 
-// convertDeletedToK8sResources converts soft-deleted alert rules into a k8s AlertRuleList,
-// stamping each item with a deletion timestamp.
-func convertDeletedToK8sResources(
+// DeletedAlertRulesToK8s converts soft-deleted alert rules into a k8s AlertRuleList,
+// stamping each item with a deletion timestamp. Deleted recording rules are skipped.
+func DeletedAlertRulesToK8s(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	namespaceMapper request.NamespaceMapper,
 ) (*v1beta1.AlertRuleList, error) {
 	out := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0, len(rules))}
 	for _, rule := range rules {
+		if rule == nil || rule.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
 		// Tombstone rows clear the UID; the converter requires a non-empty Name, so fall back to the GUID.
 		copy := *rule
 		if copy.UID == "" {
 			copy.UID = copy.GUID
 		}
-		k8sRule, err := convertToK8sResource(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
+		k8sRule, err := AlertRuleToK8s(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, errInvalidRule) {
-				continue
-			}
 			return nil, fmt.Errorf("failed to convert deleted rule to k8s resource: %w", err)
 		}
 		deleted := metav1.NewTime(rule.Updated)
@@ -357,8 +368,8 @@ func convertDeletedToK8sResources(
 	return out, nil
 }
 
-func convertToDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
-	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
+func AlertRuleFromK8sForWrite(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
+	domainRule, err := alertRuleBaseToModel(orgID, k8sRule)
 	if err != nil {
 		return nil, utils.ManagerProperties{}, fmt.Errorf("failed to convert to domain model: %w", err)
 	}
@@ -391,7 +402,7 @@ func convertToDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.Al
 	return domainRule, ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv)), nil
 }
 
-func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.AlertRule, error) {
+func alertRuleBaseToModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.AlertRule, error) {
 	noDataState, err := convertToDomainNoDataState(v1beta1.AlertRuleNoDataState(k8sRule.Spec.NoDataStateOrDefault()))
 	if err != nil {
 		return nil, err
@@ -480,7 +491,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodel
 	slices.Sort(refIDs)
 	for _, refID := range refIDs {
 		expression := k8sRule.Spec.Expressions[refID]
-		domainQuery, err := convertToDomainQuery(expression, refID)
+		domainQuery, err := alertRuleQueryToModel(expression, refID)
 		if err != nil {
 			return nil, err
 		}
@@ -602,7 +613,7 @@ func ConvertNotificationSettings(sourceSettings *v1beta1.AlertRuleNotificationSe
 	return res, nil
 }
 
-func convertToDomainQuery(expression v1beta1.AlertRuleExpression, refID string) (ngmodels.AlertQuery, error) {
+func alertRuleQueryToModel(expression v1beta1.AlertRuleExpression, refID string) (ngmodels.AlertQuery, error) {
 	modelJson, err := json.Marshal(expression.Model)
 	if err != nil {
 		return ngmodels.AlertQuery{}, fmt.Errorf("failed to marshal model: %w", err)

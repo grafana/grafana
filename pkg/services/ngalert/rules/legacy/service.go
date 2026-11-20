@@ -63,6 +63,7 @@ type RuleStore interface {
 	rulestore.RulePageReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
+	rulestore.StatusWriter
 	// ValidateAlertRuleForWrite runs the store's own write-time checks without writing.
 	ValidateAlertRuleForWrite(rule models.AlertRule) error
 }
@@ -899,4 +900,8 @@ func userUidOrFallback(user identity.Requester) *models.UserUID {
 		return &models.FileProvisioningUserUID
 	}
 	return userUID
+}
+
+func (s *LegacyRuleService) saveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	return s.ruleStore.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
 }

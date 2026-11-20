@@ -1,4 +1,4 @@
-package alertrule
+package legacy
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ func nsMapperForTest() request.NamespaceMapper {
 	return request.GetNamespaceMapper(&setting.Cfg{})
 }
 
-func TestConvertVersionToK8sResource(t *testing.T) {
+func TestAlertRuleVersionToK8s(t *testing.T) {
 	mapper := nsMapperForTest()
 	gen := ngmodels.RuleGen
 	rule := gen.With(gen.WithOrgID(1)).GenerateRef()
@@ -25,7 +25,7 @@ func TestConvertVersionToK8sResource(t *testing.T) {
 
 	t.Run("converts and preserves the revision message", func(t *testing.T) {
 		version := &ngmodels.AlertRuleVersion{AlertRule: *rule, Message: "edit reason"}
-		got, err := convertVersionToK8sResource(rule.OrgID, version, mapper)
+		got, err := alertRuleVersionToK8s(rule.OrgID, version, mapper)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		assert.Equal(t, rule.UID, got.Name)
@@ -36,18 +36,18 @@ func TestConvertVersionToK8sResource(t *testing.T) {
 	})
 
 	t.Run("nil version returns error", func(t *testing.T) {
-		_, err := convertVersionToK8sResource(rule.OrgID, nil, mapper)
+		_, err := alertRuleVersionToK8s(rule.OrgID, nil, mapper)
 		require.Error(t, err)
 	})
 
 	t.Run("recording-rule version is rejected", func(t *testing.T) {
 		recRule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
-		_, err := convertVersionToK8sResource(recRule.OrgID, &ngmodels.AlertRuleVersion{AlertRule: *recRule}, mapper)
-		require.ErrorIs(t, err, errInvalidRule)
+		_, err := alertRuleVersionToK8s(recRule.OrgID, &ngmodels.AlertRuleVersion{AlertRule: *recRule}, mapper)
+		require.ErrorIs(t, err, ErrNotAlertingRule)
 	})
 }
 
-func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
+func TestAlertRuleVersionsToK8s_FiltersInvalid(t *testing.T) {
 	mapper := nsMapperForTest()
 	gen := ngmodels.RuleGen
 	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
@@ -57,23 +57,25 @@ func TestConvertVersionsToK8sResources_FiltersInvalid(t *testing.T) {
 	versions := []*ngmodels.AlertRuleVersion{
 		{AlertRule: *alerting, Message: "v1"},
 		{AlertRule: *recording, Message: "should be skipped"},
+		nil,
 	}
 
-	out, err := convertVersionsToK8sResources(1, versions, mapper)
+	out, err := AlertRuleVersionsToK8s(1, versions, mapper)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 1)
 	assert.Equal(t, alerting.UID, out.Items[0].Name)
 }
 
-func TestConvertDeletedToK8sResources(t *testing.T) {
+func TestDeletedAlertRulesToK8s(t *testing.T) {
 	mapper := nsMapperForTest()
 	gen := ngmodels.RuleGen
 	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
 	alerting.Record = nil
 	alerting.UID = ""             // tombstone leaves UID empty
 	alerting.Updated = time.Now() // deletion time
+	recording := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
 
-	out, err := convertDeletedToK8sResources(1, []*ngmodels.AlertRule{alerting}, mapper)
+	out, err := DeletedAlertRulesToK8s(1, []*ngmodels.AlertRule{alerting, recording, nil}, mapper)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 1)
 	got := out.Items[0]
@@ -83,7 +85,7 @@ func TestConvertDeletedToK8sResources(t *testing.T) {
 	require.NotNil(t, got.DeletionTimestamp, "deleted rule should carry a deletion timestamp")
 }
 
-func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
+func TestAlertRuleExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
 	rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1)).GenerateRef()
 	rule.Record = nil
 	query := rule.Data[0]
@@ -96,17 +98,17 @@ func TestExpressionsConvertToDomainInRefIDOrder(t *testing.T) {
 	}
 	rule.Condition = "D"
 
-	k8sRule, err := convertToK8sResource(1, rule, utils.ManagerProperties{}, nsMapperForTest())
+	k8sRule, err := AlertRuleToK8s(1, rule, utils.ManagerProperties{}, nsMapperForTest())
 	require.NoError(t, err)
 
-	domainRule, _, err := convertToDomainModel(1, k8sRule)
+	domainRule, _, err := AlertRuleFromK8sForWrite(1, k8sRule)
 	require.NoError(t, err)
 	for i, refID := range []string{"A", "B", "C", "D", "E", "F", "G", "H"} {
 		assert.Equal(t, refID, domainRule.Data[i].RefID)
 	}
 }
 
-func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
+func TestAlertRulePrometheusRuleDefinitionRoundTrip(t *testing.T) {
 	mapper := nsMapperForTest()
 	gen := ngmodels.RuleGen
 	const def = "alert: HighErrors\nexpr: errors > 0\n"
@@ -117,10 +119,10 @@ func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 		rule.Condition = rule.Data[0].RefID // mark the single query as the source so the round-trip is valid
 		rule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{OriginalRuleDefinition: def}
 
-		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceConvertedPrometheus), mapper)
+		k8sRule, err := AlertRuleToK8s(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceConvertedPrometheus), mapper)
 		require.NoError(t, err)
 
-		domainRule, _, err := convertToDomainModel(1, k8sRule)
+		domainRule, _, err := AlertRuleFromK8sForWrite(1, k8sRule)
 		require.NoError(t, err)
 		require.NotNil(t, domainRule.Metadata.PrometheusStyleRule)
 		assert.Equal(t, def, domainRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
@@ -132,10 +134,10 @@ func TestPrometheusRuleDefinitionRoundTrip(t *testing.T) {
 		rule.Condition = rule.Data[0].RefID
 		rule.Metadata.PrometheusStyleRule = nil
 
-		k8sRule, err := convertToK8sResource(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceNone), mapper)
+		k8sRule, err := AlertRuleToK8s(1, rule, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceNone), mapper)
 		require.NoError(t, err)
 
-		domainRule, _, err := convertToDomainModel(1, k8sRule)
+		domainRule, _, err := AlertRuleFromK8sForWrite(1, k8sRule)
 		require.NoError(t, err)
 		assert.Nil(t, domainRule.Metadata.PrometheusStyleRule)
 	})
