@@ -13,6 +13,7 @@ import {
   dashboardModesEnabled,
   dashboardPlanEditingEnabled,
   getDashboardMode,
+  isComposerEditing,
   type DashboardMode,
 } from '../dashboardModes';
 import { type EditablePlan } from '../dashboardPlan';
@@ -113,9 +114,14 @@ export function isArrangingPlan(state: Pick<DashboardSceneState, 'planning'>): b
   return state.planning?.phase === 'preview' && dashboardPlanEditingEnabled();
 }
 
-/** Whether rows, tabs and panels can be dragged, and panels resized. */
-export function canArrangeLayout(state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning'>): boolean {
-  return isFullDashboardEditing(state) || isArrangingPlan(state);
+/**
+ * Whether rows, tabs and panels can be dragged, and panels resized. Over Composer's Editing they can: Composer's
+ * overlay holds presses while a pick is pending, so by hand it is for when none is (the Pointer tool).
+ */
+export function canArrangeLayout(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning' | 'composerEditing'>
+): boolean {
+  return isFullDashboardEditing(state) || isArrangingPlan(state) || isComposerEditing(state);
 }
 
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
