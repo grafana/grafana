@@ -3,8 +3,8 @@ import type uPlot from 'uplot';
 
 import { createTheme } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
-import { mockBoundingClientRect } from '../../../test-utils/mockDom';
 import { UPlotChart } from '../Plot';
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
