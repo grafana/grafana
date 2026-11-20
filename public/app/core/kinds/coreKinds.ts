@@ -6,6 +6,7 @@ import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playl
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { type CoreKindKey, type KindInfo, type KindLabelOptions, type KindRegistry } from '@grafana/runtime/unstable';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 // Every page path is built here, so the object name is encoded in one place
@@ -56,14 +57,14 @@ export const CORE_KINDS = {
     group: DASHBOARD_API_GROUP,
     kind: 'Notebook',
     resource: 'notebooks',
-    // As the kind manifest has it. Storage refuses the folder annotation until notebooks get folder
-    // permissions, so for now every notebook sits at the root.
-    folderScoped: true,
+    // The kind manifest scopes notebooks to folders, but storage refuses the folder annotation until
+    // notebooks get folder permissions. Flip this together with `notebookStorageOpts` on the backend.
+    folderScoped: false,
     getLabel: label(() => t('core-kinds.notebook.label', 'notebook')),
     getPluralLabel: label(() => t('core-kinds.notebook.label-plural', 'notebooks')),
     icon: 'gf-notebook',
     iconColor: 'semi-dark-purple',
-    getRoute: page('/notebooks'),
+    getRoute: page(NOTEBOOKS_BASE_URL),
   },
   playlist: {
     group: PLAYLIST_API_GROUP,

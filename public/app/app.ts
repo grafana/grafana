@@ -57,11 +57,12 @@ import {
   setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
+  setKindRegistry,
   setPanelDataErrorView,
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { initializeLoggersRegistry, setKindRegistry } from '@grafana/runtime/unstable';
+import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
