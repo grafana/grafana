@@ -378,6 +378,13 @@ describe('dashboard tracking', () => {
     it.each([
       ['overrides', { defaults: { varMappings: { min: '$min' } }, overrides: null }],
       [
+        'override properties',
+        {
+          defaults: { varMappings: { min: '$min' } },
+          overrides: [{ matcher: { id: 'byName', options: 'A' }, properties: null }],
+        },
+      ],
+      [
         'defaults',
         {
           defaults: null,

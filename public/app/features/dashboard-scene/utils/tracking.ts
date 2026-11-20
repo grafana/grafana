@@ -227,7 +227,7 @@ function trackPanelOptionVariableUsage(dashboard: DashboardScene, trigger: 'load
   for (const panel of dashboard.state.body.getVizPanels()) {
     const { overrides } = panel.state.fieldConfig;
     const defaults = panel.state.fieldConfig.defaults ?? {};
-    const properties = (overrides ?? []).flatMap((rule) => rule.properties);
+    const properties = (overrides ?? []).flatMap((rule) => rule.properties ?? []);
     const valuesOf = (id: string) => properties.filter((prop) => prop.id === id).map((prop) => prop.value);
 
     const fieldConfig = Object.keys(defaults.varMappings ?? {}).length > 0 || properties.some(isVarMappingProp);
