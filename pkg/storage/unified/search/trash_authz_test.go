@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 // Trash authorizes on folder admin or deleter, not the read check. These tests exist
@@ -460,7 +461,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 	// Alice owns one; Bob owns four that match the same query.
 	build := func(t *testing.T) resource.ResourceIndex {
-		index := newTestDashboardsIndexPostRank(t, 20)
+		index := newTestDashboardsIndexPostRankWithConfig(t, 20, search.PostRankAuthzConfig{ExactCountThreshold: 1})
 		bobs := []string{"bob-1", "bob-2", "bob-3", "bob-4"}
 		docs := make([]*resource.BulkIndexItem, 0, len(bobs)+1)
 		docs = append(docs, trashDoc("alice-1", "folder-1", trashAlice))

@@ -36,7 +36,7 @@ func newPermissionShadow(t *testing.T, reg prometheus.Registerer, maxConcurrent 
 }
 
 type shadowLegacyClient struct {
-	legacyclient.Service
+	legacyclient.LegacyUserPermissionsClient
 	get func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error)
 }
 
@@ -129,7 +129,8 @@ func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 			require.Len(t, family.Metric, 2)
 			for _, metric := range family.Metric {
 				require.Equal(t, uint64(1), metric.GetHistogram().GetSampleCount())
-				require.Greater(t, metric.GetHistogram().GetSampleSum(), float64(0))
+				// The primary callback can complete before the clock advances.
+				require.GreaterOrEqual(t, metric.GetHistogram().GetSampleSum(), float64(0))
 			}
 		}
 	}
@@ -143,7 +144,7 @@ func TestPermissionShadowFailures(t *testing.T) {
 			if mode == "primary error" {
 				primaryErr = errors.New("primary failed")
 			}
-			var client legacyclient.Service = shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+			var client legacyclient.LegacyUserPermissionsClient = shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 				if mode == "panic" {
 					panic("shadow panic")
 				}

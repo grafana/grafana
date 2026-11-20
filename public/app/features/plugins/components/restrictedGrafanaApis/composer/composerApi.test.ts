@@ -196,6 +196,7 @@ describe('presentation', () => {
     notifyExtensionSidebarClosed();
 
     expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe('sidebar_closed');
     expect(sidebarPresentation()).toBe('docked');
   });
 

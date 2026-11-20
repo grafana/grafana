@@ -279,7 +279,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
-		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 
