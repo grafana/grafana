@@ -83,3 +83,24 @@ For every failed phase, including a crash or timeout, the phase runner adds a pa
 Update and Verify change and delete the data, so each round trip needs a new `GRAFANA_COMPAT_DIR`.
 Without `GRAFANA_COMPAT_DIR` every test skips, so these tests never run as part of the unit or integration suites.
 Only SQLite is supported for now.
+
+### Testing a SQL-to-KV switch
+
+The harness defaults to SQL-backed KV. Set `GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=false` to use legacy SQL.
+From the newer checkout, use the older worktree above to run **older SQL → newer KV → older KV** on the same test databases.
+
+```bash
+(
+set -e
+old_checkout=../grafana-old
+export GRAFANA_COMPAT_DIR="$(mktemp -d)/sql-to-kv"
+(cd "$old_checkout" && GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=false GRAFANA_COMPAT_ROLE=older \
+  go test -count=1 -run '^TestCompatSetup$' ./pkg/tests/compat/{smoke,folders})
+GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=true GRAFANA_COMPAT_ROLE=newer \
+  go test -count=1 -run '^TestCompatUpdate$' ./pkg/tests/compat/{smoke,folders}
+(cd "$old_checkout" && GF_UNIFIED_STORAGE_ENABLE_SQLKV_BACKEND=true GRAFANA_COMPAT_ROLE=older \
+  go test -count=1 -run '^TestCompatVerify$' ./pkg/tests/compat/{smoke,folders})
+)
+```
+
+Set `old_checkout=.` to try this on one build. Verify fails if you switch back to legacy SQL after KV writes because legacy SQL reads stale rows.
