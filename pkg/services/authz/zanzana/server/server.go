@@ -205,7 +205,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 
 		mtReconciler = reconciler.NewReconciler(
 			s,
-			clientFactory,
+			&clientFactory,
 			reconciler.Config{
 				Workers:             cfg.ZanzanaReconciler.Workers,
 				Interval:            cfg.ZanzanaReconciler.Interval,

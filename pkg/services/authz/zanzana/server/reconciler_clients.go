@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -26,35 +27,64 @@ import (
 type reconcilerClients struct {
 	loopback apiserver.RestConfigProvider
 	byGroup  map[string]apiserver.RestConfigProvider
+
+	mu      sync.Mutex
+	clients map[string]apiClients
 }
 
-func (c reconcilerClients) ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+type apiClients struct {
+	dynamic   dynamic.Interface
+	discovery client.DiscoveryClient
+}
+
+func (c *reconcilerClients) ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	clients, err := c.clientsFor(ctx, gvr.Group)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := clients.discovery.GetKindForResource(gvr); err != nil {
+		return nil, err
+	}
+	return retryingList{clients.dynamic.Resource(gvr).Namespace(namespace)}, nil
+}
+
+func (c *reconcilerClients) clientsFor(ctx context.Context, group string) (apiClients, error) {
 	provider := c.loopback
-	if provider == nil {
-		provider = c.byGroup[gvr.Group]
+	if provider != nil {
+		group = ""
+	} else {
+		provider = c.byGroup[group]
 	}
 	if provider == nil {
-		return nil, fmt.Errorf("no client for API group %s", gvr.Group)
+		return apiClients{}, fmt.Errorf("no client for API group %s", group)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if clients, ok := c.clients[group]; ok {
+		return clients, nil
 	}
 
 	cfg, err := provider.GetRestConfig(ctx)
 	if err != nil {
-		return nil, err
+		return apiClients{}, err
 	}
 	cfg = rest.CopyConfig(cfg)
 	cfg.Wrap(k8stracing.WrapperFor(otel.GetTracerProvider()))
 	discovery, err := client.NewDiscoveryClient(cfg)
 	if err != nil {
-		return nil, err
-	}
-	if _, err := discovery.GetKindForResource(gvr); err != nil {
-		return nil, err
+		return apiClients{}, err
 	}
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return nil, err
+		return apiClients{}, err
 	}
-	return retryingList{dyn.Resource(gvr).Namespace(namespace)}, nil
+
+	if c.clients == nil {
+		c.clients = make(map[string]apiClients)
+	}
+	c.clients[group] = apiClients{dynamic: dyn, discovery: discovery}
+	return c.clients[group], nil
 }
 
 var listBackoff = wait.Backoff{Duration: 100 * time.Millisecond, Factor: 2, Jitter: 0.1, Steps: 8, Cap: 5 * time.Second}
