@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -321,6 +322,10 @@ func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.Man
 	}{plugin, manifest, host})
 }
 
+// errNoServedVersions is returned for a manifest that declares no served
+// version, which leaves nothing to route.
+var errNoServedVersions = errors.New("no served versions")
+
 // pluginManifestGroupSuffix is required on manifest groups: unified storage
 // always enforces RBAC on it, and no core Grafana group uses it.
 const pluginManifestGroupSuffix = ".ext.grafana.app"
@@ -380,7 +385,7 @@ func buildPluginBackend(pluginID string, manifest *app.ManifestData, client Plug
 	}
 	group := pluginroute.APIGroup(manifest)
 	if len(group.Versions) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
+		return nil, fmt.Errorf("plugin %q has %w", pluginID, errNoServedVersions)
 	}
 	h := sha256.New()
 	_, _ = h.Write(key)
