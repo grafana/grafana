@@ -294,6 +294,7 @@ export function TableDataGrid({
         <TableCellInspector
           mode={inspectCell.mode ?? TableCellInspectorMode.text}
           value={inspectCell.value}
+          plainText={inspectCell.plainText}
           onDismiss={onInspectCellDismiss}
         />
       )}

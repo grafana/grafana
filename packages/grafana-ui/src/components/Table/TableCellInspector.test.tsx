@@ -14,4 +14,16 @@ describe('TableCellInspector', () => {
     render(<TableCellInspector value={value} onDismiss={() => {}} mode={TableCellInspectorMode.text} />);
     expect(screen.getByText('Copy to Clipboard')).toBeInTheDocument();
   });
+
+  it('shows the plain text tab without the formatting applied to the code editor', () => {
+    render(
+      <TableCellInspector
+        value={'{\n  "region": "eu"\n}'}
+        plainText={'{"region":"eu"}'}
+        onDismiss={() => {}}
+        mode={TableCellInspectorMode.text}
+      />
+    );
+    expect(screen.getByText('{"region":"eu"}')).toBeInTheDocument();
+  });
 });

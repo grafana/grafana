@@ -41,9 +41,8 @@ it.each([false, true])('opens inspected JSON strings with new features=%s', asyn
   if (enabled) {
     await userEvent.click(screen.getByRole('tab', { name: 'Plain text' }));
   }
-  expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(
-    enabled ? '{\n  "count": 42\n}' : '{"count":42}'
-  );
+  // The plain text tab always shows the raw value, with or without auto-detection.
+  expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe('{"count":42}');
 });
 
 it.each([false, true])('gates JSON highlighting with new table features=%s', async (enabled) => {

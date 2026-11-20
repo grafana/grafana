@@ -3532,6 +3532,7 @@ describe('TableNG utils', () => {
         value: '{"region":"eu","count":3}',
         enabled: true,
         expected: '{\n  "region": "eu",\n  "count": 3\n}',
+        plain: '{"region":"eu","count":3}',
         mode: TableCellInspectorMode.code,
       },
       {
@@ -3539,6 +3540,7 @@ describe('TableNG utils', () => {
         value: '  [1,2] \n',
         enabled: true,
         expected: '[\n  1,\n  2\n]',
+        plain: '  [1,2] \n',
         mode: TableCellInspectorMode.code,
       },
       {
@@ -3559,9 +3561,9 @@ describe('TableNG utils', () => {
       { name: 'scalar', value: '42', enabled: true, expected: '42', mode: TableCellInspectorMode.text },
       { name: 'null cell', value: null, enabled: true, expected: '', mode: TableCellInspectorMode.text },
       { name: 'ordinary text', value: ' text ', enabled: true, expected: ' text ', mode: TableCellInspectorMode.text },
-    ])('auto-detects JSON for inspection: $name', ({ value, enabled, expected, mode }) => {
+    ])('auto-detects JSON for inspection: $name', ({ value, enabled, expected, mode, plain = expected }) => {
       const field: Field = { name: 'value', type: FieldType.string, values: [null, value], config: {} };
-      expect(buildInspectValue(value, field, undefined, enabled)).toEqual([expected, mode]);
+      expect(buildInspectValue(value, field, undefined, enabled)).toEqual([expected, mode, plain]);
     });
 
     const numberFieldWithNulls: Field = {

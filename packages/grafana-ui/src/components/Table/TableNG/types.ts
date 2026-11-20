@@ -233,6 +233,8 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  /** Raw cell value for the plain text tab when `value` is a formatted version of it. */
+  plainText?: string;
   preformatted?: boolean;
 };
 
