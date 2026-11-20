@@ -67,11 +67,14 @@ describe('useCanWritePlaylists', () => {
 });
 
 describe('isValidInterval', () => {
-  it.each(['30', '30s', '5m', '1h', '2d', '500ms'])('accepts %s', (interval) => {
+  it.each(['30', '30s', '5m', '1h', '500ms'])('accepts %s', (interval) => {
     expect(isValidInterval(interval)).toBe(true);
   });
 
-  it.each(['', '0s', '-5m', '30ssdddmm', '5mm', '1.5m', '1e3', '30 s', 'abc', 's'])('rejects %s', (interval) => {
-    expect(isValidInterval(interval)).toBe(false);
-  });
+  it.each(['', '0s', '-5m', '30ssdddmm', '5mm', '1.5m', '1e3', '30 s', 'abc', 's', '2d', '1w', '1M', '1y'])(
+    'rejects %s',
+    (interval) => {
+      expect(isValidInterval(interval)).toBe(false);
+    }
+  );
 });

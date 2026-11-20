@@ -12,7 +12,7 @@ import { type PlaylistItemUI } from './types';
 export const PLAYLISTS_URL = '/playlists';
 
 // `rangeUtil.intervalToMs` only anchors the start, so alone it accepts "30ssdd" and truncates "1.5m".
-const INTERVAL_PATTERN = /^\d+(ms|[smhdwMy])?$/;
+const INTERVAL_PATTERN = /^\d+(ms|[smh])?$/;
 
 /** Whether an interval string (e.g. "5m", "30s") is well formed and a positive duration. */
 export function isValidInterval(interval: string): boolean {
