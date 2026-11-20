@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
-	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -34,7 +34,7 @@ func (allowAllRuleAccessControl) AuthorizeAccessToRuleGroup(context.Context, ide
 func (allowAllRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) error {
 	return nil
 }
-func (allowAllRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
+func (allowAllRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *ngrulesvc.GroupDelta) error {
 	return nil
 }
 func (allowAllRuleAccessControl) AuthorizeNotificationSettings(context.Context, identity.Requester, []ngalertac.ReceiverRef) error {
