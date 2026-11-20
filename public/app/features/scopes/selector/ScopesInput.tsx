@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { Fragment } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -6,6 +7,7 @@ import { useFlagGrafanaEnableScopesFirstMode } from '@grafana/runtime/internal';
 import { getInputStyles, Icon, LinkButton, Spinner, Tooltip, useStyles2, Text, Stack } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
+import { ScopeMetadata, hasScopeMetadata, useScopeMetadata } from './ScopeMetadata';
 import { getPathOfNode } from './scopesTreeUtils';
 import { type NodesMap, type ScopesMap, type SelectedScope } from './types';
 import { useScopeNode } from './useScopeNode';
@@ -159,6 +161,13 @@ export interface ScopesTooltipProps {
 }
 
 export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, disabled }: ScopesTooltipProps) {
+  const styles = useStyles2(getStyles);
+  // The cached nodes and scopes only cover what was loaded before, so load the rest the way the selector does. Only
+  // the first applied scope is guaranteed a scopeNodeId, the others are resolved through their default path.
+  const loadedMetadata = useScopeMetadata(
+    appliedScopes.map((s) => ({ scopeId: s.scopeId, nodeId: s.scopeNodeId })),
+    appliedScopes.length > 0
+  );
   if (appliedScopes.length === 0) {
     return t('scopes.selector.input.tooltip', 'Select scope');
   }
@@ -176,21 +185,44 @@ export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, 
 
   const parentPaths = nicePath && nicePath.length > 0 ? nicePath.join(' > ') + ' > ' : '';
 
+  const metadata = appliedScopes
+    .map((s, i) => {
+      const loaded = loadedMetadata.find((m) => m.scopeId === s.scopeId);
+      return {
+        scopeId: s.scopeId,
+        title: appliedScopes.length > 1 ? scopeNames[i] : undefined,
+        // What is cached is shown right away, and replaced by the loaded values once they arrive
+        description: loaded ? loaded.description : s.scopeNodeId ? nodes[s.scopeNodeId]?.spec.description : undefined,
+        filters: loaded ? loaded.filters : scopes[s.scopeId]?.spec.filters,
+      };
+    })
+    .filter(hasScopeMetadata);
+  const showRemoveAll = !disabled && onRemoveAllClick;
+
   return (
-    <Stack direction="column" gap={1} justifyContent="center" alignItems={'center'}>
-      <span>{parentPaths + scopeNames.join(', ')}</span>
-      {!disabled && onRemoveAllClick && (
-        <LinkButton
-          onClick={onRemoveAllClick}
-          aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
-          name="times"
-          data-testid="scopes-selector-input-clear"
-          size="sm"
-          fill="text"
-          icon="times"
-        >
-          <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
-        </LinkButton>
+    <Stack direction="column" gap={1} alignItems="flex-start">
+      <span className={styles.tooltipPath}>{parentPaths + scopeNames.join(', ')}</span>
+      {metadata.map(({ scopeId, title, description, filters }) => (
+        <Fragment key={scopeId}>
+          {appliedScopes.length > 1 && <hr className={styles.divider} />}
+          <ScopeMetadata title={title} description={description} filters={filters} />
+        </Fragment>
+      ))}
+      {showRemoveAll && (
+        <>
+          {metadata.length > 0 && <hr className={styles.divider} />}
+          <LinkButton
+            onClick={onRemoveAllClick}
+            aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
+            name="times"
+            data-testid="scopes-selector-input-clear"
+            size="sm"
+            fill="text"
+            icon="times"
+          >
+            <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
+          </LinkButton>
+        </>
       )}
     </Stack>
   );
@@ -200,6 +232,15 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
+    tooltipPath: css({
+      textAlign: 'left',
+    }),
+    divider: css({
+      alignSelf: 'stretch',
+      margin: 0,
+      border: 0,
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+    }),
     prefix: baseStyles.prefix,
     suffix: baseStyles.suffix,
     fakeInput: css([
