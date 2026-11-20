@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
-import { SortPicker } from 'app/core/components/Select/SortPicker';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
+import { TemplateFilters } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateFilters';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelection, type TemplateSortOrder } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { getTemplateSortOptions } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templateFilters';
@@ -162,25 +162,14 @@ export function LandingTemplates({
     >
       <div className={styles.header}>
         {loaded && !isEmpty && (
-          <>
-            <FilterInput
-              className={styles.search}
-              placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
-              value={searchQuery}
-              escapeRegex={false}
-              onChange={setSearchQuery}
-            />
-            <div className={styles.sort}>
-              <SortPicker
-                value={sortOrder}
-                onChange={(change) => setSortOrder(change?.value)}
-                getSortOptions={getTemplateSortOptions}
-                placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
-                isClearable
-                width="auto"
-              />
-            </div>
-          </>
+          // The template modal's filters, without the tag and creator ones that only custom templates carry.
+          <TemplateFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sortValue={sortOrder}
+            onSortChange={(change) => setSortOrder(change?.value)}
+            getSortOptions={getTemplateSortOptions}
+          />
         )}
       </div>
       <div className={styles.list}>
@@ -271,25 +260,9 @@ function getStyles(theme: GrafanaTheme2) {
     // A set height, so the row keeps its height while the lists load and the cards do not jump.
     header: css({
       display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
+      flexDirection: 'column',
+      justifyContent: 'center',
       height: headerHeight,
-    }),
-    // The main control: it takes the room the sort leaves, up to a cap, and gives it up first.
-    search: css({
-      flex: 1,
-      minWidth: 0,
-      maxWidth: theme.spacing(32),
-    }),
-    // As wide as its value, so it stays small until a person sorts, at the far end of the row. Flex, so the
-    // inline-flex select adds no line box. A phone keeps the row to the search.
-    sort: css({
-      display: 'flex',
-      flexShrink: 0,
-      marginLeft: 'auto',
-      [theme.breakpoints.down('sm')]: {
-        display: 'none',
-      },
     }),
     // One row and a sliver of the next; the rest scrolls. A set height, so neither a search that matches less nor the
     // loading cards move the page.
