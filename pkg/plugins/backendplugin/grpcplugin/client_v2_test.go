@@ -126,6 +126,38 @@ func TestClientV2QueryChunkedDataFallbackRecordsResponseSize(t *testing.T) {
 	assert.Equal(t, want, recorder.Sizes())
 }
 
+func TestClientV2ReleasesEncodedFramesOnceDecoded(t *testing.T) {
+	tests := []struct {
+		name  string
+		query func(*ClientV2) error
+	}{
+		{"QueryData", func(c *ClientV2) error {
+			_, err := c.QueryData(context.Background(), &backend.QueryDataRequest{})
+			return err
+		}},
+		{"QueryChunkedData fallback", func(c *ClientV2) error {
+			return c.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{}, &typedWriter{})
+		}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			protoResp, _ := encodedResponse(t)
+			client := &ClientV2{DataClient: fakeDataClient{resp: protoResp, chunkedErr: status.Error(codes.Unimplemented, "no chunking")}}
+
+			require.NoError(t, tc.query(client))
+			held := 0
+			for _, r := range protoResp.Responses {
+				for _, f := range r.Frames {
+					if f != nil {
+						held++
+					}
+				}
+			}
+			assert.Zero(t, held, "encoded frames still held after decoding")
+		})
+	}
+}
+
 // sdkPlugin serves QueryData and QueryChunkedData with the data server of the plugin SDK.
 type sdkPlugin struct {
 	queryDataCalls atomic.Int32
@@ -176,21 +208,22 @@ type recordingWriter interface {
 	written() []string
 }
 
-// typedWriter keeps the refID and the name of each frame.
+// typedWriter keeps the refID and the name of each frame, and the refID and the message of each error.
 type typedWriter struct {
-	frames []string
+	writes []string
 }
 
 func (w *typedWriter) written() []string {
-	return w.frames
+	return w.writes
 }
 
 func (w *typedWriter) WriteFrame(_ context.Context, refID string, _ string, f *data.Frame) error {
-	w.frames = append(w.frames, refID+":"+f.Name)
+	w.writes = append(w.writes, refID+":"+f.Name)
 	return nil
 }
 
-func (w *typedWriter) WriteError(context.Context, string, backend.Status, error) error {
+func (w *typedWriter) WriteError(_ context.Context, refID string, _ backend.Status, err error) error {
+	w.writes = append(w.writes, refID+":error:"+err.Error())
 	return nil
 }
 
@@ -200,6 +233,9 @@ type rawWriter struct {
 }
 
 func (w *rawWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error {
+	if chunk.Error != "" {
+		return w.WriteError(context.Background(), chunk.RefId, backend.Status(chunk.Status), errors.New(chunk.Error))
+	}
 	f, err := data.UnmarshalArrowFrame(chunk.Frame)
 	if err != nil {
 		return err
@@ -260,6 +296,20 @@ func TestClientV2QueryChunkedDataWithSDKPlugin(t *testing.T) {
 
 				assert.Equal(t, []string{"A:chunked"}, w.written())
 				assert.Zero(t, plugin.queryDataCalls.Load())
+			})
+
+			t.Run("delivers the errors of the plugin", func(t *testing.T) {
+				plugin := &sdkPlugin{chunked: func(ctx context.Context, _ *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+					if err := w.WriteFrame(ctx, "A", "1", namedFrame("chunked")); err != nil {
+						return err
+					}
+					return w.WriteError(ctx, "A", backend.StatusBadRequest, errors.New("bad query"))
+				}}
+				w := tc.writer()
+
+				require.NoError(t, plugin.client(t).QueryChunkedData(context.Background(), req, w))
+
+				assert.Equal(t, []string{"A:chunked", "A:error:bad query"}, w.written())
 			})
 		})
 	}

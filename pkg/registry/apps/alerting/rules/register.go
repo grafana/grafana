@@ -28,6 +28,7 @@ import (
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
+	rulesAppUtil "github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -47,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -298,6 +300,14 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 		if err := validateNotificationSettingsFields(ns); err != nil {
 			return err
 		}
+		// The legacy store makes this check on every write, so make it even when the references below can't be checked.
+		settingsModel, err := legacy.ConvertNotificationSettings(&ns)
+		if err != nil {
+			return err
+		}
+		if err := settingsModel.Validate(); err != nil {
+			return rulesAppUtil.StoreRejection("invalid notification settings: %s", err)
+		}
 
 		orgID := resolveOrgID(ctx)
 		if orgID < 1 {
@@ -310,11 +320,6 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 			log.New("alerting.rules.app").Error("failed to create notification settings validator", "error", err)
 			// If we cannot build a validator, don't block admission
 			return nil
-		}
-
-		settingsModel, err := alertrule.ConvertNotificationSettings(&ns)
-		if err != nil {
-			return err
 		}
 		return vd.Validate(settingsModel)
 	}
@@ -469,9 +474,9 @@ func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified 
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	default:
 		return nil
 	}

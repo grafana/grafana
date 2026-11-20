@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -247,6 +249,9 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
+	for i := range pluginDefs {
+		loadSettingsManifest(ctx, &pluginDefs[i])
+	}
 	return pluginDefs, nil
 }
 
@@ -306,12 +311,20 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 // invalidate each other's handlers and active watches.
 func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
 	plugin.Manifests = nil
+	if manifest != nil {
+		// Only the settings backend serves the settings manifest.
+		plugin.Settings = nil
+	}
 	return json.Marshal(struct {
 		Definition definition.PluginDefinition
 		Manifest   *app.ManifestData
 		Host       string
 	}{plugin, manifest, host})
 }
+
+// errNoServedVersions is returned for a manifest that declares no served
+// version, which leaves nothing to route.
+var errNoServedVersions = errors.New("no served versions")
 
 // pluginManifestGroupSuffix is required on manifest groups: unified storage
 // always enforces RBAC on it, and no core Grafana group uses it.
@@ -372,7 +385,7 @@ func buildPluginBackend(pluginID string, manifest *app.ManifestData, client Plug
 	}
 	group := pluginroute.APIGroup(manifest)
 	if len(group.Versions) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
+		return nil, fmt.Errorf("plugin %q has %w", pluginID, errNoServedVersions)
 	}
 	h := sha256.New()
 	_, _ = h.Write(key)
@@ -410,6 +423,7 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 		pluginID:   id,
 		info:       plugin.JSONData.Info,
 		group:      metav1.APIGroup{Name: id, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version},
+		manifest:   plugin.Settings,
 		settings:   &plugin,
 		client:     client,
 		deps:       deps,
@@ -433,8 +447,11 @@ type PluginBackend struct {
 	client    PluginClientProvider
 	deps      PluginDependencies
 
-	// settings is set instead of manifest for the backend that serves the
-	// plugin's settings API under its plugin ID.
+	// settings is set for the backend that serves the plugin's settings API
+	// under its plugin ID. Its manifest, the settings manifest, is only
+	// published: what it serves is built from settings. It is published as
+	// served, with its x-grafana-proxy routes, so a plugin can declare it in
+	// place of its plugin.json routes.
 	settings *definition.PluginDefinition
 
 	// hasBackend is whether the plugin runs a backend process, for the
@@ -598,4 +615,12 @@ func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchan
 		setContextFailure(ctx, failureAuth)
 	}
 	return res, err
+}
+
+// loadSettingsManifest describes the plugin's settings API, with the proxy
+// routes it serves, once its manifests are loaded.
+func loadSettingsManifest(ctx context.Context, plugin *definition.PluginDefinition) {
+	if err := plugin.LoadSettings(pluginproxy.MatchRoute); err != nil {
+		logging.FromContext(ctx).Warn("router: parts of the plugin settings manifest are not served", "pluginId", plugin.JSONData.ID, "reason", err)
+	}
 }
