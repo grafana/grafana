@@ -187,7 +187,7 @@ function DashboardCardComponent({
           className={styles.selectButton}
           onClick={onSelect}
           aria-pressed={selected}
-          aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
+          aria-label={t('dashboard-library.card.attach-template-button-label', 'Attach template: {{title}}', { title })}
         />
       )}
       {hasCardMenu && (

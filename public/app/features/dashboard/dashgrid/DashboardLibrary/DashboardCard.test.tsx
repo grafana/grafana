@@ -155,7 +155,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use template: RED metrics' }));
+      await user.click(screen.getByRole('button', { name: 'Attach template: RED metrics' }));
 
       expect(onSelect).toHaveBeenCalledTimes(1);
       expect(mockOnClick).not.toHaveBeenCalled();

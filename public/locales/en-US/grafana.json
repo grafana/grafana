@@ -7248,6 +7248,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "Attach template: {{title}}",
       "community-badge": "Community",
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",

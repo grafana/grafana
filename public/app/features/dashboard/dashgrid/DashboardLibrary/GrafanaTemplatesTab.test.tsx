@@ -83,7 +83,7 @@ describe('GrafanaTemplatesTab', () => {
       const onSelectTemplate = jest.fn();
       const { user } = renderTab({ onSelectTemplate });
 
-      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+      await user.click(await screen.findByRole('button', { name: 'Attach template: RED metrics' }));
 
       expect(onSelectTemplate).toHaveBeenCalledWith({
         id: 'grafana:1',
@@ -98,7 +98,7 @@ describe('GrafanaTemplatesTab', () => {
       const onSelectTemplate = jest.fn();
       const { user } = renderTab({ onSelectTemplate, entryPoint: 'emptyDashboardPrompt' });
 
-      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+      await user.click(await screen.findByRole('button', { name: 'Attach template: RED metrics' }));
 
       expect(onSelectTemplate).toHaveBeenCalledWith(
         expect.objectContaining({ url: expect.stringContaining('sourceEntryPoint=empty_dashboard_prompt') })
@@ -136,7 +136,7 @@ describe('GrafanaTemplatesTab', () => {
       // Not while loading: an early 0 would read as an account with no templates.
       expect(onTemplatesLoad).toHaveBeenCalledTimes(1);
       expect(onTemplatesLoad).toHaveBeenCalledWith(1);
-      expect(screen.queryByRole('button', { name: /^Use template: / })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^Attach template: / })).not.toBeInTheDocument();
     });
 
     it('previews the template on its dashboard page in a new tab', async () => {
@@ -169,18 +169,18 @@ describe('GrafanaTemplatesTab', () => {
       );
       renderTab({ onSelectTemplate: jest.fn(), searchQuery: 'ERRORS', sortOrder: 'desc' });
 
-      await screen.findByRole('button', { name: 'Use template: RED metrics' });
+      await screen.findByRole('button', { name: 'Attach template: RED metrics' });
       const titles = screen
-        .getAllByRole('button', { name: /^Use template: / })
+        .getAllByRole('button', { name: /^Attach template: / })
         .map((b) => b.getAttribute('aria-label'));
-      expect(titles).toEqual(['Use template: RED metrics', 'Use template: Golden signals']);
+      expect(titles).toEqual(['Attach template: RED metrics', 'Attach template: Golden signals']);
     });
 
     it('reports attaching a template as the template modal reports its clicks, placed on the prompt', async () => {
       const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
       const { user } = renderTab({ onSelectTemplate: jest.fn(), entryPoint: 'emptyDashboardPrompt' });
 
-      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+      await user.click(await screen.findByRole('button', { name: 'Attach template: RED metrics' }));
 
       expect(itemClicked).toHaveBeenCalledWith({
         contentKind: 'template_dashboard',
@@ -199,7 +199,7 @@ describe('GrafanaTemplatesTab', () => {
       const onSelectTemplate = jest.fn();
       const { user } = renderTab({ onSelectTemplate, selectedTemplateId: 'grafana:1' });
 
-      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+      await user.click(await screen.findByRole('button', { name: 'Attach template: RED metrics' }));
 
       expect(onSelectTemplate).toHaveBeenCalled();
       expect(itemClicked).not.toHaveBeenCalled();
@@ -220,7 +220,7 @@ describe('GrafanaTemplatesTab', () => {
     it('marks the selected template', async () => {
       renderTab({ onSelectTemplate: jest.fn(), selectedTemplateId: 'grafana:1' });
 
-      expect(await screen.findByRole('button', { name: 'Use template: RED metrics' })).toHaveAttribute(
+      expect(await screen.findByRole('button', { name: 'Attach template: RED metrics' })).toHaveAttribute(
         'aria-pressed',
         'true'
       );
@@ -237,6 +237,6 @@ describe('GrafanaTemplatesTab', () => {
       expect.objectContaining({ action: 'view_template', eventLocation: 'browse_dashboards_page' })
     );
     expect(locationService.push).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1/));
-    expect(screen.queryByRole('button', { name: 'Use template: RED metrics' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Attach template: RED metrics' })).not.toBeInTheDocument();
   });
 });
