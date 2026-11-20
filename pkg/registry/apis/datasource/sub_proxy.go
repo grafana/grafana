@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -117,10 +116,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		r.recordRequest(ctx, proxymetrics.Observation{
-			PluginID: r.builder.pluginJSON.ID,
-			Status:   http.StatusInternalServerError,
-			Source:   proxymetrics.SourceServer,
+		r.recordRequest(ctx, pluginproxy.RequestLog{
+			PluginID: r.builder.pluginJSON.ID, DatasourceUID: name,
+			Namespace: k8srequest.NamespaceValue(ctx),
+			Status:    http.StatusInternalServerError, Source: string(requestmeta.StatusSourceServer),
 		})
 		return nil, errors.New("datasource proxy is not configured")
 	}
@@ -131,7 +130,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		defer m.Record()
 
 		start := time.Now()
-		recorder := proxymetrics.NewStatusRecorder(w)
+		recorder := newProxyStatusRecorder(w)
 		w = recorder
 		// Errors go through the responder rather than w, so their status is taken from the error.
 		var errStatus int
@@ -140,17 +139,15 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			if errStatus != 0 {
 				status = errStatus
 			}
-			r.recordRequest(req.Context(), proxymetrics.Observation{
-				PluginID: r.builder.pluginJSON.ID,
-				Status:   status,
-				Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
-				Duration: time.Since(start),
-				Log: proxymetrics.LogFields{
-					DatasourceUID: name,
-					Namespace:     k8srequest.NamespaceValue(req.Context()),
-					Method:        req.Method,
-					Path:          proxyPathFromRequest(req, name),
-				},
+			r.recordRequest(req.Context(), pluginproxy.RequestLog{
+				PluginID:      r.builder.pluginJSON.ID,
+				DatasourceUID: name,
+				Namespace:     k8srequest.NamespaceValue(req.Context()),
+				Method:        req.Method,
+				Path:          proxyPathFromRequest(req, name),
+				Status:        status,
+				Source:        pluginproxy.StatusSource(req.Context(), status),
+				Duration:      time.Since(start),
 			})
 		}()
 
@@ -237,10 +234,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}), nil
 }
 
-func (r *subProxyREST) recordRequest(ctx context.Context, o proxymetrics.Observation) {
-	r.builder.proxyMetrics.RecordMetricsAndLog(o)
+func (r *subProxyREST) recordRequest(ctx context.Context, entry pluginproxy.RequestLog) {
+	entry.Log()
 	if record := r.builder.cfg.RecordProxyRequest; record != nil {
-		record(ctx, o.PluginID, o.Status, o.Source)
+		record(ctx, entry.PluginID, entry.Status, entry.Source)
 	}
 }
 
@@ -326,4 +323,49 @@ var proxyRouteChecks = map[string]proxyRouteCheck{
 	accesscontrol.ActionAlertingInstancesExternalWrite:     {"alertinstances", utils.VerbUpdate},
 	accesscontrol.ActionAlertingNotificationsExternalRead:  {"alertnotifications", utils.VerbGet},
 	accesscontrol.ActionAlertingNotificationsExternalWrite: {"alertnotifications", utils.VerbUpdate},
+}
+
+// proxyStatusRecorder records the final status written to the wrapped ResponseWriter.
+type proxyStatusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+// newProxyStatusRecorder wraps w.
+func newProxyStatusRecorder(w http.ResponseWriter) *proxyStatusRecorder {
+	return &proxyStatusRecorder{ResponseWriter: w}
+}
+
+// Unwrap lets http.ResponseController reach the wrapped writer's Flusher and
+// Hijacker, which the reverse proxy needs for streaming and protocol upgrades.
+func (r *proxyStatusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
+
+func (r *proxyStatusRecorder) WriteHeader(code int) {
+	// Informational responses are not the final status. 101 ends the exchange.
+	if r.status == 0 && (code >= 200 || code == http.StatusSwitchingProtocols) {
+		r.status = code
+	}
+	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *proxyStatusRecorder) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	return r.ResponseWriter.Write(b)
+}
+
+func (r *proxyStatusRecorder) Flush() {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	_ = http.NewResponseController(r.ResponseWriter).Flush()
+}
+
+// Status returns the recorded status, or 200 if nothing was written, which is what net/http sends.
+func (r *proxyStatusRecorder) Status() int {
+	if r.status == 0 {
+		return http.StatusOK
+	}
+	return r.status
 }

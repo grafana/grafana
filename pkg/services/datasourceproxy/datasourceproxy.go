@@ -13,9 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -45,7 +43,6 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 		tracer:                     tracer,
 		secretsService:             secretsService,
 		features:                   features,
-		metrics:                    proxymetrics.ForVariant(proxymetrics.VariantLegacy),
 	}
 }
 
@@ -60,38 +57,6 @@ type DataSourceProxyService struct {
 	tracer                     tracing.Tracer
 	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features                   featuremgmt.FeatureToggles
-	metrics                    *proxymetrics.Metrics
-}
-
-// proxyObservation records one proxied request when it finishes, whichever way it ends.
-type proxyObservation struct {
-	metrics  *proxymetrics.Metrics
-	c        *contextmodel.ReqContext
-	start    time.Time
-	pluginID string
-	dsUID    string
-}
-
-func (p *DataSourceProxyService) observe(c *contextmodel.ReqContext) *proxyObservation {
-	return &proxyObservation{metrics: p.metrics, c: c, start: time.Now()}
-}
-
-func (o *proxyObservation) finish() {
-	if o.metrics == nil || o.c.Resp == nil {
-		return
-	}
-	status := o.c.Resp.Status()
-	o.metrics.RecordMetricsAndLog(proxymetrics.Observation{
-		PluginID: o.pluginID,
-		Status:   status,
-		Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
-		Duration: time.Since(o.start),
-		Log: proxymetrics.LogFields{
-			DatasourceUID: o.dsUID,
-			Method:        o.c.Req.Method,
-			Path:          getProxyPath(o.c),
-		},
-	})
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -105,8 +70,9 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqConte
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
-	obs := p.observe(c)
-	defer obs.finish()
+	start := time.Now()
+	var ds *datasources.DataSource
+	defer func() { logProxyRequest(c, ds, start) }()
 
 	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
 		dsUID = web.Params(c.Req)[":uid"]
@@ -122,20 +88,38 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 		toAPIError(c, err)
 		return
 	}
-	p.proxyDatasourceRequest(c, ds, obs)
+	p.proxyDatasourceRequest(c, ds)
 }
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
-	obs := p.observe(c)
-	defer obs.finish()
+	start := time.Now()
+	var ds *datasources.DataSource
+	defer func() { logProxyRequest(c, ds, start) }()
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
 		return
 	}
-	p.proxyDatasourceRequest(c, ds, obs)
+	p.proxyDatasourceRequest(c, ds)
+}
+
+func logProxyRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, start time.Time) {
+	if c.Resp == nil {
+		return
+	}
+	status := c.Resp.Status()
+	entry := pluginproxy.RequestLog{
+		Method: c.Req.Method, Path: getProxyPath(c),
+		Status: status, Source: pluginproxy.StatusSource(c.Req.Context(), status),
+		Duration: time.Since(start),
+	}
+	if ds != nil {
+		entry.PluginID = ds.Type
+		entry.DatasourceUID = ds.UID
+	}
+	entry.Log()
 }
 
 func toAPIError(c *contextmodel.ReqContext, err error) {
@@ -150,9 +134,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 }
 
-func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, obs *proxyObservation) {
-	obs.pluginID = ds.Type
-	obs.dsUID = ds.UID
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
 	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
