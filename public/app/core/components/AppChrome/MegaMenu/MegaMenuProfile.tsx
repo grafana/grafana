@@ -62,7 +62,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexShrink: 0,
     gap: theme.spacing(1),
-    height: theme.spacing(5),
+    // A navigation item's height.
+    height: theme.spacing(4),
     // The navigation items' box and padding: the avatar takes their icon slot and the name starts where their labels do.
     margin: theme.spacing(0, 1, 1),
     padding: theme.spacing(0, 1, 0, 0.5),
