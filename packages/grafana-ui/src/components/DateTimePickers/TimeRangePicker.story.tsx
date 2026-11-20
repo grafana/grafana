@@ -65,15 +65,13 @@ export const Basic: StoryFn<typeof TimeRangePicker> = (args) => {
 };
 
 export const Compact = Basic.bind({});
-Compact.args = { compactDesign: 'tabs', layout: 'compact' };
+Compact.args = { compactDesign: 'tabs', widthOverride: 600 };
 
 export const Embedded = Basic.bind({});
 Embedded.args = {
   compactDesign: 'tabs',
-  layout: 'compact',
-  calendarDisplay: 'inline',
+  widthOverride: 600,
   showHistory: false,
-  rememberLastTab: false,
   hideTimeZone: true,
   hideFiscalYear: true,
 };
@@ -91,7 +89,7 @@ CustomRelativeRanges.parameters = {
   docs: {
     description: {
       story:
-        'quickRanges replaces the default presets. showHistory=false omits recently used ranges; rememberLastTab=false disables tab persistence. Custom-duration search remains available.',
+        'quickRanges replaces the default presets. showHistory=false omits recently used ranges. Custom-duration search remains available.',
     },
   },
 };
@@ -100,6 +98,6 @@ export const Responsive = Basic.bind({});
 Responsive.args = { compactDesign: 'tabs' };
 
 export const Wide = Basic.bind({});
-Wide.args = { compactDesign: 'tabs', layout: 'wide' };
+Wide.args = { compactDesign: 'tabs', widthOverride: 1200 };
 
 export default meta;

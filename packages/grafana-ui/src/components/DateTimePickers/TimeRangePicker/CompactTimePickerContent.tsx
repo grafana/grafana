@@ -26,24 +26,20 @@ interface Props extends PropsWithScreenSize {
 }
 
 export function CompactTimePickerContent(props: Props) {
-  const { rememberLastTab = true, defaultTab = 'relative', hideQuickRanges } = props;
+  const { hideQuickRanges } = props;
   const [selectedTab, setSelectedTab] = useState<PickerTab>(() => {
-    if (rememberLastTab) {
-      const saved = store.get(storageKey);
-      if (saved === 'relative' || saved === 'absolute') {
-        return saved;
-      }
+    const saved = store.get(storageKey);
+    if (saved === 'relative' || saved === 'absolute') {
+      return saved;
     }
-    return defaultTab;
+    return 'relative';
   });
   const activeTab = hideQuickRanges ? 'absolute' : selectedTab;
   const id = useId();
   const styles = useStyles2(getStyles);
   const selectTab = (tab: PickerTab) => {
     setSelectedTab(tab);
-    if (rememberLastTab) {
-      store.set(storageKey, tab);
-    }
+    store.set(storageKey, tab);
   };
 
   return (
@@ -128,7 +124,6 @@ export function CompactTimePickerContent(props: Props) {
               weekStart={props.weekStart}
               isFullscreen={false}
               compact
-              calendarDisplay={props.calendarDisplay === 'modal' ? 'modal' : 'inline'}
             />
             {props.showHistory && props.historyOptions.length > 0 && (
               <TimeRangeList

@@ -26,7 +26,6 @@ import { isValid } from '../utils';
 import { TimeRangeFields } from './TimeRangeFields';
 
 interface Props {
-  calendarDisplay?: 'auto' | 'inline' | 'modal';
   compact?: boolean;
   calendarAnchor?: HTMLElement | null;
   isFullscreen: boolean;
@@ -194,7 +193,7 @@ export const TimeRangeContent = (props: Props) => {
       <TimeRangeFields
         fieldSuffix={props.compact ? undefined : fyTooltip}
         fullWidth={props.compact}
-        inlineCalendar={props.calendarDisplay === 'inline'}
+        inlineCalendar={props.compact}
         onCalendarOpenChange={setCalendarOpen}
         onSubmit={onApply}
         from={{
@@ -214,7 +213,7 @@ export const TimeRangeContent = (props: Props) => {
           testId: selectors.components.TimePicker.toField,
         }}
         calendar={{
-          isFullscreen: props.calendarDisplay === 'modal' ? false : isFullscreen,
+          isFullscreen,
           from: dateTimeParse(fromField.value, { timeZone }),
           to: dateTimeParse(toField.value, { timeZone }),
           onApply,
@@ -225,7 +224,7 @@ export const TimeRangeContent = (props: Props) => {
           referenceElement: calendarAnchor,
         }}
       />
-      {!(calendarOpen && props.calendarDisplay === 'inline') && (
+      {!(calendarOpen && props.compact) && (
         <div className={style.buttonsContainer}>
           <Button
             data-testid={selectors.components.TimePicker.copyTimeRange}

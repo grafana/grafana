@@ -30,11 +30,7 @@ import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
-interface Props
-  extends Pick<
-    TimeRangePickerProps,
-    'compactDesign' | 'layout' | 'calendarDisplay' | 'rememberLastTab' | 'defaultTab' | 'hideFiscalYear'
-  > {
+interface Props extends Pick<TimeRangePickerProps, 'compactDesign' | 'hideFiscalYear'> {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
@@ -172,9 +168,7 @@ export const TimePickerContent = (props: Props) => {
   const theme = useTheme2();
   const { width } = useWindowSize();
   const isWide = width >= theme.breakpoints.values.lg;
-  const isFullscreen =
-    props.layout === 'wide' ||
-    (props.layout !== 'compact' && (widthOverride ? widthOverride >= theme.breakpoints.values.lg : isWide));
+  const isFullscreen = widthOverride ? widthOverride >= theme.breakpoints.values.lg : isWide;
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
@@ -217,7 +211,6 @@ const NarrowScreenForm = (props: NarrowScreenFormProps) => {
               value={value}
               onApply={onChange}
               timeZone={timeZone}
-              calendarDisplay={props.calendarDisplay}
               isFullscreen={false}
               onError={onError}
               weekStart={weekStart}
@@ -267,7 +260,6 @@ const FullScreenForm = (props: FullScreenFormProps) => {
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
           onApply={onChange}
-          calendarDisplay={props.calendarDisplay}
           isFullscreen={true}
           calendarAnchor={calendarAnchor}
           isReversed={isReversed}

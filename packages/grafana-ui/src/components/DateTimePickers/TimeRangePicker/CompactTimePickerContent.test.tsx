@@ -21,8 +21,7 @@ function setup(overrides: Partial<TimeRangePickerProps> = {}, contextDesign: 'le
       onMoveForward={jest.fn()}
       onZoom={jest.fn()}
       compactDesign="tabs"
-      layout="compact"
-      rememberLastTab={false}
+      widthOverride={600}
       {...overrides}
     />,
     {
@@ -66,17 +65,14 @@ it('does not apply an empty search result', async () => {
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it.each([true, false])('remembers the selected tab only when persistence is %s', async (rememberLastTab) => {
-  const { open, user } = setup({ rememberLastTab });
+it('remembers the selected tab', async () => {
+  const { open, user } = setup();
   await open();
   await user.click(screen.getByRole('tab', { name: 'Absolute' }));
   await user.keyboard('{Escape}');
   await open();
-  expect(screen.getByRole('tab', { name: rememberLastTab ? 'Absolute' : 'Relative' })).toHaveAttribute(
-    'aria-selected',
-    'true'
-  );
-  expect(localStorage.getItem('grafana.timepicker.tab')).toBe(rememberLastTab ? 'absolute' : null);
+  expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveAttribute('aria-selected', 'true');
+  expect(localStorage.getItem('grafana.timepicker.tab')).toBe('absolute');
 });
 
 it('shows history on Absolute and applies its range in the supplied timezone', async () => {
@@ -88,8 +84,9 @@ it('shows history on Absolute and applies its range in the supplied timezone', a
 });
 
 it('discards inline calendar edits on Cancel', async () => {
-  const { open, user, onChange } = setup({ defaultTab: 'absolute' });
+  const { open, user, onChange } = setup();
   await open();
+  await user.click(screen.getByRole('tab', { name: 'Absolute' }));
   await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
   expect(screen.getByRole('dialog', { name: 'Calendar' })).toBeVisible();
   expect(screen.queryByLabelText('From')).not.toBeInTheDocument();
@@ -101,8 +98,9 @@ it('discards inline calendar edits on Cancel', async () => {
 });
 
 it('updates inputs from the calendar and allows editing times before applying the range', async () => {
-  const { open, user, onChange } = setup({ defaultTab: 'absolute' });
+  const { open, user, onChange } = setup();
   await open();
+  await user.click(screen.getByRole('tab', { name: 'Absolute' }));
   await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
   await user.click(screen.getByLabelText('June 10, 2021'));
   await user.click(screen.getByLabelText('June 11, 2021'));
@@ -132,8 +130,8 @@ it('validates absolute input before applying', async () => {
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it('keeps the desktop two-column form when wide layout is forced', async () => {
-  const { open } = setup({ layout: 'wide' });
+it('keeps the desktop two-column form at desktop width', async () => {
+  const { open } = setup({ widthOverride: 1200 });
   await open();
   expect(screen.getByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
   expect(screen.getByPlaceholderText('Search quick ranges')).toBeVisible();
@@ -141,16 +139,16 @@ it('keeps the desktop two-column form when wide layout is forced', async () => {
 });
 
 it('hides fiscal-year settings independently of timezone settings', async () => {
-  const { open, user } = setup({ layout: 'wide', hideFiscalYear: true });
+  const { open, user } = setup({ widthOverride: 1200, hideFiscalYear: true });
   await open();
   await user.click(screen.getByRole('button', { name: 'Change time settings' }));
   expect(screen.getByRole('tab', { name: 'Time zone' })).toBeVisible();
   expect(screen.queryByRole('tab', { name: 'Fiscal year' })).not.toBeInTheDocument();
 });
 
-it('hides history and uses the configured default when persistence is disabled', async () => {
-  localStorage.setItem('grafana.timepicker.tab', 'relative');
-  const { open } = setup({ defaultTab: 'absolute', showHistory: false, history: [value] });
+it('hides history while restoring the remembered tab', async () => {
+  localStorage.setItem('grafana.timepicker.tab', 'absolute');
+  const { open } = setup({ showHistory: false, history: [value] });
   await open();
   expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveAttribute('aria-selected', 'true');
   expect(
@@ -159,19 +157,12 @@ it('hides history and uses the configured default when persistence is disabled',
 });
 
 it('returns from inline calendar with Escape without dismissing the picker', async () => {
-  const { open, user } = setup({ defaultTab: 'absolute' });
+  const { open, user } = setup();
   await open();
+  await user.click(screen.getByRole('tab', { name: 'Absolute' }));
   await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
   await user.keyboard('{Escape}');
   expect(screen.getByRole('dialog', { name: 'Time range picker' })).toBeVisible();
-  expect(screen.getByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
-});
-
-it('supports an explicit modal calendar in tabbed compact layout', async () => {
-  const { open, user } = setup({ defaultTab: 'absolute', calendarDisplay: 'modal' });
-  await open();
-  await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
-  expect(screen.getByText('Select a time range')).toBeVisible();
   expect(screen.getByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
 });
 
@@ -182,27 +173,24 @@ it('allows an explicit legacy prop to override a tabbed context', async () => {
   expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 });
 
-it.each(['compact', 'wide'] as const)(
-  'uses only consumer presets in their supplied order in %s layout',
-  async (layout) => {
-    const { open, user, onChange } = setup({
-      layout,
-      showHistory: false,
-      quickRanges: [
-        { from: 'now-2h', to: 'now', display: 'Two hours' },
-        { from: 'now-15m', to: 'now', display: 'Quarter hour' },
-      ],
-    });
-    await open();
-    const options = screen.getAllByRole('checkbox');
-    expect(options).toHaveLength(2);
-    expect(options[0]).toHaveAccessibleName('Two hours');
-    expect(options[1]).toHaveAccessibleName('Quarter hour');
-    expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: 'Quarter hour' }));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-15m', to: 'now' } }));
-  }
-);
+it.each([600, 1200])('uses only consumer presets in their supplied order at width %s', async (widthOverride) => {
+  const { open, user, onChange } = setup({
+    widthOverride,
+    showHistory: false,
+    quickRanges: [
+      { from: 'now-2h', to: 'now', display: 'Two hours' },
+      { from: 'now-15m', to: 'now', display: 'Quarter hour' },
+    ],
+  });
+  await open();
+  const options = screen.getAllByRole('checkbox');
+  expect(options).toHaveLength(2);
+  expect(options[0]).toHaveAccessibleName('Two hours');
+  expect(options[1]).toHaveAccessibleName('Quarter hour');
+  expect(screen.queryByRole('checkbox', { name: 'Last 5 minutes' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('checkbox', { name: 'Quarter hour' }));
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-15m', to: 'now' } }));
+});
 
 it('accepts an empty preset list while retaining custom-duration search', async () => {
   const { open, user, onChange } = setup({ quickRanges: [] });
@@ -214,29 +202,23 @@ it('accepts an empty preset list while retaining custom-duration search', async 
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-3h', to: 'now' } }));
 });
 
-it.each([true, false])(
-  'still applies ranges when storage is blocked and tab persistence is %s',
-  async (rememberLastTab) => {
-    const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
-      throw new DOMException('Storage blocked by host', 'SecurityError');
-    });
-    try {
-      const { open, user, onChange, unmount } = setup({ rememberLastTab, showHistory: false });
-      await open();
-      await user.click(screen.getByRole('tab', { name: 'Absolute' }));
-      await user.keyboard('{Escape}');
-      await open();
-      expect(screen.getByRole('tab', { name: rememberLastTab ? 'Absolute' : 'Relative' })).toHaveAttribute(
-        'aria-selected',
-        'true'
-      );
-      await user.click(screen.getByRole('tab', { name: 'Relative' }));
-      await user.type(screen.getByRole('textbox', { name: 'Search quick ranges' }), '3h{Enter}');
-      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-3h', to: 'now' } }));
-      unmount();
-    } finally {
-      store.delete('grafana.timepicker.tab');
-      storage.mockRestore();
-    }
+it('remembers tabs and applies ranges when storage is blocked', async () => {
+  const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+    throw new DOMException('Storage blocked by host', 'SecurityError');
+  });
+  try {
+    const { open, user, onChange, unmount } = setup({ showHistory: false });
+    await open();
+    await user.click(screen.getByRole('tab', { name: 'Absolute' }));
+    await user.keyboard('{Escape}');
+    await open();
+    expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Relative' }));
+    await user.type(screen.getByRole('textbox', { name: 'Search quick ranges' }), '3h{Enter}');
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from: 'now-3h', to: 'now' } }));
+    unmount();
+  } finally {
+    store.delete('grafana.timepicker.tab');
+    storage.mockRestore();
   }
-);
+});
