@@ -34,6 +34,9 @@ type Scheduler struct {
 	SimplifiedEditorRules               *prometheus.GaugeVec
 	PrometheusImportedRules             *prometheus.GaugeVec
 	PluginOriginRules                   *prometheus.GaugeVec
+	StaleMarkerFailures                 *prometheus.CounterVec
+	RecordingRuleTrackedSeries          prometheus.Gauge
+	RecordingRuleUntrackedSeries        prometheus.Counter
 }
 
 func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -212,6 +215,27 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org", "origin"},
 		),
+		StaleMarkerFailures: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "recording_rule_stale_marker_failures_total",
+				Help:      "The number of series in stale marker writes that failed, by reason. A write can be partly accepted, so this counts every series of a failed write. Failed markers are not retried.",
+			},
+			[]string{"reason"},
+		),
+		RecordingRuleTrackedSeries: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "recording_rule_tracked_series",
+			Help:      "The number of series remembered for stale markers.",
+		}),
+		RecordingRuleUntrackedSeries: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "recording_rule_untracked_series_total",
+			Help:      "The number of series, counted on each evaluation, that got no stale marker tracking because the series limit was reached.",
+		}),
 	}
 }
 

@@ -32,13 +32,9 @@ import { getEditorType, getTransformId } from './utils';
  */
 export function QueryEditorContextWrapper({
   dataPane,
-  onSwitchToClassic,
-  showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
-  onSwitchToClassic?: () => void;
-  showVersionBanner?: boolean;
   children: ReactNode;
 }) {
   const theme = useTheme2();
@@ -396,7 +392,6 @@ export function QueryEditorContextWrapper({
       setPendingTransformation,
       finalizePendingTransformation,
       stackedMode,
-      showVersionBanner: Boolean(showVersionBanner),
       confirmingDeleteActionKey,
       setConfirmingDeleteActionKey,
     }),
@@ -435,14 +430,12 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
-      showVersionBanner,
       confirmingDeleteActionKey,
     ]
   );
 
   const actions = useMemo(
     () => ({
-      onSwitchToClassic,
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
@@ -503,7 +496,6 @@ export function QueryEditorContextWrapper({
       addTransformationAction,
       dataPane,
       findTransformationIndex,
-      onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
       setMultiSelectModeState,

@@ -6,8 +6,7 @@ import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
-import { ManagedBadge } from '../components/ManagedBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
+import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { exportResourceAsJson } from '../utils/export';
 import {
@@ -48,9 +47,9 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
-          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
           {isManagedConnection && (
-            <ManagedBadge
+            <ManagedResourceBadge
+              isReadOnly={isReadOnly}
               managerKind={getManagerKind(connection)}
               name={getManagerIdentity(connection)}
               repositoryName={getManagerIdentity(connection)}
