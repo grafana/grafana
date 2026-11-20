@@ -164,12 +164,13 @@ func globalSearchRouteSpec() *spec3.PathProps {
 
 // globalSearchDescription says what this search adds to the search of one kind,
 // which is all a caller cannot learn from the shared request schema.
+//
+// It does not list the types searched: they depend on the apps compiled in, so
+// the published spec would differ between builds. The groupResource facet lists
+// them instead.
 func globalSearchDescription() string {
-	types := make([]string, 0, len(resource.GlobalSearchResourceTypes()))
-	for _, gr := range resource.GlobalSearchResourceTypes() {
-		types = append(types, "`"+gr.Group+"/"+gr.Resource+"`")
-	}
-	return "Search resources of several types in a namespace: " + strings.Join(types, ", ") + ". " +
+	return "Search resources of several types in a namespace: every type whose app manifest opts in to global search. " +
+		"The `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` facet lists them. " +
 		"Each result names its own group, resource and kind, and is authorized on its own. " +
 		"`folderPaths` gives the path of each folder the results are in, listing ancestors before descendants and ending with the containing folder. " +
 		"Like the folder API's parents, the nearest unreadable folder or folder missing from the global index appears first, by name only and marked `detached`. " +
