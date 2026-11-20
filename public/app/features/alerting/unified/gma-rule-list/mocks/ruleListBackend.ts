@@ -104,7 +104,7 @@ export function setupRuleListBackend({
       }
 
       const scope = nameFilterValues(body.where);
-      // Like the index, a folder matches when its title contains every word of the text, ignoring case.
+      // Like the index: every word in the title, ignoring case.
       const words = leaves(body.where)
         .find((leaf) => leaf.text)
         ?.text?.value.toLowerCase()
@@ -115,7 +115,7 @@ export function setupRuleListBackend({
         .filter((folder) => !words || words.every((word) => folder.spec.title.toLowerCase().includes(word)))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
-      // Only the Folders list's batches are resized; the List mode name lookup reads one page of its own size.
+      // `pageSize` resizes the Folders list only, not the List mode lookup.
       const size = body.limit === DEFAULT_PER_PAGE_PAGINATION ? pageSize?.folders : undefined;
       return HttpResponse.json(page(listed, body, size));
     }),
@@ -278,5 +278,5 @@ function ruleHit(kind: RuleKind, rule: RuleResource) {
   };
 }
 
-// The real search caps every request at this many items.
+// The real search's cap per request.
 const SEARCH_MAX_LIMIT = 500;

@@ -181,7 +181,7 @@ function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string
 
 function SearchHelp({ filterHelp }: { filterHelp: FilterHelp[] }) {
   return (
-    // The popup has no height limit, so a help taller than the window would be cut off with no way to scroll.
+    // The popup has no height limit, so a tall help would be cut off.
     <ScrollContainer maxHeight="60vh">
       <Stack direction="column" gap={1}>
         <Text element="p">

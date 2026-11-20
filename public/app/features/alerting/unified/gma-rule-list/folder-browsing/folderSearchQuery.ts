@@ -13,10 +13,7 @@ const FOLDER_HAS_RULES_LABEL_VALUE = 'true';
 
 export type FolderScope = Pick<SharedRuleFilter, 'folder' | 'folderUids'>;
 
-/**
- * Scopes the listing to folders whose title contains every word of `folder`, ignoring case, and whose UID is one of
- * `folderUids`, so counts and paths match what the user filtered to.
- */
+/** Keeps folders whose title contains every word of `folder`, ignoring case, and whose UID is in `folderUids`. */
 export function buildFolderListSearchQuery(
   kind: RuleKind,
   continueToken: string | undefined,

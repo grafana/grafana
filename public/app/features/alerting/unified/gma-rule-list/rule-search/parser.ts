@@ -5,7 +5,7 @@ import { tokenize } from './tokenizer';
 /** A reason the page can't search the query as typed; the page shows each one and sends no request. */
 export type FilterIssue =
   | { key: string; reason: 'invalid' | 'unavailable' }
-  /** `key:` with nothing after the colon, often because a space follows it, as in `folder: Alerts`. */
+  /** `key:` with no value, usually from a space after the colon: `folder: Alerts`. */
   | { key: string; reason: 'missingValue' }
   | { key: string; reason: 'renamed'; from: string; to: string }
   | { key: null; reason: 'wildcardInText' | 'unclosedQuote' }

@@ -20,7 +20,6 @@ import { AlertRuleListEntry } from './AlertRuleListEntry';
 import { useAlertRuleSearch } from './alertRuleSearch';
 
 interface FoldersViewProps {
-  /** The only filters Folders mode supports; they scope the folder listing itself. */
   scope: FolderScope;
 }
 

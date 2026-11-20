@@ -6,7 +6,7 @@ import {
 /** What both pages' search filters hold; each page's filter type adds its own filters to it. */
 export interface SharedRuleFilter {
   text: string[];
-  /** A folder name as typed; it matches folders by title text. */
+  /** A folder name, matched loosely against folder titles. */
   folder?: string;
   folderUids: string[];
   /** Query datasource UIDs. */
@@ -16,7 +16,7 @@ export interface SharedRuleFilter {
   health?: HealthValue;
 }
 
-/** The rule search filters folders by UID only, so a `filter.folder` name is resolved to `folderUids` first. */
+/** The rule search takes folder UIDs only, so `filter.folder` is resolved to `folderUids` first. */
 export interface RuleSearchApiArgs<Filter extends SharedRuleFilter> {
   filter: Filter;
   folderUids: string[];

@@ -20,7 +20,6 @@ import { RecordingRuleListEntry } from './RecordingRuleListEntry';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface FoldersViewProps {
-  /** The only filters Folders mode supports; they scope the folder listing itself. */
   scope: FolderScope;
 }
 

@@ -83,7 +83,7 @@ export function buildSharedLeaves({
   }
 
   if (folderUids.length > 0) {
-    // A rejection names the filter the UIDs came from: the looked-up name, or the typed `folderUid:`.
+    // Blame the filter the UIDs came from.
     const key = filter.folder === undefined ? 'folderUid' : 'folder';
     leaves.push({ key, leaf: { filter: { field: 'folder', operator: 'In', values: folderUids } } });
   }

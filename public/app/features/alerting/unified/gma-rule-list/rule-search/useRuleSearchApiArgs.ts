@@ -9,9 +9,9 @@ import { type RuleKind } from '../shared/ruleKind';
 import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilter';
 
 /**
- * `apiArgs` stays undefined until there is a rule search to send: when skipped, while the name is looked up, when
- * the lookup fails, and when no folder matches it, since an empty UID list would search every folder.
- * `inFolderUid` skips the lookup: a Folders mode row knows its folder's UID, and its name could match other folders.
+ * `apiArgs` is undefined while there is nothing to search: skipped, looking the name up, lookup failed, or no folder
+ * matched, since an empty UID list would search every folder. `inFolderUid` skips the lookup, as the name could match
+ * other folders.
  */
 export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   kind: RuleKind,
@@ -65,7 +65,7 @@ export function withFolderLookup<Result extends { isLoading: boolean; error: unk
     ...result,
     noMatchingFolder: lookup.noMatchingFolder,
     folderLimitReached: lookup.folderLimitReached,
-    // A skipped rule search never loads, so it only counts as loading once there is one to send.
+    // `useRuleSearchResult` reports a skipped search as loading.
     isLoading: lookup.isLookingUp || (lookup.apiArgs !== undefined && result.isLoading),
     error: lookup.lookupError ?? result.error,
     retry: lookup.lookupError ? lookup.retryLookup : result.retry,
