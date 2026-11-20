@@ -292,9 +292,7 @@ func NewAPIBuilder(
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
 
 	for _, builder := range extraBuilders {
-		extra, workers := builder(b, parsers)
-		b.extras = append(b.extras, extra)
-		b.extraWorkers = append(b.extraWorkers, workers...)
+		b.extras = append(b.extras, builder(b))
 	}
 
 	return b, nil
@@ -358,6 +356,17 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	return &JobHistoryConfig{}
 }
 
+func ProvideSupportedResourceProvider(cfg *setting.Cfg) (resources.SupportedResourceProvider, error) {
+	if !cfg.ProvisioningEnabled {
+		return resources.NewSupportedResourceProvider(nil), nil
+	}
+	configured, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+	return resources.NewSupportedResourceProvider(configured), nil
+}
+
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
@@ -381,6 +390,7 @@ func RegisterAPIService(
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
 	manifests resource.ManifestDiscovery,
+	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -392,11 +402,6 @@ func RegisterAPIService(
 	}
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
-	configured, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
-	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
-	}
-	supportedResourceProvider := resources.NewSupportedResourceProvider(configured)
 	// The router always publishes the manifests, but it serves their groups only as middleware.
 	if router.MiddlewareEnabled(cfg, features) {
 		watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)

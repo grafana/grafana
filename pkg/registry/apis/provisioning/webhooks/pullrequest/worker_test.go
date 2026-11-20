@@ -11,12 +11,48 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/router/routertest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestProvidePullRequestWorker_SupportedResources(t *testing.T) {
+	router := routertest.NewServer(t, map[string]string{
+		"/apis/example.ext.grafana.app/v1": `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list","create"]}]}`,
+	})
+	configProvider := apiserver.RestConfigProviderFunc(func(context.Context) (*rest.Config, error) {
+		return &rest.Config{Host: router.URL}, nil
+	})
+	supportedResourceProvider := resources.NewSupportedResourceProvider([]resources.SupportedResource{{
+		GroupKind:    schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Widget"},
+		Capabilities: sets.New(resources.CapabilityFolder),
+	}})
+	worker := ProvidePullRequestWorker(&setting.Cfg{}, nil, nil, configProvider, supportedResourceProvider, prometheus.NewRegistry())
+
+	repo := repository.NewMockReader(t)
+	repo.EXPECT().Config().Return(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"}})
+	repo.EXPECT().Read(mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
+	parser, err := worker.evaluator.(*evaluator).parsers.GetParser(t.Context(), repo)
+	require.NoError(t, err)
+
+	parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
+		Path: "team/widget.json",
+		Data: []byte(`{"apiVersion":"example.ext.grafana.app/v1","kind":"Widget","metadata":{"name":"widget-1"},"spec":{}}`),
+	})
+	require.NoError(t, err)
+	require.True(t, parsed.FolderScoped)
+	require.Equal(t, resources.ParseFolder("team", "repo").ID, parsed.Meta.GetFolder())
+}
 
 func TestPullRequestWorker_IsSupported(t *testing.T) {
 	tests := []struct {

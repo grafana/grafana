@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -99,8 +100,8 @@ func ProvideProvisioningOSSConnectionExtras(
 	}
 }
 
-func ProvideExtraWorkers() []jobs.Worker {
-	return nil
+func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []jobs.Worker {
+	return []jobs.Worker{pullRequestWorker}
 }
 
 func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []repository.Extra) (repository.Factory, error) {
