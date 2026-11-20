@@ -41,9 +41,29 @@ if [ -n "$NPM_TOKEN" ]; then
   echo "$registry_without_protocol/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
 fi
 
-# Loop over .tar files in directory and publish them to npm registry
+# Loop over .tar files in directory and publish them to npm registry.
+# A version that is already published is skipped, so running the script again after a partial publish can end green.
 failed_packages=()
 for file in ./npm-artifacts/*.tgz; do
+    if ! spec=$(tar -xzOf "$file" package/package.json | node -p 'const p = JSON.parse(require("fs").readFileSync(0, "utf8")); p.name + "@" + p.version'); then
+        echo "ERROR: Could not read the name and version of $file"
+        failed_packages+=("$file")
+        continue
+    fi
+
+    if view_output=$(npm view "$spec" version --registry "$registry" 2>&1); then
+        echo "Skipping $spec: it is already published."
+        continue
+    fi
+
+    # Only E404 means that the version is not published. Any other error, such as a network failure, says nothing about it.
+    if [[ "$view_output" != *E404* ]]; then
+        echo "$view_output"
+        echo "ERROR: Could not check whether $spec is already published."
+        failed_packages+=("$file")
+        continue
+    fi
+
     if ! npm publish "$file" --tag "$dist_tag" --registry "$registry"; then
         failed_packages+=("$file")
     fi
