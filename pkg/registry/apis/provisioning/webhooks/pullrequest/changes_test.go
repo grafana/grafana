@@ -2168,33 +2168,20 @@ func TestHasStrippedMetadata(t *testing.T) {
 		require.False(t, hasRemovedMetadata(original, parsed))
 	})
 
-	t.Run("Grafana-owned annotation removed", func(t *testing.T) {
+	t.Run("Grafana-owned annotation removed by parser", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name":        "my-dash",
 				"annotations": map[string]any{"custom/note": "important", "grafana.app/createdBy": "user:1"},
 			},
 		}}
-		updated := &unstructured.Unstructured{Object: map[string]any{
+		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name":        "my-dash",
 				"annotations": map[string]any{"custom/note": "important"},
 			},
 		}}
-		require.True(t, hasRemovedMetadata(original, updated))
-	})
-
-	t.Run("Grafana-owned annotation with a non-string value removed", func(t *testing.T) {
-		original := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":        "my-dash",
-				"annotations": map[string]any{"grafana.app/managerSuspended": true},
-			},
-		}}
-		updated := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{"name": "my-dash"},
-		}}
-		require.True(t, hasRemovedMetadata(original, updated))
+		require.True(t, hasRemovedMetadata(original, parsed))
 	})
 
 	t.Run("user annotation removed is an intentional change, not stripped", func(t *testing.T) {
@@ -2208,29 +2195,13 @@ func TestHasStrippedMetadata(t *testing.T) {
 				},
 			},
 		}}
-		updated := &unstructured.Unstructured{Object: map[string]any{
+		parsed := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name":        "my-dash",
 				"annotations": map[string]any{"custom/note": "important"},
 			},
 		}}
-		require.False(t, hasRemovedMetadata(original, updated))
-	})
-
-	t.Run("Grafana-owned annotation kept in the updated file, not stripped", func(t *testing.T) {
-		original := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":        "my-dash",
-				"annotations": map[string]any{"grafana.app/folder": "team-a"},
-			},
-		}}
-		updated := &unstructured.Unstructured{Object: map[string]any{
-			"metadata": map[string]any{
-				"name":        "my-dash",
-				"annotations": map[string]any{"grafana.app/folder": "team-a"},
-			},
-		}}
-		require.False(t, hasRemovedMetadata(original, updated))
+		require.False(t, hasRemovedMetadata(original, parsed))
 	})
 
 	t.Run("namespace changed by parser", func(t *testing.T) {

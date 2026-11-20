@@ -82,9 +82,8 @@ type fileChangeInfo struct {
 	PreviewURL           string
 	PreviewScreenshotURL string
 
-	// HasRemovedMetadata is true when the base-branch file contains metadata
-	// that Git Sync does not keep (namespace, labels, Grafana-owned annotations)
-	// and the PR-branch file no longer has it.
+	// HasRemovedMetadata is true when the original file contains metadata fields
+	// (namespace, labels, Grafana-owned annotations) that will be removed when parsing the resource.
 	HasRemovedMetadata bool
 }
 
@@ -290,16 +289,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	}
 
 	if change.Action == repository.FileActionUpdated {
-		// Detect metadata that Git Sync normalized away: read the file from the
-		// default branch (empty ref) and compare its metadata against the
-		// PR-branch file as written, not as parsed, since parsing stamps and
-		// drops Grafana-owned keys itself.
+		// Detect metadata stripped by resource parser.
+		// Read the file from the default branch (empty ref) and compare its
+		// metadata against the PR-branch parsed version.
 		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
 		if baseErr == nil && baseFileInfo != nil {
-			baseObj, _, _, baseParseErr := resources.ParseFileResource(ctx, baseFileInfo)
-			updatedObj, _, _, updatedParseErr := resources.ParseFileResource(ctx, fileInfo)
-			if baseParseErr == nil && baseObj != nil && updatedParseErr == nil && updatedObj != nil {
-				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, updatedObj)
+			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
+			if parseErr == nil && baseObj != nil {
+				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, info.Parsed.Obj)
 			}
 		}
 	}
@@ -479,38 +476,33 @@ func renderPath(grafanaBaseURL, urlPath string) string {
 	return path
 }
 
-// hasRemovedMetadata returns true if the original file contains metadata that
-// Git Sync does not keep in the repository (namespace, labels, Grafana-owned
-// annotations) and that is absent or different in the updated file. Removing a
-// user annotation is an intentional change, so it does not count.
-func hasRemovedMetadata(original, updated *unstructured.Unstructured) bool {
-	if original.GetNamespace() != "" && updated.GetNamespace() != original.GetNamespace() {
+// hasRemovedMetadata returns true if the original object (from the file)
+// contains metadata fields (namespace, labels, Grafana-owned annotations) that
+// are absent or different in the parsed object (post-Parse).
+func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
 		return true
 	}
-	if hasMissingKeys(original, updated, "labels", func(string) bool { return true }) {
+	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
 		return true
 	}
-	return hasMissingKeys(original, updated, "annotations", resources.IsGrafanaOwnedAnnotation)
-}
-
-// hasMissingKeys returns true if any key of original's metadata.<field> selected
-// by include is absent from updated's. It reads the raw maps because the typed
-// getters return nil as soon as one value is not a string.
-func hasMissingKeys(original, updated *unstructured.Unstructured, field string, include func(string) bool) bool {
-	updatedKeys := rawMetadataMap(updated, field)
-	for k := range rawMetadataMap(original, field) {
-		if !include(k) {
-			continue
-		}
-		if _, exists := updatedKeys[k]; !exists {
+	// Removing a user annotation is an intentional change, not something Git Sync
+	// strips, so only Grafana-owned annotations count.
+	parsedAnnotations := parsed.GetAnnotations()
+	for k := range original.GetAnnotations() {
+		if _, exists := parsedAnnotations[k]; !exists && resources.IsGrafanaOwnedAnnotation(k) {
 			return true
 		}
 	}
 	return false
 }
 
-func rawMetadataMap(obj *unstructured.Unstructured, field string) map[string]any {
-	value, _, _ := unstructured.NestedFieldNoCopy(obj.Object, "metadata", field)
-	m, _ := value.(map[string]any)
-	return m
+// hasMissingKeys returns true if any key in original is absent from parsed.
+func hasMissingKeys(original, parsed map[string]string) bool {
+	for k := range original {
+		if _, exists := parsed[k]; !exists {
+			return true
+		}
+	}
+	return false
 }

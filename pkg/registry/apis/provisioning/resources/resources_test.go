@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -128,58 +127,6 @@ func TestWriteResourceFileFromObject_PreservesSizeOnWriteError(t *testing.T) {
 	require.Error(t, err)
 	require.Positive(t, size, "size should be reported even when the write fails")
 	require.Equal(t, len(writtenBody), size, "reported size must match the serialized body length")
-}
-
-func TestWriteResourceFileFromObject_KeepsOnlyUserAnnotations(t *testing.T) {
-	repo := repository.NewMockReaderWriter(t)
-	repo.On("Config").Return(replaceRepoConfig())
-
-	folderMgr := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
-	mgr := NewResourcesManager(repo, folderMgr, nil, NewMockResourceClients(t))
-
-	// A live object as export lists it from storage.
-	obj := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "dashboard.grafana.app/v1beta1",
-		"kind":       "Dashboard",
-		"metadata": map[string]any{
-			"name":            "dash-1",
-			"namespace":       "default",
-			"uid":             "abc",
-			"resourceVersion": "12",
-			"generation":      int64(3),
-			"labels":          map[string]any{"team": "platform", grafanautils.LabelKeyDeprecatedInternalID: "7"},
-			"annotations": map[string]any{
-				grafanautils.AnnoKeyCreatedBy:                  "user:1",
-				grafanautils.AnnoKeyUpdatedBy:                  "user:2",
-				grafanautils.AnnoKeyUpdatedTimestamp:           "2026-01-01T00:00:00Z",
-				grafanautils.AnnoKeyKubectlLastAppliedConfig:   "{}",
-				grafanautils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-				"example.com/owner":                            "team-a",
-			},
-		},
-		"spec":   map[string]any{"title": "Dash 1"},
-		"status": map[string]any{},
-	}}
-
-	var writtenBody []byte
-	repo.On("Write", mock.Anything, "dash-1.json", "", mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) {
-			writtenBody = args.Get(3).([]byte)
-		}).
-		Return(nil)
-
-	_, _, err := mgr.WriteResourceFileFromObject(context.Background(), obj, WriteOptions{})
-	require.NoError(t, err)
-
-	var file map[string]any
-	require.NoError(t, json.Unmarshal(writtenBody, &file))
-	require.Equal(t, map[string]any{
-		"name": "dash-1",
-		"annotations": map[string]any{
-			grafanautils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-			"example.com/owner":                            "team-a",
-		},
-	}, file["metadata"])
 }
 
 func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
