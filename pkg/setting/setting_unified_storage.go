@@ -252,6 +252,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
+	cfg.SearchPostRankAuthzExactCountThreshold = max(0, section.Key("search_post_rank_authz_exact_count_threshold").MustInt(0))
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
@@ -292,6 +293,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// default to 24 hours because usage insights summarizes the data every 24 hours
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
+	cfg.IndexCacheTTLIdleOnly = section.Key("index_cache_ttl_idle_only").MustBool(false)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	// Off by default: this builds a global index per namespace, holding the
@@ -351,7 +353,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
 	// fed from NATS, 3s otherwise.
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
-	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 

@@ -74,6 +74,7 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		}},
 		{"ListAlertRulesByGroup", []any{ctx, page}, []any{rules, "next-group"}, func(s *Service) []any { return serviceThreeResults(s.ListAlertRulesByGroup(ctx, page)) }},
 		{"Count", []any{ctx, int64(41)}, []any{int64(89)}, func(s *Service) []any { return serviceResult(s.Count(ctx, 41)) }},
+		{"CountByOrg", []any{ctx}, []any{map[int64]int64{41: 89}}, func(s *Service) []any { return serviceResult(s.CountByOrg(ctx)) }},
 		{"CountRuleGroups", []any{ctx, int64(41)}, []any{int64(97)}, func(s *Service) []any { return serviceResult(s.CountRuleGroups(ctx, 41)) }},
 		{"InsertAlertRules", []any{ctx, &userUID, inserts}, []any{inserted}, func(s *Service) []any { return serviceResult(s.InsertAlertRules(ctx, &userUID, inserts)) }},
 		{"UpdateAlertRules", []any{ctx, &userUID, updates}, nil, func(s *Service) []any { return []any{s.UpdateAlertRules(ctx, &userUID, updates)} }},
@@ -98,7 +99,7 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"CleanUpDeletedAlertRules", []any{ctx}, []any{int64(107)}, func(s *Service) []any { return serviceResult(s.CleanUpDeletedAlertRules(ctx)) }},
 	}
 
-	covered := map[string]bool{"Kind": true, "GetAlertRulesForScheduling": true, "RenameReceiverInNotificationSettings": true, "RenameTimeIntervalInNotificationSettings": true, "isRuleService": true}
+	covered := map[string]bool{"Kind": true, "GetAlertRulesForScheduling": true, "RenameReceiverInNotificationSettings": true, "RenameTimeIntervalInNotificationSettings": true, "isRuleService": true, "CalculateChanges": true, "CalculateRuleCreate": true, "CalculateRuleUpdate": true, "CalculateRuleDelete": true, "CalculateRuleGroupsDelete": true}
 	for _, tc := range tests {
 		covered[tc.name] = true
 		t.Run(tc.name, func(t *testing.T) {
@@ -314,6 +315,11 @@ func (s *serviceStoreSpy) ListAlertRulesByGroup(ctx context.Context, query *ngmo
 func (s *serviceStoreSpy) Count(ctx context.Context, orgID int64) (int64, error) {
 	s.check("Count", ctx, orgID)
 	return s.out[0].(int64), s.err
+}
+
+func (s *serviceStoreSpy) CountByOrg(ctx context.Context) (map[int64]int64, error) {
+	s.check("CountByOrg", ctx)
+	return s.out[0].(map[int64]int64), s.err
 }
 
 func (s *serviceStoreSpy) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {

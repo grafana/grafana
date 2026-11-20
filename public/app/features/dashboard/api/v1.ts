@@ -248,17 +248,21 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     let lastPage: ResourceList<DashboardDataDTO> | undefined;
 
     do {
-      lastPage = await this.client.list({
-        labelSelector: 'grafana.app/get-history=true',
-        fieldSelector: `metadata.name=${uid}`,
-        limit: limit - items.length,
-        continue: continueToken,
-      });
+      lastPage = await this.listHistoryPage(uid, limit - items.length, continueToken);
       items.push(...lastPage.items);
       continueToken = lastPage.metadata.continue;
     } while (items.length < limit && continueToken);
 
     return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
+  }
+
+  private listHistoryPage(uid: string, limit: number, continueToken?: string) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit,
+      continue: continueToken,
+    });
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
@@ -268,8 +272,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     do {
       // using high limit to attempt finding the versions in one request
-      // if not found, pagination will kick in
-      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      // if not found, pagination will kick in. This reads single pages on purpose: the
+      // fill-to-limit loop in listDashboardHistory would keep fetching up to the limit
+      // even after the wanted versions were found.
+      const history = await this.listHistoryPage(uid, 1000, continueToken);
       for (const item of history.items) {
         if (versionsToFind.has(item.metadata.generation ?? 0)) {
           results.push(item);

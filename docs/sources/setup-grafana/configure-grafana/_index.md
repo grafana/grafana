@@ -1109,6 +1109,12 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 
 ### `[folder]`
 
+#### `pending_deletion_resource_enabled`
+
+Mounts the internal `PendingFolderDeletion` API at `folder.grafana.app/v1alpha1`. Default is `false`. This process-global setting requires a restart. It doesn't enable pending-deletion writers or recovery, and access remains restricted to authorized internal services.
+
+Pending entries use `<folder.metadata.name>-<folder.metadata.uid>` as their name: the exact folder API name followed by its Kubernetes incarnation UID, not its display title. Recording rejects names outside Grafana's supported character set (ASCII letters, digits, `-`, `_`, `:`, and `.`) and names longer than 253 bytes without altering them. `spec.folderName` and `spec.folderUID` retain the two original values separately.
+
 #### `deleted_resource_cleanup_interval`
 
 How often the background job deletes resources (alert rules, library panels) whose folder no longer exists. Requires the `deletedFolderResourceCleanup` feature toggle. Default and minimum: `5m`.
@@ -2397,6 +2403,10 @@ Set the maximum size, in bytes (estimated from label names and values), of a sin
 #### `max_write_concurrency`
 
 Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
+
+#### `max_tracked_series`
+
+Set the maximum number of series that Grafana remembers for stale markers across all recording rules. After the limit is reached, Grafana still evaluates and writes every series, but new series get no stale marker, and Grafana logs a warning. One million series take roughly 1.2 to 1.5 GiB of memory, which is an estimate. The limit is shared by all organizations and is first come, first served. Set it to `0` for no limit. The default value is `1000000`.
 
 <hr>
 

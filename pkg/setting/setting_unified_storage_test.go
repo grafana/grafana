@@ -15,6 +15,44 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+func TestIndexCacheTTLIdleOnlyConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		want  bool
+	}{
+		{name: "default"},
+		{name: "disabled", value: "false"},
+		{name: "enabled", value: "true", want: true},
+		{name: "malformed", value: "idle"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("index_cache_ttl_idle_only").SetValue(tc.value)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.IndexCacheTTLIdleOnly)
+			require.Equal(t, 10*time.Minute, cfg.IndexCacheTTL)
+		})
+	}
+}
+
+func TestIndexCacheTTLIdleOnlyLoadsCustomINI(t *testing.T) {
+	t.Setenv("GF_UNIFIED_STORAGE_INDEX_CACHE_TTL_IDLE_ONLY", "")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[unified_storage]\nindex_cache_ttl = 4h\nindex_cache_ttl_idle_only = true\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.True(t, cfg.IndexCacheTTLIdleOnly)
+	require.Equal(t, 4*time.Hour, cfg.IndexCacheTTL)
+
+	t.Setenv("GF_UNIFIED_STORAGE_INDEX_CACHE_TTL_IDLE_ONLY", "false")
+	cfg = NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.False(t, cfg.IndexCacheTTLIdleOnly)
+}
+
 func TestRerankHedgeDelayConfig(t *testing.T) {
 	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
 	for _, tc := range []struct {
@@ -345,29 +383,30 @@ func TestKeyPathReconciliationEnabled(t *testing.T) {
 	}
 }
 
-func TestFastLatestKeyLookupEnabled(t *testing.T) {
+func TestSearchPostRankAuthzExactCountThreshold(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		configured string
 		env        string
-		want       bool
+		want       int
 	}{
 		{name: "default off"},
-		{name: "enabled", configured: "true", want: true},
-		{name: "disabled", configured: "false"},
-		{name: "environment enables", configured: "false", env: "true", want: true},
-		{name: "environment disables", configured: "true", env: "false"},
+		{name: "disabled", configured: "0"},
+		{name: "enabled", configured: "100", want: 100},
+		{name: "negative disables", configured: "-1"},
+		{name: "invalid disables", configured: "invalid"},
+		{name: "environment override", configured: "0", env: "1000", want: 1000},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := NewCfg()
 			if tc.configured != "" {
-				cfg.Raw.Section("unified_storage").Key("fast_latest_key_lookup_enabled").SetValue(tc.configured)
+				cfg.Raw.Section("unified_storage").Key("search_post_rank_authz_exact_count_threshold").SetValue(tc.configured)
 			}
 			if tc.env != "" {
-				t.Setenv("GF_UNIFIED_STORAGE_FAST_LATEST_KEY_LOOKUP_ENABLED", tc.env)
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_POST_RANK_AUTHZ_EXACT_COUNT_THRESHOLD", tc.env)
 			}
 			cfg.setUnifiedStorageConfig()
-			require.Equal(t, tc.want, cfg.FastLatestKeyLookupEnabled)
+			require.Equal(t, tc.want, cfg.SearchPostRankAuthzExactCountThreshold)
 		})
 	}
 }
