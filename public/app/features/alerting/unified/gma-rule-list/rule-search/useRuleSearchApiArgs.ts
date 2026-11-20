@@ -5,6 +5,7 @@ import { useListFolderSearchV1Beta1Query } from '@grafana/api-clients/rtkq/folde
 
 import { buildFolderListSearchQuery } from '../folder-browsing/folderSearchQuery';
 import { type RuleKind } from '../shared/ruleKind';
+import { type useRuleSearchResult } from '../shared/ruleSearchPage';
 
 import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilter';
 
@@ -53,9 +54,9 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   };
 }
 
-export function withFolderLookup<Result extends { isLoading: boolean; error: unknown; retry: () => void }>(
+export function withFolderLookup<Hit>(
   lookup: ReturnType<typeof useRuleSearchApiArgs>,
-  result: Result
+  result: ReturnType<typeof useRuleSearchResult<Hit, unknown>>
 ) {
   return {
     ...result,
