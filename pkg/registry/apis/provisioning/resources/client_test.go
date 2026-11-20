@@ -190,7 +190,7 @@ func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
 		return &rest.Config{Host: srv.URL}, nil
 	})
 
-	clients := newSingleAPIClients(provider)
+	clients := client.NewAPIClients(provider)
 	dyn, _, err := clients.GetClientsForResource(context.Background(), schema.GroupVersionResource{})
 	require.NoError(t, err)
 

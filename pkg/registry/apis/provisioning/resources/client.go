@@ -3,20 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/app"
@@ -265,72 +262,6 @@ type clientsProvider interface {
 	GetClientsForResource(ctx context.Context, gvr schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error)
 }
 
-// singleAPIClients provides clients for all registered APIs
-// It implements ClientsProvider by creating a dynamic client and discovery client
-// for the given rest config provider
-type singleAPIClients struct {
-	configProvider apiserver.RestConfigProvider
-	once           sync.Once
-	dynamic        dynamic.Interface
-	discovery      client.DiscoveryClient
-	initErr        error
-}
-
-func newSingleAPIClients(configProvider apiserver.RestConfigProvider) clientsProvider {
-	return &singleAPIClients{configProvider: configProvider}
-}
-
-func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
-	p.once.Do(func() {
-		restConfig, e := p.configProvider.GetRestConfig(ctx)
-		if e != nil {
-			p.initErr = fmt.Errorf("get rest config: %w", e)
-			return
-		}
-
-		// Wrap the transport with otelhttp so outbound requests carry W3C trace
-		// context. Without this the operator's writes to the apiserver (resource
-		// creates, folder ensures, job status updates) are leaf spans with no
-		// children — the apiserver has no incoming traceparent to continue the
-		// trace. The gRPC search path already propagates via its own interceptor.
-		// Copy first: GetRestConfig returns a shared config used by other clients.
-		restConfig = rest.CopyConfig(restConfig)
-		restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-			return otelhttp.NewTransport(rt)
-		})
-
-		p.dynamic, e = dynamic.NewForConfig(restConfig)
-		if e != nil {
-			p.initErr = fmt.Errorf("create dynamic client: %w", e)
-			return
-		}
-
-		p.discovery, e = client.NewDiscoveryClient(restConfig)
-		if e != nil {
-			p.initErr = fmt.Errorf("create discovery client: %w", e)
-			return
-		}
-	})
-
-	return p.initErr
-}
-
-func (p *singleAPIClients) GetClientsForKind(ctx context.Context, _ schema.GroupVersionKind) (dynamic.Interface, client.DiscoveryClient, error) {
-	if err := p.onlyOnce(ctx); err != nil {
-		return nil, nil, fmt.Errorf("get clients: %w", err)
-	}
-
-	return p.dynamic, p.discovery, nil
-}
-
-func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.GroupVersionResource) (dynamic.Interface, client.DiscoveryClient, error) {
-	if err := p.onlyOnce(ctx); err != nil {
-		return nil, nil, fmt.Errorf("get clients: %w", err)
-	}
-
-	return p.dynamic, p.discovery, nil
-}
-
 // NewClientFactory creates a ClientFactory. The supported set is the configured list of
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
@@ -340,7 +271,7 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supportedReso
 		supportedResourceProvider = NewSupportedResourceProvider(nil)
 	}
 	return &clientFactory{
-		clientsProvider:           newSingleAPIClients(configProvider),
+		clientsProvider:           client.NewAPIClients(configProvider),
 		supportedResourceProvider: supportedResourceProvider,
 	}
 }
@@ -359,7 +290,7 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
-			clientsProvider:           newSingleAPIClients(configProvider),
+			clientsProvider:           client.NewAPIClients(configProvider),
 			supportedResourceProvider: supportedResourceProvider,
 			storageGroup:              api,
 		}
@@ -613,7 +544,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
+		client: client.NewRetryResourceInterface(baseClient, client.DefaultRetryBackoff()),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info
@@ -667,7 +598,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	info = &clientInfo{
 		gvk:    gvk,
 		gvr:    gvr,
-		client: newRetryResourceInterface(baseClient, defaultRetryBackoff()),
+		client: client.NewRetryResourceInterface(baseClient, client.DefaultRetryBackoff()),
 	}
 	c.byKind[gvk] = info
 	c.byResource[gvr] = info

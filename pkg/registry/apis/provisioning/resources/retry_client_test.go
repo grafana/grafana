@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
 func TestIsTransientError(t *testing.T) {
@@ -100,8 +102,8 @@ func TestIsTransientError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := isTransientError(tt.err)
-			assert.Equal(t, tt.expected, result, "isTransientError(%v) = %v, want %v", tt.err, result, tt.expected)
+			result := client.IsTransientError(tt.err)
+			assert.Equal(t, tt.expected, result, "client.IsTransientError(%v) = %v, want %v", tt.err, result, tt.expected)
 		})
 	}
 }
@@ -119,7 +121,7 @@ func TestRetryResourceInterface_Create(t *testing.T) {
 			setupMock: func(m *MockDynamicResourceInterface) {
 				m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{}, nil).Once()
 			},
-			backoff:       defaultRetryBackoff(),
+			backoff:       client.DefaultRetryBackoff(),
 			expectedCalls: 1,
 			expectError:   false,
 		},
@@ -163,7 +165,7 @@ func TestRetryResourceInterface_Create(t *testing.T) {
 				m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, apierrors.NewBadRequest("bad request")).Once()
 			},
-			backoff:       defaultRetryBackoff(),
+			backoff:       client.DefaultRetryBackoff(),
 			expectedCalls: 1,
 			expectError:   true,
 		},
@@ -174,7 +176,7 @@ func TestRetryResourceInterface_Create(t *testing.T) {
 			mockClient := &MockDynamicResourceInterface{}
 			tt.setupMock(mockClient)
 
-			retryClient := newRetryResourceInterface(mockClient, tt.backoff)
+			retryClient := client.NewRetryResourceInterface(mockClient, tt.backoff)
 			obj := &unstructured.Unstructured{}
 			_, err := retryClient.Create(context.Background(), obj, metav1.CreateOptions{})
 
@@ -195,7 +197,7 @@ func TestRetryResourceInterface_Update(t *testing.T) {
 	mockClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -218,7 +220,7 @@ func TestRetryResourceInterface_Get(t *testing.T) {
 	mockClient.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -240,7 +242,7 @@ func TestRetryResourceInterface_Delete(t *testing.T) {
 	mockClient.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -261,7 +263,7 @@ func TestRetryResourceInterface_List(t *testing.T) {
 	mockClient.On("List", mock.Anything, mock.Anything).
 		Return(&unstructured.UnstructuredList{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -283,7 +285,7 @@ func TestRetryResourceInterface_Patch(t *testing.T) {
 	mockClient.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -305,7 +307,7 @@ func TestRetryResourceInterface_Apply(t *testing.T) {
 	mockClient.On("Apply", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -328,7 +330,7 @@ func TestRetryResourceInterface_UpdateStatus(t *testing.T) {
 	mockClient.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -351,7 +353,7 @@ func TestRetryResourceInterface_ApplyStatus(t *testing.T) {
 	mockClient.On("ApplyStatus", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&unstructured.Unstructured{}, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -374,7 +376,7 @@ func TestRetryResourceInterface_DeleteCollection(t *testing.T) {
 	mockClient.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 10 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -393,7 +395,7 @@ func TestRetryResourceInterface_Watch(t *testing.T) {
 	mockWatch := &mockWatch{}
 	mockClient.On("Watch", mock.Anything, mock.Anything).Return(mockWatch, nil).Once()
 
-	retryClient := newRetryResourceInterface(mockClient, defaultRetryBackoff())
+	retryClient := client.NewRetryResourceInterface(mockClient, client.DefaultRetryBackoff())
 
 	watch, err := retryClient.Watch(context.Background(), metav1.ListOptions{})
 
@@ -408,7 +410,7 @@ func TestRetryResourceInterface_ContextCancellation(t *testing.T) {
 	mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, apierrors.NewServiceUnavailable("service unavailable")).Maybe()
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 100 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -445,7 +447,7 @@ func TestRetryResourceInterface_ExponentialBackoff(t *testing.T) {
 		Return(&unstructured.Unstructured{}, nil).Once()
 
 	start := time.Now()
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 50 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -478,7 +480,7 @@ func TestRetryResourceInterface_MaxDelayRespected(t *testing.T) {
 		Return(nil, apierrors.NewServiceUnavailable("service unavailable")).
 		Maybe() // Allow unlimited calls
 
-	retryClient := newRetryResourceInterface(mockClient, wait.Backoff{
+	retryClient := client.NewRetryResourceInterface(mockClient, wait.Backoff{
 		Duration: 50 * time.Millisecond,
 		Factor:   2.0,
 		Jitter:   0.1,
@@ -501,7 +503,7 @@ func TestRetryResourceInterface_MaxDelayRespected(t *testing.T) {
 }
 
 func TestDefaultRetryBackoff(t *testing.T) {
-	backoff := defaultRetryBackoff()
+	backoff := client.DefaultRetryBackoff()
 
 	assert.Equal(t, 100*time.Millisecond, backoff.Duration)
 	assert.Equal(t, 2.0, backoff.Factor)
