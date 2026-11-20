@@ -2,7 +2,7 @@ import { buildFolderListSearchQuery } from './folderSearchQuery';
 
 describe('buildFolderListSearchQuery', () => {
   it('selects folders labelled as holding alert rules for the alert kind', () => {
-    expect(buildFolderListSearchQuery('alert')).toEqual({
+    expect(buildFolderListSearchQuery('alert', undefined, { folderUids: [] })).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       labelSelector: { matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } },
@@ -13,7 +13,7 @@ describe('buildFolderListSearchQuery', () => {
   });
 
   it('selects folders labelled as holding recording rules for the recording kind', () => {
-    expect(buildFolderListSearchQuery('recording').labelSelector).toEqual({
+    expect(buildFolderListSearchQuery('recording', undefined, { folderUids: [] }).labelSelector).toEqual({
       matchLabels: { 'alerting.grafana.app/has-recording-rules': 'true' },
     });
   });

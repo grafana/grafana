@@ -374,6 +374,13 @@ describe('RecordingRulesPage folder names', () => {
     });
   }
 
+  it('lists only the rules of the folderUid', async () => {
+    renderWithSearch('folderUid:k8s-metrics');
+
+    expect(await screen.findByText('pod:restarts:rate5m')).toBeInTheDocument();
+    expect(screen.queryByText('db:queries:rate5m')).not.toBeInTheDocument();
+  });
+
   it('lists the rules of every folder with that name, whatever its case', async () => {
     renderWithSearch('folder:metrics');
 

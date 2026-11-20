@@ -20,8 +20,8 @@ export type FolderScope = Pick<SharedRuleFilter, 'folder' | 'folderUids'>;
  */
 export function buildFolderListSearchQuery(
   kind: RuleKind,
-  continueToken?: string,
-  { folder, folderUids }: FolderScope = { folderUids: [] }
+  continueToken: string | undefined,
+  { folder, folderUids }: FolderScope
 ): SearchQuery {
   const leaves = [
     ...(folder ? [{ text: { value: folder } }] : []),
