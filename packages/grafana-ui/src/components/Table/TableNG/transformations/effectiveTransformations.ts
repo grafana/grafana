@@ -88,7 +88,7 @@ function getEffectiveColumns(config: DataTransformerConfig, source?: SourceData)
     return config;
   }
 
-  const catalogs = targets.map((frame) => getVisibleFields(frame.fields).map(getDisplayName));
+  const catalogs = withCachedDisplayNames(targets).map((frame) => getVisibleFields(frame.fields).map(getDisplayName));
   const names = new Set(catalogs.flat());
   const hiddenColumns = hidden.filter((name) => names.has(name));
   const order = getEffectiveOrder(indexByName, catalogs);

@@ -139,6 +139,21 @@ describe('getEffectiveTableTransformations', () => {
     expect(result).toEqual([latency]);
   });
 
+  it('checks columns by the names they have within their own frame when the queries are named', () => {
+    const hidden = columns({ excludeByName: { latency: true }, indexByName: { latency: 0, service: 1 } }, 'B');
+
+    const result = getEffectiveTableTransformations(
+      [hidden],
+      [
+        { ...services('A'), name: 'Alpha' },
+        { ...services('B', ['service', 'latency']), name: 'Beta' },
+      ],
+      DONE
+    );
+
+    expect(result).toEqual([hidden]);
+  });
+
   it('drops a column order that matches the order of the data', () => {
     const result = getEffectiveTableTransformations(
       [columns({ excludeByName: { region: true }, indexByName: { service: 0, region: 1, errors: 2 } })],
