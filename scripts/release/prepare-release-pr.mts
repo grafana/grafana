@@ -2,15 +2,15 @@
 // Nx to bump the versions from the conventional commits since those tags and to write the changelog entries.
 // Both steps change files in the working tree, and the next step commits them to the version PR branch.
 //
-// Usage: node scripts/release/prepare-release-pr.mts
-// Needs the git tags fetched. Run from the repo root.
+// Usage: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+// Needs the git tags fetched. Run from the repo root. Prints changed=true when Nx wrote the version and the
+// changelog, and changed=false when there was nothing to write, so the next step runs only when there are changes.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { releaseChangelog, releaseVersion } from 'nx/release';
 
 import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { isMainModule } from './lib/main.mts';
 import { tagFor } from './lib/tags.mts';
 
 // Nx counts commits from the tag of the last release. Without it, it would version from commits that were
@@ -47,13 +47,25 @@ function tagExists(tag: string): boolean {
   }
 }
 
-if (isMainModule(import.meta.url)) {
+// Nx prints its progress to stdout, which is the file of step outputs, so it is sent to stderr while Nx runs.
+async function withStdoutOnStderr<T>(work: () => Promise<T>): Promise<T> {
+  const stdoutWrite = process.stdout.write;
+  Object.assign(process.stdout, { write: process.stderr.write.bind(process.stderr) });
+  try {
+    return await work();
+  } finally {
+    Object.assign(process.stdout, { write: stdoutWrite });
+  }
+}
+
+if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
 
     // Without packages the project list would be empty, which Nx may read as "every project".
     if (packages.length === 0) {
       console.error('::notice::There are no independent packages to release.');
+      console.log('changed=false');
       process.exit(0);
     }
 
@@ -67,9 +79,9 @@ if (isMainModule(import.meta.url)) {
     const missing = findMissingTag(packages, versions, existingTags);
     if (missing) {
       console.error(
-        `::warning::The tag ${missing.tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${missing.name} ${missing.version}, then run the workflow again.`
+        `::error::The tag ${missing.tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${missing.name} ${missing.version}, for example by running the "Create Release Tag" workflow from the Actions tab with that tag and commit, then run this workflow again.`
       );
-      process.exit(0);
+      process.exit(1);
     }
 
     const options = {
@@ -79,17 +91,21 @@ if (isMainModule(import.meta.url)) {
       stageChanges: false,
     };
 
-    const versionResult = await releaseVersion(options);
+    const versionResult = await withStdoutOnStderr(() => releaseVersion(options));
     if (!hasNewVersion(packages, versionResult.projectsVersionData)) {
       console.error('::notice::No package has releasable commits since its last release.');
+      console.log('changed=false');
       process.exit(0);
     }
 
-    await releaseChangelog({
-      ...options,
-      versionData: versionResult.projectsVersionData,
-      releaseGraph: versionResult.releaseGraph,
-    });
+    await withStdoutOnStderr(() =>
+      releaseChangelog({
+        ...options,
+        versionData: versionResult.projectsVersionData,
+        releaseGraph: versionResult.releaseGraph,
+      })
+    );
+    console.log('changed=true');
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

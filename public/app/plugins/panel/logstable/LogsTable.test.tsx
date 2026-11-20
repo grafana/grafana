@@ -1,5 +1,5 @@
 import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -20,7 +20,7 @@ import {
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { defaultTableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { type TableNG } from '@grafana/ui/unstable';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
@@ -68,7 +68,7 @@ const mockEventBus: EventBus = {
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the table only renders a single column.
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 const publishMockFn = jest.fn();
@@ -515,6 +515,59 @@ describe('LogsTable', () => {
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
 
       expect(screen.queryByRole('button', { name: lokiTooltip })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('filter popover menu', () => {
+    let selectionSpy: jest.SpyInstance;
+
+    // user-event drives its own selection on mouse down, which the mocked selection doesn't support, so use fireEvent.
+    function selectTextIn(cell: Element, text: string) {
+      selectionSpy = jest.spyOn(document, 'getSelection').mockReturnValue({
+        toString: () => text,
+        rangeCount: 1,
+        getRangeAt: () => ({ commonAncestorContainer: cell }),
+      } as unknown as Selection);
+    }
+
+    afterEach(() => {
+      selectionSpy?.mockRestore();
+    });
+
+    it('adds a line contains filter for the selected text and closes the menu', async () => {
+      const onClickFilterString = jest.fn();
+      const [frame] = getPanelData().series;
+      setUp({ data: getPanelData({ series: [{ ...frame, refId: 'A' }] }) }, { onClickFilterString });
+      const cell = (await screen.findByText('log 1')).closest('[role="gridcell"]')!;
+
+      selectTextIn(cell, 'log 1');
+      fireEvent.click(cell);
+      fireEvent.click(await screen.findByText('Add as line contains filter'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('log 1', 'A');
+      // The selection is still active, but clicking the menu must not reopen it.
+      expect(screen.queryByText('Add as line contains filter')).not.toBeInTheDocument();
+    });
+
+    it('does not show the menu when the selection is not inside a cell', async () => {
+      setUp(undefined, { onClickFilterString: jest.fn() });
+      const cell = (await screen.findByText('log 1')).closest('[role="gridcell"]')!;
+
+      selectTextIn(cell.parentElement!, 'log 1');
+      fireEvent.click(cell);
+
+      expect(screen.queryByText('Add as line contains filter')).not.toBeInTheDocument();
+    });
+
+    it('does not show the menu when no filter callbacks are provided', async () => {
+      setUp();
+      const cell = (await screen.findByText('log 1')).closest('[role="gridcell"]')!;
+
+      selectTextIn(cell, 'log 1');
+      fireEvent.click(cell);
+
+      expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
     });
   });
 });

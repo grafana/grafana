@@ -28,7 +28,7 @@ policy:
             - Workflow .github/workflows/pr-bot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
             - Workflow .github/workflows/pr-bundle-size.yml succeeded or skipped
-            - Workflow .github/workflows/pr-check-plugin-compat-title.yml succeeded or skipped
+            - Workflow .github/workflows/pr-check-conventional-commits-title.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
             - Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
@@ -432,15 +432,15 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-bundle-size.yml
-  - name: Workflow .github/workflows/pr-check-plugin-compat-title.yml succeeded or skipped
+  - name: Workflow .github/workflows/pr-check-conventional-commits-title.yml succeeded or skipped
     if:
       changed_files:
         paths:
           - ^packages\/grafana-plugin-compat\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.github\/workflows\/pr-check-plugin-compat-title\.yml$
+          - ^\.github\/workflows\/pr-check-conventional-commits-title\.yml$
       file_not_deleted:
         paths:
-          - ^\.github\/workflows\/pr-check-plugin-compat-title\.yml$
+          - ^\.github\/workflows\/pr-check-conventional-commits-title\.yml$
     requires:
       conditions:
         has_workflow_result:
@@ -448,7 +448,7 @@ approval_rules:
             - skipped
             - success
           workflows:
-            - .github/workflows/pr-check-plugin-compat-title.yml
+            - .github/workflows/pr-check-conventional-commits-title.yml
   - name: Workflow .github/workflows/pr-checks.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -627,12 +627,23 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/api\/folder(?:[^/]*)\.go$
           - ^pkg\/apimachinery\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apiserver\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/registry\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/registry\/apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/(?:[^/]*)\.go$
+          - ^pkg\/services\/accesscontrol\/acimpl\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/database\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/ossaccesscontrol\/folder\.go$
+          - ^pkg\/services\/accesscontrol\/permissioncache\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/permreg\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/resourcepermissions\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/services\/apiserver\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/authz\/rbac\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/dashboards\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/folder\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/services\/sqlstore\/migrations\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/tests\/apis\/helper\.go$

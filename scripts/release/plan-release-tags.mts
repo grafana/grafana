@@ -9,10 +9,9 @@
 // tagged (a JSON list of {name, version, tag, path, commit}), matrix (the same list in the form a job matrix
 // reads), release_created and sha to stdout.
 
-import { requireEnv } from './lib/env.mts';
+import { execFileSync } from 'node:child_process';
+
 import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { isMainModule } from './lib/main.mts';
-import { run, stderrOf } from './lib/shell.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface PendingPr {
@@ -154,7 +153,8 @@ export interface ClosedPr {
 
 const PENDING_LABEL = 'nx-release:pending';
 const PAGE_SIZE = 100;
-// Three pages of closed pull requests reach back several days, long enough to re-run a failed release job.
+// The 300 most recently updated closed pull requests reach back about two to three working days. A version pull
+// request older than that is no longer found, so a failed tag job must be fixed within that time (see the workflow).
 const MAX_PAGES = 3;
 
 export function selectPendingPrs(prs: ClosedPr[]): PendingPr[] {
@@ -166,6 +166,22 @@ export function selectPendingPrs(prs: ClosedPr[]): PendingPr[] {
     )
     .sort((a, b) => a.mergedAt - b.mergedAt)
     .map(({ number, mergeCommit }) => ({ number, mergeCommit }));
+}
+
+function run(command: string, args: string[]): string {
+  return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+function stderrOf(error: unknown): string {
+  return error instanceof Error && 'stderr' in error ? String(error.stderr) : '';
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not set.`);
+  }
+  return value;
 }
 
 // gh pr list --label goes through GitHub's search index, which can lag right after a merge, so the plain list
@@ -221,7 +237,7 @@ function tagCommit(tag: string): string | null {
   }
 }
 
-if (isMainModule(import.meta.url)) {
+if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
     const tags = readTags(process.env);
@@ -230,13 +246,13 @@ if (isMainModule(import.meta.url)) {
     if (tags) {
       plan = resolveDispatchTags(tags, packages, Object.fromEntries(tags.map((tag) => [tag, tagCommit(tag)])));
     } else {
-      const prs = listMergedPendingPrs(requireEnv(process.env, 'GITHUB_REPOSITORY')).map((pr) => ({
+      const prs = listMergedPendingPrs(requireEnv('GITHUB_REPOSITORY')).map((pr) => ({
         ...pr,
         before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
         after: versionsAt(pr.mergeCommit, packages),
       }));
 
-      const planned = planReleaseTags(packages, requireEnv(process.env, 'GITHUB_SHA'), prs);
+      const planned = planReleaseTags(packages, requireEnv('GITHUB_SHA'), prs);
       planned.warnings.forEach((warning) => console.error(`::warning::${warning}`));
       plan = planned.plan;
     }
