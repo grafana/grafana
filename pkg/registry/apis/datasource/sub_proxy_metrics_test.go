@@ -7,44 +7,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-	"k8s.io/component-base/metrics/legacyregistry"
 
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
-	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
-
-func TestProxyVariant(t *testing.T) {
-	require.Equal(t, proxymetrics.VariantST, DataSourceAPIBuilderConfig{HandlerOrigin: "local"}.proxyVariant())
-	require.Equal(t, proxymetrics.VariantST, DataSourceAPIBuilderConfig{}.proxyVariant())
-	require.Equal(t, proxymetrics.VariantMT, DataSourceAPIBuilderConfig{HandlerOrigin: "remote"}.proxyVariant())
-}
-
-func TestProxyMetricsSharedPerVariant(t *testing.T) {
-	require.Same(t, proxymetrics.ForVariant(proxymetrics.VariantMT), proxymetrics.ForVariant(proxymetrics.VariantMT))
-	require.NotSame(t, proxymetrics.ForVariant(proxymetrics.VariantMT), proxymetrics.ForVariant(proxymetrics.VariantST))
-}
-
-func TestProxyMetricsRegisterWithTheLegacyProxy(t *testing.T) {
-	proxymetrics.ForVariant(proxymetrics.VariantMT).RecordMetricsAndLog(proxymetrics.Observation{PluginID: "registry-test", Status: 200})
-
-	names := func(g prometheus.Gatherer) map[string]bool {
-		families, err := g.Gather()
-		require.NoError(t, err)
-		found := map[string]bool{}
-		for _, f := range families {
-			found[f.GetName()] = true
-		}
-		return found
-	}
-	require.True(t, names(legacyregistry.DefaultGatherer)["grafana_datasource_proxy_request_duration_seconds"],
-		"the legacy proxy registers on this registry, and a name present in two registries fails the scrape")
-	require.False(t, names(prometheus.DefaultGatherer)["grafana_datasource_proxy_request_duration_seconds"])
-}
 
 func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 	const proxyURL = "/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-ds/proxy/api/v1/query_range"
@@ -66,9 +34,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 	serve := func(t *testing.T, provider *proxyMockDatasourceProvider, ctx context.Context) ([]series, *resourceMockResponder, *httptest.ResponseRecorder) {
 		t.Helper()
-		reg := prometheus.NewPedanticRegistry()
 		builder := newProxyTestBuilder(provider)
-		builder.proxyMetrics = proxymetrics.New(reg, proxymetrics.VariantST)
 		calls := captureRequests(t, builder)
 		r := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 		t.Cleanup(r.Destroy)
@@ -78,7 +44,6 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		require.NoError(t, err)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, proxyURL, nil))
-		require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_datasource_proxy_request_duration_seconds"))
 		return *calls, responder, rec
 	}
 
@@ -98,7 +63,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		calls, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
 		require.Equal(t, http.StatusOK, rec.Code)
-		require.Equal(t, []series{{200, proxymetrics.SourceServer}}, calls)
+		require.Equal(t, []series{{200, "server"}}, calls)
 	})
 
 	t.Run("a datasource 4xx is not a downstream failure", func(t *testing.T) {
@@ -106,7 +71,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		defer target.Close()
 
 		calls, _, _ := serve(t, providerFor(target.URL), proxyTestContext())
-		require.Equal(t, []series{{404, proxymetrics.SourceServer}}, calls)
+		require.Equal(t, []series{{404, "server"}}, calls)
 	})
 
 	t.Run("a datasource 5xx is downstream", func(t *testing.T) {
@@ -115,7 +80,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		calls, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
 		require.Equal(t, http.StatusInternalServerError, rec.Code, "the response status is not rewritten")
-		require.Equal(t, []series{{500, proxymetrics.SourceDownstream}}, calls)
+		require.Equal(t, []series{{500, "downstream"}}, calls)
 	})
 
 	t.Run("outer middleware sees the same downstream 503 as the proxy", func(t *testing.T) {
@@ -128,7 +93,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		calls, _, rec := serve(t, providerFor(target.URL), ctx)
 
 		require.Equal(t, http.StatusServiceUnavailable, rec.Code)
-		require.Equal(t, []series{{503, proxymetrics.SourceDownstream}}, calls)
+		require.Equal(t, []series{{503, "downstream"}}, calls)
 		require.Equal(t, requestmeta.StatusSourceDownstream, requestmeta.GetRequestMetaData(ctx).StatusSource)
 	})
 
@@ -139,13 +104,13 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		calls, _, rec := serve(t, providerFor(url), proxyTestContext())
 		require.Equal(t, http.StatusBadGateway, rec.Code)
-		require.Equal(t, []series{{502, proxymetrics.SourceDownstream}}, calls)
+		require.Equal(t, []series{{502, "downstream"}}, calls)
 	})
 
 	t.Run("a missing datasource is a Grafana 404", func(t *testing.T) {
 		calls, responder, _ := serve(t, &proxyMockDatasourceProvider{dsErr: datasources.ErrDataSourceNotFound}, proxyTestContext())
 		require.Error(t, responder.lastErr)
-		require.Equal(t, []series{{404, proxymetrics.SourceServer}}, calls)
+		require.Equal(t, []series{{404, "server"}}, calls)
 	})
 
 	t.Run("a canceled request is the client's, not the datasource's", func(t *testing.T) {
@@ -155,8 +120,6 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		builder.proxyDependencies = func(context.Context, *http.Request) (*ProxyDependencies, error) {
 			return nil, context.Canceled
 		}
-		reg := prometheus.NewPedanticRegistry()
-		builder.proxyMetrics = proxymetrics.New(reg, proxymetrics.VariantST)
 		calls := captureRequests(t, builder)
 		r := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 		t.Cleanup(r.Destroy)
@@ -164,7 +127,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		handler, err := r.Connect(ctx, "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, proxyURL, nil))
-		require.Equal(t, []series{{499, proxymetrics.SourceClient}}, *calls)
+		require.Equal(t, []series{{499, "client"}}, *calls)
 	})
 
 	t.Run("missing proxy configuration is counted once", func(t *testing.T) {
@@ -174,6 +137,40 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		r := &subProxyREST{builder: builder}
 		_, err := r.Connect(proxyTestContext(), "test-ds", nil, &resourceMockResponder{})
 		require.Error(t, err)
-		require.Equal(t, []series{{500, proxymetrics.SourceServer}}, *calls)
+		require.Equal(t, []series{{500, "server"}}, *calls)
+	})
+}
+
+func TestStatusRecorder(t *testing.T) {
+	t.Run("defaults to 200 when nothing is written", func(t *testing.T) {
+		require.Equal(t, http.StatusOK, newProxyStatusRecorder(httptest.NewRecorder()).Status())
+	})
+
+	t.Run("records the first final status", func(t *testing.T) {
+		rec := newProxyStatusRecorder(httptest.NewRecorder())
+		rec.WriteHeader(http.StatusBadGateway)
+		require.Equal(t, http.StatusBadGateway, rec.Status())
+	})
+
+	t.Run("ignores informational statuses", func(t *testing.T) {
+		rec := newProxyStatusRecorder(httptest.NewRecorder())
+		rec.WriteHeader(http.StatusContinue)
+		rec.WriteHeader(http.StatusTeapot)
+		require.Equal(t, http.StatusTeapot, rec.Status())
+	})
+
+	t.Run("a body write implies 200", func(t *testing.T) {
+		rec := newProxyStatusRecorder(httptest.NewRecorder())
+		_, err := rec.Write([]byte("x"))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, rec.Status())
+	})
+
+	t.Run("keeps flushing and unwrapping available to the reverse proxy", func(t *testing.T) {
+		inner := httptest.NewRecorder()
+		rec := newProxyStatusRecorder(inner)
+		require.NoError(t, http.NewResponseController(rec).Flush())
+		require.True(t, inner.Flushed)
+		require.Same(t, inner, rec.Unwrap())
 	})
 }

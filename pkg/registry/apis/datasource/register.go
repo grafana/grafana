@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -76,7 +75,6 @@ type DataSourceAPIBuilder struct {
 	cfg                    DataSourceAPIBuilderConfig
 	proxyDependencies      ProxyDependenciesProvider
 	dataSourceCRUDMetric   *prometheus.HistogramVec
-	proxyMetrics           *proxymetrics.Metrics
 
 	// dataSourceRequestValidator gates outbound datasource requests (proxy and
 	// health), matching the legacy HTTP API behavior.
@@ -217,7 +215,6 @@ func NewDataSourceAPIBuilder(
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
 		permissionsDeleter:         permissionsDeleter,
-		proxyMetrics:               proxymetrics.ForVariant(cfg.proxyVariant()),
 	}
 	return builder, nil
 }

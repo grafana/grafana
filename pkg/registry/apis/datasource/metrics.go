@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 )
 
 var (
@@ -82,13 +80,4 @@ func (m *connectMetric) SetNotFound() { m.status = "not_found" }
 func (m *connectMetric) Record() {
 	dsSubresourceRequests.WithLabelValues(m.endpoint, m.pluginID, m.status).Inc()
 	dsSubresourceRequestDuration.WithLabelValues(m.endpoint, m.pluginID).Observe(time.Since(m.start).Seconds())
-}
-
-// proxyVariant says which deployment serves the /proxy subresource. Remote
-// handlers are the multi-tenant datasource apiservers.
-func (c DataSourceAPIBuilderConfig) proxyVariant() string {
-	if c.HandlerOrigin == "remote" {
-		return proxymetrics.VariantMT
-	}
-	return proxymetrics.VariantST
 }
