@@ -286,7 +286,7 @@ MenuItem.displayName = 'MenuItem';
 const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
-  const linkLabel = css({ color: theme.colors.text.link });
+  const linkLabel = css({ color: theme.colors.text.primary });
 
   return {
     item: css({
@@ -321,9 +321,9 @@ const getStyles = (theme: GrafanaTheme2, size: 'sm' | 'md') => {
       }
     ),
     link: css({
-      color: theme.colors.text.link,
+      color: theme.colors.text.primary,
       '&:hover, &:focus-visible': {
-        color: theme.colors.text.link,
+        color: theme.colors.text.primary,
         [`.${linkLabel}`]: {
           textDecoration: 'underline',
         },
