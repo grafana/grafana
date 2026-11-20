@@ -1999,6 +1999,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-error": "Could not read the rules file",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Rules",
         "skipped": "Skipped",
@@ -2012,7 +2013,8 @@
         "will-import-config": "Will import this configuration",
         "will-import-rules": "Will import rules",
         "will-import-rules-count_one": "Will import {{count}} rules",
-        "will-import-rules-count_other": "Will import {{count}} rules"
+        "will-import-rules-count_other": "Will import {{count}} rules",
+        "yaml-datasource": "Data source"
       },
       "rules-preview": "Alert rules preview",
       "source": {
@@ -2117,9 +2119,14 @@
         "target-datasource-required": "Please select a target data source",
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
+        "yaml-empty-group": "The group \"{{group}}\" has no rules",
         "yaml-error": "Failed to parse YAML file: {{error}}",
         "yaml-file": "Rules YAML file",
-        "yaml-required": "Please select a file"
+        "yaml-no-rules": "No rules found in this file",
+        "yaml-required": "Please select a file",
+        "yaml-target-datasource": "Data source",
+        "yaml-target-datasource-desc": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "yaml-target-datasource-required": "Please select a data source"
       },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
@@ -5746,6 +5753,10 @@
       "label": "library panel",
       "label-plural": "library panels"
     },
+    "notebook": {
+      "label": "notebook",
+      "label-plural": "notebooks"
+    },
     "playlist": {
       "label": "playlist",
       "label-plural": "playlists"
@@ -6259,7 +6270,10 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "assistant-limit-reached": "You have used all of this month's Assistant prompts.",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
+      "assistant-placeholder-template": "Add changes, or send as is",
+      "assistant-sign-in": "Sign in to use the Assistant.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",
@@ -6273,6 +6287,8 @@
       "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
+      "templates-empty": "No templates available",
+      "templates-title": "Start from a template",
       "title": "New dashboard"
     },
     "errors": {
@@ -7243,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "Attach template: {{title}}",
       "community-badge": "Community",
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
@@ -7259,6 +7276,9 @@
       "edit-template-menu-item": "Edit",
       "more-actions-label": "More actions for {{title}}",
       "no-preview": "No preview available ",
+      "preview-template-button": "Preview",
+      "preview-template-button-label": "Preview template: {{title}}",
+      "provisioned-by-grafana": "<0>Provisioned by</0> Grafana",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
@@ -7294,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filter by created by",
       "search-placeholder": "Search",
+      "sort": {
+        "asc": "Alphabetically (A–Z)",
+        "desc": "Alphabetically (Z–A)"
+      },
       "sort-placeholder": "Sort"
     },
     "dashboard-card": {
@@ -13635,7 +13659,7 @@
       "page-assistant-below": "Page with Assistant below",
       "page-floating-assistant": "Page with floating Assistant",
       "page-only": "Page only",
-      "pop-up": "Pop up",
+      "pop-out": "Pop out",
       "right": "Right"
     },
     "assistant-workspace": {
@@ -17648,6 +17672,16 @@
       "review": "Review blocked content",
       "text_one": "External content from {{host}} is blocked pending viewer approval",
       "text_other": "External content from {{count}} sources are blocked pending viewer approval"
+    },
+    "display-completion": {
+      "color": "Color of the value mapping that matched, or else of the threshold",
+      "helper": "Display value of a field on the current row: formatted text, unit, and value mapping or threshold color",
+      "icon": "Icon of the value mapping that matched",
+      "numeric": "Value as a number",
+      "percent": "Position of the value from 0 to 1, between the lowest and highest values across all numeric fields, unless the query results set a field min or max",
+      "prefix": "Unit shown before the value, such as $",
+      "suffix": "Unit shown after the value, such as %",
+      "text": "Formatted value without its unit, or the text of the value mapping that matched"
     },
     "editor": {
       "aria-label-content": "Text content",

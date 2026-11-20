@@ -190,10 +190,21 @@ func runDryRunTests(t *testing.T, helper *apis.K8sTestHelper, k ruleKind, mode g
 			require.Equal(t, current.GetUID(), out.GetUID(), "dry-run update")
 		}
 
+		unifiedBefore, _, err := readUnified(helper, k, name)
+		require.NoError(t, err)
+
 		// A real update that changes nothing, so the later cases still see the original rule.
 		out, err = hubClient.Update(ctx, current.DeepCopy(), metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, current.GetUID(), out.GetUID(), "real update")
+		if mode == grafanarest.Mode2 {
+			// DualWrite mirrors the update to unified storage in the background. Without waiting for it, it lands
+			// between the snapshots of a later case and looks like a dry-run write.
+			require.Eventually(t, func() bool {
+				rv, _, err := readUnified(helper, k, name)
+				return err == nil && rv != unifiedBefore
+			}, 10*time.Second, 50*time.Millisecond, "the background update to unified storage")
+		}
 		after, err := hubClient.Get(ctx, name, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, current.GetUID(), after.GetUID(), "stored rule")
