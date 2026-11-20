@@ -20,14 +20,15 @@ export function getTemplateSortOptions(): Promise<Array<SelectableValue<Template
 export function filterTemplates<T>(
   items: T[],
   getTitle: (item: T) => string,
-  getDescription: (item: T) => string,
+  getDescription: (item: T) => string | undefined,
   searchQuery = '',
   sortOrder?: TemplateSortOrder
 ): T[] {
   const query = searchQuery.trim().toLowerCase();
   const matches = query
     ? items.filter(
-        (item) => getTitle(item).toLowerCase().includes(query) || getDescription(item).toLowerCase().includes(query)
+        (item) =>
+          getTitle(item).toLowerCase().includes(query) || (getDescription(item) ?? '').toLowerCase().includes(query)
       )
     : items;
   if (!sortOrder) {

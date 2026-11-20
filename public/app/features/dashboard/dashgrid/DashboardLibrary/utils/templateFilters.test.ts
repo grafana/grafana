@@ -13,6 +13,15 @@ describe('filterTemplates', () => {
     expect(filterTemplates(templates, getTitle, getDescription)).toEqual(templates);
   });
 
+  it('searches templates that have no description', () => {
+    const undescribed: Array<{ title: string; description?: string }> = [{ title: 'Loki logs' }, ...templates];
+
+    // "pods" is in no title, so every description is read, the missing one included.
+    expect(filterTemplates(undescribed, getTitle, (t) => t.description, 'pods').map(getTitle)).toEqual([
+      'Kubernetes cluster',
+    ]);
+  });
+
   it('matches the title or the description, ignoring case', () => {
     expect(filterTemplates(templates, getTitle, getDescription, ' NODE ').map(getTitle)).toEqual([
       'Node exporter',
