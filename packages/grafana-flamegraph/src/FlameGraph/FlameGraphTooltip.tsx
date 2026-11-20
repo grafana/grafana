@@ -108,7 +108,7 @@ export const getDiffTooltipData = (
 
   const shortValFormat = getValueFormat('short');
 
-  return [
+  const rows: DiffTableData[] = [
     {
       rowId: '1',
       label: '% of total',
@@ -122,15 +122,18 @@ export const getDiffTooltipData = (
       baseline: displayValueLeft,
       comparison: displayValueRight,
       diff: getValueWithUnit(data, data.valueDisplayProcessor(itemValueRight - valueLeft)),
-    },
-    {
+    }
+  ]
+  if (data.getUnitTitle() === 'Count') {
+    rows.push({
       rowId: '3',
       label: 'Samples',
       baseline: formatWithSuffix(valueLeft, shortValFormat),
       comparison: formatWithSuffix(itemValueRight, shortValFormat),
       diff: formatWithSuffix(itemValueRight - valueLeft, shortValFormat),
-    },
-  ];
+    });
+  }
+  return rows;
 };
 
 function getValueWithUnit(data: FlameGraphDataContainer, displayValue: DisplayValue) {

@@ -261,6 +261,10 @@ export type Options = {
   collapsingThreshold?: number;
 };
 
+// Units where the raw 'value' is not a sample count (e.g. CPU time in ns),
+// so showing it as "samples" would be misleading
+const UNITS_WITHOUT_SAMPLES = ['ns'];
+
 export class FlameGraphDataContainer {
   data: DataFrame;
   options: Options;
@@ -408,6 +412,10 @@ export class FlameGraphDataContainer {
       this.uniqueLabelsMap = uniqueLabelsMap;
       this.collapsedMap = collapsedMap;
     }
+  }
+
+  shouldShowSamples(): boolean {
+    return !UNITS_WITHOUT_SAMPLES.includes(this.valueField.config.unit ?? '');
   }
 }
 

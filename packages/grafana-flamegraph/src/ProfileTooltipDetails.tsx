@@ -16,7 +16,12 @@ export function ProfileTooltipDetails({ data }: { data: ProfileTooltipData }) {
       <br />
       <ProfileValue label="Self" unitValue={data.unitSelf} percentage={data.percentSelf} />
       <br />
-      Samples: <b>{data.samples}</b>
+      {data.samples !== undefined && (
+          <>
+            <br />
+            Samples: <b>{data.samples}</b>
+          </>
+        )}
     </p>
   );
 }

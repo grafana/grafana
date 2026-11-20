@@ -40,7 +40,7 @@ export function getProfileTooltipData({
     unitTitle,
     unitValue: value.unitValue,
     unitSelf: self.unitValue,
-    samples: displayValue.numeric.toLocaleString(),
+    samples: unitTitle === 'Count' ? displayValue.numeric.toLocaleString() : undefined,
   };
 }
 
