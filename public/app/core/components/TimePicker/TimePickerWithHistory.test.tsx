@@ -36,7 +36,7 @@ describe('TimePickerWithHistory', () => {
 
   it.each([true, false])('uses tabbed compact design when rollout is %s', async (enabled) => {
     setTestFlags({ 'grafana.responsiveTimePickerTabs': enabled });
-    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} layout="compact" />);
+    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} widthOverride={600} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
     if (enabled) {
       expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('aria-selected', 'true');
@@ -45,7 +45,7 @@ describe('TimePickerWithHistory', () => {
     }
   });
 
-  it.each([true, false])('applies absolute ranges with blocked storage and showHistory=%s', async (showHistory) => {
+  it.each([true, false])('applies absolute ranges with blocked storage and hideHistory=%s', async (hideHistory) => {
     const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
       throw new DOMException('Storage blocked by host', 'SecurityError');
     });
@@ -57,8 +57,8 @@ describe('TimePickerWithHistory', () => {
           value={getDefaultTimeRange()}
           {...props}
           onChange={onChange}
-          showHistory={showHistory}
-          layout="wide"
+          hideHistory={hideHistory}
+          widthOverride={1200}
         />
       );
       await user.click(screen.getByLabelText(/Time range selected/));
@@ -71,7 +71,7 @@ describe('TimePickerWithHistory', () => {
       await user.click(screen.getByLabelText(/Time range selected/));
       expect(getFromField()).toHaveValue('now-6h');
       const recentRange = screen.queryByRole('checkbox', { name: '2022-12-01 00:00:00 to 2022-12-02 00:00:00' });
-      if (showHistory) {
+      if (!hideHistory) {
         expect(recentRange).toBeInTheDocument();
       } else {
         expect(screen.queryByText('Recently used absolute ranges')).not.toBeInTheDocument();

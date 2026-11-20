@@ -30,7 +30,7 @@ export const TimePickerWithHistory = (props: Props) => {
     ...props,
     compactDesign: props.compactDesign ?? (tabsEnabled ? 'tabs' : 'legacy'),
   } satisfies Props;
-  if (props.showHistory === false) {
+  if (props.hideHistory) {
     return <TimeRangePicker {...pickerProps} />;
   }
   return (

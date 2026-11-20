@@ -148,7 +148,7 @@ it('hides fiscal-year settings independently of timezone settings', async () => 
 
 it('hides history while restoring the remembered tab', async () => {
   localStorage.setItem('grafana.timepicker.tab', 'absolute');
-  const { open } = setup({ showHistory: false, history: [value] });
+  const { open } = setup({ hideHistory: true, history: [value] });
   await open();
   expect(screen.getByRole('tab', { name: 'Absolute' })).toHaveAttribute('aria-selected', 'true');
   expect(
@@ -176,7 +176,7 @@ it('allows an explicit legacy prop to override a tabbed context', async () => {
 it.each([600, 1200])('uses only consumer presets in their supplied order at width %s', async (widthOverride) => {
   const { open, user, onChange } = setup({
     widthOverride,
-    showHistory: false,
+    hideHistory: true,
     quickRanges: [
       { from: 'now-2h', to: 'now', display: 'Two hours' },
       { from: 'now-15m', to: 'now', display: 'Quarter hour' },
@@ -207,7 +207,7 @@ it('remembers tabs and applies ranges when storage is blocked', async () => {
     throw new DOMException('Storage blocked by host', 'SecurityError');
   });
   try {
-    const { open, user, onChange, unmount } = setup({ showHistory: false });
+    const { open, user, onChange, unmount } = setup({ hideHistory: true });
     await open();
     await user.click(screen.getByRole('tab', { name: 'Absolute' }));
     await user.keyboard('{Escape}');

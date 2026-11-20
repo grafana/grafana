@@ -40,8 +40,8 @@ import { useTimeSync } from './utils/useTimeSync';
 export interface TimeRangePickerProps {
   /** Compact presentation. The tabbed design is opt-in. */
   compactDesign?: 'legacy' | 'tabs';
-  /** Show supplied history. Defaults to true; persistence remains the caller's responsibility. */
-  showHistory?: boolean;
+  /** Hide supplied history. Defaults to false; persistence remains the caller's responsibility. */
+  hideHistory?: boolean;
   hideFiscalYear?: boolean;
   hideText?: boolean;
   value: TimeRange;
@@ -260,7 +260,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                   onChange={onChange}
                   quickOptions={quickRanges || getQuickOptions()}
                   history={history}
-                  showHistory={props.showHistory ?? true}
+                  showHistory={!props.hideHistory}
                   compactDesign={props.compactDesign ?? defaultCompactDesign}
                   hideFiscalYear={props.hideFiscalYear}
                   widthOverride={widthOverride}

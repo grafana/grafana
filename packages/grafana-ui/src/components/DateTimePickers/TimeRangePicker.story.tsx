@@ -71,7 +71,7 @@ export const Embedded = Basic.bind({});
 Embedded.args = {
   compactDesign: 'tabs',
   widthOverride: 600,
-  showHistory: false,
+  hideHistory: true,
   hideTimeZone: true,
   hideFiscalYear: true,
 };
@@ -89,7 +89,7 @@ CustomRelativeRanges.parameters = {
   docs: {
     description: {
       story:
-        'quickRanges replaces the default presets. showHistory=false omits recently used ranges. Custom-duration search remains available.',
+        'quickRanges replaces the default presets. hideHistory=true omits recently used ranges. Custom-duration search remains available.',
     },
   },
 };
