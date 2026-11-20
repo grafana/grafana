@@ -698,6 +698,7 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 	_ "google.golang.org/grpc/keepalive"
 	_ "google.golang.org/grpc/metadata"
+	_ "google.golang.org/grpc/peer"
 	_ "google.golang.org/grpc/status"
 	_ "google.golang.org/grpc/test/bufconn"
 	_ "google.golang.org/protobuf/encoding/protojson"
