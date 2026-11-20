@@ -563,7 +563,6 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 			require.NoError(t, err)
 
 			events := make([]WriteEvent, 3)
-			rvs := make([]int64, 3)
 
 			// Event 1: Create the resource (ADDED event)
 			events[0] = WriteEvent{
@@ -574,14 +573,10 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					Resource:  "resources",
 					Name:      resourceName,
 				},
-				Value:      objectToJSONBytes(t, testObj),
-				Object:     metaAccessor,
-				ObjectOld:  metaAccessor,
-				PreviousRV: 0,
+				Value:     objectToJSONBytes(t, testObj),
+				Object:    metaAccessor,
+				ObjectOld: metaAccessor,
 			}
-
-			rvs[0], err = backend.WriteEvent(ctx, events[0])
-			require.NoError(t, err)
 
 			// Event 2: Update the resource (MODIFIED event)
 			newObject := testObj.DeepCopyObject()
@@ -597,14 +592,10 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					Resource:  "resources",
 					Name:      resourceName,
 				},
-				Value:      objectToJSONBytes(t, testObj),
-				Object:     newMetaAccessor,
-				ObjectOld:  metaAccessor,
-				PreviousRV: rvs[0],
+				Value:     objectToJSONBytes(t, testObj),
+				Object:    newMetaAccessor,
+				ObjectOld: metaAccessor,
 			}
-
-			rvs[1], err = backend.WriteEvent(ctx, events[1])
-			require.NoError(t, err)
 
 			// Event 3: Delete the resource (DELETED event)
 			events[2] = WriteEvent{
@@ -615,24 +606,25 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					Resource:  "resources",
 					Name:      resourceName,
 				},
-				Value:      objectToJSONBytes(t, testObj),
-				Object:     metaAccessor,
-				ObjectOld:  metaAccessor,
-				PreviousRV: rvs[1],
+				Value:     objectToJSONBytes(t, testObj),
+				Object:    metaAccessor,
+				ObjectOld: metaAccessor,
 			}
 
-			rvs[2], err = backend.WriteEvent(ctx, events[2])
-			require.NoError(t, err)
-
-			// Wait for all 3 events
+			// Check visibility before a later write can advance the list RV.
+			var previousRV int64
 			for j, event := range events {
+				event.PreviousRV = previousRV
+				rv, err := backend.WriteEvent(ctx, event)
+				require.NoError(t, err)
 				select {
 				case writtenEvent := <-stream:
 					require.Equal(t, event.Key, writtenEvent.Key)
 					require.Equal(t, event.Type, writtenEvent.Type)
 					require.Equal(t, event.Value, writtenEvent.Value)
 					require.Equal(t, event.Object.GetFolder(), writtenEvent.Folder)
-					require.Equal(t, rvs[j], writtenEvent.ResourceVersion)
+					require.Equal(t, rv, writtenEvent.ResourceVersion)
+					require.Equal(t, previousRV, writtenEvent.PreviousRV)
 
 					listRV, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
 						Options: &resourcepb.ListOptions{Key: writtenEvent.Key},
@@ -641,7 +633,6 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					require.GreaterOrEqual(t, listRV, writtenEvent.ResourceVersion, "a current list RV must cover an already published event")
 
 					if j > 0 {
-						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
 						previousAction := DataActionCreated
 						if j > 1 {
 							previousAction = DataActionUpdated
@@ -655,6 +646,7 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
 				}
+				previousRV = rv
 			}
 		})
 	}
