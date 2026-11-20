@@ -11,6 +11,7 @@ export const emptyCharts: ServiceCharts = {
 
 export const emptyOverview: Overview = {
   hints: [],
+  topLogLabels: [],
   scopeValues: { service: [], environment: [], namespace: [] },
   trendMax: 1,
   services: [],

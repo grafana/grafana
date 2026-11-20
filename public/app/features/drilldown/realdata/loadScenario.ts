@@ -8,12 +8,13 @@ import {
   type InstantSample,
   type LogEntry,
   type OtlpBatch,
-  type RangeSeries,
   type TempoSearchHit,
   lokiCount,
   lokiCountRange,
   lokiLabelValues,
+  lokiLabelVolumes,
   lokiLogs,
+  lokiInstant,
   promInstant,
   promLabelValues,
   promRange,
@@ -25,6 +26,7 @@ import {
 import {
   type AppKey,
   type Hint,
+  type HintEvidence,
   type InsightSummary,
   type LogLevel,
   type Note,
@@ -40,6 +42,7 @@ import {
 import { COLLECTOR_SPAN_METRICS, SERVER_OR_CONSUMER, TEMPO_SPAN_METRICS, type SpanMetrics } from './spanMetrics';
 
 export const CALLS = COLLECTOR_SPAN_METRICS.calls;
+const BUCKET = COLLECTOR_SPAN_METRICS.bucket;
 export const SERVER = 'span_kind="SPAN_KIND_SERVER"';
 const ERROR = 'status_code="STATUS_CODE_ERROR"';
 // flagd keeps one streaming RPC open for minutes, which would top every latency ranking.
@@ -48,7 +51,12 @@ export const OVERVIEW_WINDOW_S = 1800;
 const ERROR_RATE_LIMIT = 0.01;
 const SLOW_RATIO = 1.5;
 const SLOW_MIN_MS = 100;
-const MAX_HINTS = 4;
+const MAX_HINT_TRENDS = 4;
+const MAX_ERROR_TRACES = 20;
+const LOG_CALL_LIMIT_S = 10;
+const SERVICE_LABELS = 'service_name, service_namespace, deployment_environment_name';
+const ERROR_LOG_FILTER = '| detected_level=~"(?i)error|err|fatal|critical"';
+const ERROR_TRACE_QUERY = '{ status = error }';
 const SPAN_PALETTE: SpanColor[] = ['blue', 'orange', 'green', 'purple'];
 
 const nowSec = () => Math.floor(Date.now() / 1000);
@@ -156,24 +164,35 @@ async function attempt<T>(notes: Note[], source: Signal, query: Promise<T>, fall
   }
 }
 
+// The overview waits for every call, so one slow call holds up the whole page. The two Loki calls for the
+// recommendations and the top log labels cover every service, and a busy Loki can take over a minute for either. A
+// call that runs past the limit is no longer waited for and counts as not measured. The request itself still runs
+// until the data source answers.
+function withinLimit<T>(call: Promise<T>, slowMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(slowMessage)), LOG_CALL_LIMIT_S * 1000);
+    call.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
 const NO_ENTITIES: EntitySearch = { entities: [], complete: true };
 
-// Assertion names such as INBOUND::span_errors::ErrorRatioBreach carry the kind of problem in their last parts.
-function hintFromEntity(entity: KgEntity): Hint {
-  const slow = entity.insights.some((name) => /latency|slow|duration/i.test(name));
-  const where = [entity.env, entity.namespace].filter(Boolean).join(' · ');
+function serviceScope(labels: Record<string, string>): Scope {
   return {
-    id: `kg-${entity.id}`,
-    severity: slow ? 'slow' : 'errors',
-    title: t('drilldown-real.data.kg-hint-title', '{{name}} has {{total}} active insights', {
-      name: entity.name,
-      total: entity.insights.length,
-    }),
-    description: [entity.insights[0]?.split('::').slice(-2).join(' '), where].filter(Boolean).join(' · '),
-    scope: { type: 'service', value: entity.name },
-    investigable: true,
-    trendLabel: t('drilldown-real.data.kg-hint-trend', '{{name}} insights', { name: entity.name }),
-    trend: [1, 1],
+    type: 'service',
+    value: labels.service_name ?? labels['service.name'] ?? '',
+    env:
+      labels.deployment_environment_name ?? labels['deployment.environment.name'] ?? labels['deployment.environment'],
+    namespace: labels.service_namespace ?? labels['service.namespace'],
   };
 }
 
@@ -237,10 +256,14 @@ const orderByProblem = (names: string[], status: Status) =>
 const environmentFilter = (environment: string) =>
   `{ ${selectors({ type: 'environment', value: environment }).tempo} }`;
 
+export function scopeKey(scope: Scope): string {
+  return JSON.stringify([scope.type, scope.value, scope.env ?? '', scope.namespace ?? '']);
+}
+
 export async function loadOverview(): Promise<Overview> {
   const end = nowSec();
   const start = end - OVERVIEW_WINDOW_S;
-  const byService = ', service_name';
+  const byService = `, ${SERVICE_LABELS}`;
   const notes: Note[] = [];
   const environment = getUrlEnvironment();
 
@@ -292,8 +315,36 @@ export async function loadOverview(): Promise<Overview> {
   let profileNames: Promise<string[]> | undefined;
   const getProfileNames = () => (profileNames ??= pyroscopeLabelValues('service_name', start, end));
 
+  // Label volume is optional: a disabled volume API does not invalidate service coverage from the labels API.
+  const volumeNotes: Note[] = [];
+  const sources = {
+    metrics: getUrlDataSource('metrics'),
+    logs: getUrlDataSource('logs'),
+    traces: getUrlDataSource('traces'),
+  };
+  const timeRange = { from: start * 1000, to: end * 1000 };
+  const errorsQuery = `sum by (${SERVICE_LABELS}) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (${SERVICE_LABELS}) (rate(${CALLS}{${SERVER}}[5m]))`;
+  const versionsQuery = `count by (${SERVICE_LABELS}, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (${SERVICE_LABELS}, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`;
+  const logErrorsQuery = `sort_desc(sum by (${SERVICE_LABELS}) (count_over_time({service_name=~".+"} ${ERROR_LOG_FILTER}[30m])))`;
+  const logErrorCount = () =>
+    withinLimit(
+      lokiInstant(logErrorsQuery, end),
+      t('drilldown-real.data.log-errors-slow', 'The error log count did not answer within {{seconds}} seconds', {
+        seconds: LOG_CALL_LIMIT_S,
+      })
+    );
+  const logLabelVolumes = () =>
+    withinLimit(
+      lokiLabelVolumes(start, end),
+      t('drilldown-real.data.log-volume-slow', 'The log label volumes did not answer within {{seconds}} seconds', {
+        seconds: LOG_CALL_LIMIT_S,
+      })
+    );
+
   const [
-    [p95Now, p95Prev, errors],
+    p95Now,
+    p95Prev,
+    errors,
     traffic,
     p95Range,
     allSpanMetrics,
@@ -306,30 +357,24 @@ export async function loadOverview(): Promise<Overview> {
     spanMetrics,
     orderStatus,
     environmentServices,
+    logErrors,
+    errorTraces,
+    errorRanges,
+    labelVolumes,
   ] = await Promise.all([
-    statusQueries(SERVER),
+    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), end)), []),
+    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), start)), []),
+    attempt(notes, 'metrics', named(promInstant(errorsQuery, end)), []),
     attempt(
       notes,
       'metrics',
-      named(
-        promInstant(`sum by (service_name, service_namespace, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end)
-      ),
+      named(promInstant(`sum by (${SERVICE_LABELS}, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end)),
       []
     ),
     attempt(notes, 'metrics', named(promRange(p95(SERVER, byService), start, end, 90)), []),
     attempt(notes, 'metrics', named(promInstant(`count by (service_name) (rate(${CALLS}[5m]))`, end)), []),
     attempt(notes, 'metrics', promInstant(`count by (service_namespace) (${CALLS})`, end), []),
-    attempt(
-      notes,
-      'metrics',
-      named(
-        promInstant(
-          `count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`,
-          end
-        )
-      ),
-      []
-    ),
+    attempt(notes, 'metrics', named(promInstant(versionsQuery, end)), []),
     attempt(notes, 'logs', lokiLabelValues('service_name', start, end), []),
     traceNames(),
     attempt(notes, 'traces', tempoTagValues('resource.deployment.environment.name', start, end), []),
@@ -338,10 +383,19 @@ export async function loadOverview(): Promise<Overview> {
     orderingStatus,
     // The list narrows to the chosen environment. The hints keep the answers that cover every one.
     environment ? traceNames(environmentFilter(environment)) : undefined,
+    sources.logs ? attempt(notes, 'logs', logErrorCount(), []) : [],
+    sources.traces ? attempt(notes, 'traces', tempoSearch(ERROR_TRACE_QUERY, start, end, MAX_ERROR_TRACES), []) : [],
+    sources.metrics ? attempt(notes, 'metrics', promRange(errorsQuery, start, end, 90), []) : [],
+    sources.logs ? attempt(volumeNotes, 'logs', logLabelVolumes(), []) : [],
   ]);
 
   // A data source that answers but holds no span metrics measured nothing, which is different from measuring zero.
-  if (traffic.length === 0 && !notes.some((note) => note.source === 'metrics')) {
+  if (
+    traffic.length === 0 &&
+    p95Now.length === 0 &&
+    errors.length === 0 &&
+    !notes.some((note) => note.source === 'metrics')
+  ) {
     notes.push({
       source: 'metrics',
       message: t('drilldown-real.data.no-span-metrics', 'No {{metric}} series in the last {{minutes}} minutes', {
@@ -362,10 +416,6 @@ export async function loadOverview(): Promise<Overview> {
   }
   const entities = entitySearch.entities;
 
-  const status = statusOf(p95Now, p95Prev, errors);
-  const { latency: nowMap, before: prevMap, errorRate: errorMap } = status;
-  const rangeMap = new Map<string, RangeSeries>(p95Range.map((series) => [series.metric.service_name, series]));
-
   // One row per service: the version series with the most traffic wins when two versions overlap.
   const busiest = new Map<string, number>();
   for (const sample of traffic) {
@@ -376,9 +426,6 @@ export async function loadOverview(): Promise<Overview> {
   }
   const ranked = [...busiest.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
 
-  const isSlow = (name: string) => isSlowIn(status, name);
-  const isFailing = (name: string) => isFailingIn(status, name);
-  const trendOf = (name: string) => relative(rangeMap.get(name)?.values ?? []);
   const needsAttention = (entity: KgEntity) => entity.severity === 'critical' || entity.severity === 'warning';
 
   // Tempo names the services. Span metrics, for the chosen environment when there is one, put the problem services first.
@@ -386,55 +433,222 @@ export async function loadOverview(): Promise<Overview> {
   const services = orderByProblem(names, orderStatus);
 
   const hints: Hint[] = [];
-  for (const name of ranked) {
-    const latency = nowMap.get(name);
-    const before = prevMap.get(name);
-    const rate = errorMap.get(name) ?? 0;
-    if (isFailing(name)) {
-      hints.push({
-        id: `errors-${name}`,
-        severity: 'errors',
-        title: `${name} returns errors on ${(rate * 100).toFixed(1)}% of requests`,
-        description: `${finite(latency) ? `p95 latency ${formatMs(latency)}` : 'p95 latency n/a'} · server spans, last 5 minutes`,
-        scope: { type: 'service', value: name },
+  const addFinding = (
+    scope: Scope,
+    severity: 'errors' | 'slow',
+    evidence: HintEvidence,
+    trend: number[] = [],
+    trendLabel = ''
+  ) => {
+    if (!scope.value) {
+      return;
+    }
+    const id = `${severity}-${scopeKey(scope)}`;
+    let hint = hints.find((hint) => hint.id === id);
+    if (!hint) {
+      hint = {
+        id,
+        severity,
+        scope,
+        title:
+          severity === 'errors'
+            ? t('drilldown-real.data.errors-detected', 'Errors detected in {{service}}', { service: scope.value })
+            : t('drilldown-real.data.latency-increased', 'Latency increased in {{service}}', { service: scope.value }),
+        description: '',
         investigable: true,
-        trendLabel: `${name} p95 latency`,
-        trend: trendOf(name),
+        trend,
+        trendLabel,
+        evidence: [],
+        timeRange,
+      };
+      hints.push(hint);
+    }
+    hint.evidence.push(evidence);
+    hint.description = [...hint.evidence.map((item) => item.summary), scope.env, scope.namespace]
+      .filter(Boolean)
+      .join(' · ');
+  };
+
+  const measuredTrend = (values: number[]) => (values.filter(finite).length > 1 ? relative(values) : []);
+  const errorRangeByScope = new Map(errorRanges.map((series) => [scopeKey(serviceScope(series.metric)), series]));
+  const latencyRangeByScope = new Map(p95Range.map((series) => [scopeKey(serviceScope(series.metric)), series]));
+  if (sources.metrics) {
+    for (const sample of errors) {
+      if (finite(sample.value) && sample.value >= ERROR_RATE_LIMIT) {
+        const scope = serviceScope(sample.metric);
+        addFinding(
+          scope,
+          'errors',
+          {
+            signal: 'metrics',
+            datasourceUid: sources.metrics,
+            query: errorsQuery,
+            summary: t(
+              'drilldown-real.data.error-ratio-evidence',
+              '{{rate}}% of server spans failed in the last 5 minutes',
+              {
+                rate: (sample.value * 100).toFixed(1),
+              }
+            ),
+          },
+          measuredTrend(errorRangeByScope.get(scopeKey(scope))?.values ?? []),
+          t('drilldown-real.data.error-rate-trend', 'Error rate')
+        );
+      }
+    }
+    const previousByScope = new Map(p95Prev.map((sample) => [scopeKey(serviceScope(sample.metric)), sample.value]));
+    for (const sample of p95Now) {
+      const scope = serviceScope(sample.metric);
+      const before = previousByScope.get(scopeKey(scope));
+      if (
+        finite(sample.value) &&
+        finite(before) &&
+        before > 0 &&
+        sample.value >= SLOW_MIN_MS &&
+        sample.value / before >= SLOW_RATIO
+      ) {
+        addFinding(
+          scope,
+          'slow',
+          {
+            signal: 'metrics',
+            datasourceUid: sources.metrics,
+            query: p95(SERVER, byService),
+            summary: t('drilldown-real.data.latency-evidence', 'p95 {{latency}}, up {{change}}% from {{before}}', {
+              latency: formatMs(sample.value),
+              change: Math.round((sample.value / before - 1) * 100),
+              before: formatMs(before),
+            }),
+          },
+          measuredTrend(latencyRangeByScope.get(scopeKey(scope))?.values ?? []),
+          t('drilldown-real.data.p95-latency', 'p95 latency')
+        );
+      }
+    }
+  }
+  if (sources.logs) {
+    for (const sample of logErrors) {
+      if (finite(sample.value) && sample.value > 0) {
+        addFinding(serviceScope(sample.metric), 'errors', {
+          signal: 'logs',
+          datasourceUid: sources.logs,
+          query: logErrorsQuery,
+          summary: t('drilldown-real.data.log-error-evidence', '', {
+            count: sample.value,
+            defaultValue_one: '{{count}} error log',
+            defaultValue_other: '{{count}} error logs',
+          }),
+        });
+      }
+    }
+  }
+  if (sources.traces) {
+    const samples = await Promise.all(
+      errorTraces.slice(0, MAX_ERROR_TRACES).map(async (hit) => ({
+        traceId: hit.traceID,
+        batches: await attempt(notes, 'traces', tempoTrace(hit.traceID), []),
+      }))
+    );
+    const failures = new Map<string, { scope: Scope; count: number; traceIds: Set<string> }>();
+    for (const sample of samples) {
+      for (const batch of sample.batches) {
+        const count = batch.scopeSpans.reduce(
+          (count, scope) =>
+            count +
+            scope.spans.filter(
+              (span) =>
+                (span.status?.code === 2 || span.status?.code === 'STATUS_CODE_ERROR') &&
+                Number(span.startTimeUnixNano) / 1e9 <= end &&
+                Number(span.endTimeUnixNano) / 1e9 >= start
+            ).length,
+          0
+        );
+        if (count === 0) {
+          continue;
+        }
+        const labels: Record<string, string> = {};
+        for (const attribute of batch.resource.attributes) {
+          if (attribute.value.stringValue) {
+            labels[attribute.key] = attribute.value.stringValue;
+          }
+        }
+        const scope = serviceScope(labels);
+        const key = scopeKey(scope);
+        const failure = failures.get(key) ?? { scope, count: 0, traceIds: new Set<string>() };
+        failure.count += count;
+        failure.traceIds.add(sample.traceId);
+        failures.set(key, failure);
+      }
+    }
+    for (const failure of failures.values()) {
+      const traces = t('drilldown-real.data.sampled-traces', '', {
+        count: failure.traceIds.size,
+        defaultValue_one: '{{count}} sampled trace',
+        defaultValue_other: '{{count}} sampled traces',
       });
-    } else if (isSlow(name) && finite(latency) && finite(before)) {
-      hints.push({
-        id: `slow-${name}`,
-        severity: 'slow',
-        title: `${name} is slower than the previous 30 minutes`,
-        description: `p95 latency ${formatMs(latency)}, up ${Math.round((latency / before - 1) * 100)}% from ${formatMs(before)}`,
-        scope: { type: 'service', value: name },
-        investigable: true,
-        trendLabel: `${name} p95 latency`,
-        trend: trendOf(name),
+      addFinding(failure.scope, 'errors', {
+        signal: 'traces',
+        datasourceUid: sources.traces,
+        query: ERROR_TRACE_QUERY,
+        summary: t('drilldown-real.data.trace-error-evidence', '', {
+          defaultValue_one: '{{count}} error span in {{traces}}',
+          defaultValue_other: '{{count}} error spans in {{traces}}',
+          count: failure.count,
+          traces,
+        }),
+        traceIds: [...failure.traceIds],
       });
     }
   }
-  for (const entity of entities) {
-    if (needsAttention(entity) && !hints.some((hint) => hint.scope.value === entity.name)) {
-      hints.push(hintFromEntity(entity));
+
+  for (const entity of entities.filter(needsAttention)) {
+    const key = scopeKey({ type: 'service', value: entity.name, env: entity.env, namespace: entity.namespace });
+    const hint = hints.find((hint) => scopeKey(hint.scope) === key);
+    if (hint && entity.insights.length > 0) {
+      hint.description += ` · ${entity.insights.join(', ')}`;
     }
   }
-  const flagged = new Set(hints.map((hint) => hint.scope.value));
+  const flagged = new Set(hints.map((hint) => scopeKey(hint.scope)));
   for (const sample of newVersions) {
     const name = sample.metric.service_name;
-    if (!flagged.has(name)) {
+    const scope = serviceScope(sample.metric);
+    const key = scopeKey(scope);
+    if (sources.metrics && name && !flagged.has(key)) {
       hints.push({
-        id: `deploy-${name}`,
+        id: `deploy-${key}`,
         severity: 'deploy',
         title: `${name} version ${sample.metric.service_version} started reporting`,
         description: t('drilldown-real.data.no-change', 'No change in latency or errors so far'),
-        scope: { type: 'service', value: name },
+        scope,
         investigable: false,
         trendLabel: 'p95 latency',
-        trend: trendOf(name),
+        trend: measuredTrend(latencyRangeByScope.get(key)?.values ?? []),
+        evidence: [
+          {
+            signal: 'metrics',
+            datasourceUid: sources.metrics,
+            query: versionsQuery,
+            summary: `Version ${sample.metric.service_version} started reporting`,
+          },
+        ],
+        timeRange,
       });
+      flagged.add(key);
     }
   }
+
+  const rankedHints = hints.sort((a, b) => b.evidence.length - a.evidence.length);
+  // Keep additional Loki range queries bounded as findings span multiple pages.
+  await Promise.all(
+    rankedHints.slice(0, MAX_HINT_TRENDS).map(async (hint) => {
+      if (hint.trend.length > 1 || !hint.evidence.some((item) => item.signal === 'logs')) {
+        return;
+      }
+      const query = `sum(count_over_time(${selectors(hint.scope).loki} ${ERROR_LOG_FILTER}[90s]))`;
+      hint.trend = measuredTrend(await attempt(notes, 'logs', lokiCountRange(query, start, end, 90), []));
+      hint.trendLabel = t('drilldown-real.data.log-error-trend', 'Error logs per 90 seconds');
+    })
+  );
 
   const metricNames = allSpanMetrics.map((s) => s.metric.service_name);
   const universe = [...new Set([...metricNames, ...logServices, ...traceServices])].filter(isAppService).sort();
@@ -485,7 +699,16 @@ export async function loadOverview(): Promise<Overview> {
   const trendMax = Math.min(6, Math.max(2, ...allTrends.filter(finite).map((v) => v * 1.1)));
 
   return {
-    hints: hints.slice(0, MAX_HINTS),
+    hints: rankedHints,
+    topLogLabels: labelVolumes
+      .filter((sample) => finite(sample.value) && sample.value > 0)
+      .flatMap((sample) =>
+        Object.keys(sample.metric)
+          .filter((label) => !label.startsWith('__'))
+          .map((label) => ({ label, bytes: sample.value }))
+      )
+      .sort((a, b) => b.bytes - a.bytes)
+      .slice(0, 10),
     scopeValues: {
       service: names,
       environment: [...new Set(traceEnvironments)].sort(byName.compare),
@@ -502,7 +725,7 @@ export async function loadOverview(): Promise<Overview> {
     services,
     signals,
     exampleService: hints[0]?.scope.value ?? ranked[0] ?? entities[0]?.name ?? 'a service',
-    notes,
+    notes: [...notes, ...volumeNotes],
     entities,
     spanMetrics,
     logServiceNames: logServices,
@@ -510,25 +733,49 @@ export async function loadOverview(): Promise<Overview> {
   };
 }
 
-export function selectors(scope: Scope) {
+export function getHintDrilldownQuery(hint: Hint, signal: HintEvidence['signal']): string {
+  const sel = selectors(hint.scope);
+  switch (signal) {
+    case 'logs':
+      return hint.severity === 'errors' ? `${sel.loki} ${ERROR_LOG_FILTER}` : sel.loki;
+    case 'traces':
+      return `{ ${sel.tempo} && status = error }`;
+    case 'metrics':
+      return `${hint.severity === 'slow' ? BUCKET : CALLS}{${SERVER},${sel.prom}${hint.severity === 'errors' ? `,${ERROR}` : ''}}`;
+  }
+}
+
+function selectors(scope: Scope) {
   const value = esc(scope.value);
   switch (scope.type) {
     case 'service':
       return {
-        prom: `service_name="${value}"`,
-        loki: `service_name="${value}"`,
-        tempo: `resource.service.name="${value}"`,
+        prom: [
+          `service_name="${value}"`,
+          ...(scope.env ? [`deployment_environment_name="${esc(scope.env)}"`] : []),
+          ...(scope.namespace ? [`service_namespace="${esc(scope.namespace)}"`] : []),
+        ].join(','),
+        loki: [
+          `{service_name="${value}"}`,
+          ...(scope.env ? [`deployment_environment_name="${esc(scope.env)}"`] : []),
+          ...(scope.namespace ? [`service_namespace="${esc(scope.namespace)}"`] : []),
+        ].join(' | '),
+        tempo: [
+          `resource.service.name="${value}"`,
+          ...(scope.env ? [`resource.deployment.environment.name="${esc(scope.env)}"`] : []),
+          ...(scope.namespace ? [`resource.service.namespace="${esc(scope.namespace)}"`] : []),
+        ].join(' && '),
       };
     case 'namespace':
       return {
         prom: `service_namespace="${value}"`,
-        loki: `service_namespace="${value}"`,
+        loki: `{service_namespace="${value}"}`,
         tempo: `resource.service.namespace="${value}"`,
       };
     case 'environment':
       return {
         prom: `deployment_environment_name="${value}"`,
-        loki: `deployment_environment_name="${value}"`,
+        loki: `{deployment_environment_name="${value}"}`,
         tempo: `resource.deployment.environment.name="${value}"`,
       };
   }
@@ -544,7 +791,7 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
   const sparkStep = Math.max(15, Math.round(duration / 20));
   const durationStep = Math.max(15, Math.round(duration / 35));
   // A pipeline filter matches detected_level whether the Loki stores it as an indexed label or as structured metadata.
-  const errorLogs = `{${sel.loki}} | detected_level="error" `;
+  const errorLogs = `${sel.loki} | detected_level="error" `;
 
   const [
     p95Now,
@@ -570,7 +817,7 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
     lokiCount(`sum(count_over_time(${errorLogs}[${duration}s]))`, toSec),
     lokiCount(`sum(count_over_time(${errorLogs}[${duration}s]))`, fromSec),
     lokiCountRange(`sum(count_over_time(${errorLogs}[${sparkStep}s]))`, fromSec, toSec, sparkStep),
-    lokiLogs(`{${sel.loki}}`, fromSec, toSec, 60),
+    lokiLogs(sel.loki, fromSec, toSec, 60),
     tempoSearch(`{ ${sel.tempo} }`, fromSec, toSec, 20),
   ]);
 

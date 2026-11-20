@@ -1,3 +1,4 @@
+import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { type Signal, requireDataSource } from '../dataSources';
@@ -129,6 +130,11 @@ export async function lokiCount(query: string, time: number): Promise<number> {
   return response.data.result.reduce((sum, row) => sum + toNumber(row.value[1]), 0);
 }
 
+export async function lokiInstant(query: string, time: number): Promise<InstantSample[]> {
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/query', { query, time });
+  return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
+}
+
 export async function lokiCountRange(query: string, start: number, end: number, step: number): Promise<number[]> {
   const response = await get<LokiResponse<PromRangeRow>>('logs', 'loki/api/v1/query_range', {
     query,
@@ -157,6 +163,17 @@ export async function lokiLabelValues(label: string, startSec: number, endSec: n
     end: endSec * 1e9,
   });
   return response.data;
+}
+
+export async function lokiLabelVolumes(startSec: number, endSec: number): Promise<InstantSample[]> {
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/index/volume', {
+    query: '{}',
+    start: dateTime(startSec * 1000).toISOString(),
+    end: dateTime(endSec * 1000).toISOString(),
+    aggregateBy: 'labels',
+    limit: 100,
+  });
+  return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
 }
 
 export interface TempoSearchHit {
