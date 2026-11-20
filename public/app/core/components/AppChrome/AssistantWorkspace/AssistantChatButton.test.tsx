@@ -501,29 +501,29 @@ describe('AssistantChatButton', () => {
     expect(openButton()).toBeInTheDocument();
   });
 
-  describe('Pop up', () => {
+  describe('Pop out', () => {
     it('opens the Assistant in a new window while the Assistant can open one, showing it too', async () => {
       const onPopOut = jest.fn();
       const unsubscribe = subscribeToExtensionSidebarPopOut(onPopOut);
       const { user } = renderButtons();
       const menu = await openMenuWithKeyboard(user, openButton());
       // The last of the ways to move the Assistant.
-      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating (checked)', 'Pop up']);
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating (checked)', 'Pop out']);
       await user.keyboard('{Escape}');
 
-      await chooseFromMenu(user, openButton(), 'Pop up');
+      await chooseFromMenu(user, openButton(), 'Pop out');
 
       expect(onPopOut).toHaveBeenCalledTimes(1);
       expect(closeButton()).toBeInTheDocument();
       unsubscribe();
     });
 
-    it('marks Pop up while the Assistant is in its own window, and brings it back to the layout chosen', async () => {
+    it('marks Pop out while the Assistant is in its own window, and brings it back to the layout chosen', async () => {
       const popIn = jest.fn();
       const stop = trackExtensionSidebarPopOut(popIn);
       const { user } = renderButtons();
       const menu = await openMenuWithKeyboard(user, openButton());
-      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating', 'Pop up (checked)']);
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating', 'Pop out (checked)']);
       await user.keyboard('{Escape}');
 
       await chooseFromMenu(user, openButton(), 'Right');
@@ -611,7 +611,7 @@ describe('AssistantChatButton', () => {
 
       const menu = await openMenuWithKeyboard(user, openButton());
 
-      expect(within(menu).queryByRole('menuitemradio', { name: 'Pop up' })).not.toBeInTheDocument();
+      expect(within(menu).queryByRole('menuitemradio', { name: 'Pop out' })).not.toBeInTheDocument();
     });
   });
 

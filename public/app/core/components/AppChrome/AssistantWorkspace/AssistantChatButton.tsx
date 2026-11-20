@@ -75,12 +75,12 @@ interface PresetDrawing {
 }
 
 /**
- * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. Pressed
+ * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop out follows on 5. Pressed
  * while the Assistant already shows there, a shortcut hides it, and the next press shows it there again. The
  * browser's own ⌘1-9 switches tabs, so the shortcuts add ⌥.
  */
 const LAYOUT_SHORTCUT_DIGITS: Record<AssistantLayout, number> = { left: 1, right: 2, bottom: 3, floating: 4 };
-const POP_UP_SHORTCUT_DIGIT = 5;
+const POP_OUT_SHORTCUT_DIGIT = 5;
 /** The digit after ⌘⌥⇧ that arranges the window, in the order of the tiles. Fixed, so it means the same everywhere. */
 const PRESET_SHORTCUT_DIGITS: Record<ArrangePreset, number> = {
   'with-navigation': 1,
@@ -243,7 +243,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
       }
       return shortcutPreset !== undefined;
     }
-    if (digit === POP_UP_SHORTCUT_DIGIT) {
+    if (digit === POP_OUT_SHORTCUT_DIGIT) {
       if (poppedOut && isOpen) {
         hide();
         return true;
@@ -397,13 +397,13 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                   ))}
                   {(poppedOut || canPopOutExtensionSidebar()) && (
                     <Menu.Item
-                      label={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
-                      ariaLabel={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
+                      label={t('navigation.assistant-toolbar-button.pop-out', 'Pop out')}
+                      ariaLabel={t('navigation.assistant-toolbar-button.pop-out', 'Pop out')}
                       icon="external-link-alt"
                       role="menuitemradio"
                       ariaChecked={poppedOut}
                       className={cx(styles.item, poppedOut && styles.itemSelected)}
-                      component={getShortcutHint(POP_UP_SHORTCUT_DIGIT)}
+                      component={getShortcutHint(POP_OUT_SHORTCUT_DIGIT)}
                       onClick={openInNewWindow}
                     />
                   )}
