@@ -162,7 +162,7 @@ describe('FlameGraphDataContainer.shouldShowSamples', () => {
   it.each([
     ['ns', false],
     ['short', true],
-    ['bytes', true],
+    ['bytes', false],
     [undefined, true],
   ])('unit %s -> %s', (unit, expected) => {
     expect(containerWithUnit(unit).shouldShowSamples()).toBe(expected);

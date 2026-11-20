@@ -70,6 +70,7 @@ export const getTooltipData = (
     displaySelf: data.getSelfDisplay(item.itemIndexes),
     unitTitle: data.getUnitTitle(),
     totalTicks,
+    showSamples: data.shouldShowSamples(),
   });
 };
 
@@ -124,7 +125,7 @@ export const getDiffTooltipData = (
       diff: getValueWithUnit(data, data.valueDisplayProcessor(itemValueRight - valueLeft)),
     }
   ]
-  if (data.getUnitTitle() === 'Count') {
+  if (data.shouldShowSamples()) {
     rows.push({
       rowId: '3',
       label: 'Samples',

@@ -59,6 +59,7 @@ export interface ProfileTooltipDataOptions {
   displaySelf: DisplayValue;
   unitTitle: string;
   totalTicks: number;
+  showSamples?: boolean;
 }
 
 export interface ProfileValueDataOptions {

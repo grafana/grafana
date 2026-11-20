@@ -30,6 +30,7 @@ export function getProfileTooltipData({
   displaySelf,
   unitTitle,
   totalTicks,
+  showSamples = true,
 }: ProfileTooltipDataOptions): ProfileTooltipData {
   const value = getProfileValueData({ displayValue, totalTicks });
   const self = getProfileValueData({ displayValue: displaySelf, totalTicks });
@@ -40,7 +41,7 @@ export function getProfileTooltipData({
     unitTitle,
     unitValue: value.unitValue,
     unitSelf: self.unitValue,
-    samples: unitTitle === 'Count' ? displayValue.numeric.toLocaleString() : undefined,
+    samples: showSamples ? displayValue.numeric.toLocaleString() : undefined,
   };
 }
 
