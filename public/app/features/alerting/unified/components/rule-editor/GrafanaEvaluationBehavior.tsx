@@ -132,16 +132,18 @@ const forValidationOptions = (getEvaluateEvery: () => string): RegisterOptions<{
 export function GrafanaEvaluationBehaviorStep({
   existing,
   enableProvisionedGroups,
+  belongedToGroup = false,
 }: {
   existing: boolean;
   enableProvisionedGroups: boolean;
+  belongedToGroup?: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
 
   const {
     setValue,
-    formState: { errors, defaultValues },
+    formState: { errors },
     control,
     register,
   } = useFormContext<RuleFormValues>();
@@ -155,7 +157,6 @@ export function GrafanaEvaluationBehaviorStep({
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
 
   const gmaOnlyListView = shouldUseGmaOnlyListView();
-  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
   const showGroupSelection = !gmaOnlyListView && !isUngroupedRule;
 
   const pauseContentText = isGrafanaRecordingRule
@@ -177,7 +178,7 @@ export function GrafanaEvaluationBehaviorStep({
         ) : (
           <>
             <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
-            {gmaOnlyListView && wasGroupedRule && (
+            {gmaOnlyListView && belongedToGroup && (
               <Alert
                 severity="warning"
                 title={t('alerting.rule-form.evaluation.retired-group-title', 'Evaluation groups are retired')}
