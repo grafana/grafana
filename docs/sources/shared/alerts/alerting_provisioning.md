@@ -610,7 +610,7 @@ In Grafana Cloud, data source-managed alerts for the default Loki and Prometheus
 
 If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts. For more information, refer to [Legacy data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
-To convert data source-managed alert rules into Grafana-managed alert rules, refer to [Import data source-managed rules to Grafana-managed rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+To convert data source-managed alert rules into Grafana-managed alert rules, refer to [Import data source-managed rules to Grafana-managed rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/).
 {{< /admonition >}}
 
 ## Paths

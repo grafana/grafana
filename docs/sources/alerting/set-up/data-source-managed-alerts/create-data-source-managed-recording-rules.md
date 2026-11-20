@@ -1,5 +1,8 @@
 ---
 aliases:
+  - ../../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../../alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../../alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/create-data-source-managed-recording-rules/
 description: Recording rules allow you to pre-compute expensive queries in advance and save the results as a new set of time series. Data source-managed recording rules can create a recording rule for Prometheus-based data sources like Mimir or Loki.
@@ -26,7 +29,7 @@ weight: 200
 [Recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/) allow you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
 
 {{< admonition type="caution" >}}
-Support for data source-managed recording rules in the Grafana Alerting UI is legacy functionality. We recommend using [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/) whenever possible. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
+Support for data source-managed recording rules in the Grafana Alerting UI is legacy functionality. We recommend using [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/) whenever possible. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 {{< /admonition >}}
 
 Alert rules and dashboards can then query the new metric resulting from the recording rule. This is faster than querying real-time data and can help to reduce system load.

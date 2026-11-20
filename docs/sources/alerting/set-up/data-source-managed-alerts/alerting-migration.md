@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../alerting-rules/alerting-migration/migration-api/ # /docs/grafana/<GRAFANA_VERSION>/alerting-rules/alerting-migration/migration-api/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/
+  - ../../alerting-rules/alerting-migration/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
+  - ../../alerting-rules/alerting-migration/migration-api/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/migration-api/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/alerting-migration/
 description: Convert alert rules from data sources such as Mimir, Loki, and Prometheus into Grafana-managed alert rules. This enables you to operate and manage these rules using Grafana Alerting.
 labels:
   products:
@@ -10,7 +11,7 @@ labels:
     - oss
 title: Import data source-managed rules to Grafana-managed rules
 menuTitle: Import to Grafana-managed rules
-weight: 300
+weight: 50
 ---
 
 # Import data source-managed rules to Grafana-managed rules

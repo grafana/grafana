@@ -24,12 +24,12 @@ Alert rules in Grafana Alerting are Grafana-managed: Grafana stores and evaluate
 
 To create alert rules with the **+ New alert rule** flow, refer to [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
 
-In Grafana Alerting, you can also [configure recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/), which pre-compute queries and save the results as new time series metrics for use in other alert rules or dashboard queries.
+In Grafana Alerting, you can also [create recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/), which pre-compute queries and save the results as new time series metrics for use in other alert rules or dashboard queries.
 
 When your alert rules depend on recording rule results, use [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) to define their evaluation order and shared interval through the API or Terraform.
 
 ## Alert rules stored in a data source
 
-If you have alert rules stored in a Prometheus-compatible data source, such as Mimir, Loki, or Prometheus, you can [import them into Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) to let Grafana Alerting manage them.
+If you have alert rules stored in a Prometheus-compatible data source, such as Mimir, Loki, or Prometheus, you can [import them into Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/) to let Grafana Alerting manage them.
 
 To keep managing alert rules in the data source, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).

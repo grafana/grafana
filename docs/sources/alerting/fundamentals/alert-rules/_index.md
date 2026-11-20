@@ -43,4 +43,4 @@ Grafana Alerting can also display and manage alert rules that are stored and eva
 
 Similar to alert rules, recording rules are evaluated periodically. A recording rule pre-computes frequently used or computationally expensive queries, and saves the results as a new time series metric.
 
-The new recording metric can then be used in alert rules and dashboards to optimize their queries. For further details, refer to [Create recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
+The new recording metric can then be used in alert rules and dashboards to optimize their queries. For further details, refer to [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).

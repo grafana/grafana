@@ -30,7 +30,7 @@ Before you create a sequence, ensure you have the following:
 
 - **Grafana version:** Use Grafana Cloud or Grafana OSS or Enterprise 13.1 or later.
 - **Rules:** Create at least one Grafana-managed recording rule and any dependent recording rules or alert rules. Place all the rules in the same folder.
-- **Recording rule storage:** Ensure your recording rules write to a Prometheus-compatible data source. In Grafana Cloud, rules without an explicit target write to your managed Prometheus data source by default. In self-managed Grafana, configure a target data source or a default target. For details, refer to [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/).
+- **Recording rule storage:** Ensure your recording rules write to a Prometheus-compatible data source. In Grafana Cloud, rules without an explicit target write to your managed Prometheus data source by default. In self-managed Grafana, configure a target data source or a default target. For details, refer to [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
 - **API access:** Use an authenticated account with permission to manage alert rules in the folder. For authentication options, refer to [Authentication options for the HTTP API](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/).
 
 ## Understand evaluation order
@@ -120,5 +120,5 @@ When you create or update a sequence, follow these constraints:
 
 For more information about recording rules and evaluation behavior, refer to the following resources:
 
-- [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/)
+- [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/)
 - [How rules are evaluated within a group](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/evaluation-within-a-group/)

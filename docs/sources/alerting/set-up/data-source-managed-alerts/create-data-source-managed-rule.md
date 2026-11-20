@@ -36,7 +36,7 @@ In Grafana Alerting, you can:
 
 1. Create and edit data source-managed rules for Grafana Mimir and Grafana Loki data sources.
 1. View rules from Prometheus data sources when [Manage alerts via Alerting UI](/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/) is enabled. However, you cannot create or edit these rules in Grafana.
-1. [Import data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) from Loki, Mimir, and Prometheus into Grafana-managed rules.
+1. [Import data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/alerting-migration/) from Loki, Mimir, and Prometheus into Grafana-managed rules.
 
 {{< admonition type="note" >}}
 Data source-managed rules are supported for horizontal scalability, but they can introduce more operational complexity than Grafana-managed alert rules.
