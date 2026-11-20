@@ -944,9 +944,6 @@ importers:
       core-js:
         specifier: 3.44.0
         version: 3.44.0
-      crashme:
-        specifier: 0.0.15
-        version: 0.0.15
       css-loader:
         specifier: 7.1.2
         version: 7.1.2(@rspack/core@2.2.4(@swc/helpers@0.5.17))(webpack@5.105.0)
@@ -9054,9 +9051,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  crashme@0.0.15:
-    resolution: {integrity: sha512-oTgz8mil5EImzsM1srZ6ekrLjSgMKwYuEFOoS1LuDeM6QqqOhtkL6bFtfLV99tf47niTVRVUd/Jd0vXcqxcQkQ==}
 
   create-jest@29.7.0:
     resolution: {integrity: sha512-Adz2bdH0Vq3F53KEMJOoftQFutWCukm6J24wbPWRO4k1kMY7gS7ds/uoJkNuV8wDCtWWnuwGcJwpWcih+zEW1Q==}
@@ -22437,8 +22431,6 @@ snapshots:
       path-type: 4.0.0
     optionalDependencies:
       typescript: 6.0.2
-
-  crashme@0.0.15: {}
 
   create-jest@29.7.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)):
     dependencies:
