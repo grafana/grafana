@@ -2,6 +2,8 @@ module github.com/grafana/grafana
 
 go 1.27.4
 
+// Change the CI cache key for the cold-cache benchmark.
+
 // Replace references to internal workspaces
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
