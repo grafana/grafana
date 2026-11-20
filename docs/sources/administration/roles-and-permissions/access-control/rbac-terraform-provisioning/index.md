@@ -194,7 +194,6 @@ resource "grafana_role" "my_new_role" {
   name        = "custom:users:manager"
   description = "Manage organization users and teams"
   uid         = "customusersmanager"
-  version     = 1
   global      = false
 
   # Manage organization users

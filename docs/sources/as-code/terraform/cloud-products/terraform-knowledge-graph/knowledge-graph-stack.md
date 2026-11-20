@@ -51,6 +51,7 @@ Create a file named `knowledge-graph-stack.tf` and add the following:
 resource "grafana_cloud_access_policy" "knowledge_graph" {
   name         = "knowledge-graph-stack-policy"
   display_name = "Knowledge Graph Stack Policy"
+  region       = var.stack_region
 
   scopes = [
     "stacks:read",
@@ -68,6 +69,7 @@ resource "grafana_cloud_access_policy" "knowledge_graph" {
 resource "grafana_cloud_access_policy_token" "knowledge_graph" {
   name             = "knowledge-graph-stack-token"
   access_policy_id = grafana_cloud_access_policy.knowledge_graph.policy_id
+  region           = grafana_cloud_access_policy.knowledge_graph.region
 }
 
 # Create a Grafana Service Account for dashboards and Grafana Managed Alerts
@@ -93,12 +95,18 @@ variable "stack_slug" {
   description = "The Grafana Cloud stack slug"
   type        = string
 }
+
+variable "stack_region" {
+  description = "The region of the Grafana Cloud stack, for example prod-us-east-0"
+  type        = string
+}
 ```
 
 Replace the following values:
 
 - _`<STACK_ID>`_ with your Grafana Cloud stack ID
 - _`<STACK_SLUG>`_ with your Grafana Cloud stack slug
+- _`<STACK_REGION>`_ with the region of your Grafana Cloud stack, for example `prod-us-east-0`
 
 ## Basic stack configuration with auto-detected datasets
 

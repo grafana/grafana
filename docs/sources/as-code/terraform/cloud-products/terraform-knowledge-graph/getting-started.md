@@ -54,7 +54,7 @@ You can reuse a similar setup to the one described in [Creating and managing a G
      required_providers {
        grafana = {
          source  = "grafana/grafana"
-         version = ">= 2.9.0"
+         version = ">= 4.26.0"
        }
      }
    }

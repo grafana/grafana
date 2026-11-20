@@ -42,7 +42,7 @@ All of the following Terraform configuration files should be saved in the same d
      required_providers {
        grafana = {
          source  = "grafana/grafana"
-         version = ">= 2.9.0"
+         version = ">= 2.13.0"
        }
      }
    }
@@ -133,8 +133,11 @@ This guide uses the InfluxDB data source. The required arguments for [grafana_da
      name          = "<data-source-name>"
      url           = "<data-source-url>"
      username      = "<username>"
-     password      = "<password>"
      database_name = "<db-name>"
+
+     secure_json_data_encoded = jsonencode({
+       password = "<password>"
+     })
    }
    ```
 

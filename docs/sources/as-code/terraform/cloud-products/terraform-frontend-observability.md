@@ -18,7 +18,7 @@ aliases:
 # Manage Frontend Observability in Grafana Cloud with Terraform
 
 Learn how to use Terraform to manage [Grafana Frontend Observability](https://grafana.com/docs/grafana-cloud/frontend-observability/) resources, such as your applications.
-This guide shows you how to create an access policy and a token for Frontend Observability so that you can connect to the Frontend Observability API.
+This guide shows you how to create an access policy and a token for the Frontend Observability API, and how to use them to create a Frontend Observability app.
 
 ## Before you begin
 
@@ -64,6 +64,7 @@ The [`grafana_cloud_stack` (Data Source)](https://registry.terraform.io/provider
      required_providers {
        grafana = {
          source  = "grafana/grafana"
+         version = ">= 3.22.1"
        }
      }
    }
@@ -87,23 +88,97 @@ The [`grafana_cloud_stack` (Data Source)](https://registry.terraform.io/provider
 
 ## Create an access policy and token for Frontend Observability
 
-You must create a Terraform configuration with the following:
+The Frontend Observability API needs its own access token. Create an access policy with the `frontend-observability:read`, `frontend-observability:write`, and `frontend-observability:delete` scopes using [`grafana_cloud_access_policy`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy), and a token for it using [`grafana_cloud_access_policy_token`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy_token).
 
-- An access policy with `frontend-observability:read`, `frontend-observability:write`, and `frontend-observability:delete` scopes, using [`grafana_cloud_access_policy` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy)
-- A token named `frontend_o11y_api_access_token`, using [`grafana_cloud_access_policy_token` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_access_policy_token)
+Create a file named `frontend-o11y-token.tf` and add the following:
+
+```terraform
+resource "grafana_cloud_access_policy" "frontend_o11y" {
+  provider = grafana.cloud
+
+  name   = "frontend-o11y-policy"
+  region = data.grafana_cloud_stack.stack.region_slug
+
+  scopes = [
+    "frontend-observability:read",
+    "frontend-observability:write",
+    "frontend-observability:delete",
+    "stacks:read",
+  ]
+
+  realm {
+    type       = "stack"
+    identifier = data.grafana_cloud_stack.stack.id
+  }
+}
+
+resource "grafana_cloud_access_policy_token" "frontend_o11y" {
+  provider = grafana.cloud
+
+  name             = "frontend-o11y-token"
+  region           = grafana_cloud_access_policy.frontend_o11y.region
+  access_policy_id = grafana_cloud_access_policy.frontend_o11y.policy_id
+}
+```
 
 ## Configure the provider to use the Frontend Observability API
 
-After you have created the token, you can configure the provider as follows:
+Add a second provider block that uses the token to connect to the Frontend Observability API. Add the following to `cloud-provider.tf`:
 
 ```terraform
 provider "grafana" {
-  frontend_o11y_api_access_token = "<access token from previous step>"
+  alias = "frontend_o11y"
+
+  frontend_o11y_api_access_token = grafana_cloud_access_policy_token.frontend_o11y.token
 }
+```
+
+## Create a Frontend Observability app
+
+Use [`grafana_frontend_o11y_app`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/frontend_o11y_app) to create an app in Frontend Observability.
+
+Create a file named `frontend-o11y-app.tf` and add the following:
+
+```terraform
+resource "grafana_frontend_o11y_app" "my_app" {
+  provider = grafana.frontend_o11y
+
+  stack_id        = data.grafana_cloud_stack.stack.id
+  name            = "<APP_NAME>"
+  allowed_origins = ["<ALLOWED_ORIGIN>"]
+
+  extra_log_attributes = {
+    team = "<TEAM_NAME>"
+  }
+
+  settings = {
+    "geolocation.enabled" = "1"
+  }
+}
+
+output "frontend_o11y_collector_endpoint" {
+  value = grafana_frontend_o11y_app.my_app.collector_endpoint
+}
+```
+
+Replace the following placeholders:
+
+- _`<APP_NAME>`_: The name of your frontend app.
+- _`<ALLOWED_ORIGIN>`_: The origin that sends telemetry to Frontend Observability, for example `https://example.com`.
+- _`<TEAM_NAME>`_: A value for the `team` attribute that's added to every signal from the app.
+
+The `allowed_origins`, `extra_log_attributes`, and `settings` arguments are required. For the available settings, refer to the [`grafana_frontend_o11y_app` documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/frontend_o11y_app).
+
+After you run `terraform apply`, the `frontend_o11y_collector_endpoint` output shows the collector URL to use in the Faro Web SDK configuration of your app.
+
+To bring an existing app under Terraform management, import it with its stack ID and name:
+
+```sh
+terraform import grafana_frontend_o11y_app.my_app "<STACK_ID>:<APP_NAME>"
 ```
 
 ## Summary
 
-In this guide, you created an access policy and a token for Frontend Observability using Terraform.
+In this guide, you created an access policy and a token for Frontend Observability, and used them to create a Frontend Observability app with Terraform.
 
 To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
