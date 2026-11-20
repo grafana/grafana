@@ -68,7 +68,7 @@ func TestClientCertificateRotation(t *testing.T) {
 		return conn
 	}
 	first := dial()
-	defer first.Close()
+	t.Cleanup(func() { _ = first.Close() })
 	expectSerial(1)
 	guard := time.AfterFunc(8*time.Second, func() { _ = first.Close() })
 	defer guard.Stop()
@@ -83,14 +83,14 @@ func TestClientCertificateRotation(t *testing.T) {
 		}
 	}
 	second := dial()
-	defer second.Close()
+	t.Cleanup(func() { _ = second.Close() })
 	expectSerial(2)
 	// A bad replacement must fail closed, even after earlier successful handshakes.
 	require.NoError(t, os.WriteFile(certFile, []byte("invalid"), 0600))
 	addr := server.Listener.Addr().String()
 	raw, err := net.DialTimeout("tcp", addr, time.Second)
 	require.NoError(t, err)
-	defer raw.Close()
+	t.Cleanup(func() { _ = raw.Close() })
 	_, _, err = creds.ClientHandshake(context.Background(), addr, raw)
 	require.Error(t, err)
 }
