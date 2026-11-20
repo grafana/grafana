@@ -14,7 +14,7 @@ runtime_config = example.grafana.app/v0alpha1=true,example.grafana.app/v1alpha1=
 ## Manifest
 
 The source of the app's schemas and list of capabilities is the manifest, which is generated from [kinds/manifest.cue](./kinds/manifest.cue).
-The `Example` kind is defined for [v0alpha1 here](./kinds/example_v0alpha1) and [v1alpha1 (default) here](./kinds/example_v1alpha1.cue).
+The `Example` kind is defined for [v0alpha1 here](./kinds/example_v0alpha1.cue) and [v1alpha1 (default) here](./kinds/example_v1alpha1.cue).
 The root definition of the `Example` kind that both versions share is defined [here](./kinds/example.cue).
 
 The CUE is used to generate code (and the AppManifest) when `make generate` is run.
