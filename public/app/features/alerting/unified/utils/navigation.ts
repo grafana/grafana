@@ -3,8 +3,8 @@ import { locationService, logInfo } from '@grafana/runtime';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 
+import { type RuleKind } from '../gma-rule-list/shared/ruleKind';
 import { createReturnTo } from '../hooks/useReturnTo';
-import { type RuleKind } from '../rule-editor/useK8sRuleWithLocation';
 import { type RuleFormValues } from '../types/rule-form';
 
 import { ROOT_ROUTE_NAME } from './k8s/constants';

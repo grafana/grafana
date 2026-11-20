@@ -21,6 +21,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { isNotFoundError } from '../api/util';
+import { type RuleKind } from '../gma-rule-list/shared/ruleKind';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { K8sAnnotations } from '../utils/k8s/constants';
 import { NO_GROUP_PREFIX } from '../utils/rules';
@@ -38,8 +39,6 @@ export interface EditableRuleState {
   resourceVersion?: string;
 }
 
-export type RuleKind = 'alert' | 'recording';
-
 /**
  * Loads a Grafana-managed rule from the rules API. Alert and recording rules have separate endpoints and
  * the UID doesn't say which one a rule lives in, so without a `kind` the alert rule is tried first and
@@ -54,19 +53,20 @@ export function useK8sRuleWithLocation(uid: string, kind?: RuleKind): EditableRu
     refetchOnMountOrArgChange: true,
   });
   const resource = alertRule.currentData ?? recordingRule.currentData;
+  // The GMA list caches the same rules, so wait for the editor's own fetch instead of showing that copy.
   const alertPending = kind !== 'recording' && (alertRule.isUninitialized || alertRule.isFetching);
   const recordingPending = tryRecordingRule && (recordingRule.isUninitialized || recordingRule.isFetching);
 
   return useMemo(() => {
+    if (alertPending || recordingPending) {
+      return { loading: true };
+    }
     if (resource) {
       return {
         loading: false,
         result: k8sRuleToRuleWithLocation(resource),
         resourceVersion: resource.metadata.resourceVersion,
       };
-    }
-    if (alertPending || recordingPending) {
-      return { loading: true };
     }
     const error = [alertRule.error, recordingRule.error].find((err) => err && !isNotFoundError(err));
     return { loading: false, error };
