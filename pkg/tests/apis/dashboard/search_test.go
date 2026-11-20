@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -133,11 +132,16 @@ func testIntegrationSearchDevDashboards(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, json.Unmarshal(raw, &sr))
 
-		// Normalize scores and query cost for snapshot comparison
+		// Relevance scores depend on index-wide statistics (document count, term
+		// frequencies), which differ between environments, so they are not part of
+		// the snapshot. The ranking is still covered by the order of the hits.
+		for i := 1; i < len(sr.Hits); i++ {
+			require.GreaterOrEqual(t, sr.Hits[i-1].Score, sr.Hits[i].Score, "hits must be ordered by descending score")
+		}
 		sr.QueryCost = 0 // this depends on the hardware
-		sr.MaxScore = roundTo(sr.MaxScore, 3)
+		sr.MaxScore = 0
 		for i := range sr.Hits {
-			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+			sr.Hits[i].Score = 0
 		}
 		return sr
 	}
@@ -754,12 +758,4 @@ func TestIntegrationSearchCreatePermissionSharedWithMe(t *testing.T) {
 			assert.Equal(t, enabled, found)
 		})
 	}
-}
-
-// roundTo rounds a float64 to a specified number of decimal places.
-func roundTo(n float64, decimals uint32) float64 {
-	// Calculate the power of 10 for the desired number of decimals
-	scale := math.Pow(10, float64(decimals))
-	// Multiply, round to the nearest integer, and then divide back
-	return math.Round(n*scale) / scale
 }
