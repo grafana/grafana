@@ -21,7 +21,7 @@ export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode;
   return (
     <Stack direction={isWide ? 'row' : 'column'} gap={2}>
       {isWide ? (
-        <Box width={32} shrink={0} paddingBottom={2}>
+        <Box width={32} shrink={0}>
           {sidebar}
         </Box>
       ) : (

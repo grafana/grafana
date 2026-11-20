@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
@@ -38,24 +38,22 @@ function AlertRulesPage() {
 
   return (
     <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
-      <Box paddingTop={2}>
-        <Stack direction="column" gap={2}>
-          <div className={styles.searchRow}>
-            <RuleSearchInput
-              query={query}
-              onApply={applyQuery}
-              filterHelp={filterHelp}
-              issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
-            />
-          </div>
-          <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
-            <RuleSequenceDrawerProvider>
-              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-            </RuleSequenceDrawerProvider>
-          </FilterSidebarLayout>
-        </Stack>
-      </Box>
+      <Stack direction="column" gap={1}>
+        <div className={styles.searchRow}>
+          <RuleSearchInput
+            query={query}
+            onApply={applyQuery}
+            filterHelp={filterHelp}
+            issues={issues}
+            trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+          />
+        </div>
+        <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
+          <RuleSequenceDrawerProvider>
+            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
+        </FilterSidebarLayout>
+      </Stack>
     </AlertingPageWrapper>
   );
 }

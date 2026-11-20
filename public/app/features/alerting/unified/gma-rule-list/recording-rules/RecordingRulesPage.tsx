@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
@@ -37,26 +37,24 @@ function RecordingRulesPage() {
 
   return (
     <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<RecordingRulesPageHeader />}>
-      <Box paddingTop={2}>
-        <Stack direction="column" gap={2}>
-          <div className={styles.searchRow}>
-            <RuleSearchInput
-              query={query}
-              onApply={applyQuery}
-              filterHelp={filterHelp}
-              issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
-            />
-          </div>
-          <FilterSidebarLayout
-            sidebar={<RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}
-          >
-            <RuleSequenceDrawerProvider>
-              <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-            </RuleSequenceDrawerProvider>
-          </FilterSidebarLayout>
-        </Stack>
-      </Box>
+      <Stack direction="column" gap={1}>
+        <div className={styles.searchRow}>
+          <RuleSearchInput
+            query={query}
+            onApply={applyQuery}
+            filterHelp={filterHelp}
+            issues={issues}
+            trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+          />
+        </div>
+        <FilterSidebarLayout
+          sidebar={<RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}
+        >
+          <RuleSequenceDrawerProvider>
+            <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
+        </FilterSidebarLayout>
+      </Stack>
     </AlertingPageWrapper>
   );
 }
