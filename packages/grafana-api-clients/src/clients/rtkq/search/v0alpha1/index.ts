@@ -13,12 +13,14 @@ export const generatedAPI = rawAPI.injectEndpoints({
     searchGlobal: build.infiniteQuery<GlobalSearchResults, Omit<GlobalSearchQuery, 'continue'>, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
-        getNextPageParam: (lastPage) => lastPage.metadata.continue || undefined,
+        // Runs while rendering, so a response without `metadata` ends the list instead of throwing.
+        getNextPageParam: (lastPage) => lastPage.metadata?.continue || undefined,
       },
       query: ({ queryArg, pageParam }) => ({
         url: '/global/search',
         method: 'POST',
-        body: { ...queryArg, ...(pageParam ? { continue: pageParam } : {}) },
+        // Always set, so a cursor in the argument never reaches the server.
+        body: { ...queryArg, continue: pageParam },
       }),
       providesTags: ['Search'],
     }),
