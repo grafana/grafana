@@ -114,6 +114,8 @@ export interface Step2ValidationParams {
   rulesSource: 'yaml' | 'datasource';
   rulesYamlFile: File | null;
   rulesDatasourceUID: string | null | undefined;
+  /** The data source the rules of a YAML file run against. Not used for a data source. */
+  yamlImportTargetDatasourceUID: string | null | undefined;
   /** Selected routing tree name */
   selectedRoutingTree: string;
   targetDatasourceUID: string | null | undefined;
@@ -123,9 +125,19 @@ export interface Step2ValidationParams {
  * Validates that Step 2 form is complete and valid
  */
 export function isStep2Valid(params: Step2ValidationParams): boolean {
-  const { rulesSource, rulesYamlFile, rulesDatasourceUID, selectedRoutingTree, targetDatasourceUID } = params;
+  const {
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    yamlImportTargetDatasourceUID,
+    selectedRoutingTree,
+    targetDatasourceUID,
+  } = params;
 
   if (!hasValidSourceSelection(rulesSource, rulesYamlFile, rulesDatasourceUID)) {
+    return false;
+  }
+  if (rulesSource === 'yaml' && !yamlImportTargetDatasourceUID) {
     return false;
   }
   if (!selectedRoutingTree) {
