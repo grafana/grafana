@@ -5741,6 +5741,10 @@
       "label": "library panel",
       "label-plural": "library panels"
     },
+    "notebook": {
+      "label": "notebook",
+      "label-plural": "notebooks"
+    },
     "playlist": {
       "label": "playlist",
       "label-plural": "playlists"

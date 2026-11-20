@@ -61,7 +61,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { initializeLoggersRegistry } from '@grafana/runtime/unstable';
+import { initializeLoggersRegistry, setKindRegistry } from '@grafana/runtime/unstable';
 import { loadResources as loadScenesResources, sceneUtils } from '@grafana/scenes';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -85,6 +85,7 @@ import { createErrorNotification } from './core/copy/appNotification';
 import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
+import { kindRegistry } from './core/kinds/coreKinds';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
@@ -247,6 +248,7 @@ export class GrafanaApp {
       setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
+      setKindRegistry(kindRegistry);
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);

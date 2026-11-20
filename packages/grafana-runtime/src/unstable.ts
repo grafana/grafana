@@ -13,6 +13,14 @@ export { clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } 
 export { type LoggerSource } from './services/logging/loggers';
 export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event, EventVariants } from './analyticsFramework/types';
+export {
+  getKindRegistry,
+  setKindRegistry,
+  type CoreKindKey,
+  type KindInfo,
+  type KindLabelOptions,
+  type KindRegistry,
+} from './services/KindRegistry';
 // Plugins bundling @grafana/plugin-compat < 0.5.0 only look for these here.
 export {
   /** @deprecated Import from `@grafana/runtime` instead. */
