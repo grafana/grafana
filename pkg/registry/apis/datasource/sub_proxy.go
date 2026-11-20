@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
@@ -14,7 +13,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -114,17 +112,13 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
-	entry := pluginproxy.RequestLog{
-		PluginID:      r.builder.pluginJSON.ID,
-		DatasourceUID: name,
-		Namespace:     k8srequest.NamespaceValue(ctx),
-	}
+	record := r.builder.cfg.RecordProxyRequest
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		entry.Status = http.StatusInternalServerError
-		entry.Source = string(requestmeta.StatusSourceServer)
-		r.recordRequest(ctx, entry)
+		if record != nil {
+			record(ctx, r.builder.pluginJSON.ID, http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
+		}
 		return nil, errors.New("datasource proxy is not configured")
 	}
 
@@ -133,27 +127,25 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
-		start := time.Now()
-		recorder := builder.NewResponseWriterWithStatus(w)
-		result := entry
-		result.Method = req.Method
-		result.Path = proxyPathFromRequest(req, name)
-		defer func() {
-			if result.Status == 0 {
-				result.Status = recorder.StatusCode()
-			}
-			result.Source = pluginproxy.StatusSource(req.Context(), result.Status)
-			result.Duration = time.Since(start)
-			r.recordRequest(req.Context(), result)
-		}()
+		var status int
+		if record != nil {
+			recorder := builder.NewResponseWriterWithStatus(w)
+			w = recorder
+			defer func() {
+				if status == 0 {
+					status = recorder.StatusCode()
+				}
+				record(req.Context(), r.builder.pluginJSON.ID, status, pluginproxy.StatusSource(req.Context(), status))
+			}()
+		}
 
 		respondError := func(err error) {
 			err = proxyResponseError(req.Context(), err)
 			// The Kubernetes responder writes to the original response writer.
-			result.Status = http.StatusInternalServerError
+			status = http.StatusInternalServerError
 			var s apierrors.APIStatus
 			if errors.As(err, &s) && s.Status().Code != 0 {
-				result.Status = int(s.Status().Code)
+				status = int(s.Status().Code)
 			}
 			responder.Error(err)
 		}
@@ -216,8 +208,8 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		proxy, err := pluginproxy.NewDataSourceProxy(
 			loader,
 			r.builder.pluginJSON.Routes,
-			pluginproxy.HTTPContext{Req: req, Resp: recorder},
-			result.Path,
+			pluginproxy.HTTPContext{Req: req, Resp: w},
+			proxyPathFromRequest(req, name),
 			deps.ProxyCfg,
 			deps.HTTPClientProvider,
 			deps.OAuthTokenService,
@@ -233,13 +225,6 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		proxy.HandleRequest()
 	}), nil
-}
-
-func (r *subProxyREST) recordRequest(ctx context.Context, entry pluginproxy.RequestLog) {
-	entry.Log()
-	if record := r.builder.cfg.RecordProxyRequest; record != nil {
-		record(ctx, entry.PluginID, entry.Status, entry.Source)
-	}
 }
 
 // proxyResponseError reports a request the client abandoned as 499, as the

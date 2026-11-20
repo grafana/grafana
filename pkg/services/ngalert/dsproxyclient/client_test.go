@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -28,7 +27,6 @@ type fakeProxy struct {
 	apiErr       error
 
 	gotUID    string
-	gotSource requestmeta.StatusSource
 	gotPath   string
 	gotAccept string
 	gotUser   string
@@ -55,8 +53,6 @@ func (f *fakeProxy) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, ds
 	if status == 0 {
 		status = http.StatusOK
 	}
-	requestmeta.WithStatusSource(c.Req.Context(), status)
-	f.gotSource = requestmeta.GetRequestMetaData(c.Req.Context()).StatusSource
 	c.Resp.WriteHeader(status)
 	_, _ = c.Resp.Write(f.body)
 }
@@ -123,13 +119,12 @@ func TestClient_Get_ServiceIdentityUserCarriesOrgAndDatasourcePermissions(t *tes
 }
 
 func TestClient_Get_PassesThroughNon2xxStatusAndBody(t *testing.T) {
-	proxy := &fakeProxy{status: http.StatusServiceUnavailable, body: []byte("boom")}
+	proxy := &fakeProxy{status: http.StatusInternalServerError, body: []byte("boom")}
 	c := New(proxy, log.NewNopLogger(), "path", "login", "")
 
 	res, err := c.Get(context.Background(), testDS())
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusServiceUnavailable, res.Status)
-	assert.Equal(t, requestmeta.StatusSourceDownstream, proxy.gotSource)
+	assert.Equal(t, http.StatusInternalServerError, res.Status)
 	assert.Equal(t, []byte("boom"), res.Body)
 }
 
