@@ -11,8 +11,10 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -83,6 +85,72 @@ func setupTestContextWithUser(r *http.Request, namespace string) *http.Request {
 		ctx = request.WithNamespace(ctx, namespace)
 	}
 	return r.WithContext(ctx)
+}
+
+func TestRequestConfigMiddlewareNavigationOverrides(t *testing.T) {
+	for _, mode := range []struct {
+		name         string
+		fullSettings bool
+	}{
+		{name: "slim settings"},
+		{name: "full settings", fullSettings: true},
+	} {
+		t.Run(mode.name, func(t *testing.T) {
+			if mode.fullSettings {
+				enableReducedBootDataToggle(t)
+			}
+			cfg := setting.NewCfg()
+			raw, err := ini.Load([]byte(`
+[navigation.app_sections]
+base-app = dashboards 1
+moved-app = explore 2
+`))
+			require.NoError(t, err)
+			cfg.Raw = raw
+			service := &mockSettingsService{settings: []*settingservice.Setting{
+				{Section: "navigation.app_sections", Key: "moved-app", Value: "connections 3"},
+				{Section: "navigation.app_standalone_pages", Key: "/a/plugin/page", Value: "dashboards 4"},
+			}}
+
+			var captured FSRequestConfig
+			handler := RequestConfigMiddleware(cfg, &licensing.OSSLicensingService{}, service, nil)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var err error
+				captured, err = FSRequestConfigFromContext(r.Context())
+				require.NoError(t, err)
+			}))
+			serveTenant := func(namespace string) {
+				r := setupTestContextWithUser(httptest.NewRequest(http.MethodGet, "/", nil), namespace)
+				w := httptest.NewRecorder()
+				handler.ServeHTTP(w, r)
+				require.Equal(t, http.StatusOK, w.Code)
+			}
+
+			serveTenant("stacks-123")
+			selector, err := metav1.LabelSelectorAsSelector(&service.capturedSelector)
+			require.NoError(t, err)
+			for _, entry := range service.settings {
+				assert.True(t, selector.Matches(labels.Set{"section": entry.Section, "source": "us"}), entry.Section)
+			}
+			assert.Equal(t, dtos.FrontendSettingsNavigationDTO{
+				AppSections: map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+					"base-app":  {SectionID: "dashboards", SortWeight: 1},
+					"moved-app": {SectionID: "connections", SortWeight: 3},
+				},
+				AppStandalonePages: map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+					"/a/plugin/page": {SectionID: "dashboards", SortWeight: 4},
+				},
+			}, captured.Navigation)
+			if mode.fullSettings {
+				require.NotNil(t, captured.FullFrontendSettings)
+				assert.Equal(t, captured.Navigation, captured.FullFrontendSettings.Navigation)
+			}
+
+			service.settings = nil
+			serveTenant("stacks-456")
+			assert.Equal(t, dtos.FrontendSettingsNavigationPlacementDTO{SectionID: "explore", SortWeight: 2}, captured.Navigation.AppSections["moved-app"])
+			assert.Empty(t, captured.Navigation.AppStandalonePages)
+		})
+	}
 }
 
 func TestRequestConfigMiddleware(t *testing.T) {

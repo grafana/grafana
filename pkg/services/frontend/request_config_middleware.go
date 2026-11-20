@@ -83,7 +83,7 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
-							Values:   []string{"security", "analytics"},
+							Values:   []string{"security", "analytics", navigationAppSections, navigationAppStandalonePages},
 						}, {
 							Key:      "source",
 							Operator: metav1.LabelSelectorOpIn,

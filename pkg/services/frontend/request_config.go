@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -13,7 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	navigationAppSections        = "navigation.app_sections"
+	navigationAppStandalonePages = "navigation.app_standalone_pages"
 )
 
 // FSRequestConfig contains all configuration that can be overridden on a per-request basis.
@@ -168,6 +175,12 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
 
+	c.Navigation.AppSections = mergeNavigationPlacements(c.Navigation.AppSections, settings, navigationAppSections)
+	c.Navigation.AppStandalonePages = mergeNavigationPlacements(c.Navigation.AppStandalonePages, settings, navigationAppStandalonePages)
+	if c.FullFrontendSettings != nil {
+		c.FullFrontendSettings.Navigation = c.Navigation
+	}
+
 	if fullFrontendSettingsEnabled && c.FullFrontendSettings == nil {
 		// Guard against a misconfigured call: when the flag is enabled the caller is
 		// expected to have built FullFrontendSettings. Skip the overrides rather than
@@ -202,6 +215,19 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "google_analytics_4_id", &c.GoogleAnalytics4Id, logger)
 		applyBool(settings, "analytics", "google_analytics_4_send_manual_page_views", &c.GoogleAnalytics4SendManualPageViews, logger)
 	}
+}
+
+func mergeNavigationPlacements(base map[string]navtree.NavigationPlacement, settings *ini.File, sectionName string) map[string]navtree.NavigationPlacement {
+	section, err := settings.GetSection(sectionName)
+	if err != nil {
+		return base
+	}
+	overrides := navtree.ParseNavigationPlacements(section)
+	if base == nil {
+		return overrides
+	}
+	maps.Copy(base, overrides)
+	return base
 }
 
 func getValue(settings *ini.File, section, key string) *ini.Key {
