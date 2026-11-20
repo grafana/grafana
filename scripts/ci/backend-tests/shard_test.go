@@ -113,6 +113,7 @@ example.com/grafana/removed 200
 func TestSQLIntegrationRunnerRunsEachBinaryOnce(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/integration\n"), 0o600))
+	// Assemble the fixture test names so discovery only finds them in the generated files.
 	for _, pkg := range []string{"first/api", "second/api"} {
 		dir := filepath.Join(root, pkg)
 		require.NoError(t, os.MkdirAll(dir, 0o700))
@@ -144,7 +145,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestIntegrationFixture(t *testing.T) {
+func `+"TestIntegrationFixture"+`(t *testing.T) {
 	if timeout := flag.Lookup("test.timeout").Value.String(); timeout != "12m0s" {
 		t.Fatalf("unexpected timeout %s", timeout)
 	}
@@ -170,7 +171,7 @@ func TestUnitFixture(t *testing.T) {
 
 package inactive
 
-func TestIntegrationIgnored() {}
+func `+"TestIntegrationIgnored"+`() {}
 `), 0o600))
 
 	script, err := filepath.Abs("run-sql-integration-shard.sh")
