@@ -145,20 +145,22 @@ jobs:
         uses: ./.github/actions/install-frontend-deps
 
       - name: Version and generate changelogs
-        run: node scripts/release/prepare-release-pr.mts
+        id: prepare
+        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
 
       - name: Describe the dry run
-        if: env.DRY_RUN == 'true'
+        if: env.DRY_RUN == 'true' && steps.prepare.outputs.changed == 'true'
         run: |
           echo "Dry run: the version pull request would be created or updated with these changes."
           git status --short
           git diff --stat
 
       # Commits what Nx changed to the version pull request branch and opens the pull request, or updates it when the
-      # result differs. Nothing is done when there is nothing to commit, and an open pull request is never closed.
+      # result differs. It runs only when Nx changed files: with nothing to commit the action would reset an existing
+      # version branch to main. An open pull request is never closed.
       # Commits are signed by the writer app, and the token of the pull request app creates and edits the pull request.
       - name: Create or update the version pull request
-        if: env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true' && steps.prepare.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}

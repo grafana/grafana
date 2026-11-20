@@ -2,8 +2,9 @@
 // Nx to bump the versions from the conventional commits since those tags and to write the changelog entries.
 // Both steps change files in the working tree, and the next step commits them to the version PR branch.
 //
-// Usage: node scripts/release/prepare-release-pr.mts
-// Needs the git tags fetched. Run from the repo root.
+// Usage: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+// Needs the git tags fetched. Run from the repo root. Prints changed=true when Nx wrote the version and the
+// changelog, and changed=false when there was nothing to write, so the next step runs only when there are changes.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -46,6 +47,17 @@ function tagExists(tag: string): boolean {
   }
 }
 
+// Nx prints its progress to stdout, which is the file of step outputs, so it is sent to stderr while Nx runs.
+async function withStdoutOnStderr<T>(work: () => Promise<T>): Promise<T> {
+  const stdoutWrite = process.stdout.write;
+  Object.assign(process.stdout, { write: process.stderr.write.bind(process.stderr) });
+  try {
+    return await work();
+  } finally {
+    Object.assign(process.stdout, { write: stdoutWrite });
+  }
+}
+
 if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
@@ -53,6 +65,7 @@ if (import.meta.main) {
     // Without packages the project list would be empty, which Nx may read as "every project".
     if (packages.length === 0) {
       console.error('::notice::There are no independent packages to release.');
+      console.log('changed=false');
       process.exit(0);
     }
 
@@ -78,17 +91,21 @@ if (import.meta.main) {
       stageChanges: false,
     };
 
-    const versionResult = await releaseVersion(options);
+    const versionResult = await withStdoutOnStderr(() => releaseVersion(options));
     if (!hasNewVersion(packages, versionResult.projectsVersionData)) {
       console.error('::notice::No package has releasable commits since its last release.');
+      console.log('changed=false');
       process.exit(0);
     }
 
-    await releaseChangelog({
-      ...options,
-      versionData: versionResult.projectsVersionData,
-      releaseGraph: versionResult.releaseGraph,
-    });
+    await withStdoutOnStderr(() =>
+      releaseChangelog({
+        ...options,
+        versionData: versionResult.projectsVersionData,
+        releaseGraph: versionResult.releaseGraph,
+      })
+    );
+    console.log('changed=true');
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
