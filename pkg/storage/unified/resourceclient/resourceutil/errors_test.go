@@ -11,6 +11,8 @@ import (
 
 	authzlib "github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
@@ -24,9 +26,11 @@ func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			got := AsErrorResult(err)
-			require.Equal(t, int32(http.StatusForbidden), got.Code)
-			require.Equal(t, string(metav1.StatusReasonForbidden), got.Reason)
-			require.Equal(t, claims.ErrNamespaceMismatch.Error(), got.Message)
+			require.Equal(t, &resourcepb.ErrorResult{
+				Code:    http.StatusForbidden,
+				Reason:  string(metav1.StatusReasonForbidden),
+				Message: claims.ErrNamespaceMismatch.Error(),
+			}, got)
 			require.True(t, apierrors.IsForbidden(StatusError(got)))
 		})
 	}
