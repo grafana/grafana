@@ -1,11 +1,11 @@
 package pluginproxy
 
 import (
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 )
 
 var requestLogger = log.New("datasource.proxy")
@@ -20,8 +20,8 @@ type RequestLog struct {
 
 func (r RequestLog) Log() {
 	write := requestLogger.Info
-	if r.Status >= 500 || r.Source == "client" || r.Source == string(requestmeta.StatusSourceDownstream) {
-		write = requestLogger.Warn
+	if r.Status >= http.StatusBadRequest {
+		write = requestLogger.Error
 	}
 	// The query string can contain user queries. Keep only the bounded path.
 	path := r.Path
@@ -31,7 +31,7 @@ func (r RequestLog) Log() {
 	if r.PluginID == "" {
 		r.PluginID = "unknown"
 	}
-	write("Proxied datasource request", "pluginId", r.PluginID, "datasourceUid", r.DatasourceUID,
+	write("Proxied datasource request", "eventName", "grafana-data-egress", "pluginId", r.PluginID, "datasourceUid", r.DatasourceUID,
 		"namespace", r.Namespace, "method", r.Method, "path", path[:min(len(path), 200)],
 		"status", r.Status, "statusSource", r.Source, "duration", r.Duration)
 }
