@@ -138,11 +138,9 @@ You can define the following Cloud Provider Observability resources and data sou
 
 You can also read existing Cloud Provider Observability configuration with the following data sources:
 
-| Data source name                                    | Description                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------- |
-| `grafana_cloud_provider_aws_account`                | Reads an AWS account that's connected to Grafana Cloud.               |
-| `grafana_cloud_provider_aws_cloudwatch_scrape_job`  | Reads a single Amazon CloudWatch scrape job.                          |
-| `grafana_cloud_provider_aws_cloudwatch_scrape_jobs` | Lists all Amazon CloudWatch scrape jobs in a stack.                   |
-| `grafana_cloud_provider_azure_credential`           | Reads a Microsoft Azure credential that's connected to Grafana Cloud. |
-
-For the arguments and attributes of each data source, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+| Data source name                                                                                                                                                                  | Description                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`grafana_cloud_provider_aws_account`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_account)                               | Reads an AWS account that's connected to Grafana Cloud.               |
+| [`grafana_cloud_provider_aws_cloudwatch_scrape_job`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_cloudwatch_scrape_job)   | Reads a single Amazon CloudWatch scrape job.                          |
+| [`grafana_cloud_provider_aws_cloudwatch_scrape_jobs`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_cloudwatch_scrape_jobs) | Lists all Amazon CloudWatch scrape jobs in a stack.                   |
+| [`grafana_cloud_provider_azure_credential`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_azure_credential)                     | Reads a Microsoft Azure credential that's connected to Grafana Cloud. |

@@ -181,6 +181,19 @@ To bring an existing app under Terraform management, import it with its stack ID
 terraform import grafana_frontend_o11y_app.my_app "<STACK_ID>:<APP_NAME>"
 ```
 
+## Read an existing Frontend Observability app
+
+To reference an existing Frontend Observability app without managing it in Terraform, use the [`grafana_frontend_o11y_app` data source](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/frontend_o11y_app):
+
+```terraform
+data "grafana_frontend_o11y_app" "existing" {
+  provider = grafana.frontend_o11y
+
+  stack_id = data.grafana_cloud_stack.stack.id
+  name     = "<APP_NAME>"
+}
+```
+
 ## Summary
 
 In this guide, you created an access policy and a token for Frontend Observability, and used them to create a Frontend Observability app with Terraform.
