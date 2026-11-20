@@ -19,6 +19,8 @@ type pullRequestMetrics struct {
 }
 
 func registerPullRequestMetrics(registry prometheus.Registerer) pullRequestMetrics {
+	// called by ProvideWebhooksWithImages once per API version
+	// this ensures we only register the metric once
 	pullRequestMetricsOnce.Do(func() {
 		processingDuration := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -68,6 +70,8 @@ var (
 )
 
 func registerScreenshotMetrics(registry prometheus.Registerer) screenshotMetrics {
+	// called by ProvideWebhooksWithImages once per API version
+	// this ensures we only register the metric once
 	screenshotMetricsOnce.Do(func() {
 		screenshotDuration := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{

@@ -143,7 +143,6 @@ func ProvideWebhooksWithImages(
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder, parsers resources.ParserFactory) (provisioningapis.Extra, []jobs.Worker) {
-
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
 			webhook := NewWebhookConnector(

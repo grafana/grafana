@@ -52,6 +52,7 @@ var WireSetExts = wire.NewSet(
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
+	extras.ProvideExtraWorkers,
 	extras.ProvideQuotaGetter,
 )
 
