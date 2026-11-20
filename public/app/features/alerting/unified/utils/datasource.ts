@@ -234,6 +234,10 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   return { availableInternalDataSources, availableExternalDataSources };
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `useDataSourcesForRules` or `getDataSourcesForRules`, and add
+ * the Grafana rules source when the user can view Grafana-managed rules.
+ */
 export function getAllRulesSourceNames(): string[] {
   const availableRulesSources: string[] = getRulesDataSources().map((r) => r.name);
 
