@@ -1,4 +1,4 @@
-package client_test
+package clientmiddleware_test
 
 import (
 	"context"
