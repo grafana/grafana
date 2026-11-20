@@ -12,13 +12,13 @@ import (
 	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -34,9 +34,13 @@ type ReconcileResult struct {
 	InSync         bool // true if no changes were needed
 }
 
+type ClientFactory interface {
+	ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error)
+}
+
 type Reconciler struct {
 	server        zanzana.ServerInternal
-	clientFactory resources.ClientFactory
+	clientFactory ClientFactory
 	cfg           Config
 	logger        log.Logger
 	tracer        tracing.Tracer
@@ -113,7 +117,7 @@ var DefaultCRDs = []schema.GroupVersionResource{
 // NewReconciler creates a new reconciler instance.
 func NewReconciler(
 	srv zanzana.ServerInternal,
-	clientFactory resources.ClientFactory,
+	clientFactory ClientFactory,
 	cfg Config,
 	logger log.Logger,
 	tracer tracing.Tracer,
