@@ -81,14 +81,16 @@ func (o *proxyObservation) finish() {
 		return
 	}
 	status := o.c.Resp.Status()
-	o.metrics.Observe(proxymetrics.Observation{
-		PluginID:      o.pluginID,
-		DatasourceUID: o.dsUID,
-		Method:        o.c.Req.Method,
-		Path:          getProxyPath(o.c),
-		Status:        status,
-		Source:        proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
-		Duration:      time.Since(o.start),
+	o.metrics.RecordMetricsAndLog(proxymetrics.Observation{
+		PluginID: o.pluginID,
+		Status:   status,
+		Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
+		Duration: time.Since(o.start),
+		Log: proxymetrics.LogFields{
+			DatasourceUID: o.dsUID,
+			Method:        o.c.Req.Method,
+			Path:          getProxyPath(o.c),
+		},
 	})
 }
 

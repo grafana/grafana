@@ -52,7 +52,7 @@ const (
 //
 // The counter deliberately has no path or per-datasource label: those are
 // unbounded, and a multi-tenant process serves many stacks. That detail goes to
-// the log, which Observe writes for failures and a sample of other requests.
+// the log, which RecordMetricsAndLog writes for failures and a sample of other requests.
 type Metrics struct {
 	requests *prometheus.CounterVec
 	duration *prometheus.HistogramVec
@@ -112,8 +112,11 @@ type Observation struct {
 	Status   int
 	Source   string
 	Duration time.Duration
+	Log      LogFields
+}
 
-	// The fields below are only logged, never used as metric labels.
+// LogFields contains request details used only in proxy logs.
+type LogFields struct {
 	Method string
 	// Path is the path forwarded to the datasource, without the proxy prefix.
 	Path          string
@@ -122,8 +125,8 @@ type Observation struct {
 	Namespace string
 }
 
-// Observe records one finished request, and logs it if it failed or was sampled.
-func (m *Metrics) Observe(o Observation) {
+// RecordMetricsAndLog records one finished request, and logs it if it failed or was sampled.
+func (m *Metrics) RecordMetricsAndLog(o Observation) {
 	if m == nil {
 		return
 	}
@@ -148,10 +151,10 @@ func (m *Metrics) logRequest(o Observation, pluginID, source string, failed bool
 	}
 	logFn("Proxied datasource request",
 		"pluginId", pluginID,
-		"datasourceUid", o.DatasourceUID,
-		"namespace", o.Namespace,
-		"method", o.Method,
-		"path", loggedPath(o.Path),
+		"datasourceUid", o.Log.DatasourceUID,
+		"namespace", o.Log.Namespace,
+		"method", o.Log.Method,
+		"path", loggedPath(o.Log.Path),
 		"status", o.Status,
 		"statusSource", source,
 		"duration", o.Duration,

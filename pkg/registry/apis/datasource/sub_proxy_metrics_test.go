@@ -29,7 +29,7 @@ func TestProxyMetricsForSharesOneSetPerVariant(t *testing.T) {
 }
 
 func TestProxyMetricsRegisterWithTheLegacyProxy(t *testing.T) {
-	proxyMetricsFor(proxymetrics.VariantMT).Observe(proxymetrics.Observation{PluginID: "registry-test", Status: 200})
+	proxyMetricsFor(proxymetrics.VariantMT).RecordMetricsAndLog(proxymetrics.Observation{PluginID: "registry-test", Status: 200})
 
 	names := func(g prometheus.Gatherer) map[string]bool {
 		families, err := g.Gather()
