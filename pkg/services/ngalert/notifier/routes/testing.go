@@ -28,7 +28,7 @@ func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _
 		return v1.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 	if p, ok := f.Provenances[name]; ok {
-		r.Provenance = p
+		r.Manager = models.ProvenanceToManagerProperties(p)
 	}
 	return *r, nil
 }
@@ -36,7 +36,7 @@ func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Re
 	routes := f.Config.GetManagedRoutes()
 	for _, r := range routes {
 		if p, ok := f.Provenances[r.GetUID()]; ok {
-			r.Provenance = p
+			r.Manager = models.ProvenanceToManagerProperties(p)
 		}
 	}
 	return routes, nil

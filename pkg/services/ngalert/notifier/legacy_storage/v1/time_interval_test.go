@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -224,9 +225,9 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 	baseInterval := func() TimeInterval {
 		return TimeInterval{
 			ResourceMetadata: ResourceMetadata{
-				UID:        TimeIntervalUID("business-hours"),
-				Version:    "some-version",
-				Provenance: models.ProvenanceAPI,
+				UID:     TimeIntervalUID("business-hours"),
+				Version: "some-version",
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 			},
 			Title: "business-hours",
 			TimeIntervals: []timeinterval.TimeInterval{
@@ -266,9 +267,9 @@ func TestTimeIntervalFingerprint(t *testing.T) {
 
 		metadataType := reflect.TypeFor[ResourceMetadata]()
 		otherMetadata := reflect.ValueOf(ResourceMetadata{
-			UID:        "some-other-uid",
-			Version:    "some-other-version",
-			Provenance: models.ProvenanceFile,
+			UID:     "some-other-uid",
+			Version: "some-other-version",
+			Manager: utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "some-identity"},
 		})
 		for i := 0; i < metadataType.NumField(); i++ {
 			field := metadataType.Field(i).Name

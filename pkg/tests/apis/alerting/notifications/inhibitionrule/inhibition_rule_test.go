@@ -3,6 +3,7 @@ package inhibitionrule
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -11,6 +12,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -479,6 +481,91 @@ func TestIntegrationInhibitionRuleProvisioning(t *testing.T) {
 			err = provisionerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 			require.NoError(t, err)
 		})
+	})
+}
+
+// TestIntegrationInhibitionRuleManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through the stored Alertmanager configuration, and that rules that only
+// carry a provenance are exposed with the classic manager derived from it.
+func TestIntegrationInhibitionRuleManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	client, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	newRule := func(name string, annotations map[string]string) *v1beta1.InhibitionRule {
+		return &v1beta1.InhibitionRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace:   apis.DefaultNamespace,
+				Name:        name,
+				Annotations: annotations,
+			},
+			Spec: v1beta1.InhibitionRuleSpec{
+				SourceMatchers: []v1beta1.InhibitionRuleMatcher{
+					{Type: v1beta1.InhibitionRuleMatcherTypeEqual, Label: "alertname", Value: "SourceAlert"},
+				},
+				TargetMatchers: []v1beta1.InhibitionRuleMatcher{
+					{Type: v1beta1.InhibitionRuleMatcherTypeEqual, Label: "alertname", Value: "TargetAlert"},
+				},
+				Equal: []string{"instance"},
+			},
+		}
+	}
+	requireTerraform := func(t *testing.T, rule *v1beta1.InhibitionRule, msg string) {
+		t.Helper()
+		require.Equal(t, string(ngmodels.ProvenanceAPI), rule.GetProvenanceStatus(), msg)
+		require.Equal(t, string(utils.ManagerKindTerraform), rule.Annotations[utils.AnnoKeyManagerKind], msg)
+		require.Equal(t, "my-terraform-workspace", rule.Annotations[utils.AnnoKeyManagerIdentity], msg)
+	}
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through the stored config", func(t *testing.T) {
+		created, err := client.Create(ctx, newRule("mp-terraform", map[string]string{
+			utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+			utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+		}), resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+		requireTerraform(t, created, "create response should carry the terraform manager")
+
+		retrieved, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		requireTerraform(t, retrieved, "the terraform manager should survive a fresh read")
+
+		list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+		idx := slices.IndexFunc(list.Items, func(r v1beta1.InhibitionRule) bool { return r.Name == created.Name })
+		require.GreaterOrEqual(t, idx, 0)
+		requireTerraform(t, &list.Items[idx], "the terraform manager should be listed")
+
+		retrieved.Spec.Equal = []string{"instance", "job"}
+		updated, err := client.Update(ctx, retrieved, resource.UpdateOptions{})
+		require.NoError(t, err)
+		requireTerraform(t, updated, "update response should keep the terraform manager")
+
+		retrieved, err = client.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		requireTerraform(t, retrieved, "the terraform manager should survive an update")
+		require.Equal(t, []string{"instance", "job"}, retrieved.Spec.Equal)
+	})
+
+	t.Run("provenance-only rule reads back with the classic manager", func(t *testing.T) {
+		rule := newRule("mp-provenance-only", nil)
+		rule.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+		created, err := client.Create(ctx, rule, resource.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		})
+
+		retrieved, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus())
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.Annotations[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+		require.Empty(t, retrieved.Annotations[utils.AnnoKeyManagerIdentity])
 	})
 }
 

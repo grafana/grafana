@@ -1395,7 +1395,6 @@ func ReceiverGen(mutators ...Mutator[Receiver]) func() Receiver {
 			UID:          util.GenerateShortUID(),
 			Name:         name,
 			Integrations: []*Integration{&integration},
-			Provenance:   ProvenanceNone,
 			Origin:       ResourceOriginGrafana,
 		}
 		for _, mutator := range mutators {
@@ -1420,7 +1419,7 @@ func (n ReceiverMutators) WithName(name string) Mutator[Receiver] {
 
 func (n ReceiverMutators) WithProvenance(provenance Provenance) Mutator[Receiver] {
 	return func(r *Receiver) {
-		r.Provenance = provenance
+		r.Manager = ProvenanceToManagerProperties(provenance)
 	}
 }
 

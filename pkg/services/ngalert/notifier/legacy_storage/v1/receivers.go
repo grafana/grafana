@@ -68,8 +68,8 @@ func ValidateReceiverUID(uid string) error {
 func NewReceiver(uid ResourceUID, name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
 	r := PostableApiReceiver{
 		ResourceMetadata: ResourceMetadata{
-			UID:        uid,
-			Provenance: provenance,
+			UID:     uid,
+			Manager: models.ProvenanceToManagerProperties(provenance),
 		},
 		Name:                    name,
 		GrafanaManagedReceivers: integrations,

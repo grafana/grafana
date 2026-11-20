@@ -41,7 +41,7 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 					cache[muteTiming.OrgID][interval.Title] = struct{}{}
 				}
 			}
-			muteTiming.MuteTime.Provenance = models.ProvenanceFile
+			muteTiming.MuteTime.Manager = models.ProvenanceToManagerProperties(models.ProvenanceFile)
 			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Title]; exists {
 				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
 				if err != nil {
