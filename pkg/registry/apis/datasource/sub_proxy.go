@@ -117,7 +117,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		r.builder.proxyMetrics.RecordMetricsAndLog(proxymetrics.Observation{
+		r.recordRequest(ctx, proxymetrics.Observation{
 			PluginID: r.builder.pluginJSON.ID,
 			Status:   http.StatusInternalServerError,
 			Source:   proxymetrics.SourceServer,
@@ -140,7 +140,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			if errStatus != 0 {
 				status = errStatus
 			}
-			r.builder.proxyMetrics.RecordMetricsAndLog(proxymetrics.Observation{
+			r.recordRequest(req.Context(), proxymetrics.Observation{
 				PluginID: r.builder.pluginJSON.ID,
 				Status:   status,
 				Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
@@ -235,6 +235,13 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		proxy.HandleRequest()
 	}), nil
+}
+
+func (r *subProxyREST) recordRequest(ctx context.Context, o proxymetrics.Observation) {
+	r.builder.proxyMetrics.RecordMetricsAndLog(o)
+	if record := r.builder.cfg.RecordProxyRequest; record != nil {
+		record(ctx, o.PluginID, o.Status, o.Source)
+	}
 }
 
 // errorStatus returns the HTTP status the apiserver reports for err.

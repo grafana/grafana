@@ -134,21 +134,20 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("Invalid data source URL: %q", tc.dsURL), jsonBody["message"])
 
 			require.Equal(t, map[string]string{
-				"variant":       proxymetrics.VariantLegacy,
-				"plugin_id":     pluginID,
-				"status_code":   "400",
-				"status_source": proxymetrics.SourceServer,
-			}, onlyRequestSeries(t, reg))
+				"variant":      proxymetrics.VariantLegacy,
+				"plugin_id":    pluginID,
+				"status_class": "4xx",
+			}, onlyDurationSeries(t, reg))
 		})
 	}
 }
 
-func onlyRequestSeries(t *testing.T, reg *prometheus.Registry) map[string]string {
+func onlyDurationSeries(t *testing.T, reg *prometheus.Registry) map[string]string {
 	t.Helper()
 	families, err := reg.Gather()
 	require.NoError(t, err)
 	for _, f := range families {
-		if f.GetName() != "grafana_datasource_proxy_requests_total" {
+		if f.GetName() != "grafana_datasource_proxy_request_duration_seconds" {
 			continue
 		}
 		require.Len(t, f.GetMetric(), 1)
@@ -158,7 +157,7 @@ func onlyRequestSeries(t *testing.T, reg *prometheus.Registry) map[string]string
 		}
 		return labels
 	}
-	t.Fatal("grafana_datasource_proxy_requests_total was not recorded")
+	t.Fatal("grafana_datasource_proxy_request_duration_seconds was not recorded")
 	return nil
 }
 
