@@ -64,19 +64,25 @@ export function CompactTimePickerContent(props: Props) {
               aria-controls={`${id}-panel`}
               onChangeTab={() => selectTab(tab)}
               onKeyDown={(event) => {
-                if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-                  event.preventDefault();
-                  const next =
-                    event.key === 'Home'
-                      ? 'relative'
-                      : event.key === 'End'
-                        ? 'absolute'
-                        : tab === 'relative'
-                          ? 'absolute'
-                          : 'relative';
-                  selectTab(next);
-                  document.getElementById(`${id}-${next}`)?.focus();
+                let nextTab: PickerTab;
+                switch (event.key) {
+                  case 'Home':
+                    nextTab = 'relative';
+                    break;
+                  case 'End':
+                    nextTab = 'absolute';
+                    break;
+                  case 'ArrowLeft':
+                  case 'ArrowRight':
+                    nextTab = tab === 'relative' ? 'absolute' : 'relative';
+                    break;
+                  default:
+                    return;
                 }
+
+                event.preventDefault();
+                selectTab(nextTab);
+                document.getElementById(`${id}-${nextTab}`)?.focus();
               }}
             />
           ))}
@@ -141,8 +147,8 @@ export function CompactTimePickerContent(props: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     width: 300,
-    maxWidth: 'calc(100vw - 16px)',
-    maxHeight: 'calc(100dvh - 32px)',
+    maxWidth: `calc(100vw - ${theme.spacing(2)})`,
+    maxHeight: `calc(100dvh - ${theme.spacing(4)})`,
     display: 'flex',
     flexDirection: 'column',
     background: theme.colors.background.elevated,
