@@ -217,7 +217,7 @@ func NewDataSourceAPIBuilder(
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDependencies:          proxyDependencies,
 		permissionsDeleter:         permissionsDeleter,
-		proxyMetrics:               proxyMetricsFor(cfg.proxyVariant()),
+		proxyMetrics:               proxymetrics.ForVariant(cfg.proxyVariant()),
 	}
 	return builder, nil
 }

@@ -92,8 +92,3 @@ func (c DataSourceAPIBuilderConfig) proxyVariant() string {
 	}
 	return proxymetrics.VariantST
 }
-
-// proxyMetricsFor returns the shared proxy collectors for a variant.
-func proxyMetricsFor(variant string) *proxymetrics.Metrics {
-	return proxymetrics.ForVariant(variant)
-}

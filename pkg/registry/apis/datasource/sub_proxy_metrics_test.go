@@ -24,13 +24,13 @@ func TestProxyVariant(t *testing.T) {
 	require.Equal(t, proxymetrics.VariantMT, DataSourceAPIBuilderConfig{HandlerOrigin: "remote"}.proxyVariant())
 }
 
-func TestProxyMetricsForSharesOneSetPerVariant(t *testing.T) {
-	require.Same(t, proxyMetricsFor(proxymetrics.VariantMT), proxyMetricsFor(proxymetrics.VariantMT))
-	require.NotSame(t, proxyMetricsFor(proxymetrics.VariantMT), proxyMetricsFor(proxymetrics.VariantST))
+func TestProxyMetricsSharedPerVariant(t *testing.T) {
+	require.Same(t, proxymetrics.ForVariant(proxymetrics.VariantMT), proxymetrics.ForVariant(proxymetrics.VariantMT))
+	require.NotSame(t, proxymetrics.ForVariant(proxymetrics.VariantMT), proxymetrics.ForVariant(proxymetrics.VariantST))
 }
 
 func TestProxyMetricsRegisterWithTheLegacyProxy(t *testing.T) {
-	proxyMetricsFor(proxymetrics.VariantMT).RecordMetricsAndLog(proxymetrics.Observation{PluginID: "registry-test", Status: 200})
+	proxymetrics.ForVariant(proxymetrics.VariantMT).RecordMetricsAndLog(proxymetrics.Observation{PluginID: "registry-test", Status: 200})
 
 	names := func(g prometheus.Gatherer) map[string]bool {
 		families, err := g.Gather()
