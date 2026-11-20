@@ -332,6 +332,55 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 	assert.Len(t, seen, 3, "no document is repeated")
 }
 
+// Counts per creator cover every type the caller may read, and nothing else, so a
+// client can group hits by owner. A document without a creator adds no term.
+func TestGlobalIndexFacetsOnCreator(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	key := resource.GlobalSearchKey("default")
+
+	doc := func(group, res, name, createdBy string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:        1,
+				Name:      name,
+				Title:     name,
+				CreatedBy: createdBy,
+				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			doc("dashboard.grafana.app", "dashboards", "a", "user:alice"),
+			doc("dashboard.grafana.app", "dashboards", "b", "user:alice"),
+			doc("folder.grafana.app", "folders", "c", "user:bob"),
+			doc("playlist.grafana.app", "playlists", "d", "user:carol"),
+			doc("dashboard.grafana.app", "dashboards", "e", ""),
+		}})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+	rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
+		Limit:   10,
+		Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+			resource.SEARCH_FIELD_CREATED_BY: {Field: resource.SEARCH_FIELD_CREATED_BY, Limit: 10},
+		},
+	}, nil, nil)
+	require.NoError(t, err)
+
+	facet := rsp.Facet[resource.SEARCH_FIELD_CREATED_BY]
+	require.NotNil(t, facet)
+	counts := map[string]int64{}
+	for _, term := range facet.Terms {
+		counts[term.Term] = term.Count
+	}
+	assert.Equal(t, map[string]int64{"user:alice": 2, "user:bob": 1}, counts)
+}
+
 var (
 	typeBuildsKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
 	importedA     = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
