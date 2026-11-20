@@ -254,8 +254,8 @@ importers:
         specifier: 0.27.20
         version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@formatjs/intl-durationformat':
-        specifier: ^0.12.0
-        version: 0.12.4
+        specifier: ^0.13.0
+        version: 0.13.0
       '@grafana/alerting':
         specifier: workspace:*
         version: link:packages/grafana-alerting
@@ -354,10 +354,10 @@ importers:
         version: 0.19.1
       '@msagl/core':
         specifier: ^1.1.19
-        version: 1.1.24
+        version: 1.1.25
       '@msagl/parser':
         specifier: ^1.1.19
-        version: 1.1.24
+        version: 1.1.25
       '@openfeature/react-sdk':
         specifier: ^1.3.0
         version: 1.4.1(@openfeature/web-sdk@1.10.0(@openfeature/core@1.12.0))(react@19.2.8)
@@ -1803,8 +1803,8 @@ importers:
   packages/grafana-i18n:
     dependencies:
       '@formatjs/intl-durationformat':
-        specifier: ^0.12.0
-        version: 0.12.4
+        specifier: ^0.13.0
+        version: 0.13.0
       '@typescript-eslint/utils':
         specifier: ^8.33.1
         version: 8.58.0(@typescript/typescript6@6.0.2)(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
@@ -1816,7 +1816,7 @@ importers:
         version: 26.4.2(@typescript/typescript6@6.0.2)
       i18next-browser-languagedetector:
         specifier: ^8.0.0
-        version: 8.3.0
+        version: 8.3.1
       i18next-pseudo:
         specifier: ^2.2.1
         version: 2.2.1
@@ -3765,8 +3765,8 @@ packages:
   '@formatjs/fast-memoize@3.1.7':
     resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
 
-  '@formatjs/intl-durationformat@0.12.4':
-    resolution: {integrity: sha512-EjUHL8isAQOqXuLxGllgsfIQdLrLNo8iCOQHMqUNY4Fvl52hw6TEP0n9tPnOmQWb5wTUa92NeqyGmwhjQ2lvHA==}
+  '@formatjs/intl-durationformat@0.13.0':
+    resolution: {integrity: sha512-hZMyYyxZOb41/WuBaA3F3AQtIR0z3H8kGephf5yaqwiVmEamPh6b7ElWEUEl1xlQsg4Z6/AIHEX0SaWfw2SHAg==}
 
   '@formatjs/intl-localematcher@0.10.1':
     resolution: {integrity: sha512-gBqglQK9rXuHsLmM8wzTMBy4Xo4d0jamirIVKuEL8F1rwbskWdpMA1kZarSkny+uvr5q/K6GSzE0Rcq1wZLl3g==}
@@ -4792,14 +4792,14 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@msagl/core@1.1.24':
-    resolution: {integrity: sha512-yBk+EpL93CdZyVEaaPLj44zZX3ovLHttjW10lsM4PFYZYJUz+S2XI3QdyKyKJNSWc/hHVqwd1VWAkMr3UGK/Cg==}
+  '@msagl/core@1.1.25':
+    resolution: {integrity: sha512-tGu1cr8oL2L/NFRZ2Es3OJTvPD0eKO3LGRr1ps2MciVKzyyzlYG4s8H0z1ifvzSPiknP3+G+b1OW+/MQo8FFFA==}
 
-  '@msagl/drawing@1.1.24':
-    resolution: {integrity: sha512-CqI2k7P33DxGksAjGY8975mL0lGTIgG9JQDsSKEQbR8ibDRTDzFW8XVh/Pv+NtOx9dnWBWn6hH23RugjBFb6mA==}
+  '@msagl/drawing@1.1.25':
+    resolution: {integrity: sha512-t/SgdJUkD/BZIdS34lBZrU0mmK8O3/bm/nVyuHXNtU66ZRHWgytWWb9HBx24rMEnVgOnauy+aS5mh+FmpQPYhw==}
 
-  '@msagl/parser@1.1.24':
-    resolution: {integrity: sha512-dfdoSLn0qA63t49Ds+Nl6iFOCH1jTZYwB+Pcx6vFDbWbpKfeo3l8crLpU/GI953p/3JXQMZlBiVPHfsPWLVVAA==}
+  '@msagl/parser@1.1.25':
+    resolution: {integrity: sha512-z+zU46BKNfezNvvkpUedpELro76mRwjhTp2f4h0vxZEdMYVhU1XdYX4QRWeThm6M0k9R3Gv3YR5Q9ATLXwdjbg==}
 
   '@mswjs/interceptors@0.39.2':
     resolution: {integrity: sha512-RuzCup9Ct91Y7V79xwCb146RaBRHZ7NBbrIUySumd1rpKqHL5OonaqrGIbug5hNwP/fRyxFMA6ISgw4FTtYFYg==}
@@ -10764,8 +10764,8 @@ packages:
   hyphenate-style-name@1.0.4:
     resolution: {integrity: sha512-ygGZLjmXfPHj+ZWh6LwbC37l43MhfztxetbFCoYTM2VjkIUpeHgSNn7QIyVFj7YQ1Wl9Cbw5sholVJPzWvC2MQ==}
 
-  i18next-browser-languagedetector@8.3.0:
-    resolution: {integrity: sha512-t7FtF+VyQ+XSy+GI1O9TXWsMzP4U2u0m27yxJcCbG4LaAbTQa3CXFXgG3LvRivS+ZoYah8yPv5NhMl+Wg6I8Fg==}
+  i18next-browser-languagedetector@8.3.1:
+    resolution: {integrity: sha512-W7dfKWlmaxuy5zsKsu8vKm7SQ0R6T1Tw7XRMKCh3bt98q9m5Q73GKF1PiqtvcwzC+AZvfUCugbfcIYQkDfHeAg==}
 
   i18next-cli@1.58.0:
     resolution: {integrity: sha512-S5Nm6fE/HZzbuC5g8i2JQGq2CCVw7uSpDomY+PpqIglslEuQpje1rQ5r97ZDBdJebUZ4E5v7wf9FRLfGXDGjtQ==}
@@ -16446,7 +16446,7 @@ snapshots:
 
   '@formatjs/fast-memoize@3.1.7': {}
 
-  '@formatjs/intl-durationformat@0.12.4':
+  '@formatjs/intl-durationformat@0.13.0':
     dependencies:
       '@formatjs/bigdecimal': 0.2.10
       '@formatjs/intl-localematcher': 0.10.1
@@ -17965,21 +17965,21 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@msagl/core@1.1.24':
+  '@msagl/core@1.1.25':
     dependencies:
       queue-typescript: 1.0.1
       reliable-random: 0.0.1
       stack-typescript: 1.0.4
       typescript-string-operations: 1.5.1
 
-  '@msagl/drawing@1.1.24':
+  '@msagl/drawing@1.1.25':
     dependencies:
-      '@msagl/core': 1.1.24
+      '@msagl/core': 1.1.25
 
-  '@msagl/parser@1.1.24':
+  '@msagl/parser@1.1.25':
     dependencies:
-      '@msagl/core': 1.1.24
-      '@msagl/drawing': 1.1.24
+      '@msagl/core': 1.1.25
+      '@msagl/drawing': 1.1.25
       '@types/parse-color': 1.0.3
       dotparser: 1.1.1
       parse-color: 1.0.0
@@ -24490,7 +24490,7 @@ snapshots:
 
   hyphenate-style-name@1.0.4: {}
 
-  i18next-browser-languagedetector@8.3.0:
+  i18next-browser-languagedetector@8.3.1:
     dependencies:
       '@babel/runtime': 7.29.7
 

@@ -15,6 +15,5 @@ type RuleStore interface {
 	rulestore.RuleWriter
 	rulestore.RuleAdminWriter
 	rulestore.RuleVersionReader
-	rulestore.StatusWriter
 	ngrulesvc.DeltaCalculator
 }
