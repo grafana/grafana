@@ -27,10 +27,6 @@ An inhibition rule suppresses notifications for target alerts when source alerts
 
 For example, if a node is down (the **source**), you can inhibit all alerts for services running on that node (the **target**). This prevents your team from receiving individual alerts for each affected service when the underlying cause is already captured in the source alert.
 
-{{< admonition type="note" >}}
-Inhibition rules are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
-{{< /admonition >}}
-
 {{< admonition type="caution" >}}
 Inhibition rules are intended for compatibility with configurations imported from Prometheus Alertmanager or Mimir. They have no dedicated management UI in Grafana by design.
 
@@ -61,7 +57,7 @@ The API resource is:
 The inhibition rules API is in beta (`v1beta1`) and is subject to change.
 {{< /admonition >}}
 
-Inhibition rules are also supported in the Prometheus Alertmanager. Refer to [Configure Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) to set up an external Alertmanager.
+This page describes inhibition rules in the Grafana Alertmanager, which only suppress notifications for Grafana-managed alerts. The Prometheus Alertmanager also supports inhibition rules. To manage another Alertmanager, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 
 ## Inhibition rule schema
 

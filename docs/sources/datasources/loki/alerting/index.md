@@ -112,7 +112,7 @@ This example fires when the rate of log lines that contain `error` exceeds a thr
 
 When you turn on **Manage alert rules in Alerting UI** for the Loki data source, you can create and edit alert and recording rules that the Loki ruler stores and evaluates. These rules appear in the Grafana Alerting UI alongside your Grafana-managed rules, grouped under the Loki data source.
 
-The Loki data source configuration doesn't include Alertmanager routing. To route the resulting alerts, add a separate [Alertmanager data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/). For more information, refer to [Configure the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#alerting) and [Data source-managed alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/).
+The Loki data source configuration doesn't include Alertmanager routing. To route the resulting alerts, add a separate [Alertmanager data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/). For more information, refer to [Configure the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#alerting) and [Legacy data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
 ## Best practices
 

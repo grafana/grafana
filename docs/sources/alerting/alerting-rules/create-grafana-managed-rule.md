@@ -10,7 +10,6 @@ keywords:
   - rules
   - create
   - grafana-managed
-  - data source-managed
 labels:
   products:
     - cloud
@@ -20,18 +19,9 @@ title: Configure Grafana-managed alert rules
 weight: 100
 ---
 
-{{< admonition type="caution" >}}
-Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
-New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
-
-This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
-
-Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
-{{< /admonition >}}
-
 # Configure Grafana-managed alert rules
 
-Grafana-managed alert rules are the default way to create alert rules in Grafana.
+Grafana-managed alert rules are alert rules that Grafana stores and evaluates. They're the default way to create alert rules in Grafana.
 
 Grafana-managed rules inherit their model from Prometheus Alerting and extend it with greater flexibility—such as multi-data source queries, expression-based transformations, advanced alert conditions, images in notifications, custom states, and more.
 
@@ -119,8 +109,6 @@ The **Default** option allows you to configure one query and one alert condition
 1. Add a query.
 
    To add multiple [queries](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/), click **Add query**.
-
-   All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
 
 1. Add one or more [expressions](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 

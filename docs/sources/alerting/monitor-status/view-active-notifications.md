@@ -70,7 +70,7 @@ You can filter by label, state, or Alertmanager:
 
 - **By state**: In **States**, select from Active, Suppressed, or Unprocessed states to view alerts matching your selected state. All other alerts are hidden.
 
-- **By Alertmanager**: In the **Alertmanager** dropdown, select an [external Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) to view only alert groups for that specific Alertmanager. By default, the `Grafana` Alertmanager is selected.
+- **By Alertmanager**: If you use [other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/), select one in the **Alertmanager** dropdown to view only the alert groups for that Alertmanager. By default, the `Grafana` Alertmanager is selected.
 
 ### Custom group
 

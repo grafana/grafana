@@ -37,17 +37,12 @@ When an alert instance is assigned to a notification policy, the notification po
 - Controlling when notifications are sent using the [timing options](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/#timing-options).
 - Determining the [contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) that receive the alert notification.
 
-{{< admonition type="note" >}}
-The default notification policy and its child policies are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture), and they cannot use contact points or mute timings from other Alertmanagers.
-{{< /admonition >}}
-
 ## Edit the default notification policy
 
 You can change the contact point, grouping, and timing options for this policy. Mute timings and active time intervals aren't available on the root policy. Add them on a [child policy](#add-a-child-policy) instead.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
-1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Default policy section, click **...** -> **Edit**.
 1. In **Default contact point**, update the [contact point](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) for where to send notifications when alert rules do not match any specific policy.
 1. In **Group by**, choose labels to group alerts. If multiple alerts match this policy, they are grouped by the selected labels, and notifications are sent per group. For more details on using this option, refer to [Group notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/#group-notifications).
@@ -65,7 +60,6 @@ If you want to choose where to position your policy, see the section on **Add a 
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
-1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. Click **+New child policy** from the default policy or an existing child policy.
 1. In the Matching labels section of the child policy, add one or more matching label rules to narrow down a specific case from the parent policy.
 

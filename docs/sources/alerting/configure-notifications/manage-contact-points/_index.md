@@ -42,10 +42,6 @@ On the **Contact Points** tab, you can:
 - Export individual contact points or all contact points in JSON, YAML, or Terraform format.
 - Delete contact points. Note that you cannot delete contact points that are in use by a notification policy. To proceed, either delete the notification policy or update it to use another contact point.
 
-{{< admonition type="note" >}}
-Contact points are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) and cannot be used by notification policies in other Alertmanagers.
-{{< /admonition >}}
-
 ## Protected fields
 
 For Grafana users, contact points may contain protected fields that require admin permissions to modify. Protected fields are sensitive configuration settings that affect where notifications are sent, such as:
@@ -107,7 +103,6 @@ Complete the following steps to add a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Contact points** tab.
-1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
 1. Click **+ New contact point**.
 1. Enter a descriptive name for the contact point.
 1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel and users who should be contacted.

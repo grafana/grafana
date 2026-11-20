@@ -14,33 +14,22 @@ title: Configure alert rules
 weight: 120
 ---
 
-{{< admonition type="caution" >}}
-Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana and can not be created in new stacks.
-New Grafana stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
-
-This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
-
-Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
-{{< /admonition >}}
-
 # Configure alert rules
 
 [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/) are the central component of your alerting system.
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure. It contains a condition to trigger the alert, an evaluation period that determines how often the rule is evaluated, and additional options to manage alert events and their notifications.
 
-Grafana supports two types of alert rules:
+Alert rules in Grafana Alerting are Grafana-managed: Grafana stores and evaluates them. They can query any backend data source that supports alerting, including Prometheus-based ones, and combine multiple data sources in a single rule.
 
-1. **Grafana-managed alert rules** — the recommended option. They can query backend data sources—including Prometheus-based ones—and offer a [richer feature set](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules).
-1. **Data source-managed alert rules** — supported for Prometheus-based data sources (such as Mimir, Loki, and Prometheus), with rules stored in the data source itself.
-
-   You can [convert and import data source-managed rules into Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) to let Grafana Alerting manage them.
-
-Both types of alert rules can be configured in Grafana using the **+ New alert rule** flow. For step-by-step instructions, refer to:
-
-- [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
-- [Configure data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/)
+To create alert rules with the **+ New alert rule** flow, refer to [Configure Grafana-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/).
 
 In Grafana Alerting, you can also [configure recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/), which pre-compute queries and save the results as new time series metrics for use in other alert rules or dashboard queries.
 
-When your Grafana-managed rules depend on recording rule results, use [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) to define their evaluation order and shared interval through the API or Terraform.
+When your alert rules depend on recording rule results, use [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) to define their evaluation order and shared interval through the API or Terraform.
+
+## Alert rules stored in a data source
+
+If you have alert rules stored in a Prometheus-compatible data source, such as Mimir, Loki, or Prometheus, you can [import them into Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) to let Grafana Alerting manage them.
+
+To keep managing alert rules in the data source, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
