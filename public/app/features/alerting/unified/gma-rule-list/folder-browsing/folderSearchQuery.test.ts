@@ -18,21 +18,27 @@ describe('buildFolderListSearchQuery', () => {
     });
   });
 
-  it('keeps the label selector when scoping to a folder name and passes the continue token', () => {
-    const query = buildFolderListSearchQuery('alert', 'tok', { folder: 'Team 01', folderUids: [] });
-
-    expect(query.labelSelector).toEqual({ matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } });
-    expect(query.where).toEqual({ text: { value: 'Team 01' } });
-    expect(query.continue).toBe('tok');
+  it('passes the continue token through', () => {
+    expect(buildFolderListSearchQuery('alert', 'tok', { folderUids: [] }).continue).toBe('tok');
   });
 
   it.each([
-    [{ folderUids: ['f1', 'f2'] }, { filter: { field: 'name', operator: 'In', values: ['f1', 'f2'] } }],
-    [
-      { folder: 'team', folderUids: ['f1'] },
-      { and: [{ text: { value: 'team' } }, { filter: { field: 'name', operator: 'In', values: ['f1'] } }] },
-    ],
-  ])('scopes the listing for %j', (scope, where) => {
+    {
+      name: 'a folder name as title text',
+      scope: { folder: 'Team 01', folderUids: [] },
+      where: { text: { value: 'Team 01' } },
+    },
+    {
+      name: 'folder UIDs',
+      scope: { folderUids: ['f1', 'f2'] },
+      where: { filter: { field: 'name', operator: 'In', values: ['f1', 'f2'] } },
+    },
+    {
+      name: 'both, so a folder must match each',
+      scope: { folder: 'team', folderUids: ['f1'] },
+      where: { and: [{ text: { value: 'team' } }, { filter: { field: 'name', operator: 'In', values: ['f1'] } }] },
+    },
+  ])('scopes the listing to $name', ({ scope, where }) => {
     expect(buildFolderListSearchQuery('alert', undefined, scope).where).toEqual(where);
   });
 });

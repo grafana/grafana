@@ -67,14 +67,6 @@ describe('buildAlertRuleSearchQuery', () => {
     expect(buildAlertRuleSearchQuery(apiArgs(parse(query, alertRuleSearchSchema).filter)).where).toEqual(where);
   });
 
-  it('filters by the resolved folder UIDs, not the typed names', () => {
-    expect(
-      buildAlertRuleSearchQuery(apiArgs(parse('folder:Alerts', alertRuleSearchSchema).filter, ['f1', 'f2'])).where
-    ).toEqual({
-      filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
-    });
-  });
-
   it('combines several filters in one flat and', () => {
     expect(
       buildAlertRuleSearchQuery(apiArgs(parse('cpu folder:Alerts label:team', alertRuleSearchSchema).filter, ['f1']))

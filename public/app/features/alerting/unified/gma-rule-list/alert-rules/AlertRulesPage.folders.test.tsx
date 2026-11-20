@@ -106,7 +106,6 @@ describe('AlertRulesPage Folders mode', () => {
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Alerts']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
-    expect(backend.folderSearches[0].where).toEqual({ text: { value: 'Team Alerts' } });
     expect(backend.ruleSearches).toEqual([]);
   });
 

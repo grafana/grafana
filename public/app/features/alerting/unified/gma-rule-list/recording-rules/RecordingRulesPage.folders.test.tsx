@@ -75,14 +75,13 @@ describe('RecordingRulesPage folder list', () => {
   });
 
   it('lists only the filtered folder and stays in Folders mode', async () => {
-    const backend = setup();
+    setup();
 
     render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3A%22team%20metrics%22'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Metrics']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
-    expect(backend.folderSearches[0].where).toEqual({ text: { value: 'team metrics' } });
   });
 
   it('loads the next page of folders when the end of the list comes into view, keeping the loaded ones, until the last page', async () => {

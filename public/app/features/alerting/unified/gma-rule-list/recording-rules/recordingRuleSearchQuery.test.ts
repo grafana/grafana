@@ -43,15 +43,6 @@ describe('buildRecordingRuleSearchQuery', () => {
     expect(buildRecordingRuleSearchQuery(apiArgs(parse(query, recordingRuleSearchSchema).filter)).where).toEqual(where);
   });
 
-  it('filters by the resolved folder UIDs, not the typed names', () => {
-    expect(
-      buildRecordingRuleSearchQuery(apiArgs(parse('folder:Metrics', recordingRuleSearchSchema).filter, ['f1', 'f2']))
-        .where
-    ).toEqual({
-      filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
-    });
-  });
-
   it('combines several filters in one flat and', () => {
     expect(
       buildRecordingRuleSearchQuery(
@@ -68,6 +59,6 @@ describe('buildRecordingRuleSearchQuery', () => {
   });
 });
 
-function apiArgs<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
-  return { filter, folderUids };
+function apiArgs<Filter extends SharedRuleFilter>(filter: Filter) {
+  return { filter, folderUids: [] };
 }

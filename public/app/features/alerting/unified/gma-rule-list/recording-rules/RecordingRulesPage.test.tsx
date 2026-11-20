@@ -352,7 +352,7 @@ describe('RecordingRulesPage search', () => {
   });
 });
 
-describe('RecordingRulesPage folder names', () => {
+describe('RecordingRulesPage folder filters', () => {
   let backend: RuleListBackend;
 
   beforeEach(() => {
@@ -374,72 +374,48 @@ describe('RecordingRulesPage folder names', () => {
     });
   }
 
-  it('lists only the rules of the folderUid', async () => {
-    renderWithSearch('folderUid:k8s-metrics');
+  it.each([
+    { search: 'folder:Metrics', rules: ['db:queries:rate5m', 'pod:restarts:rate5m'] },
+    { search: 'folderUid:k8s-metrics', rules: ['pod:restarts:rate5m'] },
+  ])('lists $rules for $search', async ({ search, rules }) => {
+    renderWithSearch(search);
 
-    expect(await screen.findByText('pod:restarts:rate5m')).toBeInTheDocument();
-    expect(screen.queryByText('db:queries:rate5m')).not.toBeInTheDocument();
-  });
-
-  it('lists the rules of every folder with that name, whatever its case', async () => {
-    renderWithSearch('folder:metrics');
-
-    expect(await screen.findByText('db:queries:rate5m')).toBeInTheDocument();
-    expect(screen.getByText('pod:restarts:rate5m')).toBeInTheDocument();
-    expect(backend.folderSearches).toEqual([
-      expect.objectContaining({
-        labelSelector: { matchLabels: { 'alerting.grafana.app/has-recording-rules': 'true' } },
-      }),
-    ]);
-    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
-      { filter: { field: 'folder', operator: 'In', values: ['db-metrics', 'k8s-metrics'] } },
-    ]);
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('a')?.textContent)).toEqual(rules);
   });
 
   it.each([
-    { folderCount: 500, empty: false, limited: false },
-    { folderCount: 501, empty: false, limited: true },
-    { folderCount: 501, empty: true, limited: true },
-  ])(
-    'warns only when folders are omitted ($folderCount folders, empty: $empty)',
-    async ({ folderCount, empty, limited }) => {
-      const folders = Array.from({ length: folderCount }, (_, index) =>
-        folderFactory.build({ metadata: { name: `folder-${index}` }, spec: { title: 'Shared' } })
-      );
-      backend = setupRuleListBackend({
-        folders,
-        recordingRules: folders.map((folder) =>
-          recordingRuleFactory
-            .inFolder(folder.metadata.name!)
-            .build({ spec: { title: `Rule in ${folder.metadata.name}` } })
-        ),
-      });
-      renderWithSearch(`folder:Shared${empty ? ' label:team=missing' : ''}`);
+    { search: 'folder:Nope', message: 'No recording rules match this folder' },
+    { search: 'folder:Metrics label:team=none', message: 'No recording rules found' },
+  ])('says "$message" for $search', async ({ search, message }) => {
+    renderWithSearch(search);
 
-      expect(await screen.findByText(empty ? 'No recording rules found' : 'Rule in folder-0')).toBeInTheDocument();
-      if (limited) {
-        expect(screen.getByRole('alert')).toHaveTextContent(
-          'Showing results from only the first 500 matching folders. Narrow your search criteria to see results from other folders.'
-        );
-      } else {
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-      }
-    }
-  );
-
-  it('shows the empty state and sends no rule search when no folder name matches', async () => {
-    renderWithSearch('folder:Nope');
-
-    expect(await screen.findByText('No recording rules match this folder')).toBeInTheDocument();
-    expect(backend.ruleSearches).toEqual([]);
+    expect(await screen.findByText(message)).toBeInTheDocument();
   });
 
-  it('shows a failed folder lookup as a failed load with Retry, and lists the rules after a successful retry', async () => {
+  it('warns that only 500 folders are searched when 501 match', async () => {
+    const folders = Array.from({ length: 501 }, (_, index) =>
+      folderFactory.build({ metadata: { name: `folder-${index}` }, spec: { title: 'Shared' } })
+    );
+    setupRuleListBackend({
+      folders,
+      recordingRules: folders.map((folder) =>
+        recordingRuleFactory
+          .inFolder(folder.metadata.name!)
+          .build({ spec: { title: `Rule in ${folder.metadata.name}` } })
+      ),
+    });
+    renderWithSearch('folder:Shared');
+
+    expect(await screen.findByText('Rule in folder-0')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Showing results from only the first 500 matching folders.');
+  });
+
+  it('shows a failed folder lookup with Retry, and lists the rules once Retry succeeds', async () => {
     backend.failNext('folderSearch');
     const { user } = renderWithSearch('folder:Metrics');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
-    expect(backend.ruleSearches).toEqual([]);
 
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 

@@ -124,7 +124,7 @@ describe('parsing', () => {
     });
   });
 
-  it('reads a value after a space as title text and reports the filter as having no value', () => {
+  it('reports folder: followed by a space as missing its value, and reads the rest as title text', () => {
     expect(parse('folder: "perf folder 1"', sharedSchema)).toEqual({
       filter: createRulesApiFilter({ text: ['perf folder 1'] }),
       issues: [{ key: 'folder', reason: 'missingValue' }],

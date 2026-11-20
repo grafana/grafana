@@ -33,6 +33,12 @@ describe('getRejectionIssues', () => {
     ]);
   });
 
+  it('names folderUid for a rejected folder leaf when no folder name was typed', () => {
+    expect(rejectionOf('folderUid:f1', [{ field: 'where.filter.values', message: 'bad uid' }], ['f1'])).toEqual([
+      { key: 'folderUid', reason: 'rejected', message: 'bad uid' },
+    ]);
+  });
+
   it('names no filter for a cause outside the where clause', () => {
     expect(rejectionOf('cpu', [{ field: 'limit', message: 'too big' }])).toEqual([
       { key: null, reason: 'rejected', message: 'too big' },
