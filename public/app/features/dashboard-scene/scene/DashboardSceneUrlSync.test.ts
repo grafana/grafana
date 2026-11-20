@@ -20,6 +20,24 @@ import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
+jest.mock('app/features/library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn((...args) =>
+    jest.requireActual('app/features/library-panels/state/api').getLibraryPanel(...args)
+  ),
+}));
+
+jest.mock('../panel-edit/openPanelEditor', () => ({
+  ...jest.requireActual('../panel-edit/openPanelEditor'),
+  openPanelEditor: jest.fn((...args) => jest.requireActual('../panel-edit/openPanelEditor').openPanelEditor(...args)),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(libraryPanels.getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
+});
+
 describe('DashboardSceneUrlSync', () => {
   describe('library panel editor loading', () => {
     beforeAll(() => {
@@ -32,7 +50,7 @@ describe('DashboardSceneUrlSync', () => {
       'finishes loading when the library panel is %s',
       async (outcome) => {
         const pending = createDeferred<LibraryPanel>();
-        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const fetchPanel = jest.mocked(libraryPanels.getLibraryPanel).mockReturnValue(pending.promise);
         const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
         const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
         const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
@@ -68,7 +86,7 @@ describe('DashboardSceneUrlSync', () => {
           expect(panel.isActive).toBe(false);
         } finally {
           scene.cancelPendingViews();
-          fetchPanel.mockRestore();
+          fetchPanel.mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         }
       }
     );
@@ -80,7 +98,7 @@ describe('DashboardSceneUrlSync', () => {
 
       it('does not wait on an unloaded library panel or start loading the editor', () => {
         const pending = createDeferred<LibraryPanel>();
-        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const fetchPanel = jest.mocked(libraryPanels.getLibraryPanel).mockReturnValue(pending.promise);
         const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
         const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
         const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
@@ -99,7 +117,7 @@ describe('DashboardSceneUrlSync', () => {
           expect(panel.isActive).toBeFalsy();
         } finally {
           scene.cancelPendingViews();
-          fetchPanel.mockRestore();
+          fetchPanel.mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
         }
       });
     });
@@ -580,7 +598,7 @@ describe('DashboardSceneUrlSync', () => {
           },
         };
       });
-      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      const openEditor = jest.mocked(panelEditor.openPanelEditor).mockClear();
       try {
         scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
         scene.urlSync?.updateFromUrl({ editPanel: null });
@@ -597,7 +615,7 @@ describe('DashboardSceneUrlSync', () => {
         first.resolve();
         second.resolve();
         scene.cancelPendingViews();
-        openEditor.mockRestore();
+        openEditor.mockClear();
         loadEditor.mockRestore();
       }
     });
@@ -795,7 +813,7 @@ describe('DashboardSceneUrlSync', () => {
     it('does not reopen the editor when URL sync closes it before its chunk arrives', async () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: true });
-      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      const openEditor = jest.mocked(panelEditor.openPanelEditor).mockClear();
       try {
         scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
         expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
@@ -811,7 +829,7 @@ describe('DashboardSceneUrlSync', () => {
         await openEditor.mock.results[1].value;
         expect(scene.state.editPanel?.getUrlKey()).toBe('1');
       } finally {
-        openEditor.mockRestore();
+        openEditor.mockClear();
       }
     });
   });

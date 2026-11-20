@@ -3,7 +3,7 @@ import { waitFor } from '@testing-library/react';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import * as libraryPanelApi from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
@@ -16,6 +16,17 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { replacePanel } from './replacePanel';
+
+jest.mock('app/features/library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id) => Promise.resolve(getPanelPlugin({ id })),
@@ -33,7 +44,7 @@ describe('replacePanel', () => {
   });
 
   function mockGetLibraryPanel() {
-    return jest.spyOn(libraryPanelApi, 'getLibraryPanel').mockResolvedValue({
+    return jest.mocked(getLibraryPanel).mockResolvedValue({
       uid: 'library-1',
       name: 'Library panel',
       version: 1,
