@@ -23,8 +23,8 @@ interface Props {
   selectedTemplateId?: string;
   /**
    * Called once the cards show, with how many templates each list offers (a list that is not shown, or has not
-   * reported, has no count): when every list has loaded, or after `LOAD_WAIT_MS` when the loaded ones have templates,
-   * and again as late lists report. The host drops the toggle when there are none and reports what was on offer.
+   * reported, has no count): when every list has loaded, or after `LOAD_WAIT_MS` with the ones that have, and again
+   * as late lists report. The host drops the toggle when there are none and reports what was on offer.
    */
   onTemplatesCount?: (counts: TemplateCounts) => void;
   className?: string;
@@ -47,7 +47,7 @@ const NEXT_ROW_PEEK = 0.1;
 /** A row on a desktop and the next one: the panel's loading cards, at the height the real ones take. */
 const LOADING_CARDS = 8;
 /** How long the cards wait for every list before showing the ones that have loaded. */
-export const LOAD_WAIT_MS = 1500;
+const LOAD_WAIT_MS = 1500;
 
 interface ToggleProps {
   isOpen: boolean;
@@ -105,9 +105,8 @@ export function LandingTemplates({
   );
   // Registered by the enterprise build; `showCustomTemplates` is only set when it is.
   const DashboardTemplatesTab = showCustomTemplates ? getDashboardTemplatesTab() : null;
-  const hasCustomTemplates = Boolean(DashboardTemplatesTab);
   const allLoaded =
-    (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
+    (!showCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
   const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
   // A slow list must not hold back the cards the others loaded.
   const [waitedLong, setWaitedLong] = useState(false);
@@ -118,8 +117,9 @@ export function LandingTemplates({
     const timeout = setTimeout(() => setWaitedLong(true), LOAD_WAIT_MS);
     return () => clearTimeout(timeout);
   }, [allLoaded]);
-  const loaded = allLoaded || (waitedLong && total > 0);
-  const isEmpty = allLoaded && total === 0;
+  // After the wait the panel goes with what it has, so a list that fails without reporting cannot keep it loading.
+  const loaded = allLoaded || waitedLong;
+  const isEmpty = loaded && total === 0;
   useEffect(() => {
     if (loaded) {
       onTemplatesCount?.(counts);
@@ -288,8 +288,8 @@ function getStyles(theme: GrafanaTheme2) {
         display: 'none',
       },
     }),
-    // One row and a sliver of the next; the rest scrolls. A set height, so a search that matches less does not move
-    // the page, centered on its content.
+    // One row and a sliver of the next; the rest scrolls. A set height, so neither a search that matches less nor the
+    // loading cards move the page.
     list: css({
       height: `calc(${CARD_HEIGHT}px + ${gap} + ${peek} + ${listPaddingTop})`,
       overflowY: 'auto',
@@ -302,12 +302,12 @@ function getStyles(theme: GrafanaTheme2) {
       gridAutoRows: CARD_HEIGHT,
       gap,
     }),
-    // Shown while a search is on and no list has a card for it.
     empty: css({
       margin: 0,
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
     }),
+    // Shown while a search is on and no list has a card for it.
     noMatches: css({
       margin: 0,
       color: theme.colors.text.secondary,

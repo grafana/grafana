@@ -14,6 +14,8 @@ interface TemplateDashboardsAvailability {
   showCustomTemplates: boolean;
   /** Either source is available — use this to gate entry points and the modal mount. */
   isAvailable: boolean;
+  /** The datasource lookup is still running, so `showGrafanaTemplates` may still turn true. */
+  isLoading: boolean;
 }
 
 /**
@@ -43,5 +45,6 @@ export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailabil
     showGrafanaTemplates,
     showCustomTemplates,
     isAvailable: showGrafanaTemplates || showCustomTemplates,
+    isLoading,
   };
 }

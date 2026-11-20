@@ -26,9 +26,12 @@ jest.mock('@grafana/assistant', () => ({
   checkLimits: () => mockCheckLimits(),
 }));
 
+// The Assistant plugin's prompt: registered unless a test says otherwise.
+let mockPromptComponent: { component?: () => null; isLoading: boolean } = { component: () => null, isLoading: false };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  usePluginComponent: () => mockPromptComponent,
 }));
 
 jest.mock('./datasources', () => ({
@@ -87,6 +90,7 @@ const mockAvailability = {
   showGrafanaTemplates: false,
   showCustomTemplates: false,
   isAvailable: false,
+  isLoading: false,
 };
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability', () => ({
   useTemplateDashboardsAvailability: () => mockAvailability,
@@ -114,7 +118,13 @@ describe('AssistantDashboardEmpty', () => {
     latestPromptProps = undefined;
     latestTemplatesProps = undefined;
     mockPromptLoaded = true;
-    Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
+    mockPromptComponent = { component: () => null, isLoading: false };
+    Object.assign(mockAvailability, {
+      showGrafanaTemplates: false,
+      showCustomTemplates: false,
+      isAvailable: false,
+      isLoading: false,
+    });
     setTestFlags({ dashboardNewLayouts: true });
   });
 
@@ -229,7 +239,7 @@ describe('AssistantDashboardEmpty', () => {
     const queryToggle = () => screen.queryByRole('button', { name: 'Start from a template' });
 
     beforeEach(() => {
-      Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
+      Object.assign(mockAvailability, { showGrafanaTemplates: true, showCustomTemplates: true, isAvailable: true });
       window.localStorage.removeItem(OPEN_KEY);
       window.localStorage.removeItem(HAS_CUSTOM_KEY);
     });
@@ -291,8 +301,10 @@ describe('AssistantDashboardEmpty', () => {
         mockPromptLoaded = false;
         renderEmpty();
 
-        act(() => jest.advanceTimersByTime(1500));
+        act(() => jest.advanceTimersByTime(1499));
+        expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
 
+        act(() => jest.advanceTimersByTime(1));
         expect(screen.getByRole('heading')).toBeVisible();
         expect(panel()).not.toBeVisible();
       });
@@ -311,6 +323,8 @@ describe('AssistantDashboardEmpty', () => {
 
     it('drops the toggle when the lists have no templates', () => {
       renderEmpty();
+      reportCounts({ custom: 0, grafana: 2 });
+      expect(toggle()).toBeInTheDocument();
 
       reportCounts({ custom: 0, grafana: 0 });
 
@@ -326,6 +340,62 @@ describe('AssistantDashboardEmpty', () => {
 
       expect(toggle()).toHaveAttribute('aria-expanded', 'true');
       expect(panel()).toBeVisible();
+    });
+
+    it('keeps the toggle a person used to close a panel with no templates', async () => {
+      window.localStorage.setItem(OPEN_KEY, 'true');
+      const { user } = renderEmpty();
+      reportCounts({ custom: 0, grafana: 0 });
+
+      await user.click(toggle());
+
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it("keeps what the last visit found when this visit's custom list does not report", () => {
+      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
+      renderEmpty();
+
+      reportCounts({ grafana: 2 });
+
+      expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('true');
+    });
+
+    it('forgets the custom templates of the last visit when the account no longer offers them', () => {
+      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
+      mockAvailability.showCustomTemplates = false;
+
+      renderEmpty();
+
+      expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('false');
+    });
+
+    it('waits for the template lookup before showing an open panel', async () => {
+      window.localStorage.setItem(OPEN_KEY, 'true');
+      Object.assign(mockAvailability, {
+        showGrafanaTemplates: false,
+        showCustomTemplates: false,
+        isAvailable: false,
+        isLoading: true,
+      });
+      const { dashboard, rerender } = renderEmpty();
+      expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
+
+      Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true, isLoading: false });
+      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
+
+      await waitFor(() => expect(panel()).toBeVisible());
+      expect(screen.getByRole('heading')).toBeVisible();
+    });
+
+    it('offers no templates when the Assistant plugin has no prompt for them', () => {
+      window.localStorage.setItem(OPEN_KEY, 'true');
+      mockPromptComponent = { component: undefined, isLoading: false };
+
+      renderEmpty();
+
+      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading')).toBeVisible();
     });
 
     it('does not list templates when none are available, and shows the page at once', () => {
@@ -392,8 +462,9 @@ describe('AssistantDashboardEmpty', () => {
 
     it('reports the picked template and how many templates were on offer with the prompt', async () => {
       renderEmpty();
-      act(() => latestTemplatesProps?.onTemplatesCount?.({ custom: 3, grafana: 12 }));
       act(() => latestTemplatesProps?.onSelectTemplate(red));
+      // Counts that come after the pick still go out with the prompt.
+      act(() => latestTemplatesProps?.onTemplatesCount?.({ custom: 3, grafana: 12 }));
 
       await act(() => latestOnSubmit?.('', [red.contextItem]));
 
@@ -409,7 +480,7 @@ describe('AssistantDashboardEmpty', () => {
       renderEmpty();
       act(() => latestTemplatesProps?.onSelectTemplate(red));
 
-      await act(() => latestOnSubmit?.('', [red.contextItem]));
+      await act(() => latestOnSubmit?.('  ', [red.contextItem]));
 
       expect(mockOpenTemplate).toHaveBeenCalledWith({
         templateUrl: '/dashboard/template?gnetId=1',

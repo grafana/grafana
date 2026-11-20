@@ -5,7 +5,7 @@ import { type Props as SortPickerProps } from 'app/core/components/Select/SortPi
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 
-import { LOAD_WAIT_MS, LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
+import { LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
 
 // `undefined` keeps a list loading.
 let mockGrafanaCount: number | undefined = 1;
@@ -13,7 +13,7 @@ let mockCustomCount: number | undefined = 1;
 type ListProps = TemplateSelectionProps & { entryPoint?: string; loadedFiredRef?: MutableRefObject<boolean> };
 // What the Grafana list was last rendered with.
 let mockGrafanaProps: ListProps = {};
-// Called with the entry point and `loaded` guard on every render of the custom list.
+// Called with its props on every render of the custom list.
 const mockCustomProps = jest.fn();
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
@@ -51,8 +51,9 @@ jest.mock(
 );
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
-const CustomTemplates = ({ onTemplatesLoad, entryPoint, loadedFiredRef }: ListProps) => {
-  mockCustomProps({ entryPoint, loadedFiredRef });
+const CustomTemplates = (props: ListProps) => {
+  const { onTemplatesLoad } = props;
+  mockCustomProps(props);
   useEffect(() => {
     if (mockCustomCount !== undefined) {
       onTemplatesLoad?.(mockCustomCount);
@@ -114,10 +115,17 @@ describe('LandingTemplates', () => {
     const { user } = renderTemplates();
 
     await user.type(screen.getByPlaceholderText('Search'), 'node');
-    expect(mockGrafanaProps.searchQuery).toBe('node');
-
     await user.selectOptions(screen.getByRole('combobox', { name: 'Sort' }), 'desc');
-    expect(mockGrafanaProps.sortOrder).toBe('desc');
+
+    expect(mockGrafanaProps).toMatchObject({ searchQuery: 'node', sortOrder: 'desc' });
+    expect(mockCustomProps.mock.lastCall?.[0]).toMatchObject({ searchQuery: 'node', sortOrder: 'desc' });
+  });
+
+  it('hands both lists the pick and the picked template', () => {
+    renderTemplates({ selectedTemplateId: 'grafana:1' });
+
+    expect(mockGrafanaProps).toMatchObject({ onSelectTemplate, selectedTemplateId: 'grafana:1' });
+    expect(mockCustomProps.mock.lastCall?.[0]).toMatchObject({ onSelectTemplate, selectedTemplateId: 'grafana:1' });
   });
 
   it('adds a no-matches line while a search is on', async () => {
@@ -126,16 +134,6 @@ describe('LandingTemplates', () => {
 
     await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
     expect(screen.getByText('No template dashboards found')).toBeInTheDocument();
-  });
-
-  it('keeps the list one row and a peek tall while a search matches nothing, so the page does not move', async () => {
-    const { user } = renderTemplates();
-
-    await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
-
-    // The no-matches line sits under the grid, in the list.
-    const list = screen.getByText('No template dashboards found').parentElement?.parentElement;
-    expect(list).toHaveStyle({ height: 'calc(160px + 16px + 16px + 4px)' });
   });
 
   it('takes no room while closed, and keeps its lists mounted so reopening does not reload them', () => {
@@ -150,41 +148,60 @@ describe('LandingTemplates', () => {
     expect(screen.getByTestId('grafana-card')).toBe(card);
   });
 
-  it('holds every card back until all lists have loaded, so they do not reflow', () => {
-    mockCustomCount = undefined;
+  it.each([
+    ['custom', 'grafana-card'],
+    ['Grafana', 'custom-card'],
+  ])('holds every card back while the %s list loads, so they do not reflow', (slowList, loadedCard) => {
+    if (slowList === 'custom') {
+      mockCustomCount = undefined;
+    } else {
+      mockGrafanaCount = undefined;
+    }
     renderTemplates();
 
     expect(screen.getByRole('region', { name: 'Start from a template' })).toBeVisible();
-    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
+    expect(screen.getByTestId(loadedCard)).not.toBeVisible();
   });
 
   describe('when a list never reports', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
 
-    it('shows the cards that loaded after a short wait, and tells its host about them', () => {
+    it('shows the cards that loaded after 1.5 seconds, and tells its host about them', () => {
       mockCustomCount = undefined;
       const onTemplatesCount = jest.fn();
       renderTemplates({ onTemplatesCount });
+
+      act(() => jest.advanceTimersByTime(1499));
       expect(screen.getByTestId('grafana-card')).not.toBeVisible();
       expect(onTemplatesCount).not.toHaveBeenCalled();
 
-      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
-
+      act(() => jest.advanceTimersByTime(1));
       expect(screen.getByTestId('grafana-card')).toBeVisible();
       expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1 });
     });
 
-    it('keeps waiting while no list has shown a card, and does not call the panel empty', () => {
+    it('tells its host again when the late list reports', () => {
       mockCustomCount = undefined;
-      mockGrafanaCount = undefined;
+      const onTemplatesCount = jest.fn();
+      renderTemplates({ onTemplatesCount });
+      act(() => jest.advanceTimersByTime(1500));
+
+      act(() => mockCustomProps.mock.lastCall?.[0].onTemplatesLoad?.(2));
+
+      expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1, custom: 2 });
+    });
+
+    it('goes with what it has after the wait, so a list that never reports cannot keep it loading', () => {
+      mockCustomCount = undefined;
+      mockGrafanaCount = 0;
       const onTemplatesCount = jest.fn();
       renderTemplates({ onTemplatesCount });
 
-      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
+      act(() => jest.advanceTimersByTime(1500));
 
-      expect(onTemplatesCount).not.toHaveBeenCalled();
-      expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
+      expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 0 });
+      expect(screen.getByText('No templates available')).toBeInTheDocument();
     });
   });
 
@@ -219,14 +236,6 @@ describe('LandingTemplates', () => {
     expect(screen.queryByTestId('custom-card')).not.toBeInTheDocument();
     expect(screen.getByTestId('grafana-card')).toBeVisible();
     expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1 });
-  });
-
-  it('leaves out custom templates when no enterprise list is registered', () => {
-    mockGetDashboardTemplatesTab.mockReturnValue(null);
-    renderTemplates();
-
-    expect(screen.queryByTestId('custom-card')).not.toBeInTheDocument();
-    expect(screen.getByTestId('grafana-card')).toBeVisible();
   });
 });
 

@@ -5,7 +5,7 @@ import { type ChatContextItem, checkLimits } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, usePluginComponent } from '@grafana/runtime';
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
@@ -15,7 +15,7 @@ import { type TemplateSelection } from 'app/features/dashboard/dashgrid/Dashboar
 import { OPEN_TEMPLATE_PROMPT } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardLandingPrompt, PROMPT_HEIGHT } from './DashboardLandingPrompt';
+import { DashboardLandingPrompt, PROMPT_HEIGHT, STANDALONE_PROMPT_COMPONENT_ID } from './DashboardLandingPrompt';
 import { LandingTemplates, LandingTemplatesToggle, type TemplateCounts } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
 import { openTemplateInAssistant, startPlanningInAssistant } from './handoff';
@@ -143,9 +143,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   // Assistant with it; opening the Assistant from the toolbar shows it too.
   useHoldFloatingExtensionSidebar(!assistantDriven);
 
-  const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
-    useTemplateDashboardsAvailability();
-  const showTemplates = isAvailable && !assistantDriven;
+  const {
+    testDataSource,
+    showGrafanaTemplates,
+    showCustomTemplates,
+    isAvailable,
+    isLoading: availabilityLoading,
+  } = useTemplateDashboardsAvailability();
+  // Templates attach to the prompt, so a plugin without one offers none.
+  const { component: prompt, isLoading: promptLoading } = usePluginComponent(STANDALONE_PROMPT_COMPONENT_ID);
+  const promptMissing = !prompt && !promptLoading;
+  const showTemplates = isAvailable && !assistantDriven && !promptMissing;
   const { ref: fitRef, fit } = useFitToScrollArea();
   const [templateCounts, setTemplateCounts] = useState<TemplateCounts>();
   const templatesId = useId();
@@ -157,15 +165,18 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   );
   const [hadCustomTemplates] = useState(() => store.getBool(HAS_CUSTOM_TEMPLATES_KEY, false));
   const templatesOpen = templatesOpenedByUser ?? hadCustomTemplates;
+  const customTemplates = showCustomTemplates ? templateCounts?.custom : 0;
   useEffect(() => {
-    if (templateCounts?.custom !== undefined) {
-      store.set(HAS_CUSTOM_TEMPLATES_KEY, templateCounts.custom > 0);
+    if (customTemplates !== undefined) {
+      store.set(HAS_CUSTOM_TEMPLATES_KEY, customTemplates > 0);
     }
-  }, [templateCounts?.custom]);
-  // The toggle goes once the lists turn out to have no templates, unless its panel is open: it then says so in place.
+  }, [customTemplates]);
+  // The toggle goes once the lists turn out to have no templates, unless the panel has been open on this visit: it
+  // then says so in place, and a person who closes it keeps the control they just used.
+  const [panelWasOpen, setPanelWasOpen] = useState(templatesOpen);
   const noTemplates =
     templateCounts !== undefined && (templateCounts.custom ?? 0) + (templateCounts.grafana ?? 0) === 0;
-  const showToggle = showTemplates && !(noTemplates && !templatesOpen);
+  const showToggle = showTemplates && !(noTemplates && !panelWasOpen);
   // The panel comes in with the prompt, never beside the prompt's own loader. With it open, the block waits out of
   // sight behind one spinner for the prompt, then shows whole; a prompt slower than PROMPT_WAIT_MS lets the block show,
   // the panel keeping its room out of sight until the prompt is there. Closed, the page shows at once.
@@ -176,7 +187,11 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     const timeout = setTimeout(() => setWaitedForPrompt(true), PROMPT_WAIT_MS);
     return () => clearTimeout(timeout);
   }, []);
-  const panelWaits = showTemplates && templatesOpen && !promptReady;
+  // Until the availability lookup is done the panel may still come, so an open one waits for it too.
+  const panelWaits =
+    (showTemplates || (availabilityLoading && !assistantDriven)) &&
+    templatesOpen &&
+    (!promptReady || availabilityLoading);
   const waiting = panelWaits && !waitedForPrompt;
   // Opening or closing the templates keeps the block's top where it is, so the toggle stays under the person's pointer
   // instead of moving with the free space; the actions below move. A new fit places it again.
@@ -191,6 +206,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     }
     store.set(TEMPLATES_OPEN_KEY, !templatesOpen);
     setTemplatesOpenedByUser(!templatesOpen);
+    setPanelWasOpen(true);
   }, [fit, templatesOpen]);
   const renderTemplatesToggle = useCallback(
     () => <LandingTemplatesToggle isOpen={templatesOpen} onToggle={onTemplatesToggle} controls={templatesId} />,
@@ -300,7 +316,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     >
       <div
         ref={contentRef}
-        className={cx(styles.content, waiting && styles.contentWaiting)}
+        className={cx(styles.content, waiting && styles.outOfSight)}
         style={heldTop !== undefined ? { marginTop: heldTop } : undefined}
         aria-busy={waiting || undefined}
       >
@@ -338,7 +354,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
             id={templatesId}
             isOpen={templatesOpen}
             onTemplatesCount={setTemplateCounts}
-            className={cx(styles.templates, panelWaits && styles.templatesWaiting)}
+            className={cx(styles.templates, panelWaits && styles.outOfSight)}
             testDataSource={testDataSource}
             showGrafanaTemplates={showGrafanaTemplates}
             showCustomTemplates={showCustomTemplates}
@@ -415,7 +431,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     // Laid out but out of sight, so it shows in place once the prompt is there.
-    contentWaiting: css({
+    outOfSight: css({
       visibility: 'hidden',
     }),
     waiting: css({
@@ -457,9 +473,6 @@ function getStyles(theme: GrafanaTheme2) {
       // The plugin's text box is shorter while its code loads; the floor keeps the block from moving as it does.
       minHeight: PROMPT_HEIGHT,
     }),
-    templatesWaiting: css({
-      visibility: 'hidden',
-    }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({
       marginTop: `calc(-1 * (${theme.spacing(4)} + ${PROMPT_OVERLAP}px))`,
@@ -479,7 +492,6 @@ function getStyles(theme: GrafanaTheme2) {
     orText: css({
       color: theme.colors.text.disabled,
       fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: theme.typography.bodySmall.lineHeight,
       textTransform: 'uppercase',
       letterSpacing: '0.04em',
     }),
