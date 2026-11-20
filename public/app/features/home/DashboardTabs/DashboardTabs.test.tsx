@@ -477,6 +477,9 @@ describe('DashboardTabs', () => {
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
         total_count: 4,
+        folder_count: 0,
+        notebook_count: 0,
+        playlist_count: 0,
         page_count: 0,
         dashboard_count: 1,
         explore_count: 1,
@@ -689,6 +692,9 @@ describe('DashboardTabs', () => {
         render(<DashboardTabs />);
 
         expect(await screen.findByRole('link', { name: /NOC wall/ })).toBeInTheDocument();
+        expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith(
+          expect.objectContaining({ total_count: 1, playlist_count: 1, folder_count: 0, notebook_count: 0 })
+        );
       });
 
       it('drops playlist rows but keeps the rest when playlist access is denied', async () => {
