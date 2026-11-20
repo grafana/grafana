@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
@@ -114,18 +113,15 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
+	requestLog := pluginproxy.RequestLog{
+		PluginID: r.builder.pluginJSON.ID, DatasourceUID: name, Namespace: k8srequest.NamespaceValue(ctx),
+	}
 	record := r.builder.cfg.RecordProxyRequest
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		entry := pluginproxy.RequestLog{
-			PluginID:      r.builder.pluginJSON.ID,
-			DatasourceUID: name,
-			Namespace:     k8srequest.NamespaceValue(ctx),
-			Status:        http.StatusInternalServerError,
-			Source:        string(requestmeta.StatusSourceServer),
-		}
-		entry.Log()
+		requestLog.Start()
+		requestLog.Complete(http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
 		if record != nil {
 			record(ctx, r.builder.pluginJSON.ID, http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
 		}
@@ -137,8 +133,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
-		start := time.Now()
 		path := proxyPathFromRequest(req, name)
+		entry := requestLog
+		entry.Method, entry.Path = req.Method, path
+		entry.Start()
 		recorder := builder.NewResponseWriterWithStatus(w)
 		w = recorder
 		var status int
@@ -147,17 +145,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				status = recorder.StatusCode()
 			}
 			source := pluginproxy.StatusSource(req.Context(), status)
-			entry := pluginproxy.RequestLog{
-				PluginID:      r.builder.pluginJSON.ID,
-				DatasourceUID: name,
-				Namespace:     k8srequest.NamespaceValue(ctx),
-				Method:        req.Method,
-				Path:          path,
-				Status:        status,
-				Source:        source,
-				Duration:      time.Since(start),
-			}
-			entry.Log()
+			entry.Complete(status, source)
 			if record != nil {
 				record(req.Context(), r.builder.pluginJSON.ID, status, source)
 			}
