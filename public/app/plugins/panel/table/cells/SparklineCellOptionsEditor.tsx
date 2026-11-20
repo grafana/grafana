@@ -44,7 +44,7 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
         name: t('table.name-sparkline-select-time-range', 'Enable time range selection'),
         description: t(
           'table.description-sparkline-select-time-range',
-          'Drag to select a time range. Disabled for fields with data links.'
+          'Drag to select a time range. Disabled for fields with data links or actions.'
         ),
         defaultValue: false,
         // Only TableNG forwards the callback, and it sits behind both toggles.
