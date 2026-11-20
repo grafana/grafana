@@ -166,6 +166,9 @@ export const grafanaRulesNav = {
   newAlertRuleLink: () => createRelativeUrl('/alerting/new/alerting', { returnTo: createReturnTo() }),
   newRecordingRuleLink: () => createRelativeUrl('/alerting/new/grafana-recording', { returnTo: createReturnTo() }),
   designForProvisioningLink: () => createRelativeUrl('/alerting/export-new-rule', { returnTo: createReturnTo() }),
+  /** The GMA-only Alert or Recording rules page, with `search` applied. */
+  ruleListLink: (kind: 'alert' | 'recording', search: string) =>
+    createRelativeUrl(`/alerting/rules/${kind}`, { search }),
 };
 
 export const notificationPolicies = {

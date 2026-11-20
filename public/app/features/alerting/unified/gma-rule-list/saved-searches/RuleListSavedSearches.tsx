@@ -6,6 +6,7 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { type UseGenericSavedSearchesResult } from '../../hooks/useGenericSavedSearches';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { type RuleSearchSchema } from '../rule-search/filterDefinitions';
 import { parse } from '../rule-search/parser';
 import { type SharedRuleFilter } from '../rule-search/sharedRuleFilter';
@@ -35,7 +36,7 @@ export function RuleListSavedSearches({ kind, query, onApply, savedSearches }: R
         onApply(search.query);
         trackSavedSearchApplied(kind, search);
       }}
-      getHref={(search) => `/alerting/rules/${kind}?search=${encodeURIComponent(search.query)}`}
+      getHref={(search) => grafanaRulesNav.ruleListLink(kind, search.query)}
     />
   );
 }

@@ -17,8 +17,8 @@ export interface RuleSearchInputProps {
   issues?: FilterIssue[];
   /** Rendered beside the input box, so it stays aligned with the box however many issue messages show below. */
   trailing?: ReactNode;
-  /** Rendered after the label, outside it, so it stays out of the input's accessible name. */
-  labelSuffix?: ReactNode;
+  /** Names the saved search the applied query matches, shown after the label but outside it, so it stays out of the input's accessible name. */
+  appliedSavedSearch?: ReactNode;
 }
 
 const INPUT_ID = 'rule-search-input';
@@ -31,7 +31,7 @@ export function RuleSearchInput({
   filterHelp,
   issues = [],
   trailing,
-  labelSuffix,
+  appliedSavedSearch,
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
@@ -79,7 +79,7 @@ export function RuleSearchInput({
             </PopupCard>
           </Stack>
         </Label>
-        {labelSuffix}
+        {appliedSavedSearch}
       </Stack>
       <Stack direction="row" gap={2} alignItems="center">
         <Box grow={1} minWidth={0}>

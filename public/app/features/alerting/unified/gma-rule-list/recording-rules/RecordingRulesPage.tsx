@@ -50,7 +50,7 @@ function RecordingRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
-              labelSuffix={
+              appliedSavedSearch={
                 <RuleListSavedSearchIndicator
                   query={query}
                   schema={recordingRuleSearchSchema}
