@@ -9,9 +9,10 @@ keywords:
   - Profile Configuration
   - Profile Correlation
   - Pyroscope
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/profile-configurations/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/profile-configurations/
 aliases:
-  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/profile-configurations/
+  - ../../terraform-knowledge-graph/profile-configurations/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/profile-configurations/
 ---
 
 # Configure profile correlation using Terraform

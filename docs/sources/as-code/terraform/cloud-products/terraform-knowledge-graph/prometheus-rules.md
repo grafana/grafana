@@ -10,9 +10,10 @@ keywords:
   - Recording rules
   - Alerting rules
   - PromQL
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/prometheus-rules/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/prometheus-rules/
 aliases:
-  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/prometheus-rules/
+  - ../../terraform-knowledge-graph/prometheus-rules/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/prometheus-rules/
 ---
 
 # Manage Prometheus rules using Terraform

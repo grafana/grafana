@@ -1,4 +1,5 @@
 ---
+description: Learn how to manage multiple dashboards stored as JSON source code using Terraform and GitHub Actions.
 keywords:
   - Infrastructure as Code
   - Quickstart
@@ -6,10 +7,11 @@ keywords:
   - Terraform
   - GitHub Actions
 title: Create and manage dashboards using Terraform and GitHub Actions
-weight: 110
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/dashboards-github-action/
+weight: 100
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/dashboards-github-action/
 aliases:
-  - ../infrastructure-as-code/terraform/dashboards-github-action/
+  - ../dashboards-github-action/
+  - ../../infrastructure-as-code/terraform/dashboards-github-action/
 ---
 
 # Create and manage dashboards using Terraform and GitHub Actions

@@ -1,8 +1,9 @@
 ---
 aliases:
-  - ../infrastructure-as-code/terraform/terraform-knowledge-graph/
-  - ../infrastructure-as-code/terraform/knowledge-graph-slo/
-  - ./knowledge-graph-slo/
+  - ../terraform-knowledge-graph/
+  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/
+  - ../../infrastructure-as-code/terraform/knowledge-graph-slo/
+  - ../knowledge-graph-slo/
 cards:
   items:
     - description: Learn how to set up Terraform provider and configure your environment for managing Knowledge Graph resources.
@@ -53,7 +54,7 @@ hero:
   title: Manage Knowledge Graph using Terraform
 menuTitle: Manage Knowledge Graph in Grafana Cloud using Terraform
 title: Manage Knowledge Graph in Grafana Cloud using Terraform
-weight: 130
+weight: 500
 keywords:
   - Infrastructure as Code
   - Quickstart
@@ -70,7 +71,7 @@ keywords:
   - Knowledge Graph Stack
   - Stack Onboarding
   - Datasets
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/
 ---
 
 {{< docs/hero-simple key="hero" >}}

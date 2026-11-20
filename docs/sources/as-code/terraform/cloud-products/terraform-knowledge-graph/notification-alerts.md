@@ -8,9 +8,10 @@ keywords:
   - Knowledge Graph
   - Notification Alerts
   - Alert Configuration
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/notification-alerts/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/notification-alerts/
 aliases:
-  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/notification-alerts/
+  - ../../terraform-knowledge-graph/notification-alerts/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/notification-alerts/
 ---
 
 # Configure notification alerts using Terraform

@@ -9,9 +9,10 @@ keywords:
   - Stack Configuration
   - Onboarding
   - Datasets
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/knowledge-graph-stack/
 aliases:
-  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
+  - ../../terraform-knowledge-graph/knowledge-graph-stack/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
 ---
 
 # Configure the Knowledge Graph stack using Terraform
