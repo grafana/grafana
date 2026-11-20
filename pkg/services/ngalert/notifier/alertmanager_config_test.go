@@ -362,6 +362,29 @@ receivers:
 		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false, false)
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
+
+	for _, identifier := range []string{
+		models.DefaultRoutingTreeName,
+		models.DefaultRoutingTreeNameAlias,
+	} {
+		t.Run("fail to create extra configuration with reserved identifier "+identifier, func(t *testing.T) {
+			mam := setupMam(t, nil)
+			ctx := t.Context()
+			require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+			extraConfig := v1.ExtraConfiguration{
+				Identifier: identifier,
+				AlertmanagerConfig: `route:
+  receiver: original-receiver
+receivers:
+  - name: original-receiver`,
+			}
+
+			_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+			require.ErrorIs(t, err, ErrIdentifierAlreadyExists.Base)
+			require.ErrorContains(t, err, identifier)
+		})
+	}
 }
 
 func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {
@@ -653,6 +676,15 @@ receivers:
 	})
 }
 
+// withConfigClient gives the syncer a Config client without resources. Reads succeed and find
+// nothing, like an org that never recorded an identifier.
+func withConfigClient(mam *MultiOrgAlertmanager) *fakeConfigClient {
+	c := newFakeConfigClient()
+	mam.externalAMSyncer.clientGenerator = c
+	mam.externalAMSyncer.namespaceMapper = c.nsMapper
+	return c
+}
+
 func TestMultiOrgAlertmanager_ExtraConfigManagedBy(t *testing.T) {
 	orgID := int64(1)
 
@@ -730,6 +762,7 @@ receivers:
 	t.Run("identifier matching the ini-configured sync datasource is auto-sync", func(t *testing.T) {
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -745,6 +778,7 @@ receivers:
 	t.Run("manual import staged alongside an unrelated active sync is still manual", func(t *testing.T) {
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -761,6 +795,7 @@ receivers:
 		// Regression: a leftover config from before a flag rollback must not read as
 		// auto-sync-owned once the syncer has stopped touching it.
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -786,6 +821,7 @@ receivers:
 	t.Run("manual stage using the sync datasource identifier is not mislabelled auto-sync", func(t *testing.T) {
 		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		withConfigClient(mam)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
@@ -833,6 +869,7 @@ receivers:
 				ExternalAlertmanagerUID:        syncUID,
 			},
 		})
+		withConfigClient(mam)
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		return mam
 	}

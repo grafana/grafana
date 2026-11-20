@@ -260,6 +260,50 @@ describe('ResourceEditFormSharedFields', () => {
       expect(filenameInput).toHaveValue('test.json');
     });
 
+    it.each([
+      [mockRepo.github, 'Folder inside the repository. Leave empty for the repository root.'],
+      [
+        {
+          ...mockRepo.local,
+          path: '/var/lib/grafana/dashboards',
+        },
+        'Folder inside the repository. Leave empty for the repository root.',
+      ],
+      [
+        {
+          ...mockRepo.github,
+          path: 'dashboards/production',
+        },
+        'Folder inside the repository. Leave empty for the configured repository path (dashboards/production).',
+      ],
+      [
+        {
+          ...mockRepo.github,
+          path: '/team-a/dashboards/',
+        },
+        'Folder inside the repository. Leave empty for the configured repository path (team-a/dashboards).',
+      ],
+    ])('should display correct repository folder description', (repository, expectedDescription) => {
+      setup({ isNew: true, repository });
+
+      expect(screen.getByText(expectedDescription)).toBeInTheDocument();
+    });
+
+    it('should retain neutral placeholder when repository path is configured', () => {
+      setup({
+        isNew: true,
+        repository: {
+          ...mockRepo.github,
+          path: 'dashboards/production',
+        },
+      });
+
+      expect(screen.getByRole('combobox', { name: /folder/i })).toHaveAttribute(
+        'placeholder',
+        'Select or enter folder path'
+      );
+    });
+
     it('should render folder and filename fields for existing dashboards when allowPathEdit is true', () => {
       setup({ isNew: false, allowPathEdit: true, formDefaultValues: { path: 'dashboards/my-dashboard.json' } });
 

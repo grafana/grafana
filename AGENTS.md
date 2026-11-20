@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.0.0 -->
+<!-- version: 2.3.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -10,6 +10,8 @@ This file provides guidance to AI agents when working with code in the Grafana r
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
 - `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
 - `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
+- `.github/AGENTS.md` - CI workflow and action rules (for work under `.github/`)
+- [`packages/grafana-ui/AGENTS.md`](packages/grafana-ui/AGENTS.md): Component docs and visualization testing
 
 ## Project Overview
 
@@ -25,6 +27,7 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
 - Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
+- Before changing an existing branch or running tests, merge the latest `grafana/grafana` `main` into it; don't rebase pushed branches
 
 ## Code Review Rules
 
@@ -119,6 +122,8 @@ make lefthook-install                             # Pre-commit hooks
 
 ### Frontend (`public/app/`)
 
+When building product UI, check `@grafana/ui` before writing a custom component. Read the component's MDX in [`packages/grafana-ui/src/components/`](packages/grafana-ui/src/components/) for usage guidance. For guidance that spans components, check the [shared patterns](packages/grafana-ui/src/guidance/patterns/).
+
 | Directory              | Purpose                                               |
 | ---------------------- | ----------------------------------------------------- |
 | `public/app/core/`     | Shared services, components, utilities                |
@@ -139,13 +144,13 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `graphite` and `grafana-testdata-datasource`.
 
 Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 
 ## Key Notes
 
-- When calling a unified storage gRPC client, handle both error forms (transport `err` and response `Error`) with the helpers described in `pkg/storage/unified/resource/doc.go`; never check only one of them.
+- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Migrated direct Go calls are also error-only; streaming calls must check terminal errors.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.

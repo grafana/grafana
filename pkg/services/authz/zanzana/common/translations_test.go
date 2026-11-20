@@ -12,10 +12,7 @@ func TestTranslateActionToListParams_UsesDeterministicMapping(t *testing.T) {
 	expectedResource := dashboards.DashboardResourceInfo.GroupResource().Resource
 
 	for range 20 {
-		group, resource, _, verb := TranslateActionToListParams("dashboards:read")
-		require.Equal(t, expectedGroup, group)
-		require.Equal(t, expectedResource, resource)
-		require.Equal(t, "get", verb)
+		require.Equal(t, []ActionListEntry{{Action: "dashboards:read", Group: expectedGroup, Resource: expectedResource, LegacyScopeKind: expectedResource, Verb: "get"}}, TranslateActionToListParams("dashboards:read"))
 	}
 }
 
@@ -24,12 +21,12 @@ func TestSupportedActions_DeterministicAndUnique(t *testing.T) {
 	second := SupportedActions()
 	require.Equal(t, first, second)
 
-	seen := map[string]struct{}{}
+	seen := map[ActionListEntry]struct{}{}
 	for _, entry := range first {
-		if _, ok := seen[entry.Action]; ok {
-			t.Fatalf("duplicate action in supported actions: %s", entry.Action)
+		if _, ok := seen[entry]; ok {
+			t.Fatalf("duplicate mapping in supported actions: %+v", entry)
 		}
-		seen[entry.Action] = struct{}{}
+		seen[entry] = struct{}{}
 		require.NotEmpty(t, entry.Group)
 		require.NotEmpty(t, entry.Resource)
 		require.NotEmpty(t, entry.Verb)
@@ -61,6 +58,18 @@ func TestDatasourceLegacyActionsUseSharedResource(t *testing.T) {
 	}
 }
 
+func TestTranslateActionToListParams_AnnotationResources(t *testing.T) {
+	for action, verb := range map[string]string{"annotations:read": "get", "annotations:create": "create", "annotations:write": "update", "annotations:delete": "delete"} {
+		t.Run(action, func(t *testing.T) {
+			require.Equal(t, []ActionListEntry{
+				{Action: action, Group: "annotation.grafana.app", Resource: "annotations", LegacyScopeKind: "annotations", Verb: verb},
+				{Action: action, Group: "dashboard.grafana.app", Resource: "dashboards", LegacyScopeKind: "dashboards", Subresource: "annotations", Verb: verb},
+			}, TranslateActionToListParams(action))
+		})
+	}
+	require.Empty(t, TranslateActionToListParams("unknown:action"))
+}
+
 func TestActionListEntryLegacyScopeKind(t *testing.T) {
 	for _, tc := range []struct {
 		action, resource, kind string
@@ -75,20 +84,12 @@ func TestActionListEntryLegacyScopeKind(t *testing.T) {
 		{"datasources.caching:read", "datasources", "datasources"},
 	} {
 		t.Run(tc.action, func(t *testing.T) {
-			entry, ok := TranslateActionToListEntry(tc.action)
-			require.True(t, ok)
+			entries := TranslateActionToListParams(tc.action)
+			require.Len(t, entries, 1)
+			entry := entries[0]
 			require.Equal(t, tc.resource, entry.Resource)
 			require.Equal(t, tc.kind, entry.LegacyScopeKind)
 			require.Contains(t, SupportedActions(), entry)
 		})
 	}
-
-	entry, ok := TranslateActionToListEntry("unknown:read")
-	require.False(t, ok)
-	require.Empty(t, entry)
-	group, resource, subresource, verb := TranslateActionToListParams("unknown:read")
-	require.Empty(t, group)
-	require.Empty(t, resource)
-	require.Empty(t, subresource)
-	require.Empty(t, verb)
 }

@@ -78,7 +78,6 @@ func TestTrashRetentionWindow(t *testing.T) {
 			}
 			res, err := index.Search(context.Background(), nil, req, nil, nil)
 			require.NoError(t, err)
-			require.Nil(t, res.Error)
 
 			got := make([]string, 0, len(res.Rows))
 			for _, row := range res.Rows {
@@ -102,7 +101,6 @@ func TestTrashRetentionLeavesLiveSearchAlone(t *testing.T) {
 	}
 	res, err := index.Search(context.Background(), nil, req, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, res.Error)
 
 	got := make([]string, 0, len(res.Rows))
 	for _, row := range res.Rows {

@@ -13,9 +13,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
@@ -50,8 +50,8 @@ func RegisterAPIService(
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
 			AllowOrgAdmin: true,
-			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
+			Resource: map[string][]resource.Owner{
+				"stars": {resource.UserResourceOwner},
 			},
 		},
 	}
@@ -88,18 +88,10 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	// Configure Stars Dual writer
 	resource := collections.StarsResourceInfo
-	var stars grafanarest.Storage
 	stars, err := grafanaregistry.NewRegistryStore(opts.Scheme, resource, opts.OptsGetter)
 	if err != nil {
 		return err
-	}
-	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
-		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
-		if err != nil {
-			return err
-		}
 	}
 	storage[resource.StoragePath()] = &starStorage{Storage: stars} // wrap List so we only return one value
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}

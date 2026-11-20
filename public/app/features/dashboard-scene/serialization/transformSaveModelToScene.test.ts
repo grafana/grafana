@@ -1,7 +1,7 @@
 import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   behaviors,
@@ -236,6 +236,37 @@ describe('transformSaveModelToScene', () => {
       const body = layout.state.grid;
 
       expect(body.state.isLazy).toBeFalsy();
+    });
+  });
+
+  describe('scopeMeta', () => {
+    const scopeMeta = { trait: 'trait', groups: ['group-a', 'group-b'] };
+
+    const buildSceneWithScopeMeta = () => {
+      const dash = { ...defaultDashboard, title: 'Test dashboard', uid: 'test-uid' };
+      const oldModel = new DashboardModel(dash);
+      oldModel.scopeMeta = scopeMeta;
+      return createDashboardSceneFromDashboardModel(oldModel, dash);
+    };
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('copies scopeMeta to the scene state when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = buildSceneWithScopeMeta();
+
+      expect(scene.state.scopeMeta).toEqual(scopeMeta);
+    });
+
+    it('leaves scopeMeta unset when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = buildSceneWithScopeMeta();
+
+      expect(scene.state.scopeMeta).toBeUndefined();
     });
   });
 

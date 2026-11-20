@@ -146,7 +146,8 @@ func TestResourcePermissionTupleRegressionCases(t *testing.T) {
 		verb  string
 		count int
 	}{
-		{"dashboard remains singular", "dashboard.grafana.app", "dashboards", "View", 1},
+		{"dashboard view adds annotation get", "dashboard.grafana.app", "dashboards", "View", 2},
+		{"dashboard edit adds annotation create, get, update and delete", "dashboard.grafana.app", "dashboards", "Edit", 5},
 		{"folder remains singular", "folder.grafana.app", "folders", "View", 1},
 		{"wrong datasource resource remains singular", "loki.datasource.grafana.app", "queries", "Query", 1},
 		{"unrelated group remains singular", "loki", "datasources", "View", 1},
@@ -703,6 +704,12 @@ func TestSharedDatasourceRolePermissions(t *testing.T) {
 		{"datasources:query", "create", "query"},
 		{"datasources.caching:read", "get", "caching"},
 		{"datasources.caching:write", "update", "caching"},
+		{"alert.instances.external:read", "get", "alertinstances"},
+		{"alert.instances.external:write", "update", "alertinstances"},
+		{"alert.rules.external:read", "get", "alertrules"},
+		{"alert.rules.external:write", "update", "alertrules"},
+		{"alert.notifications.external:read", "get", "alertnotifications"},
+		{"alert.notifications.external:write", "update", "alertnotifications"},
 	} {
 		for _, uid := range []string{"ds1", "*"} {
 			tuples, err := ConvertRolePermissionsToTuples("role1", []RolePermission{{Action: tc.action, Kind: "datasources", Identifier: uid}})
@@ -799,5 +806,40 @@ func TestDatasourceCreatePermissionWithEmptyScope(t *testing.T) {
 			expected := NewGroupResourceTuple("role:r1#assignee", "create", "datasource.grafana.app", "datasources", "")
 			require.True(t, proto.Equal(expected, tuples[0]), "expected %v, got %v", expected, tuples[0])
 		})
+	}
+}
+
+func TestConvertRolePermissionsToTuples_AnnotationScopes(t *testing.T) {
+	const (
+		orgObject  = "group_resource:annotation.grafana.app/annotations"
+		dashObject = "group_resource:dashboard.grafana.app/dashboards/annotations"
+	)
+
+	tests := []struct {
+		name       string
+		kind       string
+		identifier string
+		expected   []string
+	}{
+		{"organization scope", "annotations", "organization", []string{orgObject}},
+		{"annotations wildcard covers every type", "annotations", "*", []string{orgObject, dashObject}},
+		{"global wildcard covers every type", "*", "*", []string{orgObject, dashObject}},
+		{"dashboard type alone grants nothing", "annotations", "dashboard", nil},
+	}
+
+	for _, tc := range tests {
+		for _, action := range []string{"annotations:read", "annotations:create", "annotations:write", "annotations:delete"} {
+			t.Run(tc.name+"/"+action, func(t *testing.T) {
+				tuples, err := ConvertRolePermissionsToTuples("basic_admin", []RolePermission{
+					{Action: action, Kind: tc.kind, Identifier: tc.identifier},
+				})
+				require.NoError(t, err)
+				objects := make([]string, 0, len(tuples))
+				for _, tuple := range tuples {
+					objects = append(objects, tuple.Object)
+				}
+				require.ElementsMatch(t, tc.expected, objects)
+			})
+		}
 	}
 }

@@ -1,0 +1,303 @@
+name: Run compatibility tests
+
+# Called by pr-test-compat.yml once per edition. See pkg/tests/compat/README.md.
+# It is a separate file so each edition runs as its own caller job with its own
+# permissions: only the Enterprise job needs id-token: write, and job permissions
+# cannot depend on a matrix value.
+
+on:
+  workflow_call:
+    inputs:
+      edition:
+        description: oss or enterprise
+        required: true
+        type: string
+      old_ref:
+        description: Git ref of the older version; empty picks the newest release of the previous minor
+        required: false
+        type: string
+        default: ''
+
+# No permissions here: the job inherits them from the calling job, contents: read plus
+# id-token: write for Enterprise. Declaring them would fail the OSS caller.
+
+jobs:
+  compat:
+    name: Run
+    runs-on: ubuntu-x64-large-io
+    timeout-minutes: 60
+    defaults:
+      run:
+        # Explicit bash runs with -o pipefail, so piping test output through tee keeps the exit code.
+        shell: bash
+    env:
+      CGO_ENABLED: 0
+      GOFLAGS: ${{ inputs.edition == 'enterprise' && '-tags=enterprise' || '' }}
+      # Oldest release the tests run against: the first one with the KV storage
+      # layout that Grafana 14 enables by default. Against 13.3, the round trips fail:
+      # - 13.3 still runs the KV backend in its compatibility mode by default, which checks
+      #   resourceVersions against the legacy resource table that 13.4 stopped writing, so
+      #   13.3 cannot update or delete objects 13.4 wrote ("requested RV does not match
+      #   current RV").
+      # - 13.3 and 13.4 derive alerting receiver, time interval, and template group names
+      #   differently, so each version cannot find the others' objects.
+      MIN_OLD_VERSION: v13.4.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Resolve older version
+        id: old
+        env:
+          OLD_REF: ${{ inputs.old_ref }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Databases, manifests, logs, and test binaries of every phase.
+          {
+            echo "COMPAT_DIR=$RUNNER_TEMP/compat"
+            echo "NEWER_BIN=$RUNNER_TEMP/compat/bin/newer"
+          } >> "$GITHUB_ENV"
+          older() {
+            {
+              echo "OLD_DIR=$GITHUB_WORKSPACE/.compat-old"
+              echo "OLDER_BIN=$RUNNER_TEMP/compat/bin/older"
+            } >> "$GITHUB_ENV"
+          }
+          if [ -n "$OLD_REF" ]; then
+            echo "ref=$OLD_REF" >> "$GITHUB_OUTPUT"
+            older
+            exit 0
+          fi
+
+          version=$(jq -r .version package.json)
+          major=${version%%.*}
+          minor=${version#*.}
+          minor=${minor%%.*}
+          if [ "$minor" -gt 0 ]; then
+            pattern="v${major}.$((minor - 1)).*"
+          else
+            pattern="v$((major - 1)).*"
+          fi
+
+          # Newest stable release of the previous minor.
+          tag=$(git ls-remote --tags --refs "$REPO_URL" "refs/tags/${pattern}" |
+            sed 's|.*refs/tags/||' | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -n 1)
+          if [ -z "$tag" ] || [ "$(printf '%s\n' "$MIN_OLD_VERSION" "$tag" | sort -V | head -n 1)" != "$MIN_OLD_VERSION" ]; then
+            # Still run against this commit itself, which keeps the tests working and catches
+            # new resources that the smoke test cannot create.
+            echo "::notice::No ${pattern} release at or after ${MIN_OLD_VERSION} yet, running against this commit only"
+            echo "ref=" >> "$GITHUB_OUTPUT"
+            {
+              echo "OLD_DIR=$GITHUB_WORKSPACE"
+              echo "OLDER_BIN=$RUNNER_TEMP/compat/bin/newer"
+            } >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "ref=$tag" >> "$GITHUB_OUTPUT"
+          older
+
+      - name: Checkout older version
+        if: steps.old.outputs.ref != ''
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ steps.old.outputs.ref }}
+          path: .compat-old
+          persist-credentials: false
+
+      # A release tag names the same fixed code in grafana and grafana-enterprise, so the older
+      # version's test binaries are built once per tag and cached. Other refs, such as a branch
+      # given as old_ref in a manual run, can move in grafana-enterprise without changing the
+      # grafana commit, so they are always built.
+      - name: Key for the tests of ${{ steps.old.outputs.ref }}
+        if: steps.old.outputs.ref != ''
+        id: older-key
+        env:
+          EDITION: ${{ inputs.edition }}
+          OLD_REF: ${{ steps.old.outputs.ref }}
+        run: |
+          if [[ "$OLD_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "key=compat-tests-$EDITION-$RUNNER_OS-$RUNNER_ARCH-$OLD_REF-$(git -C .compat-old rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restore the tests of ${{ steps.old.outputs.ref }}
+        if: steps.older-key.outputs.key != ''
+        id: older-cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ${{ env.OLDER_BIN }}
+          key: ${{ steps.older-key.outputs.key }}
+
+      - name: Get GitHub App token
+        if: inputs.edition == 'enterprise'
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-ci-bot
+
+      # Checks out the grafana-enterprise branch with this branch's name, else main.
+      - name: Setup Enterprise for this commit
+        if: inputs.edition == 'enterprise'
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+
+      # grafana-enterprise tags its releases like grafana, so the older side uses the same ref.
+      - name: Setup Enterprise for ${{ steps.old.outputs.ref }}
+        if: inputs.edition == 'enterprise' && steps.old.outputs.ref != ''
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          ref: ${{ steps.old.outputs.ref }}
+          path: ../grafana-enterprise-old
+          grafana-path: .compat-old
+
+      # Enterprise must be cloned before setup-go so that enterprise
+      # modules are visible when the Go cache key is computed.
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
+        with:
+          # The Enterprise key is filled by the Enterprise test shards, which compile like this
+          # job, so its cache saves minutes. The OSS key mostly holds server builds with other
+          # settings, which are not worth the restore.
+          cache-build: ${{ inputs.edition == 'enterprise' && 'true' || 'false' }}
+
+      - name: Test the compatibility phase runner
+        run: go test -count=1 ./.github/actions/run-compat-phase
+
+      - name: Summarize the tested versions
+        env:
+          EDITION: ${{ inputs.edition }}
+          OLD_REF: ${{ steps.old.outputs.ref }}
+          OLDER_CACHE: ${{ steps.older-cache.outputs.cache-hit == 'true' && 'restored from the cache' || '' }}
+        run: |
+          set -euo pipefail
+          sha() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "-"; }
+          cross="yes"
+          if [ -z "$OLD_REF" ]; then cross="no, this commit was tested against itself"; fi
+          {
+            echo "### Compatibility tests ($EDITION)"
+            echo
+            echo "| | Grafana | grafana-enterprise |"
+            echo "| --- | --- | --- |"
+            echo "| Newer | \`$(sha .)\` | \`$(sha ../grafana-enterprise)\` |"
+            echo "| Older | \`$(sha "$OLD_DIR")\` ${OLD_REF:+($OLD_REF)} | \`$(sha ../grafana-enterprise-old)\` |"
+            echo
+            echo "Cross-version: $cross"
+            if [ -n "$OLD_REF" ]; then echo; echo "Tests of the older version: ${OLDER_CACHE:-built}"; fi
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p "$COMPAT_DIR/logs"
+
+      # Compile the test binaries of both versions once; every phase then runs them, so the
+      # phases do not relink, and a build failure shows up as one failed step.
+      - name: Build tests with this commit
+        id: build-newer
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        run: go test -c -o "$NEWER_BIN/" ./pkg/tests/compat/...
+
+      - name: Build tests with ${{ steps.old.outputs.ref }}
+        id: build-older
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && steps.old.outputs.ref != '' && steps.older-cache.outputs.cache-hit != 'true' }}
+        working-directory: ${{ env.OLD_DIR }}
+        run: go test -c -o "$OLDER_BIN/" ./pkg/tests/compat/...
+
+      - name: Cache the tests of ${{ steps.old.outputs.ref }}
+        if: steps.build-older.outcome == 'success' && steps.older-key.outputs.key != ''
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ${{ env.OLDER_BIN }}
+          key: ${{ steps.older-key.outputs.key }}
+
+      # Two round trips over a fresh database each. One version sets data up, the other
+      # updates it, and the first reads it back:
+      # - older, newer, older: an upgrade followed by a rollback
+      # - newer, older, newer: a rollback followed by a re-upgrade
+      # Every phase runs even when an earlier one failed, as long as both versions built, so
+      # one red run shows all breakages; the job still fails.
+      - name: Upgrade then rollback - setup with ${{ steps.old.outputs.ref || 'this commit' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatSetup
+          role: older
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/1-upgrade-rollback-setup.log
+
+      - name: Upgrade then rollback - update with this commit
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatUpdate
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/2-upgrade-rollback-update.log
+
+      - name: Upgrade then rollback - verify with ${{ steps.old.outputs.ref || 'this commit' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatVerify
+          role: older
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/3-upgrade-rollback-verify.log
+
+      - name: Rollback then re-upgrade - setup with this commit
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatSetup
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/4-rollback-upgrade-setup.log
+
+      - name: Rollback then re-upgrade - update with ${{ steps.old.outputs.ref || 'this commit' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatUpdate
+          role: older
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/5-rollback-upgrade-update.log
+
+      - name: Rollback then re-upgrade - verify with this commit
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatVerify
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/6-rollback-upgrade-verify.log
+
+      # Test logs, the manifests each phase hands to the next, and the SQLite databases, but
+      # not the test binaries. All data in them is synthetic test data.
+      - name: Upload logs and databases
+        if: failure()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: compat-${{ inputs.edition }}
+          path: |
+            ${{ env.COMPAT_DIR }}
+            !${{ env.COMPAT_DIR }}/bin
+          retention-days: 7

@@ -150,3 +150,36 @@ func TestIntegrationSecureValueLegacyPermissions(t *testing.T) {
 		}
 	}
 }
+
+func TestGetUserPermissionsSecureValueScopes(t *testing.T) {
+	const group, resource = "secret.grafana.app", "securevalues"
+	srv, _, _ := newPermissionTestServer(t, []*openfgav1.TupleKey{
+		common.NewResourceTuple("user:named", common.RelationSetAdmin, group, resource, "", "personal-one"),
+		common.NewGroupResourceTuple("user:wildcard", common.RelationSetAdmin, group, resource, ""),
+		common.NewGroupResourceTuple("user:wildcard", common.RelationCreate, group, resource, ""),
+	})
+	for _, tc := range []struct {
+		subject   string
+		scope     string
+		canCreate bool
+	}{
+		{"user:named", "secret.securevalues:uid:personal-one", false},
+		{"user:wildcard", "secret.securevalues:*", true},
+	} {
+		t.Run(tc.subject, func(t *testing.T) {
+			stream := &permissionResponseStream{ctx: newContextWithNamespace()}
+			require.NoError(t, srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject}, stream))
+			want := []*authzv1.UserPermission{
+				{Action: "secret.securevalues:read", Scope: tc.scope},
+				{Action: "secret.securevalues:write", Scope: tc.scope},
+				{Action: "secret.securevalues:delete", Scope: tc.scope},
+				{Action: "secret.securevalues.permissions:read", Scope: tc.scope},
+				{Action: "secret.securevalues.permissions:write", Scope: tc.scope},
+			}
+			if tc.canCreate {
+				want = append(want, &authzv1.UserPermission{Action: "secret.securevalues:create", Scope: tc.scope})
+			}
+			require.ElementsMatch(t, want, stream.permissions)
+		})
+	}
+}

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { type RulesSource } from 'app/types/unified-alerting';
 
-import { mockDataSource } from '../mocks';
+import { mockDataSource } from '../testSetup/mockDataSource';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { Expression } from './Expression';

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { createAssistantContextItem, OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, Icon, useStyles2 } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
 import { classifyErrorAttributes } from '../otel/details';
@@ -58,15 +58,15 @@ export const LogLineDetailsError = ({ className, fields, labels, otelLanguage }:
     [errorDetails, isAvailable, otelLanguage]
   );
 
-  if (!errorDetails.length) {
-    return null;
-  }
-
-  const reportDiagnose = () => {
+  const reportDiagnose = useCallback(() => {
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_error_diagnose_clicked');
     }
-  };
+  }, [noInteractions]);
+
+  if (!errorDetails.length) {
+    return null;
+  }
 
   return (
     <div className={`${styles.container} ${className ? className : ''}`}>
@@ -150,21 +150,32 @@ function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
   const { fontSize, noInteractions } = useLogListContext();
   const styles = useStyles2(getValueStyles, fontSize, 'stacktrace');
   const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const label = getNormalizedFieldName(item.key);
 
-  const toggleStacktrace = () => {
+  const toggleStacktrace = useCallback(() => {
     const state = isOpen ? 'closed' : 'open';
     setIsOpen(!isOpen);
+    if (isOpen) {
+      setIsModalOpen(false);
+    }
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_error_stacktrace_toggled', { state });
     }
-  };
+  }, [isOpen, noInteractions]);
 
-  const copyStacktrace = () => {
+  const copyStacktrace = useCallback(() => {
     if (!noInteractions) {
       reportInteraction('logs_log_line_details_error_stacktrace_copied');
     }
-  };
+  }, [noInteractions]);
+
+  const openStacktrace = useCallback(() => {
+    setIsModalOpen(true);
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_stacktrace_expanded');
+    }
+  }, [noInteractions]);
 
   return (
     <div className={styles.row}>
@@ -176,6 +187,14 @@ function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
         <div className={styles.value}>
           <div className={styles.valueContent}>{item.value}</div>
           <div className={styles.actions}>
+            <Button
+              aria-label={t('logs.log-details.error.expand-stacktrace', 'Expand stack trace')}
+              fill="text"
+              variant="secondary"
+              icon="expand-arrows"
+              size="sm"
+              onClick={openStacktrace}
+            />
             <ClipboardButton
               getText={() => item.value}
               onClipboardCopy={copyStacktrace}
@@ -187,6 +206,17 @@ function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
             />
           </div>
         </div>
+      )}
+      {isModalOpen && (
+        <Modal
+          isOpen
+          title={label}
+          onDismiss={() => setIsModalOpen(false)}
+          className={styles.modal}
+          contentClassName={styles.modalContent}
+        >
+          {item.value}
+        </Modal>
       )}
     </div>
   );
@@ -270,10 +300,14 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
     position: 'absolute',
     top: variant === 'stacktrace' ? theme.spacing(2.25) : 0,
     right: variant === 'stacktrace' ? theme.spacing(2.25) : 0,
-    visibility: 'hidden',
-    '& > button': {
+    opacity: 0,
+    pointerEvents: 'none',
+    display: 'flex',
+    gap: theme.spacing(0.25),
+    '& button': {
       color: theme.colors.text.secondary,
       gap: 0,
+      margin: 0,
       padding: 0,
       justifyContent: 'center',
       borderRadius: theme.shape.radius.default,
@@ -315,7 +349,8 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
       position: 'relative',
       minWidth: 0,
       [`&:hover .${actions}, &:focus-within .${actions}`]: {
-        visibility: 'visible',
+        opacity: 1,
+        pointerEvents: 'auto',
       },
     }),
     valueContent: css({
@@ -342,5 +377,21 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
         : {}),
     }),
     actions,
+    modal: css({
+      width: '85vw',
+      height: '80vh',
+      maxWidth: '100%',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
+    modalContent: css({
+      flex: '1 1 auto',
+      minHeight: 0,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   };
 };

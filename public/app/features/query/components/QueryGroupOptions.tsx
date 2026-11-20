@@ -143,12 +143,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   );
 
   const onOpenOptions = useCallback(() => {
-    trackQueryOptionsToggle(true, { silent: true });
+    trackQueryOptionsToggle(true, { editor: 'classic' });
     setIsOpen(true);
   }, []);
 
   const onCloseOptions = useCallback(() => {
-    trackQueryOptionsToggle(false, { silent: true });
+    trackQueryOptionsToggle(false, { editor: 'classic' });
     setIsOpen(false);
   }, []);
 

@@ -22,6 +22,19 @@ export function dashboardComposerEnabled(): boolean {
   return dashboardModesEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardComposer, false);
 }
 
+/**
+ * Plan previews are edited by arranging them by hand and through Composer, so editing needs Composer
+ * too. Requiring Viewing and Editing modes also keeps edit-pane selection and undo inert during a preview.
+ */
+export function dashboardPlanEditingEnabled(): boolean {
+  return (
+    dashboardComposerEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanEditing, false)
+  );
+}
+
+/** The mutation commands that exist only for plan editing. */
+export const PLAN_EDITING_COMMANDS: ReadonlySet<string> = new Set(['GET_PLAN']);
+
 export function getDashboardMode(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): DashboardMode {
   return state.mode ?? (state.isEditing ? 'edit' : 'view');
 }

@@ -5,6 +5,7 @@ import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '..
 
 import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
+import { textSuggestionsSupplier } from './suggestions';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { isTextNewFeaturesEnabled } from './utils';
 
@@ -81,7 +82,7 @@ const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
-  .setSuggestionsSupplier(() => []);
+  .setSuggestionsSupplier(textSuggestionsSupplier);
 
 if (isTextNewFeaturesEnabled()) {
   plugin.useFieldConfig({

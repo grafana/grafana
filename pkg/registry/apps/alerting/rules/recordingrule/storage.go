@@ -5,13 +5,12 @@ import (
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
-func NewStorage(legacySvc provisioning.AlertRuleService, namespacer request.NamespaceMapper) grafanarest.Storage {
+func NewStorage(legacySvc legacy.LegacyRuleService, namespacer request.NamespaceMapper) grafanarest.Storage {
 	return &legacyStorage{
-		service:        legacySvc,
-		namespacer:     namespacer,
+		rules:          legacy.NewRecordingRules(&legacySvc, namespacer),
 		tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 	}
 }

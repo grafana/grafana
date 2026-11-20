@@ -1,17 +1,21 @@
 package v1
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"hash/fnv"
+	"math/big"
 	"regexp"
 	"strings"
 	"unsafe"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/notify"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type TemplateGroup struct {
@@ -75,7 +79,7 @@ func (t *TemplateGroup) Validate() error {
 }
 
 // NewTemplateGroup creates a new TemplateGroup with the specified UID, name, content, kind, and provenance.
-// If the UID is empty, it generates a deterministic UID based on the template kind and name.
+// If the UID is empty, it generates the one that a template without a UID has, see TemplateUID.
 func NewTemplateGroup(uid ResourceUID, name, content string, kind TemplateKind, provenance models.Provenance) TemplateGroup {
 	if uid == "" {
 		uid = TemplateUID(kind, name)
@@ -121,14 +125,18 @@ func TemplatesToTemplateFiles(templates map[ResourceUID]TemplateGroup) map[strin
 }
 
 // ManagedTemplatesToTemplates converts a ManagedTemplates map (keyed by UID) to the internal TemplateGroup map.
+// An empty or invalid UID is replaced by a deterministically generated one, see ResolveTemplateUID.
+// A kind and title are unique among the stored templates because creating, updating and promoting templates check it,
+// which is not checked again here.
 func ManagedTemplatesToTemplates(managed map[string]store.PostableApiTemplateDB) map[ResourceUID]TemplateGroup {
 	if managed == nil {
 		return nil
 	}
 	out := make(map[ResourceUID]TemplateGroup, len(managed))
-	for uid, t := range managed {
-		tmpl := NewTemplateGroup(ResourceUID(uid), t.Name, t.Content, TemplateKind(t.Kind), models.ProvenanceNone)
-		out[ResourceUID(uid)] = tmpl
+	for key, t := range managed {
+		kind := TemplateKind(t.Kind)
+		uid := ResolveTemplateUID(key, kind, t.Name)
+		out[uid] = NewTemplateGroup(uid, t.Name, t.Content, kind, models.ProvenanceNone)
 	}
 	return out
 }
@@ -149,9 +157,47 @@ func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[st
 	return out
 }
 
-// TemplateUID generates a deterministic UID for a template based on its name.
+// ValidateTemplateUID validates a template UID: non-empty, no ':', a valid DNS-1123 subdomain, and not longer than
+// ualert.UIDMaxLength. Mirrors ValidateTimeIntervalUID.
+func ValidateTemplateUID(uid string) error {
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("template uid is required")
+	}
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("template uid cannot contain invalid character ':'")
+	}
+	if len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("template uid cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("template uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
+}
+
+// ResolveTemplateUID is the UID of a stored template: the stored one, unless it is not a valid UID, in which case it is
+// the one that the template has without one.
+//
+// Templates used to be stored under a UID derived from their kind and title that was not always valid, this is
+// replaced the next time they are saved.
+func ResolveTemplateUID(storedUID string, kind TemplateKind, name string) ResourceUID {
+	if ValidateTemplateUID(storedUID) != nil {
+		return TemplateUID(kind, name)
+	}
+	return ResourceUID(storedUID)
+}
+
+// TemplateUID derives a deterministic UID from the kind and title of a template. It exists only for templates whose
+// persisted UID is absent or invalid.
+//
+// The kind is part of the calculation because a Grafana and a Mimir template can have
+// the same title. Note that imported templates do not get their UID from here, see merge.MergeTemplates.
+//
+// The result is a fixed-length lowercase base36 string so it is always a valid Kubernetes name.
 func TemplateUID(kind TemplateKind, name string) ResourceUID {
-	return ResourceUID(models.NameToUid(fmt.Sprintf("%s|%s", string(kind), name)))
+	h := sha256.Sum256([]byte("template\x00" + string(kind) + "\x00" + name))
+	n := new(big.Int).SetBytes(h[:16])
+	return ResourceUID(fmt.Sprintf("%025s", n.Text(36)))
 }
 
 func CalculateTemplateFingerprint(tmpl TemplateGroup) string {

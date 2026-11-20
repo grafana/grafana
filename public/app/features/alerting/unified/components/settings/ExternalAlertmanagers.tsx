@@ -1,6 +1,7 @@
+import { AlertManagerImplementation } from '@grafana/alerting/internal';
 import { Stack } from '@grafana/ui';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { AlertManagerImplementation, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { type ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';

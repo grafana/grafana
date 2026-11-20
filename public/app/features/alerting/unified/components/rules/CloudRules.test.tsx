@@ -7,9 +7,10 @@ import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserPermissions, grantUserRole, mockUnifiedAlertingStore } from '../../mocks';
+import { grantUserPermissions, grantUserRole } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
+import { mockUnifiedAlertingStore } from '../../testSetup/mockUnifiedAlertingStore';
 
 import { CloudRules } from './CloudRules';
 

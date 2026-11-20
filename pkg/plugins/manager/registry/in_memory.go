@@ -8,11 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+var _ Notifier = (*InMemory)(nil)
+
 // InMemory is a registry that only allows a single version of a plugin to be registered at a time.
 type InMemory struct {
 	store map[string]*plugins.Plugin
 	alias map[string]*plugins.Plugin
 	mu    sync.RWMutex
+
+	subscribers map[chan struct{}]struct{}
+	subMu       sync.Mutex
 }
 
 func ProvideService() *InMemory {
@@ -54,6 +59,7 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	}
 	i.mu.Unlock()
 
+	i.notify()
 	return nil
 }
 
@@ -72,7 +78,41 @@ func (i *InMemory) Remove(_ context.Context, pluginID, _ string) error {
 	}
 	i.mu.Unlock()
 
+	i.notify()
 	return nil
+}
+
+func (i *InMemory) Notify(ctx context.Context) <-chan struct{} {
+	ch := make(chan struct{}, 1)
+
+	i.subMu.Lock()
+	if i.subscribers == nil {
+		i.subscribers = make(map[chan struct{}]struct{})
+	}
+	i.subscribers[ch] = struct{}{}
+	i.subMu.Unlock()
+
+	context.AfterFunc(ctx, func() {
+		i.subMu.Lock()
+		delete(i.subscribers, ch)
+		close(ch)
+		i.subMu.Unlock()
+	})
+
+	return ch
+}
+
+// notify wakes every subscriber without blocking. A subscriber whose channel
+// already holds a value has a wake pending, so it will see this change too.
+func (i *InMemory) notify() {
+	i.subMu.Lock()
+	defer i.subMu.Unlock()
+	for ch := range i.subscribers {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
 }
 
 func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {

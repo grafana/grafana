@@ -67,7 +67,7 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 
 	folderByDash, err := resolveDashboardFolders(ctx, tracer, folderResolver, namespace, items)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve dashboard folders: %w", err)
 	}
 
 	checks := make([]authtypes.BatchCheckItem, 0, len(items))
@@ -111,7 +111,7 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 			Checks:    checks[start:end],
 		})
 		if err != nil {
-			return nil, apierrors.NewInternalError(fmt.Errorf("batch authz check failed: %w", err))
+			return nil, fmt.Errorf("batch authz check failed: %w", err)
 		}
 		for id, result := range res.Results {
 			allowedByID[id] = result.Allowed
@@ -169,7 +169,7 @@ func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient auth
 		Verb:      utils.VerbList,
 	}, "") // organization-scoped annotations have no parent folder
 	if err != nil {
-		return apierrors.NewInternalError(fmt.Errorf("annotation authz check failed: %w", err))
+		return fmt.Errorf("annotation authz check failed: %w", err)
 	}
 	if !resp.Allowed {
 		return apierrors.NewForbidden(annotationGR, "tags", fmt.Errorf("requires the annotations:read permission with the organization scope"))

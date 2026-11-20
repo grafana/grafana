@@ -17,31 +17,25 @@ var _ LegacyAccessClient = (*LegacyClient)(nil)
 
 // LegacyCheck executes the deprecated legacy-RBAC compatibility check through
 // the local AuthZ compatibility API.
-func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) (allowed bool, err error) {
-	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacyCheck")
-	defer func() {
-		if err != nil {
-			_ = tracing.Error(span, err)
-		}
+func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) (bool, error) {
+	call, err := c.PrepareLegacyCheck(req)
+	if err != nil {
+		return false, err
+	}
 
-		span.SetAttributes(attribute.Bool("allowed", allowed))
-		span.End()
-	}()
+	return call(ctx)
+}
 
+// PrepareLegacyCheck snapshots the request before background execution can outlive its caller.
+// The returned call uses the supplied execution context and does not retain the requester or evaluator.
+func (c *LegacyClient) PrepareLegacyCheck(req LegacyCheckRequest) (func(context.Context) (bool, error), error) {
 	if c.clientV1 == nil {
-		return false, errors.New("legacy check client is not configured")
+		return nil, errors.New("legacy check client is not configured")
 	}
 
 	expression, err := accesscontrol.ToLegacyExpression(req.Evaluator)
 	if err != nil {
-		return false, fmt.Errorf("converting evaluator to legacy expression: %w", err)
-	}
-
-	var global *authzextv1.LegacyGlobalEvaluation
-	if req.GlobalEvaluation != nil {
-		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId: req.GlobalEvaluation.RequesterOrgID,
-		}
+		return nil, fmt.Errorf("converting evaluator to legacy expression: %w", err)
 	}
 
 	var restriction *authzextv1.LegacyActionRestriction
@@ -52,20 +46,56 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) 
 	var internal *authzextv1.LegacyInternalIdentity
 	if req.InternalIdentity != nil {
 		internal = &authzextv1.LegacyInternalIdentity{Profile: req.InternalIdentity.Profile.String()}
+
+		if background := req.InternalIdentity.Background; background != nil {
+			permissions := make(map[string]*authzextv1.LegacyPermissionScopes, len(background.Permissions))
+			for action, scopes := range background.Permissions {
+				permissions[action] = &authzextv1.LegacyPermissionScopes{Scopes: slices.Clone(scopes)}
+			}
+
+			internal.Background = &authzextv1.LegacyBackgroundIdentity{
+				Name:        background.Name,
+				OrgRole:     background.OrgRole,
+				Permissions: permissions,
+			}
+		}
 	}
 
-	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
-	resp, err := c.clientV1.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
+	var requesterOrgID *int64
+	if req.RequesterOrgID != nil {
+		orgID := *req.RequesterOrgID
+		requesterOrgID = &orgID
+	}
+	request := &authzextv1.LegacyCheckRequest{
 		Namespace:           req.Namespace,
+		RequesterOrgId:      requesterOrgID,
 		Subject:             req.Subject,
 		Expression:          expression,
 		Teams:               slices.Clone(req.Teams),
 		SkipCache:           req.SkipCache,
 		SkipScopeResolution: req.SkipScopeResolution,
-		GlobalEvaluation:    global,
 		InternalIdentity:    internal,
 		Restriction:         restriction,
-	})
+	}
+
+	return func(ctx context.Context) (bool, error) {
+		return c.legacyCheck(ctx, request)
+	}, nil
+}
+
+func (c *LegacyClient) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (allowed bool, err error) {
+	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacyCheck")
+	defer func() {
+		if err != nil {
+			_ = tracing.Error(span, err)
+		}
+
+		span.SetAttributes(attribute.Bool("allowed", allowed))
+		span.End()
+	}()
+
+	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
+	resp, err := c.clientV1.LegacyCheck(ctx, req)
 	if err != nil {
 		return false, err
 	}
