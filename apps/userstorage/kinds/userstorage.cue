@@ -11,7 +11,8 @@ userStorageV0alpha1: {
 	// naming strategy can declare a <service>:<user_uid> name.
 	folderScoped: false
 
-	// No need for search
+	// The names a user owns cannot be listed from the user, so no route lists them.
+	listKeys: false
 	search: {
 		endpoint: false
 		trash:    false

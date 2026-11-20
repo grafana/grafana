@@ -40,6 +40,9 @@ var appManifestData = app.ManifestData{
 					Scope:        "Namespaced",
 					Conversion:   false,
 					FolderScoped: new(false),
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: new(false),
+					},
 					Search: &app.ManifestVersionKindSearch{
 						Endpoint: new(false),
 						Trash:    new(false),

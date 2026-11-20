@@ -48,6 +48,9 @@ func TestIntegrationStars(t *testing.T) {
 			EnableFeatureToggles: flags,
 			Provisioning:         testinfra.FeatureEnabled,
 		})
+		if routed {
+			helper.WaitForCoreApp(collections.APIGroup)
+		}
 
 		t.Run(fmt.Sprintf("test stars (routed:%t)", routed), func(t *testing.T) {
 			ctx := context.Background()
@@ -279,6 +282,9 @@ func TestIntegrationStarsUpsert(t *testing.T) {
 			EnableFeatureToggles: flags,
 			Provisioning:         testinfra.FeatureEnabled,
 		})
+		if routed {
+			helper.WaitForCoreApp(collections.APIGroup)
+		}
 
 		t.Run(fmt.Sprintf("upsert stars (routed:%t)", routed), func(t *testing.T) {
 			ctx := context.Background()

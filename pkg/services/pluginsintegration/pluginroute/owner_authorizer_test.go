@@ -174,6 +174,27 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 	}
 }
 
+// A search or list-keys POST reaches a kind's naming strategy restated as a
+// list, so a kind whose users may not list cannot be enumerated through them.
+func TestGetAuthorizerReadNoneDeniesCollectionReads(t *testing.T) {
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  map[string]kindPolicy{"user-storage": {ownerFromName: hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")}},
+		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: identity.RoleAdmin}
+
+	for _, route := range []string{"list-keys", "search"} {
+		t.Run(route, func(t *testing.T) {
+			decision, reason := authorize(t, b, user, authorizer.AttributesRecord{
+				APIGroup: "userstorage.grafana.app", APIVersion: "v0alpha1", Namespace: "default",
+				Resource: "user-storage", Verb: "create", Name: route, ResourceRequest: true,
+			})
+			require.Equal(t, authorizer.DecisionDeny, decision, reason)
+		})
+	}
+}
+
 // namespaceUserTeamOwner is a policy for a kind whose objects are owned by a
 // user, a team or the namespace. Only the generic owner mechanics are tested
 // with it; no kind served here uses it.

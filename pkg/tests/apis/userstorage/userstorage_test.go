@@ -2,15 +2,12 @@ package userstorage
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,7 +66,7 @@ func runScenario(t *testing.T, routed bool) []string {
 	})
 
 	if routed {
-		waitForCoreApp(t, helper, userstorage.APIGroup)
+		helper.WaitForCoreApp(userstorage.APIGroup)
 	}
 
 	gvr := userstorage.UserStorageResourceInfo.GroupVersionResource()
@@ -214,36 +211,6 @@ func runScenario(t *testing.T, routed bool) []string {
 	require.Error(t, err)
 
 	return steps
-}
-
-// waitForCoreApp waits until the router serves group from a core app. Until
-// its first reconcile completes, the router leaves every request to the
-// embedded API server, which would make a routed run test the legacy builder.
-func waitForCoreApp(t *testing.T, helper *apis.K8sTestHelper, group string) {
-	t.Helper()
-	client := helper.Org1.Admin.RESTClient(t, &userstorage.GroupVersion)
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		raw, err := client.Get().AbsPath("apis", "discovery", "v1alpha2", "status").DoRaw(context.Background())
-		if !assert.NoError(c, err) {
-			return
-		}
-		var status struct {
-			Ready  bool `json:"ready"`
-			Groups []struct {
-				Group  string `json:"group"`
-				Source string `json:"source"`
-			} `json:"groups"`
-		}
-		if !assert.NoError(c, json.Unmarshal(raw, &status)) {
-			return
-		}
-		assert.True(c, status.Ready, "router is not ready")
-		served := false
-		for _, g := range status.Groups {
-			served = served || (g.Group == group && g.Source == "core")
-		}
-		assert.True(c, served, "router does not serve %s from a core app", group)
-	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func TestIntegrationUserStorage(t *testing.T) {
