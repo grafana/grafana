@@ -98,8 +98,6 @@ export const FlagKeys = {
   CloudWatchCrossAccountQuerying: "cloudWatchCrossAccountQuerying",
   /** Enables the new sidebar filter panel in the Add new connection page */
   ConnectionsFilterSidebar: "connectionsFilterSidebar",
-  /** Enables browser crash detection reporting to Faro. */
-  CrashDetection: "crashDetection",
   /** Enables creating alert rules from a panel using a drawer UI */
   CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
   /** Enables Critical User Journey (CUJ) tracking */
@@ -886,17 +884,6 @@ export const useFlagCloudWatchCrossAccountQuerying = (options?: ReactFlagEvaluat
  */
 export const useFlagConnectionsFilterSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("connectionsFilterSidebar", false, options).value;
-};
-
-/**
- * Enables browser crash detection reporting to Faro.
- *
- * **Details:**
- * - flag key: `crashDetection`
- * - default value: `false`
- */
-export const useFlagCrashDetection = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("crashDetection", false, options).value;
 };
 
 /**

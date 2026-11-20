@@ -1591,7 +1591,8 @@
       "metadata": {
         "name": "crashDetection",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-12T15:07:27Z"
+        "creationTimestamp": "2024-11-12T15:07:27Z",
+        "deletionTimestamp": "2026-11-20T13:55:44Z"
       },
       "spec": {
         "description": "Enables browser crash detection reporting to Faro.",
