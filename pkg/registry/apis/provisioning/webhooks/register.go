@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -119,7 +118,6 @@ func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {
 	// Webhook callbacks and screenshot images embedded in PR comments must be
@@ -144,9 +142,7 @@ func ProvideWebhooksWithImages(
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
-		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider, nil)
-			parsers := resources.NewParserFactory(clients)
+		ExtraBuilder: func(b *provisioningapis.APIBuilder, parsers resources.ParserFactory) (provisioningapis.Extra, []jobs.Worker) {
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
@@ -162,12 +158,7 @@ func ProvideWebhooksWithImages(
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
-			return NewWebhookExtraWithImages(
-				render,
-				webhook,
-				urls.Public,
-				[]jobs.Worker{pullRequestWorker},
-			)
+			return &WebhookExtraWithImages{render: render, webhook: webhook}, []jobs.Worker{pullRequestWorker}
 		},
 	}
 }
@@ -182,11 +173,11 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, rat
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
 		urlProvider: urlProvider,
-		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
+		ExtraBuilder: func(b *provisioningapis.APIBuilder, _ resources.ParserFactory) (provisioningapis.Extra, []jobs.Worker) {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
 			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, rateLimiter)
 
-			return NewWebhookExtra(webhook)
+			return NewWebhookExtra(webhook), nil
 		},
 	}
 }
@@ -196,20 +187,6 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, rat
 type WebhookExtraWithImages struct {
 	render  *renderConnector
 	webhook *webhookConnector
-	workers []jobs.Worker
-}
-
-func NewWebhookExtraWithImages(
-	render *renderConnector,
-	webhook *webhookConnector,
-	urlProvider func(ctx context.Context, namespace string) string,
-	workers []jobs.Worker,
-) *WebhookExtraWithImages {
-	return &WebhookExtraWithImages{
-		render:  render,
-		webhook: webhook,
-		workers: workers,
-	}
 }
 
 // Authorize delegates authorization to the webhook connector

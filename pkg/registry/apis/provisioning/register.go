@@ -221,7 +221,6 @@ func NewAPIBuilder(
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResourceProvider resources.SupportedResourceProvider,
@@ -275,7 +274,6 @@ func NewAPIBuilder(
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
 		jobHistoryConfig:                    jobHistoryConfig,
-		extraWorkers:                        extraWorkers,
 		restConfigGetter:                    restConfigGetter,
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
@@ -292,7 +290,9 @@ func NewAPIBuilder(
 	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
 
 	for _, builder := range extraBuilders {
-		b.extras = append(b.extras, builder(b))
+		extra, workers := builder(b, parsers)
+		b.extras = append(b.extras, extra)
+		b.extraWorkers = append(b.extraWorkers, workers...)
 	}
 
 	return b, nil
@@ -373,7 +373,6 @@ func RegisterAPIService(
 	orgSvc org.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
@@ -439,7 +438,6 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
@@ -493,7 +491,6 @@ func RegisterAPIService(
 		access,
 		tracer,
 		extraBuilders,
-		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResourceProvider,
