@@ -9,7 +9,7 @@ interface OpenAPISchema {
 }
 
 interface JSONSchema {
-  type?: string;
+  type?: string | string[];
   properties?: Record<string, JSONSchema>;
   items?: JSONSchema;
   $ref?: string;
@@ -113,6 +113,7 @@ function convertRefToDefinitionKey(key: string): string {
 // - kind fields are emitted as plain strings instead of const values
 // - scalar union types are emitted as structs instead of oneOf
 // - map[string]interface{} values are constrained to objects instead of any
+// - nullable numbers are emitted as required plain numbers
 // - discriminated unions are emitted as struct properties instead of if/then
 
 function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
@@ -120,6 +121,7 @@ function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
   fixScalarUnions(definitions);
   fixOpaqueMaps(definitions);
   fixAnyValueProperties(definitions);
+  fixNullableNumbers(definitions);
   fixDiscriminatedUnions(definitions);
 }
 
@@ -218,6 +220,35 @@ function fixAnyValueProperties(definitions: Record<string, JSONSchema>): void {
             schema.properties[p] = {};
           }
         }
+      }
+    }
+  }
+}
+
+// `float64 | null` fields where null means an open-ended bound (-Infinity or +Infinity). The
+// generator emits them as required numbers, so null fails validation. The scene serializer also
+// drops null values before saving, and the API reads a missing value as null, so they must be
+// optional too. Otherwise any dashboard with a base threshold or an open-ended range mapping
+// can't be saved from the editor.
+const NULLABLE_NUMBER_PROPERTIES: Array<{ key: RegExp; props: string[] }> = [
+  { key: /_DashboardThreshold$/, props: ['value'] },
+  // The generator prefixes this one with the API version, e.g. DashboardV2beta1RangeMapOptions.
+  { key: /_DashboardV\w+RangeMapOptions$/, props: ['from', 'to'] },
+];
+
+function fixNullableNumbers(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const { key: pattern, props } of NULLABLE_NUMBER_PROPERTIES) {
+      if (!pattern.test(key)) {
+        continue;
+      }
+      for (const p of props) {
+        if (schema.properties?.[p]) {
+          schema.properties[p] = { ...schema.properties[p], type: ['number', 'null'] };
+        }
+      }
+      if (schema.required) {
+        schema.required = schema.required.filter((prop) => !props.includes(prop));
       }
     }
   }

@@ -1,8 +1,29 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  type DataFrame,
+  type FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  getDisplayProcessor,
+  type InterpolateFunction,
+  MappingType,
+  SpecialValueMatch,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { buildAllRowsContext, buildRows, compileTemplate, type TemplateContext } from './handlebars';
+import { buildAllRowsContext, buildRows, compileTemplate, type TemplateContext, type TemplateRow } from './handlebars';
+
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const hosts = toDataFrame({
   name: 'frameA',
@@ -26,6 +47,96 @@ function createReplaceVariables(variables: unknown[] = []): InterpolateFunction 
 
 function render(content: string, context: TemplateContext = {}, replaceVariables = createReplaceVariables()) {
   return compileTemplate(content, replaceVariables)(context);
+}
+
+const theme = createTheme();
+const green = theme.visualization.getColorByName('green');
+const orange = theme.visualization.getColorByName('orange');
+const red = theme.visualization.getColorByName('red');
+const blue = theme.visualization.getColorByName('blue');
+const purple = theme.visualization.getColorByName('purple');
+
+const fleet = toDataFrame({
+  name: 'fleet',
+  refId: 'A',
+  fields: [
+    { name: 'service', type: FieldType.string, values: ['checkout', 'payments', 'search'] },
+    { name: 'status', type: FieldType.string, values: ['ok', 'degraded', null] },
+    { name: 'cpu', type: FieldType.number, values: [0.942, 0.71, null], config: { min: 0, max: 1 } },
+    { name: 'cost', type: FieldType.number, values: [1234.5, 20, 3.14159] },
+    { name: 'Memory usage', type: FieldType.number, values: [1024, 2048, 5], config: { unit: 'bytes' } },
+  ],
+});
+
+const fleetThresholds = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 0.7, color: 'orange' },
+    { value: 0.9, color: 'red' },
+  ],
+};
+
+const fleetConfig: FieldConfigSource = {
+  defaults: { thresholds: fleetThresholds },
+  overrides: [
+    {
+      matcher: { id: FieldMatcherID.byName, options: 'status' },
+      properties: [
+        {
+          id: 'mappings',
+          value: [
+            {
+              type: MappingType.ValueToText,
+              options: {
+                ok: { text: 'Healthy', color: 'green', icon: 'img/ok.svg', index: 0 },
+                degraded: { text: '<b>Degraded</b>', color: 'orange', index: 1 },
+              },
+            },
+            {
+              type: MappingType.SpecialValue,
+              options: { match: SpecialValueMatch.Null, result: { text: 'No report', color: 'blue', index: 2 } },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      matcher: { id: FieldMatcherID.byName, options: 'cpu' },
+      properties: [
+        { id: 'unit', value: 'percentunit' },
+        { id: 'decimals', value: 1 },
+        { id: 'noValue', value: 'n/a' },
+      ],
+    },
+    {
+      matcher: { id: FieldMatcherID.byName, options: 'cost' },
+      properties: [
+        { id: 'unit', value: 'currencyUSD' },
+        { id: 'decimals', value: 2 },
+        {
+          id: 'thresholds',
+          value: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'blue' },
+              { value: 1000, color: 'purple' },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+};
+
+function withFieldConfig(series: DataFrame[], fieldConfig: FieldConfigSource): DataFrame[] {
+  return applyFieldOverrides({
+    data: series,
+    fieldConfig,
+    replaceVariables: (value) => value,
+    theme,
+    timeZone: 'utc',
+  });
 }
 
 /** A frame whose display processor adds a unit, as applyFieldOverrides would. */
@@ -69,6 +180,242 @@ describe('buildRows', () => {
     expect(buildRows(hosts, [hosts], 1)).toEqual([{ host: 'web-1', cpu: 0.84, fmt: { host: 'web-1', cpu: '0.84' } }]);
     expect(buildRows(hosts, [hosts], 0)).toEqual([]);
     expect(buildRows(hosts, [hosts], -1)).toEqual([]);
+  });
+});
+
+describe('lazy `fmt`', () => {
+  // The eager build `buildRows` replaced, kept to check the lazy one renders the same.
+  function buildRowsEagerly(frame: DataFrame, series: DataFrame[]): TemplateRow[] {
+    const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
+
+    return Array.from({ length: frame.length }, (_, rowIndex) => {
+      const formatted: TemplateRow = {};
+      const row: TemplateRow = { fmt: formatted };
+
+      frame.fields.forEach((field, fieldIndex) => {
+        const value = field.values[rowIndex];
+        formatted[names[fieldIndex]] = field.display
+          ? formattedValueToString(field.display(value))
+          : String(value ?? '');
+        row[names[fieldIndex]] = value;
+      });
+
+      return row;
+    });
+  }
+
+  /** Counts display processor calls per field name. */
+  function withCountedDisplay(frame: DataFrame) {
+    const calls: Record<string, number> = {};
+
+    for (const field of frame.fields) {
+      calls[field.name] = 0;
+      field.display = (value) => {
+        calls[field.name]++;
+        return { text: `<${String(value)}>`, numeric: Number(value), suffix: ' u' };
+      };
+    }
+
+    return { frame, calls };
+  }
+
+  function counted() {
+    return withCountedDisplay(
+      toDataFrame({
+        fields: [
+          { name: 'host', type: FieldType.string, values: ['web-1', 'web-2'] },
+          { name: 'cpu', type: FieldType.number, values: [0.84, 0.12] },
+          { name: 'mem', type: FieldType.number, values: [512, 256] },
+        ],
+      })
+    );
+  }
+
+  it('formats nothing for a template that reads raw values only', () => {
+    const { frame, calls } = counted();
+
+    expect(render('{{#each data}}{{host}} {{cpu}};{{/each}}', buildAllRowsContext([frame]))).toBe(
+      'web-1 0.84;web-2 0.12;'
+    );
+    expect(calls).toEqual({ host: 0, cpu: 0, mem: 0 });
+  });
+
+  it('formats nothing when building rows', () => {
+    const { frame, calls } = counted();
+
+    buildRows(frame, [frame]);
+
+    expect(calls).toEqual({ host: 0, cpu: 0, mem: 0 });
+  });
+
+  it('formats only the field a template reads, once per row', () => {
+    const { frame, calls } = counted();
+
+    expect(render('{{#each data}}{{fmt.cpu}}|{{fmt.cpu}};{{/each}}', buildAllRowsContext([frame]))).toBe(
+      '&lt;0.84&gt; u|&lt;0.84&gt; u;&lt;0.12&gt; u|&lt;0.12&gt; u;'
+    );
+    expect(calls).toEqual({ host: 0, cpu: 2, mem: 0 });
+  });
+
+  it('formats only the rows a template reads', () => {
+    const { frame, calls } = counted();
+
+    expect(render('{{data.[1].fmt.mem}}', buildAllRowsContext([frame]))).toBe('&lt;256&gt; u');
+    expect(calls).toEqual({ host: 0, cpu: 0, mem: 1 });
+  });
+
+  it('keeps the same `fmt` object and value across reads', () => {
+    const { frame, calls } = counted();
+    const [row] = buildRows(frame, [frame]);
+    const formatted = row.fmt;
+
+    expect(row.fmt).toBe(formatted);
+    expect((formatted as TemplateRow).cpu).toBe('<0.84> u');
+    expect((formatted as TemplateRow).cpu).toBe('<0.84> u');
+    expect(calls.cpu).toBe(1);
+  });
+
+  it('leaves `fmt` a plain property once read', () => {
+    const { frame } = counted();
+    const [row] = buildRows(frame, [frame]);
+    const [eager] = buildRowsEagerly(frame, [frame]);
+
+    expect(row.fmt).toEqual(eager.fmt);
+    expect(Object.getOwnPropertyDescriptor(row, 'fmt')).toEqual(Object.getOwnPropertyDescriptor(eager, 'fmt'));
+  });
+
+  it('lets `fmt` and its fields be overwritten, like plain properties', () => {
+    const { frame } = counted();
+    const [row] = buildRows(frame, [frame]);
+    const [other] = buildRows(frame, [frame]);
+
+    (other.fmt as TemplateRow).cpu = 'mine';
+    row.fmt = 'replaced';
+
+    expect(row.fmt).toBe('replaced');
+    expect((other.fmt as TemplateRow).cpu).toBe('mine');
+  });
+
+  it('formats the rows of a window that does not start at the first row', () => {
+    const { frame, calls } = counted();
+
+    expect(render('{{#each data}}{{fmt.host}};{{/each}}', { data: buildRows(frame, [frame], 1, 1) })).toBe(
+      '&lt;web-2&gt; u;'
+    );
+    expect(calls).toEqual({ host: 1, cpu: 0, mem: 0 });
+  });
+
+  it('formats a field without a display processor as text', () => {
+    const frame = toDataFrame({ fields: [{ name: 'cpu', type: FieldType.number, values: [1, null] }] });
+
+    expect(render('{{#each data}}[{{fmt.cpu}}]{{/each}}', { data: buildRows(frame, [frame]) })).toBe('[1][]');
+  });
+
+  it('surfaces a display processor error when the template reads the field', () => {
+    const frame = toDataFrame({ fields: [{ name: 'cpu', type: FieldType.number, values: [1] }] });
+    frame.fields[0].display = () => {
+      throw new Error('broken processor');
+    };
+    const context = buildAllRowsContext([frame]);
+
+    expect(render('{{#each data}}{{cpu}}{{/each}}', context)).toBe('1');
+    expect(() => render('{{#each data}}{{fmt.cpu}}{{/each}}', context)).toThrow('broken processor');
+  });
+
+  it('formats whole rows once a row has read most of its fields', () => {
+    const { frame, calls } = counted();
+
+    expect(
+      render(
+        '{{#each data}}{{#if @first}}{{fmt.host}}{{fmt.cpu}}{{/if}}{{fmt.mem}};{{/each}}',
+        buildAllRowsContext([frame])
+      )
+    ).toBe('&lt;web-1&gt; u&lt;0.84&gt; u&lt;512&gt; u;&lt;256&gt; u;');
+    expect(calls).toEqual({ host: 2, cpu: 2, mem: 2 });
+  });
+
+  it('keeps formatting only what is read while rows read less than half their fields', () => {
+    const { frame, calls } = counted();
+
+    render('{{#each data}}{{fmt.host}};{{/each}}', buildAllRowsContext([frame]));
+
+    expect(calls).toEqual({ host: 2, cpu: 0, mem: 0 });
+  });
+
+  describe('renders the same as building `fmt` eagerly', () => {
+    const frame = () =>
+      withCountedDisplay(
+        toDataFrame({
+          fields: [
+            { name: 'host', type: FieldType.string, values: ['<b>web-1</b>', 'web-"2"'] },
+            { name: 'cpu', type: FieldType.number, values: [0.84, null] },
+            { name: 'fmt', type: FieldType.string, values: ['own fmt', 'own fmt 2'] },
+            { name: 'toString', type: FieldType.string, values: ['t1', 't2'] },
+            { name: 'constructor', type: FieldType.string, values: ['c1', 'c2'] },
+            { name: '__proto__', type: FieldType.string, values: ['p1', 'p2'] },
+            { name: 'with space', type: FieldType.number, values: [1, 2] },
+            { name: '0', type: FieldType.number, values: [3, 4] },
+          ],
+        })
+      ).frame;
+
+    const withoutFmtField = () => {
+      const built = frame();
+      built.fields = built.fields.filter((field) => field.name !== 'fmt');
+      return built;
+    };
+
+    const duplicateNames = () =>
+      withCountedDisplay(
+        toDataFrame({
+          fields: [
+            { name: 'cpu', type: FieldType.number, values: [1, 2], config: { displayName: 'cpu' } },
+            { name: 'host', type: FieldType.string, values: ['a', 'b'] },
+            { name: 'cpu', type: FieldType.number, values: [3, 4], config: { displayName: 'cpu' } },
+          ],
+        })
+      ).frame;
+
+    it.each([
+      ['every formatted value', '{{#each data}}{{#each fmt}}{{@key}}={{this}};{{/each}}{{/each}}'],
+      ['triple braces', '{{#each data}}{{{fmt.host}}}|{{{fmt.[with space]}}};{{/each}}'],
+      ['double braces', '{{#each data}}{{fmt.host}}|{{fmt.cpu}}|{{fmt.[0]}};{{/each}}'],
+      ['odd field names', '{{#each data}}{{fmt.toString}}|{{fmt.constructor}}|{{fmt.__proto__}};{{/each}}'],
+      ['a row as JSON', '{{#each data}}{{{json this}}}{{/each}}'],
+      ['every key of a row', '{{#each data}}{{#each this}}{{@key}},{{/each}};{{/each}}'],
+      ['a lookup', '{{#each data}}{{lookup fmt "host"}}{{/each}}'],
+      ['`fmt` in a condition', '{{#each data}}{{#if fmt}}y{{else}}n{{/if}}{{/each}}'],
+      ['`with fmt`', '{{#each data}}{{#with fmt}}{{host}}{{/with}}{{/each}}'],
+      [
+        'a partial with hash arguments',
+        '{{#*inline "p"}}{{fmt.host}}{{x}}{{/inline}}{{#each data}}{{> p x=1}}{{/each}}',
+      ],
+      ['a parent path', '{{#each data}}{{#each ../data}}{{../fmt.cpu}}{{/each}}{{/each}}'],
+    ])('%s', (_name, content) => {
+      for (const build of [frame, withoutFmtField, duplicateNames]) {
+        const lazy = build();
+        const eager = build();
+
+        expect(render(content, { data: buildRows(lazy, [lazy]) })).toBe(
+          render(content, { data: buildRowsEagerly(eager, [eager]) })
+        );
+      }
+    });
+
+    it('has a frame where two fields share a display name', () => {
+      const built = duplicateNames();
+
+      expect(built.fields.map((field) => getFieldDisplayName(field, built, [built]))).toEqual(['cpu', 'host', 'cpu']);
+    });
+
+    it('builds equal rows', () => {
+      for (const build of [frame, withoutFmtField, duplicateNames]) {
+        const lazy = build();
+        const eager = build();
+
+        expect(buildRows(lazy, [lazy])).toEqual(buildRowsEagerly(eager, [eager]));
+      }
+    });
   });
 });
 
@@ -197,6 +544,299 @@ describe('compileTemplate', () => {
 
     it('throws on a runtime error', () => {
       expect(() => render('{{nope a}}', { a: 1 })).toThrow();
+    });
+  });
+});
+
+describe('display', () => {
+  const series = withFieldConfig([fleet], fleetConfig);
+
+  function eachRow(expression: string, frames = series) {
+    return render(`{{#each data}}[${expression}]{{/each}}`, buildAllRowsContext(frames));
+  }
+
+  it('prints the formatted value, as `fmt` does', () => {
+    expect(eachRow('{{display "cpu"}}={{fmt.cpu}}')).toBe('[94.2%=94.2%][71.0%=71.0%][n/a=n/a]');
+  });
+
+  it('takes a field name with spaces as a quoted argument', () => {
+    expect(eachRow("{{display 'Memory usage'}}")).toBe('[1 KiB][2 KiB][5 B]');
+  });
+
+  it.each([
+    { property: 'text', expected: '[1.23][20.00][3.14]' },
+    { property: 'prefix', expected: '[$][$][$]' },
+    { property: 'suffix', expected: '[K][][]' },
+    { property: 'numeric', expected: '[1234.5][20][3.14159]' },
+  ])('reads $property apart from the rest of the formatted value', ({ property, expected }) => {
+    expect(eachRow(`{{display "cost" "${property}"}}`)).toBe(expected);
+  });
+
+  it('colors a value from the threshold it falls in', () => {
+    expect(eachRow('{{display "cpu" "color"}}')).toBe(`[${red}][${orange}][${green}]`);
+  });
+
+  it('takes the thresholds of a field override over the panel defaults', () => {
+    expect(eachRow('{{display "cost" "color"}}')).toBe(`[${purple}][${blue}][${blue}]`);
+  });
+
+  it('reads the text and the color of the value mapping that matched', () => {
+    expect(eachRow('{{{display "status" "text"}}} {{display "status" "color"}}')).toBe(
+      `[Healthy ${green}][<b>Degraded</b> ${orange}][No report ${blue}]`
+    );
+  });
+
+  it('prefers the color of a matching value mapping over the threshold', () => {
+    const mapped = withFieldConfig([fleet], {
+      defaults: {
+        thresholds: fleetThresholds,
+        mappings: [{ type: MappingType.RangeToText, options: { from: 0.9, to: 1, result: { color: 'blue' } } }],
+      },
+      overrides: [],
+    });
+
+    expect(eachRow('{{display "cpu" "color"}}', mapped)).toBe(`[${blue}][${orange}][${green}]`);
+  });
+
+  it('reads the position between the field min and max, and the icon of a value mapping', () => {
+    expect(eachRow('{{display "cpu" "percent"}} {{display "status" "icon"}}')).toBe('[0.942 img/ok.svg][0.71 ][0 ]');
+  });
+
+  it('renders the no value text and the base threshold color for a null', () => {
+    const [, , unreported] = buildAllRowsContext(series).data;
+
+    expect(render('{{display "cpu" "text"}} {{display "cpu" "numeric"}} {{display "cpu" "color"}}', unreported)).toBe(
+      `n/a NaN ${green}`
+    );
+  });
+
+  it.each([
+    { desc: 'a field that does not exist', expression: '{{display "nope"}}{{display "nope" "color"}}' },
+    { desc: 'a property that does not exist', expression: '{{display "cpu" "nope"}}' },
+    { desc: 'a prototype member', expression: '{{display "cpu" "toString"}}{{display "cpu" "constructor"}}' },
+  ])('renders nothing for $desc', ({ expression }) => {
+    expect(eachRow(expression)).toBe('[][][]');
+  });
+
+  it('exposes only the allowlisted properties when a display value holds more, inline and as a block', () => {
+    const revenue = toDataFrame({ fields: [{ name: 'revenue', type: FieldType.number, values: [42000] }] });
+    revenue.fields[0].display = () => ({
+      text: '42',
+      prefix: '$',
+      suffix: 'K',
+      numeric: 42000,
+      color: '#73bf69',
+      percent: 0.42,
+      icon: 'img/up.svg',
+      title: 'Revenue',
+      percentChange: 0.1,
+      description: 'Quarterly',
+    });
+
+    expect(eachRow('{{#display "revenue"}}{{#each this}}{{@key}}={{this}} {{/each}}{{/display}}', [revenue])).toBe(
+      '[text=42 prefix=$ suffix=K numeric=42000 color=#73bf69 percent=0.42 icon=img/up.svg ]'
+    );
+    expect(
+      eachRow(
+        '{{display "revenue" "text"}}{{display "revenue" "title"}}{{display "revenue" "percentChange"}}{{display "revenue" "description"}}',
+        [revenue]
+      )
+    ).toBe('[42]');
+  });
+
+  it('escapes a display value like any other value', () => {
+    expect(eachRow('{{display "status"}}')).toBe('[Healthy][&lt;b&gt;Degraded&lt;/b&gt;][No report]');
+  });
+
+  it('compares on the number or the mapped text of a display value', () => {
+    expect(
+      eachRow(
+        '{{#if (gt (display "cpu" "numeric") 0.9)}}hot{{/if}}{{#if (eq (display "status" "text") "Healthy")}} ok{{/if}}'
+      )
+    ).toBe('[hot ok][][]');
+  });
+
+  it('returns the formatted value as the string `fmt` holds, so the two compare equal', () => {
+    expect(
+      eachRow('{{#if (eq (display "cpu") fmt.cpu)}}same{{/if}}{{#if (eq (display "status") "Healthy")}} healthy{{/if}}')
+    ).toBe('[same healthy][same][same]');
+  });
+
+  it('counts an empty formatted value as falsy, as `fmt` does', () => {
+    const notes = toDataFrame({ fields: [{ name: 'note', type: FieldType.string, values: ['paged', ''] }] });
+
+    expect(eachRow('{{#if (display "note")}}noted{{else}}blank{{/if}}', [notes])).toBe('[noted][blank]');
+  });
+
+  it('reads a field named like an object member', () => {
+    const members = toDataFrame({
+      fields: [
+        { name: 'constructor', type: FieldType.string, values: ['built'] },
+        { name: 'toString', type: FieldType.string, values: ['text'] },
+      ],
+    });
+
+    expect(eachRow('{{display "constructor"}} {{display "toString"}} {{display "valueOf"}}', [members])).toBe(
+      '[built text ]'
+    );
+  });
+
+  it('resolves against the row itself when a template renders per row', () => {
+    const compiled = compileTemplate(
+      '{{service}} {{display "status" "text"}} {{display "cpu"}}',
+      createReplaceVariables()
+    );
+
+    expect(buildRows(series[0], series).map((row) => compiled(row))).toEqual([
+      'checkout Healthy 94.2%',
+      'payments &lt;b&gt;Degraded&lt;/b&gt; 71.0%',
+      'search No report n/a',
+    ]);
+  });
+
+  it('resolves every row against the frame it came from', () => {
+    const frames = withFieldConfig(
+      [
+        toDataFrame({ refId: 'A', fields: [{ name: 'cpu', type: FieldType.number, values: [0.95, 0.2] }] }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'cpu', type: FieldType.number, values: [0.95] }] }),
+      ],
+      {
+        defaults: { thresholds: fleetThresholds },
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byFrameRefID, options: 'B' },
+            properties: [
+              {
+                id: 'thresholds',
+                value: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'purple' }] },
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    expect(
+      render(
+        '{{#each frames}}{{refId}}:{{#each data}}{{display "cpu" "color"}} {{/each}}{{/each}}',
+        buildAllRowsContext(frames)
+      )
+    ).toBe(`A:${red} ${green} B:${purple} `);
+  });
+
+  it('reads the same field as the row and `fmt` when two fields share a name', () => {
+    const frames = withFieldConfig(
+      [
+        toDataFrame({
+          fields: [
+            { name: 'a', type: FieldType.number, values: [1], config: { displayName: 'load', unit: 'percent' } },
+            { name: 'b', type: FieldType.number, values: [2], config: { displayName: 'load', unit: 'ms' } },
+          ],
+        }),
+      ],
+      { defaults: {}, overrides: [] }
+    );
+
+    expect(eachRow('{{load}} {{fmt.load}} {{display "load"}}', frames)).toBe('[2 2 ms 2 ms]');
+  });
+
+  it('falls back to the plain value for a frame without display processors', () => {
+    expect(eachRow('{{display "cpu"}} {{display "cpu" "numeric"}} {{display "cpu" "color"}}', [hosts])).toBe(
+      '[0.84 0.84 ][0.12 0.12 ]'
+    );
+  });
+
+  describe('as a block', () => {
+    it('renders the block with the display value as its context', () => {
+      expect(eachRow('{{#display "cpu"}}{{color}} {{text}}{{suffix}} {{this}}{{/display}}')).toBe(
+        `[${red} 94.2% 94.2%][${orange} 71.0% 71.0%][${green} n/a n/a]`
+      );
+    });
+
+    it('names the display value with a block parameter', () => {
+      expect(eachRow('{{#display "cpu" as |cpu|}}{{../service}} {{cpu.text}}{{/display}}')).toBe(
+        '[checkout 94.2][payments 71.0][search n/a]'
+      );
+    });
+
+    it('renders the else branch for a field that does not exist', () => {
+      expect(eachRow('{{#display "nope"}}found{{else}}missing{{/display}}')).toBe('[missing][missing][missing]');
+    });
+  });
+
+  describe('the row argument', () => {
+    it('reads a row the template is not iterating', () => {
+      expect(render('{{display "cpu" row=data.[1]}}', buildAllRowsContext(series))).toBe('71.0%');
+    });
+
+    it('reads the row from inside a block that changed the context', () => {
+      expect(eachRow('{{#with service}}{{display "cpu"}}|{{display "cpu" row=..}}{{/with}}')).toBe(
+        '[|94.2%][|71.0%][|n/a]'
+      );
+    });
+
+    it('renders nothing when it is not a row', () => {
+      expect(eachRow('{{display "cpu" row=service}}{{display "cpu" row=nope}}')).toBe('[][][]');
+    });
+  });
+
+  describe('without a field name', () => {
+    it('still reads a field named `display`, as a value and as a section', () => {
+      const frame = toDataFrame({ fields: [{ name: 'display', type: FieldType.string, values: ['mine'] }] });
+      const [row] = buildRows(frame, [frame]);
+
+      expect(render('{{display}} {{#display}}{{this}}{{else}}none{{/display}} {{display "display"}}', row)).toBe(
+        'mine mine mine'
+      );
+    });
+
+    it('renders nothing, and the else branch of a section, where no field is named `display`', () => {
+      expect(eachRow('{{display}}{{#display}}section{{else}}none{{/display}}')).toBe('[none][none][none]');
+    });
+  });
+
+  describe('display processors', () => {
+    function setup() {
+      const frames = withFieldConfig([fleet], fleetConfig);
+      const [status, cpu] = ['status', 'cpu'].map((name) => {
+        const field = frames[0].fields.find((candidate) => candidate.name === name)!;
+        const processor = jest.fn(field.display ?? getDisplayProcessor());
+        field.display = processor;
+        return processor;
+      });
+
+      return { context: buildAllRowsContext(frames), status, cpu };
+    }
+
+    it('run once per value, however many of its properties a template reads', () => {
+      const { context, cpu } = setup();
+      expect(cpu).toHaveBeenCalledTimes(0);
+
+      render(
+        '{{#each data}}{{display "cpu" "color"}}{{display "cpu" "text"}}{{display "cpu" "suffix"}}{{#display "cpu"}}{{color}}{{/display}}{{/each}}',
+        context
+      );
+
+      expect(cpu).toHaveBeenCalledTimes(3);
+    });
+
+    it('run only for the fields a template asks for', () => {
+      const { context, status, cpu } = setup();
+
+      render('{{#each data}}{{display "cpu" "color"}}{{status}}{{fmt.status}}{{/each}}', context);
+
+      expect(cpu).toHaveBeenCalledTimes(3);
+      expect(status).toHaveBeenCalledTimes(3);
+    });
+
+    it('run again for the rows of a later render, which picks up new field configuration', () => {
+      const recolored = withFieldConfig([fleet], {
+        ...fleetConfig,
+        defaults: { thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'purple' }] } },
+      });
+
+      expect(eachRow('{{display "cpu" "color"}}')).toBe(`[${red}][${orange}][${green}]`);
+      expect(eachRow('{{display "cpu" "color"}}', recolored)).toBe(`[${purple}][${purple}][${purple}]`);
     });
   });
 });

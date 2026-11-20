@@ -56,17 +56,48 @@ export function withCachedDisplayNames(frames: readonly DataFrame[]): DataFrame[
   return copies;
 }
 
+function copyWithDisplayNames(frame: DataFrame): DataFrame {
+  const copy = {
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
+  };
+  cacheFieldDisplayNames([copy]);
+  return copy;
+}
+
 export function prepareColumnContext(
   sourceSeries: readonly DataFrame[],
-  sourceIndex: number
+  sourceIndex: number,
+  displaySeries?: readonly DataFrame[]
 ): ColumnContext | undefined {
-  // Hidden columns must remain in the catalog. Cache names on copies, across the full source series.
-  const frame = withCachedDisplayNames(sourceSeries)[sourceIndex];
-  const catalog = getVisibleFields(frame.fields).map(getDisplayName);
-
-  // Display names identify columns; duplicates cannot be managed independently.
-  if (new Set(catalog).size !== catalog.length) {
+  // Hidden columns must remain in the catalog. Cache names on a copy.
+  const frame = copyWithDisplayNames(sourceSeries[sourceIndex]);
+  const displayFrame = displaySeries ? displaySeries[sourceIndex] : frame;
+  if (displayFrame?.fields.length !== frame.fields.length) {
     return;
   }
-  return { catalog, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
+
+  const visibleFields = new Set(getVisibleFields(frame.fields));
+  const visibleIndexes = frame.fields.flatMap((field, index) => (visibleFields.has(field) ? [index] : []));
+  const catalog = visibleIndexes.map((index) => getDisplayName(frame.fields[index]));
+  const displayNames = visibleIndexes.map((index) => getDisplayName(displayFrame.fields[index]));
+
+  // Display names identify columns; duplicates cannot be managed independently.
+  if (new Set(catalog).size !== catalog.length || new Set(displayNames).size !== displayNames.length) {
+    return;
+  }
+  return { catalog, displayNames, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
+}
+
+function translateNames(from: string[], to: string[], names: Iterable<string>): string[] {
+  const translations = new Map(from.map((name, index) => [name, to[index]]));
+  return Array.from(names).flatMap((name) => translations.get(name) ?? []);
+}
+
+export function toDisplayNames({ catalog, displayNames = catalog }: ColumnContext, names: Iterable<string>): string[] {
+  return translateNames(catalog, displayNames, names);
+}
+
+export function toCatalogNames({ catalog, displayNames = catalog }: ColumnContext, names: Iterable<string>): string[] {
+  return translateNames(displayNames, catalog, names);
 }

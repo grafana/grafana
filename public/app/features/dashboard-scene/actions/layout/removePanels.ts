@@ -9,7 +9,7 @@ import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { endBatch, startBatch } from '../utils/batch';
 
 export function removePanel(panel: VizPanel, source: EditActionSource) {
-  DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(panel), source);
+  DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(panel), source, panel.state.pluginId);
   getLayoutManagerFor(panel).removePanel?.(panel);
 }
 

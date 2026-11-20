@@ -33,13 +33,34 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-// Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
+// Real InternalCodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: useCodeMirrorSetup.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
 // would re-fire this stub's fake focus effect on every keystroke, stealing focus back from whatever
 // cell the reader is actually typing into — useStableExtensions below is what keeps the identity (and
 // so the effect) stable across a re-render that does not actually change what's requested.
-jest.mock('@grafana/ui/unstable', () => {
+// Minted names are random in production. Most tests here are about layout, not naming, so they get the
+// old counter-style names (`paragraph-1`, `paragraph-2`) to keep their assertions readable; the
+// "element names" describe switches the real implementation back on.
+let useRealElementNames = false;
+jest.mock('../../elementName', () => {
+  const actual = jest.requireActual('../../elementName');
+  return {
+    ...actual,
+    mintElementName: (base: string, isTaken: (name: string) => boolean) => {
+      if (useRealElementNames) {
+        return actual.mintElementName(base, isTaken);
+      }
+      let n = 1;
+      while (isTaken(`${base}-${n}`)) {
+        n++;
+      }
+      return `${base}-${n}`;
+    },
+  };
+});
+
+jest.mock('@grafana/ui/internal', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
@@ -55,8 +76,8 @@ jest.mock('@grafana/ui/unstable', () => {
   }
 
   return {
-    ...jest.requireActual('@grafana/ui/unstable'),
-    CodeMirrorEditor: ({
+    ...jest.requireActual('@grafana/ui/internal'),
+    InternalCodeMirrorEditor: ({
       value,
       readOnly,
       extensions,
@@ -87,7 +108,7 @@ jest.mock('@grafana/ui/unstable', () => {
           ref={ref}
           aria-label={ariaLabel}
           // Controlled: every markdown cell resets its own buffer via onChange -> setCellContent, and
-          // a real CodeMirrorEditor's `value` is genuinely controlled too — an uncontrolled stub would
+          // a real InternalCodeMirrorEditor's `value` is genuinely controlled too — an uncontrolled stub would
           // leave stale text in the DOM across that reset, which nothing in a real browser would ever do.
           value={value}
           readOnly={readOnly}
@@ -632,7 +653,7 @@ describe('NotebookLayoutManager', () => {
       await chooseCellAction('Duplicate block', 0);
 
       // Plus the trailing-invariant cell appended after 'b'.
-      expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
     });
 
     // A copy is a new cell: sharing the original's id would have the server read two cells as one.
@@ -798,7 +819,7 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(manager.state.cells[0]);
       manager.duplicateCell(manager.state.cells[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'a-copy-2', 'a-copy-1']);
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'paragraph-1']);
     });
 
     // A reused panel-<id> key collides in findVizPanelByKey and in the panelId that feeds query caching.
@@ -2625,7 +2646,7 @@ describe('NotebookLayoutManager', () => {
   });
 
   // A Markdown/Code cell's own boundary-aware ArrowUp/Down keymap lives inside a real CodeMirror
-  // keymap, which — same as onAdvance/Enter above — this file's mocked CodeMirrorEditor never
+  // keymap, which — same as onAdvance/Enter above — this file's mocked InternalCodeMirrorEditor never
   // actually runs (see navigationKeymap's own dedicated test in focusExtension.test.ts for that
   // part). A Collapsed cell has no editor at all, so its own frame is what ArrowUp/Down reaches
   // instead — real DOM/React the whole way, and so exercised here for the manager's own resolution
@@ -2722,7 +2743,7 @@ describe('NotebookLayoutManager', () => {
 
 // What NotebookLayoutManagerRenderer's onAdvance hands to insertCellAfter on Enter — pulled out here
 // since MarkdownCell's own Enter binding lives inside a real CodeMirror keymap, which this file's
-// mocked CodeMirrorEditor never actually runs (see the mock's own doc comment above).
+// mocked InternalCodeMirrorEditor never actually runs (see the mock's own doc comment above).
 describe('splitSeed', () => {
   it('defers to insertCellAfter’s own empty-paragraph default outside a list', () => {
     expect(splitSeed('', undefined)).toEqual({ text: undefined, caretOffset: 0 });
@@ -2752,5 +2773,70 @@ describe('splitSeed', () => {
       text: '- rest of item two\n- item three',
       caretOffset: 2,
     });
+  });
+});
+
+// Comments anchor to a cell by its element name, so a name must never be handed to a second cell: a
+// counter reissues the one a deleted cell freed, and the deleted cell's comments would follow it.
+describe('NotebookLayoutManager element names', () => {
+  beforeEach(() => {
+    useRealElementNames = true;
+  });
+
+  afterEach(() => {
+    useRealElementNames = false;
+  });
+
+  it('does not reissue the name of a deleted cell', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+
+    const first = manager.addCell('heading', 1)!;
+    const deleted = first.state.elementName;
+    manager.removeCell(first);
+    const second = manager.addCell('heading', 1)!;
+
+    expect(second.state.elementName).not.toBe(deleted);
+    expect(second.state.elementName).toMatch(/^heading-[a-z0-9]{6}$/);
+  });
+
+  it('keeps the name of a deleted cell through undo and redo', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+    const history = attachHistory(manager);
+    const cell = manager.addCell('heading', 1)!;
+    const name = cell.state.elementName;
+
+    manager.removeCell(cell);
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+    expect(manager.state.cells[1]).toBe(cell);
+
+    history.redo();
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+  });
+
+  it('names a copy from the block type so copies of copies do not grow the name', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+
+    manager.duplicateCell(manager.state.cells[0]);
+    manager.duplicateCell(manager.state.cells[1]);
+
+    expect(cellNames(manager).slice(1)).toEqual([
+      expect.stringMatching(/^paragraph-[a-z0-9]{6}$/),
+      expect.stringMatching(/^paragraph-[a-z0-9]{6}$/),
+    ]);
+    expect(new Set(cellNames(manager)).size).toBe(3);
+  });
+
+  it('leaves the names of existing cells alone', () => {
+    const manager = buildManager(buildNarrativeCells(['heading-2', 'paragraph-1']));
+
+    manager.addCell('code', 2);
+
+    expect(cellNames(manager).slice(0, 2)).toEqual(['heading-2', 'paragraph-1']);
   });
 });

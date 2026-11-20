@@ -99,12 +99,11 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo                  repository.ReaderWriter
-	tree                  FolderTree
-	client                dynamic.ResourceInterface
-	beforeCreate          FolderCreationInterceptor
-	folderMetadataEnabled bool
-	folderGVK             schema.GroupVersionKind
+	repo         repository.ReaderWriter
+	tree         FolderTree
+	client       dynamic.ResourceInterface
+	beforeCreate FolderCreationInterceptor
+	folderGVK    schema.GroupVersionKind
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
@@ -130,12 +129,6 @@ func (fm *FolderManager) FolderGVK() schema.GroupVersionKind {
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
-	}
-}
-
-func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
-	return func(fm *FolderManager) {
-		fm.folderMetadataEnabled = folderMetadataEnabled
 	}
 }
 
@@ -170,7 +163,7 @@ func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref stri
 		if dir != "" {
 			// Invalid metadata must not fall back to a cached folder or hash-derived UID.
 			var err error
-			folderID, err = GetFolderID(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref)
 			if err != nil {
 				return false, fmt.Errorf("resolve ancestor %q: %w", dir, err)
 			}
@@ -290,7 +283,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 // invalid, it falls back to the current folder already known at that path. When
 // no folder exists yet, it falls back to the hash/path-derived folder identity.
 func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
-	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref)
 	if err == nil {
 		return f, nil
 	}
@@ -581,7 +574,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // path-derived UID. That gives delete+recreate semantics instead of preserving
 // a metadata-backed identity we can no longer trust.
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
-	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef)
 	if err != nil {
 		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse old folder: %w", err)
@@ -606,7 +599,7 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 
-	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef)
 	if err != nil {
 		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse new folder: %w", err)

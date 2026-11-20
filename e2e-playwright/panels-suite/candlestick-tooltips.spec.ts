@@ -4,6 +4,7 @@ const DASHBOARD_UID = 'panel-tests-candlestick';
 
 test.use({
   viewport: { width: 1280, height: 2000 },
+  openFeature: { flags: { queryEditorNext: false } },
 });
 
 test.describe('Panels test: Candlestick tooltips', { tag: ['@panels', '@candlestick'] }, () => {

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -55,6 +54,9 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
+	}
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
+		return fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
 	resourceLister, err := controllerCfg.ResourceLister()
@@ -128,7 +130,6 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		quotaGetter,
 		controller.NewRepositoryQuotaChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
-			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),

@@ -1,17 +1,23 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, EmptyState, Stack, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { Box, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useRecordingRulesNav } from '../../navigation/useAlertRulesNav';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 import { RecordingRulesListView } from './RecordingRulesListView';
 import { type RecordingRuleFilter, recordingRuleSearchSchema } from './recordingRuleFilters';
@@ -25,12 +31,12 @@ function RecordingRulesPage() {
 
   useTrackRuleListPageView('recording', mode);
 
+  const { navId, pageNav } = useRecordingRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
-    // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="recording-rules">
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<RecordingRulesPageHeader />}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>
@@ -42,7 +48,13 @@ function RecordingRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <FilterSidebarLayout
+            sidebar={<RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}
+          >
+            <RuleSequenceDrawerProvider>
+              <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </RuleSequenceDrawerProvider>
+          </FilterSidebarLayout>
         </Stack>
       </Box>
     </AlertingPageWrapper>
@@ -50,6 +62,21 @@ function RecordingRulesPage() {
 }
 
 export default withPageErrorBoundary(RecordingRulesPage);
+
+function RecordingRulesPageHeader() {
+  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const canCreate = createSupported && createAllowed && config.unifiedAlerting.recordingRulesEnabled;
+
+  if (!canCreate) {
+    return null;
+  }
+
+  return (
+    <LinkButton href={grafanaRulesNav.newRecordingRuleLink()} icon="plus" variant="primary">
+      <Trans i18nKey="alerting.gma-rule-list.recording-rules.header.new-rule">New recording rule</Trans>
+    </LinkButton>
+  );
+}
 
 interface RecordingRulesBodyProps {
   hasIssues: boolean;
@@ -67,7 +94,12 @@ function RecordingRulesBody({ hasIssues, mode, filter }: RecordingRulesBodyProps
     );
   }
   if (mode === 'folders') {
-    return <RecordingRulesFoldersView key={filter.folders.join()} folderUids={filter.folders} />;
+    return (
+      <RecordingRulesFoldersView
+        key={JSON.stringify([filter.folder, filter.folderUids])}
+        scope={{ folder: filter.folder, folderUids: filter.folderUids }}
+      />
+    );
   }
   return <RecordingRulesListView filter={filter} />;
 }

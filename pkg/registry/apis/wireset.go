@@ -43,12 +43,15 @@ var WireSetExts = wire.NewSet(
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
+	dashboardinternal.ProvideNoopDashboardLifecycleExtras,
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,
 )
 
 var provisioningExtras = wire.NewSet(
+	provisioning.ProvideSupportedResourceProvider,
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,

@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -26,10 +24,12 @@ import (
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim; remove with it
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/routemux"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -105,11 +105,53 @@ func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(manife
 // parseManifestRoutes resolves a version's custom routes from its OpenAPI paths.
 // Deprecated routes were moved there when the manifest was loaded.
 func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
+	version.OpenAPI.Paths = manifestPaths(version, skip)
 	routes, problems := manifestroutes.Parse(version, routeOptions)
 	for _, p := range problems {
 		skip(p)
 	}
 	return routes
+}
+
+// manifestPaths returns the paths this API serves. Proxy routes are served only
+// by the app settings API, below its settings object, so a proxy operation
+// is refused.
+func manifestPaths(version app.ManifestVersion, skip func(manifestroutes.Problem)) map[string]spec3.PathProps {
+	paths := make(map[string]spec3.PathProps, len(version.OpenAPI.Paths))
+	for path, props := range version.OpenAPI.Paths {
+		for method, op := range manifestroutes.Operations(&props) {
+			if _, ok := op.Extensions[definition.ExtensionProxy]; !ok {
+				continue
+			}
+			skip(manifestroutes.Problem{Version: version.Name, Path: path, Method: method,
+				Reason: definition.ExtensionProxy + " is only served by the app settings API, declared in the manifest whose group is the plugin ID"})
+			props = withoutOperation(props, method)
+		}
+		paths[path] = props
+	}
+	return paths
+}
+
+func withoutOperation(props spec3.PathProps, method string) spec3.PathProps {
+	switch method {
+	case http.MethodGet:
+		props.Get = nil
+	case http.MethodHead:
+		props.Head = nil
+	case http.MethodPost:
+		props.Post = nil
+	case http.MethodPut:
+		props.Put = nil
+	case http.MethodPatch:
+		props.Patch = nil
+	case http.MethodDelete:
+		props.Delete = nil
+	case http.MethodOptions:
+		props.Options = nil
+	case http.MethodTrace:
+		props.Trace = nil
+	}
+	return props
 }
 
 func ignoreSkipped(manifestroutes.Problem) {}
@@ -121,10 +163,7 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 	if b.manifest == nil {
 		return next
 	}
-	metrics := builder.NewCustomRouteMetrics(reg)
-	mux := http.NewServeMux()
-	index := newRouteIndex(b.group)
-	mounted := 0
+	var versions []routemux.Version
 	for _, version := range b.manifest.Versions {
 		if !version.Served {
 			continue
@@ -134,86 +173,11 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 			logging.DefaultLogger.Warn("skipping manifest route",
 				"group", gv.Group, "version", gv.Version, "path", p.Path, "method", p.Method, "reason", p.Reason)
 		}
-		// manifestroutes.Parse has already registered every pattern on a scratch
-		// mux, so registering them again cannot fail.
-		root := "/apis/" + gv.String() + "/"
-		for _, route := range b.versionRoutes(gv, warn) {
-			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, b.routeHandler(gv, route))
-			for method := range manifestroutes.Operations(&route.Operations) {
-				mux.Handle(method+" "+root+route.Pattern, handler)
-				mounted++
-			}
-			index.add(version.Name, route)
-		}
+		versions = append(versions, routemux.Version{Name: version.Name, Routes: b.versionRoutes(gv, warn)})
 	}
-	if mounted == 0 {
-		return next
-	}
-
-	// Reached for a candidate that no route matches. Only candidates go through
-	// the mux, so its cleaning and redirecting of paths never touches the API
-	// server's requests.
-	mux.Handle(fallbackPattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// The path is the plugin's, since paths the apiserver serves are never
-		// mounted, so an undeclared method is refused here rather than passed on
-		// to answer 404.
-		if allowed := allowedMethods(mux, r); len(allowed) > 0 {
-			methodNotAllowed(w, r, allowed)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}))
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !index.candidate(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-		mux.ServeHTTP(w, r)
-	})
-}
-
-// fallbackPattern is registered on the route mux for a candidate path that no
-// route matches.
-const fallbackPattern = "/"
-
-// servedMethods are the methods a manifest route can be mounted for. HEAD is
-// matched by a GET pattern too.
-var servedMethods = []string{
-	http.MethodDelete, http.MethodGet, http.MethodHead,
-	http.MethodPatch, http.MethodPost, http.MethodPut,
-}
-
-// allowedMethods returns the methods mux serves for r's path, the same lookup
-// ServeMux makes for its own 405s, leaving out the fallback. Registering a
-// method-less pattern per path instead would conflict with another route's
-// wildcard.
-func allowedMethods(mux *http.ServeMux, r *http.Request) []string {
-	var allowed []string
-	// A shallow copy is enough to look up a route, and this runs for every
-	// request the apiserver serves, so the headers are not cloned.
-	probe := *r
-	for _, method := range servedMethods {
-		probe.Method = method
-		if _, pattern := mux.Handler(&probe); pattern != "" && pattern != fallbackPattern {
-			allowed = append(allowed, method)
-		}
-	}
-	return allowed
-}
-
-// methodNotAllowed answers a method the route does not declare, listing the
-// ones it does.
-func methodNotAllowed(w http.ResponseWriter, r *http.Request, allowed []string) {
-	w.Header().Set("Allow", strings.Join(allowed, ", "))
-	// Not apierrors.NewMethodNotSupported, which names a resource kind that a
-	// custom route does not have.
-	_ = errhttp.Write(r.Context(), &apierrors.StatusError{ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    http.StatusMethodNotAllowed,
-		Reason:  metav1.StatusReasonMethodNotAllowed,
-		Message: r.Method + " is not supported",
-	}}, w)
+	return routemux.Wrap(b.group, versions, func(gv schema.GroupVersion, route manifestroutes.Route) http.Handler {
+		return b.routeHandler(gv, route)
+	}, next, reg)
 }
 
 // routeSpec documents the path segments a route is mounted under.
@@ -298,12 +262,24 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 	return nil
 }
 
+// allowsMissingParent is whether the route's operation for the method is
+// served when no object is stored under the name, so the plugin answers for
+// the name alone.
+func allowsMissingParent(route manifestroutes.Route, method string) bool {
+	op := manifestroutes.Operations(&route.Operations)[method]
+	if op == nil {
+		return false
+	}
+	allowed, _ := op.Extensions[manifestroutes.ExtensionAllowMissingParent].(bool)
+	return allowed
+}
+
 // routeHandler forwards a manifest route to the plugin's v3 route service. A
 // kind subresource route also carries the parent object, named by the path.
 func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
 	path, resource := route.Path, ""
 	if route.Kind != nil {
-		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
+		path, resource = route.Subresource, route.Kind.Resource
 	}
 	forward := httpadapter.HandlerFunc(b.clientV3)
 	checks := routeChecks(gv, route, resource)
@@ -346,16 +322,20 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				return
 			}
 			obj, err := b.getter(ctx, gv.WithResource(resource), name)
-			if err != nil {
+			switch {
+			case err == nil:
+				m, err := utils.MetaAccessor(obj)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
+				parentObj, parentMeta = obj, m
+			case apierrors.IsNotFound(err) && allowsMissingParent(route, r.Method):
+				// The plugin is called with the name alone.
+			default:
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
-			m, err := utils.MetaAccessor(obj)
-			if err != nil {
-				_ = errhttp.Write(ctx, err, w)
-				return
-			}
-			parentObj, parentMeta = obj, m
 		}
 
 		// Before the parent's secure values are decrypted, so a request the
@@ -373,6 +353,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		if resource != "" {
 			parent := &pluginv3.RouteResource{}
 			parent.SetResource(resource)
+			parent.SetName(name)
 			if parentObj != nil {
 				raw, err := json.Marshal(parentObj)
 				if err != nil {
@@ -384,7 +365,6 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
-				parent.SetName(name)
 				parent.SetRv(parentMeta.GetResourceVersion())
 				parent.SetRaw(raw)
 				parent.SetDecryptedSecureValues(sv)
