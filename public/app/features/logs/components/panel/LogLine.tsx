@@ -268,12 +268,19 @@ const LogLineComponent = memo(
                 </Tooltip>
               )}
               {log.isFromTimeMachine && (
-                <Tooltip content={log.timeMachineMessage ?? ''} placement="right" theme="info">
+                <Tooltip
+                  content={t(
+                    'logs.log-line.is-from-time-machine-tooltip',
+                    'This log line was dropped by Adaptive Logs but remains available for a limited time'
+                  )}
+                  placement="right"
+                  theme="info"
+                >
                   <Icon
                     className={styles.logIconAccented}
                     name="adaptive-telemetry"
                     size="xs"
-                    aria-label={t('logs.log-line.is-from-time-machine', 'Retrieved from Time Machine')}
+                    aria-label={t('logs.log-line.is-from-time-machine', 'Dropped log, temporarily available')}
                   />
                 </Tooltip>
               )}
