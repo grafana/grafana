@@ -23,6 +23,15 @@ function label(translate: () => string) {
 }
 
 /**
+ * `searchKind` stays out of the `KindInfo` plugins get: only app code turns search hits into these
+ * strings, so a plugin never holds one to look up.
+ */
+interface CoreKindInfo extends KindInfo {
+  /** The kind string dashboard search rows carry. That index holds only dashboards and folders. */
+  readonly searchKind?: 'dashboard' | 'folder';
+}
+
+/**
  * Kinds Grafana serves itself, each described once: what it is called, which icon it gets and where
  * its pages are, so that every list of mixed kinds shows a kind the same way. A feature that needs to
  * know more about a kind, such as how to list it, spreads the kind's row into an entry of its own.
@@ -57,7 +66,6 @@ export const CORE_KINDS = {
     group: DASHBOARD_API_GROUP,
     kind: 'Notebook',
     resource: 'notebooks',
-    searchKind: 'notebook',
     // The kind manifest scopes notebooks to folders, but storage refuses the folder annotation until
     // notebooks get folder permissions. Flip this together with `notebookStorageOpts` on the backend.
     folderScoped: false,
@@ -125,9 +133,9 @@ export const CORE_KINDS = {
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
   },
-} as const satisfies Record<CoreKindKey, KindInfo>;
+} as const satisfies Record<CoreKindKey, CoreKindInfo>;
 
-const kinds: KindInfo[] = Object.values(CORE_KINDS);
+const kinds: CoreKindInfo[] = Object.values(CORE_KINDS);
 
 /**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
@@ -148,4 +156,4 @@ export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
 }
 
 /** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
-export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind, findKindBySearchKind };
+export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind };

@@ -21,8 +21,6 @@ export interface KindInfo {
   readonly kind: string;
   /** Plural resource name in API paths, e.g. `dashboards`. */
   readonly resource: string;
-  /** The kind string dashboard search rows carry. Absent when the kind is not in that index. */
-  readonly searchKind?: string;
   /** Whether objects of this kind live in folders, carrying the folder annotation. */
   readonly folderScoped: boolean;
   /**
@@ -70,8 +68,6 @@ export interface KindRegistry {
   readonly coversGroup: (kind: KindInfo, group: string) => boolean;
   /** The kind an object of this API group and Kubernetes kind belongs to. */
   readonly findKind: (group: string, kind: string) => KindInfo | undefined;
-  /** The kind behind a dashboard search row's kind string; undefined for rows such as panels. */
-  readonly findKindBySearchKind: (searchKind: string) => KindInfo | undefined;
 }
 
 let singletonInstance: KindRegistry | undefined;
