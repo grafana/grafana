@@ -1,4 +1,4 @@
-import React, { memo, useLayoutEffect, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 
 import { type FieldConfig, type FieldSparkline } from '@grafana/data';
 import { type GraphFieldConfig } from '@grafana/schema';
@@ -47,11 +47,13 @@ const InteractiveSparkline = (props: SparklineProps) => {
     }
   });
 
-  useLayoutEffect(() => {
+  const [prevShowTooltip, setPrevShowTooltip] = useState(showTooltip);
+  if (prevShowTooltip !== showTooltip) {
+    setPrevShowTooltip(showTooltip);
     if (!showTooltip) {
       setTooltip(null);
     }
-  }, [showTooltip]);
+  }
 
   return (
     <>

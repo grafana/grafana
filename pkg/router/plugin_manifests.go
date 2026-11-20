@@ -171,6 +171,12 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			// Only the operator-configured core source may serve core groups.
 			backend, err := buildPluginBackend(entry.Definition.JSONData.ID, manifest, clients, t.deps, nil, t.source == sourceCore)
 
+			if entry.Definition.JSONData.ID == "" && errors.Is(err, errNoServedVersions) {
+				// A core or bridge entry has no plugin ID, and one with no served
+				// version has nothing to route. Logging it on every poll is noise,
+				// and a named plugin that serves nothing still warns.
+				continue
+			}
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 				skipped++
@@ -359,10 +365,13 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
 
-	for _, plugin := range deployment.Plugins {
-		for _, manifest := range plugin.Definition.Manifests {
+	for i := range deployment.Plugins {
+		plugin := &deployment.Plugins[i].Definition
+		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
+		definition.MigrateDeprecatedRoutes(plugin.Settings)
+		loadSettingsManifest(ctx, plugin)
 	}
 
 	return deployment, nil
