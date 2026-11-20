@@ -1316,7 +1316,8 @@ describe('dry-run wiring (wizard-level)', () => {
 
   it('disables the step 1 inputs while the click-time check runs, then re-enables them on failure', async () => {
     let previewDone = false;
-    let failCheck: (() => void) | undefined;
+    // Keep every pending request, not just the last one, so none is left hanging with the inputs disabled.
+    const pendingChecks: Array<() => void> = [];
     server.use(
       http.post(CONVERT_URL, async () => {
         if (!previewDone) {
@@ -1324,7 +1325,7 @@ describe('dry-run wiring (wizard-level)', () => {
           return HttpResponse.json(convertResponse());
         }
         await new Promise<void>((resolve) => {
-          failCheck = resolve;
+          pendingChecks.push(resolve);
         });
         return new HttpResponse(null, { status: 500 });
       })
@@ -1338,7 +1339,9 @@ describe('dry-run wiring (wizard-level)', () => {
     await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
 
     await waitFor(() => expect(input).toBeDisabled());
-    failCheck?.();
+    // The inputs disable before the request reaches the mock server, so wait for it before releasing it.
+    await waitFor(() => expect(pendingChecks.length).toBeGreaterThan(0));
+    pendingChecks.forEach((release) => release());
     await waitFor(() => expect(input).toBeEnabled());
   });
 
