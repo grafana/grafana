@@ -97,3 +97,5 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 
 After you've added cross-dashboard variables to a dashboard, you can view its settings or remove it by way of the dashboard sidebar.
 To edit the variable, go to **Dashboards > Variables**.
+
+If the dashboard is provisioned with Git Sync, your selection is saved in the dashboard file as the `grafana.app/useCrossDashboardVariables` annotation, so it's committed together with the rest of the dashboard.

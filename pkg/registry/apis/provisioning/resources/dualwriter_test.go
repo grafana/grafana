@@ -1940,6 +1940,96 @@ func TestDualReadWriter_UpdateResourceKeepsCommittedSecureValues(t *testing.T) {
 		"the resource update must carry the plaintext from the file")
 }
 
+func TestDualReadWriter_UpdateResourceWritesOnlyUserAnnotations(t *testing.T) {
+	const (
+		repoName = "repo"
+		path     = "dash.json"
+	)
+
+	committed := &repository.FileInfo{Path: path, Hash: "h", Data: []byte(`{
+		"apiVersion": "dashboard.grafana.app/v1",
+		"kind": "Dashboard",
+		"metadata": {"name": "dash"},
+		"spec": {"title": "Dash"}
+	}`)}
+
+	// The parsed request body: user annotations next to the ones the parser stamps.
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v1",
+		"kind":       "Dashboard",
+		"metadata": map[string]any{
+			"name":      "dash",
+			"namespace": "default",
+			"labels":    map[string]any{"team": "platform"},
+			"annotations": map[string]any{
+				utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+				"example.com/owner":                     "team-a",
+			},
+		},
+		"spec": map[string]any{"title": "Dash renamed"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+	meta.SetSourceProperties(utils.SourceProperties{Path: path, Checksum: "h"})
+
+	var liveObj *unstructured.Unstructured
+	client := &MockDynamicResourceInterface{}
+	client.On("Get", mock.Anything, "dash", metav1.GetOptions{}, mock.Anything).Return(obj.DeepCopy(), nil)
+	client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(&unstructured.Unstructured{}, nil).
+		Run(func(args mock.Arguments) {
+			if len(args.Get(2).(metav1.UpdateOptions).DryRun) == 0 {
+				liveObj = args.Get(1).(*unstructured.Unstructured).DeepCopy()
+			}
+		})
+
+	parsed := &ParsedResource{
+		Info:   &repository.FileInfo{Path: path},
+		Obj:    obj,
+		Meta:   meta,
+		GVK:    schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1", Kind: "Dashboard"},
+		GVR:    schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1", Resource: "dashboards"},
+		Client: client,
+		Repo:   provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default", Type: provisioning.LocalRepositoryType},
+		Action: provisioning.ResourceActionUpdate,
+	}
+
+	var savedFile []byte
+	rw := repository.NewMockReaderWriter(t)
+	rw.On("Config").Return(newSyncEnabledConfig(repoName))
+	rw.On("Read", mock.Anything, path, "").Return(committed, nil)
+	rw.On("Update", mock.Anything, path, "", mock.Anything, "msg").Return(nil).
+		Run(func(args mock.Arguments) {
+			savedFile = args.Get(3).([]byte)
+		})
+
+	parser := NewMockParser(t)
+	parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
+
+	dw := NewDualReadWriter(rw, parser, NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind), stubAuthorizer{}, 0)
+	_, err = dw.UpdateResource(context.Background(), DualWriteOptions{Path: path, Message: "msg"})
+	require.NoError(t, err)
+
+	var saved map[string]any
+	require.NoError(t, json.Unmarshal(savedFile, &saved))
+	require.Equal(t, map[string]any{
+		"name": "dash",
+		"annotations": map[string]any{
+			utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+			"example.com/owner":                     "team-a",
+		},
+	}, saved["metadata"], "the file gets the user annotations only")
+
+	require.NotNil(t, liveObj, "the resource must be written to Grafana")
+	liveAnnotations := liveObj.GetAnnotations()
+	require.Equal(t, string(utils.ManagerKindRepo), liveAnnotations[utils.AnnoKeyManagerKind])
+	require.Equal(t, repoName, liveAnnotations[utils.AnnoKeyManagerIdentity])
+	require.Equal(t, path, liveAnnotations[utils.AnnoKeySourcePath])
+	require.Equal(t, `{"global":"all","folder":"none"}`, liveAnnotations[utils.AnnoKeyUseCrossDashboardVariables])
+	require.Equal(t, "team-a", liveAnnotations["example.com/owner"])
+}
+
 func TestKeepCommittedSecureValues_ReadFallback(t *testing.T) {
 	const path = "datasource.json"
 

@@ -82,8 +82,9 @@ type fileChangeInfo struct {
 	PreviewURL           string
 	PreviewScreenshotURL string
 
-	// HasRemovedMetadata is true when the original file contains metadata
-	// fields (namespace, labels, annotations) that will be removed when parsing the resource.
+	// HasRemovedMetadata is true when the base-branch file contains metadata
+	// that Git Sync does not keep (namespace, labels, Grafana-owned annotations)
+	// and the PR-branch file no longer has it.
 	HasRemovedMetadata bool
 }
 
@@ -289,14 +290,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	}
 
 	if change.Action == repository.FileActionUpdated {
-		// Detect metadata stripped by resource parser.
-		// Read the file from the default branch (empty ref) and compare its
-		// metadata against the PR-branch parsed version.
+		// Detect metadata that Git Sync normalized away: read the file from the
+		// default branch (empty ref) and compare its metadata against the
+		// PR-branch file as written, not as parsed, since parsing stamps and
+		// drops Grafana-owned keys itself.
 		baseFileInfo, baseErr := repo.Read(ctx, change.Path, "")
 		if baseErr == nil && baseFileInfo != nil {
-			baseObj, _, _, parseErr := resources.ParseFileResource(ctx, baseFileInfo)
-			if parseErr == nil && baseObj != nil {
-				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, info.Parsed.Obj)
+			baseObj, _, _, baseParseErr := resources.ParseFileResource(ctx, baseFileInfo)
+			updatedObj, _, _, updatedParseErr := resources.ParseFileResource(ctx, fileInfo)
+			if baseParseErr == nil && baseObj != nil && updatedParseErr == nil && updatedObj != nil {
+				info.HasRemovedMetadata = hasRemovedMetadata(baseObj, updatedObj)
 			}
 		}
 	}
@@ -476,26 +479,28 @@ func renderPath(grafanaBaseURL, urlPath string) string {
 	return path
 }
 
-// hasRemovedMetadata returns true if the original object (from the file)
-// contains metadata fields (namespace, labels, annotations) that are absent
-// or different in the parsed object (post-Parse).
-func hasRemovedMetadata(original, parsed *unstructured.Unstructured) bool {
-	if original.GetNamespace() != "" && parsed.GetNamespace() != original.GetNamespace() {
+// hasRemovedMetadata returns true if the original file contains metadata that
+// Git Sync does not keep in the repository (namespace, labels, Grafana-owned
+// annotations) and that is absent or different in the updated file. Removing a
+// user annotation is an intentional change, so it does not count.
+func hasRemovedMetadata(original, updated *unstructured.Unstructured) bool {
+	if original.GetNamespace() != "" && updated.GetNamespace() != original.GetNamespace() {
 		return true
 	}
-	if len(original.GetLabels()) > 0 && hasMissingKeys(original.GetLabels(), parsed.GetLabels()) {
+	if hasMissingKeys(original.GetLabels(), updated.GetLabels(), func(string) bool { return true }) {
 		return true
 	}
-	if len(original.GetAnnotations()) > 0 && hasMissingKeys(original.GetAnnotations(), parsed.GetAnnotations()) {
-		return true
-	}
-	return false
+	return hasMissingKeys(original.GetAnnotations(), updated.GetAnnotations(), resources.IsGrafanaOwnedAnnotation)
 }
 
-// hasMissingKeys returns true if any key in original is absent from parsed.
-func hasMissingKeys(original, parsed map[string]string) bool {
+// hasMissingKeys returns true if any key in original selected by include is
+// absent from updated.
+func hasMissingKeys(original, updated map[string]string, include func(string) bool) bool {
 	for k := range original {
-		if _, exists := parsed[k]; !exists {
+		if !include(k) {
+			continue
+		}
+		if _, exists := updated[k]; !exists {
 			return true
 		}
 	}
