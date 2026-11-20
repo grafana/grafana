@@ -61,7 +61,7 @@ func TestMetrics_RecordMetricsAndLog(t *testing.T) {
 	for _, f := range families {
 		require.Len(t, f.GetMetric(), 3, f.GetName())
 		for _, metric := range f.GetMetric() {
-			var labels []string
+			labels := make([]string, 0, len(metric.GetLabel()))
 			for _, l := range metric.GetLabel() {
 				labels = append(labels, l.GetName())
 				if l.GetName() == "variant" {
