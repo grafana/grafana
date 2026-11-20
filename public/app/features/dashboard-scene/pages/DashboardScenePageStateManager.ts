@@ -75,7 +75,7 @@ import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistor
 import { setPendingChangesPageClose, setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
 import { openPendingChangesForEditing } from '../lifecycle/pendingChangesSave';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { loadSavedViews } from '../savedviews/loadSavedViews';
+import { applyDefaultSavedViewToUrl, loadSavedViews } from '../savedviews/loadSavedViews';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
@@ -598,14 +598,29 @@ abstract class DashboardScenePageStateManagerBase<T>
     await this.prepareResponse(rsp);
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);
+    const savedViewsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false);
 
-    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches lazily.
+    const pathname = locationService.getLocation().pathname;
+    if (scene && savedViewsEnabled && !isRenderTarget(options.route) && !playlistSrv.state.isPlaying) {
+      // Writes the viewer's stored default into ?viewFilter= when the URL has none. Skipped for render
+      // targets (reports, embeds) and playlists, whose fixed parameters a personal default must not replace.
+      await applyDefaultSavedViewToUrl(scene);
+    }
+
+    // Fetched eagerly only for ?viewFilter= links, which URL sync needs resolved; the pane fetches
+    // lazily. A stored default above has already loaded them.
     if (
       scene &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaSavedDashboardViews, false) &&
+      savedViewsEnabled &&
+      !scene.state.savedViews &&
       typeof locationService.getSearchObject().viewFilter === 'string'
     ) {
       await loadSavedViews(scene);
+    }
+
+    if (savedViewsEnabled && locationService.getLocation().pathname !== pathname) {
+      // The viewer navigated away during the awaits above; don't mount this scene over the new page.
+      return null;
     }
 
     return scene;

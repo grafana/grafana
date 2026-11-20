@@ -11,6 +11,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SavedViewsPane } from './SavedViewsPane';
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { getDefaultSavedView, setDefaultSavedView } from './defaultView';
 import { captureSavedViewState } from './state';
 
 jest.mock('./api', () => ({
@@ -23,7 +24,14 @@ jest.mock('./api', () => ({
   },
 }));
 
+jest.mock('./defaultView', () => ({
+  getDefaultSavedView: jest.fn(),
+  setDefaultSavedView: jest.fn(),
+}));
+
 const api = jest.mocked(savedDashboardViewsApi);
+const mockGetDefaultSavedView = jest.mocked(getDefaultSavedView);
+const mockSetDefaultSavedView = jest.mocked(setDefaultSavedView);
 
 function buildView(name: string, specOverrides?: Partial<SavedDashboardView['spec']>): SavedDashboardView {
   return {
@@ -69,6 +77,11 @@ describe('SavedViewsPane', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockGetDefaultSavedView.mockResolvedValue(undefined);
+  });
+
+  beforeEach(() => {
+    mockGetDefaultSavedView.mockResolvedValue(undefined);
   });
 
   describe('anonymous viewers', () => {
@@ -82,10 +95,19 @@ describe('SavedViewsPane', () => {
 
       expect(screen.queryByRole('button', { name: 'Save new' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'My view' }));
       expect(scene.state.viewFilter).toBe('view-1');
+    });
+
+    it('can still pick a personal default, which stays in their browser', async () => {
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Set as default' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Edit title' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
@@ -214,14 +236,18 @@ describe('SavedViewsPane', () => {
   });
 
   describe('Save changes', () => {
-    it('is not shown until a view is active for the dashboard', () => {
+    it('is not shown until a view is active for the dashboard', async () => {
       renderPane([buildView('view-1', { name: 'My view' })]);
+      // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+      await act(() => Promise.resolve());
 
       expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
     });
 
-    it('shows only in the selected row, disabled while the dashboard matches the view', () => {
+    it('shows only in the selected row, disabled while the dashboard matches the view', async () => {
       const { scene } = renderPane([buildView('view-1', { name: 'My view' }), buildView('view-2', { name: 'Other' })]);
+      // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+      await act(() => Promise.resolve());
 
       act(() => scene.setState({ viewFilter: 'view-1' }));
 
@@ -230,8 +256,10 @@ describe('SavedViewsPane', () => {
       expect(buttons[0]).toBeDisabled();
     });
 
-    it('enables once the time range drifts from the selected view', () => {
+    it('enables once the time range drifts from the selected view', async () => {
       const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+      // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+      await act(() => Promise.resolve());
       act(() => scene.setState({ viewFilter: 'view-1' }));
 
       act(() => scene.state.$timeRange?.setState({ from: 'now-24h' }));
@@ -282,6 +310,8 @@ describe('SavedViewsPane', () => {
           <pane.Component model={pane} />
         </WrapSidebar>
       );
+      // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+      await act(() => Promise.resolve());
       expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
 
       act(() => env.changeValueTo('dev', 'dev'));
@@ -425,8 +455,10 @@ describe('SavedViewsPane', () => {
     expect(screen.getByText('No results found for your query')).toBeInTheDocument();
   });
 
-  it('offers only Save new in the footer', () => {
+  it('offers only Save new in the footer', async () => {
     renderPane([buildView('view-1', { name: 'My view' })]);
+    // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+    await act(() => Promise.resolve());
 
     expect(screen.getByRole('button', { name: 'Save new' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
@@ -519,6 +551,58 @@ describe('SavedViewsPane', () => {
       expect(screen.queryByRole('textbox', { name: 'New view title' })).not.toBeInTheDocument();
       expect(screen.getByText('No saved views yet')).toBeInTheDocument();
       expect(api.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('default view', () => {
+    it('offers "Set as default" for a view that is not the current default', async () => {
+      mockGetDefaultSavedView.mockResolvedValue(undefined);
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      const item = await screen.findByRole('menuitem', { name: 'Set as default' });
+      await userEvent.click(item);
+
+      expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', 'view-1');
+    });
+
+    it('offers "Remove as default" for the current default, and clears it on click', async () => {
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      const item = await screen.findByRole('menuitem', { name: 'Remove as default' });
+      await userEvent.click(item);
+
+      expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined);
+    });
+
+    it('shows the default indicator only for the default view', async () => {
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' }), buildView('view-2', { name: 'Other view' })]);
+
+      await waitFor(() => expect(screen.getAllByTitle('Your default view for this dashboard')).toHaveLength(1));
+    });
+
+    it('shows no indicator when there is no stored default', async () => {
+      mockGetDefaultSavedView.mockResolvedValue(undefined);
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await waitFor(() => expect(mockGetDefaultSavedView).toHaveBeenCalled());
+      expect(screen.queryByTitle('Your default view for this dashboard')).not.toBeInTheDocument();
+    });
+
+    it('clears the stored default when the default view itself is deleted', async () => {
+      api.remove.mockResolvedValue(undefined);
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' })]);
+      await waitFor(() => expect(screen.getByTitle('Your default view for this dashboard')).toBeInTheDocument());
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+      await userEvent.click(screen.getByTestId('data-testid Confirm Modal Danger Button'));
+
+      await waitFor(() => expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined));
     });
   });
 });

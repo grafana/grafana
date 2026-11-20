@@ -37,6 +37,7 @@ import {
   type PendingChangesHistory,
 } from '../lifecycle/pendingChangePreview';
 import { reloadPendingChangesPage } from '../lifecycle/pendingChangesPageReload';
+import { applyDefaultSavedViewToUrl, loadSavedViews } from '../savedviews/loadSavedViews';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -112,6 +113,11 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
       isPlaying: false,
     },
   },
+}));
+
+jest.mock('../savedviews/loadSavedViews', () => ({
+  applyDefaultSavedViewToUrl: jest.fn(),
+  loadSavedViews: jest.fn(),
 }));
 
 const mockUserStorageGetItem = jest.fn();
@@ -268,6 +274,67 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
+  describe('default saved view', () => {
+    const load = () =>
+      new DashboardScenePageStateManager({}).loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.savedDashboardViews': true });
+      playlistSrv.state.isPlaying = false;
+      locationService.push('/d/fake-uid');
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-uid' }, meta: {} });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+      playlistSrv.state.isPlaying = false;
+      jest.mocked(applyDefaultSavedViewToUrl).mockReset();
+      jest.mocked(loadSavedViews).mockReset();
+    });
+
+    it('writes the viewer default on a normal load', async () => {
+      await load();
+
+      expect(applyDefaultSavedViewToUrl).toHaveBeenCalled();
+    });
+
+    it('does not fetch the views again once the default has loaded them', async () => {
+      jest.mocked(applyDefaultSavedViewToUrl).mockImplementation(async (scene) => {
+        scene.setState({ savedViews: [] });
+        locationService.getSearchObject = jest.fn().mockReturnValue({ viewFilter: 'view-1' });
+      });
+
+      await load();
+
+      expect(loadSavedViews).not.toHaveBeenCalled();
+    });
+
+    it('fetches the views for an explicit ?viewFilter= link', async () => {
+      locationService.getSearchObject = jest.fn().mockReturnValue({ viewFilter: 'view-1' });
+
+      await load();
+
+      expect(loadSavedViews).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips the viewer default while a playlist is playing', async () => {
+      playlistSrv.state.isPlaying = true;
+
+      await load();
+
+      expect(applyDefaultSavedViewToUrl).not.toHaveBeenCalled();
+    });
+
+    it('does not mount the scene if the viewer navigated away while it was loading', async () => {
+      jest.mocked(applyDefaultSavedViewToUrl).mockImplementation(async () => locationService.push('/d/other-uid'));
+      const loader = new DashboardScenePageStateManager({});
+
+      await loader.loadDashboard({ uid: 'fake-uid', route: DashboardRoutes.Normal });
+
+      expect(loader.state.dashboard).toBeUndefined();
+    });
+  });
+
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
 
