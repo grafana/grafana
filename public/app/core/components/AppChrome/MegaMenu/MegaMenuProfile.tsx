@@ -72,11 +72,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '&:focus-visible': getFocusStyles(theme),
   }),
+  // A navigation item's icon: 18px, as `Icon size="lg"` draws, centered in their 24px icon slot. A rounded square.
   avatar: css({
-    borderRadius: theme.shape.radius.circle,
+    borderRadius: theme.shape.radius.sm,
     flexShrink: 0,
-    height: 24,
-    width: 24,
+    height: theme.spacing(2.25),
+    margin: theme.spacing(0, 0.375),
+    width: theme.spacing(2.25),
   }),
   identity: css({
     color: theme.colors.text.secondary,
