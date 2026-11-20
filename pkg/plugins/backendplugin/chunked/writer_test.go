@@ -424,3 +424,22 @@ func TestProcessTypedResponsePreservesErrorSource(t *testing.T) {
 		})
 	}
 }
+
+// TestProcessTypedResponseErrorSourceOverHTTP sends a typed response through the
+// SDK chunked writer and the HTTP writer, then reads the JSONL output back.
+func TestProcessTypedResponseErrorSourceOverHTTP(t *testing.T) {
+	response := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Status: backend.StatusUnauthorized, Error: errors.New("unauthorized"), ErrorSource: backend.ErrorSourceDownstream},
+	}}
+
+	recorder := httptest.NewRecorder()
+	httpWriter := NewChunkedHTTPWriter(recorder)
+	sdkWriter := backend.NewChunkedDataWriter(backend.DataFrameFormat_JSON, httpWriter.OnChunk)
+	require.NoError(t, ProcessTypedResponse(context.Background(), response, sdkWriter))
+
+	rsp, err := AccumulateJSONLines(recorder.Body)
+	require.NoError(t, err)
+	require.Equal(t, backend.StatusUnauthorized, rsp.Responses["A"].Status)
+	require.EqualError(t, rsp.Responses["A"].Error, "unauthorized")
+	require.Equal(t, backend.ErrorSourceDownstream, rsp.Responses["A"].ErrorSource)
+}

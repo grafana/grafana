@@ -104,6 +104,10 @@ func TestAccumulatorErrorStatus(t *testing.T) {
 	require.EqualError(t, rsp.Responses["A"].Error, "unauthorized")
 	require.Equal(t, backend.ErrorSourceDownstream, rsp.Responses["A"].ErrorSource)
 
+	// A field after the bad value must not hide the error.
 	_, err = AccumulateJSONLines(strings.NewReader(`{"refId":"A","status":"bad","error":"unauthorized"}`))
 	require.ErrorContains(t, err, "expected number")
+
+	_, err = AccumulateJSONLines(strings.NewReader(`{"refId":"A","unknown":"x","error":"unauthorized"}`))
+	require.ErrorContains(t, err, "unsupported property: unknown")
 }
