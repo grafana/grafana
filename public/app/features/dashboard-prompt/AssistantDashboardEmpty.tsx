@@ -140,15 +140,16 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
-  const { ref: fitRef, fit } = useFitToScrollArea(showTemplates);
-  // The templates panel opens and closes from a toggle next to the prompt's + button. It starts open, unless the
-  // lists have no templates; a person's own toggle wins.
-  const templatesId = useId();
-  const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState<boolean>();
+  const promptRef = useRef<HTMLDivElement>(null);
+  const promptReady = useHasTextbox(promptRef);
   const [templateCounts, setTemplateCounts] = useState<TemplateCounts>();
-  const templatesEmpty =
-    templateCounts !== undefined && (templateCounts.custom ?? 0) + (templateCounts.grafana ?? 0) === 0;
-  const templatesOpen = templatesOpenedByUser ?? !templatesEmpty;
+  // The page keeps its plain layout until there are templates to offer: while the prompt and the lists load, and for
+  // good when the lists have none. Then a toggle next to the prompt's + button opens the panel under the prompt.
+  const withTemplates =
+    showTemplates && promptReady && (templateCounts?.custom ?? 0) + (templateCounts?.grafana ?? 0) > 0;
+  const { ref: fitRef, fit } = useFitToScrollArea(withTemplates);
+  const templatesId = useId();
+  const [templatesOpen, setTemplatesOpen] = useState(true);
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -159,14 +160,12 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     if (height !== undefined) {
       setHeld({ fit, height });
     }
-    setTemplatesOpenedByUser(!templatesOpen);
+    setTemplatesOpen(!templatesOpen);
   }, [fit, templatesOpen]);
   const renderTemplatesToggle = useCallback(
     () => <LandingTemplatesToggle isOpen={templatesOpen} onToggle={onTemplatesToggle} controls={templatesId} />,
     [templatesOpen, onTemplatesToggle, templatesId]
   );
-  const promptRef = useRef<HTMLDivElement>(null);
-  const promptReady = useHasTextbox(promptRef);
   // The picked template travels to the Assistant as a context pill in the prompt.
   const [template, setTemplate] = useState<TemplateSelection>();
 
@@ -271,11 +270,11 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     >
       <div
         ref={contentRef}
-        className={cx(styles.content, showTemplates && styles.contentWithTemplates)}
+        className={cx(styles.content, withTemplates && styles.contentWithTemplates)}
         style={heldHeight ? { minHeight: heldHeight } : undefined}
       >
-        <div className={styles.top}>
-          <div className={styles.heading}>
+        <div className={cx(styles.top, withTemplates && styles.topWithTemplates)}>
+          <div className={cx(styles.heading, withTemplates && styles.headingWithTemplates)}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
             <h2 className={styles.title}>
               <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
@@ -292,18 +291,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               }
               hostContextItems={template ? [template.contextItem] : []}
               onHostContextItemRemove={onTemplatePillRemove}
-              renderHostActions={showTemplates ? renderTemplatesToggle : undefined}
+              renderHostActions={withTemplates ? renderTemplatesToggle : undefined}
             />
           </div>
         </div>
 
         {showTemplates && (
-          // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
+          // Mounted at once so the templates load alongside the prompt, out of the layout until there are some to show.
           <LandingTemplates
             id={templatesId}
-            isOpen={templatesOpen}
+            isOpen={withTemplates && templatesOpen}
             onTemplatesCount={setTemplateCounts}
-            hidden={!promptReady}
             className={styles.templates}
             testDataSource={testDataSource}
             showGrafanaTemplates={showGrafanaTemplates}
@@ -383,13 +381,19 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: theme.spacing(3),
+      gap: theme.spacing(2),
     }),
-    // The icon belongs to the heading, closer to it than the heading is to the prompt.
     heading: css({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      gap: theme.spacing(2),
+    }),
+    // With the templates, the icon belongs to the heading, closer to it than the heading is to the prompt.
+    topWithTemplates: css({
+      gap: theme.spacing(3),
+    }),
+    headingWithTemplates: css({
       gap: theme.spacing(1),
     }),
     appsIcon: css({

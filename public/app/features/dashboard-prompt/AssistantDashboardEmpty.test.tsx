@@ -65,14 +65,13 @@ interface LandingTemplatesProps {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
   onTemplatesCount?: (counts: { custom?: number; grafana?: number }) => void;
-  hidden?: boolean;
 }
 let latestTemplatesProps: LandingTemplatesProps | undefined;
 
 jest.mock('./LandingTemplates', () => ({
   LandingTemplates: (props: LandingTemplatesProps) => {
     latestTemplatesProps = props;
-    return <div data-testid="landing-templates" hidden={props.hidden} />;
+    return <div data-testid="landing-templates" hidden={!props.isOpen} />;
   },
   LandingTemplatesToggle: ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) => (
     <button type="button" aria-expanded={isOpen} onClick={onToggle}>
@@ -100,8 +99,8 @@ function renderEmpty() {
     body: AutoGridLayoutManager.createEmpty(),
   });
   const addNewPanel = jest.spyOn(dashboard.state.sidebar, 'addNewPanel').mockImplementation(() => {});
-  const { rerender, user } = render(<AssistantDashboardEmpty dashboard={dashboard} />);
-  return { dashboard, addNewPanel, rerender, user };
+  const { rerender, unmount, user } = render(<AssistantDashboardEmpty dashboard={dashboard} />);
+  return { dashboard, addNewPanel, rerender, unmount, user };
 }
 
 describe('AssistantDashboardEmpty', () => {
@@ -221,13 +220,31 @@ describe('AssistantDashboardEmpty', () => {
       },
     };
 
+    const reportCounts = (counts: { custom?: number; grafana?: number }) =>
+      act(() => latestTemplatesProps?.onTemplatesCount?.(counts));
+    const queryToggle = () => screen.queryByRole('button', { name: 'Start from a template' });
+
     beforeEach(() => {
       Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
     });
 
-    it('loads the templates out of view until the prompt shows its text box', async () => {
+    it('loads the templates out of the layout, with no toggle, until the lists report some', () => {
+      renderEmpty();
+      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+      expect(queryToggle()).not.toBeInTheDocument();
+
+      reportCounts({ custom: 1, grafana: 2 });
+
+      expect(screen.getByTestId('landing-templates')).toBeVisible();
+      expect(within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button')).toHaveAccessibleName(
+        'Start from a template'
+      );
+    });
+
+    it('waits for the prompt to show its text box too', async () => {
       mockPromptLoaded = false;
       const { dashboard, rerender } = renderEmpty();
+      reportCounts({ custom: 1, grafana: 2 });
       expect(screen.getByTestId('landing-templates')).not.toBeVisible();
 
       mockPromptLoaded = true;
@@ -236,16 +253,18 @@ describe('AssistantDashboardEmpty', () => {
       await waitFor(() => expect(screen.getByTestId('landing-templates')).toBeVisible());
     });
 
-    it('does not list templates when none are available', () => {
-      Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
+    it('keeps the templates and their toggle out when the lists have none', () => {
       renderEmpty();
 
-      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Start from a template' })).not.toBeInTheDocument();
+      reportCounts({ custom: 0, grafana: 0 });
+
+      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+      expect(queryToggle()).not.toBeInTheDocument();
     });
 
     it("opens and closes the templates from a toggle next to the prompt's + button", async () => {
       const { user } = renderEmpty();
+      reportCounts({ custom: 1, grafana: 2 });
       const toggle = within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button', {
         name: 'Start from a template',
       });
@@ -257,15 +276,6 @@ describe('AssistantDashboardEmpty', () => {
 
       await user.click(toggle);
       expect(latestTemplatesProps?.isOpen).toBe(true);
-    });
-
-    it('starts the templates closed when the lists have none', () => {
-      renderEmpty();
-
-      act(() => latestTemplatesProps?.onTemplatesCount?.({ custom: 0, grafana: 0 }));
-
-      expect(latestTemplatesProps?.isOpen).toBe(false);
-      expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('attaches the picked template to the prompt and swaps it on the next pick', () => {
