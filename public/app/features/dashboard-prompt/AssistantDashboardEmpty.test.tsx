@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
@@ -26,12 +26,9 @@ jest.mock('@grafana/assistant', () => ({
   checkLimits: () => mockCheckLimits(),
 }));
 
-// The Assistant plugin's prompt: registered unless a test says otherwise.
-let mockPromptComponent: { component?: () => null; isLoading: boolean } = { component: () => null, isLoading: false };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-  usePluginComponent: () => mockPromptComponent,
 }));
 
 jest.mock('./datasources', () => ({
@@ -47,8 +44,6 @@ interface LandingPromptProps {
   renderHostActions?: () => ReactNode;
 }
 let latestPromptProps: LandingPromptProps | undefined;
-// The plugin prompt renders its text box once its code has loaded.
-let mockPromptLoaded = true;
 
 jest.mock('./DashboardLandingPrompt', () => ({
   PROMPT_HEIGHT: 91,
@@ -57,7 +52,7 @@ jest.mock('./DashboardLandingPrompt', () => ({
     latestPromptProps = props;
     return (
       <div data-testid="dashboard-landing-prompt">
-        {mockPromptLoaded ? <div role="textbox" /> : 'loading'}
+        <div role="textbox" />
         {props.renderHostActions?.()}
       </div>
     );
@@ -90,7 +85,6 @@ const mockAvailability = {
   showGrafanaTemplates: false,
   showCustomTemplates: false,
   isAvailable: false,
-  isLoading: false,
 };
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability', () => ({
   useTemplateDashboardsAvailability: () => mockAvailability,
@@ -117,13 +111,10 @@ describe('AssistantDashboardEmpty', () => {
     mockCheckLimits.mockResolvedValue({ count: 0, limit: 0, month: '2026-11', isLimitReached: false });
     latestPromptProps = undefined;
     latestTemplatesProps = undefined;
-    mockPromptLoaded = true;
-    mockPromptComponent = { component: () => null, isLoading: false };
     Object.assign(mockAvailability, {
       showGrafanaTemplates: false,
       showCustomTemplates: false,
       isAvailable: false,
-      isLoading: false,
     });
     setTestFlags({ dashboardNewLayouts: true });
   });
@@ -267,49 +258,6 @@ describe('AssistantDashboardEmpty', () => {
       expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('false');
     });
 
-    it("keeps an open panel's page behind one spinner until the prompt shows its text box", async () => {
-      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
-      mockPromptLoaded = false;
-      const { dashboard, rerender } = renderEmpty();
-      expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
-      // In a browser it shows over the hidden block, which jsdom's visibility check does not model.
-      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
-      expect(panel()).not.toBeVisible();
-
-      mockPromptLoaded = true;
-      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
-
-      await waitFor(() => expect(panel()).toBeVisible());
-      expect(screen.getByRole('heading')).toBeVisible();
-      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
-    });
-
-    it('shows the page at once while the prompt loads when the panel is closed', () => {
-      mockPromptLoaded = false;
-      renderEmpty();
-
-      expect(screen.getByRole('heading')).toBeVisible();
-      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
-    });
-
-    describe('when the prompt is slow', () => {
-      beforeEach(() => jest.useFakeTimers());
-      afterEach(() => jest.useRealTimers());
-
-      it('shows the page after a short wait, the open panel out of sight until the prompt is there', () => {
-        window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
-        mockPromptLoaded = false;
-        renderEmpty();
-
-        act(() => jest.advanceTimersByTime(1499));
-        expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
-
-        act(() => jest.advanceTimersByTime(1));
-        expect(screen.getByRole('heading')).toBeVisible();
-        expect(panel()).not.toBeVisible();
-      });
-    });
-
     it('keeps the panel closed when this visit finds custom templates, and opens it on the next', () => {
       const first = renderEmpty();
       reportCounts({ custom: 2, grafana: 3 });
@@ -368,44 +316,6 @@ describe('AssistantDashboardEmpty', () => {
       renderEmpty();
 
       expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('false');
-    });
-
-    it('waits for the template lookup before showing an open panel', async () => {
-      window.localStorage.setItem(OPEN_KEY, 'true');
-      Object.assign(mockAvailability, {
-        showGrafanaTemplates: false,
-        showCustomTemplates: false,
-        isAvailable: false,
-        isLoading: true,
-      });
-      const { dashboard, rerender } = renderEmpty();
-      expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
-
-      Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true, isLoading: false });
-      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
-
-      await waitFor(() => expect(panel()).toBeVisible());
-      expect(screen.getByRole('heading')).toBeVisible();
-    });
-
-    it('does not wait for the template lookup when the Assistant plugin has no prompt', () => {
-      window.localStorage.setItem(OPEN_KEY, 'true');
-      mockPromptComponent = { component: undefined, isLoading: false };
-      Object.assign(mockAvailability, { isAvailable: false, isLoading: true });
-
-      renderEmpty();
-
-      expect(screen.getByRole('heading')).toBeVisible();
-    });
-
-    it('offers no templates when the Assistant plugin has no prompt for them', () => {
-      window.localStorage.setItem(OPEN_KEY, 'true');
-      mockPromptComponent = { component: undefined, isLoading: false };
-
-      renderEmpty();
-
-      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
-      expect(screen.getByRole('heading')).toBeVisible();
     });
 
     it('does not list templates when none are available, and shows the page at once', () => {
