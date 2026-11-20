@@ -5,9 +5,9 @@ import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
+import { type CoreKindKey, type KindInfo, type KindLabelOptions, type KindRegistry } from '@grafana/runtime/unstable';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
-
-import { type KindInfo, type LabelOptions } from './types';
 
 // Every page path is built here, so the object name is encoded in one place
 function page(base: string, suffix = '') {
@@ -17,14 +17,24 @@ function page(base: string, suffix = '') {
 // Translations hold the label as it reads mid-sentence. A title only uppercases the first letter,
 // which is safe in every language. Lowercasing a title is not: German capitalizes every noun, so
 // "Ordner" would become the misspelled "ordner". Readers ask for a form here instead of changing
-// the case themselves.
+// the case themselves. The label stays a function so that it translates at render, not at module load.
 function label(translate: () => string) {
-  return ({ upperFirst: upper = true }: LabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
+  return ({ upperFirst: upper = true }: KindLabelOptions = {}) => (upper ? upperFirst(translate()) : translate());
+}
+
+/**
+ * `searchKind` stays out of the `KindInfo` plugins get: only app code turns search hits into these
+ * strings, so a plugin never holds one to look up.
+ */
+interface CoreKindInfo extends KindInfo {
+  /** The kind string dashboard search rows carry. That index holds only dashboards and folders. */
+  readonly searchKind?: 'dashboard' | 'folder';
 }
 
 /**
  * Kinds Grafana serves itself, each described once: what it is called, which icon it gets and where
- * its pages are, so that every list of mixed kinds shows a kind the same way.
+ * its pages are, so that every list of mixed kinds shows a kind the same way. A feature that needs to
+ * know more about a kind, such as how to list it, spreads the kind's row into an entry of its own.
  */
 export const CORE_KINDS = {
   folder: {
@@ -36,6 +46,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.folder.label', 'folder')),
     getPluralLabel: label(() => t('core-kinds.folder.label-plural', 'folders')),
     icon: 'folder',
+    iconColor: 'semi-dark-blue',
     getRoute: page('/dashboards/f'),
   },
   dashboard: {
@@ -47,7 +58,22 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.dashboard.label', 'dashboard')),
     getPluralLabel: label(() => t('core-kinds.dashboard.label-plural', 'dashboards')),
     icon: 'apps',
+    iconColor: 'semi-dark-orange',
     getRoute: page('/d'),
+  },
+  notebook: {
+    // Also served from the dashboards group, under its own plural
+    group: DASHBOARD_API_GROUP,
+    kind: 'Notebook',
+    resource: 'notebooks',
+    // The kind manifest scopes notebooks to folders, but storage refuses the folder annotation until
+    // notebooks get folder permissions. Flip this together with `notebookStorageOpts` on the backend.
+    folderScoped: false,
+    getLabel: label(() => t('core-kinds.notebook.label', 'notebook')),
+    getPluralLabel: label(() => t('core-kinds.notebook.label-plural', 'notebooks')),
+    icon: 'gf-notebook',
+    iconColor: 'semi-dark-purple',
+    getRoute: page(NOTEBOOKS_BASE_URL),
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
@@ -57,6 +83,7 @@ export const CORE_KINDS = {
     getLabel: label(() => t('core-kinds.playlist.label', 'playlist')),
     getPluralLabel: label(() => t('core-kinds.playlist.label-plural', 'playlists')),
     icon: 'presentation-play',
+    iconColor: 'semi-dark-orange',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
   },
@@ -106,9 +133,9 @@ export const CORE_KINDS = {
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
   },
-} as const satisfies Record<string, KindInfo>;
+} as const satisfies Record<CoreKindKey, CoreKindInfo>;
 
-const kinds: KindInfo[] = Object.values(CORE_KINDS);
+const kinds: CoreKindInfo[] = Object.values(CORE_KINDS);
 
 /**
  * Whether `group` names this kind: its own group, or for a collection kind a group served inside the
@@ -127,3 +154,6 @@ export function findKind(group: string, kind: string): KindInfo | undefined {
 export function findKindBySearchKind(searchKind: string): KindInfo | undefined {
   return kinds.find((row) => row.searchKind === searchKind);
 }
+
+/** This table and its lookups as the `KindRegistry` that `@grafana/runtime` defines for plugins. */
+export const kindRegistry: KindRegistry = { coreKinds: CORE_KINDS, coversGroup, findKind };
