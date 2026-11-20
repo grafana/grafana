@@ -8,6 +8,7 @@ export const EVENT_LOCATIONS = {
   DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
   DASHBOARD_TEMPLATES_MODAL: 'dashboard_templates_modal',
   DASHBOARD_SETTINGS_PAGE: 'dashboard_settings_page',
+  EMPTY_DASHBOARD_PROMPT: 'empty_dashboard_prompt',
 } as const;
 
 /**

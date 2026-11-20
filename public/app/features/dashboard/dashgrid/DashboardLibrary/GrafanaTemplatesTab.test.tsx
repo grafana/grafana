@@ -8,6 +8,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
+import { TemplateDashboardInteractions } from './interactions';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -164,6 +165,65 @@ describe('GrafanaTemplatesTab', () => {
       expect(titles).toEqual(['Use template: RED metrics', 'Use template: Golden signals']);
     });
 
+    it('reports attaching a template as the template modal reports its clicks, placed on the prompt', async () => {
+      const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
+      const { user } = renderTab({ onSelectTemplate: jest.fn(), entryPoint: 'emptyDashboardPrompt' });
+
+      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+
+      expect(itemClicked).toHaveBeenCalledWith({
+        contentKind: 'template_dashboard',
+        datasourceTypes: ['grafana-testdata-datasource'],
+        libraryItemId: '1',
+        libraryItemTitle: 'RED metrics',
+        sourceEntryPoint: 'empty_dashboard_prompt',
+        eventLocation: 'empty_dashboard_prompt',
+        discoveryMethod: 'browse',
+        action: 'attach_template',
+      });
+    });
+
+    it('does not report taking the attached template off the prompt', async () => {
+      const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
+      const onSelectTemplate = jest.fn();
+      const { user } = renderTab({ onSelectTemplate, selectedTemplateId: 'grafana:1' });
+
+      await user.click(await screen.findByRole('button', { name: 'Use template: RED metrics' }));
+
+      expect(onSelectTemplate).toHaveBeenCalled();
+      expect(itemClicked).not.toHaveBeenCalled();
+    });
+
+    it('reports a preview as viewing the template, found by search when one is on', async () => {
+      jest.spyOn(window, 'open').mockImplementation(() => null);
+      const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
+      const { user } = renderTab({ onSelectTemplate: jest.fn(), searchQuery: 'red' });
+
+      await user.click(await screen.findByRole('button', { name: 'Preview template: RED metrics' }));
+
+      expect(itemClicked).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'view_template', discoveryMethod: 'search' })
+      );
+    });
+
+    it('reports the load once, placed on the prompt', async () => {
+      const loaded = jest.spyOn(TemplateDashboardInteractions, 'loaded').mockResolvedValue();
+      const loadedFiredRef = { current: false };
+      renderTab({ onSelectTemplate: jest.fn(), entryPoint: 'emptyDashboardPrompt', loadedFiredRef });
+
+      await waitFor(() =>
+        expect(loaded).toHaveBeenCalledWith({
+          numberOfItems: 1,
+          contentKinds: ['template_dashboard'],
+          datasourceTypes: ['grafana-testdata-datasource'],
+          sourceEntryPoint: 'empty_dashboard_prompt',
+          eventLocation: 'empty_dashboard_prompt',
+        })
+      );
+      expect(loaded).toHaveBeenCalledTimes(1);
+      expect(loadedFiredRef.current).toBe(true);
+    });
+
     it('marks the selected template', async () => {
       renderTab({ onSelectTemplate: jest.fn(), selectedTemplateId: 'grafana:1' });
 
@@ -175,10 +235,14 @@ describe('GrafanaTemplatesTab', () => {
   });
 
   it('opens the template without select mode', async () => {
+    const itemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockResolvedValue();
     const { user } = renderTab();
 
     await user.click(await screen.findByRole('button', { name: 'View template: RED metrics' }));
 
+    expect(itemClicked).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'view_template', eventLocation: 'browse_dashboards_page' })
+    );
     expect(locationService.push).toHaveBeenCalledWith(expect.stringMatching(/^\/dashboard\/template\?.*gnetId=1/));
     expect(screen.queryByRole('button', { name: 'Use template: RED metrics' })).not.toBeInTheDocument();
   });

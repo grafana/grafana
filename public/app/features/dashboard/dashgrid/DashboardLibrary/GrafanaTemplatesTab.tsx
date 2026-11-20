@@ -72,6 +72,12 @@ export const GrafanaTemplatesTab = ({
     }
   }, []);
 
+  const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
+  // A picker sits under the new-dashboard prompt, so its events name that place, not the template modal's.
+  const eventLocation = onSelectTemplate
+    ? EVENT_LOCATIONS.EMPTY_DASHBOARD_PROMPT
+    : EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE;
+
   // Fire `loaded` once per open, after templates resolve. Mounting this component means
   // the Grafana templates tab is the selected view, so this tracks tab selection.
   useEffect(() => {
@@ -83,13 +89,21 @@ export const GrafanaTemplatesTab = ({
       numberOfItems: dashboards.length,
       contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
       datasourceTypes: [String(testDataSource?.type)],
-      sourceEntryPoint: DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown',
-      eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
+      sourceEntryPoint,
+      eventLocation,
     };
     isAnalyticsFrameworkEnabled
       ? NewTemplateDashboardInteractions.loaded(properties)
       : TemplateDashboardInteractions.loaded(properties);
-  }, [loading, dashboards, entryPoint, testDataSource?.type, isAnalyticsFrameworkEnabled, loadedFiredRef]);
+  }, [
+    loading,
+    dashboards,
+    sourceEntryPoint,
+    eventLocation,
+    testDataSource?.type,
+    isAnalyticsFrameworkEnabled,
+    loadedFiredRef,
+  ]);
 
   useEffect(() => {
     if (!loading) {
@@ -97,29 +111,24 @@ export const GrafanaTemplatesTab = ({
     }
   }, [loading, dashboards.length, onTemplatesLoad]);
 
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
-    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
+  const trackItemClicked = (dashboard: GnetDashboard, action: 'view_template' | 'assistant' | 'attach_template') => {
+    const properties = {
+      contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+      datasourceTypes: [String(testDataSource?.type)],
+      libraryItemId: String(dashboard.id),
+      libraryItemTitle: dashboard.name,
+      sourceEntryPoint,
+      eventLocation,
+      discoveryMethod: searchQuery?.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+      action,
+    };
     isAnalyticsFrameworkEnabled
-      ? NewTemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        })
-      : TemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        });
+      ? NewTemplateDashboardInteractions.itemClicked(properties)
+      : TemplateDashboardInteractions.itemClicked(properties);
+  };
+
+  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
+    trackItemClicked(dashboard, customizeWithAssistant ? 'assistant' : 'view_template');
 
     const templateUrl = getTemplateDashboardUrl(
       dashboard,
@@ -130,17 +139,21 @@ export const GrafanaTemplatesTab = ({
     locationService.push(templateUrl);
   };
 
-  const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
-
   // A new tab keeps the landing, and its prompt, where the person left them.
   const previewTemplate = (dashboard: GnetDashboard) => {
+    trackItemClicked(dashboard, 'view_template');
     const url = getTemplateDashboardUrl(dashboard, testDataSource, sourceEntryPoint);
     window.open(locationUtil.assureBaseUrl(url), '_blank', 'noopener,noreferrer');
   };
 
   const selectTemplate = (dashboard: GnetDashboard) => {
+    const id = getGrafanaTemplateSelectionId(dashboard);
+    // Picking the attached template again takes it off the prompt, which is not a use.
+    if (id !== selectedTemplateId) {
+      trackItemClicked(dashboard, 'attach_template');
+    }
     onSelectTemplate?.({
-      id: getGrafanaTemplateSelectionId(dashboard),
+      id,
       kind: 'template_dashboard',
       // The page Customize with Assistant opens: the template's own dashboard, on TestData.
       url: getTemplateDashboardUrl(

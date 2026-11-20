@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { type MutableRefObject, useEffect } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
 import { type Props as SortPickerProps } from 'app/core/components/Select/SortPicker';
@@ -10,15 +10,16 @@ import { LOAD_WAIT_MS, LandingTemplates, LandingTemplatesToggle } from './Landin
 // `undefined` keeps a list loading.
 let mockGrafanaCount: number | undefined = 1;
 let mockCustomCount: number | undefined = 1;
+type ListProps = TemplateSelectionProps & { entryPoint?: string; loadedFiredRef?: MutableRefObject<boolean> };
 // What the Grafana list was last rendered with.
-let mockGrafanaProps: TemplateSelectionProps & { entryPoint?: string } = {};
-// Called with the entry point on every render of the custom list.
-const mockCustomEntryPoint = jest.fn();
+let mockGrafanaProps: ListProps = {};
+// Called with the entry point and `loaded` guard on every render of the custom list.
+const mockCustomProps = jest.fn();
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
   return {
-    GrafanaTemplatesTab: (props: TemplateSelectionProps & { entryPoint?: string }) => {
+    GrafanaTemplatesTab: (props: ListProps) => {
       const { onTemplatesLoad } = props;
       mockGrafanaProps = props;
       useMockEffect(() => {
@@ -50,8 +51,8 @@ jest.mock(
 );
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
-const CustomTemplates = ({ onTemplatesLoad, entryPoint }: TemplateSelectionProps & { entryPoint?: string }) => {
-  mockCustomEntryPoint(entryPoint);
+const CustomTemplates = ({ onTemplatesLoad, entryPoint, loadedFiredRef }: ListProps) => {
+  mockCustomProps({ entryPoint, loadedFiredRef });
   useEffect(() => {
     if (mockCustomCount !== undefined) {
       onTemplatesLoad?.(mockCustomCount);
@@ -99,7 +100,16 @@ describe('LandingTemplates', () => {
     renderTemplates();
 
     expect(mockGrafanaProps.entryPoint).toBe('emptyDashboardPrompt');
-    expect(mockCustomEntryPoint).toHaveBeenLastCalledWith('emptyDashboardPrompt');
+    expect(mockCustomProps).toHaveBeenLastCalledWith(expect.objectContaining({ entryPoint: 'emptyDashboardPrompt' }));
+  });
+
+  it('gives each list its own unfired `loaded` guard, so both report their load', () => {
+    renderTemplates();
+
+    const customRef = mockCustomProps.mock.lastCall?.[0].loadedFiredRef;
+    expect(mockGrafanaProps.loadedFiredRef).toEqual({ current: false });
+    expect(customRef).toEqual({ current: false });
+    expect(customRef).not.toBe(mockGrafanaProps.loadedFiredRef);
   });
 
   it('searches and sorts the templates from the top of the panel', async () => {

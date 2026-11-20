@@ -115,8 +115,9 @@ export function LandingTemplates({
   useEffect(() => {
     onEmptyChange?.(isEmpty);
   }, [isEmpty, onEmptyChange]);
-  // Pre-set so the lists' `loaded` events, which report the template modal as their location, stay silent here.
-  const loadedFiredRef = useRef(true);
+  // One per list, as in the template modal, so each reports `loaded` once for this page.
+  const customLoadedFiredRef = useRef(false);
+  const grafanaLoadedFiredRef = useRef(false);
 
   // Rendered through a function, as in the template modal: the tab comes from a registry at render time.
   const renderCustomTemplates = () => {
@@ -128,7 +129,7 @@ export function LandingTemplates({
         isOpen
         onClose={noop}
         entryPoint={ENTRY_POINT}
-        loadedFiredRef={loadedFiredRef}
+        loadedFiredRef={customLoadedFiredRef}
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
         onTemplatesLoad={onCustomTemplatesLoad}
@@ -194,7 +195,7 @@ export function LandingTemplates({
                 entryPoint={ENTRY_POINT}
                 testDataSource={testDataSource}
                 onClose={noop}
-                loadedFiredRef={loadedFiredRef}
+                loadedFiredRef={grafanaLoadedFiredRef}
                 onSelectTemplate={onSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
                 onTemplatesLoad={onGrafanaTemplatesLoad}
