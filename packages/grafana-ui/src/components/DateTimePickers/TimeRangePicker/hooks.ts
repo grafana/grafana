@@ -3,7 +3,7 @@ import { type RefObject, useEffect, useState } from 'react';
 import { type TimeOption } from '@grafana/data';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
-const CAUGHT_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Tab'];
+const CAUGHT_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', ' '];
 
 /** @internal */
 export interface UseListFocusProps {
@@ -35,9 +35,7 @@ export const useListFocus = ({ localRef, options }: UseListFocusProps): UseListF
 
     if (CAUGHT_KEYS.indexOf(event.key) > -1) {
       event.preventDefault();
-      if (event.key !== 'Tab') {
-        event.stopPropagation();
-      }
+      event.stopPropagation();
     }
 
     let newFocusedIndex = null;
@@ -56,6 +54,7 @@ export const useListFocus = ({ localRef, options }: UseListFocusProps): UseListF
         newFocusedIndex = itemsCount - 1;
         break;
       case 'Enter':
+      case ' ':
         items?.[focusedItem]?.click();
         break;
       default:

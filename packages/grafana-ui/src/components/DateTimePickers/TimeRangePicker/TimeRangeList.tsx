@@ -51,10 +51,10 @@ const Options = ({ options, value, onChange, title }: Props) => {
   return (
     <>
       <ul
-        role="presentation"
+        role="radiogroup"
+        aria-label={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
         onKeyDown={handleKeys}
         ref={localRef}
-        aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}
         className={styles.list}
       >
         {options.map((option, index) => (
