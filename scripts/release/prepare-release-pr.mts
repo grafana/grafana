@@ -66,9 +66,9 @@ if (import.meta.main) {
     const missing = findMissingTag(packages, versions, existingTags);
     if (missing) {
       console.error(
-        `::warning::The tag ${missing.tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${missing.name} ${missing.version}, then run the workflow again.`
+        `::error::The tag ${missing.tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${missing.name} ${missing.version}, for example by running the "Create Release Tag" workflow from the Actions tab with that tag and commit, then run this workflow again.`
       );
-      process.exit(0);
+      process.exit(1);
     }
 
     const options = {

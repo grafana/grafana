@@ -76,7 +76,7 @@ Merging the version pull request releases the packages.
 
 To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped. Or run the workflow with `tags` set to a comma-separated list of existing tags, which publishes them and does not prepare a version pull request.
 
-Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `tag` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the workflow warns and does not open a version pull request.
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `tag` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the `release` job fails with an error that names the tag and does not open a version pull request. Create the tag on the commit that published that version, for example by running the `Create Release Tag` workflow from the Actions tab with the tag and the commit, and run the workflow again.
 
 ### Stable releases
 
