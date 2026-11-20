@@ -17826,7 +17826,6 @@
     },
     "time-range": {
       "apply": "Apply time range",
-      "aria-role": "Time range selection",
       "default-title": "Time ranges",
       "dialog-label": "Relative time range picker",
       "example-title": "Example time ranges",
