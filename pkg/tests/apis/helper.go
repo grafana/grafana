@@ -270,6 +270,34 @@ func (c *K8sTestHelper) loadAPIGroups() {
 	}
 }
 
+// WaitForCoreApp waits until the router serves group from a core app. Until
+// its first reconcile completes, the router leaves every request to the
+// embedded API server, which would make a routed run test the legacy builder.
+func (c *K8sTestHelper) WaitForCoreApp(group string) {
+	c.t.Helper()
+	require.EventuallyWithT(c.t, func(t *assert.CollectT) {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Admin,
+			Path: "/apis/discovery/v1alpha2/status",
+		}, &struct {
+			Ready  bool `json:"ready"`
+			Groups []struct {
+				Group  string `json:"group"`
+				Source string `json:"source"`
+			} `json:"groups"`
+		}{})
+		if !assert.Equal(t, http.StatusOK, rsp.Response.StatusCode, "router status: %s", rsp.Body) {
+			return
+		}
+		assert.True(t, rsp.Result.Ready, "router is not ready")
+		served := false
+		for _, g := range rsp.Result.Groups {
+			served = served || (g.Group == group && g.Source == "core")
+		}
+		assert.True(t, served, "router does not serve %s from a core app", group)
+	}, 30*time.Second, 100*time.Millisecond)
+}
+
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
 }
