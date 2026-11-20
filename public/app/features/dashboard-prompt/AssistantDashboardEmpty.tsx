@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { type ChatContextItem, checkLimits } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -38,6 +38,8 @@ const FREE_SPACE_BELOW = 2;
 const TEMPLATES_OPEN_KEY = 'grafana.dashboard.landing.templatesOpen';
 /** Whether the last visit found templates of the account's own, which opens the panel on the next one. */
 const HAS_CUSTOM_TEMPLATES_KEY = 'grafana.dashboard.landing.hasCustomTemplates';
+/** How long a page with the panel open waits for the prompt before it shows without it. */
+const PROMPT_WAIT_MS = 1500;
 
 /** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
 async function findHandoffProblem(): Promise<string | undefined> {
@@ -53,6 +55,36 @@ async function findHandoffProblem(): Promise<string | undefined> {
     return t('dashboard.empty.assistant-unreachable', 'Could not reach the Assistant. Try sending again.');
   }
   return undefined;
+}
+
+/**
+ * True once the prompt shows its text box. The prompt is a plugin component that loads its own code after the
+ * page, behind its own Suspense, so its text box rendering is the only signal the host gets.
+ */
+function useHasTextbox(ref: RefObject<HTMLElement | null>) {
+  const [hasTextbox, setHasTextbox] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) {
+      return;
+    }
+    const check = () => Boolean(element.querySelector('[role="textbox"], textarea'));
+    if (check()) {
+      setHasTextbox(true);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (check()) {
+        observer.disconnect();
+        setHasTextbox(true);
+      }
+    });
+    observer.observe(element, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return hasTextbox;
 }
 
 /**
@@ -134,6 +166,18 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const noTemplates =
     templateCounts !== undefined && (templateCounts.custom ?? 0) + (templateCounts.grafana ?? 0) === 0;
   const showToggle = showTemplates && !(noTemplates && !templatesOpen);
+  // The panel comes in with the prompt, never beside the prompt's own loader. With it open, the block waits out of
+  // sight behind one spinner for the prompt, then shows whole; a prompt slower than PROMPT_WAIT_MS lets the block show,
+  // the panel keeping its room out of sight until the prompt is there. Closed, the page shows at once.
+  const promptRef = useRef<HTMLDivElement>(null);
+  const promptReady = useHasTextbox(promptRef);
+  const [waitedForPrompt, setWaitedForPrompt] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setWaitedForPrompt(true), PROMPT_WAIT_MS);
+    return () => clearTimeout(timeout);
+  }, []);
+  const panelWaits = showTemplates && templatesOpen && !promptReady;
+  const waiting = panelWaits && !waitedForPrompt;
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -253,7 +297,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
       style={fit ? { minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
     >
-      <div ref={contentRef} className={styles.content} style={heldHeight ? { minHeight: heldHeight } : undefined}>
+      <div
+        ref={contentRef}
+        className={cx(styles.content, waiting && styles.contentWaiting)}
+        style={heldHeight ? { minHeight: heldHeight } : undefined}
+        aria-busy={waiting || undefined}
+      >
+        {waiting && (
+          <div className={styles.waiting}>
+            <Spinner size="xl" />
+          </div>
+        )}
         <div className={styles.top}>
           <div className={styles.heading}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -261,7 +315,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
             </h2>
           </div>
-          <div className={styles.prompt}>
+          <div ref={promptRef} className={styles.prompt}>
             <DashboardLandingPrompt
               onSubmit={onSubmitPrompt}
               placeholder={
@@ -283,7 +337,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
             id={templatesId}
             isOpen={templatesOpen}
             onTemplatesCount={setTemplateCounts}
-            className={styles.templates}
+            className={cx(styles.templates, panelWaits && styles.templatesWaiting)}
             testDataSource={testDataSource}
             showGrafanaTemplates={showGrafanaTemplates}
             showCustomTemplates={showCustomTemplates}
@@ -340,6 +394,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     // As wide as the dashboard area lets it, with or without templates; the empty-state wrapper sets the cap.
     content: css({
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(4),
@@ -351,6 +406,18 @@ function getStyles(theme: GrafanaTheme2) {
         paddingRight: 0,
         paddingBottom: theme.spacing(6),
       },
+    }),
+    // Laid out but out of sight, so it shows in place once the prompt is there.
+    contentWaiting: css({
+      visibility: 'hidden',
+    }),
+    waiting: css({
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      visibility: 'visible',
     }),
     top: css({
       display: 'flex',
@@ -382,6 +449,9 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       // The plugin's text box is shorter while its code loads; the floor keeps the block from moving as it does.
       minHeight: PROMPT_HEIGHT,
+    }),
+    templatesWaiting: css({
+      visibility: 'hidden',
     }),
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({

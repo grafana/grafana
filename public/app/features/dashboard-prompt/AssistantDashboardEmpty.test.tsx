@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { render } from 'test/test-utils';
 
@@ -66,13 +66,14 @@ interface LandingTemplatesProps {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
   onTemplatesCount?: (counts: { custom?: number; grafana?: number }) => void;
+  className?: string;
 }
 let latestTemplatesProps: LandingTemplatesProps | undefined;
 
 jest.mock('./LandingTemplates', () => ({
   LandingTemplates: (props: LandingTemplatesProps) => {
     latestTemplatesProps = props;
-    return <div data-testid="landing-templates" hidden={!props.isOpen} />;
+    return <div data-testid="landing-templates" className={props.className} hidden={!props.isOpen} />;
   },
   LandingTemplatesToggle: ({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) => (
     <button type="button" aria-expanded={isOpen} onClick={onToggle}>
@@ -254,6 +255,47 @@ describe('AssistantDashboardEmpty', () => {
 
       expect(panel()).toBeVisible();
       expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('false');
+    });
+
+    it("keeps an open panel's page behind one spinner until the prompt shows its text box", async () => {
+      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
+      mockPromptLoaded = false;
+      const { dashboard, rerender } = renderEmpty();
+      expect(screen.getByRole('heading', { hidden: true })).not.toBeVisible();
+      // In a browser it shows over the hidden block, which jsdom's visibility check does not model.
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+      expect(panel()).not.toBeVisible();
+
+      mockPromptLoaded = true;
+      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
+
+      await waitFor(() => expect(panel()).toBeVisible());
+      expect(screen.getByRole('heading')).toBeVisible();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    });
+
+    it('shows the page at once while the prompt loads when the panel is closed', () => {
+      mockPromptLoaded = false;
+      renderEmpty();
+
+      expect(screen.getByRole('heading')).toBeVisible();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    });
+
+    describe('when the prompt is slow', () => {
+      beforeEach(() => jest.useFakeTimers());
+      afterEach(() => jest.useRealTimers());
+
+      it('shows the page after a short wait, the open panel out of sight until the prompt is there', () => {
+        window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
+        mockPromptLoaded = false;
+        renderEmpty();
+
+        act(() => jest.advanceTimersByTime(1500));
+
+        expect(screen.getByRole('heading')).toBeVisible();
+        expect(panel()).not.toBeVisible();
+      });
     });
 
     it('keeps the panel closed when this visit finds custom templates, and opens it on the next', () => {
