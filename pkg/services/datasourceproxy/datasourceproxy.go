@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -69,6 +70,9 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqConte
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+	start := time.Now()
+	var ds *datasources.DataSource
+	defer func() { logProxyRequest(c, ds, start) }()
 
 	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
 		dsUID = web.Params(c.Req)[":uid"]
@@ -89,6 +93,9 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+	start := time.Now()
+	var ds *datasources.DataSource
+	defer func() { logProxyRequest(c, ds, start) }()
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
@@ -96,6 +103,23 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.Re
 		return
 	}
 	p.proxyDatasourceRequest(c, ds)
+}
+
+func logProxyRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, start time.Time) {
+	if c.Resp == nil {
+		return
+	}
+	status := c.Resp.Status()
+	entry := pluginproxy.RequestLog{
+		Method: c.Req.Method, Path: getProxyPath(c),
+		Status: status, Source: pluginproxy.StatusSource(c.Req.Context(), status),
+		Duration: time.Since(start),
+	}
+	if ds != nil {
+		entry.PluginID = ds.Type
+		entry.DatasourceUID = ds.UID
+	}
+	entry.Log()
 }
 
 func toAPIError(c *contextmodel.ReqContext, err error) {
