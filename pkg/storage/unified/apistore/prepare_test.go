@@ -56,43 +56,6 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
 	)
 
-	t.Run("namespace from context", func(t *testing.T) {
-		for _, tt := range []struct {
-			name             string
-			requestNamespace string
-			objectNamespace  string
-			wantError        bool
-		}{
-			{name: "sets missing namespace", requestNamespace: "default"},
-			{name: "preserves matching namespace", requestNamespace: "default", objectNamespace: "default"},
-			{name: "rejects mismatched namespace", requestNamespace: "default", objectNamespace: "other", wantError: true},
-			{name: "allows empty namespaces"},
-			{name: "rejects namespace without request namespace", objectNamespace: "default", wantError: true},
-		} {
-			t.Run(tt.name, func(t *testing.T) {
-				ctx := request.WithNamespace(ctx, tt.requestNamespace)
-				dashboard := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
-					Name:      "test-name",
-					Namespace: tt.objectNamespace,
-				}}
-				v, err := s.prepareObjectForStorage(ctx, dashboard)
-				if tt.wantError {
-					require.Error(t, err)
-					require.True(t, apierrors.IsBadRequest(err))
-					require.ErrorContains(t, err, "namespace mismatch")
-					require.Empty(t, v.raw)
-					return
-				}
-				require.NoError(t, err)
-				newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
-				require.NoError(t, err)
-				obj, err := utils.MetaAccessor(newObject)
-				require.NoError(t, err)
-				require.Equal(t, tt.requestNamespace, obj.GetNamespace())
-			})
-		}
-	})
-
 	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
@@ -1067,6 +1030,56 @@ func TestVerifyFolder(t *testing.T) {
 			acc.SetFolder(parent)
 		}
 		return acc
+	}
+
+	for _, tt := range []struct {
+		name          string
+		enableSupport bool
+		requireFolder bool
+		folder        string
+		cause         v1.CauseType
+		message       string
+	}{
+		{name: "optional folder accepts root", enableSupport: true, folder: "general"},
+		{name: "required folder accepts non-root", enableSupport: true, requireFolder: true, folder: "my-folder"},
+		{name: "required folder rejects missing annotation", enableSupport: true, requireFolder: true,
+			cause: v1.CauseTypeFieldValueRequired, message: "folder is required"},
+		{name: "required folder rejects root", enableSupport: true, requireFolder: true, folder: "general",
+			cause: v1.CauseTypeForbidden, message: "cannot be created in the root folder"},
+		{name: "disabled support rejects root", folder: "general",
+			cause: v1.CauseTypeForbidden, message: "folders are not supported"},
+		{name: "disabled support takes precedence over required folder", requireFolder: true},
+		{name: "disabled support rejects a required folder", requireFolder: true, folder: "my-folder",
+			cause: v1.CauseTypeForbidden, message: "folders are not supported"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Storage{
+				gr:   dashv1.DashboardResourceInfo.GroupResource(),
+				opts: StorageOptions{EnableFolderSupport: tt.enableSupport, RequireFolder: tt.requireFolder},
+			}
+			obj := makeDash(t, tt.folder)
+			err := s.verifyFolder(obj)
+			require.Equal(t, tt.folder, obj.GetFolder())
+			if tt.cause == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.True(t, apierrors.IsInvalid(err))
+			var status *apierrors.StatusError
+			require.ErrorAs(t, err, &status)
+			require.Equal(t, int32(http.StatusUnprocessableEntity), status.ErrStatus.Code)
+			details := status.ErrStatus.Details
+			require.NotNil(t, details)
+			require.Equal(t, obj.GetName(), details.Name)
+			require.Equal(t, obj.GetGroupVersionKind().Group, details.Group)
+			require.Equal(t, obj.GetGroupVersionKind().Kind, details.Kind)
+			require.Len(t, details.Causes, 1)
+			require.Equal(t, tt.cause, details.Causes[0].Type)
+			require.Equal(t, "metadata.annotations[grafana.app/folder]", details.Causes[0].Field)
+			require.Contains(t, details.Causes[0].Message, tt.message)
+			require.Contains(t, details.Causes[0].Message, s.gr.String())
+		})
 	}
 
 	t.Run("support enabled, empty folder passes", func(t *testing.T) {

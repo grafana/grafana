@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -203,13 +202,6 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
-
-	ns := request.NamespaceValue(ctx)
-	if obj.GetNamespace() == "" {
-		obj.SetNamespace(ns) // set the missing namespace
-	} else if obj.GetNamespace() != ns {
-		return v, apierrors.NewBadRequest("namespace mismatch")
-	}
 
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
