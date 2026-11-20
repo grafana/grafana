@@ -189,6 +189,10 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	parsed.GVK = *gvk
 
+	// Grafana-owned annotations are derived by Grafana, never taken from the file
+	// (or request body). Drop them before anything below stamps its own.
+	stripGrafanaOwnedAnnotations(parsed.Obj.Object)
+
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
 		if err != nil {
@@ -632,6 +636,10 @@ func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error)
 	return false, nil
 }
 
+// ToSaveBytes serializes the resource as it is stored in the repository. Of the
+// metadata only the name and the user annotations are kept: everything else
+// (namespace, labels, Grafana-owned annotations, server fields) is derived by
+// Grafana when the file is read back.
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.DeepCopy().Object
 	delete(obj, "status")
@@ -639,7 +647,11 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	if name == "" {
 		delete(obj, "metadata")
 	} else {
-		obj["metadata"] = map[string]any{"name": name}
+		metadata := map[string]any{"name": name}
+		if annotations := userAnnotations(obj); len(annotations) > 0 {
+			metadata["annotations"] = annotations
+		}
+		obj["metadata"] = metadata
 	}
 
 	switch path.Ext(f.Info.Path) {
