@@ -226,6 +226,8 @@ func (s *Service) getLegacyIdentityPermissions(
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
 	case types.TypeRenderService:
+		// TODO: this is a "temporary" fix. We are aiming to ask a render team to use JWT tokens intead
+		//		and remove the types.TypeRenderService.
 		// Local evaluation authenticates the render service with the Admin org role.
 		query.Role = string(org.RoleAdmin)
 	default:
