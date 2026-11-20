@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
@@ -124,4 +124,23 @@ it('keeps the current item tabbable when ArrowLeft has no submenu to close', asy
   await user.keyboard('{ArrowLeft}');
 
   expect(item).toHaveAttribute('tabindex', '0');
+});
+
+it('does not overwrite submenu tab stops when the parent menu rerenders', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (siblingLabel: string) => (
+    <Menu>
+      <MenuItem label="Parent" childItems={[<MenuItem key="nested" label="Nested" />]} />
+      <MenuItem label={siblingLabel} />
+    </Menu>
+  );
+  const { rerender } = render(renderMenu('Sibling'));
+
+  await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Parent' })).toHaveFocus());
+  await user.keyboard('{ArrowRight}');
+  await waitFor(() => expect(screen.getByRole('menuitem', { name: 'Nested' })).toHaveFocus());
+
+  rerender(renderMenu('Updated sibling'));
+
+  expect(screen.getByRole('menuitem', { name: 'Nested' })).toHaveAttribute('tabindex', '0');
 });

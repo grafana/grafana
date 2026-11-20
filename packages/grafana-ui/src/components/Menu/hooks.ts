@@ -3,6 +3,20 @@ import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
 const UNFOCUSED = -1;
+const MENU_ITEM_SELECTOR = '[data-role="menuitem"]:not([data-disabled])';
+
+const getMenuItems = (container: HTMLElement | null) => {
+  const menu =
+    container?.getAttribute('role') === 'menu'
+      ? container
+      : (container?.querySelector<HTMLElement>('[role="menu"]') ?? container);
+
+  return menu
+    ? Array.from(menu.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)).filter(
+        (menuItem) => menu.getAttribute('role') !== 'menu' || menuItem.closest('[role="menu"]') === menu
+      )
+    : [];
+};
 
 /** @internal */
 export interface UseMenuFocusProps {
@@ -37,11 +51,9 @@ export const useMenuFocus = ({
   }, [isMenuOpen]);
 
   useEffect(() => {
-    const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
+    const menuItems = getMenuItems(localRef.current);
     if (autoFocus || localRef.current?.contains(document.activeElement)) {
-      menuItems?.[focusedItem]?.focus();
+      menuItems[focusedItem]?.focus();
     }
   }, [localRef, focusedItem, autoFocus]);
 
@@ -49,11 +61,11 @@ export const useMenuFocus = ({
   // DOM children can change without any hook input changing, so this must run after every commit.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
-    const menuItems = localRef.current?.querySelectorAll<HTMLElement>('[data-role="menuitem"]:not([data-disabled])');
-    const itemCount = menuItems?.length ?? 0;
+    const menuItems = getMenuItems(localRef.current);
+    const itemCount = menuItems.length;
     const reconciledFocusedItem = focusedItem === UNFOCUSED || focusedItem < itemCount ? focusedItem : itemCount - 1;
 
-    menuItems?.forEach((menuItem, i) => {
+    menuItems.forEach((menuItem, i) => {
       menuItem.tabIndex = i === reconciledFocusedItem ? 0 : -1;
     });
 
@@ -67,10 +79,8 @@ export const useMenuFocus = ({
   });
 
   const handleKeys = (event: React.KeyboardEvent) => {
-    const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
-    const menuItemsCount = menuItems?.length ?? 0;
+    const menuItems = getMenuItems(localRef.current);
+    const menuItemsCount = menuItems.length;
 
     switch (event.key) {
       case 'ArrowUp':
@@ -105,7 +115,7 @@ export const useMenuFocus = ({
       case ' ':
         event.preventDefault();
         event.stopPropagation();
-        const focusedElement = menuItems?.[focusedItem];
+        const focusedElement = menuItems[focusedItem];
         const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
 
         if (!hasSubMenu) {
