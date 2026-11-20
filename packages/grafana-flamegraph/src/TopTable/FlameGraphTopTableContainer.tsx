@@ -9,6 +9,7 @@ import {
   type DisplayProcessor,
   type Field,
   FieldType,
+  formattedValueToString,
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
@@ -20,6 +21,7 @@ import {
   type TableCustomCellOptions,
   type TableFieldOptions,
   type TableSortByFieldState,
+  Text,
   Tooltip,
   useStyles2,
   useTheme2,
@@ -30,7 +32,7 @@ import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { ProfileTooltipContent } from '../ProfileTooltipContent';
 import { ProfileTooltipDetails } from '../ProfileTooltipDetails';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { TOP_TABLE_COLUMN_WIDTH, TRUNCATED_NODE_LABEL } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 import { getProfileTooltipData } from '../utils';
 
@@ -68,7 +70,27 @@ const FlameGraphTopTableContainer = memo(
     tableRefreshEnabled,
     contentAwareWidthsEnabled,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const isDiff = data.isDiffFlamegraph();
+    // The truncated "other" node is not actionable resource consumption, so it gets its own
+    // note below the table instead of a row. Diff tables keep it as a row: the note's
+    // self/total wording does not apply to baseline/comparison/diff values.
+    const { table, truncated, unfilteredMinTotal } = useMemo(() => {
+      const full = buildFilteredTable(data, matchedLabels);
+      if (isDiff) {
+        return { table: full, truncated: undefined, unfilteredMinTotal: undefined };
+      }
+      const { [TRUNCATED_NODE_LABEL]: other, ...rest } = full;
+      if (other && Object.keys(rest).length === 0) {
+        // The filter matched only `other` (e.g. highlighting it from the
+        // note): keep it as a row so the table does not go blank.
+        return { table: full, truncated: undefined, unfilteredMinTotal: undefined };
+      }
+      // The threshold sentence states a global fact, so its minimum comes
+      // from the unfiltered table, not the visible rest.
+      const unfiltered = buildFilteredTable(data);
+      delete unfiltered[TRUNCATED_NODE_LABEL];
+      return { table: rest, truncated: other, unfilteredMinTotal: minTotal(unfiltered) };
+    }, [data, matchedLabels, isDiff]);
 
     const styles = useStyles2(getStyles, Boolean(useTableNG), tableRefreshEnabled);
     const theme = useTheme2();
@@ -77,68 +99,153 @@ const FlameGraphTopTableContainer = memo(
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
-
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              Boolean(useTableNG),
-              search,
-              sandwichItem
-            );
-
-            const onSortByChange = (s: TableSortByFieldState[]) => {
-              if (s && s.length) {
-                onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+        <div className={styles.tableWrapper}>
+          <AutoSizer style={{ width: '100%' }}>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
               }
-              setSort(s);
-            };
 
-            if (useTableNG) {
-              // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
-              // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
-              return (
-                <div style={{ width, height }}>
-                  <TableNG
-                    sortBy={sort}
-                    sortByBehavior="managed"
-                    onSortByChange={onSortByChange}
-                    data={frame}
-                    width={width}
-                    height={height}
-                    tableRefreshEnabled={tableRefreshEnabled}
-                    contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-                    // The pane's width is already divided up between the three fixed columns and
-                    // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
-                    // Symbol truncates to fit instead — its full value is a click away in the flame
-                    // graph, and in a narrow split pane it truncates either way.
-                    preventHorizontalOverflow
-                  />
-                </div>
+              const frame = buildTableDataFrame(
+                data,
+                table,
+                width,
+                onSymbolClick,
+                onSearch,
+                onSandwich,
+                theme,
+                colorScheme,
+                Boolean(useTableNG),
+                search,
+                sandwichItem
               );
-            }
 
-            return (
-              <Table initialSortBy={sort} onSortByChange={onSortByChange} data={frame} width={width} height={height} />
-            );
-          }}
-        </AutoSizer>
+              const onSortByChange = (s: TableSortByFieldState[]) => {
+                if (s && s.length) {
+                  onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                }
+                setSort(s);
+              };
+
+              if (useTableNG) {
+                // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
+                // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
+                return (
+                  <div style={{ width, height }}>
+                    <TableNG
+                      sortBy={sort}
+                      sortByBehavior="managed"
+                      onSortByChange={onSortByChange}
+                      data={frame}
+                      width={width}
+                      height={height}
+                      tableRefreshEnabled={tableRefreshEnabled}
+                      contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+                      // The pane's width is already divided up between the three fixed columns and
+                      // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
+                      // Symbol truncates to fit instead — its full value is a click away in the flame
+                      // graph, and in a narrow split pane it truncates either way.
+                      preventHorizontalOverflow
+                    />
+                  </div>
+                );
+              }
+
+              return (
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={onSortByChange}
+                  data={frame}
+                  width={width}
+                  height={height}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+        {truncated && (
+          <TruncatedStacksNote
+            truncated={truncated}
+            minTotal={unfilteredMinTotal}
+            display={data.valueDisplayProcessor}
+            search={search}
+            sandwichItem={sandwichItem}
+            onSymbolClick={onSymbolClick}
+            onSandwich={onSandwich}
+          />
+        )}
       </div>
     );
   }
 );
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
+
+function minTotal(table: { [key: string]: TableData }): number | undefined {
+  let min: number | undefined;
+  for (const key in table) {
+    const total = table[key].total;
+    if (typeof total === 'number' && (min === undefined || total < min)) {
+      min = total;
+    }
+  }
+  return min;
+}
+
+type TruncatedStacksNoteProps = {
+  truncated: TableData;
+  minTotal: number | undefined;
+  display: DisplayProcessor;
+  search?: string;
+  sandwichItem?: string;
+  onSymbolClick: (symbol: string) => void;
+  onSandwich: (symbol?: string) => void;
+};
+
+function TruncatedStacksNote({
+  truncated,
+  minTotal,
+  display,
+  search,
+  sandwichItem,
+  onSymbolClick,
+  onSandwich,
+}: TruncatedStacksNoteProps) {
+  const styles = useStyles2(getNoteStyles);
+  const isHighlighted = search === `^${escapeStringForRegex(TRUNCATED_NODE_LABEL)}$`;
+  const isSandwiched = sandwichItem === TRUNCATED_NODE_LABEL;
+  const truncatedTotal = formattedValueToString(display(truncated.total ?? 0));
+
+  return (
+    <div className={styles.note} data-testid="truncatedStacksNote">
+      <IconButton
+        name="search"
+        variant={isHighlighted ? 'primary' : 'secondary'}
+        tooltip={isHighlighted ? 'Clear highlight' : 'Highlight symbol'}
+        aria-label={isHighlighted ? 'Clear highlight' : 'Highlight symbol'}
+        onClick={() => onSymbolClick(TRUNCATED_NODE_LABEL)}
+      />
+      <IconButton
+        name="gf-show-context"
+        tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+        variant={isSandwiched ? 'primary' : 'secondary'}
+        aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+        onClick={() => onSandwich(isSandwiched ? undefined : TRUNCATED_NODE_LABEL)}
+      />
+      <Text variant="bodySmall" color="secondary">
+        A total of &quot;{truncatedTotal}&quot; has been truncated and is represented by &quot;
+        {TRUNCATED_NODE_LABEL}&quot; in the flamegraph.
+        {minTotal !== undefined && (
+          <>
+            {' '}
+            Each truncated stacktrace had a total resource consumption of &quot;
+            {formattedValueToString(display(minTotal))}&quot;.
+          </>
+        )}
+      </Text>
+    </div>
+  );
+}
 
 function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
   // Group the data by label, we show only one row per label and sum the values
@@ -497,10 +604,25 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
+const getNoteStyles = (theme: GrafanaTheme2) => {
+  return {
+    note: css({
+      label: 'truncatedStacksNote',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+  };
+};
+
 const getStyles = (theme: GrafanaTheme2, useTableNG: boolean, tableRefreshEnabled?: boolean) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
+      display: 'flex',
+      flexDirection: 'column',
       padding: useTableNG ? 0 : theme.spacing(1),
       backgroundColor: useTableNG ? 'transparent' : theme.colors.background.secondary,
       height: '100%',
@@ -518,6 +640,12 @@ const getStyles = (theme: GrafanaTheme2, useTableNG: boolean, tableRefreshEnable
           ? theme.components.table.headerBackground
           : theme.colors.background.secondary,
       },
+    }),
+    tableWrapper: css({
+      label: 'topTableWrapper',
+      flex: 1,
+      minHeight: 0,
+      minWidth: 0,
     }),
   };
 };

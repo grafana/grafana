@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 import { act } from 'react';
 
-import { createDataFrame, FieldType } from '@grafana/data';
+import { createDataFrame, type DataFrameDTO, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -576,4 +576,128 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
       });
     }
   );
+});
+
+describe.each([false, true])('truncated stacks note with useTableNG=%s', (useTableNG) => {
+  // 'other' holds the folded stack traces (total 40); the smallest shown total is 'bar' (25).
+  const dataWithOther: DataFrameDTO = {
+    name: 'response',
+    fields: [
+      { name: 'level', values: [0, 1, 2, 1] },
+      { name: 'value', values: [100, 60, 25, 40] },
+      { name: 'self', values: [0, 35, 25, 40] },
+      { name: 'label', values: ['total', 'foo', 'bar', 'other'] },
+    ],
+  };
+
+  const setup = () => {
+    const container = new FlameGraphDataContainer(createDataFrame(dataWithOther), { collapsing: true });
+    const onSymbolClick = jest.fn();
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={onSymbolClick}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+      />
+    );
+
+    return { onSymbolClick, onSearch, onSandwich };
+  };
+
+  it('filters the other row and explains the truncation below the table', async () => {
+    mockTableSize();
+    setup();
+
+    const note = await screen.findByTestId('truncatedStacksNote');
+    expect(note).toHaveTextContent(
+      'A total of "40" has been truncated and is represented by "other" in the flamegraph.'
+    );
+    expect(note).toHaveTextContent('Each truncated stacktrace had a total resource consumption of "25".');
+
+    // The remaining rows still render, and 'other' has no table row of its own.
+    expect(screen.getByText('foo')).toBeInTheDocument();
+    expect(screen.getByText('bar')).toBeInTheDocument();
+    expect(screen.queryByText('other', { exact: true })).not.toBeInTheDocument();
+  });
+
+  it('highlights and sandwiches the other node from the note', async () => {
+    mockTableSize();
+    const { onSymbolClick, onSandwich } = setup();
+
+    const note = await screen.findByTestId('truncatedStacksNote');
+    await userEvents.click(within(note).getByRole('button', { name: 'Highlight symbol' }));
+    expect(onSymbolClick).toHaveBeenCalledWith('other');
+
+    await userEvents.click(within(note).getByRole('button', { name: 'Show in sandwich view' }));
+    expect(onSandwich).toHaveBeenCalledWith('other');
+  });
+
+  it('keeps the other row when the filter matches only it', async () => {
+    mockTableSize();
+    const container = new FlameGraphDataContainer(createDataFrame(dataWithOther), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+        matchedLabels={new Set(['other'])}
+        search="^other$"
+      />
+    );
+
+    // The single matching row renders instead of a blank table ...
+    expect(await screen.findByText('other', { exact: true })).toBeInTheDocument();
+    // ... and the note hides since there is no separate rest to explain.
+    expect(screen.queryByTestId('truncatedStacksNote')).not.toBeInTheDocument();
+  });
+
+  it('keeps the global threshold when a partial filter is applied', async () => {
+    mockTableSize();
+    const container = new FlameGraphDataContainer(createDataFrame(dataWithOther), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+        matchedLabels={new Set(['foo', 'other'])}
+      />
+    );
+
+    // The visible rest is just foo (60), but the threshold still reports
+    // the unfiltered minimum (bar, 25).
+    const note = await screen.findByTestId('truncatedStacksNote');
+    expect(note).toHaveTextContent('Each truncated stacktrace had a total resource consumption of "25".');
+  });
+
+  it('shows no note when nothing was truncated', async () => {
+    mockTableSize();
+
+    // dataNestedSet has no 'other' label.
+    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={useTableNG}
+      />
+    );
+
+    await screen.findAllByRole('row');
+    expect(screen.queryByTestId('truncatedStacksNote')).not.toBeInTheDocument();
+  });
 });
