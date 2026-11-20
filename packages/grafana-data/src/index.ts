@@ -639,6 +639,7 @@ export {
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionDataSourcePermissionsContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
