@@ -57,7 +57,6 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   };
 }
 
-/** A page search's result with the folder lookup in front of it: the list waits for the lookup, and Retry retries it when it failed. */
 export function withFolderLookup<Result extends { isLoading: boolean; error: unknown; retry: () => void }>(
   lookup: ReturnType<typeof useRuleSearchApiArgs>,
   result: Result

@@ -20,7 +20,7 @@ export interface ParsedSearch<Filter extends SharedRuleFilter> {
 /**
  * Parses the query into a filter, then gives feedback on the result. Parsing rejects only a value the
  * filter can't hold; feedback judges what parsing accepted, so `state:bogus` is a parse rejection and
- * `folder:f*` is feedback.
+ * `folderUid:f*` is feedback.
  */
 export function parse<Filter extends SharedRuleFilter>(
   query: string,

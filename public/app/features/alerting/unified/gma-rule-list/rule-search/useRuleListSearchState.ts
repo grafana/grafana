@@ -16,7 +16,7 @@ export interface UseRuleListSearchStateResult<Filter extends SharedRuleFilter> {
   /** The page's filters as the search help shows them. */
   filterHelp: FilterHelp[];
   mode: RuleListMode;
-  /** Folders mode supports only the folder filter; any other filter or free text forces List. */
+  /** Folders mode supports only the folder filters; any other filter or free text forces List. */
   hasNonFolderFilters: boolean;
   applyQuery: (query: string) => void;
   setMode: (mode: RuleListMode) => void;

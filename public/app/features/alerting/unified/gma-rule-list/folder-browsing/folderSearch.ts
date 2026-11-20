@@ -36,7 +36,7 @@ const folderSearchResponseSchema = z.object({
 type FolderSearchResponse = z.infer<typeof folderSearchResponseSchema>;
 
 /**
- * Infinite query keyed by rule kind and folder filter, so a new filter starts again from the first page. The
+ * Infinite query keyed by rule kind and folder filters, so a new filter starts again from the first page. The
  * generated search is a plain query with no page state.
  */
 const folderSearchAPI = folderAPI.injectEndpoints({

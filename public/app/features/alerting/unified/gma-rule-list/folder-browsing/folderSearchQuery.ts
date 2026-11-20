@@ -11,7 +11,6 @@ const FOLDER_HAS_RULES_LABEL: Record<RuleKind, string> = {
 };
 const FOLDER_HAS_RULES_LABEL_VALUE = 'true';
 
-/** The folder filters; a listing keeps the folders that match both. */
 export type FolderScope = Pick<SharedRuleFilter, 'folder' | 'folderUids'>;
 
 /**
