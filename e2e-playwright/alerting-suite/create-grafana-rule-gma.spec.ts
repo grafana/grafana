@@ -2,10 +2,6 @@ import { test, expect, contactPoint, dataSource, ruleUidFromUrl } from './fixtur
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { AlertRuleViewPage } from './pages/AlertRuleViewPage';
 
-// These tests run in parallel across workers. The worker-scoped `folder` fixture (see
-// fixtures.ts) creates one folder per worker and reuses it, so folder writes stay at one
-// per worker instead of one per test — that's what keeps the 2-connection SQLite pool from
-// saturating and returning SQLITE_BUSY, which previously forced this file to run serially.
 test.use({
   openFeature: { flags: { 'alerting.gmaOnlyListView': true } },
 });
