@@ -74,6 +74,24 @@ export interface ImportFormValues {
   yamlImportTargetDatasourceName?: string;
 }
 
+interface RulesDataSource {
+  uid: string;
+  name: string | null;
+}
+
+/** What the rules step will import, from the one source the user chose. Built by `buildRulesImportJob`. */
+export type RulesImportJob = {
+  selectedRoutingTree: string;
+  targetFolder?: Folder;
+  pauseAlertingRules: boolean;
+  pauseRecordingRules: boolean;
+  targetDatasourceUID?: string;
+} & (
+  | { type: 'datasource'; datasource: RulesDataSource; namespace?: string; ruleGroup?: string }
+  // The data source is the one the rules run against, which may not be chosen yet.
+  | { type: 'yaml'; file: File; datasource?: RulesDataSource }
+);
+
 export type Step1Values = Pick<
   ImportFormValues,
   | 'policyTreeName'

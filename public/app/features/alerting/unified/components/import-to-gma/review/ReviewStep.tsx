@@ -16,7 +16,7 @@ import { StepKey } from '../Wizard/types';
 import { PreviewContentModal } from '../preview/PreviewContentModal';
 import { useNotificationsPreview } from '../preview/useNotificationsPreview';
 import { formatPreviewError, usePreviewContent } from '../preview/usePreviewContent';
-import { type DryRunValidationResult, type ImportFormValues } from '../types';
+import { type DryRunValidationResult, type ImportFormValues, type RulesImportJob } from '../types';
 
 // Validation Status Indicator Component
 interface ValidationStatusIndicatorProps {
@@ -148,11 +148,12 @@ function NotificationsCardContent({
 
 interface RulesCardContentProps {
   formData: ImportFormValues;
+  rulesJob: RulesImportJob | undefined;
   willImportRules: boolean;
   styles: ReturnType<typeof getStyles>;
 }
 
-function RulesCardContent({ formData, willImportRules, styles }: RulesCardContentProps) {
+function RulesCardContent({ formData, rulesJob, willImportRules, styles }: RulesCardContentProps) {
   if (!willImportRules) {
     return (
       <Text color="secondary">
@@ -166,15 +167,13 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
       <div className={styles.row}>
         <Text color="secondary">{t('alerting.import-to-gma.review.source', 'Source')}</Text>
         <Text>
-          {formData.rulesSource === 'yaml'
-            ? formData.rulesYamlFile?.name || 'YAML file'
-            : formData.rulesDatasourceName || 'Data source'}
+          {rulesJob?.type === 'yaml' ? rulesJob.file.name || 'YAML file' : rulesJob?.datasource.name || 'Data source'}
         </Text>
       </div>
-      {formData.rulesSource === 'yaml' && (
+      {rulesJob?.type === 'yaml' && (
         <div className={styles.row}>
           <Text color="secondary">{t('alerting.import-to-gma.review.yaml-datasource', 'Data source')}</Text>
-          <Text>{formData.yamlImportTargetDatasourceName ?? formData.yamlImportTargetDatasourceUID ?? ''}</Text>
+          <Text>{rulesJob.datasource?.name ?? rulesJob.datasource?.uid ?? ''}</Text>
         </div>
       )}
       <div className={styles.row}>
@@ -218,6 +217,7 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
 // Review Step Component
 interface ReviewStepProps {
   formData: ImportFormValues;
+  rulesJob?: RulesImportJob;
   onStartImport: () => void;
   dryRunResult?: DryRunValidationResult;
   /** The rules the import will send, already filtered. Only set for a data source. */
@@ -227,14 +227,9 @@ interface ReviewStepProps {
   rulesError?: Error;
 }
 
-// True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
-// Typed as a guard so callers get `file` narrowed to `File` afterwards, instead of a bare boolean.
-function hasYamlUpload(source: string, file: File | null): file is File {
-  return source === 'yaml' && file !== null;
-}
-
 export function ReviewStep({
   formData,
+  rulesJob,
   onStartImport,
   dryRunResult,
   rulesToImport,
@@ -258,14 +253,14 @@ export function ReviewStep({
   // unlike notifier configs, so this is shown as-is rather than run through redactPreviewSecrets.
   const handlePreviewRules = useCallback(() => {
     rulesPreview.show(async () => {
-      if (hasYamlUpload(formData.rulesSource, formData.rulesYamlFile)) {
-        return formData.rulesYamlFile.text();
+      if (rulesJob?.type === 'yaml') {
+        return rulesJob.file.text();
       } else if (rulesToImport) {
         return JSON.stringify(rulesToImport, null, 2);
       }
       return '';
     }, formatPreviewError);
-  }, [rulesPreview, formData.rulesSource, formData.rulesYamlFile, rulesToImport]);
+  }, [rulesPreview, rulesJob, rulesToImport]);
 
   // Calculate rules count
   const rulesCount = useMemo(() => {
@@ -381,7 +376,12 @@ export function ReviewStep({
               )}
             </div>
             <div className={styles.cardContent}>
-              <RulesCardContent formData={formData} willImportRules={willImportRules} styles={styles} />
+              <RulesCardContent
+                formData={formData}
+                rulesJob={rulesJob}
+                willImportRules={willImportRules}
+                styles={styles}
+              />
             </div>
           </div>
         </Stack>
@@ -433,7 +433,7 @@ export function ReviewStep({
         title={t('alerting.import-to-gma.preview.rules-title', 'Alert Rules Preview')}
         content={rulesPreview.content}
         isLoading={rulesPreview.isLoading}
-        language={formData.rulesSource === 'yaml' ? 'yaml' : 'json'}
+        language={rulesJob?.type === 'yaml' ? 'yaml' : 'json'}
         onDismiss={rulesPreview.hide}
       />
     </Stack>
