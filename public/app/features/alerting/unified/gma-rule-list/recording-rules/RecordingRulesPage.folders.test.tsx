@@ -77,7 +77,7 @@ describe('RecordingRulesPage folder list', () => {
   it('lists only the filtered folder and stays in Folders mode', async () => {
     setup();
 
-    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3A%22team%20metrics%22'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Metrics']);
@@ -121,16 +121,14 @@ describe('RecordingRulesPage folder list', () => {
 
   it('restarts the folder list, collapsed, when the folder filter changes', async () => {
     setup({ pageSize: { folders: 1 } });
-    const { user } = render(<RecordingRulesPage />, {
-      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'folder:infra folder:team' })}`] },
-    });
+    const { user } = render(<RecordingRulesPage />);
     await user.click(await screen.findByRole('button', { name: 'Expand Infra' }));
     await screen.findByRole('link', { name: 'latency:p99' });
     intersection.intersectObserved();
     expect(await screen.findByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
 
     await user.tripleClick(screen.getByRole('textbox', { name: 'Search' }));
-    await user.keyboard('folder:infra{Enter}');
+    await user.keyboard('folder:Infra{Enter}');
 
     // The same folder reappears under the new filter, but no longer expanded.
     expect(await screen.findByRole('button', { name: 'Expand Infra' })).toHaveAttribute('aria-expanded', 'false');

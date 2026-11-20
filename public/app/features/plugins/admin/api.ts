@@ -2,9 +2,8 @@ import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   assertPluginIdFormat,
-  FlagKeys,
-  getFeatureFlagClient,
   installPluginMeta,
+  logPluginMetaError,
   uninstallPluginMeta,
 } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -233,10 +232,20 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 export async function installPlugin(id: string, version?: string) {
   assertPluginIdFormat(id);
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return await installPluginMeta(id, version ?? '');
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
+  // We call both this and the legacy path because the K8s settings API doesn't cover all
+  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
+  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
+  try {
+    await installPluginMeta(id, version ?? '');
+  } catch (error: unknown) {
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
   }
 
+  // Legacy install path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(
     `${API_ROOT}/${id}/install`,
     { version },
@@ -250,10 +259,19 @@ export async function installPlugin(id: string, version?: string) {
 export async function uninstallPlugin(id: string) {
   assertPluginIdFormat(id);
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    return await uninstallPluginMeta(id);
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
+  // We call both this and the legacy path because the K8s settings API doesn't cover all
+  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
+  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
+  try {
+    await uninstallPluginMeta(id);
+  } catch (error: unknown) {
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
   }
 
+  // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 

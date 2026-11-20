@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -67,6 +68,7 @@ type ControllerConfig struct {
 	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
+	manifestWatcher       services.Service
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
@@ -254,6 +256,14 @@ func (c *ControllerConfig) SupportedResources() ([]resources.SupportedResource, 
 	return supported, nil
 }
 
+func (c *ControllerConfig) NewSupportedResourceProvider() (resources.SupportedResourceProvider, error) {
+	configured, err := c.SupportedResources()
+	if err != nil {
+		return nil, err
+	}
+	return resources.NewSupportedResourceProvider(configured), nil
+}
+
 // Clients Clients are clients that are used to connect to the different API servers.
 func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if c.clients != nil {
@@ -290,7 +300,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		provisioning.GROUP:                provisioningServerURL,
 	}
 
-	supportedResources, err := c.SupportedResources()
+	supportedResourceProvider, err := c.NewSupportedResourceProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +310,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	// "no clients provider for group" at request time. A collection is registered under the
 	// collection group, not its members: those cannot be discovered before there is a client to
 	// discover through.
-	for _, r := range supportedResources {
+	for _, r := range supportedResourceProvider.Configured() {
 		if !r.IsActive() {
 			continue
 		}
@@ -315,7 +325,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
-		apiServerURLs[group] = aggregatedServerURL
+	}
+	if aggregatedServerURL != "" {
+		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -330,6 +342,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		audiences := []string{group}
 		if group != provisioning.GROUP {
 			audiences = append(audiences, provisioning.GROUP)
+		}
+		if group == resources.AnyGroup {
+			audiences = []string{provisioning.GROUP}
 		}
 
 		config := &rest.Config{
@@ -351,7 +366,18 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
+	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
+		DiscoveryURL:      aggregatedServerURL,
+		DiscoveryAudience: provisioning.GROUP,
+		Exchanger:         tokenExchangeClient,
+		TLS:               &tlsConfig,
+		PollInterval:      time.Minute,
+		Log:               c.Settings.Logger,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
+	}
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
 	c.clients = clients
 	return clients, nil
 }

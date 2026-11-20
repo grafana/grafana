@@ -601,6 +601,48 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 	}
 }
 
+// An entry without a plugin ID and without a served version has nothing to
+// route, so the target drops it without counting a skipped backend. A named
+// plugin that serves nothing still counts.
+func TestPluginManifestsTargetIgnoresUnnamedManifestsWithoutServedVersions(t *testing.T) {
+	entry := func(id, versions string) string {
+		return `{"definition": {"jsonData": {"id": "` + id + `", "type": "app"}, "manifests": [{
+			"appName": "app", "group": "example.ext.grafana.app",
+			"versions": ` + versions + `, "preferredVersion": "v1"}]}}`
+	}
+	for _, tc := range []struct {
+		name     string
+		id       string
+		versions string
+		loaded   bool
+		skipped  int
+	}{
+		{name: "no ID and no versions", versions: `[]`},
+		{name: "no ID and only unserved versions", versions: `[{"name": "v1", "served": false}]`},
+		{name: "no ID and a served version", versions: `[{"name": "v1", "served": true}]`, loaded: true},
+		{name: "an ID and no versions", id: "example-app", versions: `[]`, skipped: 1},
+		{name: "an ID and only unserved versions", id: "example-app", versions: `[{"name": "v1", "served": false}]`, skipped: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(`{"key": "k", "plugins": [` + entry(tc.id, tc.versions) + `]}`))
+			}))
+			defer srv.Close()
+
+			target, err := newPluginManifestsTarget(sourceCore, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+			require.NoError(t, err)
+			target.poll(t.Context(), make(chan struct{}, 1))
+
+			require.Equal(t, tc.skipped, target.status.status(sourceCore).Skipped)
+			if tc.loaded {
+				require.Len(t, target.Backends(), 1)
+			} else {
+				require.Empty(t, target.Backends())
+			}
+		})
+	}
+}
+
 // An HTTP operator gets only a v3 client, from baasbridge, and no connection.
 func TestPluginManifestsTargetHTTPClient(t *testing.T) {
 	target := &pluginConnections{}
