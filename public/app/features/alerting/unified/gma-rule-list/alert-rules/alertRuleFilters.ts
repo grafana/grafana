@@ -38,6 +38,7 @@ export const alertRuleSearchSchema: RuleSearchSchema<AlertRuleFilter, AlertFilte
     sharedFilters.rule,
     sharedFilters.label,
     sharedFilters.folder,
+    sharedFilters.folderUid,
     sharedFilters.datasource,
     sharedFilters.plugins,
     {

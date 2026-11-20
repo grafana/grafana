@@ -17,6 +17,7 @@ export const recordingRuleSearchSchema: RuleSearchSchema<RecordingRuleFilter, Re
     sharedFilters.rule,
     sharedFilters.label,
     sharedFilters.folder,
+    sharedFilters.folderUid,
     sharedFilters.datasource,
     sharedFilters.plugins,
     {
