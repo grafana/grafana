@@ -955,11 +955,9 @@ func (f *routerClientFactory) Clients(ctx context.Context, namespace string) (re
 }
 
 func defaultConnectionTypes(extras []connection.Extra) []string {
-	types := []string{string(provisioning.GithubConnectionType)}
+	types := make([]string, 0, len(extras))
 	for _, extra := range extras {
-		if extra.Type() == provisioning.GithubEnterpriseConnectionType {
-			types = append(types, string(extra.Type()))
-		}
+		types = append(types, string(extra.Type()))
 	}
 	return types
 }
