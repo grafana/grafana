@@ -10,6 +10,7 @@ import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useRecordingRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
@@ -19,6 +20,7 @@ import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSear
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 import { RecordingRulesListView } from './RecordingRulesListView';
 import { type RecordingRuleFilter, recordingRuleSearchSchema } from './recordingRuleFilters';
@@ -68,9 +70,13 @@ function RecordingRulesPage() {
               }
             />
           </div>
-          <RuleSequenceDrawerProvider>
-            <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-          </RuleSequenceDrawerProvider>
+          <FilterSidebarLayout
+            sidebar={<RecordingRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}
+          >
+            <RuleSequenceDrawerProvider>
+              <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </RuleSequenceDrawerProvider>
+          </FilterSidebarLayout>
         </Stack>
       </Box>
     </AlertingPageWrapper>

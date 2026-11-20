@@ -47,22 +47,48 @@ export function getFrameFilter(frames: readonly DataFrame[], frameIndex: number)
   return { id: FrameMatcherID.byRefId, options: refId };
 }
 
-export function prepareColumnContext(
-  sourceSeries: readonly DataFrame[],
-  sourceIndex: number
-): ColumnContext | undefined {
-  // Hidden columns must remain in the catalog. Cache names on copies, across the full source series.
-  const source = sourceSeries.map((frame) => ({
+function copyWithDisplayNames(frame: DataFrame): DataFrame {
+  const copy = {
     ...frame,
     fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
-  }));
-  cacheFieldDisplayNames(source);
-  const frame = source[sourceIndex];
-  const catalog = getVisibleFields(frame.fields).map(getDisplayName);
+  };
+  cacheFieldDisplayNames([copy]);
+  return copy;
+}
 
-  // Display names identify columns; duplicates cannot be managed independently.
-  if (new Set(catalog).size !== catalog.length) {
+export function prepareColumnContext(
+  sourceSeries: readonly DataFrame[],
+  sourceIndex: number,
+  displaySeries?: readonly DataFrame[]
+): ColumnContext | undefined {
+  // Hidden columns must remain in the catalog. Cache names on a copy.
+  const frame = copyWithDisplayNames(sourceSeries[sourceIndex]);
+  const displayFrame = displaySeries ? displaySeries[sourceIndex] : frame;
+  if (displayFrame?.fields.length !== frame.fields.length) {
     return;
   }
-  return { catalog, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
+
+  const visibleFields = new Set(getVisibleFields(frame.fields));
+  const visibleIndexes = frame.fields.flatMap((field, index) => (visibleFields.has(field) ? [index] : []));
+  const catalog = visibleIndexes.map((index) => getDisplayName(frame.fields[index]));
+  const displayNames = visibleIndexes.map((index) => getDisplayName(displayFrame.fields[index]));
+
+  // Display names identify columns; duplicates cannot be managed independently.
+  if (new Set(catalog).size !== catalog.length || new Set(displayNames).size !== displayNames.length) {
+    return;
+  }
+  return { catalog, displayNames, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
+}
+
+function translateNames(from: string[], to: string[], names: Iterable<string>): string[] {
+  const translations = new Map(from.map((name, index) => [name, to[index]]));
+  return Array.from(names).flatMap((name) => translations.get(name) ?? []);
+}
+
+export function toDisplayNames({ catalog, displayNames = catalog }: ColumnContext, names: Iterable<string>): string[] {
+  return translateNames(catalog, displayNames, names);
+}
+
+export function toCatalogNames({ catalog, displayNames = catalog }: ColumnContext, names: Iterable<string>): string[] {
+  return translateNames(displayNames, catalog, names);
 }

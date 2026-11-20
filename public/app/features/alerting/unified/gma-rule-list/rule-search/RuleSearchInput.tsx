@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
@@ -35,9 +35,11 @@ export function RuleSearchInput({
 }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setDraft(query);
-  }, [query]);
+  }
 
   const handleChange = (value: string) => {
     setDraft(value);

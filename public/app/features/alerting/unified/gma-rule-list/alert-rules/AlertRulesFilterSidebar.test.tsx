@@ -1,6 +1,9 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
 import { setupDataSources } from '../../testSetup/datasources';
@@ -13,7 +16,14 @@ import AlertRulesPage from './AlertRulesPage';
 setupMswServer();
 setupDataSources(mockDataSource({ uid: 'prom-uid', name: 'Prometheus main' }, { alerting: true }));
 
+// The sidebar shows beside the rules from the lg breakpoint; jsdom's matchMedia never matches.
+const jsdomMatchMedia = window.matchMedia;
+function setWideScreen(isWide: boolean) {
+  jest.spyOn(window, 'matchMedia').mockImplementation((query) => ({ ...jsdomMatchMedia(query), matches: isWide }));
+}
+
 beforeEach(() => {
+  setWideScreen(true);
   setupRuleListBackend({
     folders: [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Alerts' } })],
     alertRules: [alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'CPU high load' } })],
@@ -37,6 +47,18 @@ function group(name: string) {
 }
 
 describe('AlertRulesFilterSidebar', () => {
+  it('folds the filters above the rules on a narrow screen, until opened', async () => {
+    setWideScreen(false);
+    const { user } = renderPage('cpu');
+
+    expect(await screen.findByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Rule name' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Filters' }));
+
+    expect(screen.getByRole('textbox', { name: 'Rule name' })).toHaveValue('cpu');
+  });
+
   it('shows each filter of the query in its control', async () => {
     renderPage('cpu state:firing label:team=api label:!env paused:true plugins:hide');
 
@@ -50,7 +72,10 @@ describe('AlertRulesFilterSidebar', () => {
     expect(keys).toHaveLength(2);
     expect(keys[0]).toHaveValue('team');
     expect(keys[1]).toHaveValue('env');
-    expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+    const values = screen.getAllByRole('textbox', { name: 'Label value' });
+    expect(values[0]).toHaveValue('api');
+    expect(values[1]).toBeDisabled();
+    expect(values[1]).toHaveAttribute('placeholder', 'none');
   });
 
   it.each([
@@ -62,6 +87,37 @@ describe('AlertRulesFilterSidebar', () => {
     expect(await screen.findByText(shown)).toBeInTheDocument();
   });
 
+  it('offers only named notification policies, and adds a picked one to the query', async () => {
+    mockComboboxRect();
+    const { user } = renderPage('cpu');
+
+    await user.click(await screen.findByRole('combobox', { name: /Notification policy/ }));
+    const named = await screen.findByRole('option', { name: /Managed Policy - Empty Provisioned/ });
+    expect(screen.queryByRole('option', { name: /Default policy/ })).not.toBeInTheDocument();
+    await user.click(named);
+
+    await waitFor(() => expect(searchParam()).toBe('cpu policy:"Managed Policy - Empty Provisioned"'));
+  });
+
+  it('shows the folders of the query by title in one picker, and adds a picked folder to the query', async () => {
+    server.use(
+      getCustomSearchHandler([
+        { resource: 'folders', name: 'folder-1', title: 'Team Alerts' },
+        { resource: 'folders', name: 'folder-2', title: 'Payments' },
+      ])
+    );
+    mockComboboxRect();
+    const { user } = renderPage('cpu folder:folder-1');
+    const folders = await screen.findByRole('combobox', { name: 'Folder' });
+
+    await waitFor(() => expect(folders.closest('div')?.parentElement).toHaveTextContent('Team Alerts'));
+
+    await user.click(folders);
+    await user.click(await screen.findByRole('option', { name: 'Payments' }));
+
+    await waitFor(() => expect(searchParam()).toBe('cpu folder:folder-1 folder:folder-2'));
+  });
+
   it('rewrites only the changed filter, keeping the rest of the query in order', async () => {
     const { user } = renderPage('cpu state:firing label:team=api');
 
@@ -71,6 +127,41 @@ describe('AlertRulesFilterSidebar', () => {
 
     await waitFor(() => expect(searchParam()).toBe('cpu state:pending label:team=api'));
     expect(searchInput()).toHaveValue('cpu state:pending label:team=api');
+  });
+
+  it('names the dashboard picker by its label', async () => {
+    renderPage('');
+
+    expect(await screen.findByRole('combobox', { name: 'Dashboard' })).toBeInTheDocument();
+  });
+
+  it('keeps the help icon out of the label, so it is not part of the field name', async () => {
+    renderPage('');
+
+    expect((await screen.findByTitle('Folder filter help')).closest('label')).toBeNull();
+  });
+
+  it('moves focus with the arrow keys and picks with Space, from a single tab stop on the checked option', async () => {
+    const { user } = renderPage('cpu');
+    const health = await screen.findByRole('radiogroup', { name: 'Health' });
+    const radio = (name: string) => within(health).getByRole('radio', { name });
+    const tabStops = () =>
+      within(health)
+        .getAllByRole('radio')
+        .filter((option) => option.tabIndex === 0);
+    expect(tabStops()).toEqual([radio('All')]);
+
+    radio('All').focus();
+    await user.keyboard('{ArrowUp}');
+    expect(radio('Unknown')).toHaveFocus();
+    expect(searchParam()).toBe('cpu');
+
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(radio('OK')).toHaveFocus();
+    await user.keyboard(' ');
+
+    await waitFor(() => expect(searchParam()).toBe('cpu health:ok'));
+    expect(tabStops()).toEqual([radio('OK')]);
   });
 
   it('applies the rule name on blur, replacing only the title text', async () => {

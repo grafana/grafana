@@ -197,30 +197,38 @@ describe('picking', () => {
     });
   });
 
-  it('leaves Composer on Escape', async () => {
+  it('keeps Composer open on Escape', async () => {
     const { scene, session, startPick } = setup();
-    const pick = startPick();
+    const modeBefore = scene.state.mode;
+    const resolved = jest.fn();
+    startPick().then(resolved);
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    const escape = fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
 
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
-    expect(scene.state.mode).toBe('view');
+    expect(escape).toBe(false); // swallowed, so exit edit and close view panel do not see it either
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(scene.state.mode).toBe(modeBefore);
   });
 
-  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
+  it('cancels a drag on Escape and keeps Composer open', async () => {
     const { session, startPick } = setup();
-    const pick = startPick();
+    const resolved = jest.fn();
+    startPick().then(resolved);
     const overlay = screen.getByTestId('dashboard-composer-overlay');
     fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
     fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    expect(resolved).not.toHaveBeenCalled();
     expect(session.isClosed).toBe(false);
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 
   it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
@@ -242,9 +250,17 @@ describe('picking', () => {
     expect(resolved).not.toHaveBeenCalled();
     expect(session.getOverlayState().picking).toBe(true);
 
-    fireEvent.keyDown(document.body, { key: 'Escape' });
+    const outside = fireEvent.keyDown(document.body, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(outside).toBe(false); // outside the anchor the overlay still swallows it, and stays open
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+
+    act(() => {
+      session.exit();
+    });
     await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 });
 

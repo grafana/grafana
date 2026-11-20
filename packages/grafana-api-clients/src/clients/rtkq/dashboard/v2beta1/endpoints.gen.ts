@@ -43,6 +43,19 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['DashboardPreferences'],
       }),
+      getMergedDashboardPreferences: build.query<
+        GetMergedDashboardPreferencesApiResponse,
+        GetMergedDashboardPreferencesApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboardpreferences/merged`,
+          params: {
+            folder: queryArg.folder,
+            includeUser: queryArg.includeUser,
+          },
+        }),
+        providesTags: ['DashboardPreferences'],
+      }),
       getDashboardPreferences: build.query<GetDashboardPreferencesApiResponse, GetDashboardPreferencesApiArg>({
         query: (queryArg) => ({
           url: `/dashboardpreferences/${queryArg.name}`,
@@ -451,6 +464,14 @@ export type CreateDashboardPreferencesApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   dashboardPreferences: DashboardPreferences;
+};
+export type GetMergedDashboardPreferencesApiResponse =
+  /** status 200 The merged preferences */ DashboardPreferencesMerged;
+export type GetMergedDashboardPreferencesApiArg = {
+  /** UID of the folder the dashboard is created in. Omit it, or use general, for the top level. */
+  folder?: string;
+  /** Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder. */
+  includeUser?: boolean;
 };
 export type GetDashboardPreferencesApiResponse = /** status 200 OK */ DashboardPreferences;
 export type GetDashboardPreferencesApiArg = {
@@ -1163,6 +1184,33 @@ export type DashboardPreferencesList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type DashboardPreferencesMergedSource = {
+  /** The tier object's name. Left out for a parent folder the caller can't read. */
+  name?: string;
+  /** The tier reset the field to Grafana's built-in default, so it is absent from spec. */
+  reset?: boolean;
+  /** Possible enum values:
+     - `"folder"`
+     - `"org"`
+     - `"user"` */
+  tier: 'folder' | 'org' | 'user';
+};
+export type DashboardPreferencesMergedSpec = {
+  dashboard?: DashboardPreferencesDashboardDefaults;
+  panels?: DashboardPreferencesPanelDefaults;
+};
+export type DashboardPreferencesMerged = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** Where each field came from, keyed by its path as in spec.reset, such as "dashboard.autoGrid.columnWidth". A field with no entry uses Grafana's built-in default. */
+  sources: {
+    [key: string]: DashboardPreferencesMergedSource;
+  };
+  /** Only the fields some tier set. A field that is absent uses Grafana's built-in default. */
+  spec: DashboardPreferencesMergedSpec;
+};
 export type StatusCause = {
   /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
     
@@ -1643,6 +1691,18 @@ export type DashboardGridLayoutKind = {
   kind: string;
   spec: DashboardGridLayoutSpec;
 };
+export type DashboardPromptSource = {
+  /** The panel, by its name in dashboard.spec.elements. */
+  element: DashboardElementReference;
+};
+export type DashboardPrompt = {
+  /** The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on. */
+  sources?: DashboardPromptSource[];
+  /** The prompt that is run. Viewers see it on the dashboard unless it has a title. */
+  text: string;
+  /** A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt. */
+  title?: string;
+};
 export type DashboardTabRepeatOptions = {
   mode: string;
   value: string;
@@ -1886,6 +1946,8 @@ export type DashboardTabsLayoutTabSpec = {
   annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
+  /** Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls. */
+  prompts?: DashboardPrompt[];
   repeat?: DashboardTabRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -1918,6 +1980,8 @@ export type DashboardRowsLayoutRowSpec = {
   fillScreen?: boolean;
   hideHeader?: boolean;
   layout: DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind;
+  /** Prompts viewers can run on the panels in this row, offered by plugins in the row's controls. */
+  prompts?: DashboardPrompt[];
   repeat?: DashboardRowRepeatOptions;
   title?: string;
   variables?: DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind[];
@@ -2010,6 +2074,8 @@ export type DashboardSpec = {
   liveNow?: boolean;
   /** When set to true, the dashboard will load all panels in the dashboard when it's loaded. */
   preload: boolean;
+  /** Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls. */
+  prompts?: DashboardPrompt[];
   /** Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated. */
   revision?: number;
   /** Tags associated with dashboard. */
@@ -2527,6 +2593,8 @@ export const {
   useListDashboardPreferencesQuery,
   useLazyListDashboardPreferencesQuery,
   useCreateDashboardPreferencesMutation,
+  useGetMergedDashboardPreferencesQuery,
+  useLazyGetMergedDashboardPreferencesQuery,
   useGetDashboardPreferencesQuery,
   useLazyGetDashboardPreferencesQuery,
   useReplaceDashboardPreferencesMutation,

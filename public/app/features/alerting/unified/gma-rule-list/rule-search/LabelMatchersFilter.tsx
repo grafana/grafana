@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, IconButton, Input, Stack } from '@grafana/ui';
+import { Box, Button, Combobox, type ComboboxOption, IconButton, Input, Stack } from '@grafana/ui';
 
 import { SidebarField } from '../../rule-list/filter/RulesFilterSidebar';
 
@@ -31,9 +31,7 @@ export function LabelMatchersFilter({
     setRows(next);
     const complete = next
       .filter(isComplete)
-      .map(({ key, operator, value }) =>
-        operator === 'exists' || operator === 'absent' ? { key, operator } : { key, operator, value }
-      );
+      .map(({ key, operator, value }) => (takesValue(operator) ? { key, operator, value } : { key, operator }));
     if (apply && !isEqual(complete, sent)) {
       setSent(complete);
       onChange(complete);
@@ -53,31 +51,37 @@ export function LabelMatchersFilter({
           // Rows have no identity of their own, and their inputs hold no state, so the index is a safe key.
           // eslint-disable-next-line react/no-array-index-key
           <Stack key={index} direction="row" gap={0.5} alignItems="center">
-            <Input
-              aria-label={t('alerting.gma-rule-list.sidebar.label-key', 'Label key')}
-              placeholder={t('alerting.gma-rule-list.sidebar.label-key-placeholder', 'key')}
-              value={row.key}
-              onChange={(event) => edit(index, { key: event.currentTarget.value }, { apply: false })}
-              onBlur={applyRows}
-              onKeyDown={(event) => event.key === 'Enter' && applyRows()}
-            />
-            <Combobox
-              aria-label={t('alerting.gma-rule-list.sidebar.label-operator', 'Operator')}
-              width={8}
-              options={OPERATORS}
-              value={row.operator}
-              onChange={(option) => edit(index, { operator: option.value })}
-            />
-            {row.operator !== 'exists' && row.operator !== 'absent' && (
+            <Box grow={1} minWidth={8}>
+              <Input
+                aria-label={t('alerting.gma-rule-list.sidebar.label-key', 'Label key')}
+                placeholder={t('alerting.gma-rule-list.sidebar.label-key-placeholder', 'key')}
+                value={row.key}
+                onChange={(event) => edit(index, { key: event.currentTarget.value }, { apply: false })}
+                onBlur={applyRows}
+                onKeyDown={(event) => event.key === 'Enter' && applyRows()}
+              />
+            </Box>
+            <Box shrink={0}>
+              <Combobox
+                aria-label={t('alerting.gma-rule-list.sidebar.label-operator', 'Operator')}
+                width="auto"
+                minWidth={8}
+                options={getOperators()}
+                value={row.operator}
+                onChange={(option) => edit(index, { operator: option.value })}
+              />
+            </Box>
+            <Box grow={1} minWidth={8}>
               <Input
                 aria-label={t('alerting.gma-rule-list.sidebar.label-value', 'Label value')}
-                placeholder={t('alerting.gma-rule-list.sidebar.label-value-placeholder', 'value')}
-                value={row.value ?? ''}
+                placeholder={getValuePlaceholder(row.operator)}
+                disabled={!takesValue(row.operator)}
+                value={takesValue(row.operator) ? (row.value ?? '') : ''}
                 onChange={(event) => edit(index, { value: event.currentTarget.value }, { apply: false })}
                 onBlur={applyRows}
                 onKeyDown={(event) => event.key === 'Enter' && applyRows()}
               />
-            )}
+            </Box>
             <IconButton
               name="times"
               tooltip={t('alerting.gma-rule-list.sidebar.label-remove', 'Remove label matcher')}
@@ -99,14 +103,47 @@ export function LabelMatchersFilter({
 }
 
 function isComplete({ key, operator, value }: SearchLabelMatcher): boolean {
-  return key.length > 0 && (operator === 'exists' || operator === 'absent' || Boolean(value));
+  return key.length > 0 && (!takesValue(operator) || Boolean(value));
 }
 
-const OPERATORS: Array<{ label: string; value: SearchLabelMatcher['operator'] }> = [
-  { label: '=', value: 'equal' },
-  { label: '!=', value: 'notEqual' },
-  { label: '=~', value: 'regex' },
-  { label: '!~', value: 'notRegex' },
-  { label: 'exists', value: 'exists' },
-  { label: 'absent', value: 'absent' },
-];
+/** exists and absent match on the key alone. */
+function takesValue(operator: SearchLabelMatcher['operator']): boolean {
+  return operator !== 'exists' && operator !== 'absent';
+}
+
+function getValuePlaceholder(operator: SearchLabelMatcher['operator']): string {
+  if (operator === 'exists') {
+    return t('alerting.gma-rule-list.sidebar.label-value-any', 'any');
+  }
+  if (operator === 'absent') {
+    return t('alerting.gma-rule-list.sidebar.label-value-unset', 'none');
+  }
+  return t('alerting.gma-rule-list.sidebar.label-value-placeholder', 'value');
+}
+
+function getOperators(): Array<ComboboxOption<SearchLabelMatcher['operator']>> {
+  return [
+    { label: '=', value: 'equal', description: t('alerting.gma-rule-list.sidebar.operator-equal', 'Equals') },
+    {
+      label: '!=',
+      value: 'notEqual',
+      description: t('alerting.gma-rule-list.sidebar.operator-not-equal', 'Does not equal'),
+    },
+    { label: '=~', value: 'regex', description: t('alerting.gma-rule-list.sidebar.operator-regex', 'Matches regex') },
+    {
+      label: '!~',
+      value: 'notRegex',
+      description: t('alerting.gma-rule-list.sidebar.operator-not-regex', 'Does not match regex'),
+    },
+    {
+      label: t('alerting.gma-rule-list.sidebar.operator-exists', 'exists'),
+      value: 'exists',
+      description: t('alerting.gma-rule-list.sidebar.operator-exists-description', 'Has this label'),
+    },
+    {
+      label: t('alerting.gma-rule-list.sidebar.operator-absent', 'absent'),
+      value: 'absent',
+      description: t('alerting.gma-rule-list.sidebar.operator-absent-description', 'Lacks this label'),
+    },
+  ];
+}

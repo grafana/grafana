@@ -1,16 +1,41 @@
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
+import { useAsync } from 'react-use';
 
+import { buildRoutingTreeOptions, isDefaultRoutingTreeName, useRoutingTrees } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Input, MultiCombobox, Stack } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { Box, Collapse, Combobox, Divider, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import {
-  FieldLabelWithTooltip,
-  SidebarField,
-  ToggleButtonGroup,
-  type ToggleOption,
-} from '../../rule-list/filter/RulesFilterSidebar';
+import { SidebarField, ToggleButtonGroup, type ToggleOption } from '../../rule-list/filter/RulesFilterSidebar';
+
+import { type HealthValue } from './sharedRuleFilter';
+
+/** The filter sidebar beside the rules, or folded above them on narrow screens so the rules keep the full width. */
+export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
+  const isWide = useMediaQueryMinWidth('lg');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // The rules keep their place in the tree across layouts, so resizing doesn't remount the list.
+  return (
+    <Stack direction={isWide ? 'row' : 'column'} gap={2}>
+      {isWide ? (
+        <Box width={32} shrink={0} paddingBottom={2}>
+          {sidebar}
+        </Box>
+      ) : (
+        <Collapse label={t('alerting.gma-rule-list.sidebar.filters', 'Filters')} isOpen={isOpen} onToggle={setIsOpen}>
+          {sidebar}
+        </Collapse>
+      )}
+      {isWide && <Divider direction="vertical" spacing={0} />}
+      <Box flex={1} minWidth={0}>
+        {children}
+      </Box>
+    </Stack>
+  );
+}
 
 /** One choice of a few, plus All for no filter. */
 export function ChoiceFilter<Value extends string>({
@@ -77,43 +102,25 @@ export function TextFilter({
   );
 }
 
-/** One picker per chosen folder, then an empty one that adds a folder. */
 export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; onChange: (uids: string[]) => void }) {
-  const replace = (index: number, uid: string | undefined) => {
-    const next = [...folderUids];
-    next.splice(index, 1, ...(uid ? [uid] : []));
-    onChange(next);
-  };
+  const id = useId();
+  const { value: titles } = useAsync(() => getFolderTitles(folderUids), [folderUids]);
+  const value = folderUids.map((uid) => ({ value: uid, label: titles?.get(uid) ?? uid }));
 
   return (
     <SidebarField
-      label={
-        <FieldLabelWithTooltip
-          label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
-          tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
-          tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
-        />
-      }
+      htmlFor={id}
+      label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
+      tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
     >
-      <Stack direction="column" gap={1}>
-        {folderUids.map((uid, index) => (
-          <NestedFolderPicker
-            // The same folder can be listed twice, and the picker reads its value from props.
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
-            value={uid}
-            permission="view"
-            clearable
-            onChange={(next) => replace(index, next)}
-          />
-        ))}
-        <NestedFolderPicker
-          // A new key after each pick, so the next empty picker starts empty.
-          key={folderUids.length}
-          permission="view"
-          onChange={(uid) => uid && onChange([...folderUids, uid])}
-        />
-      </Stack>
+      <MultiCombobox<string>
+        id={id}
+        options={searchFolders}
+        value={value}
+        placeholder={t('alerting.gma-rule-list.sidebar.folder-placeholder', 'Select folders')}
+        onChange={(selected) => onChange(selected.map((option) => option.value))}
+      />
     </SidebarField>
   );
 }
@@ -145,4 +152,104 @@ export function DataSourceFilter({
       />
     </SidebarField>
   );
+}
+
+export function HealthFilter({
+  health,
+  onChange,
+}: {
+  health: HealthValue | undefined;
+  onChange: (health: HealthValue | undefined) => void;
+}) {
+  return (
+    <ChoiceFilter
+      label={t('alerting.gma-rule-list.sidebar.health', 'Health')}
+      value={health}
+      onChange={onChange}
+      options={[
+        { label: t('alerting.gma-rule-list.sidebar.health-ok', 'OK'), value: 'ok' },
+        { label: t('alerting.gma-rule-list.sidebar.health-nodata', 'No data'), value: 'nodata' },
+        { label: t('alerting.gma-rule-list.sidebar.health-error', 'Error'), value: 'error' },
+        { label: t('alerting.gma-rule-list.sidebar.health-unknown', 'Unknown'), value: 'unknown' },
+      ]}
+    />
+  );
+}
+
+export function PluginRulesFilter({ hide, onChange }: { hide: boolean; onChange: (hide: boolean) => void }) {
+  const labelId = useId();
+  return (
+    <SidebarField label={t('alerting.gma-rule-list.sidebar.plugin-rules', 'Plugin rules')} labelId={labelId}>
+      <ToggleButtonGroup<boolean>
+        aria-labelledby={labelId}
+        value={hide}
+        onChange={onChange}
+        options={[
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-show', 'Show'), value: false },
+          { label: t('alerting.gma-rule-list.sidebar.plugin-rules-hide', 'Hide'), value: true },
+        ]}
+      />
+    </SidebarField>
+  );
+}
+
+/** Named notification policies only: the search can't match the default policy yet. */
+export function PolicyFilter({
+  policy,
+  disabled,
+  onChange,
+}: {
+  policy: string | undefined;
+  disabled: boolean;
+  onChange: (policy: string | undefined) => void;
+}) {
+  const id = useId();
+  const { trees, isLoading } = useRoutingTrees();
+  const options = buildRoutingTreeOptions(trees).filter((option) => !isDefaultRoutingTreeName(option.value));
+
+  return (
+    <SidebarField
+      htmlFor={id}
+      label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
+      tooltip={t(
+        'alerting.gma-rule-list.sidebar.policy-description',
+        'Rules routed through it, not straight to a contact point'
+      )}
+      tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
+    >
+      <Combobox
+        id={id}
+        placeholder={t('alerting.gma-rule-list.sidebar.policy-placeholder', 'Select policy')}
+        options={options}
+        loading={isLoading}
+        value={policy}
+        isClearable
+        disabled={disabled}
+        onChange={(option) => onChange(option?.value)}
+      />
+    </SidebarField>
+  );
+}
+
+async function searchFolders(query: string) {
+  const { view } = await getGrafanaSearcher().search({ query, kind: ['folder'], limit: 100, permission: 'view' });
+  // The searcher loads every folder's title once, so parent paths cost no request per folder.
+  const locationInfo: Record<string, { name: string }> = view.dataFrame.meta?.custom?.locationInfo ?? {};
+  return view.map((folder) => ({
+    label: folder.name,
+    value: folder.uid,
+    description: (folder.location || '')
+      .split('/')
+      .filter((uid) => uid && uid !== 'general')
+      .map((uid) => locationInfo[uid]?.name ?? uid)
+      .join(' / '),
+  }));
+}
+
+async function getFolderTitles(uids: string[]): Promise<Map<string, string>> {
+  if (uids.length === 0) {
+    return new Map();
+  }
+  const { view } = await getGrafanaSearcher().search({ uid: uids, kind: ['folder'] });
+  return new Map(view.map((folder) => [folder.uid, folder.name]));
 }
