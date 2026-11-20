@@ -20,6 +20,7 @@ import (
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -140,7 +141,7 @@ func TestDecryptService(t *testing.T) {
 		respTokenExchanged := "test-token"
 		tokenExchangeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			response := `{
-				"data": { 
+				"data": {
 					"token": "` + respTokenExchanged + `"
 				}
 			}`
@@ -234,6 +235,37 @@ func TestDecryptService(t *testing.T) {
 	})
 }
 
+func TestDecryptMany(t *testing.T) {
+	t.Parallel()
+
+	ctx := identity.WithServiceIdentityContext(t.Context(), 1, identity.WithServiceIdentityName("decrypter1"))
+	sut := testutils.Setup(t)
+
+	_, err := sut.CreateSv(ctx)
+	require.NoError(t, err)
+
+	_, err = sut.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
+		cfg.Sv.Name = "sv2"
+		cfg.Sv.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v2"))
+	})
+	require.NoError(t, err)
+
+	values, err := sut.DecryptStorage.DecryptMany(ctx, "ns1", []string{"sv1", "sv2"})
+	require.NoError(t, err)
+	require.NotNil(t, values)
+	require.Equal(t, 2, values.Size())
+
+	first, found := values.Load("sv1")
+	require.True(t, found)
+	require.NoError(t, first.Error())
+	require.Equal(t, "v1", first.Value().DangerouslyExposeAndConsumeValue())
+
+	second, found := values.Load("sv2")
+	require.True(t, found)
+	require.NoError(t, second.Error())
+	require.Equal(t, "v2", second.Value().DangerouslyExposeAndConsumeValue())
+}
+
 type mockDecryptStorage struct {
 	mock.Mock
 }
@@ -241,6 +273,11 @@ type mockDecryptStorage struct {
 func (m *mockDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv1beta1.ExposedSecureValue, error) {
 	args := m.Called(ctx, namespace, name)
 	return args.Get(0).(secretv1beta1.ExposedSecureValue), args.Error(1)
+}
+
+func (m *mockDecryptStorage) DecryptMany(ctx context.Context, namespace xkube.Namespace, names []string) (contracts.DecryptManyResult, error) {
+	args := m.Called(ctx, namespace, names)
+	return args.Get(0).(contracts.DecryptManyResult), args.Error(1)
 }
 
 type mockDecryptServer struct {

@@ -215,6 +215,16 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueReadMany: {
+				{
+					Name: "read-many",
+					Data: &readManySecureValues{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						Names:       []string{"first", "second", "third"},
+					},
+				},
+			},
 			sqlSecureValueList: {
 				{
 					Name: "list",

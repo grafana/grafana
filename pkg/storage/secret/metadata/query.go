@@ -26,6 +26,7 @@ var (
 
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
+	sqlSecureValueReadMany                = mustTemplate("secure_value_read_many.sql")
 	sqlSecureValueRead                    = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList                    = mustTemplate("secure_value_list.sql")
 	sqlSecureValueListByIdentifiers       = mustTemplate("secure_value_list_by_ids.sql")
@@ -167,6 +168,16 @@ type readSecureValue struct {
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readSecureValue) Validate() error {
 	return nil // TODO
+}
+
+type readManySecureValues struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Names     []string
+}
+
+func (r readManySecureValues) Validate() error {
+	return nil
 }
 
 type getLatestSecureValueVersionAndCreatedAt struct {
