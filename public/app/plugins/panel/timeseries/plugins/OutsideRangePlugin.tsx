@@ -41,18 +41,6 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastVal
     [data]
   );
 
-  const allValuesExplicitNullAtIndex = useCallback(
-    (idx: number): boolean => {
-      for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
-        if (data[seriesIdx][idx] !== null) {
-          return false;
-        }
-      }
-      return true;
-    },
-    [data]
-  );
-
   const timeValues = data[0];
   if (!timeValues || timeValues.length < 1 || !onChangeTimeRange) {
     return null;
@@ -82,12 +70,7 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastVal
   let first = timeValues[i];
   let last = timeValues[j];
 
-  // Matches how the timeline draws: an undefined value continues the previous one and a null ends it,
-  // so the last value lasts until a row where every series is null, or to the edge of the chart.
-  let end = last;
-  if (holdLastValue) {
-    end = j + 1 < timeValues.length && allValuesExplicitNullAtIndex(j + 1) ? timeValues[j + 1] : Infinity;
-  }
+  const end = holdLastValue ? getHeldValuesEnd(data) : last;
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= timeRange.max && end >= timeRange.min) {
@@ -129,3 +112,36 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastVal
 });
 
 OutsideRangePlugin.displayName = 'OutsideRangePlugin';
+
+/**
+ * Matches how the timeline draws: in each series an undefined value continues the previous one and a null ends it.
+ * Returns the time where the last held value of any series ends, or Infinity if one reaches the edge of the chart.
+ */
+function getHeldValuesEnd(data: uPlot.AlignedData): number {
+  const timeValues = data[0];
+  let end = -Infinity;
+
+  for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
+    const values = data[seriesIdx];
+
+    let lastIdx = values.length - 1;
+    while (lastIdx >= 0 && values[lastIdx] == null) {
+      lastIdx--;
+    }
+    if (lastIdx < 0) {
+      continue;
+    }
+
+    let endIdx = lastIdx + 1;
+    while (endIdx < values.length && values[endIdx] === undefined) {
+      endIdx++;
+    }
+    if (endIdx >= values.length) {
+      return Infinity;
+    }
+
+    end = Math.max(end, timeValues[endIdx]);
+  }
+
+  return end;
+}
