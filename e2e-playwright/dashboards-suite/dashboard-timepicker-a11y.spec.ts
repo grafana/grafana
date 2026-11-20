@@ -12,7 +12,7 @@ test(
     const scanPicker = async () => {
       await expect(picker).toBeVisible();
       const results = await scanForA11yViolations({
-        include: '[role="dialog"][aria-label="Time range picker"]',
+        include: `[data-testid="${selectors.components.TimePicker.overlayContent}"]`,
         // The presentation-role-conflict rule is a best practice, outside the default WCAG tags.
         options: { runOnly: { type: 'tag', values: [...DEFAULT_A11Y_TAGS, 'best-practice'] } },
       });
