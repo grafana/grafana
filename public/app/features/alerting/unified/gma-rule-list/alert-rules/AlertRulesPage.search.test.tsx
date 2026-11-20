@@ -108,7 +108,10 @@ describe('AlertRulesPage search', () => {
       'Use one of these values for health: ok, nodata, error, unknown Put a value right after the colon, with no space: label:',
     ],
     ['contactPoint:on-call policy:escalation', 'Some filters could not be applied: contactPoint'],
-    ['policy:default paused:false', 'Some filters are not available yet: policy, paused'],
+    [
+      'policy:default paused:false',
+      'Use one of these values for paused: true Some filters are not available yet: policy',
+    ],
     ['cpu*', 'Search text cannot contain * or %.'],
     ['cpu "high', 'A quote in the search is not closed.'],
   ])('shows why %j cannot be searched, keeps it as typed and sends no request', async (search, message) => {

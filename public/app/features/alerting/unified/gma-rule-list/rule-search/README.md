@@ -75,6 +75,12 @@ parser applies a token when one of the page's definitions accepts it.
 - `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and the
   page's filter.
 - `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
+- `setFilterValues.ts`: the sidebar's one edit, which replaces a single filter's tokens in the query and writes the
+  other tokens back in their typed order. The new tokens go where the filter's first token was, or at the end.
+  Spacing and quote placement can change, never the meaning.
+- `FilterSidebar.tsx` and `LabelMatchersFilter.tsx`: the sidebar shell and the controls both pages' sidebars
+  compose, such as `alert-rules/AlertRulesFilterSidebar.tsx`. A label row is sent only once it has a key and a
+  value, or a key with exists or absent.
 - `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
 - `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts` and
   `recording-rules/recordingRuleSearchQuery.ts` build each page's request from them. The builder tests

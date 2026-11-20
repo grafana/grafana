@@ -3,6 +3,7 @@ package appsettings
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -69,7 +71,8 @@ type Builder struct {
 	// The settings API group is the plugin ID.
 	group           string
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same plugin id!
+	settings        *app.ManifestData // declares the resources and proxy routes
+	client          PluginClient      // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService
@@ -86,6 +89,9 @@ type Builder struct {
 
 	secureValues secureValuesCache
 	proxy        *proxyHandler
+
+	routesOnce sync.Once
+	routes     *settingsRoutes
 }
 
 func NewBuilder(
@@ -108,6 +114,7 @@ func NewBuilder(
 	return &Builder{
 		group:           plugin.JSONData.ID,
 		pluginJSON:      plugin.JSONData,
+		settings:        plugin.Settings,
 		client:          client,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
@@ -118,6 +125,29 @@ func NewBuilder(
 		features:        features,
 		tracer:          tracer,
 	}, nil
+}
+
+// settingsRoutes returns the routes the settings manifest declares. When they
+// cannot be compiled, none are served or published.
+func (b *Builder) settingsRoutes() *settingsRoutes {
+	b.routesOnce.Do(func() {
+		routes, err := compileSettingsRoutes(b.settings)
+		if err != nil {
+			logger.Warn("plugin settings routes are not served", "plugin", b.group, "reason", err)
+			routes = &settingsRoutes{}
+		}
+		b.routes = routes
+	})
+	return b.routes
+}
+
+// proxyRoutes returns the proxy routes the settings manifest declares, or nil
+// when the proxy is not registered or there are none.
+func (b *Builder) proxyRoutes() *proxyRoutes {
+	if !b.opts.RegisterProxy {
+		return nil
+	}
+	return b.settingsRoutes().proxy
 }
 
 // GetGroupVersions returns the settings API version.

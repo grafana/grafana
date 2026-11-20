@@ -106,6 +106,18 @@ export const sharedFilters = {
   },
 } satisfies { [Key in SharedFilterKey]: FilterDefinition<SharedRuleFilter, Key> };
 
+/** The `label:` value that reads back as `matcher`. */
+export function formatLabelMatcher({ key, operator, value = '' }: SearchLabelMatcher): string {
+  return {
+    exists: key,
+    absent: `!${key}`,
+    equal: `${key}=${value}`,
+    notEqual: `${key}!=${value}`,
+    regex: `${key}=~${value}`,
+    notRegex: `${key}!~${value}`,
+  }[operator];
+}
+
 /** Exact-match filters refuse `*`, since the rule search would treat it as a wildcard. */
 export function hasWildcard(value: string): boolean {
   return value.includes('*');

@@ -462,7 +462,7 @@ describe('RecordingRulesPage header', () => {
     config.unifiedAlerting.recordingRulesEnabled = true;
     renderInListMode();
 
-    await screen.findByRole('textbox');
+    await screen.findByRole('textbox', { name: 'Search' });
     expect(screen.queryByRole('link', { name: /New recording rule/i })).not.toBeInTheDocument();
   });
 
@@ -471,7 +471,7 @@ describe('RecordingRulesPage header', () => {
     config.unifiedAlerting.recordingRulesEnabled = false;
     renderInListMode();
 
-    await screen.findByRole('textbox');
+    await screen.findByRole('textbox', { name: 'Search' });
     expect(screen.queryByRole('link', { name: /New recording rule/i })).not.toBeInTheDocument();
   });
 });

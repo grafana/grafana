@@ -33,9 +33,6 @@ const (
 type dataStore struct {
 	kv    KV
 	cache *gocache.Cache
-	// fastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup. Off by default while it is rolled out.
-	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -251,7 +248,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	if rv == 0 && d.fastLatestKeyLookup {
+	if rv == 0 {
 		// The newest key for a single resource is the last one in key order, so a
 		// one-row descending lookup avoids scanning the resource's whole history.
 		dataKey, err := d.LastResourceVersion(ctx, listKey)
@@ -280,7 +277,7 @@ type ListRequestOptions struct {
 	// ContinueNamespace is the namespace to continue from.
 	// Only used when Key.Namespace is empty (cross-namespace query).
 	ContinueNamespace string
-	// ContinueName is the name to continue from.
+	// ContinueName is the last name already listed; listing resumes strictly after it.
 	ContinueName    string
 	ResourceVersion int64
 	IncludeDeleted  bool
@@ -387,7 +384,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
 			continueKey.Namespace = options.ContinueNamespace
 		}
-		startKey = continueKey.Prefix()
+		// continueKey.Prefix() return a trailing '/'
+		// Names cannot contain '/', so this skips exactly the continue item's keys.
+		startKey = PrefixRangeEnd(continueKey.Prefix())
 	}
 
 	listOptions := ListOptions{
