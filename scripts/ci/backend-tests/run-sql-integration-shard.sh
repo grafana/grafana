@@ -100,10 +100,12 @@ run_compiled_tests() {
         return
     fi
 
+    # Match the linker flags used for temporary go test binaries to reduce peak link memory.
+    local -a compile_flags=(-vet=off -ldflags='-s -w' "${build_tags[@]}" -c)
     echo "Compiling test binaries"
-    CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "$binaries/" "${batch[@]}"
+    CGO_ENABLED=0 go test "${compile_flags[@]}" -o "$binaries/" "${batch[@]}"
     for pkg in "${collisions[@]}"; do
-        CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "${binary_paths[$pkg]}" "$pkg"
+        CGO_ENABLED=0 go test "${compile_flags[@]}" -o "${binary_paths[$pkg]}" "$pkg"
     done
 
     echo "Running compiled tests"
