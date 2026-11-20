@@ -417,7 +417,6 @@ spec:
 		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]
 		require.False(t, hasFolder, "org-scoped resources must not carry the folder annotation")
 	})
-
 }
 
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
