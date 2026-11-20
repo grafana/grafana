@@ -46,8 +46,8 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
-export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const lookup = useRuleSearchApiArgs('recording', filter, { inFolderUid });
+export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
+  const lookup = useRuleSearchApiArgs('recording', filter);
   return withFolderLookup(
     lookup,
     useRuleSearchResult(useSearchRecordingRulesInfiniteQuery(lookup.apiArgs ?? skipToken))

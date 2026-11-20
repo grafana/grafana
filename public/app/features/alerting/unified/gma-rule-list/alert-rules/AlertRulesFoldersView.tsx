@@ -115,8 +115,7 @@ function AlertFolderListEntry({ folderUid, title, expanded, onToggle }: AlertFol
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch(
-    createRulesApiFilter(),
-    { inFolderUid: folderUid }
+    createRulesApiFilter({ folderUids: [folderUid] })
   );
 
   const retryLabel = t('alerting.gma-rule-list.alert-rules.retry-rules-in-folder', 'Retry loading rules in {{title}}', {

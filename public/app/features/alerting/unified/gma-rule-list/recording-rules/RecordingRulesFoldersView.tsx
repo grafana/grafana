@@ -115,8 +115,7 @@ function RecordingFolderListEntry({ folderUid, title, expanded, onToggle }: Reco
 
 function ExpandedFolderRules({ folderUid, title }: { folderUid: string; title: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useRecordingRuleSearch(
-    createRulesApiFilter(),
-    { inFolderUid: folderUid }
+    createRulesApiFilter({ folderUids: [folderUid] })
   );
 
   const retryLabel = t(

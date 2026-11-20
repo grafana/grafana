@@ -10,15 +10,14 @@ import { type RuleSearchApiArgs, type SharedRuleFilter } from './sharedRuleFilte
 
 /**
  * `apiArgs` is undefined while there is nothing to search: skipped, looking the name up, lookup failed, or no folder
- * matched, since an empty UID list would search every folder. `inFolderUid` skips the lookup, as the name could match
- * other folders.
+ * matched, since an empty UID list would search every folder.
  */
 export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   kind: RuleKind,
   filter: Filter,
-  { skip = false, inFolderUid }: { skip?: boolean; inFolderUid?: string } = {}
+  { skip = false }: { skip?: boolean } = {}
 ) {
-  const lookUp = !skip && !inFolderUid && filter.folder !== undefined;
+  const lookUp = !skip && filter.folder !== undefined;
   const folderLookup = useListFolderSearchV1Beta1Query(
     lookUp
       ? {
@@ -36,14 +35,11 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
     if (skip) {
       return undefined;
     }
-    if (inFolderUid) {
-      return { filter, folderUids: [inFolderUid] };
-    }
     if (filter.folder === undefined) {
       return { filter, folderUids: filter.folderUids };
     }
     return lookedUpUids?.length ? { filter, folderUids: lookedUpUids } : undefined;
-  }, [skip, inFolderUid, filter, lookedUpUids]);
+  }, [skip, filter, lookedUpUids]);
 
   return {
     apiArgs,

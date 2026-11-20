@@ -46,8 +46,8 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
-export function useAlertRuleSearch(filter: AlertRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
-  const lookup = useRuleSearchApiArgs('alert', filter, { inFolderUid });
+export function useAlertRuleSearch(filter: AlertRuleFilter) {
+  const lookup = useRuleSearchApiArgs('alert', filter);
   return withFolderLookup(lookup, useRuleSearchResult(useSearchAlertRulesInfiniteQuery(lookup.apiArgs ?? skipToken)));
 }
 
