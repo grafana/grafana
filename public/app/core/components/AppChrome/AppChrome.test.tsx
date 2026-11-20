@@ -256,6 +256,33 @@ describe('AppChrome', () => {
     expect(await screen.findByTestId(selectors.components.Breadcrumbs.breadcrumb('Home'))).toHaveFocus();
   });
 
+  describe('profile', () => {
+    const profileNav: NavModelItem = { id: 'profile', text: 'Profile', url: '/profile' };
+    const profileButtons = () => screen.getAllByRole('button', { name: /profile/i, hidden: true });
+
+    beforeEach(() => {
+      // The docked menu renders on wide screens, hidden by CSS that jsdom does not apply.
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+    });
+
+    it('keeps the profile in the top bar while grafana.megaMenuProfile is off', async () => {
+      setup(<Page navId="child1">Children</Page>, { extraNav: [profileNav] });
+      const menu = await screen.findByTestId(selectors.components.NavMenu.Menu);
+
+      expect(profileButtons()).toHaveLength(1);
+      expect(menu).not.toContainElement(profileButtons()[0]);
+    });
+
+    it('moves the profile from the top bar to the bottom of the mega menu while the toggle is on', async () => {
+      setTestFlags({ 'grafana.megaMenuProfile': true });
+      setup(<Page navId="child1">Children</Page>, { extraNav: [profileNav] });
+      const menu = await screen.findByTestId(selectors.components.NavMenu.Menu);
+
+      expect(profileButtons()).toHaveLength(1);
+      expect(menu).toContainElement(profileButtons()[0]);
+    });
+  });
+
   describe('mega menu toggle', () => {
     const PEEK_AND_DOCK_FLAG = 'grafana.megaMenuPeekAndDock';
     const homeLogoTestId = selectors.components.Breadcrumbs.breadcrumb('Home');

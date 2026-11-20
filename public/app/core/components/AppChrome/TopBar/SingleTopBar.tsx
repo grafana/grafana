@@ -5,7 +5,11 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { useFlagGrafanaMegaMenuPeekAndDock, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaMegaMenuPeekAndDock,
+  useFlagGrafanaMegaMenuProfile,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -62,6 +66,8 @@ export const SingleTopBar = memo(function SingleTopBar({
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
   const profileNode = useSelector((state) => state.navIndex['profile']);
+  // With grafana.megaMenuProfile the profile sits at the bottom of the mega menu instead.
+  const profileInMegaMenu = useFlagGrafanaMegaMenuProfile();
   const homeNav = useHomeNav();
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -153,7 +159,9 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           <NavRightButton />
           <AssistantToolbarButtons />
-          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+          {profileNode && !profileInMegaMenu && (
+            <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />
+          )}
           {!contextSrv.user.isSignedIn && <SignInLink />}
         </Stack>
       </div>

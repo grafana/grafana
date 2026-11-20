@@ -10,6 +10,13 @@ export interface MegaMenuSectionProps {
    * page; a docked menu stays open.
    */
   onNavigate?: () => void;
+  /**
+   * Whether the user has folded the section to its heading, at the bottom of the menu. A folded section renders
+   * only its heading; the navigation takes the rest of the menu.
+   */
+  collapsed: boolean;
+  /** Folds the section to its heading, or unfolds it, from a control in its heading. The menu remembers it. */
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
 /**
@@ -17,10 +24,19 @@ export interface MegaMenuSectionProps {
  * plugin fills it. Only the Assistant can, with one component that owns the section's heading, content and
  * scrolling: the menu gives it the height the navigation leaves.
  */
-export function useMegaMenuSectionExtension({ onNavigate }: MegaMenuSectionProps): ReactElement | null {
+export function useMegaMenuSectionExtension({
+  onNavigate,
+  collapsed,
+  onCollapsedChange,
+}: MegaMenuSectionProps): ReactElement | null {
   const { components } = usePluginComponents<MegaMenuSectionProps>({
     extensionPointId: PluginExtensionPoints.MegaMenuSection,
   });
 
-  return renderLimitedComponents({ props: { onNavigate }, components, limit: 1, pluginId: ASSISTANT_PLUGIN_ID });
+  return renderLimitedComponents({
+    props: { onNavigate, collapsed, onCollapsedChange },
+    components,
+    limit: 1,
+    pluginId: ASSISTANT_PLUGIN_ID,
+  });
 }

@@ -7,8 +7,9 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 
 import { type MegaMenuSectionProps, useMegaMenuSectionExtension } from './MegaMenuSectionExtensionPoint';
 
-// `createComponentWithMeta` takes props that share a key with JSX's intrinsic attributes.
-type SectionProps = MegaMenuSectionProps & JSX.IntrinsicAttributes;
+// `createComponentWithMeta` takes props that share a key with JSX's intrinsic attributes. Partial, as a plugin's section
+// runs on Grafana versions that pass more or fewer of them.
+type SectionProps = Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes;
 
 const createSectionComponent = (pluginId: string, title: string): ComponentTypeWithExtensionMeta<SectionProps> =>
   createComponentWithMeta<SectionProps>(
@@ -46,7 +47,7 @@ describe('useMegaMenuSectionExtension', () => {
       createSectionComponent('grafana-assistant-app', 'Conversations'),
     ]);
 
-    render(<Section />);
+    render(<Section collapsed={false} onCollapsedChange={jest.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Conversations' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Untrusted section' })).not.toBeInTheDocument();
@@ -56,7 +57,7 @@ describe('useMegaMenuSectionExtension', () => {
     provideSectionComponents([createSectionComponent('grafana-assistant-app', 'Conversations')]);
     const onNavigate = jest.fn();
 
-    render(<Section onNavigate={onNavigate} />);
+    render(<Section onNavigate={onNavigate} collapsed={false} onCollapsedChange={jest.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Conversations' }));
 
     expect(onNavigate).toHaveBeenCalledTimes(1);
@@ -65,8 +66,39 @@ describe('useMegaMenuSectionExtension', () => {
   it('is empty when no plugin fills the section', () => {
     provideSectionComponents([createSectionComponent('grafana-untrusted-app', 'Untrusted section')]);
 
-    render(<Section />);
+    render(<Section collapsed={false} onCollapsedChange={jest.fn()} />);
 
     expect(screen.getByTestId('section')).toHaveTextContent('empty');
+  });
+
+  it('passes the folded state, and the call that changes it, to the section', async () => {
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.MegaMenuSection
+          ? [
+              createComponentWithMeta<SectionProps>(
+                {
+                  pluginId: 'grafana-assistant-app',
+                  title: 'Conversations',
+                  component: ({ collapsed, onCollapsedChange }) => (
+                    <button type="button" aria-expanded={!collapsed} onClick={() => onCollapsedChange?.(!collapsed)}>
+                      Conversations
+                    </button>
+                  ),
+                },
+                PluginExtensionPoints.MegaMenuSection
+              ),
+            ]
+          : [],
+    }));
+    const onCollapsedChange = jest.fn();
+
+    render(<Section collapsed onCollapsedChange={onCollapsedChange} />);
+    const toggle = screen.getByRole('button', { name: 'Conversations' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(toggle);
+
+    expect(onCollapsedChange).toHaveBeenCalledWith(false);
   });
 });

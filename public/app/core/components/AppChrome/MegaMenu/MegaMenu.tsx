@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import {
   useFlagGrafanaMegaMenuPeekAndDock,
+  useFlagGrafanaMegaMenuProfile,
   useFlagGrafanaScopesDashboardsMegaMenu,
   useFlagGrafanaVisualDesignRefresh,
 } from '@grafana/runtime/internal';
@@ -15,16 +16,18 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
+import { useSelector } from 'app/types/store';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
+import { MegaMenuProfile } from './MegaMenuProfile';
 import { useMegaMenuSectionExtension } from './MegaMenuSectionExtensionPoint';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
-import { useMegaMenuSectionSplitter } from './useMegaMenuSectionSplitter';
+import { useMegaMenuSectionCollapsed, useMegaMenuSectionSplitter } from './useMegaMenuSectionSplitter';
 
 export const MENU_WIDTH = '320px';
 
@@ -63,15 +66,24 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+    const [sectionCollapsed, setSectionCollapsed] = useMegaMenuSectionCollapsed();
     const pluginSection = useMegaMenuSectionExtension({
       onNavigate: state.megaMenuDocked ? undefined : onClose,
+      collapsed: sectionCollapsed,
+      onCollapsedChange: setSectionCollapsed,
     });
     // Customising the navigation gives it the whole menu.
     const section = editMode ? null : pluginSection;
-    const { containerProps, navProps, separatorProps, sectionProps } = useMegaMenuSectionSplitter(section !== null);
+    const { containerProps, navProps, separatorProps, sectionProps } = useMegaMenuSectionSplitter(
+      section !== null,
+      sectionCollapsed
+    );
 
     const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
     const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
+    // Only a signed-in user has a profile; anonymous users sign in from the top bar.
+    const profileNode = useSelector((store) => store.navIndex['profile']);
+    const showProfile = useFlagGrafanaMegaMenuProfile() && profileNode !== undefined;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -291,14 +303,18 @@ export const MegaMenu = memo(
             </div>
             {section && (
               <>
-                <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
+                {sectionCollapsed ? (
+                  <hr className={styles.dividerLine} />
+                ) : (
+                  <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
+                )}
                 <div {...sectionProps} data-testid="mega-menu-section">
                   {section}
                 </div>
               </>
             )}
           </div>
-          {showFooter && <hr className={styles.dividerLine} />}
+          {(showFooter || showProfile) && <hr className={styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
               {editMode && (
@@ -331,6 +347,7 @@ export const MegaMenu = memo(
               )}
             </div>
           )}
+          {showProfile && <MegaMenuProfile profileNode={profileNode} />}
         </nav>
       </div>
     );

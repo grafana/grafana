@@ -5,7 +5,7 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace, useFlagGrafanaMegaMenuProfile } from '@grafana/runtime/internal';
 import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -73,6 +73,8 @@ function AssistantIconGradientDefs() {
 export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const workspaceEnabled = useFlagAssistantFullscreenWorkspace();
+  // The trailing separator sets these buttons apart from the profile button, which then sits in the mega menu.
+  const profileInMegaMenu = useFlagGrafanaMegaMenuProfile();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const { availableComponents, dockedComponentId, floatingHidden } = useExtensionSidebarContext();
   // The top bar also renders outside a router, so the location comes from the location service.
@@ -110,7 +112,7 @@ export function AssistantToolbarButtons() {
         >
           {t('navigation.assistant-workspace.exit', 'Exit Workspace')}
         </ToolbarButton>
-        <NavToolbarSeparator className={styles.separator} />
+        {!profileInMegaMenu && <NavToolbarSeparator className={styles.separator} />}
       </>
     );
   }
@@ -150,7 +152,7 @@ export function AssistantToolbarButtons() {
       >
         {t('navigation.assistant-workspace.open', 'Workspace')}
       </ToolbarButton>
-      <NavToolbarSeparator className={styles.separator} />
+      {!profileInMegaMenu && <NavToolbarSeparator className={styles.separator} />}
     </>
   );
 }

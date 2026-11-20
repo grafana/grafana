@@ -3455,6 +3455,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.megaMenuProfile",
+			Description: "Moves the signed-in user's profile menu from the top bar to the bottom of the mega menu",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.otelLogDetails",
 			Description: "Enables a new version of log details optimized for displaying OTel logs",
 			Stage:       FeatureStageExperimental,

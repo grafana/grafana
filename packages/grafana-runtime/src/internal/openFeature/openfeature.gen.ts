@@ -234,6 +234,8 @@ export const FlagKeys = {
   GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
   GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
+  /** Moves the signed-in user's profile menu from the top bar to the bottom of the mega menu */
+  GrafanaMegaMenuProfile: "grafana.megaMenuProfile",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
@@ -1634,6 +1636,17 @@ export const useFlagGrafanaLogsInfiniteScrollTop = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaMegaMenuPeekAndDock = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.megaMenuPeekAndDock", false, options).value;
+};
+
+/**
+ * Moves the signed-in user's profile menu from the top bar to the bottom of the mega menu
+ *
+ * **Details:**
+ * - flag key: `grafana.megaMenuProfile`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMegaMenuProfile = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.megaMenuProfile", false, options).value;
 };
 
 /**

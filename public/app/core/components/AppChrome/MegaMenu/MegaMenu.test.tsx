@@ -26,7 +26,10 @@ import { MegaMenu } from './MegaMenu';
 import { type MegaMenuSectionProps } from './MegaMenuSectionExtensionPoint';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
-import { MEGA_MENU_NAV_HEIGHT_STORAGE_KEY } from './useMegaMenuSectionSplitter';
+import {
+  MEGA_MENU_NAV_HEIGHT_STORAGE_KEY,
+  MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY,
+} from './useMegaMenuSectionSplitter';
 import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
@@ -141,6 +144,34 @@ describe('MegaMenu', () => {
     renderMegaMenu({ navBarTree: nestedNavTree });
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
+  });
+
+  describe('profile', () => {
+    const PROFILE_FLAG = 'grafana.megaMenuProfile';
+    const renderWithProfile = () =>
+      render(<MegaMenu onClose={() => {}} />, {
+        preloadedState: {
+          navBarTree: nestedNavTree,
+          navIndex: { profile: { id: 'profile', text: 'Test User', url: '/profile', children: [] } },
+        },
+      });
+
+    it('shows the profile at the bottom of the menu while grafana.megaMenuProfile is on', async () => {
+      setTestFlags({ [PROFILE_FLAG]: true });
+      const { user } = renderWithProfile();
+
+      await user.click(await screen.findByRole('button', { name: /profile/i }));
+
+      expect(await screen.findByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
+    });
+
+    it('leaves the profile to the top bar while the toggle is off', async () => {
+      setTestFlags({ [PROFILE_FLAG]: false });
+      renderWithProfile();
+
+      await screen.findByTestId(selectors.components.NavMenu.Menu);
+      expect(screen.queryByRole('button', { name: /profile/i })).not.toBeInTheDocument();
+    });
   });
 
   it('should filter out home', async () => {
@@ -320,7 +351,7 @@ describe('MegaMenu', () => {
 
     describe('plugin section', () => {
       // Built once: a new component type per render would remount the section.
-      const conversationsSection = createComponentWithMeta<MegaMenuSectionProps & JSX.IntrinsicAttributes>(
+      const conversationsSection = createComponentWithMeta<Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes>(
         {
           pluginId: 'grafana-assistant-app',
           title: 'Conversations',
@@ -447,6 +478,59 @@ describe('MegaMenu', () => {
 
           expect(navigationPane(handle)).toHaveStyle({ flexBasis: 'auto' });
           expect(storedHeight()).toBeNull();
+        });
+      });
+
+      describe('folding it to its heading', () => {
+        // Built once: a new component type per render would remount the section.
+        const foldableSection = createComponentWithMeta<Partial<MegaMenuSectionProps> & JSX.IntrinsicAttributes>(
+          {
+            pluginId: 'grafana-assistant-app',
+            title: 'Conversations',
+            component: ({ collapsed, onCollapsedChange }) => (
+              <button type="button" aria-expanded={!collapsed} onClick={() => onCollapsedChange?.(!collapsed)}>
+                Conversations
+              </button>
+            ),
+          },
+          PluginExtensionPoints.MegaMenuSection
+        );
+        const storedCollapsed = () => window.localStorage.getItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY);
+
+        beforeEach(() => {
+          setPluginComponentsHook(({ extensionPointId }) => ({
+            isLoading: false,
+            components: extensionPointId === PluginExtensionPoints.MegaMenuSection ? [foldableSection] : [],
+          }));
+        });
+
+        it('folds and unfolds from the section, without the resize handle while folded, and remembers it', async () => {
+          const { user } = renderMegaMenu();
+          const toggle = await screen.findByRole('button', { name: 'Conversations' });
+          expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+          await user.click(toggle);
+
+          expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
+          expect(storedCollapsed()).toBe('true');
+
+          await user.click(toggle);
+
+          expect(toggle).toHaveAttribute('aria-expanded', 'true');
+          expect(screen.getByRole('separator', { name: 'Resize navigation' })).toBeInTheDocument();
+          expect(storedCollapsed()).toBeNull();
+        });
+
+        it('opens with the section folded when the user left it folded', async () => {
+          window.localStorage.setItem(MEGA_MENU_SECTION_COLLAPSED_STORAGE_KEY, 'true');
+          renderMegaMenu();
+
+          expect(await screen.findByRole('button', { name: 'Conversations' })).toHaveAttribute(
+            'aria-expanded',
+            'false'
+          );
+          expect(screen.queryByRole('separator', { name: 'Resize navigation' })).not.toBeInTheDocument();
         });
       });
     });
