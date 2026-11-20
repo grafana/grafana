@@ -1,4 +1,4 @@
-package client
+package resources
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-// DefaultRetryBackoff returns a default backoff configuration for retries.
+// defaultRetryBackoff returns a default backoff configuration for retries.
 //
 // Retry attempts will happen when:
 //   - The Kubernetes API returns transient errors: ServiceUnavailable (503), ServerTimeout (504),
@@ -40,7 +40,7 @@ import (
 //   - Context cancellation occurs before retries complete
 //
 // Non-transient errors (e.g., NotFound, BadRequest, Forbidden, InternalError) are not retried and returned immediately.
-func DefaultRetryBackoff() wait.Backoff {
+func defaultRetryBackoff() wait.Backoff {
 	return wait.Backoff{
 		Duration: 100 * time.Millisecond,
 		Factor:   2.0,
@@ -56,16 +56,16 @@ type retryResourceInterface struct {
 	backoff wait.Backoff
 }
 
-// NewRetryResourceInterface creates a new ResourceInterface wrapper with retry logic
-func NewRetryResourceInterface(client dynamic.ResourceInterface, backoff wait.Backoff) dynamic.ResourceInterface {
+// newRetryResourceInterface creates a new ResourceInterface wrapper with retry logic
+func newRetryResourceInterface(client dynamic.ResourceInterface, backoff wait.Backoff) dynamic.ResourceInterface {
 	return &retryResourceInterface{
 		client:  client,
 		backoff: backoff,
 	}
 }
 
-// IsTransientError determines if an error is transient and should be retried
-func IsTransientError(err error) bool {
+// isTransientError determines if an error is transient and should be retried
+func isTransientError(err error) bool {
 	if err == nil {
 		return false
 	}
@@ -128,7 +128,7 @@ func (r *retryResourceInterface) retryWithBackoff(ctx context.Context, fn func()
 		}
 
 		// If not a transient error, return immediately without retrying
-		if !IsTransientError(err) {
+		if !isTransientError(err) {
 			logger.Debug("Non-transient error, not retrying", "attempt", attempt, "error", err)
 			return false, err
 		}

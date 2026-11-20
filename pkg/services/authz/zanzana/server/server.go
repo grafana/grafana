@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -129,7 +128,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	if cfg.ZanzanaReconciler.Mode == setting.ZanzanaReconcilerModeMT {
 		if restConfig != nil {
 			// Embedded mode: use LoopbackClientConfig via the eventual provider
-			clientFactory.loopback = client.NewAPIClients(restConfig)
+			clientFactory.loopback = &reconcilerAPIServer{config: restConfig.GetRestConfig}
 		} else {
 			// Standalone mode: use explicit URLs with token exchange
 			if cfg.ZanzanaReconciler.FolderAPIServerURL == "" {
@@ -156,7 +155,7 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 			}
 
 			// Build per-group REST configs with group-specific audiences
-			clientFactory.byGroup = make(map[string]*client.APIClients)
+			clientFactory.byGroup = make(map[string]*reconcilerAPIServer)
 			apiServerURLs := map[string]string{
 				"folder.grafana.app": cfg.ZanzanaReconciler.FolderAPIServerURL,
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
@@ -186,9 +185,9 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 					),
 				}
 
-				clientFactory.byGroup[group] = client.NewAPIClients(apiserver.RestConfigProviderFunc(func(_ context.Context) (*clientrest.Config, error) {
+				clientFactory.byGroup[group] = &reconcilerAPIServer{config: func(context.Context) (*clientrest.Config, error) {
 					return standaloneRestConfig, nil
-				}))
+				}}
 			}
 		}
 	}

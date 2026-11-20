@@ -2,7 +2,9 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"strconv"
 	"time"
 
@@ -11,10 +13,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -147,7 +152,7 @@ func (r *Reconciler) fetchAnonymousTuples(ctx context.Context, namespace string,
 		return nil
 	}
 
-	list, err := resourceClient.List(ctx, metav1.ListOptions{LabelSelector: anonymousSettingsSectionSelector})
+	list, err := listWithRetry(ctx, resourceClient, metav1.ListOptions{LabelSelector: anonymousSettingsSectionSelector})
 	if err != nil {
 		// The settings client exists but the list failed (transient error, apiserver down, etc.).
 		// Break the error chain (%v, not %w) so a NotFound is never misinterpreted by
@@ -330,13 +335,38 @@ func (r *Reconciler) fetchAndTranslateCRD(
 	return nil
 }
 
+func listWithRetry(ctx context.Context, client dynamic.ResourceInterface, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	backoff := wait.Backoff{Duration: 100 * time.Millisecond, Factor: 2, Jitter: 0.1, Steps: 8, Cap: 5 * time.Second}
+	var list *unstructured.UnstructuredList
+	err := retry.OnError(backoff, retryableListError, func() error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		var err error
+		list, err = client.List(ctx, opts)
+		return err
+	})
+	return list, err
+}
+
+func retryableListError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	netErr, ok := errors.AsType[net.Error](err)
+	var opErr *net.OpError
+	return apierrors.IsServiceUnavailable(err) || apierrors.IsServerTimeout(err) ||
+		apierrors.IsTooManyRequests(err) || apierrors.IsTimeout(err) ||
+		(ok && netErr.Timeout()) || errors.As(err, &opErr)
+}
+
 // listAndProcess is a helper function that lists all resources and processes each one.
 // It handles pagination using Kubernetes continuation tokens.
 func listAndProcess(ctx context.Context, client dynamic.ResourceInterface, pageSize int64, fn func(*unstructured.Unstructured) error) error {
 	var continueToken string
 
 	for {
-		list, err := client.List(ctx, metav1.ListOptions{
+		list, err := listWithRetry(ctx, client, metav1.ListOptions{
 			Limit:    pageSize,
 			Continue: continueToken,
 		})
