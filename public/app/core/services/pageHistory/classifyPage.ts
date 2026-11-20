@@ -37,10 +37,11 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
       : null;
   }
 
-  // `/notebooks/<uid>` only: `new` is the create flow (it becomes `/notebooks/<uid>` once saved), and
+  // `/notebooks/<uid>[/<slug>]`: `new` is the create flow (it becomes `/notebooks/<uid>` once saved), and
   // `/notebooks/<uid>/render` is the chromeless export route.
   if (first === 'notebooks' && second && second !== 'new') {
-    return normalized.split('/').length === 3 ? { kind: 'notebook', uid: second, pathname: normalized } : null;
+    const [, , , slug, ...rest] = normalized.split('/');
+    return !rest.length && slug !== 'render' ? { kind: 'notebook', uid: second, pathname: normalized } : null;
   }
 
   if (first === 'playlists' && (second === 'edit' || second === 'play')) {

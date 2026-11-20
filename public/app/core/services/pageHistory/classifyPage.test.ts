@@ -44,6 +44,8 @@ describe('classifyPage', () => {
     ['/dashboards/f/abc', { kind: 'folder', uid: 'abc', pathname: '/dashboards/f/abc' }],
     ['/dashboards/f/abc/my-folder', { kind: 'folder', uid: 'abc', pathname: '/dashboards/f/abc/my-folder' }],
     ['/notebooks/abc', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc' }],
+    // The route takes an optional slug after the uid, like dashboards do.
+    ['/notebooks/abc/my-notebook', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc/my-notebook' }],
     ['/notebooks/abc?edit=true', { kind: 'notebook', uid: 'abc', pathname: '/notebooks/abc' }],
     ['/playlists/edit/abc', { kind: 'playlist', uid: 'abc', pathname: '/playlists/edit/abc' }],
     ['/playlists/play/abc', { kind: 'playlist', uid: 'abc', pathname: '/playlists/play/abc' }],
@@ -73,6 +75,7 @@ describe('classifyPage', () => {
     '/notebooks',
     '/notebooks/new',
     '/notebooks/abc/render',
+    '/notebooks/abc/my-notebook/extra',
     '/playlists',
     '/playlists/new',
     '/playlists/edit',
@@ -105,6 +108,7 @@ describe('classifyPage', () => {
 describe('pageKey', () => {
   it('folds variants of one page onto the same key', () => {
     expect(pageKey(classify('/d/abc/slug')!)).toBe(pageKey(classify('/d/abc')!));
+    expect(pageKey(classify('/notebooks/abc/slug')!)).toBe(pageKey(classify('/notebooks/abc')!));
     expect(pageKey(classify('/dashboards/f/abc/slug')!)).toBe(pageKey(classify('/dashboards/f/abc')!));
     // Editing and playing a playlist are one page.
     expect(pageKey(classify('/playlists/edit/abc')!)).toBe(pageKey(classify('/playlists/play/abc')!));

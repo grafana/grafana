@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAsyncRetry } from 'react-use';
 
+import { isFetchError } from '@grafana/runtime';
 import { type Playlist, playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { useStoredString } from 'app/core/hooks/useStored';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
@@ -83,7 +84,10 @@ export interface RecentActivity {
   clear: () => Promise<void>;
 }
 
-/** Names of the playlists the user can see, by uid. One list call; none when no playlist is in the history. */
+/**
+ * Names of the playlists the user can see, by uid. One list call; none when no playlist is in the history. A user
+ * without playlist access (the call is denied) sees none, so the rest of the history still loads.
+ */
 async function getPlaylistNames(entries: PageHistoryEntry[]): Promise<Map<string, string>> {
   if (!entries.some((entry) => entry.kind === 'playlist')) {
     return new Map();
@@ -92,6 +96,11 @@ async function getPlaylistNames(entries: PageHistoryEntry[]): Promise<Map<string
   try {
     const { items } = await request.unwrap();
     return new Map(items.map((playlist: Playlist) => [playlist.metadata.name ?? '', playlist.spec.title]));
+  } catch (error) {
+    if (isFetchError(error) && error.status === 403) {
+      return new Map();
+    }
+    throw error;
   } finally {
     request.unsubscribe();
   }

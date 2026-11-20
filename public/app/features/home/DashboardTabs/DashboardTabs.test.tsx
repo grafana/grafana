@@ -667,5 +667,49 @@ describe('DashboardTabs', () => {
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
     });
+
+    describe('playlists', () => {
+      const playlistEntry: PageHistoryEntry = {
+        kind: 'playlist',
+        uid: 'pl-1',
+        pathname: '/playlists/edit/pl-1',
+        search: '',
+        lastVisited: Date.now() - 30_000,
+      };
+      const playlistsRoute = '*/apis/playlist.grafana.app/*/namespaces/*/playlists';
+
+      it('titles a playlist row with the playlist name', async () => {
+        seedHistory([playlistEntry]);
+        server.use(
+          http.get(playlistsRoute, () =>
+            HttpResponse.json({ items: [{ metadata: { name: 'pl-1' }, spec: { title: 'NOC wall', interval: '5m' } }] })
+          )
+        );
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /NOC wall/ })).toBeInTheDocument();
+      });
+
+      it('drops playlist rows but keeps the rest when playlist access is denied', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 403 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+        expect(screen.queryByText('Could not load your recent activity')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /playlist/i })).not.toBeInTheDocument();
+      });
+
+      it('still shows the retryable error when the playlist lookup fails for another reason', async () => {
+        seedHistory([recentDashboardEntry, playlistEntry]);
+        server.use(http.get(playlistsRoute, () => HttpResponse.json({}, { status: 500 })));
+
+        render(<DashboardTabs />);
+
+        expect(await screen.findByText('Could not load your recent activity')).toBeInTheDocument();
+      });
+    });
   });
 });
