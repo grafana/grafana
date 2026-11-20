@@ -36,17 +36,13 @@ func StatusSource(ctx context.Context, status int) string {
 }
 
 func (r RequestLog) Log() {
-	r.write(requestLogger, &sampleCount)
-}
-
-func (r RequestLog) write(logger log.Logger, count *atomic.Uint64) {
 	failed := r.Status >= 500 || r.Source == "client" || r.Source == string(requestmeta.StatusSourceDownstream)
-	if !failed && count.Add(1)%1000 != 0 {
+	if !failed && sampleCount.Add(1)%1000 != 0 {
 		return
 	}
-	write := logger.Info
+	write := requestLogger.Info
 	if failed {
-		write = logger.Warn
+		write = requestLogger.Warn
 	}
 	// The query string can contain user queries. Keep only the bounded path.
 	path := r.Path
