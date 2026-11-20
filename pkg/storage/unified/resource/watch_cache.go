@@ -26,7 +26,8 @@ type cacheSeed[T any] struct {
 
 // watchCache is owned by the broadcaster's event loop so eviction and resume
 // validation cannot race with replay and subscriber registration. Each
-// collection has its own ring so a burst in one cannot evict another's events.
+// collection has its own ring; shared limits evict from the largest consumer
+// of bytes or events, counting the incoming event.
 type watchCache[T any] struct {
 	size             int
 	rings            map[GroupResource]*cacheRing[T]
