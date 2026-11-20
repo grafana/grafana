@@ -33,6 +33,7 @@ type RuleService interface {
 	folder.RegistryService
 	rulestore.FolderRuleCounter
 	rulestore.MaintenanceStore
+	DeltaCalculator
 
 	// isRuleService seals the interface so the SQL store cannot be passed where the wrapper is expected.
 	isRuleService()
@@ -204,4 +205,24 @@ func (s *Service) GetAllFoldersWithRulesByType(ctx context.Context, orgID int64,
 
 func (s *Service) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {
 	return s.sql.CleanUpDeletedAlertRules(ctx)
+}
+
+func (s *Service) CalculateChanges(ctx context.Context, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRuleWithOptionals) (*GroupDelta, error) {
+	return CalculateChanges(ctx, s, groupKey, submittedRules)
+}
+
+func (s *Service) CalculateRuleCreate(ctx context.Context, rule *ngmodels.AlertRule) (*GroupDelta, error) {
+	return CalculateRuleCreate(ctx, s, rule)
+}
+
+func (s *Service) CalculateRuleUpdate(ctx context.Context, rule *ngmodels.AlertRuleWithOptionals) (*GroupDelta, error) {
+	return CalculateRuleUpdate(ctx, s, rule)
+}
+
+func (s *Service) CalculateRuleDelete(ctx context.Context, ruleKey ngmodels.AlertRuleKey) (*GroupDelta, error) {
+	return CalculateRuleDelete(ctx, s, ruleKey)
+}
+
+func (s *Service) CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *ngmodels.ListAlertRulesQuery) ([]*GroupDelta, error) {
+	return CalculateRuleGroupsDelete(ctx, s, orgID, query)
 }

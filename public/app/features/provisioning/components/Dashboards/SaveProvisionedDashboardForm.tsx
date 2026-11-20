@@ -8,15 +8,21 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
 import {
   type RepositoryView,
   type ResourceWrapper,
   type Unstructured,
   useCreateRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
+import { isPendingChangesStale } from 'app/features/dashboard-scene/lifecycle/pendingChangePreview';
+import {
+  finishCommittingPendingChanges,
+  getCommittedPendingChanges,
+} from 'app/features/dashboard-scene/lifecycle/pendingChangesSave';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { nextMetaAfterFolderPick } from 'app/features/dashboard-scene/saving/shared';
 import { useParkSaveFormDraft } from 'app/features/dashboard-scene/saving/useParkSaveFormDraft';
@@ -117,6 +123,11 @@ export function SaveProvisionedDashboardForm({
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isRename ? undefined : originalPath);
 
+  // Pending changes the page shows to this dashboard go into the commit, and their plugin discards
+  // them once it's made. Someone may have saved the dashboard since they started.
+  const pendingChanges = isNew ? undefined : getCommittedPendingChanges(dashboard);
+  const stalePendingChanges = pendingChanges ? isPendingChangesStale(pendingChanges.preview) : false;
+
   // Retargeting to another branch is a committable change on its own. In the recovery flow the new
   // branch is a form default (never dirty), so the flag itself has to enable Save.
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
@@ -126,6 +137,8 @@ export function SaveProvisionedDashboardForm({
     Boolean(dirtyFields.ref) ||
     Boolean(recoverToNewBranch) ||
     isDirty ||
+    // Pending changes are changes to commit, though the page loaded them.
+    Boolean(pendingChanges) ||
     Boolean(rawDashboardJSON);
   const ref = watch('ref') ?? '';
   const isFolderless = repository?.target === 'folderless';
@@ -230,7 +243,7 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(
-    async (wrapper: ResourceWrapper) => {
+    async (wrapper: ResourceWrapper, { showSaved }: { showSaved: boolean }) => {
       // Baseline against exactly what was committed. On the update path that is the
       // change-trimmed model; getSaveModel() would re-include values the toggles
       // omitted, so change detection would treat them as already saved until reload.
@@ -239,13 +252,17 @@ export function SaveProvisionedDashboardForm({
       const saveResponse = createSaveResponseFromResource(resourceData);
       await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
+      if (pendingChanges) {
+        await finishCommittingPendingChanges(dashboard, pendingChanges, { showSaved });
+      }
     },
-    [dashboard, defaultValues.folder?.uid]
+    [dashboard, defaultValues.folder?.uid, pendingChanges]
   );
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>, wrapper: ResourceWrapper) => {
-      handleDismiss(wrapper);
+      // The configured branch is the dashboard here, unless the commit made a new one.
+      handleDismiss(wrapper, { showSaved: !isNew && !recoverToNewBranch });
       if (isNew && upsert?.metadata.name) {
         handleNewDashboard(upsert);
       }
@@ -253,7 +270,7 @@ export function SaveProvisionedDashboardForm({
       // Staying on the preview URL would keep showing the deleted branch (and its recovery banner)
       // for a draft that was just saved, so go to the saved dashboard instead.
       if (recoverToNewBranch && upsert?.metadata?.name) {
-        navigate(`/d/${upsert.metadata.name}`);
+        navigate(CORE_KINDS.dashboard.getRoute(upsert.metadata.name));
         return;
       }
 
@@ -273,7 +290,7 @@ export function SaveProvisionedDashboardForm({
       upsert: Resource<Dashboard>,
       wrapper: ResourceWrapper
     ) => {
-      handleDismiss(wrapper);
+      handleDismiss(wrapper, { showSaved: false });
       if (isNew && upsert?.metadata?.name) {
         handleNewDashboard(upsert);
       } else {
@@ -407,8 +424,10 @@ export function SaveProvisionedDashboardForm({
           // variables / time range / refresh" toggles are honored. getSaveResource()
           // serializes the full scene and would re-include the current variable values
           // (and time/refresh) even when the toggle is left off, diverging from the diff
-          // shown in the drawer. This mirrors the non-provisioned save path.
-          dashboard.getSaveResourceFromSpec(changeInfo.changedSaveModel);
+          // shown in the drawer. This mirrors the non-provisioned save path. Pending changes have
+          // no toggles and go in whole: the model their diff shows leaves out empty values a
+          // dashboard needs.
+          dashboard.getSaveResourceFromSpec(pendingChanges ? dashboard.getSaveModel() : changeInfo.changedSaveModel);
 
     // Single source of truth: baseline against exactly the spec we committed, so
     // post-save change detection matches what was written (handleDismiss → saveCompleted).
@@ -597,12 +616,39 @@ export function SaveProvisionedDashboardForm({
 
           {error && <ProvisioningAlert error={error} />}
 
+          {stalePendingChanges && (
+            <Alert
+              title={t(
+                'dashboard-scene.save-dashboard-form.render-footer.title-someone-else-has-updated-this-dashboard',
+                'Someone else has updated this dashboard'
+              )}
+              severity="error"
+            >
+              <Stack direction="column" alignItems="flex-start">
+                <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.would-still-dashboard">
+                  Would you still like to save this dashboard?
+                </Trans>
+                {pendingChanges?.preview.pending.update && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      drawer.onClose();
+                      pendingChanges.preview.pending.update?.();
+                    }}
+                  >
+                    <Trans i18nKey="dashboard-scene.lifecycle.ask-assistant-to-update">Ask Assistant to update</Trans>
+                  </Button>
+                )}
+              </Stack>
+            </Alert>
+          )}
+
           <Stack gap={2}>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
             <Button
-              variant="primary"
+              variant={stalePendingChanges ? 'destructive' : 'primary'}
               type="submit"
               data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
               disabled={
@@ -618,7 +664,9 @@ export function SaveProvisionedDashboardForm({
             >
               {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+                : stalePendingChanges
+                  ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+                  : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
             </Button>
           </Stack>
         </Stack>

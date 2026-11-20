@@ -623,6 +623,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = anonSect.NewKey("enabled", "false")
 		require.NoError(t, err)
 	}
+	if opts.ExtJWTJWKSURL != "" {
+		extJWTSect, err := getOrCreateSection("auth.extended_jwt")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("jwks_url", opts.ExtJWTJWKSURL)
+		require.NoError(t, err)
+	}
 	if opts.LocalPluginAPI {
 		// The listener is only known when the server starts, which fills in the address.
 		pluginsSect, err := getOrCreateSection("plugins")
@@ -1184,6 +1192,9 @@ type GrafanaOpts struct {
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
+	// ExtJWTJWKSURL enables [auth.extended_jwt] with this JWKS URL, so a test can authenticate as an
+	// access policy with a token signed by its own key.
+	ExtJWTJWKSURL string
 	// LocalPluginAPI sets [plugins] local_api_url to the test server's listener,
 	// for plugins and apps that call Grafana's API from this process.
 	LocalPluginAPI                      bool
