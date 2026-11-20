@@ -36,7 +36,7 @@ export interface EditableRuleState {
   loading: boolean;
   error?: unknown;
   result?: RuleWithLocation;
-  resourceVersion?: string;
+  resource?: AlertRule | RecordingRule;
 }
 
 /**
@@ -65,12 +65,17 @@ export function useK8sRuleWithLocation(uid: string, kind?: RuleKind): EditableRu
       return {
         loading: false,
         result: k8sRuleToRuleWithLocation(resource),
-        resourceVersion: resource.metadata.resourceVersion,
+        resource,
       };
     }
     const error = [alertRule.error, recordingRule.error].find((err) => err && !isNotFoundError(err));
     return { loading: false, error };
   }, [resource, alertPending, alertRule.error, recordingPending, recordingRule.error]);
+}
+
+/** Whether the rule was in an evaluation group before groups were retired. */
+export function belongedToGroup(resource?: AlertRule | RecordingRule): boolean {
+  return Boolean(resource?.metadata.labels?.[GROUP_LABEL]);
 }
 
 /**
@@ -80,7 +85,8 @@ export function useK8sRuleWithLocation(uid: string, kind?: RuleKind): EditableRu
 export function k8sRuleToRuleWithLocation(resource: AlertRule | RecordingRule): RuleWithLocation<RulerGrafanaRuleDTO> {
   const uid = resource.metadata.name ?? '';
   const folderUid = resource.metadata.annotations?.[FOLDER_ANNOTATION] ?? '';
-  const groupName = resource.metadata.labels?.[GROUP_LABEL] ?? `${NO_GROUP_PREFIX}${uid}`;
+  // Rules from the rules API belong to their folder only; the group label is just a leftover.
+  const groupName = `${NO_GROUP_PREFIX}${uid}`;
   const { expressions, trigger, title, labels, paused } = resource.spec;
   const condition = Object.keys(expressions).find((refId) => expressions[refId].source) ?? '';
 

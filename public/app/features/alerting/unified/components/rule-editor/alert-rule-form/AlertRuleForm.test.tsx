@@ -189,6 +189,7 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
     const replaceSpy = jest.spyOn(locationService, 'replace');
     expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRule.grafana_alert.title);
     expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toHaveValue(grafanaRulerGroup.interval);
+    expect(screen.getByText(/Evaluation groups are retired/i)).toBeInTheDocument();
 
     await user.click(ui.buttons.save.get());
 
@@ -212,6 +213,7 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
 
     const { user } = renderRuleEditor(ungroupedGrafanaRulerRule.grafana_alert.uid);
     expect(await ui.inputs.name.find()).toHaveValue(ungroupedGrafanaRulerRule.grafana_alert.title);
+    expect(screen.queryByText(/Evaluation groups are retired/i)).not.toBeInTheDocument();
     await user.click(ui.buttons.save.get());
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();

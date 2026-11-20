@@ -64,7 +64,7 @@ function ExistingRuleEditorView({
 }: ExistingRuleEditorViewProps) {
   const navId = getAlertRulesNavId();
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
-  const { loading: loadingAlertRule, result: ruleWithLocation, error: fetchRuleError, resourceVersion } = ruleState;
+  const { loading: loadingAlertRule, result: ruleWithLocation, error: fetchRuleError, resource } = ruleState;
   const {
     isEditable,
     loading: loadingEditable,
@@ -147,7 +147,7 @@ function ExistingRuleEditorView({
       ) : (
         <AlertRuleForm
           existing={ruleWithLocation}
-          existingResourceVersion={resourceVersion}
+          existingResource={resource}
           prefill={prefill}
           isManualRestore={isManualRestore}
         />

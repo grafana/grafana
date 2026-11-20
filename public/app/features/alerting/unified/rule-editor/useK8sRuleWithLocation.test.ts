@@ -21,7 +21,7 @@ import { rulerRuleToFormValues } from '../utils/rule-form';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { getDefaultFormValues } from './formDefaults';
-import { k8sRuleToRuleWithLocation, useK8sRuleWithLocation } from './useK8sRuleWithLocation';
+import { belongedToGroup, k8sRuleToRuleWithLocation, useK8sRuleWithLocation } from './useK8sRuleWithLocation';
 
 const server = setupMswServer();
 
@@ -150,15 +150,15 @@ describe('k8sRuleToRuleWithLocation', () => {
     expect({ evaluateFor, keepFiringFor }).toEqual({ evaluateFor: '40m', keepFiringFor: '1h' });
   });
 
-  it("keeps a grouped rule's group so the editor can warn before ungrouping it", () => {
+  it('puts a rule that was in a group directly in its folder', () => {
     const resource = asSaved(buildAlertRuleResource(alertValues, 'rule-uid', 'v0alpha1') as AlertRule, {
       'grafana.com/group': 'cpu-group',
     });
 
     const { group } = k8sRuleToRuleWithLocation(resource);
 
-    expect(group.name).toBe('cpu-group');
-    expect(isUngroupedRuleGroup(group.name)).toBe(false);
+    expect(isUngroupedRuleGroup(group.name)).toBe(true);
+    expect(belongedToGroup(resource)).toBe(true);
   });
 });
 
@@ -179,7 +179,7 @@ describe('useK8sRuleWithLocation', () => {
     });
 
     expect(result.current).toEqual({ loading: true });
-    await waitFor(() => expect(result.current.resourceVersion).toBe('8'));
+    await waitFor(() => expect(result.current.resource?.metadata.resourceVersion).toBe('8'));
     expect(result.current.result?.rule).toMatchObject({ grafana_alert: { title: 'server title' } });
   });
 });
