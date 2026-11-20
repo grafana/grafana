@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -153,6 +154,9 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 		}
 		if configRejectedError, ok := errors.AsType[notifier.AlertmanagerConfigRejectedError](err); ok {
 			return ErrResp(http.StatusBadRequest, configRejectedError, "")
+		}
+		if legacy_storage.ErrAlertmanagerConfigSizeExceeded.Base.Is(err) {
+			return response.Err(err)
 		}
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return response.Error(http.StatusNotFound, err.Error(), err)

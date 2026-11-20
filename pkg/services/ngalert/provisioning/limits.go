@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,18 +29,25 @@ func (p *NoopLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits,
 	return nil, nil
 }
 
+// limitsFetchTimeout bounds a limits lookup so a slow remote Alertmanager cannot stall config writes.
+const limitsFetchTimeout = 5 * time.Second
+
 // RemoteLimitsProvider fetches limits from a remote alertmanager via the MimirClient.
 type RemoteLimitsProvider struct {
-	client *client.Mimir
+	client  *client.Mimir
+	timeout time.Duration
 }
 
 func NewRemoteLimitsProvider(c *client.Mimir) *RemoteLimitsProvider {
 	return &RemoteLimitsProvider{
-		client: c,
+		client:  c,
+		timeout: limitsFetchTimeout,
 	}
 }
 
 func (p *RemoteLimitsProvider) GetLimits(ctx context.Context) (*client.TenantLimits, error) {
+	ctx, cancel := context.WithTimeout(ctx, p.timeout)
+	defer cancel()
 	return p.client.GetLimits(ctx)
 }
 
