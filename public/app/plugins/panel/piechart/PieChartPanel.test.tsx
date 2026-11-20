@@ -459,6 +459,33 @@ describe('PieChartPanel', () => {
     });
   });
 
+  describe.each([LegendDisplayMode.List, LegendDisplayMode.Table])('legend limit in %s mode', (displayMode) => {
+    it.each([
+      { limit: 2, expectedLabels: ['Chrome', 'Firefox'] },
+      { limit: undefined, expectedLabels: ['Chrome', 'Firefox', 'Safari'] },
+      { limit: 0, expectedLabels: ['Chrome', 'Firefox', 'Safari'] },
+    ])('shows $expectedLabels with limit=$limit and keeps all slices', ({ limit, expectedLabels }) => {
+      setup({
+        options: buildOptions({ legend: buildLegend({ displayMode, limit }) }),
+        data: {
+          series: makeSeries([
+            { name: 'Chrome', value: 60 },
+            { name: 'Firefox', value: 30 },
+            { name: 'Safari', value: 10 },
+          ]),
+        },
+      });
+
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(
+        within(legend)
+          .getAllByText(/^(Chrome|Firefox|Safari)$/)
+          .map((item) => item.textContent?.trim())
+      ).toEqual(expectedLabels);
+      expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(3);
+    });
+  });
+
   describe('panel states', () => {
     it('renders the error view instead of a chart when there are no data frames', () => {
       setup({ data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] } });
