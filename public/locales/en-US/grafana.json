@@ -6263,7 +6263,6 @@
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "assistant-placeholder-template": "Add changes, or send as is",
       "assistant-sign-in": "Sign in to use the Assistant.",
-      "assistant-unreachable": "Could not reach the Assistant. Try sending again.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",

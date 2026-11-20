@@ -189,6 +189,15 @@ describe('AssistantDashboardEmpty', () => {
     expect(isFloatingExtensionSidebarHeld()).toBe(false);
   });
 
+  it('still sends when the limit check fails, since the Assistant enforces its own limit', async () => {
+    mockCheckLimits.mockRejectedValue(new Error('Failed to check limits'));
+    renderEmpty();
+
+    await act(() => latestOnSubmit?.('monitor checkout', []));
+
+    expect(mockStartPlanning).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to every datasource when the user picked none', async () => {
     renderEmpty();
 
@@ -424,11 +433,6 @@ describe('AssistantDashboardEmpty', () => {
         expect(screen.getByTestId('landing-templates')).toBeInTheDocument();
         expect(isFloatingExtensionSidebarHeld()).toBe(true);
       }
-
-      it('keeps everything as it was when the Assistant cannot be reached', async () => {
-        mockCheckLimits.mockRejectedValue(new Error('Failed to check limits'));
-        await submitRefused('Could not reach the Assistant. Try sending again.');
-      });
 
       it("keeps everything as it was when this month's prompts are used up", async () => {
         mockCheckLimits.mockResolvedValue({ count: 10, limit: 10, month: '2026-11', isLimitReached: true });

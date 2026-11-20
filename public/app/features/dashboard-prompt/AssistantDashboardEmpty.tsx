@@ -38,7 +38,7 @@ async function findHandoffProblem(): Promise<string | undefined> {
       return t('dashboard.empty.assistant-limit-reached', "You have used all of this month's Assistant prompts.");
     }
   } catch {
-    return t('dashboard.empty.assistant-unreachable', 'Could not reach the Assistant. Try sending again.');
+    // The Assistant enforces its own limit, so a check that fails must not block the prompt.
   }
   return undefined;
 }
