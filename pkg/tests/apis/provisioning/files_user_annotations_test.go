@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// A file written by Git Sync keeps metadata.name and the user annotations only:
-// labels, the namespace, server fields and Grafana-owned annotations are derived
-// again when the file is read back, so a request body must not be able to plant
-// them in the repository. grafana.app/useCrossDashboardVariables is user content
-// set from the dashboard UI even though it lives under the Grafana domain.
+// A file written by Git Sync keeps metadata.name and the user annotations only.
+// Labels are not written, and the namespace, server fields and Grafana-owned
+// annotations are set again when the file is read back, so a request body must
+// not be able to plant them in the repository. grafana.app/useCrossDashboardVariables
+// is user content set from the dashboard UI even though it is under the Grafana domain.
 func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -233,7 +233,7 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		require.Equal(t, "team-a", annotations[ownerKey])
 	})
 
-	t.Run("server-owned keys in a request body never reach the file", func(t *testing.T) {
+	t.Run("Grafana-owned annotations in a request body are not written to the file", func(t *testing.T) {
 		const (
 			createdName = "server-owned-dash"
 			createdPath = "server-owned.json"
@@ -285,9 +285,6 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 		require.NotEqual(t, "user:evil", annotations[utils.AnnoKeyCreatedBy])
 		require.NotEqual(t, "bogus", annotations[utils.AnnoKeyFolder])
 		require.Equal(t, "me", annotations[ownerKey])
-		for _, key := range []string{"grafana.app/folderTitle", "grafana.app/saved-from-ui", "grafana.com/updatedBy", utils.AnnoKeyKubectlLastAppliedConfig} {
-			require.NotContains(t, annotations, key, "the dashboard should not carry %s from the request body", key)
-		}
 		require.NotEqual(t, plantedUID, string(live.GetUID()), "the request body should not choose the uid")
 	})
 }

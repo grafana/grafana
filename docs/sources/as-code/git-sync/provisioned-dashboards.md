@@ -39,7 +39,7 @@ Using Git Sync, you can manage your dashboards in the UI and synchronize them wi
 - To save any changes to provisioned resources, open a pull request or commit directly to an existing branch, such as the `main` branch.
   - Use pull requests to review changes to dashboards.
   - Preview the changes before merging.
-- Git Sync writes the dashboard name (`metadata.name`) and your own annotations (`metadata.annotations`) to the file. Grafana-managed annotations aren't written to the repository and are ignored if a file contains them. These are annotations under the `grafana.app` and `grafana.com` domains, including subdomains such as `alerting.grafana.app`, and Kubernetes system annotations under `kubernetes.io`, `k8s.io`, and `kubectl.kubernetes.io`. The exception is `grafana.app/useCrossDashboardVariables`, which stores the cross-dashboard variables the dashboard uses. Labels in a file are read, but Git Sync doesn't write them when it saves the file.
+- When you save a dashboard, Git Sync writes the dashboard name (`metadata.name`) and your own annotations (`metadata.annotations`) to the file. Grafana-managed annotations aren't written to the repository. These are annotations under the `grafana.app` and `grafana.com` domains, including subdomains such as `alerting.grafana.app`, and Kubernetes system annotations under `kubernetes.io`, `k8s.io`, and `kubectl.kubernetes.io`. The exception is `grafana.app/useCrossDashboardVariables`, which stores the cross-dashboard variables the dashboard uses. Labels aren't written to the repository.
 
 Refer to [Key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts) for more details.
 

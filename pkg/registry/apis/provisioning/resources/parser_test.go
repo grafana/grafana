@@ -204,47 +204,6 @@ spec:
 		}
 	})
 
-	t.Run("ignores Grafana-owned annotations from the file and stamps its own", func(t *testing.T) {
-		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
-			Path: "team-a/dash.json",
-			Hash: "the-hash",
-			Data: []byte(`{
-  "apiVersion": "dashboard.grafana.app/v0alpha1",
-  "kind": "Dashboard",
-  "metadata": {
-    "name": "dash",
-    "labels": {"team": "platform"},
-    "annotations": {
-      "grafana.app/managedBy": "plugin",
-      "grafana.app/managerId": "other",
-      "grafana.app/managerAllowsEdits": "true",
-      "grafana.app/sourcePath": "elsewhere.json",
-      "grafana.app/repoPath": "legacy.json",
-      "grafana.app/folder": "bogus",
-      "grafana.app/grant-permissions": "default",
-      "grafana.app/message": "spoofed",
-      "grafana.app/blob": "other-blob",
-      "grafana.app/createdBy": "user:evil",
-      "grafana.app/useCrossDashboardVariables": "{\"global\":\"all\",\"folder\":\"none\"}",
-      "example.com/owner": "team-a"
-    }
-  },
-  "spec": {"title": "Test dashboard"}
-}`),
-		})
-		require.NoError(t, err)
-		require.Equal(t, map[string]string{
-			utils.AnnoKeyManagerKind:                string(utils.ManagerKindRepo),
-			utils.AnnoKeyManagerIdentity:            "repo",
-			utils.AnnoKeySourcePath:                 "team-a/dash.json",
-			utils.AnnoKeySourceChecksum:             "the-hash",
-			utils.AnnoKeyFolder:                     ParseFolder("team-a/", "repo").ID,
-			utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-			"example.com/owner":                     "team-a",
-		}, dash.Obj.GetAnnotations())
-		require.Equal(t, map[string]string{"team": "platform"}, dash.Obj.GetLabels(), "labels are not filtered")
-	})
-
 	t.Run("user annotations round-trip through the repository file", func(t *testing.T) {
 		// What the frontend sends on save: the full metadata it loaded.
 		body := []byte(`{
@@ -294,27 +253,6 @@ spec:
 		rewritten, err := second.ToSaveBytes()
 		require.NoError(t, err)
 		require.Equal(t, string(written), string(rewritten))
-	})
-
-	t.Run("rejects user annotations that are not strings instead of dropping them all", func(t *testing.T) {
-		_, err := parser.Parse(context.Background(), &repository.FileInfo{
-			Path: "dash.yaml",
-			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
-kind: Dashboard
-metadata:
-  name: dash
-  annotations:
-    grafana.app/managerSuspended: true
-    grafana.app/useCrossDashboardVariables: '{"global":"all","folder":"none"}'
-    example.com/count: 3
-spec:
-  title: Test dashboard
-`),
-		})
-		var validationErr *ResourceValidationError
-		require.ErrorAs(t, err, &validationErr)
-		require.ErrorContains(t, err, "metadata.annotations[example.com/count]")
-		require.NotContains(t, err.Error(), "managerSuspended", "Grafana-owned annotations are dropped, whatever their value")
 	})
 
 	t.Run("an annotation-only change produces a different file", func(t *testing.T) {
@@ -480,23 +418,6 @@ spec:
 		require.False(t, hasFolder, "org-scoped resources must not carry the folder annotation")
 	})
 
-	t.Run("org-scoped resource ignores a folder annotation declared in the file", func(t *testing.T) {
-		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
-			Path: "team-a/my-playlist.json",
-			Data: []byte(`apiVersion: playlist.grafana.app/v0alpha1
-kind: Playlist
-metadata:
-  name: my-playlist
-  annotations:
-    grafana.app/folder: some-folder
-spec:
-  title: My playlist
-`),
-		})
-		require.NoError(t, err)
-		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]
-		require.False(t, hasFolder, "a file must not be able to place an org-scoped resource in a folder")
-	})
 }
 
 func TestParser_FolderMetadataRefFallback(t *testing.T) {

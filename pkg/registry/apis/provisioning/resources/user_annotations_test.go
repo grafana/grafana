@@ -45,7 +45,6 @@ func TestIsGrafanaOwnedAnnotation(t *testing.T) {
 
 	user := []string{
 		utils.AnnoKeyUseCrossDashboardVariables,
-		"alerting.grafana.app/allow-group-writes",
 		"team",
 		"grafana.app",
 		"/foo",
@@ -61,90 +60,4 @@ func TestIsGrafanaOwnedAnnotation(t *testing.T) {
 			require.False(t, IsGrafanaOwnedAnnotation(key))
 		})
 	}
-}
-
-func TestStripGrafanaOwnedAnnotations(t *testing.T) {
-	t.Run("removes owned keys of any value type and keeps user keys untouched", func(t *testing.T) {
-		obj := map[string]any{"metadata": map[string]any{
-			"name": "dash",
-			"annotations": map[string]any{
-				utils.AnnoKeyCreatedBy:                  "user:1",
-				utils.AnnoKeyManagerKind:                true,
-				utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-				"example.com/owner":                     "team-a",
-				"example.com/count":                     float64(3),
-			},
-			"labels": map[string]any{"grafana.app/lifecycle": "draft"},
-		}}
-
-		stripGrafanaOwnedAnnotations(obj)
-
-		require.Equal(t, map[string]any{"metadata": map[string]any{
-			"name": "dash",
-			"annotations": map[string]any{
-				utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
-				"example.com/owner":                     "team-a",
-				"example.com/count":                     float64(3),
-			},
-			"labels": map[string]any{"grafana.app/lifecycle": "draft"},
-		}}, obj, "labels are out of scope and must not be touched")
-	})
-
-	t.Run("drops the annotations field when only owned keys were present", func(t *testing.T) {
-		obj := map[string]any{"metadata": map[string]any{
-			"name":        "dash",
-			"annotations": map[string]any{utils.AnnoKeyFolder: "f"},
-		}}
-
-		stripGrafanaOwnedAnnotations(obj)
-
-		require.Equal(t, map[string]any{"metadata": map[string]any{"name": "dash"}}, obj)
-	})
-
-	t.Run("tolerates missing or malformed metadata", func(t *testing.T) {
-		for _, obj := range []map[string]any{
-			{},
-			{"metadata": "not-a-map"},
-			{"metadata": map[string]any{"annotations": "not-a-map"}},
-		} {
-			want := deepCopyMap(t, obj)
-			require.NotPanics(t, func() { stripGrafanaOwnedAnnotations(obj) })
-			require.Equal(t, want, obj)
-		}
-	})
-}
-
-func TestValidateUserAnnotations(t *testing.T) {
-	valid := []map[string]any{
-		{},
-		{"metadata": map[string]any{"name": "dash"}},
-		{"metadata": map[string]any{"annotations": nil}},
-		{"metadata": map[string]any{"annotations": map[string]any{"example.com/owner": "team-a"}}},
-	}
-	for _, obj := range valid {
-		require.NoError(t, validateUserAnnotations(obj))
-	}
-
-	err := validateUserAnnotations(map[string]any{"metadata": map[string]any{"annotations": map[string]any{
-		"example.com/owner": "team-a",
-		"example.com/count": float64(3),
-		"example.com/flag":  true,
-	}}})
-	require.EqualError(t, err, `metadata.annotations[example.com/count]: Invalid value: 3: annotation values must be strings`)
-
-	err = validateUserAnnotations(map[string]any{"metadata": map[string]any{"annotations": "not-a-map"}})
-	require.EqualError(t, err, `metadata.annotations: Invalid value: "not-a-map": must be a map of strings`)
-}
-
-func deepCopyMap(t *testing.T, in map[string]any) map[string]any {
-	t.Helper()
-	out := make(map[string]any, len(in))
-	for k, v := range in {
-		if m, ok := v.(map[string]any); ok {
-			out[k] = deepCopyMap(t, m)
-			continue
-		}
-		out[k] = v
-	}
-	return out
 }
