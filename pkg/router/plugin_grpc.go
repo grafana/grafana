@@ -14,12 +14,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/grpctls"
 )
 
 // backendGRPCSection configures the router's gRPC connections to the plugin
@@ -172,11 +172,9 @@ func parsePluginGRPCTLS(section *setting.DynamicSection) (*tls.Config, error) {
 		if insecureSkipVerify {
 			return nil, fmt.Errorf("client certificate requires server verification")
 		}
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
+		if err := grpctls.UseClientCertificate(tlsCfg, certFile, keyFile); err != nil {
 			return nil, fmt.Errorf("router backend client certificate: %w", err)
 		}
-		tlsCfg.Certificates = []tls.Certificate{cert}
 	}
 	tlsCfg.ServerName = serverName
 	return tlsCfg, nil
@@ -190,7 +188,7 @@ func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, 
 	// unless TLS is configured.
 	transportCredentials := insecure.NewCredentials()
 	if c.TLS != nil {
-		transportCredentials = credentials.NewTLS(c.TLS)
+		transportCredentials = grpctls.ClientCredentials(c.TLS)
 	}
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),

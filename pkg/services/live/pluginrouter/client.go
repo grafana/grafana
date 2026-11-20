@@ -13,8 +13,8 @@ import (
 	v2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/grpctls"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type Client struct {
@@ -33,10 +33,6 @@ func New(cfg *setting.Cfg) (*Client, error) {
 	if addr == "" {
 		return nil, fmt.Errorf("live.plugin_router requires address")
 	}
-	cert, e := tls.LoadX509KeyPair(sec.Key("cert_file").String(), sec.Key("key_file").String())
-	if e != nil {
-		return nil, fmt.Errorf("live router client certificate: %w", e)
-	}
 	pem, e := os.ReadFile(sec.Key("ca_file").String())
 	if e != nil {
 		return nil, fmt.Errorf("live router CA: %w", e)
@@ -45,7 +41,11 @@ func New(cfg *setting.Cfg) (*Client, error) {
 	if !roots.AppendCertsFromPEM(pem) {
 		return nil, fmt.Errorf("invalid live router CA")
 	}
-	conn, e := grpc.NewClient(addr, grpc.WithDisableRetry(), grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}, RootCAs: roots, ServerName: sec.Key("server_name").String(), MinVersion: tls.VersionTLS13})))
+	tlsCfg := &tls.Config{RootCAs: roots, ServerName: sec.Key("server_name").String(), MinVersion: tls.VersionTLS13}
+	if err := grpctls.UseClientCertificate(tlsCfg, sec.Key("cert_file").String(), sec.Key("key_file").String()); err != nil {
+		return nil, fmt.Errorf("live router client certificate: %w", err)
+	}
+	conn, e := grpc.NewClient(addr, grpc.WithDisableRetry(), grpc.WithTransportCredentials(grpctls.ClientCredentials(tlsCfg)))
 	if e != nil {
 		return nil, e
 	}

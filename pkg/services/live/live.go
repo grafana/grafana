@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginclient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -1059,6 +1060,7 @@ func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requeste
 		if !ok || !p.IsApp() || !p.Backend || !p.Streaming {
 			return nil, fmt.Errorf("app plugin %s does not support streaming", namespace)
 		}
+		streamHandler = pluginclient.RouteStream(namespace, g.pluginClient, streamHandler)
 	} else {
 		var err error
 		streamHandler, err = g.getStreamPlugin(ctx, namespace)

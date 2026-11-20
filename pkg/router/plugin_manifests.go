@@ -191,7 +191,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 			// connection to hold.
 			if host := entry.Host; host != "" && !baasbridge.IsHTTPHost(host) { //nolint:staticcheck
 				backend.routedLive = t.source == sourcePlugins && t.grpcConfig.TLS != nil &&
-					!t.grpcConfig.TLS.InsecureSkipVerify && len(t.grpcConfig.TLS.Certificates) > 0
+					!t.grpcConfig.TLS.InsecureSkipVerify && (t.grpcConfig.TLS.GetClientCertificate != nil || len(t.grpcConfig.TLS.Certificates) > 0)
 				backend.acquire = func() (func(), error) { return t.acquireConnection(host, connectionID) }
 			}
 

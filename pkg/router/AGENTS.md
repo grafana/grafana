@@ -572,7 +572,16 @@ finishes, and cancels streams on retirement. A managed plugin from
 `plugins_url` with verified backend TLS and a client certificate can receive
 these requests. Supply `tls_client_cert_file` and `tls_client_key_file` under
 `[router.backend_grpc]`. The operator verifies the router's workload identity.
-A publish has no application-level retry.
+Both clients reload their configured certificate and key at the next handshake.
+An existing transport expires with the leaf it presented. Rotate each key pair
+together before expiry. The trusted CA bundle still needs an explicit rollout.
+
+Configure the router client certificate before enabling the operator-wide
+`live_router_dns_name` gate. Verify health and resource calls for each plugin
+on that operator before and after enabling the gate. Roll back the app Live
+destination and `serve_live` independently of this gate. To withdraw the router
+credential, first restore the previous trusted operator path and check all v2
+consumers. A publish has no application-level retry.
 
 The calling Grafana opts in under `[live.plugin_router]` using `plugin_ids`
 (space-separated), `address`, `ca_file`, `cert_file` and `key_file`.
