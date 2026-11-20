@@ -1,3 +1,5 @@
+import multiResourceCompatibleTypeList from './multiResourceCompatibleTypes.json';
+
 /**
 This list is obtained parsing https://docs.microsoft.com/en-us/azure/governance/resource-graph/reference/supported-tables-resources
 To programatically get the list, execute in the browser console:
@@ -427,27 +429,11 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
 // This list has been manually written using the Azure Portal as the source.
 // Visit https://portal.azure.com/#view/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/~/metrics
 // and go to Select a scope > Resource types > Multi-resource compatible (preview)
-export const multiResourceCompatibleTypes: { [ns: string]: boolean } = {
-  'microsoft.cache/redis': true, // 'Azure Cache for Redis'
-  'microsoft.documentdb/mongoclusters': true, // 'Azure Cosmos DB for MongoDB'
-  'microsoft.dbforpostgresql/flexibleservers': true, // 'Azure Database for PostgreSQL flexible servers'
-  'microsoft.storagecache/amlfilesystems': true, // 'Lustre File Systems'
-  'microsoft.monitor/accounts': true, // Azure Monitor Workspaces
-  'microsoft.databoxedge/databoxedgedevices': true, // 'Azure Stack Edge / Data Box Gateway'
-  'microsoft.azurestackhci/clusters': true, // 'Azure Stack HCI'
-  'microsoft.dataprotection/backupvaults': true, // 'Backup vaults'
-  'microsoft.networkcloud/baremetalmachines': true, // 'Bare Metal Machines'
-  'microsoft.netapp/netappaccounts/capacitypools': true, // 'Capacity pools'
-  'microsoft.netapp/netappaccounts/capacitypools/volumes': true, // 'Capacity pool volumes'
-  'microsoft.network/networkwatchers/connectionmonitors': true, // 'Connection Monitors'
-  'microsoft.keyvault/vaults': true, // 'Key vaults'
-  'microsoft.recoveryservices/vaults': true, // 'Recovery Services vaults'
-  'microsoft.sql/servers/databases': true, // 'SQL databases'
-  'microsoft.sql/servers/elasticpools': true, // 'SQL elastic pools'
-  'microsoft.compute/virtualmachinescalesets': true, // 'Virtual machine scale sets'
-  'microsoft.compute/virtualmachines': true, // 'Virtual machines'
-  'microsoft.signalrservice/webpubsub': true, // 'Web PubSub Service'
-};
+// The list lives in multiResourceCompatibleTypes.json so the backend can check its copy
+// against it (TestMultiResourceCompatibleTypesMatchFrontend in pkg/azuremonitor/metrics).
+export const multiResourceCompatibleTypes: { [ns: string]: boolean } = Object.fromEntries(
+  multiResourceCompatibleTypeList.map((ns) => [ns, true])
+);
 
 export const resourceTypes = [
   'microsoft.aad/domainservices',

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -890,4 +892,176 @@ func TestIsBatchFlagEnabled(t *testing.T) {
 
 	// No provider registered (e.g. the standalone plugin binary): defaults to off.
 	require.False(t, isBatchFlagEnabled(context.Background()))
+}
+
+func TestNeedsResourceFanOut(t *testing.T) {
+	twoResources := func(ns string, second dataquery.AzureMonitorResource) dataquery.AzureMonitorQuery {
+		return dataquery.AzureMonitorQuery{
+			Subscription: strPtr("sub-1"),
+			AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr(ns),
+				Region:          strPtr("westus2"),
+				Resources: []dataquery.AzureMonitorResource{
+					{Subscription: strPtr("sub-1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("r1"), Region: strPtr("westus2")},
+					second,
+				},
+			},
+		}
+	}
+	sameSubRegion := dataquery.AzureMonitorResource{Subscription: strPtr("SUB-1"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("r2"), Region: strPtr("WestUS2")}
+
+	tests := []struct {
+		name  string
+		model dataquery.AzureMonitorQuery
+		want  bool
+	}{
+		{
+			name:  "compatible type, same subscription and region",
+			model: twoResources("Microsoft.Compute/virtualMachines", sameSubRegion),
+			want:  false,
+		},
+		{
+			name:  "compatible type, resource without explicit subscription or region",
+			model: twoResources("Microsoft.Compute/virtualMachines", dataquery.AzureMonitorResource{ResourceGroup: strPtr("rg2"), ResourceName: strPtr("r2")}),
+			want:  false,
+		},
+		{
+			name:  "incompatible type",
+			model: twoResources("microsoft.operationalinsights/workspaces", sameSubRegion),
+			want:  true,
+		},
+		{
+			name:  "compatible type, different subscription",
+			model: twoResources("Microsoft.Compute/virtualMachines", dataquery.AzureMonitorResource{Subscription: strPtr("sub-2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("r2"), Region: strPtr("westus2")}),
+			want:  true,
+		},
+		{
+			name:  "compatible type, different region",
+			model: twoResources("Microsoft.Compute/virtualMachines", dataquery.AzureMonitorResource{Subscription: strPtr("sub-1"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("r2"), Region: strPtr("eastus")}),
+			want:  true,
+		},
+		{
+			name: "single resource of an incompatible type",
+			model: dataquery.AzureMonitorQuery{AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr("microsoft.operationalinsights/workspaces"),
+				Resources:       []dataquery.AzureMonitorResource{{ResourceGroup: strPtr("rg"), ResourceName: strPtr("r")}},
+			}},
+			want: false,
+		},
+		{
+			name:  "no azureMonitor object",
+			model: dataquery.AzureMonitorQuery{},
+			want:  false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, needsResourceFanOut(tt.model))
+		})
+	}
+}
+
+// TestExecuteTimeSeriesQueryLegacyFanOut covers a query saved while the batch
+// API was enabled (two Log Analytics workspaces in different resource groups)
+// and then run with batch disabled. Log Analytics workspaces are not
+// multi-resource compatible, so the legacy path must issue one resource-level
+// GET per workspace rather than a single subscription-level POST.
+func TestExecuteTimeSeriesQueryLegacyFanOut(t *testing.T) {
+	ds := &AzureMonitorDatasource{Logger: log.DefaultLogger}
+
+	var mu sync.Mutex
+	var metricRequests []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if !strings.HasSuffix(r.URL.Path, "/providers/microsoft.insights/metrics") {
+			_, _ = w.Write([]byte(`{"displayName":"My Subscription"}`))
+			return
+		}
+		mu.Lock()
+		metricRequests = append(metricRequests, r.Method+" "+r.URL.Path)
+		mu.Unlock()
+		if strings.Contains(r.URL.Path, "/resourceGroups/rg-broken/") {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":{"code":"AuthorizationFailed","message":"denied"}}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"value":[{"name":{"value":"AvailabilityRate_Query","localizedValue":"Availability"},"unit":"Percent","timeseries":[{"data":[{"timeStamp":"2024-01-01T00:00:00Z","average":100}]}]}]}`))
+	}))
+	defer srv.Close()
+
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "sub-1"},
+		Routes: map[string]types.AzRoute{
+			"Azure Monitor": {URL: srv.URL},
+			"Azure Portal":  {URL: "https://portal.azure.com"},
+		},
+	}
+	makeQuery := func(refID, brokenRG string) backend.DataQuery {
+		model := dataquery.AzureMonitorQuery{
+			Subscription: strPtr("sub-1"),
+			AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr("microsoft.operationalinsights/workspaces"),
+				MetricName:      strPtr("AvailabilityRate_Query"),
+				Aggregation:     strPtr("Average"),
+				TimeGrain:       strPtr("PT5M"),
+				Region:          strPtr("westus2"),
+				Resources: []dataquery.AzureMonitorResource{
+					{Subscription: strPtr("sub-1"), ResourceGroup: strPtr("rg-a"), ResourceName: strPtr("ws-a"), Region: strPtr("westus2"), MetricNamespace: strPtr("Microsoft.OperationalInsights/workspaces")},
+					{Subscription: strPtr("sub-1"), ResourceGroup: strPtr(brokenRG), ResourceName: strPtr("ws-b"), Region: strPtr("westus2"), MetricNamespace: strPtr("microsoft.operationalinsights/workspaces")},
+				},
+			},
+		}
+		raw, err := json.Marshal(model)
+		require.NoError(t, err)
+		return backend.DataQuery{
+			RefID: refID,
+			JSON:  raw,
+			TimeRange: backend.TimeRange{
+				From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				To:   time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC),
+			},
+		}
+	}
+
+	t.Run("each workspace is fetched with its own resource-level GET", func(t *testing.T) {
+		metricRequests = nil
+		resp, err := ds.ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{makeQuery("A", "rg-b")}, dsInfo, srv.Client(), srv.URL, false)
+		require.NoError(t, err)
+
+		dr := resp.Responses["A"]
+		require.NoError(t, dr.Error)
+		require.Len(t, dr.Frames, 2)
+		assert.Equal(t, "ws-a", dr.Frames[0].Fields[1].Labels["resourceName"])
+		assert.Equal(t, "ws-b", dr.Frames[1].Fields[1].Labels["resourceName"])
+		assert.ElementsMatch(t, []string{
+			"GET /subscriptions/sub-1/resourceGroups/rg-a/providers/microsoft.operationalinsights/workspaces/ws-a/providers/microsoft.insights/metrics",
+			"GET /subscriptions/sub-1/resourceGroups/rg-b/providers/microsoft.operationalinsights/workspaces/ws-b/providers/microsoft.insights/metrics",
+		}, metricRequests)
+	})
+
+	t.Run("a failing workspace keeps the other workspace's frames", func(t *testing.T) {
+		metricRequests = nil
+		resp, err := ds.ExecuteTimeSeriesQuery(context.Background(), []backend.DataQuery{makeQuery("A", "rg-broken")}, dsInfo, srv.Client(), srv.URL, false)
+		require.NoError(t, err)
+
+		dr := resp.Responses["A"]
+		require.Error(t, dr.Error)
+		require.Len(t, dr.Frames, 1)
+		assert.Equal(t, "ws-a", dr.Frames[0].Fields[1].Labels["resourceName"])
+	})
+}
+
+// TestMultiResourceCompatibleTypesMatchFrontend keeps the backend copy of the
+// multi-resource compatible types in step with the list the resource picker uses.
+func TestMultiResourceCompatibleTypesMatchFrontend(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "public", "app", "plugins", "datasource", "azuremonitor", "azureMetadata", "multiResourceCompatibleTypes.json"))
+	require.NoError(t, err)
+	var frontend []string
+	require.NoError(t, json.Unmarshal(raw, &frontend))
+
+	backendTypes := make([]string, 0, len(multiResourceCompatibleTypes))
+	for ns := range multiResourceCompatibleTypes {
+		backendTypes = append(backendTypes, ns)
+	}
+	assert.ElementsMatch(t, frontend, backendTypes, "update multiResourceCompatibleTypes in azuremonitor-datasource.go to match public/app/plugins/datasource/azuremonitor/azureMetadata/multiResourceCompatibleTypes.json")
 }
