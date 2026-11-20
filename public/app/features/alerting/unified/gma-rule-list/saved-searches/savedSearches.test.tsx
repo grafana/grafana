@@ -99,9 +99,9 @@ describe('GMA rule list saved searches', () => {
     await user.click(ui.savedSearchesButton.get());
     await user.click(await screen.findByRole('link', { name: 'Full disks' }));
 
-    expect(await screen.findByText('Full disks')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'CPU high load' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Disk full' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'CPU high load' })).not.toBeInTheDocument());
+    expect(await screen.findByRole('link', { name: 'Disk full' })).toBeInTheDocument();
+    expect(screen.getByText('Full disks')).toBeInTheDocument();
     expect(ui.searchInput.get()).toHaveValue('disk');
 
     await user.type(ui.searchInput.get(), ' full{Enter}');
