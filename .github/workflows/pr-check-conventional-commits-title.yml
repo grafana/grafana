@@ -1,4 +1,4 @@
-name: Check plugin-compat pull request title
+name: Check conventional commit pull request title
 
 on:
   pull_request:
@@ -9,8 +9,9 @@ on:
       - reopened
       - ready_for_review
     paths:
+      # One entry for each package that is released on its own.
       - 'packages/grafana-plugin-compat/**'
-      - '.github/workflows/pr-check-plugin-compat-title.yml'
+      - '.github/workflows/pr-check-conventional-commits-title.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +21,7 @@ permissions: {}
 
 jobs:
   title-check:
-    name: Check plugin-compat pull request title
+    name: Check conventional commit pull request title
     # The release PR bumps the version and writes the changelog, so it never triggers a release of its own.
     if: github.event.pull_request.draft == false && github.head_ref != 'nx-release-branch--main'
     runs-on: ubuntu-x64-small
