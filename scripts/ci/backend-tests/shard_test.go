@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -72,6 +73,41 @@ func TestShardSingleShardPassThrough(t *testing.T) {
 	input := "./e\n./a\n./...\n./a\n"
 	output := runShard(t, root, input, "-N", "1/1", "-d", "-")
 	require.Equal(t, input, output)
+}
+
+func TestShardBalancesPackageWeights(t *testing.T) {
+	root := t.TempDir()
+	weights := filepath.Join(root, "weights.txt")
+	require.NoError(t, os.WriteFile(weights, []byte(`# Estimated seconds
+example.com/grafana/api 40
+example.com/grafana/db 35
+example.com/enterprise/api 32
+example.com/enterprise/db 20
+example.com/grafana/removed 200
+`), 0o600))
+
+	packages := []string{
+		"example.com/grafana/api",
+		"example.com/grafana/db",
+		"example.com/grafana/new",
+		"example.com/enterprise/api",
+		"example.com/enterprise/db",
+		"example.com/enterprise/new",
+		"example.com/grafana/api",
+	}
+	want := [][]string{
+		{"example.com/grafana/api", "example.com/enterprise/db", "example.com/enterprise/new"},
+		{"example.com/grafana/db", "example.com/enterprise/api", "example.com/grafana/new"},
+	}
+
+	for range 2 {
+		for i, expected := range want {
+			got := runShard(t, root, strings.Join(packages, "\n")+"\n",
+				"-N", fmt.Sprintf("%d/2", i+1), "-d", "-", "-w", weights)
+			require.ElementsMatch(t, expected, strings.Fields(got), "shard %d", i+1)
+		}
+		slices.Reverse(packages)
+	}
 }
 
 func shardFixture(t *testing.T) (string, []string) {
