@@ -29,7 +29,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
-	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -3332,6 +3331,14 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 	})
 }
 
+func TestInitializeBlobStorageRejectsBucketURL(t *testing.T) {
+	_, err := initializeBlobStorage(ResourceServerOptions{Blob: BlobConfig{
+		URL:     "mem://",
+		Backend: NewKVBlobSupport(nil),
+	}})
+	require.ErrorContains(t, err, "blob_url is no longer supported")
+}
+
 // stubBlobSupport records whether PutResourceBlob was reached so tests can
 // assert that the authz gate short-circuits or delegates.
 type stubBlobSupport struct {
@@ -3709,12 +3716,9 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.True(t, blob.getReached)
 	})
 
-	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+	t.Run("reads a referenced blob from KV storage using its content type", func(t *testing.T) {
 		srv, _, _ := newBlobAuthzTestServer(t, nil)
-		bucket := memblob.OpenBucket(nil)
-		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
-		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
-		require.NoError(t, err)
+		blob := NewKVBlobSupport(setupBadgerKV(t))
 		srv.blob = blob
 
 		value := []byte(`{"title":"test"}`)
