@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { Checkbox } from '@grafana/ui';
 
 import { type AddPanelFormValues } from './addPanelForm';
-import { describeCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
+import { type CapturedTimeRange } from './capturedTimeRange';
 
 interface Props {
   control: Control<AddPanelFormValues>;
@@ -14,7 +14,6 @@ interface Props {
 }
 
 export function LockTimeRangeField({ control, capturedTimeRanges, disabled }: Props) {
-  const [onlyRange] = capturedTimeRanges;
   const single = capturedTimeRanges.length === 1;
   return (
     <Controller
@@ -29,12 +28,7 @@ export function LockTimeRangeField({ control, capturedTimeRanges, disabled }: Pr
           onChange={(event) => onChange(event.currentTarget.checked)}
           label={
             single
-              ? t('notebooks.add-panel.lock-time-range', 'Lock to {{range}}', {
-                  range: describeCapturedTimeRange(onlyRange),
-                  // The range is formatted dates, not markup, and escaping turns its separators into
-                  // entities the reader can see.
-                  interpolation: { escapeValue: false },
-                })
+              ? t('notebooks.add-panel.lock-time-range', 'Lock time range')
               : t('notebooks.add-panel.lock-time-ranges', 'Lock panels to the time ranges they showed')
           }
           description={

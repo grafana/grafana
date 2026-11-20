@@ -186,7 +186,7 @@ describe('AddToNotebookFormExposedComponent', () => {
       />
     );
 
-    expect(screen.getByRole('checkbox', { name: /^Lock to 2026-10-05 08:00:00 to 2026-10-05 09:30:00/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Lock time range/ })).toBeChecked();
 
     await addToCheckoutErrorSpike(user);
 

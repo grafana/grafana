@@ -149,8 +149,8 @@ function renderModal(
  * Named by its own label plus its description, which grafana-ui's Checkbox puts inside the same
  * label element — so the name is matched from the start rather than in full.
  */
-function lockCheckbox(range = '') {
-  return screen.getByRole('checkbox', { name: new RegExp(`^Lock to ${range}`) });
+function lockCheckbox() {
+  return screen.getByRole('checkbox', { name: /^Lock time range/ });
 }
 
 describe('AddPanelToNotebookModalBody', () => {
@@ -613,13 +613,13 @@ describe('AddPanelToNotebookModalBody', () => {
     it('starts locked for an absolute capture, naming the window it will keep', () => {
       renderModal(undefined, false, ABSOLUTE_CAPTURE);
 
-      expect(lockCheckbox('2026-10-05 08:00:00 to 2026-10-05 09:30:00')).toBeChecked();
+      expect(lockCheckbox()).toBeChecked();
     });
 
     it('starts unlocked for a relative capture, so the panel follows the notebook range', () => {
       renderModal(undefined, false, RELATIVE_CAPTURE);
 
-      expect(lockCheckbox('Last 6 hours')).not.toBeChecked();
+      expect(lockCheckbox()).not.toBeChecked();
     });
 
     it('locks the added panel to the captured window', async () => {
@@ -1168,7 +1168,7 @@ describe('AddPanelToNotebookModalBody', () => {
       const { user } = renderCells([panelCell('pinned', ABSOLUTE_CAPTURE), panelCell('live', RELATIVE_CAPTURE)]);
 
       // One lockable panel, so the checkbox names its window.
-      const lock = screen.getByRole('checkbox', { name: /^Lock to / });
+      const lock = screen.getByRole('checkbox', { name: /^Lock time range/ });
       expect(lock).toBeChecked();
       await chooseExisting(user);
       await user.click(selectNotebook('Checkout error spike'));
