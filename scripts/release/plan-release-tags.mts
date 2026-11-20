@@ -12,7 +12,6 @@
 import { execFileSync } from 'node:child_process';
 
 import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { isMainModule } from './lib/main.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface PendingPr {
@@ -237,7 +236,7 @@ function tagCommit(tag: string): string | null {
   }
 }
 
-if (isMainModule(import.meta.url)) {
+if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
     const tags = readTags(process.env);

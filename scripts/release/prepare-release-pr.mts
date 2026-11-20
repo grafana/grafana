@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { releaseChangelog, releaseVersion } from 'nx/release';
 
 import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
-import { isMainModule } from './lib/main.mts';
 import { tagFor } from './lib/tags.mts';
 
 // Nx counts commits from the tag of the last release. Without it, it would version from commits that were
@@ -47,7 +46,7 @@ function tagExists(tag: string): boolean {
   }
 }
 
-if (isMainModule(import.meta.url)) {
+if (import.meta.main) {
   try {
     const packages = await getIndependentPackages();
 
