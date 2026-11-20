@@ -75,7 +75,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
@@ -259,7 +259,6 @@ export function transformSaveModelSchemaV2ToScene(
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
           intervals: dashboard.timeSettings.autoRefreshIntervals,
-          withText: true,
         }),
         hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
@@ -302,7 +301,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   }).filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
-  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
@@ -374,7 +373,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
       drilldownRecommendationsEnabled: true,
-      $behaviors: [new ReportInteractionBehavior({})],
+      $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
       supportsMultiValueOperators: false,
       collapsible: true,
       enableGroupBy: variable.spec.enableGroupBy ?? false,
@@ -382,9 +381,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
     }
-    const adhocVariable = new AdHocFiltersVariable(adhocVariableState);
-    applySupportsMultiValueOperators(adhocVariable, ds?.type);
-    return adhocVariable;
+    return new AdHocFiltersVariable(adhocVariableState);
   }
 
   if (variable.kind === defaultCustomVariableKind().kind) {
@@ -583,9 +580,8 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             ),
             supportsMultiValueOperators: false,
             enableGroupBy: v.spec.enableGroupBy ?? false,
-            $behaviors: [new ReportInteractionBehavior({})],
+            $behaviors: [new ReportInteractionBehavior({}), resolveMultiValueOperatorsOnActivate],
           });
-          applySupportsMultiValueOperators(adhocVariable, ds?.type);
           return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable

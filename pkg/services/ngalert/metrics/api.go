@@ -2,12 +2,14 @@ package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
 
 type API struct {
 	RequestDuration *prometheus.HistogramVec
+	ConvertRequests *prometheus.CounterVec
 }
 
 func NewAPIMetrics(r prometheus.Registerer) *API {
@@ -27,5 +29,16 @@ func NewAPIMetrics(r prometheus.Registerer) *API {
 		r.MustRegister(requestDuration)
 	}
 
-	return &API{RequestDuration: requestDuration}
+	return &API{
+		RequestDuration: requestDuration,
+		ConvertRequests: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "convert_api_requests_total",
+				Help:      "Number of import calls to the convert API, by operation, caller and result. Alertmanager dry runs are not counted.",
+			},
+			[]string{"operation", "source", "result"},
+		),
+	}
 }

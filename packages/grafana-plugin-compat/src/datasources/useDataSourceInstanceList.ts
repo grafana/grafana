@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { useDataSourceInstanceList as stableUseDataSourceInstanceList } from '@grafana/runtime';
-import { useDataSourceInstanceList as unstableUseDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { getDataSourceInstanceList } from './getDataSourceInstanceList';
 import { type GetDataSourceInstanceListFilters } from './types';
@@ -24,9 +23,7 @@ export const useDataSourceInstanceList: (
 ) => UseDataSourceInstanceListResult =
   typeof stableUseDataSourceInstanceList === 'function'
     ? stableUseDataSourceInstanceList
-    : typeof unstableUseDataSourceInstanceList === 'function'
-      ? unstableUseDataSourceInstanceList
-      : useBackwardsCompatibleDataSourceInstanceList;
+    : useBackwardsCompatibleDataSourceInstanceList;
 
 function useBackwardsCompatibleDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters

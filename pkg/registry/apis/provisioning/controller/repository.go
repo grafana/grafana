@@ -134,17 +134,10 @@ func NewRepositoryController(
 	reconcileMetrics := registerReconcileErrorMetrics(registry)
 
 	rc := &RepositoryController{
-		client:    provisioningClient,
-		repos:     repos,
-		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
-		triggers:  make(map[string]usinformer.ProcessTrigger),
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name:            "provisioningRepositoryController",
-				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
-			},
-		),
+		client:            provisioningClient,
+		repos:             repos,
+		processed:         usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		triggers:          make(map[string]usinformer.ProcessTrigger),
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -175,6 +168,10 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
+	rc.queue = newWorkerQueue(&rc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
+		Name:            "provisioningRepositoryController",
+		MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
+	})
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
@@ -197,7 +194,7 @@ func NewRepositoryController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_repository_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished repository key (waiting or in flight) in this replica's queue, measured from first enqueue.",
+			Help: "Age in seconds of the oldest unfinished repository queue entry (waiting or in flight) in this replica, measured from that entry's enqueue, excluding retry backoff.",
 		},
 		func() float64 { return rc.queueLag.lag().Seconds() },
 	))
@@ -293,7 +290,6 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 	// Attribute the key before the enqueue so a worker that dequeues immediately
 	// sees it.
 	rc.setTrigger(key, trigger)
-	rc.queueLag.add(key)
 	rc.queue.Add(key)
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// Log lag at enqueue so backlog is visible on add, not only at pickup.
@@ -402,11 +398,10 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	// repoType is empty when process failed before resolving the object (bad key
 	// or not-found); the field is still emitted so type-scoped log filters match
-	// every failure/retry line for a resolvable repository. On error the key stays
-	// in flight so a retry (below) inherits its original enqueue time; the deferred
-	// done clears it once this attempt ends.
+	// every failure/retry line for a resolvable repository.
 	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
+	rc.queueLag.done(key)
 
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
@@ -427,7 +422,6 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		rc.setTrigger(key, trigger)
 	}
-	rc.queueLag.add(key)
 	rc.queue.AddRateLimited(key)
 	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
 
@@ -1227,7 +1221,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
-				rc.queueLag.add(key)
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("repository token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())

@@ -49,22 +49,26 @@ const (
 	// DeleteOutcomePending means the delete was accepted but the child is held by finalizers; a
 	// subfolder with the cascade finalizer stays until its own cascade releases it.
 	DeleteOutcomePending
-	// DeleteOutcomeTerminating means the child was already being deleted; nothing was issued.
+	// DeleteOutcomeTerminating means the child was already being deleted; nothing was issued, so it
+	// does not requeue the folder. A handler whose child needs rechecking should return Pending.
 	DeleteOutcomeTerminating
 	// DeleteOutcomeGone means the child no longer exists or is no longer in this folder (e.g. a
 	// stale search hit).
 	DeleteOutcomeGone
 )
 
-// childKinds is the order children are deleted in: subfolders first, so their own cascades start
-// as early as possible.
-var childKinds = []ChildKind{ChildFolder, ChildDashboard}
-
 // ChildLister pages through a folder's direct children of one kind.
 type ChildLister interface {
 	// ListChildren returns up to limit direct children of kind in folderUID, starting at offset, and
 	// the total number of them.
 	ListChildren(ctx context.Context, namespace, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error)
+}
+
+// KindHandler lists and deletes the children of one kind.
+type KindHandler struct {
+	Kind    ChildKind
+	Lister  ChildLister
+	Deleter ChildDeleter
 }
 
 // ChildDeleter deletes one child of parentUID. Children are deleted with force, so a non-empty
@@ -87,6 +91,11 @@ type FolderWriter interface {
 	RemoveFinalizer(ctx context.Context, namespace, name string, finalizers []string) error
 }
 
+// cascadePending reports whether f is terminating and still holds the cascade finalizer.
+func cascadePending(f *foldersv1.Folder) bool {
+	return f.DeletionTimestamp != nil && slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer)
+}
+
 // ErrChildrenStillListed reports a pass that found only children that are already gone. That
 // usually means the search index has not caught up with deletes or moves yet, so the folder must be
 // retried with backoff: requeueing it at once would query search in a tight loop until it does.
@@ -104,8 +113,8 @@ type Result struct {
 
 // Reconciler advances the cascade delete of one folder per call.
 type Reconciler struct {
-	Children ChildLister
-	Deleter  ChildDeleter
+	// Handlers run in order.
+	Handlers []KindHandler
 	Folders  FolderWriter
 	// BatchSize caps the deletes issued per reconcile; DefaultBatchSize when <= 0.
 	BatchSize int
@@ -119,8 +128,11 @@ type Reconciler struct {
 // A pass that issues nothing because every child is already being deleted returns an empty Result:
 // those subfolders run their own cascade, and releasing one wakes f, so f must not requeue itself.
 func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result, error) {
-	if f.DeletionTimestamp == nil || !slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer) {
+	if !cascadePending(f) {
 		return Result{}, nil
+	}
+	if len(r.Handlers) == 0 {
+		return Result{}, errors.New("no child handlers configured")
 	}
 	logger := logging.FromContext(ctx).With("namespace", f.Namespace, "folder", f.Name)
 
@@ -134,18 +146,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 	// Only the first page of each kind is read up front; progress comes from the hit totals, so a
 	// large folder costs a batch-sized read per pass rather than a full listing.
 	batch := int64(r.batchSize())
-	cursors := make([]childCursor, 0, len(childKinds))
+	cursors := make([]childCursor, 0, len(r.Handlers))
 	var total int64
-	for _, kind := range childKinds {
-		page, n, err := r.Children.ListChildren(ctx, f.Namespace, f.Name, kind, 0, batch)
+	for _, h := range r.Handlers {
+		page, n, err := h.Lister.ListChildren(ctx, f.Namespace, f.Name, h.Kind, 0, batch)
 		if err != nil {
-			err = fmt.Errorf("list %s: %w", kind, err)
+			err = fmt.Errorf("list %s: %w", h.Kind, err)
 			status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
 			status.Errors = []string{err.Error()}
 			return Result{}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
 		}
 		n = max(n, int64(len(page)))
-		cursors = append(cursors, childCursor{kind: kind, page: page, offset: int64(len(page)), total: n})
+		cursors = append(cursors, childCursor{h: h, page: page, offset: int64(len(page)), total: n})
 		total += n
 	}
 	if status.Total == nil {
@@ -179,13 +191,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		for issued < batch {
 			c, ok, err := r.next(ctx, f, cur, batch)
 			if err != nil {
-				failures = append(failures, fmt.Errorf("list %s: %w", cur.kind, err))
+				failures = append(failures, fmt.Errorf("list %s: %w", cur.h.Kind, err))
 				break
 			}
 			if !ok {
 				break
 			}
-			outcome, err := r.Deleter.Delete(ctx, f.Namespace, f.Name, c)
+			outcome, err := cur.h.Deleter.Delete(ctx, f.Namespace, f.Name, c)
 			if err != nil {
 				issued++
 				failures = append(failures, fmt.Errorf("%s/%s: %w", c.Kind, c.Name, err))
@@ -241,7 +253,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 
 // childCursor walks one kind of child across search pages within a pass.
 type childCursor struct {
-	kind   ChildKind
+	h      KindHandler
 	page   []Child
 	offset int64
 	total  int64
@@ -256,7 +268,7 @@ func (r *Reconciler) next(ctx context.Context, f *foldersv1.Folder, cur *childCu
 		if cur.offset >= cur.total {
 			return Child{}, false, nil
 		}
-		page, _, err := r.Children.ListChildren(ctx, f.Namespace, f.Name, cur.kind, cur.offset, batch)
+		page, _, err := cur.h.Lister.ListChildren(ctx, f.Namespace, f.Name, cur.h.Kind, cur.offset, batch)
 		if err != nil {
 			return Child{}, false, err
 		}

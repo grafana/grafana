@@ -58,22 +58,6 @@ func IsConflict(err error) bool {
 	return apierrors.IsConflict(StatusError(ErrorResultFromGRPCDetails(err)))
 }
 
-// ErrorFromResponse resolves the outcome of a unified storage call — which
-// reports failure either through a transport error or through a response that
-// embeds an ErrorResult — into a single error, so callers need one error
-// branch. The transport error is returned untouched to keep its gRPC status,
-// cancellation semantics and errors.Is/As chain intact; a response-embedded
-// result is converted to a typed Kubernetes error. Callers that need an ErrorResult
-// representation for status checks can convert the returned error with AsErrorResult.
-// Attached or response-embedded details are preserved when available.
-// Returns nil only when the call fully succeeded.
-func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	if err != nil {
-		return err
-	}
-	return StatusError(respErr)
-}
-
 // ErrorResultFromGRPCDetails returns the ErrorResult attached to a gRPC status error, or nil.
 func ErrorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
@@ -216,17 +200,6 @@ func StatusError(res *resourcepb.ErrorResult) error {
 		}
 	}
 	return status
-}
-
-// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a unified
-// storage call that may report failure through a response-embedded [resourcepb.ErrorResult]
-// or a returned error. A returned error takes precedence and is handled by
-// [StatusErrorFromGRPC]; otherwise the embedded result is converted with [StatusError].
-func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	if err == nil {
-		return StatusError(respErr)
-	}
-	return StatusErrorFromGRPC(err)
 }
 
 // StatusErrorFromGRPC derives a Kubernetes [apierrors.StatusError] from the error returned

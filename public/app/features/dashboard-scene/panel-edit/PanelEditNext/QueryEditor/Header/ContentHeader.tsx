@@ -10,6 +10,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
+import { type CardActionSource } from '../../tracking';
 import {
   useActionsContext,
   usePanelContext,
@@ -131,6 +132,8 @@ interface ContentHeaderProps {
   target?: HeaderActionTarget;
   /** `stacked` renders the header inside a stacked view section, which draws its own accent bar. */
   variant?: ContentHeaderVariant;
+  /** Analytics source reported by the header actions. */
+  source?: CardActionSource;
 }
 
 type ContentHeaderVariant = 'default' | 'stacked';
@@ -164,6 +167,7 @@ export function ContentHeader({
   scopedVars,
   target,
   variant = 'default',
+  source = 'content_header',
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
@@ -277,12 +281,7 @@ export function ContentHeader({
         )}
       </div>
       <div className={styles.actions}>
-        <HeaderActions
-          containerRef={containerRef}
-          target={target}
-          source={isStacked ? 'stacked_header' : 'content_header'}
-          showFeedbackButton={!isStacked}
-        />
+        <HeaderActions containerRef={containerRef} target={target} source={source} />
       </div>
     </div>
   );
@@ -362,6 +361,7 @@ export function ContentHeaderSceneWrapper({
       scopedVars={scopedVars}
       target={target}
       variant={variant}
+      source={uiState.stackedMode.enabled ? 'stacked_header' : 'content_header'}
     />
   );
 }

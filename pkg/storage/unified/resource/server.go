@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -350,8 +350,7 @@ type ResourceStats struct {
 	Count           int64
 	ResourceVersion int64
 
-	// LastSearchedAt is when a global index was last searched before a restart,
-	// so its idle time carries on. Zero when unknown.
+	// LastSearchedAt carries idle time across restarts. Zero when unknown.
 	LastSearchedAt time.Time
 }
 
@@ -430,11 +429,6 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
-
-	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
-	// setting. It selects the index features this server requires, so an index
-	// that predates them is rebuilt before that path serves a query.
-	PostRankAuthzEnabled bool
 
 	// GlobalIndexEnabled builds one index per namespace covering several resource
 	// types, alongside the per-resource indexes.
@@ -1518,7 +1512,19 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(user.GetUID())
+	// An access-policy caller (a service, authenticated from its token) may delete on a user's
+	// behalf; record that user rather than the service. Any other caller cannot choose the
+	// recorded deleter. The in-context service identity is not matched here: the server derives
+	// the caller from the token, whose subject is the service's own access policy.
+	deletedBy := user.GetUID()
+	if req.ActingUserUid != "" {
+		if user.GetIdentityType() == claims.TypeAccessPolicy {
+			deletedBy = req.ActingUserUid
+		} else {
+			s.log.Debug("ignoring acting user on delete from a non-service caller", "caller", user.GetUID())
+		}
+	}
+	obj.SetUpdatedBy(deletedBy)
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 	event.ObjectOld = oldObj
@@ -2219,6 +2225,10 @@ func (s *server) initWatcher() error {
 		s.initSeededWatcher(backend)
 		return nil
 	}
+	if backend, ok := s.backend.(ResumeFloorWatchBackend); ok && backend.WatchResumeFloorsEnabled() {
+		s.initSeededWatcher(resumeFloorWatchBackend{backend: backend})
+		return nil
+	}
 	events, err := s.backend.WatchWriteEvents(s.ctx)
 	if err != nil {
 		return err
@@ -2720,11 +2730,14 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
+}
+
+func errBlobBackendNoResponse() error {
+	return GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"})
 }
 
 func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
@@ -2844,9 +2857,8 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	if err != nil {
 		return nil, rpcErrorFrom(err)
 	}
-	// Blob backends may still report failure in the body.
-	if rsp.GetError() != nil {
-		return nil, GRPCStatusError(rsp.GetError())
+	if rsp == nil {
+		return nil, errBlobBackendNoResponse()
 	}
 	return rsp, nil
 }

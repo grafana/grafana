@@ -17,6 +17,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -41,7 +42,7 @@ afterAll(() => {
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   // The stubbed editor never runs completions; the source itself is covered by
   // editor/variableCompletion.test.ts.
   createVariableCompletionSource: () => () => null,
@@ -361,7 +362,8 @@ describe('TextNGPanel', () => {
         return onOptionsChange;
       };
 
-      it('keeps the existing code options', async () => {
+      it('keeps the existing code options and reports the toggle', async () => {
+        const setVisualOption = jest.spyOn(DashboardInteractions, 'setVisualOption').mockImplementation();
         const onOptionsChange = await toggleLineNumbers({
           content: 'SELECT 1',
           mode: TextMode.Code,
@@ -373,6 +375,15 @@ describe('TextNGPanel', () => {
           mode: TextMode.Code,
           code: { language: CodeLanguage.Sql, showLineNumbers: true, showMiniMap: false },
         });
+        expect(setVisualOption).toHaveBeenCalledWith({
+          ui: 'text-panel-editor',
+          option: 'code.showLineNumbers',
+          value: 'true',
+          value_type: 'boolean',
+          panel_type: 'text',
+          panel_id: 1,
+        });
+        setVisualOption.mockRestore();
       });
 
       it('fills in the defaults when no code options are set', async () => {

@@ -48,7 +48,7 @@ func TestRouteHandlerDeclaredAccess(t *testing.T) {
 	kindRoute := func(check authlib.CheckRequest) manifestroutes.Route {
 		return manifestroutes.Route{
 			Path: "testkinds/{name}/reload", Namespaced: true, Subresource: "reload",
-			Kind:       &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
+			Kind:       &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds"},
 			Operations: spec3.PathProps{Post: &spec3.Operation{}, Get: &spec3.Operation{}},
 			Authz:      map[string]authlib.CheckRequest{http.MethodPost: check, http.MethodGet: check},
 		}

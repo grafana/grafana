@@ -3,14 +3,17 @@ package cascadedelete
 import (
 	"context"
 	"errors"
+	"maps"
 	"slices"
 	"sort"
+	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -51,22 +54,50 @@ type memStore struct {
 	listedRows   int
 	// gets counts Get calls per folder: one per controller pass.
 	gets map[string]int
+	// rvs is bumped on every change, like the real store.
+	rvs map[string]int
 }
 
 func newMemStore() *memStore {
-	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}}
+	return &memStore{folders: map[string]*memFolder{}, dashboards: map[string]string{}, failDelete: map[string]error{}, gets: map[string]int{}, rvs: map[string]int{}}
 }
 
+// notify delivers a folder change to the handler. The caller holds m.mu.
 func (m *memStore) notify(name string, deleted bool) {
 	if m.handler == nil {
 		return
 	}
-	obj := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name}}
 	if deleted {
-		m.handler.OnDelete(obj)
+		delete(m.rvs, name)
+		m.handler.OnDelete(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name}})
 		return
 	}
+	m.rvs[name]++
+	obj := m.eventObject(name)
 	m.handler.OnUpdate(obj, obj)
+}
+
+func (m *memStore) eventObject(name string) *foldersv1.Folder {
+	return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, ResourceVersion: strconv.Itoa(m.rvs[name])}}
+}
+
+// initialList delivers every folder as the informer's first list does.
+func (m *memStore) initialList() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, name := range slices.Sorted(maps.Keys(m.folders)) {
+		m.handler.OnAdd(m.eventObject(name), true)
+	}
+}
+
+// resync re-delivers every folder at its current version, like a re-list.
+func (m *memStore) resync() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, name := range slices.Sorted(maps.Keys(m.folders)) {
+		obj := m.eventObject(name)
+		m.handler.OnUpdate(obj, obj)
+	}
 }
 
 func (m *memStore) getCount(name string) int {
@@ -136,7 +167,7 @@ func (m *memStore) getLocked(name string) *foldersv1.Folder {
 	if !ok {
 		return nil
 	}
-	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, Finalizers: slices.Clone(f.finalizers)}}
+	out := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name, UID: types.UID(name + "-uid"), Finalizers: slices.Clone(f.finalizers)}}
 	if f.parent != "" {
 		out.Annotations = map[string]string{utils.AnnoKeyFolder: f.parent}
 	}
@@ -271,10 +302,15 @@ func sortedKeys[V any](m map[string]V) []string {
 
 func newTestReconciler(m *memStore, batch int) *Reconciler {
 	return &Reconciler{
-		Children:  m,
-		Deleter:   m,
+		Handlers:  []KindHandler{{ChildFolder, m, m}, {ChildDashboard, m, m}},
 		Folders:   m,
 		BatchSize: batch,
+	}
+}
+
+func setLister(r *Reconciler, l ChildLister) {
+	for i := range r.Handlers {
+		r.Handlers[i].Lister = l
 	}
 }
 

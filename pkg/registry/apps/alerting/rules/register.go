@@ -28,6 +28,7 @@ import (
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
+	rulesAppUtil "github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -93,7 +94,7 @@ func RegisterAppInstaller(
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
-	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
+	legacySearch := search.NewLegacyClient(*ng.Api.LegacyRuleService)
 	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
 		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
@@ -287,7 +288,7 @@ func newRuleRefResolver(ng *ngalert.AlertNG) func(ctx context.Context, uid strin
 			return rulesAppConfig.RuleRef{}, false, err
 		}
 
-		return rulesAppConfig.RuleRef{UID: r.UID, FolderUID: r.NamespaceUID}, true, nil
+		return rulesAppConfig.RuleRef{UID: r.UID, FolderUID: r.NamespaceUID, IsRecording: r.Type() == ngmodels.RuleTypeRecording}, true, nil
 	}
 }
 
@@ -297,6 +298,14 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 	return func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
 		if err := validateNotificationSettingsFields(ns); err != nil {
 			return err
+		}
+		// The legacy store makes this check on every write, so make it even when the references below can't be checked.
+		settingsModel, err := alertrule.ConvertNotificationSettings(&ns)
+		if err != nil {
+			return err
+		}
+		if err := settingsModel.Validate(); err != nil {
+			return rulesAppUtil.StoreRejection("invalid notification settings: %s", err)
 		}
 
 		orgID := resolveOrgID(ctx)
@@ -310,11 +319,6 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 			log.New("alerting.rules.app").Error("failed to create notification settings validator", "error", err)
 			// If we cannot build a validator, don't block admission
 			return nil
-		}
-
-		settingsModel, err := alertrule.ConvertNotificationSettings(&ns)
-		if err != nil {
-			return err
 		}
 		return vd.Validate(settingsModel)
 	}
@@ -433,9 +437,9 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return recordingrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return alertrule.NewStorage(*a.ng.Api.LegacyRuleService, namespacer)
 	case rulesequence.ResourceInfo.GroupResource():
 		return nil
 	case config.ResourceInfo.GroupResource():
@@ -469,9 +473,9 @@ func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified 
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
 	default:
 		return nil
 	}

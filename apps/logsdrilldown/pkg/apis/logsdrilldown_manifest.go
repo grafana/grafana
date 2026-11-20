@@ -46,6 +46,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldown",
 					Plural:     "LogsDrilldowns",
+					Resource:   "logsdrilldowns",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownv1alpha1,
@@ -54,6 +55,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaults",
 					Plural:     "LogsDrilldownDefaults",
+					Resource:   "logsdrilldowndefaults",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultsv1alpha1,
@@ -68,6 +70,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaultColumns",
 					Plural:     "LogsDrilldownDefaultColumns",
+					Resource:   "logsdrilldowndefaultcolumns",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultColumnsv1beta1,
@@ -76,6 +79,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaultLabels",
 					Plural:     "LogsDrilldownDefaultLabels",
+					Resource:   "logsdrilldowndefaultlabels",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultLabelsv1beta1,

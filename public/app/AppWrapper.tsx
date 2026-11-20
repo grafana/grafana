@@ -32,6 +32,10 @@ interface AppWrapperProps {
   context: GrafanaContextType;
 }
 
+function PassThroughProvider({ children }: { children: ReactNode }) {
+  return <>{children}</>;
+}
+
 // Reads Branding.LoginLogo at render time so custom branding applied by enterprise at startup
 // is reflected regardless of module init order. Defined at module scope so the context value
 // keeps a stable identity across renders.
@@ -59,6 +63,15 @@ export function addPageBanner(fn: ComponentType) {
 
 const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
+function removePreloader() {
+  const preloader = document.querySelector('.preloader');
+  if (preloader) {
+    preloader.remove();
+  } else {
+    console.warn('Preloader element not found');
+  }
+}
+
 export function AppWrapper({ context }: AppWrapperProps) {
   const [ready, setReady] = useState(false);
   const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(initRegistries([]));
@@ -82,15 +95,6 @@ export function AppWrapper({ context }: AppWrapperProps) {
     }
     init();
   }, []);
-
-  function removePreloader() {
-    const preloader = document.querySelector('.preloader');
-    if (preloader) {
-      preloader.remove();
-    } else {
-      console.warn('Preloader element not found');
-    }
-  }
 
   function renderRoute(route: RouteDescriptor) {
     return (
@@ -126,9 +130,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
   };
 
   // The extensions sidebar calls plugins/settings which requires auth, so only show it if the user has a role (is logged in)
-  const ExtensionsSidebarProvider = isSignedInOrAnonymous()
-    ? ExtensionSidebarContextProvider
-    : ({ children }: { children: ReactNode }) => <>{children}</>;
+  const ExtensionsSidebarProvider = isSignedInOrAnonymous() ? ExtensionSidebarContextProvider : PassThroughProvider;
 
   return (
     <StrictMode>

@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"uuid"
@@ -93,6 +94,120 @@ func TestGetOrCreateNamespaceByTitle(t *testing.T) {
 	require.Contains(t, err.Error(), "title is empty")
 
 	// note: most tests are in /pkg/tests/api/alerting/api_namespace_test.go
+}
+
+// statefulFolderService keeps created folders so a test can create, look up and
+// race on a folder UID; foldertest.FakeService.Create does not persist anything.
+type statefulFolderService struct {
+	*foldertest.FakeService
+	folders   map[string]*folder.Folder
+	created   []string
+	getErr    error
+	createErr error
+	// onCreate runs before Create stores anything, to simulate another writer.
+	onCreate func(s *statefulFolderService)
+}
+
+func newStatefulFolderService() *statefulFolderService {
+	return &statefulFolderService{FakeService: foldertest.NewFakeService(), folders: map[string]*folder.Folder{}}
+}
+
+func (s *statefulFolderService) GetFolders(_ context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	if s.getErr != nil {
+		return nil, s.getErr
+	}
+	var out []*folder.Folder
+	for _, uid := range q.UIDs {
+		if f, ok := s.folders[uid]; ok {
+			out = append(out, f)
+		}
+	}
+	return out, nil
+}
+
+func (s *statefulFolderService) Create(_ context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
+	if s.onCreate != nil {
+		s.onCreate(s)
+	}
+	if s.createErr != nil {
+		return nil, s.createErr
+	}
+	if _, ok := s.folders[cmd.UID]; ok {
+		return nil, folder.ErrConflict.Errorf("folder already exists")
+	}
+	f := &folder.Folder{UID: cmd.UID, Title: cmd.Title, ParentUID: cmd.ParentUID, OrgID: cmd.OrgID}
+	s.folders[cmd.UID] = f
+	s.created = append(s.created, cmd.UID)
+	return f, nil
+}
+
+func TestGetOrCreateNamespaceByUID(t *testing.T) {
+	ctx := context.Background()
+	admin := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin}
+
+	t.Run("rejects empty uid and title", func(t *testing.T) {
+		store := RuleStore{FolderService: newStatefulFolderService()}
+		_, _, err := store.GetOrCreateNamespaceByUID(ctx, "", "title", 1, admin, "")
+		require.ErrorContains(t, err, "uid is empty")
+		_, _, err = store.GetOrCreateNamespaceByUID(ctx, "uid", "", 1, admin, "")
+		require.ErrorContains(t, err, "title is empty")
+	})
+
+	t.Run("creates the folder with the given uid when it does not exist", func(t *testing.T) {
+		svc := newStatefulFolderService()
+		store := RuleStore{FolderService: svc}
+		f, created, err := store.GetOrCreateNamespaceByUID(ctx, "root-uid", "Root", 1, admin, "")
+		require.NoError(t, err)
+		require.True(t, created)
+		require.Equal(t, "root-uid", f.UID)
+		require.Equal(t, "Root", f.Title)
+		require.Equal(t, []string{"root-uid"}, svc.created)
+	})
+
+	t.Run("returns an existing folder untouched even when its title differs", func(t *testing.T) {
+		svc := newStatefulFolderService()
+		svc.folders["root-uid"] = &folder.Folder{UID: "root-uid", Title: "Renamed by a user", OrgID: 1}
+		store := RuleStore{FolderService: svc}
+		f, created, err := store.GetOrCreateNamespaceByUID(ctx, "root-uid", "Root", 1, admin, "")
+		require.NoError(t, err)
+		require.False(t, created)
+		require.Equal(t, "Renamed by a user", f.Title)
+		require.Empty(t, svc.created)
+	})
+
+	t.Run("a lookup error other than not found fails without creating", func(t *testing.T) {
+		svc := newStatefulFolderService()
+		svc.getErr = errors.New("database is down")
+		store := RuleStore{FolderService: svc}
+		_, created, err := store.GetOrCreateNamespaceByUID(ctx, "root-uid", "Root", 1, admin, "")
+		require.ErrorIs(t, err, svc.getErr)
+		require.False(t, created)
+		require.Empty(t, svc.created)
+		require.Empty(t, svc.folders)
+	})
+
+	t.Run("a concurrent create of the same uid resolves to the existing folder", func(t *testing.T) {
+		svc := newStatefulFolderService()
+		svc.createErr = folder.ErrConflict.Errorf("folder already exists")
+		svc.onCreate = func(s *statefulFolderService) {
+			s.folders["root-uid"] = &folder.Folder{UID: "root-uid", Title: "Root", OrgID: 1}
+		}
+		store := RuleStore{FolderService: svc}
+		f, created, err := store.GetOrCreateNamespaceByUID(ctx, "root-uid", "Root", 1, admin, "")
+		require.NoError(t, err)
+		require.False(t, created)
+		require.Equal(t, "root-uid", f.UID)
+	})
+
+	t.Run("a failed create that left no folder returns both errors", func(t *testing.T) {
+		svc := newStatefulFolderService()
+		svc.createErr = errors.New("storage unavailable")
+		store := RuleStore{FolderService: svc}
+		_, created, err := store.GetOrCreateNamespaceByUID(ctx, "root-uid", "Root", 1, admin, "")
+		require.ErrorIs(t, err, svc.createErr)
+		require.ErrorIs(t, err, folder.ErrAccessDenied)
+		require.False(t, created)
+	})
 }
 
 func TestGenerateAlertingFolderUID(t *testing.T) {

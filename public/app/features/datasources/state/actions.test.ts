@@ -217,6 +217,59 @@ describe('initDataSourceSettings', () => {
       expect(dependencies.loadDataSourceMeta).toHaveBeenCalledWith(dataSource);
     });
   });
+
+  describe('when a step rejects with something other than an Error', () => {
+    const notFound: FetchError = {
+      status: 404,
+      statusText: 'Not Found',
+      data: { message: 'Data source not found' },
+      config: { url: '/api/datasources/uid/abc' },
+    };
+    const forbidden: FetchError = {
+      status: 403,
+      statusText: 'Forbidden',
+      data: {},
+      config: { url: '/api/plugins/app/settings' },
+    };
+    const rejectingThunk = (reason: unknown) => () => async () => {
+      throw reason;
+    };
+
+    it.each([
+      {
+        name: 'loadDataSource rejects with a FetchError',
+        overrides: { loadDataSource: jest.fn(rejectingThunk(notFound)) },
+        expectedMessage: 'Data source not found',
+      },
+      {
+        name: 'loadDataSourceMeta rejects with a FetchError without a server message',
+        overrides: { loadDataSourceMeta: jest.fn(rejectingThunk(forbidden)) },
+        expectedMessage: 'Forbidden',
+      },
+      {
+        name: 'importDataSourcePlugin rejects with a string',
+        overrides: { importDataSourcePlugin: jest.fn().mockRejectedValue('Failed to fetch module') },
+        expectedMessage: 'Failed to fetch module',
+      },
+    ])('dispatches initDataSourceSettingsFailed with an Error when $name', async ({ overrides, expectedMessage }) => {
+      const dataSource = { type: 'app' };
+      const dependencies = {
+        loadDataSource: jest.fn(() => () => dataSource),
+        loadDataSourceMeta: jest.fn(() => () => {}),
+        getDataSource: jest.fn().mockReturnValue(dataSource),
+        getDataSourceMeta: jest.fn().mockReturnValue({ id: 'app' }),
+        importDataSourcePlugin: jest.fn().mockResolvedValue({}),
+        ...overrides,
+      } as unknown as InitDataSourceSettingDependencies;
+
+      const dispatchedActions = await thunkTester({ dataSourceSettings: {}, dataSources: {} })
+        .givenThunk(initDataSourceSettings)
+        .whenThunkIsDispatched('abc', dependencies);
+
+      expect(dispatchedActions).toEqual([initDataSourceSettingsFailed(new Error(expectedMessage))]);
+      expect(dispatchedActions[0].payload).toBeInstanceOf(Error);
+    });
+  });
 });
 
 describe('testDataSource', () => {

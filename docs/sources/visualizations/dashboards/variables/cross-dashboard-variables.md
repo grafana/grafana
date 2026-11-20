@@ -36,7 +36,7 @@ For example, in the preceding image, there are two variables in the "Core metric
 The following image shows a dashboard in the "Core metrics" folder.
 As a result, the variables in the "Core metrics" folder are available to that dashboard, as well as all the global variables:
 
-![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-sidebar-v13.3.png)
+![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-sidebar-v13.3.1.png)
 
 Variables in other folders aren't available to that dashboard.
 
@@ -78,7 +78,7 @@ Only variables that share the same scope as your dashboard are available for you
 To add cross-dashboard variables to a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon in the sidebar and select **Variable**.
 
    You can also click the **Add** (plus sign) icon at the top of the dashboard and select **Variable**.
@@ -86,14 +86,14 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Select the **Global or folder variable** variable type.
 1. Select the variables you want to add to the dashboard:
 
-   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-cross-dash-variable-selected-v13.3.png)
+   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-cross-dash-variable-selected-v13.3.1.png)
 
    To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
 
 1. Update variable values as needed.
 1. Click **Save**.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 After you've added cross-dashboard variables to a dashboard, you can view its settings or remove it by way of the dashboard sidebar.
 To edit the variable, go to **Dashboards > Variables**.

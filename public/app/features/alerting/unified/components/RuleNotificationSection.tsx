@@ -24,8 +24,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type RuleFormValues } from '../types/rule-form';
-import { Annotation } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
 import { PolicyTreeSelector } from './rule-editor/notificaton-preview/PolicyTreeSelector';
