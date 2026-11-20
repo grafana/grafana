@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { rangeUtil } from '@grafana/data';
@@ -23,7 +23,9 @@ describe('TimeRangeSelector', () => {
       quickOptions,
     };
     render(<TimeRangeSelector {...props} />);
-    await userEvent.click(screen.getByText(label));
+    const ranges = screen.getByRole('presentation');
+    expect(ranges).not.toHaveAttribute('aria-roledescription');
+    await userEvent.click(within(ranges).getByText(label));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from, to: 'now' } }));
     if (quickOptions) {
       expect(screen.queryByText('Last 5 minutes')).not.toBeInTheDocument();
