@@ -54,7 +54,11 @@ export const GrafanaTemplatesTab = ({
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
   const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
 
-  const { value: dashboards = [], loading } = useAsync(async () => {
+  const {
+    value: dashboards = [],
+    loading,
+    error,
+  } = useAsync(async () => {
     try {
       const response = await getBackendSrv().get<GnetDashboardsResponse>(
         `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
@@ -68,7 +72,7 @@ export const GrafanaTemplatesTab = ({
       return response.items;
     } catch (error) {
       console.error('Error loading template dashboards ', error);
-      return [];
+      throw error;
     }
   }, []);
 
@@ -99,9 +103,9 @@ export const GrafanaTemplatesTab = ({
 
   useEffect(() => {
     if (!loading) {
-      onTemplatesLoad?.(dashboards.length);
+      onTemplatesLoad?.(error ? undefined : dashboards.length);
     }
-  }, [loading, dashboards.length, onTemplatesLoad]);
+  }, [loading, error, dashboards.length, onTemplatesLoad]);
 
   const trackItemClicked = (dashboard: GnetDashboard, action: 'view_template' | 'assistant' | 'attach_template') => {
     const properties = {

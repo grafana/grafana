@@ -105,6 +105,19 @@ describe('GrafanaTemplatesTab', () => {
       );
     });
 
+    it('reports a failed fetch with no count, so the failure does not read as none', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      server.use(
+        http.get('/api/gnet/dashboards', () => HttpResponse.json({ message: 'unavailable' }, { status: 503 }))
+      );
+      const onTemplatesLoad = jest.fn();
+      renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad });
+
+      await waitFor(() => expect(onTemplatesLoad).toHaveBeenCalled());
+      expect(onTemplatesLoad).toHaveBeenCalledTimes(1);
+      expect(onTemplatesLoad).toHaveBeenCalledWith(undefined);
+    });
+
     it('renders nothing when there are no templates, to leave the shared grid alone', async () => {
       server.use(http.get('/api/gnet/dashboards', () => HttpResponse.json({ page: 1, pages: 1, items: [] })));
       const onTemplatesLoad = jest.fn();
