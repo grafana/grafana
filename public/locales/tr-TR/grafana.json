@@ -1555,7 +1555,7 @@
           "label": "Etiket eşleştirici: label:key (var), label:!key (yok), label:key=value (eşit), label:key!=value (eşit değil), label:key=~re (düzenli ifade), label:key!~re (düzenli ifade değil). Boşluk içeren bir değeri tırnak içine alın: label:team=\"a b\".",
           "metric": "Kaydedilen metrik adı (tam eşleşme).",
           "panel-id": "Kuralın bağlı olduğu panel. Panel kimlikleri panoya özgüdür; dashboard: ile birlikte kullanın.",
-          "paused": "Kuralın duraklatılıp duraklatılmadığı (true/false).",
+          "paused": "",
           "plugins": "plugins:hide, eklentiler tarafından oluşturulan kuralları hariç tutar.",
           "policy": "Adlandırılmış bildirim politikası (contactPoint: ile birlikte kullanılamaz).",
           "rule": "Kural başlığında metin araması (serbest metinle eş değer).",
@@ -1571,7 +1571,6 @@
         "invalid-tokens": "Bazı filtreler uygulanamadı: {{tokens}}",
         "invalid-value": "{{key}} için şu değerlerden birini kullanın: {{values}}",
         "label": "Ara",
-        "not-paused-unavailable": "Duraklatılmamış kurallara göre filtreleme henüz kullanılamıyor.",
         "placeholder": "Ada göre arayın veya filtre sorgusu girin...",
         "property": {
           "contact-point": "İletişim noktası",
@@ -1618,6 +1617,65 @@
         "loading-rules": "Kurallar yükleniyor",
         "refresh-error": "Sonuçlar yenilenemedi",
         "retry": "Tekrar dene"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "Kural değerlendirilemedi",
@@ -4857,6 +4915,12 @@
     "folder-owners": {
       "owned-by": "Sahibi:"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Klasör seçin: {{ label }} şu anda seçili",
       "button-label": "Klasör seçin",
@@ -5654,6 +5718,36 @@
         "version": "Sürüm"
       },
       "view-json-diff": "Tüm değişiklikleri görmek için JSON farklarını görüntüleyin"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -7976,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Sorgu"
-    },
-    "query-editor-banner": {
-      "description-classic": "Geliştirilmiş sorgu düzenleme deneyimini deneyin.",
-      "description-new": "Geliştirilmiş sorgu düzenleme deneyimine hoş geldiniz.",
-      "dismiss": "Kapat",
-      "downgrade-title": "Yeni sorgu düzenleyici",
-      "give-feedback": "Geri bildirim gönder",
-      "go-back": "Klasik sürüme geri dön",
-      "try-it": "Deneyin",
-      "upgrade-title": "Yeni düzenleyici mevcut"
     },
     "query-variable-editor": {
       "modal": {
@@ -11411,6 +11495,9 @@
       },
       "wrapping-disabled-warning": "Bir değer çok uzun olduğu için bu sütunda metin kaydırma devre dışı. Tüm içeriği görmek için Değeri incele seçeneğini kullanın."
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Etiketler"
     },
@@ -13564,7 +13651,8 @@
         "open": "{{title}} bölümünü aç",
         "open-all": "Yapay Zeka asistanlarını ve yan menü uygulamalarını aç"
       },
-      "floating-resize": "Kenar çubuğu genişliğini yeniden boyutlandır"
+      "floating-resize": "Kenar çubuğu genişliğini yeniden boyutlandır",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Yardım",
@@ -13828,6 +13916,8 @@
       "cancel": "İptal et",
       "card-author": "Yazar: {{author}}",
       "card-updated": "Güncelleme tarihi: {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Not defteri adı",
       "create-name-required": "Not defteri adı gereklidir",
       "create-name-taken": "Bu ada sahip bir not defteri zaten var",
@@ -13846,6 +13936,8 @@
       "lock-time-range-description": "Bu görselleştirmeyi yakalandığı zaman penceresinde tutun. Kilitli değilse not defterinin zaman aralığını izler.",
       "lock-time-ranges": "Panelleri gösterdikleri zaman aralıklarına kilitle",
       "lock-time-ranges-description": "Her görselleştirmeyi yakalandığı zaman penceresinde tutun. Kilitli değilse not defterinin zaman aralığını izlerler.",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Başlığa göre ara",
       "sort-alphabetical": "Alfabetik (A-Z)",
       "sort-label": "Not defterlerini sırala",
@@ -15131,9 +15223,6 @@
       "success-title": "Klasör meta verileri başarıyla düzeltildi",
       "title": "Klasör meta verilerini düzelt"
     },
-    "folder-permissions": {
-      "loading": "Yükleniyor..."
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Sorgunuzla eşleşen sonuç yok",
       "partial-managed": "{{resourceCount}} kaynağın {{managedCount}} tanesi Git senkronizasyonu ile yönetiliyor.",
@@ -15288,13 +15377,16 @@
       "path-required": "Depo yolu gereklidir"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Yöneten: Dosya sağlama",
       "file-provisioning": "",
       "kubectl": "Yöneten: Kubectl",
       "manage-repository": "Depoyu yönet",
       "plugin": "Yöneten: {{id}} eklentisi",
       "provisioned": "Sağlanan",
+      "read-only": "",
       "terraform": "Yöneten: Terraform",
+      "view-source": "",
       "view-source-file": "Kaynak dosyayı göster"
     },
     "managed-by-repository-tooltip": "Yöneten: Depo",
@@ -15477,8 +15569,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Kaydetme iletişim kutularındaki çekme isteği (pull request) başlığını yukarıdaki şablona göre önceden doldurun ve salt okunur yapın.",
       "description-title-template": "Dal iş akışı tarafından açılan çekme isteği (pull request) başlığı için şablon. Kullanılabilir yer tutucular: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Yürütme mesajının ilk satırını kullanmak için boş bırakın.",
@@ -15508,9 +15598,6 @@
       "message-resource_other": "Hesabınız depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır.",
       "message-resource-onprem_one": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır.",
       "message-resource-onprem_other": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -15639,22 +15726,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Herhangi bir Git deposuna bağlanın",
       "pure-git-tooltip": "Smart HTTP protokolü sürüm 2 kullanarak herhangi bir Git deposuna bağlanır. Sağlayıcıya özel özellikler olmadan temel senkronizasyon iş akışı (web kancaları, PR yorumları, doğrudan bağlantılar)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "pano",
-      "dashboards": "Panolar",
-      "datasource": "",
-      "datasources": "",
-      "folder": "klasör",
-      "folders": "Klasörler",
-      "library-panel": "kitaplık paneli",
-      "library-panels": "Kitaplık panelleri",
-      "playlist": "oynatma listesi",
-      "playlists": "Oynatma listeleri",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash (Karma)",
@@ -16222,12 +16293,6 @@
       "width-of-panel": "Panelin genişliği"
     },
     "edit-query-name": "Sorgu adını düzenle",
-    "experimental-button": {
-      "aria-label": "Deneysel özellik seçenekleri",
-      "back-to-classic": "Klasik düzenleyiciye geri dön",
-      "give-feedback": "Geri bildirim gönder",
-      "tooltip": "Deneysel özellik seçenekleri"
-    },
     "header": {
       "alert": "Uyarı",
       "enter-stacked-view": "",
@@ -16597,8 +16662,6 @@
       "location-header": "Konum",
       "name-header": "Ad",
       "tags-header": "Etiketler",
-      "type-dashboard": "Pano",
-      "type-folder": "Klasör",
       "type-header": "Tür"
     },
     "search-input": {

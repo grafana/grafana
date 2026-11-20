@@ -1571,7 +1571,6 @@
         "invalid-tokens": "",
         "invalid-value": "",
         "label": "",
-        "not-paused-unavailable": "",
         "placeholder": "",
         "property": {
           "contact-point": "",
@@ -1618,6 +1617,65 @@
         "loading-rules": "",
         "refresh-error": "",
         "retry": ""
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "",
@@ -4857,6 +4915,12 @@
     "folder-owners": {
       "owned-by": "Di proprietà di:"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Seleziona cartella: {{ label }} attualmente selezionata",
       "button-label": "Seleziona la cartella",
@@ -5654,6 +5718,36 @@
         "version": "Versione"
       },
       "view-json-diff": "Visualizza la differenza JSON per vedere tutte le modifiche"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -7976,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Query"
-    },
-    "query-editor-banner": {
-      "description-classic": "Prova la nuova esperienza di modifica delle query.",
-      "description-new": "Ti diamo il benvenuto nella nuova esperienza di modifica delle query.",
-      "dismiss": "Chiudi",
-      "downgrade-title": "Nuovo editor delle query",
-      "give-feedback": "Lascia un feedback",
-      "go-back": "Torna alla versione classica",
-      "try-it": "Provala",
-      "upgrade-title": "Nuovo editor disponibile"
     },
     "query-variable-editor": {
       "modal": {
@@ -11411,6 +11495,9 @@
       },
       "wrapping-disabled-warning": ""
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Tag"
     },
@@ -13564,7 +13651,8 @@
         "open": "Apri {{title}}",
         "open-all": "Apri gli assistenti IA e le app della barra laterale"
       },
-      "floating-resize": ""
+      "floating-resize": "",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Guida",
@@ -13828,6 +13916,8 @@
       "cancel": "Annulla",
       "card-author": "Da {{author}}",
       "card-updated": "Aggiornato il {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Nome blocco appunti",
       "create-name-required": "Il nome del blocco appunti è obbligatorio",
       "create-name-taken": "Esiste già un blocco appunti con questo nome",
@@ -13846,6 +13936,8 @@
       "lock-time-range-description": "",
       "lock-time-ranges": "",
       "lock-time-ranges-description": "",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Cerca per titolo",
       "sort-alphabetical": "In ordine alfabetico (A-Z)",
       "sort-label": "Ordina blocchi appunti",
@@ -15131,9 +15223,6 @@
       "success-title": "Metadati delle cartelle corretti con successo",
       "title": "Correggi i metadati della cartella"
     },
-    "folder-permissions": {
-      "loading": "Caricamento in corso..."
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Nessun risultato corrisponde alla tua query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} risorse gestite da Git Sync.",
@@ -15288,13 +15377,16 @@
       "path-required": "Il percorso del repository è obbligatorio"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Gestito da: provisioning dei file",
       "file-provisioning": "",
       "kubectl": "Gestito da: Kubectl",
       "manage-repository": "Gestisci repository",
       "plugin": "Gestito da: plug-in {{id}}",
       "provisioned": "Sottoposto a provisioning",
+      "read-only": "",
       "terraform": "Gestito da: Terraform",
+      "view-source": "",
       "view-source-file": "Visualizza il file sorgente"
     },
     "managed-by-repository-tooltip": "Gestito da: repository",
@@ -15477,8 +15569,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Precompila il titolo della richiesta di pull nelle finestre di dialogo di salvataggio utilizzando il modello qui sopra e rendilo di sola lettura.",
       "description-title-template": "Modello per il titolo della richiesta di pull aperto dal flusso di lavoro del ramo. Segnaposto disponibili: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Lascia vuoto per utilizzare la prima riga del messaggio di commit.",
@@ -15508,9 +15598,6 @@
       "message-resource_other": "Il tuo account è limitato a {{count}} risorse sincronizzate per ogni repository.",
       "message-resource-onprem_one": "La tua istanza è limitata a {{count}} risorsa sincronizzata per ogni repository.",
       "message-resource-onprem_other": "La tua istanza è limitata a {{count}} risorse sincronizzate per ogni repository."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite il provisioning dei file. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
     "read-only-remote-tooltip": "Questa risorsa è di sola lettura e viene fornita tramite Git. Per apportare modifiche, aggiorna il repository connesso. Per modificare le impostazioni, vai in Amministrazione > Provisioning > Repository.",
@@ -15639,22 +15726,6 @@
       "pure-git": "Git puro",
       "pure-git-description": "Connetti a qualsiasi repository Git",
       "pure-git-tooltip": "Si connette a qualsiasi repository Git utilizzando il protocollo Smart HTTP v2. Flusso di lavoro di sincronizzazione di base senza funzionalità specifiche del provider (webhook, commenti alle richieste di pull, deep link)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboard",
-      "datasource": "",
-      "datasources": "",
-      "folder": "cartella",
-      "folders": "Cartelle",
-      "library-panel": "pannello della libreria",
-      "library-panels": "Pannelli della libreria",
-      "playlist": "playlist",
-      "playlists": "Playlist",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16222,12 +16293,6 @@
       "width-of-panel": "Larghezza del pannello"
     },
     "edit-query-name": "Modifica il nome della query",
-    "experimental-button": {
-      "aria-label": "Opzioni delle funzionalità sperimentali",
-      "back-to-classic": "Torna all'editor classico",
-      "give-feedback": "Lascia un feedback",
-      "tooltip": "Opzioni delle funzionalità sperimentali"
-    },
     "header": {
       "alert": "Avviso",
       "enter-stacked-view": "",
@@ -16597,8 +16662,6 @@
       "location-header": "Posizione",
       "name-header": "Nome",
       "tags-header": "Tag",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Cartella",
       "type-header": "Tipo"
     },
     "search-input": {
