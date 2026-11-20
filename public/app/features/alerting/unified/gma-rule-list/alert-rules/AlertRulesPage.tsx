@@ -121,6 +121,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
     top: headerHeight,
     zIndex: theme.zIndex.navbarFixed,
     background: theme.colors.background.page,
-    padding: theme.spacing(1, 0),
+    paddingBottom: theme.spacing(1),
   }),
 });

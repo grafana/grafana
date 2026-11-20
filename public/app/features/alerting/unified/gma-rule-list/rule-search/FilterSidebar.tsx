@@ -19,7 +19,7 @@ export function FilterSidebarLayout({ sidebar, children }: { sidebar: ReactNode;
 
   // The rules keep their place in the tree across layouts, so resizing doesn't remount the list.
   return (
-    <Stack direction={isWide ? 'row' : 'column'} gap={2}>
+    <Stack direction={isWide ? 'row' : 'column'} gap={1}>
       {isWide ? (
         <Box width={32} shrink={0}>
           {sidebar}
