@@ -117,6 +117,42 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
   return captured;
 }
 
+describe('plugin attribution', () => {
+  it('passes the origin through successful creation and addition writes', async () => {
+    captureCreate();
+    captureWrite();
+    const cells = [{ kind: 'markdown' as const, text: 'Investigation notes' }];
+    await createNotebookWithContent(
+      { title: 'Investigation' },
+      cells,
+      'plugin',
+      'assistant',
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'plugin',
+      1,
+      undefined,
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+    await addToExistingNotebook('nb1', cells, 'plugin', 'assistant', false, false, 'grafana-assistant-app');
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      'plugin',
+      0,
+      undefined,
+      false,
+      false,
+      'grafana-assistant-app'
+    );
+  });
+});
+
 describe('addToExistingNotebook', () => {
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
@@ -211,7 +247,8 @@ describe('addToExistingNotebook', () => {
       0,
       { panel: panel('p95 latency'), isLibraryPanel: false },
       false,
-      false
+      false,
+      undefined
     );
   });
 
@@ -232,7 +269,8 @@ describe('addToExistingNotebook', () => {
       0,
       { panel: panel('p95 latency'), isLibraryPanel: true },
       false,
-      false
+      false,
+      undefined
     );
   });
 
@@ -258,7 +296,8 @@ describe('addToExistingNotebook', () => {
       0,
       undefined,
       false,
-      false
+      false,
+      undefined
     );
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
       2,
@@ -267,7 +306,8 @@ describe('addToExistingNotebook', () => {
       1,
       { panel: panel('p95 latency'), isLibraryPanel: false },
       false,
-      false
+      false,
+      undefined
     );
   });
 
@@ -289,7 +329,8 @@ describe('addToExistingNotebook', () => {
       0,
       { panel: panel('p95 latency'), isLibraryPanel: false },
       true,
-      false
+      false,
+      undefined
     );
   });
 
@@ -317,7 +358,8 @@ describe('addToExistingNotebook', () => {
       1,
       { panel: panel('p95 latency'), isLibraryPanel: false },
       false,
-      true
+      true,
+      undefined
     );
   });
 
@@ -417,7 +459,8 @@ describe('createNotebookWithContent', () => {
       2,
       { panel: panel('Chart'), isLibraryPanel: true },
       false,
-      false
+      false,
+      undefined
     );
   });
 
@@ -433,7 +476,7 @@ describe('createNotebookWithContent', () => {
       'plugin'
     );
 
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false, false);
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false, false, undefined);
   });
 
   it('passes on whether the modal locked the time range', async () => {
@@ -444,7 +487,8 @@ describe('createNotebookWithContent', () => {
       [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
       'explore',
       'user',
-      true
+      true,
+      undefined
     );
 
     expect(NotebookAnalytics.created).toHaveBeenCalledWith(
@@ -453,7 +497,8 @@ describe('createNotebookWithContent', () => {
       1,
       { panel: panel('Chart'), isLibraryPanel: false },
       true,
-      false
+      false,
+      undefined
     );
   });
 
@@ -478,7 +523,8 @@ describe('createNotebookWithContent', () => {
       2,
       { panel: panel('Chart'), isLibraryPanel: false },
       false,
-      true
+      true,
+      undefined
     );
   });
 
@@ -498,7 +544,8 @@ describe('createNotebookWithContent', () => {
       1,
       { panel: panel('Chart'), isLibraryPanel: false },
       false,
-      false
+      false,
+      undefined
     );
     // The cell arrived as part of the creation, and `created` already carries the cell count.
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();
