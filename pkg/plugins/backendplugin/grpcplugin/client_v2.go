@@ -214,11 +214,6 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			continue // do not decode the frame
 		}
 
-		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
-		if err != nil {
-			return err
-		}
-
 		if chunk.Error != "" {
 			chunkStatus := backend.Status(chunk.Status)
 			errorSource := backend.ErrorSource(chunk.ErrorSource)
@@ -228,6 +223,14 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			}
 		}
 
+		// A chunk from WriteError has no frame.
+		if len(chunk.Frame) == 0 {
+			continue
+		}
+		frame, err := data.UnmarshalArrowFrame(chunk.Frame)
+		if err != nil {
+			return err
+		}
 		if err = w.WriteFrame(ctx, chunk.RefId, chunk.FrameId, frame); err != nil {
 			return err
 		}
