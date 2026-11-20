@@ -94,6 +94,7 @@ import (
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	_ "github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
