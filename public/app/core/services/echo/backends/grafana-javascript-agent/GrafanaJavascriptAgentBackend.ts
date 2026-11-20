@@ -47,7 +47,7 @@ export class GrafanaJavascriptAgentBackend
     ];
 
     if (options.tracingInstrumentalizationEnabled) {
-      instrumentations.push(new TracingInstrumentation());
+      instrumentations.push(new TracingInstrumentation({ mode: 'routing', fallback: true }));
     }
 
     const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];

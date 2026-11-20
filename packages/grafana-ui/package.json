@@ -101,7 +101,7 @@
     "@floating-ui/react": "^0.27.19",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/faro-web-sdk": "^2.12.0",
+    "@grafana/faro-web-sdk": "2.15.0-alpha.0",
     "@grafana/i18n": "workspace:*",
     "@grafana/react-data-grid": "7.0.0-beta.60",
     "@grafana/schema": "workspace:*",

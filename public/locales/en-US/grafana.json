@@ -4915,9 +4915,10 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions": {
+      "no-access": "You do not have permission to view the permissions of this folder."
+    },
     "folder-permissions-exposed": {
-      "loading": "Loading...",
-      "no-access": "You do not have permission to view the permissions of this folder.",
       "not-found": "Unable to load this folder."
     },
     "folder-picker": {
@@ -8069,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Query"
-    },
-    "query-editor-banner": {
-      "description-classic": "Try the improved query editing experience.",
-      "description-new": "Welcome to the improved query editing experience.",
-      "dismiss": "Dismiss",
-      "downgrade-title": "New query editor",
-      "give-feedback": "Give feedback",
-      "go-back": "Back to classic",
-      "try-it": "Try it out",
-      "upgrade-title": "New editor available"
     },
     "query-variable-editor": {
       "modal": {
@@ -11506,6 +11497,9 @@
       },
       "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },
+    "tag": {
+      "remove": "Remove tag: {{name}}"
+    },
     "tags": {
       "list-label": "Tags"
     },
@@ -13659,7 +13653,8 @@
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       },
-      "floating-resize": "Resize sidebar width"
+      "floating-resize": "Resize sidebar width",
+      "floating-resize-height": "Resize sidebar height"
     },
     "help": {
       "aria-label": "Help",
@@ -13923,6 +13918,8 @@
       "cancel": "Cancel",
       "card-author": "By {{author}}",
       "card-updated": "Updated {{when}}",
+      "convert-to-absolute": "Convert to an absolute time range",
+      "convert-to-absolute-description": "Lock to the exact times the relative range covers now.",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
@@ -13941,6 +13938,8 @@
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
       "lock-time-ranges": "Lock panels to the time ranges they showed",
       "lock-time-ranges-description": "Keep each visualization on the window it was captured in. Unlocked, they follow the notebook time range.",
+      "note-description": "Added to the notebook as a text block before the panel.",
+      "note-label": "Text above the panel (optional)",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -15226,9 +15225,6 @@
       "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
     },
-    "folder-permissions": {
-      "loading": "Loading..."
-    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -15383,13 +15379,16 @@
       "path-required": "Repository path is required"
     },
     "managed-badge": {
+      "actions": "Managed resource actions",
       "classic-file-provisioning": "Managed by: File provisioning",
       "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
+      "read-only": "Read only, {{managedBy}}",
       "terraform": "Managed by: Terraform",
+      "view-source": "View source",
       "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
@@ -15572,8 +15571,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
-    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15603,9 +15600,6 @@
       "to-increase-limits": "To add more {{type}},",
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
-    },
-    "read-only-badge": {
-      "pull-only": "Pull only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -16301,12 +16295,6 @@
       "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
-    "experimental-button": {
-      "aria-label": "Experimental feature options",
-      "back-to-classic": "Go back to classic editor",
-      "give-feedback": "Give feedback",
-      "tooltip": "Experimental feature options"
-    },
     "header": {
       "alert": "Alert",
       "enter-stacked-view": "Enter stacked view",

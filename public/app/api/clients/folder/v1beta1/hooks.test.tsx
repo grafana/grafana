@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, renderHook, getWrapper, waitFor, screen, within } from 'test/test-utils';
@@ -43,6 +43,26 @@ const renderFolderHook = async () => {
     expect(result.current.data).toBeDefined();
   });
   return result;
+};
+
+/** Renders the hook and records what a caller would show on each render. */
+const renderFolderHookPhases = (store?: Store<StoreState>) => {
+  const phases: string[] = [];
+  const { result } = renderHook(
+    () => {
+      const state = useGetCombinedFolderQuery(expectedUid);
+      if (state.isLoading) {
+        phases.push('loading');
+      } else if (state.isError) {
+        phases.push('error');
+      } else {
+        phases.push(state.data ? 'ready' : 'empty');
+      }
+      return state;
+    },
+    { wrapper: getWrapper({ store }) }
+  );
+  return { phases, result };
 };
 
 const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
@@ -189,26 +209,34 @@ describe('useGetCombinedFolderQuery', () => {
     expect(result.current.error).toBeUndefined();
   });
 
-  it('stays loading on every render until the folder is ready', async () => {
-    const phases: string[] = [];
-    const { result } = renderHook(
-      () => {
-        const state = useGetCombinedFolderQuery(expectedUid);
-        if (state.isLoading) {
-          phases.push('loading');
-        } else if (state.isError) {
-          phases.push('error');
-        } else {
-          phases.push(state.data ? 'ready' : 'empty');
-        }
-        return state;
-      },
-      { wrapper: getWrapper({}) }
+  it('reports the HTTP status of a failed folder request', async () => {
+    server.use(
+      http.get(folderHandlers.FOLDER_BY_NAME, () => HttpResponse.json({ message: 'Forbidden' }, { status: 403 }))
     );
+
+    const { result } = renderHook(() => useGetCombinedFolderQuery(expectedUid), { wrapper: getWrapper({}) });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(result.current.error).toMatchObject({ status: 403 });
+  });
+
+  it('stays loading on every render until the folder is ready', async () => {
+    const { phases, result } = renderFolderHookPhases();
     await waitFor(() => expect(result.current.data?.uid).toBe(expectedUid));
 
     // Callers show a render that is neither loading nor an error, and has no folder, as a missing folder.
     expect([...new Set(phases)]).toEqual(['loading', 'ready']);
+  });
+
+  it('is ready from the first render when the folder is already cached', async () => {
+    const store = configureStore();
+    const first = renderFolderHookPhases(store);
+    await waitFor(() => expect(first.result.current.data?.uid).toBe(expectedUid));
+
+    const second = renderFolderHookPhases(store);
+    await waitFor(() => expect(second.result.current.data?.uid).toBe(expectedUid));
+
+    expect([...new Set(second.phases)]).toEqual(['ready']);
   });
 
   it('runs a real access query for the root/general virtual folder', async () => {
@@ -271,6 +299,65 @@ describe('useGetCombinedFolderQuery', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
 
     rerender({ uid: undefined });
+
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('keeps the previous folder whole until the next one has loaded', async () => {
+    // The second folder's access arrives after its folder and parents
+    server.use(
+      http.get<{ folderUid: string }>(`${folderHandlers.FOLDER_BY_NAME}/access`, async ({ params }) => {
+        const isFirstFolder = params.folderUid === folderA.item.uid;
+        if (!isFirstFolder) {
+          await delay(50);
+        }
+        return HttpResponse.json({
+          kind: 'FolderAccessInfo',
+          apiVersion: 'folder.grafana.app/v1beta1',
+          canAdmin: isFirstFolder,
+          canDelete: false,
+          canEdit: false,
+          canSave: false,
+        });
+      })
+    );
+    const seen: string[] = [];
+    const initialProps: { uid: string } = { uid: folderA.item.uid };
+    const { result, rerender } = renderHook(
+      ({ uid }: { uid: string }) => {
+        const state = useGetCombinedFolderQuery(uid);
+        if (state.data) {
+          seen.push(`${state.data.title}, canAdmin: ${state.data.canAdmin}`);
+        }
+        return state;
+      },
+      { wrapper: getWrapper({}), initialProps }
+    );
+    await waitFor(() => expect(result.current.data?.uid).toBe(folderA.item.uid));
+    seen.length = 0;
+
+    rerender({ uid: folderB.item.uid });
+    await waitFor(() => expect(result.current.data?.uid).toBe(folderB.item.uid));
+
+    expect([...new Set(seen)]).toEqual([
+      `${folderA.item.title}, canAdmin: true`,
+      `${folderB.item.title}, canAdmin: false`,
+    ]);
+  });
+
+  it('does not keep the previous folder when the next one cannot be loaded', async () => {
+    const initialProps: { uid: string } = { uid: folderA.item.uid };
+    const { result, rerender } = renderHook(({ uid }: { uid: string }) => useGetCombinedFolderQuery(uid), {
+      wrapper: getWrapper({}),
+      initialProps,
+    });
+    await waitFor(() => expect(result.current.data?.uid).toBe(folderA.item.uid));
+
+    rerender({ uid: 'does-not-exist' });
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+      expect(result.current.isFetching).toBe(false);
+    });
 
     expect(result.current.data).toBeUndefined();
   });

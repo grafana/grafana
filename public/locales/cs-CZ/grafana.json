@@ -1573,7 +1573,7 @@
           "label": "Porovnávač štítků: label:key (existuje), label:!key (chybí), label:key=value (rovná se), label:key!=value (nerovná se), label:key=~re (regulární výraz), label:key!~re (není regulární výraz). Uveďte hodnotu s mezerami v uvozovkách: label:team=\"a b\".",
           "metric": "Zaznamenaný název metriky (přesná shoda).",
           "panel-id": "Panel, s nímž je pravidlo propojeno. ID panelů jsou jedinečná v rámci konkrétního dashboardu; uvádějte je společně s dashboard:",
-          "paused": "Zda je pravidlo pozastaveno (pravda/nepravda).",
+          "paused": "",
           "plugins": "plugins:hide vylučuje pravidla vytvořená pluginy.",
           "policy": "Pojmenovaná zásada oznamování (vzájemně se vylučuje s contactPoint:).",
           "rule": "Vyhledávání textu názvu pravidla (ekvivalent volného textu).",
@@ -1589,7 +1589,6 @@
         "invalid-tokens": "Některé filtry se nepodařilo použít: {{tokens}}",
         "invalid-value": "Použijte jednu z těchto hodnot pro {{key}}: {{values}}",
         "label": "Hledat",
-        "not-paused-unavailable": "Filtrování podle kritéria „nepozastaveno“ zatím není k dispozici.",
         "placeholder": "Hledejte podle názvu nebo zadejte dotaz na filtr…",
         "property": {
           "contact-point": "Kontaktní bod",
@@ -1636,6 +1635,65 @@
         "loading-rules": "Načítání pravidel",
         "refresh-error": "Výsledky se nepodařilo obnovit",
         "retry": "Zkusit znovu"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "Pravidlo se nepodařilo vyhodnotit",
@@ -4949,6 +5007,12 @@
     "folder-owners": {
       "owned-by": "Vlastník:"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Vybrat složku: {{ label }} aktuálně vybraná",
       "button-label": "Vybrat složku",
@@ -5752,6 +5816,36 @@
         "version": "Verze"
       },
       "view-json-diff": "Zobrazit JSON diff pro zobrazení všech změn"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -8088,16 +8182,6 @@
     },
     "query-editor": {
       "query": "Dotaz"
-    },
-    "query-editor-banner": {
-      "description-classic": "Vyzkoušejte vylepšené prostředí pro úpravy dotazů.",
-      "description-new": "Vítejte ve vylepšeném prostředí pro úpravy dotazů.",
-      "dismiss": "Zamítnout",
-      "downgrade-title": "Nový editor dotazů",
-      "give-feedback": "Poskytnout zpětnou vazbu",
-      "go-back": "Zpět na klasické rozhraní",
-      "try-it": "Vyzkoušet",
-      "upgrade-title": "Nový editor je k dispozici"
     },
     "query-variable-editor": {
       "modal": {
@@ -11577,6 +11661,9 @@
       },
       "wrapping-disabled-warning": "Zalomení textu je pro tento sloupec zakázáno, protože hodnota je příliš dlouhá. Pro zobrazení celého obsahu použijte možnost Zkontrolovat hodnotu."
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Tagy"
     },
@@ -13774,7 +13861,8 @@
         "open": "Otevřít {{title}}",
         "open-all": "Asistenti Open AI a aplikace postranních panelů"
       },
-      "floating-resize": "Změnit šířku postranního panelu"
+      "floating-resize": "Změnit šířku postranního panelu",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Nápověda",
@@ -14048,6 +14136,8 @@
       "cancel": "Zrušit",
       "card-author": "Autor: {{author}}",
       "card-updated": "Aktualizováno {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Název zápisníku",
       "create-name-required": "Název zápisníku je povinný",
       "create-name-taken": "Zápisník s tímto názvem již existuje",
@@ -14066,6 +14156,8 @@
       "lock-time-range-description": "Ponechat tuto vizualizaci v okně, ve kterém byla zachycena. Po odemknutí se řídí časovým rozsahem zápisníku.",
       "lock-time-ranges": "Zamknout panely k časovým rozsahům, které zobrazovaly",
       "lock-time-ranges-description": "Ponechat každou vizualizaci v okně, ve kterém byla zachycena. Pokud jsou odemčené, řídí se časovým rozsahem zápisníku.",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Hledat podle názvu",
       "sort-alphabetical": "Abecedně (A–Z)",
       "sort-label": "Seřadit zápisníky",
@@ -15359,9 +15451,6 @@
       "success-title": "Metadata složky byla úspěšně opravena",
       "title": "Opravit metadata složky"
     },
-    "folder-permissions": {
-      "loading": "Načítání…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Vašemu dotazu neodpovídají žádné výsledky",
       "partial-managed": "{{managedCount}}/{{resourceCount}} zdrojů je spravováno synchronizací Git.",
@@ -15520,13 +15609,16 @@
       "path-required": "Cesta k úložišti je povinná"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Spravuje: Zajišťování souborů",
       "file-provisioning": "",
       "kubectl": "Spravuje: Kubectl",
       "manage-repository": "Spravovat úložiště",
       "plugin": "Spravováno pluginem {{id}}",
       "provisioned": "Zajištěno",
+      "read-only": "",
       "terraform": "Spravuje: Terraform",
+      "view-source": "",
       "view-source-file": "Zobrazit zdrojový soubor"
     },
     "managed-by-repository-tooltip": "Spravuje: Úložiště",
@@ -15719,8 +15811,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Předvyplňte název žádosti o stažení v dialogových oknech pro ukládání z výše uvedené šablony a nastavte ji jako „jen pro čtení“.",
       "description-title-template": "Šablona pro název žádosti o stažení otevřená pracovním postupem větve. Dostupné zástupné symboly: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Ponechte prázdné pro použití prvního řádku zprávy o odeslání.",
@@ -15766,9 +15856,6 @@
       "message-resource-onprem_few": "Vaše instance je omezena na {{count}} synchronizované zdroje na úložiště.",
       "message-resource-onprem_many": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště.",
       "message-resource-onprem_other": "Vaše instance je omezena na {{count}} synchronizovaných zdrojů na úložiště."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím zajištění souborů. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
     "read-only-remote-tooltip": "Tento zdroj je jen pro čtení a je zajištěn prostřednictvím Gitu. Chcete-li provést jakékoli změny, aktualizujte připojené úložiště. Chcete-li upravit nastavení, přejděte do části Správa > Zajištění > Úložiště.",
@@ -15897,22 +15984,6 @@
       "pure-git": "Pouze Git",
       "pure-git-description": "Připojit k jakémukoli úložišti Git",
       "pure-git-tooltip": "Připojí se k jakémukoli úložišti Git pomocí protokolu Smart HTTP v2. Základní pracovní postup synchronizace bez funkcí specifických pro poskytovatele (webhooky, komentáře k požadavkům na stažení, přesné odkazy)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "nástěnka",
-      "dashboards": "Nástěnky",
-      "datasource": "",
-      "datasources": "",
-      "folder": "složka",
-      "folders": "Složky",
-      "library-panel": "panel knihovny",
-      "library-panels": "Panely knihovny",
-      "playlist": "playlist",
-      "playlists": "Playlisty",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16486,12 +16557,6 @@
       "width-of-panel": "Šířka panelu"
     },
     "edit-query-name": "Upravit název dotazu",
-    "experimental-button": {
-      "aria-label": "Možnosti experimentálních funkcí",
-      "back-to-classic": "Zpět na klasický editor",
-      "give-feedback": "Poskytnout zpětnou vazbu",
-      "tooltip": "Možnosti experimentálních funkcí"
-    },
     "header": {
       "alert": "Výstraha",
       "enter-stacked-view": "",
@@ -16875,8 +16940,6 @@
       "location-header": "Poloha",
       "name-header": "Název",
       "tags-header": "Tagy",
-      "type-dashboard": "Nástěnka",
-      "type-folder": "Složka",
       "type-header": "Typ"
     },
     "search-input": {

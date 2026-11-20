@@ -213,7 +213,8 @@ declare module "@openfeature/core" {
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"
-    | "grafana.logsInfiniteScrollTop";
+    | "grafana.logsInfiniteScrollTop"
+    | "grafana.dashboardQuestions";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
