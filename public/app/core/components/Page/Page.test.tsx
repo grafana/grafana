@@ -68,6 +68,12 @@ describe('Render', () => {
     expect(screen.getAllByRole('tab').length).toBe(2);
   });
 
+  it('places header actions in a row that wraps', () => {
+    setup({ pageNav, actions: <button type="button">Header action</button> });
+
+    expect(screen.getByRole('button', { name: 'Header action' }).parentElement).toHaveStyle({ flexWrap: 'wrap' });
+  });
+
   it('should update chrome with section, pageNav and layout', async () => {
     const { context } = setup({ navId: 'child1', pageNav, layout: PageLayoutType.Canvas });
     expect(context.chrome.state.getValue().sectionNav.node.id).toBe('child1');
