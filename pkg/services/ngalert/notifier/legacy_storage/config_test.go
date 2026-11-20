@@ -188,9 +188,11 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 type fakeLimitsProvider struct {
 	limits *client.TenantLimits
 	err    error
+	calls  int
 }
 
 func (f *fakeLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits, error) {
+	f.calls++
 	return f.limits, f.err
 }
 
@@ -252,9 +254,13 @@ func TestAlertmanagerConfigStoreSaveSizeLimit(t *testing.T) {
 			sut := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures()).WithLimitsProvider(tc.provider)
 			storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil).Maybe()
 
+			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, orgID).Return(&models.AlertConfiguration{AlertmanagerConfiguration: defaultConfig}, nil)
+			revision, err := sut.Get(context.Background(), orgID)
+			require.NoError(t, err)
 			c := cfg
-			revision := &ConfigRevision{Config: &c, storedSize: tc.storedSize}
-			err := sut.Save(context.Background(), revision, orgID)
+			revision.Config = &c
+			revision.storedSize = tc.storedSize
+			err = sut.Save(context.Background(), revision, orgID)
 
 			if tc.expectErr {
 				require.Truef(t, ErrAlertmanagerConfigSizeExceeded.Base.Is(err), "expected ErrAlertmanagerConfigSizeExceeded but got %v", err)
@@ -266,4 +272,36 @@ func TestAlertmanagerConfigStoreSaveSizeLimit(t *testing.T) {
 			storeMock.AssertCalled(t, "UpdateAlertmanagerConfiguration", mock.Anything, mock.Anything)
 		})
 	}
+}
+
+func TestAlertmanagerConfigStoreFetchesLimitsOnGet(t *testing.T) {
+	orgID := int64(1)
+	dbCfg := store.AMConfigDB{}
+	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &dbCfg))
+	cfg := *v1.ToModel(&dbCfg)
+
+	provider := &fakeLimitsProvider{limits: &client.TenantLimits{Config: &client.ConfigLimits{MaxGrafanaConfigSizeBytes: 1}}}
+	storeMock := &MockAMConfigStore{}
+	storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, orgID).Return(&models.AlertConfiguration{AlertmanagerConfiguration: defaultConfig}, nil)
+	storeMock.EXPECT().UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil).Maybe()
+	sut := NewAlertmanagerConfigStore(storeMock, newFakeCrypto(), featuremgmt.WithFeatures()).WithLimitsProvider(provider)
+
+	revision, err := sut.Get(context.Background(), orgID)
+	require.NoError(t, err)
+	require.Equal(t, 1, provider.calls)
+
+	t.Run("Save validates against the limits fetched by Get without fetching again", func(t *testing.T) {
+		c := cfg
+		revision.Config = &c
+		revision.storedSize = 0
+		err := sut.Save(context.Background(), revision, orgID)
+		require.Truef(t, ErrAlertmanagerConfigSizeExceeded.Base.Is(err), "got %v", err)
+		require.Equal(t, 1, provider.calls)
+	})
+
+	t.Run("Save skips validation when the revision has no limits", func(t *testing.T) {
+		c := cfg
+		require.NoError(t, sut.Save(context.Background(), &ConfigRevision{Config: &c}, orgID))
+		require.Equal(t, 1, provider.calls)
+	})
 }
