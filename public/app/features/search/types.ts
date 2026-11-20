@@ -29,6 +29,10 @@ export interface DashboardSearchItem {
 
 export type DashboardViewItemKind = 'folder' | 'dashboard' | 'panel';
 
+export function isDashboardViewItemKind(kind: string): kind is DashboardViewItemKind {
+  return kind === 'folder' || kind === 'dashboard' || kind === 'panel';
+}
+
 /**
  * Type used in the folder view components
  */

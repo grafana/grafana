@@ -2,15 +2,19 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as PROVISIONING_BASE } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { FolderDetailsActions } from './FolderDetailsActions';
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 
 describe('FolderDetailsActions', () => {

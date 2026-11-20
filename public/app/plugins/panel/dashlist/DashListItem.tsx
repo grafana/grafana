@@ -24,7 +24,7 @@ export function DashListItem({ dashboard, url, showFolderNames, locationInfo, la
   // Rows can be folders too; the star targets the row's own kind, and a kind nobody can star gets none
   const starredKind = findStarredKindBySearchKind(dashboard.kind);
   const starButton = starredKind ? (
-    <StarToolbarButton title={dashboard.name} group={starredKind.group} kind={starredKind.kind} id={dashboard.uid} />
+    <StarToolbarButton title={dashboard.name} group={starredKind.group} kind={starredKind.kind} name={dashboard.uid} />
   ) : null;
 
   const onCardLinkClick = () => {

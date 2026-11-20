@@ -4,7 +4,7 @@ import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
@@ -15,6 +15,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
+import { CollectionsStarsSrv } from 'app/features/stars/service';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -43,6 +44,9 @@ jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
 }));
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 // The kind filter is a Combobox; without a measured rect the virtualizer renders no options in jsdom.
 mockComboboxRect();

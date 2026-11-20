@@ -4,7 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { starsRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
@@ -13,6 +13,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { StarToolbarButton } from './StarToolbarButton';
 import { itemStarred } from './analytics/main';
+import { CollectionsStarsSrv } from './service';
 
 jest.mock('./analytics/main', () => ({
   itemStarred: jest.fn(),
@@ -21,6 +22,9 @@ jest.mock('./analytics/main', () => ({
 const [_, { dashbdD, folderA, folderA_folderB_dashbdB }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
+// Stars go through the runtime service, which refuses signed-out callers
+setStarsSrv(new CollectionsStarsSrv());
+contextSrv.isSignedIn = true;
 setupMockServer();
 locationUtil.initialize({
   config: { appSubUrl: '/foo/bar' } as GrafanaConfig,
@@ -38,7 +42,8 @@ const findStarButton = (title: string, isStarred: boolean) =>
 const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
-) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
+) =>
+  render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} name={itemForStarButton.uid} />);
 
 testWithStarsUser();
 
@@ -109,6 +114,28 @@ describe('StarToolbarButton', () => {
       });
     });
     expect(itemStarred).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports no analytics event when the star is not stored', async () => {
+    server.use(
+      http.put(
+        '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
+        () => new HttpResponse(null, { status: 500 })
+      )
+    );
+    const { user } = render(
+      <StarToolbarButton
+        title={itemToStar.title}
+        group="dashboard.grafana.app"
+        kind="Dashboard"
+        name={itemToStar.uid}
+      />
+    );
+
+    await user.click(await findStarButton(itemToStar.title, false));
+
+    expect(await findStarButton(itemToStar.title, false)).toBeInTheDocument();
+    expect(itemStarred).not.toHaveBeenCalled();
   });
 
   it('reports a typed analytics event when unstarring a dashboard', async () => {

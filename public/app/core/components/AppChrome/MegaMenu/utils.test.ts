@@ -151,11 +151,12 @@ describe('enrichWithInteractionTracking', () => {
     jest.mocked(reportInteraction).mockClear();
   });
 
-  it('reports a starred folder click with itemKind folder', () => {
+  it('reports the kind a starred leaf carries', () => {
     const item: NavModelItem = {
-      text: 'Folder 1',
-      id: 'starred/f1',
-      url: '/dashboards/f/f1/',
+      text: 'Thing 1',
+      id: 'starred/t1',
+      url: '/a/test-things-app/things/t1',
+      starredKind: 'things.ext.grafana.app/Thing',
       parentItem: { text: 'Starred', id: 'starred' },
     };
 
@@ -163,23 +164,7 @@ describe('enrichWithInteractionTracking', () => {
 
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
-    );
-  });
-
-  it('reports a starred dashboard click with itemKind dashboard', () => {
-    const item: NavModelItem = {
-      text: 'Dashboard 1',
-      id: 'starred/d1',
-      url: '/d/d1',
-      parentItem: { text: 'Starred', id: 'starred' },
-    };
-
-    enrichWithInteractionTracking(item, false).onClick?.();
-
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'things.ext.grafana.app/Thing' })
     );
   });
 
