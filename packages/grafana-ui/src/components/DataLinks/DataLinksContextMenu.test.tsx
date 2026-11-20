@@ -34,10 +34,14 @@ describe('DataLinksContextMenu', () => {
     await userEvent.click(screen.getByLabelText('trigger'));
 
     expect(screen.queryByText('Data links')).not.toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Link1' })).toHaveStyle({
+    const firstLink = screen.getByRole('menuitem', { name: 'Link1' });
+    expect(firstLink).toHaveStyle({
       fontSize: createTheme().typography.bodySmall.fontSize,
     });
     expect(screen.getByRole('menuitem', { name: 'Link2' })).toBeInTheDocument();
+
+    firstLink.focus();
+    expect(firstLink).toHaveStyle({ background: 'none', textDecoration: 'underline' });
   });
 
   it('renders single link with correct attributes and style', () => {

@@ -59,7 +59,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
 
   const dataLinks = links();
   const linksCounter = dataLinks.length;
-  const renderMenuItems = () => <DataLinkMenuItems links={dataLinks} />;
+  const renderMenuItems = () => <DataLinkMenuItems links={dataLinks} variant="link" />;
 
   // Class consumers can apply to their click target purely as a visual "this
   // opens a context menu" affordance (cursor only). Behaviour is exposed
