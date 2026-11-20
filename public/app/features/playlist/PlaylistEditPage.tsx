@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -62,7 +62,7 @@ export const PlaylistEditPage = () => {
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
       {data && isManaged(data) && (
-        <ManagedBadge
+        <ManagedResourceBadge
           managerKind={getManagerKind(data)}
           name={getManagerIdentity(data)}
           repositoryName={getManagerIdentity(data)}

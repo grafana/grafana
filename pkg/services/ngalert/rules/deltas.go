@@ -70,6 +70,15 @@ func (c *GroupDelta) NewOrUpdatedNotificationSettings() []models.NotificationSet
 	return settings
 }
 
+// DeltaCalculator computes group deltas by reading the rules it is implemented over.
+type DeltaCalculator interface {
+	CalculateChanges(ctx context.Context, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRuleWithOptionals) (*GroupDelta, error)
+	CalculateRuleCreate(ctx context.Context, rule *models.AlertRule) (*GroupDelta, error)
+	CalculateRuleUpdate(ctx context.Context, rule *models.AlertRuleWithOptionals) (*GroupDelta, error)
+	CalculateRuleDelete(ctx context.Context, ruleKey models.AlertRuleKey) (*GroupDelta, error)
+	CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *models.ListAlertRulesQuery) ([]*GroupDelta, error)
+}
+
 // deltaRuleReader is the read surface the delta calculations need.
 type deltaRuleReader interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
