@@ -194,7 +194,7 @@ func (m *MetricsMiddleware) QueryChunkedData(ctx context.Context, req *backend.Q
 	// reflect partial failures the same way QueryData inspects per-refID response errors.
 	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw)
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw.writer())
 		return cw.requestStatus(innerErr), innerErr
 	})
 }
