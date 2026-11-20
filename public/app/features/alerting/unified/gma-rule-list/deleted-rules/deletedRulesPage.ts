@@ -31,16 +31,24 @@ export function toRestoreResult(result: { data: unknown } | { error: unknown }):
 export const TRASH_LABEL_SELECTOR = 'grafana.app/get-trash=true';
 export const PAGE_SIZE = DEFAULT_PER_PAGE_PAGINATION;
 
-type TrashListRequest = ThunkAction<PromiseLike<{ data?: unknown; error?: unknown }>, unknown, unknown, UnknownAction>;
+type GeneratedListRequest<Rule> = ThunkAction<
+  PromiseLike<{
+    data?: { items: Rule[]; metadata?: { continue?: string } };
+    error?: unknown;
+  }>,
+  unknown,
+  unknown,
+  UnknownAction
+>;
 
-interface TrashListEndpoint {
+interface GeneratedList<Rule> {
   initiate: (
     arg: { labelSelector?: string; limit?: number; continue?: string },
     options: { subscribe: boolean; forceRefetch: boolean }
-  ) => TrashListRequest;
+  ) => GeneratedListRequest<Rule>;
 }
 
-export function deletedRulesPageQueryFn<Rule>(list: TrashListEndpoint) {
+export function deletedRulesPageQueryFn<Rule>(list: GeneratedList<Rule>) {
   return async (
     { pageParam }: { pageParam: string | undefined },
     { dispatch }: BaseQueryApi
@@ -54,12 +62,10 @@ export function deletedRulesPageQueryFn<Rule>(list: TrashListEndpoint) {
     if (response.error) {
       return { error: response.error };
     }
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const listData = response.data as { items: Rule[]; metadata?: { continue?: string } } | undefined;
     return {
       data: {
-        items: listData?.items ?? [],
-        continueToken: listData?.metadata?.continue,
+        items: response.data?.items ?? [],
+        continueToken: response.data?.metadata?.continue,
       },
     };
   };

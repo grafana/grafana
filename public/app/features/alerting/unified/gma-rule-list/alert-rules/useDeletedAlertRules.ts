@@ -1,8 +1,6 @@
 import { type AlertRule, generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import {
-  PAGE_SIZE,
-  TRASH_LABEL_SELECTOR,
   type UseDeletedRulesResult,
   deletedRulesPageQueryFn,
   useDeletedRulesResult,
