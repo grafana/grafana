@@ -145,7 +145,7 @@ func ProvideWebhooksWithImages(
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			clients := resources.NewClientFactory(configProvider)
+			clients := resources.NewClientFactory(configProvider, nil)
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
