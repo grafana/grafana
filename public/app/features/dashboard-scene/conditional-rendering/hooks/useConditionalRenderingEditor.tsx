@@ -15,6 +15,35 @@ function getPlaceholderConditionalRendering(): ConditionalRenderingGroup {
   return placeholderConditionalRendering;
 }
 
+interface ConditionalRenderingTitleProps {
+  title: string;
+  model: ConditionalRenderingGroup;
+  isSupported: boolean;
+}
+
+function ConditionalRenderingTitle({ title, model, isSupported }: ConditionalRenderingTitleProps) {
+  const { result } = model.useState();
+
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      <div>{title}</div>
+      {isSupported ? (
+        <Tooltip
+          content={t(
+            'dashboard.conditional-rendering.editor.info',
+            'Set rules to control {{type}} visibility by matching any or all rules.',
+            { type: getLowerTranslatedObjectType(extractObjectType(model.parent)) }
+          )}
+        >
+          <Icon name={!result ? 'eye-slash' : 'eye'} />
+        </Tooltip>
+      ) : (
+        <Icon name="eye-slash" />
+      )}
+    </Stack>
+  );
+}
+
 export function useConditionalRenderingEditor(
   conditionalRendering?: ConditionalRenderingGroup,
   disabledText?: string | React.ReactElement
@@ -33,28 +62,15 @@ export function useConditionalRenderingEditor(
           'Conditional rendering not supported for this item type'
         )),
     id: 'conditional-rendering-options',
-    renderTitle: () => {
-      const { result } = conditionalRenderingToRender.useState();
-
-      return (
-        <Stack direction="row" gap={1} alignItems="center">
-          <div>{title}</div>
-          {conditionalRendering ? (
-            <Tooltip
-              content={t(
-                'dashboard.conditional-rendering.editor.info',
-                'Set rules to control {{type}} visibility by matching any or all rules.',
-                { type: getLowerTranslatedObjectType(extractObjectType(conditionalRenderingToRender.parent)) }
-              )}
-            >
-              <Icon name={!result ? 'eye-slash' : 'eye'} />
-            </Tooltip>
-          ) : (
-            <Icon name="eye-slash" />
-          )}
-        </Stack>
-      );
-    },
+    // renderTitle is called inside OptionsPaneCategory's render, so a hook here would belong to that
+    // component; it must render a component that owns the hook instead.
+    renderTitle: () => (
+      <ConditionalRenderingTitle
+        title={title}
+        model={conditionalRenderingToRender}
+        isSupported={conditionalRendering !== undefined}
+      />
+    ),
     isOpenDefault: true,
   }).addItem(
     new OptionsPaneItemDescriptor({

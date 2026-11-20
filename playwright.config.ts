@@ -180,6 +180,17 @@ export default defineConfig<PluginOptions>({
       testMatch: ['global-teardown.spec.ts'],
       dependencies: ['dashboard-cujs'],
     }),
+    // Benchmarks, not correctness tests: opt-in via PERF_LABEL so CI's full run skips them.
+    // Run alone with --workers=1 against a production build.
+    ...(process.env.PERF_LABEL
+      ? [
+          withAuth({
+            name: 'perf',
+            testDir: path.join(testDirRoot, '/perf-suite'),
+            timeout: 5 * 60_000,
+          }),
+        ]
+      : []),
     withAuth({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
