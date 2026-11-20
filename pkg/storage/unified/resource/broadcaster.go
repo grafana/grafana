@@ -538,7 +538,8 @@ func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
 		return
 	}
 	if req.resume != nil {
-		if !req.resume.unchecked {
+		// Negative cursors predate resume floors and replay all retained events.
+		if req.resume.requestedRV >= 0 {
 			if err := b.cache.validateResume(sub.gr, *req.resume); err != nil {
 				result := subscriptionResultReplayFailed
 				if IsResourceVersionExpired(err) {

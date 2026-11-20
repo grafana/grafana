@@ -12,9 +12,6 @@ type eventIdentity[T any] func(T) (GroupResource, int64)
 type watchResume struct {
 	since       int64
 	requestedRV int64
-	// unchecked resumes replay without a floor check. Negative cursors predate
-	// resume floors and always replayed everything cached.
-	unchecked bool
 }
 
 type cacheSeed[T any] struct {

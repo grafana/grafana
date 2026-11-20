@@ -2343,7 +2343,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	var resume *watchResume
 	if req.Since != 0 && !req.SendInitialEvents {
-		resume = &watchResume{since: requestedSince, requestedRV: req.Since, unchecked: req.Since < 0}
+		resume = &watchResume{since: requestedSince, requestedRV: req.Since}
 	}
 	gr := GroupResource{Group: key.Group, Resource: key.Resource}
 	sub, err := b.subscribeWatch(ctx, name, gr, resume)
