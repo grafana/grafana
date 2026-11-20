@@ -99,7 +99,7 @@ func TestService_forwardsStoreMethods(t *testing.T) {
 		{"CleanUpDeletedAlertRules", []any{ctx}, []any{int64(107)}, func(s *Service) []any { return serviceResult(s.CleanUpDeletedAlertRules(ctx)) }},
 	}
 
-	covered := map[string]bool{"Kind": true, "GetAlertRulesForScheduling": true, "RenameReceiverInNotificationSettings": true, "RenameTimeIntervalInNotificationSettings": true, "isRuleService": true}
+	covered := map[string]bool{"Kind": true, "GetAlertRulesForScheduling": true, "RenameReceiverInNotificationSettings": true, "RenameTimeIntervalInNotificationSettings": true, "isRuleService": true, "CalculateChanges": true, "CalculateRuleCreate": true, "CalculateRuleUpdate": true, "CalculateRuleDelete": true, "CalculateRuleGroupsDelete": true}
 	for _, tc := range tests {
 		covered[tc.name] = true
 		t.Run(tc.name, func(t *testing.T) {

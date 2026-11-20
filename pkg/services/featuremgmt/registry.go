@@ -2298,10 +2298,10 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryeditor.coauthoringUi",
@@ -2593,12 +2593,13 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "flameGraph.tableNg",
-			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{React: true},
-			Expression:  "false",
+			Name:         "flameGraph.tableNg",
+			Description:  "Renders the flame graph's top table using TableNG instead of the legacy Table",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "true",
 		},
 		{
 			Name:        "inlineLogDetailsNoScrolls",
@@ -2913,7 +2914,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "true",
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3029,10 +3030,10 @@ var (
 		{
 			Name:         "table.inspectDataTableNG",
 			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3315,12 +3316,13 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "rawPrometheus.tableNg",
-			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Generate:    Generate{React: true},
-			Expression:  "false",
+			Name:         "rawPrometheus.tableNg",
+			Description:  "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "true",
 		},
 		{
 			Name:         "datasources.queryGateway",
@@ -3349,13 +3351,12 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "grafana.dashboardsAutoHeightPanels",
-			Description:  "Enables the auto-height feature for dashboard panels",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-			HideFromDocs: true,
+			Name:        "grafana.dashboardsAutoHeightPanels",
+			Description: "Enables the auto-height feature for dashboard panels",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.dashboardAutoGridDefault",
@@ -3575,6 +3576,15 @@ var (
 			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "grafana.dashboardQuestions",
+			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

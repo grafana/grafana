@@ -123,14 +123,12 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   stackedMode: StackedEditorState;
-  showVersionBanner: boolean;
   /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
   confirmingDeleteActionKey: string | null;
   setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {
-  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
