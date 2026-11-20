@@ -14,6 +14,7 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Box,
+  CodeMirrorEditor,
   Collapse,
   Combobox,
   type ComboboxOption,
@@ -25,7 +26,6 @@ import {
   Stack,
   Text,
 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
