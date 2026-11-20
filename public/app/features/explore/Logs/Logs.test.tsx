@@ -80,6 +80,19 @@ jest.mock('@openfeature/react-sdk', () => ({
   useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
+const logListMock = jest.fn();
+jest.mock('app/features/logs/components/panel/LogList', () => {
+  const actual = jest.requireActual('app/features/logs/components/panel/LogList');
+  const { createElement } = jest.requireActual('react');
+  return {
+    ...actual,
+    LogList: (props: ComponentProps<typeof actual.LogList>) => {
+      logListMock(props);
+      return createElement(actual.LogList, props);
+    },
+  };
+});
+
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
@@ -214,6 +227,16 @@ describe('Logs', () => {
     );
     return { ...rendered, store: fakeStore };
   };
+
+  it.each([true, false])('passes infiniteScrollTop=%s to the log list according to the flag', async (flag) => {
+    setBooleanFlags({ logsPanelControls: false, 'grafana.logsInfiniteScrollTop': flag });
+    logListMock.mockClear();
+
+    setup();
+
+    expect(await screen.findByText('log message 3')).toBeInTheDocument();
+    expect(logListMock).toHaveBeenLastCalledWith(expect.objectContaining({ infiniteScrollTop: flag }));
+  });
 
   it('should render logs', async () => {
     setup();
