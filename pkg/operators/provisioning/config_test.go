@@ -57,7 +57,7 @@ func TestConnectionFactoryUsesConfiguredTypes(t *testing.T) {
 	require.ElementsMatch(t, []apisprovisioning.ConnectionType{configuredType}, factory.Types())
 }
 
-func TestDefaultConnectionTypes(t *testing.T) {
+func TestConnectionFactoryEnablesAllRegisteredTypesByDefault(t *testing.T) {
 	registeredTypes := []apisprovisioning.ConnectionType{
 		apisprovisioning.GithubConnectionType,
 		apisprovisioning.GithubEnterpriseConnectionType,
@@ -74,7 +74,14 @@ func TestDefaultConnectionTypes(t *testing.T) {
 		extras = append(extras, extra)
 	}
 
-	require.ElementsMatch(t, []string{"github", "githubEnterprise", "githubOAuth", "githubEnterpriseOAuth", "bitbucketOAuth", "gitlabOAuth", "gitOAuth"}, defaultConnectionTypes(extras))
+	cfg := ControllerConfig{
+		Settings:         &setting.Cfg{},
+		connectionExtras: extras,
+		tracer:           tracing.NewNoopTracerService(),
+	}
+	factory, err := cfg.ConnectionFactory()
+	require.NoError(t, err)
+	require.ElementsMatch(t, registeredTypes, factory.Types())
 }
 
 // roundTripperFunc lets a plain function stand in as an http.RoundTripper.

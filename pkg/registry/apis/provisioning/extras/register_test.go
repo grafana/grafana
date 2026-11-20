@@ -3,6 +3,7 @@ package extras
 import (
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,6 +15,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func TestProvideConnectionFactoryFromConfigEnablesAllOSSTypesByDefault(t *testing.T) {
+	extras := ProvideProvisioningOSSConnectionExtras(&setting.Cfg{}, nil, nil, nil, prometheus.NewRegistry())
+	expected := make([]provisioning.ConnectionType, 0, len(extras))
+	for _, extra := range extras {
+		expected = append(expected, extra.Type())
+	}
+
+	factory, err := ProvideConnectionFactoryFromConfig(&setting.Cfg{}, tracing.NewNoopTracerService(), extras)
+	require.NoError(t, err)
+	require.ElementsMatch(t, expected, factory.Types())
+}
+
 func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 	configuredType := provisioning.ConnectionType("configured")
 	tests := []struct {
@@ -21,14 +34,6 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 		types    []string
 		expected []provisioning.ConnectionType
 	}{
-		{
-			name: "defaults to GitHub and OAuth connection types",
-			expected: []provisioning.ConnectionType{
-				provisioning.GithubConnectionType,
-				provisioning.GithubOAuthConnectionType,
-				provisioning.GitOAuthConnectionType,
-			},
-		},
 		{
 			name:     "uses configured connection types",
 			types:    []string{string(configuredType)},
@@ -38,11 +43,9 @@ func TestProvideConnectionFactoryFromConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			extras := make([]connection.Extra, 0, 4)
+			extras := make([]connection.Extra, 0, 2)
 			for _, connectionType := range []provisioning.ConnectionType{
 				provisioning.GithubConnectionType,
-				provisioning.GithubOAuthConnectionType,
-				provisioning.GitOAuthConnectionType,
 				configuredType,
 			} {
 				extra := connection.NewMockExtra(t)
