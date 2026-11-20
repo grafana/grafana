@@ -24,7 +24,7 @@ interface Props {
   /**
    * Called once the cards show, with how many templates each list offers (a list that is not shown, has not reported,
    * or failed has no count): when every list is done, or after `LOAD_WAIT_MS` when the loaded ones have templates, and
-   * again as late lists report. The host drops the toggle when there are none and reports what was on offer.
+   * again as late lists report. The host reports what was on offer.
    */
   onTemplatesCount?: (counts: TemplateCounts) => void;
   className?: string;
