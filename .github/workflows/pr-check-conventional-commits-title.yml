@@ -22,8 +22,7 @@ permissions: {}
 jobs:
   title-check:
     name: Check conventional commit pull request title
-    # The release PR bumps the version and writes the changelog, so it never triggers a release of its own.
-    if: github.event.pull_request.draft == false && github.head_ref != 'nx-release-branch--main'
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-x64-small
     permissions:
       pull-requests: read
