@@ -258,8 +258,8 @@ func TestIntegrationStars(t *testing.T) {
 }
 
 // TestIntegrationStarsUpsert checks that a user who is not an org admin can
-// create their own stars object by writing to its name: there is no separate
-// create step, and a collection-level create is not allowed.
+// create their own stars object by writing to its name, with no separate create
+// step. A collection-level create may only use the user's own name.
 func TestIntegrationStarsUpsert(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -375,18 +375,28 @@ func TestIntegrationStarsUpsert(t *testing.T) {
 				require.True(t, apierrors.IsNotFound(err), "got %v", err)
 			})
 
-			t.Run("a collection-level create is forbidden for a user", func(t *testing.T) {
+			t.Run("a collection-level create checks the name in the object", func(t *testing.T) {
 				if !routed {
 					t.Skip("the router's owner authorizer applies to the routed API")
 				}
-				_, err := viewerStars.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": collections.GroupVersion.String(),
-					"kind":       "Stars",
-					"metadata":   map[string]any{"name": viewerName, "namespace": "default"},
-					"spec":       map[string]any{"resource": []map[string]any{}},
-				}}, metav1.CreateOptions{})
-				require.Error(t, err)
-				require.True(t, apierrors.IsForbidden(err), "got %v", err)
+				starsNamed := func(name string) *unstructured.Unstructured {
+					return &unstructured.Unstructured{Object: map[string]any{
+						"apiVersion": collections.GroupVersion.String(),
+						"kind":       "Stars",
+						"metadata":   map[string]any{"name": name, "namespace": "default"},
+						"spec": map[string]any{"resource": []any{map[string]any{
+							"group": "dashboard.grafana.app", "kind": "Dashboard", "names": []any{"posted"},
+						}}},
+					}}
+				}
+
+				_, err := viewerStars.Resource.Create(ctx, starsNamed("user-someone-else"), metav1.CreateOptions{})
+				require.True(t, apierrors.IsInvalid(err), "got %v", err)
+
+				require.NoError(t, viewerStars.Resource.Delete(ctx, viewerName, metav1.DeleteOptions{}))
+				_, err = viewerStars.Resource.Create(ctx, starsNamed(viewerName), metav1.CreateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, []string{"posted"}, names(t, viewerStars, viewerName))
 			})
 		})
 	}

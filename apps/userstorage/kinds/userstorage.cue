@@ -7,14 +7,9 @@ userStorageV0alpha1: {
 	scope:      "Namespaced"
 
 	// Access is decided by the user uid embedded in the name, not by a folder.
+	// The router enforces it (pluginroute hardcodedOwnerFromName) until the
+	// naming strategy can declare a <service>:<user_uid> name.
 	folderScoped: false
-
-	// The name of a new object must hold the uid of the user creating it.
-	validation: {
-		operations: [
-			"CREATE",
-		]
-	}
 
 	schema: {
 		spec: {

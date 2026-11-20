@@ -75,6 +75,8 @@ func runScenario(t *testing.T, routed bool) []string {
 	other := helper.Org1.Viewer
 	ownerClient := helper.GetResourceClient(apis.ResourceClientArgs{User: owner, GVR: gvr}).Resource
 	otherClient := helper.GetResourceClient(apis.ResourceClientArgs{User: other, GVR: gvr}).Resource
+	// The Grafana server admin may reach every user's storage.
+	adminClient := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr}).Resource
 
 	uid := func(u apis.User) string {
 		_, id, ok := strings.Cut(u.Identity.GetUID(), ":")
@@ -127,6 +129,15 @@ func runScenario(t *testing.T, routed bool) []string {
 	_, err = ownerClient.List(ctx, metav1.ListOptions{})
 	record("owner lists", err)
 	require.Error(t, err)
+
+	_, err = adminClient.Get(ctx, ownName, metav1.GetOptions{})
+	record("server admin gets owner's", err)
+	require.NoError(t, err)
+
+	list, err := adminClient.List(ctx, metav1.ListOptions{})
+	record("server admin lists", err)
+	require.NoError(t, err)
+	require.Len(t, list.Items, 1)
 
 	err = otherClient.Delete(ctx, ownName, metav1.DeleteOptions{})
 	record("other deletes owner's", err)

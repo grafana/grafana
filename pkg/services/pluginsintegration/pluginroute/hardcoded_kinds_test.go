@@ -1,6 +1,7 @@
 package pluginroute
 
 import (
+	"context"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -19,7 +20,14 @@ func TestHardcodedNamespaceReadable(t *testing.T) {
 	require.False(t, hardcodedNamespaceReadable("banners.grafana.app", "other"))
 }
 
-func TestAuthorizeUserStorage(t *testing.T) {
+func TestHardcodedOwnerFromName(t *testing.T) {
+	require.Nil(t, hardcodedOwnerFromName("userstorage.ext.grafana.app", "user-storage"))
+	require.Nil(t, hardcodedOwnerFromName("userstorage.grafana.app", "other"))
+
+	owned := hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")
+	require.NotNil(t, owned)
+
+	// An org admin is not a server admin: they reach only their own objects.
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleAdmin}
 	serverAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", IsGrafanaAdmin: true}
 
@@ -34,21 +42,26 @@ func TestAuthorizeUserStorage(t *testing.T) {
 		{"owner updates own", user, "update", "svc:abc", authorizer.DecisionAllow},
 		{"owner patches own", user, "patch", "svc:abc", authorizer.DecisionAllow},
 		{"owner deletes own", user, "delete", "svc:abc", authorizer.DecisionAllow},
-		{"create is checked on admission", user, "create", "", authorizer.DecisionAllow},
+		{"owner creates own", user, "create", "svc:abc", authorizer.DecisionAllow},
+		{"a create without a name is left to the store", user, "create", "", authorizer.DecisionAllow},
 		{"another user's object", user, "get", "svc:xyz", authorizer.DecisionDeny},
+		{"create for another user", user, "create", "svc:xyz", authorizer.DecisionDeny},
 		{"name without a user", user, "get", "abc", authorizer.DecisionDeny},
+		{"name without a service", user, "get", ":abc", authorizer.DecisionDeny},
 		{"name with extra parts", user, "get", "svc:abc:x", authorizer.DecisionDeny},
-		{"org admin cannot list", user, "list", "", authorizer.DecisionDeny},
-		{"org admin cannot watch", user, "watch", "", authorizer.DecisionDeny},
+		{"an owner name is not a user storage name", user, "get", "user-abc", authorizer.DecisionDeny},
+		{"a user cannot list", user, "list", "", authorizer.DecisionDeny},
+		{"a user cannot watch", user, "watch", "", authorizer.DecisionDeny},
+		{"a user cannot delete a collection", user, "deletecollection", "", authorizer.DecisionDeny},
 		{"server admin gets any", serverAdmin, "get", "svc:abc", authorizer.DecisionAllow},
 		{"server admin lists", serverAdmin, "list", "", authorizer.DecisionAllow},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			attr := authorizer.AttributesRecord{Verb: tt.verb, Name: tt.obj, ResourceRequest: true}
-			got, _, err := authorizeUserStorage(tt.user, attr)
+			got, reason, err := owned.authorize(context.Background(), tt.user, attr, nil)
 			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.want, got, reason)
 		})
 	}
 }

@@ -146,9 +146,6 @@ func (b *manifestBuilder) authorizeKind(ctx context.Context, requester identity.
 	// Check the naming strategy. An access policy is held to its token's
 	// permissions below, as storage cannot decide for it.
 	isAccessPolicy := authlib.IsIdentityType(requester.GetIdentityType(), authlib.TypeAccessPolicy)
-	if hardcodedUserStorage(attr.GetAPIGroup(), attr.GetResource()) && !isAccessPolicy {
-		return authorizeUserStorage(requester, attr)
-	}
 	if policy.ownerFromName != nil && !isAccessPolicy {
 		return policy.ownerFromName.authorize(ctx, requester, attr, b.accessClient)
 	}

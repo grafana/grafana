@@ -66,7 +66,8 @@ func TestOwnerFromNameAuthorize(t *testing.T) {
 		err    string
 	}{
 		{name: "list without a name", policy: ownerFromName{owners: all}, user: user, verb: "list", want: authorizer.DecisionAllow},
-		{name: "create without a name", policy: ownerFromName{owners: all}, user: user, verb: "create", want: authorizer.DecisionDeny},
+		{name: "create without a name is left to the store", policy: ownerFromName{owners: all}, user: user, verb: "create", want: authorizer.DecisionAllow},
+		{name: "delete a collection without a name", policy: ownerFromName{owners: all}, user: user, verb: "deletecollection", want: authorizer.DecisionDeny},
 		{name: "fixed name", policy: ownerFromName{names: []string{"merged"}}, user: user, verb: "get", obj: "merged", want: authorizer.DecisionAllow},
 		{name: "own user", policy: ownerFromName{owners: all}, user: user, verb: "update", obj: "user-abc", want: authorizer.DecisionAllow},
 		{name: "other user", policy: ownerFromName{owners: all}, user: user, verb: "get", obj: "user-xyz", want: authorizer.DecisionDeny},
@@ -157,14 +158,14 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 		object string
 		want   authorizer.Decision
 	}{
-		"a user writes their own":            {user, "update", "user-abc", authorizer.DecisionAllow},
-		"a user may not read another's":      {user, "get", "user-other", authorizer.DecisionDeny},
-		"a user may list":                    {user, "list", "", authorizer.DecisionAllow},
-		"a user may not create without name": {user, "create", "", authorizer.DecisionDeny},
-		"an org admin writes another's":      {admin, "update", "user-abc", authorizer.DecisionAllow},
-		"an access policy with the grant":    {accessPolicy("collections.grafana.app/stars:get"), "get", "user-other", authorizer.DecisionAllow},
-		"an access policy without the grant": {accessPolicy(), "get", "user-abc", authorizer.DecisionDeny},
-		"an access policy past its grant":    {accessPolicy("collections.grafana.app/stars:get"), "update", "user-abc", authorizer.DecisionDeny},
+		"a user writes their own":                      {user, "update", "user-abc", authorizer.DecisionAllow},
+		"a user may not read another's":                {user, "get", "user-other", authorizer.DecisionDeny},
+		"a user may list":                              {user, "list", "", authorizer.DecisionAllow},
+		"a create without a name is left to the store": {user, "create", "", authorizer.DecisionAllow},
+		"an org admin writes another's":                {admin, "update", "user-abc", authorizer.DecisionAllow},
+		"an access policy with the grant":              {accessPolicy("collections.grafana.app/stars:get"), "get", "user-other", authorizer.DecisionAllow},
+		"an access policy without the grant":           {accessPolicy(), "get", "user-abc", authorizer.DecisionDeny},
+		"an access policy past its grant":              {accessPolicy("collections.grafana.app/stars:get"), "update", "user-abc", authorizer.DecisionDeny},
 	} {
 		t.Run(name, func(t *testing.T) {
 			decision, reason := authorize(t, b, tc.caller, attr(tc.verb, tc.object))

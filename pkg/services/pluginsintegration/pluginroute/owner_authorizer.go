@@ -32,11 +32,26 @@ type ownerFromName struct {
 	// An identity that is not a user (an access policy, the image renderer)
 	// lists only the namespace's object, instead of every object.
 	nonUserNamespaceOnly bool
+
+	// parse reads the owner from an object name. Nil reads the owner names
+	// user-<id>, team-<uid> and namespace.
+	parse func(name string) (resource.OwnerReference, bool)
+
+	// Grafana server admins may do anything to the kind, and list and watch
+	// every object.
+	allowGrafanaAdmin bool
+
+	// The owner cannot be listed from the identity, so a user may not list or
+	// watch: the owned names are not known.
+	denyList bool
 }
 
 // ownerFromKind is how a kind's naming strategy authorizes it, or nil when the
 // kind does not declare one.
 func ownerFromKind(group string, kind app.ManifestVersionKind) *ownerFromName {
+	if owned := hardcodedOwnerFromName(group, kind.Resource); owned != nil {
+		return owned
+	}
 	strategy := kind.NamingStrategy
 	if strategy == nil || strategy.Mode != app.NamingStrategyModeOwner || strategy.Owner == nil {
 		return nil
@@ -83,14 +98,34 @@ func (b *ownerFromName) nonUserNames() ([]string, bool) {
 	return []string{resource.NamespaceOwner().AsName()}, true
 }
 
+// allowsAll reports whether user may do anything to the kind, whoever owns the
+// object.
+func (b *ownerFromName) allowsAll(user identity.Requester) bool {
+	return (b.allowGrafanaAdmin && user.GetIsGrafanaAdmin()) ||
+		(b.allowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin)
+}
+
+func (b *ownerFromName) parseOwner(name string) (resource.OwnerReference, bool) {
+	if b.parse != nil {
+		return b.parse(name)
+	}
+	return resource.ParseOwnerFromName(name)
+}
+
 func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, attr authorizer.Attributes, ac authlib.AccessChecker) (authorizer.Decision, string, error) {
-	if b.allowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin {
+	if b.allowsAll(user) {
 		return authorizer.DecisionAllow, "", nil
 	}
 
 	name := attr.GetName()
 	if name == "" {
-		if attr.IsReadOnly() {
+		switch {
+		case b.denyList && (attr.GetVerb() == "list" || attr.GetVerb() == "watch"):
+			return authorizer.DecisionDeny, "the owned objects cannot be listed", nil
+		case attr.IsReadOnly():
+			return authorizer.DecisionAllow, "", nil
+		case attr.GetVerb() == "create":
+			// The name is in the body: ownerScopedStore.Create authorizes it.
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "mutating request without a name", nil
@@ -99,7 +134,7 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	info, ok := resource.ParseOwnerFromName(name)
+	info, ok := b.parseOwner(name)
 	if !ok {
 		return authorizer.DecisionDeny, "name is missing owner", nil
 	}

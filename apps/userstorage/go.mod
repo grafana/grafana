@@ -3,10 +3,8 @@ module github.com/grafana/grafana/apps/userstorage
 go 1.27.4
 
 require (
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.63.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
-	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.2
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
 )
@@ -42,6 +40,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // indirect
+	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // indirect
 	github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.63.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0 // indirect
@@ -62,6 +61,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.8.0 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 // indirect
@@ -94,7 +94,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.37.2 // indirect
 	k8s.io/apiextensions-apiserver v0.37.2 // indirect
-	k8s.io/apiserver v0.37.2 // indirect
 	k8s.io/client-go v0.37.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab // indirect

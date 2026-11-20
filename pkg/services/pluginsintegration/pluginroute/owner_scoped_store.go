@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
@@ -38,11 +39,44 @@ type ownerScopedStore struct {
 	// the Store's own, held apart so the scoping can be tested without one.
 	stored   func(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error)
 	newList  func() runtime.Object
+	create   func(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error)
 	resource schema.GroupResource
 }
 
 func newOwnerScopedStore(store *kindstore.Store, owned *ownerFromName, access authlib.AccessChecker) *ownerScopedStore {
-	return &ownerScopedStore{Store: store, owned: owned, access: access, stored: store.Get, newList: store.NewList, resource: store.DefaultQualifiedResource}
+	return &ownerScopedStore{Store: store, owned: owned, access: access, stored: store.Get, newList: store.NewList, create: store.Create, resource: store.DefaultQualifiedResource}
+}
+
+// Create authorizes the name in the object, as the authorizer does for a
+// request that names it: a POST carries the name only in the body, so the
+// authorizer let it through. An access policy was held to its token's
+// permissions there instead.
+func (s *ownerScopedStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, apierrors.NewUnauthorized("valid user is required")
+	}
+	if !authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeAccessPolicy) {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(err.Error())
+		}
+		name := accessor.GetName()
+		attrs := authorizer.AttributesRecord{User: user, Verb: "create", Name: name, Namespace: requestK8s.NamespaceValue(ctx), ResourceRequest: true}
+		decision, reason, err := s.owned.authorize(ctx, user, attrs, s.access)
+		if err != nil {
+			return nil, err
+		}
+		if decision != authorizer.DecisionAllow {
+			// A name the caller may not use is an invalid object, as the
+			// embedded API servers report it.
+			gk := schema.GroupKind{Group: s.resource.Group, Kind: obj.GetObjectKind().GroupVersionKind().Kind}
+			return nil, apierrors.NewInvalid(gk, name, field.ErrorList{
+				field.Forbidden(field.NewPath("metadata", "name"), reason),
+			})
+		}
+	}
+	return s.create(ctx, obj, createValidation, options)
 }
 
 func (s *ownerScopedStore) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -118,6 +152,9 @@ func (s *ownerScopedStore) ownedObjects(ctx context.Context) (items []runtime.Ob
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
+	}
+	if s.owned.allowGrafanaAdmin && user.GetIsGrafanaAdmin() {
+		return nil, true, nil
 	}
 	var names []string
 	switch user.GetIdentityType() {
@@ -236,6 +273,9 @@ func (s *ownerScopedStore) Watch(ctx context.Context, options *metainternalversi
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if s.owned.allowGrafanaAdmin && user.GetIsGrafanaAdmin() {
+		return s.Store.Watch(ctx, options)
 	}
 	if user.GetIdentityType() == authlib.TypeUser || user.GetIdentityType() == authlib.TypeAnonymous {
 		return nil, apierrors.NewForbidden(s.resource, "", fmt.Errorf("watch is not supported for this resource"))

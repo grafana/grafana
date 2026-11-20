@@ -3,9 +3,7 @@ package pluginroute
 import (
 	"strings"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // What the router still knows about the kinds it authorizes by name, because
@@ -33,36 +31,28 @@ func hardcodedNamespaceReadable(group, resource string) bool {
 	return group == "banners.grafana.app" && resource == "announcement-banners"
 }
 
-// hardcodedUserStorage is the kind whose objects are named <service>:<user_uid>.
-// The name is the access control: a user reaches only their own objects.
+// hardcodedOwnerFromName is a naming strategy the app manifest cannot declare
+// yet: user storage objects are named <service>:<user_uid>, so a user owns one
+// object per service. The names a user owns cannot be listed from the user, so
+// users may not list or watch; Grafana server admins may do anything.
 // TODO: this moves to the app manifest, as a naming strategy.
-func hardcodedUserStorage(group, resource string) bool {
-	return group == "userstorage.grafana.app" && resource == "user-storage"
+func hardcodedOwnerFromName(group, kindResource string) *ownerFromName {
+	if group != "userstorage.grafana.app" || kindResource != "user-storage" {
+		return nil
+	}
+	return &ownerFromName{
+		owners:            []resource.Owner{resource.UserResourceOwner},
+		parse:             parseUserStorageName,
+		allowGrafanaAdmin: true,
+		denyList:          true,
+	}
 }
 
-// authorizeUserStorage decides a request on a hardcodedUserStorage kind.
-func authorizeUserStorage(user identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-	if user.GetIsGrafanaAdmin() {
-		return authorizer.DecisionAllow, "", nil
-	}
-	switch attr.GetVerb() {
-	case "create":
-		// The name is in the body, so the app checks it on admission.
-		return authorizer.DecisionAllow, "", nil
-	case "get", "delete", "patch", "update":
-		if userStorageNameMatchesUser(attr.GetName(), user) {
-			return authorizer.DecisionAllow, "", nil
-		}
-	}
-	return authorizer.DecisionDeny, "forbidden", nil
-}
-
-func userStorageNameMatchesUser(name string, user identity.Requester) bool {
+// parseUserStorageName reads the user from a <service>:<user_uid> name.
+func parseUserStorageName(name string) (resource.OwnerReference, bool) {
 	parts := strings.Split(name, ":")
-	if len(parts) != 2 {
-		return false
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return resource.OwnerReference{}, false
 	}
-	// The identity UID is <type>:<uid>
-	uid := strings.Split(user.GetUID(), ":")
-	return len(uid) == 2 && parts[1] == uid[1]
+	return resource.UserOwner(parts[1]), true
 }

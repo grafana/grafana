@@ -40,14 +40,7 @@ var appManifestData = app.ManifestData{
 					Scope:        "Namespaced",
 					Conversion:   false,
 					FolderScoped: new(false),
-					Admission: &app.AdmissionCapabilities{
-						Validation: &app.ValidationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-							},
-						},
-					},
-					Schema: &versionSchemaUserStoragev0alpha1,
+					Schema:       &versionSchemaUserStoragev0alpha1,
 				},
 			},
 		},
