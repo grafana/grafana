@@ -819,30 +819,21 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
 });
 
 describe('plugin version bumped by rendering', () => {
-  const v1 = (): Dashboard => ({
+  const v1 = (pluginVersion: string, title = 'CPU'): Dashboard => ({
     title: 'Dash',
     schemaVersion: 30,
-    panels: [{ id: 1, type: 'timeseries', title: 'CPU', pluginVersion: '9.4.0' }],
+    panels: [{ id: 1, type: 'timeseries', title, pluginVersion }],
   });
 
   it('is not an unsaved change on its own', () => {
-    const initial = v1();
-    const changed = v1();
-    changed.panels![0].pluginVersion = '13.4.0';
-
-    const result = getRawDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(v1('9.4.0'), v1('13.4.0'), false, false, false);
 
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
   });
 
   it('still reports a real panel edit', () => {
-    const initial = v1();
-    const changed = v1();
-    changed.panels![0].pluginVersion = '13.4.0';
-    changed.panels![0].title = 'Memory';
-
-    const result = getRawDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(v1('9.4.0'), v1('13.4.0', 'Memory'), false, false, false);
     const paths = Object.values(result.diffs)
       .flat()
       .map((diff) => diff.path.join('/'));

@@ -222,9 +222,6 @@ test.describe(
       await controls.redo();
       await expect(tabs.getTitles()).toHaveText(movedOrder);
 
-      // "New tab" opens first after the reload: render its panel before saving, otherwise its first
-      // render after the reload bumps the fixture's outdated plugin version, an unsaved change
-      await tabs.select('New tab');
       await flows.dashboards.saveDashboard(page, controls);
 
       const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
