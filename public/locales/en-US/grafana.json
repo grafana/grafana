@@ -6270,7 +6270,10 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "assistant-limit-reached": "You have used all of this month's Assistant prompts.",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
+      "assistant-placeholder-template": "Add changes, or send as is",
+      "assistant-sign-in": "Sign in to use the Assistant.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",
@@ -6284,6 +6287,8 @@
       "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
+      "templates-empty": "No templates available",
+      "templates-title": "Start from a template",
       "title": "New dashboard"
     },
     "errors": {
@@ -7254,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "Attach template: {{title}}",
       "community-badge": "Community",
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
@@ -7270,6 +7276,9 @@
       "edit-template-menu-item": "Edit",
       "more-actions-label": "More actions for {{title}}",
       "no-preview": "No preview available ",
+      "preview-template-button": "Preview",
+      "preview-template-button-label": "Preview template: {{title}}",
+      "provisioned-by-grafana": "<0>Provisioned by</0> Grafana",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
@@ -7305,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Filter by created by",
       "search-placeholder": "Search",
+      "sort": {
+        "asc": "Alphabetically (A–Z)",
+        "desc": "Alphabetically (Z–A)"
+      },
       "sort-placeholder": "Sort"
     },
     "dashboard-card": {
