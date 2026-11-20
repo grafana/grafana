@@ -1,6 +1,6 @@
-import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
-import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { getPluginDetails, getPluginEntitlement, getPluginInsights, installPlugin, uninstallPlugin } from './api';
 
@@ -18,7 +18,6 @@ const uninstallPluginMetaMock = jest.mocked(uninstallPluginMeta);
 const originalFetch = global.fetch;
 
 describe('api', () => {
-  let logger: MonitoringLogger;
   beforeEach(() => {
     jest.clearAllMocks();
     setBackendSrv({
@@ -32,7 +31,6 @@ describe('api', () => {
       request: jest.fn(),
       datasourceRequest: jest.fn(),
     });
-    logger = mockLogger('grafana/runtime.plugins.meta');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -53,7 +51,7 @@ describe('api', () => {
     });
 
     describe('installPlugin', () => {
-      it('should call both legacy api and new api', async () => {
+      it('should only call new api', async () => {
         await installPlugin('myorg-test-panel', '1.5.0');
 
         expect(installPluginMetaMock).toHaveBeenCalledTimes(1);
@@ -76,37 +74,15 @@ describe('api', () => {
           headers: { 'content-type': 'application/json' },
           method: 'POST',
         });
-        expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getBackendSrv().post).toHaveBeenCalledWith(
-          '/api/plugins/myorg-test-panel/install',
-          { version: '1.5.0' },
-          { showErrorAlert: false }
-        );
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 
-      it('should call legacy api when installPluginMeta fails but log failure', async () => {
+      it('should reject when installPluginMeta fails without calling the legacy api', async () => {
         global.fetch = jest.fn().mockRejectedValue(new Error('Network Error'));
 
-        await installPlugin('myorg-test-panel', '1.5.0');
+        await expect(installPlugin('myorg-test-panel', '1.5.0')).rejects.toThrow('Network Error');
 
-        expect(installPluginMetaMock).toHaveBeenCalledTimes(1);
-        expect(installPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel', '1.5.0');
-        expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getBackendSrv().post).toHaveBeenCalledWith(
-          '/api/plugins/myorg-test-panel/install',
-          { version: '1.5.0' },
-          { showErrorAlert: false }
-        );
-        expect(logger.logError).toHaveBeenCalledTimes(1);
-        expect(logger.logError).toHaveBeenCalledWith(
-          expect.objectContaining({
-            message: 'installPluginMeta: Failed to install plugin',
-            cause: expect.objectContaining({
-              message: 'Network Error',
-            }),
-          }),
-          { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
-        );
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
@@ -117,7 +93,7 @@ describe('api', () => {
     });
 
     describe('uninstallPlugin', () => {
-      it('should call both legacy api and new api', async () => {
+      it('should only call new api', async () => {
         await uninstallPlugin('myorg-test-panel');
 
         expect(uninstallPluginMetaMock).toHaveBeenCalledTimes(1);
@@ -127,28 +103,15 @@ describe('api', () => {
           'apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins/myorg-test-panel',
           { method: 'DELETE' }
         );
-        expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 
-      it('should call legacy api when uninstallPluginMeta fails but log failure', async () => {
+      it('should reject when uninstallPluginMeta fails without calling the legacy api', async () => {
         global.fetch = jest.fn().mockRejectedValue(new Error('Network Error'));
 
-        await uninstallPlugin('myorg-test-panel');
+        await expect(uninstallPlugin('myorg-test-panel')).rejects.toThrow('Network Error');
 
-        expect(uninstallPluginMetaMock).toHaveBeenCalledTimes(1);
-        expect(uninstallPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel');
-        expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(logger.logError).toHaveBeenCalledTimes(1);
-        expect(logger.logError).toHaveBeenCalledWith(
-          expect.objectContaining({
-            message: 'uninstallPluginMeta: Failed to uninstall plugin',
-            cause: expect.objectContaining({
-              message: 'Network Error',
-            }),
-          }),
-          { pluginId: 'myorg-test-panel' }
-        );
+        expect(getBackendSrv().post).not.toHaveBeenCalled();
       });
 
       it('should reject invalid plugin IDs without making a request', async () => {
@@ -173,9 +136,8 @@ describe('api', () => {
       it('should only call legacy api', async () => {
         await installPlugin('myorg-test-panel', '1.5.0');
 
-        expect(installPluginMetaMock).toHaveBeenCalledTimes(1);
-        expect(installPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel', '1.5.0');
-        expect(global.fetch).not.toHaveBeenCalled(); // no call to fetch is made because of feature flag check in installPluginMeta
+        expect(installPluginMetaMock).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
         expect(getBackendSrv().post).toHaveBeenCalledWith(
           '/api/plugins/myorg-test-panel/install',
@@ -195,9 +157,8 @@ describe('api', () => {
       it('should only call legacy api', async () => {
         await uninstallPlugin('myorg-test-panel');
 
-        expect(uninstallPluginMetaMock).toHaveBeenCalledTimes(1);
-        expect(uninstallPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel');
-        expect(global.fetch).not.toHaveBeenCalled(); // no call to fetch is made because of feature flag check in uninstallPluginMeta
+        expect(uninstallPluginMetaMock).not.toHaveBeenCalled();
+        expect(global.fetch).not.toHaveBeenCalled();
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
         expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
       });
