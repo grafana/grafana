@@ -22,11 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
-// ruleStatusWriter persists the serialized status subresource for a single rule.
-type ruleStatusWriter interface {
-	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
-}
-
 // statusDualWriter serves the AlertRule /status subresource. The legacy SQL row
 // (alert_rule.k8s_status) is the source of truth: writes persist there and reads
 // come from there. Status is also mirrored to unified storage best-effort, because
@@ -35,10 +30,10 @@ type ruleStatusWriter interface {
 // the resource advances past Mode0 for parity metrics and the eventual read-from-
 // unified cutover). The mirror is skipped in Mode0, see writesUnified.
 type statusDualWriter struct {
-	gv           schema.GroupVersion
-	status       *appsdkapiserver.StatusREST
-	legacy       *legacyStorage
-	statusWriter ruleStatusWriter
+	gv      schema.GroupVersion
+	status  *appsdkapiserver.StatusREST
+	legacy  *legacyStorage
+	service *legacy.LegacyRuleService
 	// writesUnified reports whether the resource writes to unified storage (modes 1-5).
 	// It is evaluated per request because the storage mode can change at runtime.
 	writesUnified func(ctx context.Context) bool
@@ -54,14 +49,13 @@ var (
 func NewStatusStorage(
 	legacySvc legacy.LegacyRuleService,
 	namespacer request.NamespaceMapper,
-	statusWriter ruleStatusWriter,
 	unified *appsdkapiserver.StatusREST,
 	writesUnified func(ctx context.Context) bool,
 ) rest.Storage {
 	return &statusDualWriter{
 		gv:            ResourceInfo.GroupVersionResource().GroupVersion(),
 		status:        unified,
-		statusWriter:  statusWriter,
+		service:       &legacySvc,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
 			rules:          legacy.NewAlertRules(&legacySvc, namespacer),
@@ -117,7 +111,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		out.Status = newRule.Status
 		return out, false, nil
 	}
-	if err := s.statusWriter.SaveAlertRuleStatus(ctx, info.OrgID, name, data); err != nil {
+	if err := s.service.SaveAlertRuleStatus(ctx, info.OrgID, name, data); err != nil {
 		return nil, false, err
 	}
 

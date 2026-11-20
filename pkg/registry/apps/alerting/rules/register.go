@@ -474,9 +474,9 @@ func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified 
 	writesUnified := newWritesUnifiedChecker(a.dual, gvr.GroupResource())
 	switch gvr.GroupResource() {
 	case recordingrule.ResourceInfo.GroupResource():
-		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return recordingrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	case alertrule.ResourceInfo.GroupResource():
-		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, a.ng.Api.RuleStore, unified, writesUnified)
+		return alertrule.NewStatusStorage(*a.ng.Api.LegacyRuleService, namespacer, unified, writesUnified)
 	default:
 		return nil
 	}

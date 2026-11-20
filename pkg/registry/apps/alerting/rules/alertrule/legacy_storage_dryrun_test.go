@@ -35,15 +35,9 @@ func (v *switchableValidator) ValidateRuleMutations(context.Context, []*ngmodels
 	return v.err
 }
 
-type recordingStatusWriter struct{ calls int }
-
-func (w *recordingStatusWriter) SaveAlertRuleStatus(context.Context, int64, string, []byte) error {
-	w.calls++
-	return nil
-}
-
 type dryRunFixture struct {
 	storage   *legacyStorage
+	service   *legacy.LegacyRuleService
 	ruleStore *fakes.RuleStore
 	validator *switchableValidator
 	ctx       context.Context
@@ -69,6 +63,7 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
 		storage:   &legacyStorage{rules: legacy.NewAlertRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))},
+		service:   svc,
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,
@@ -249,11 +244,10 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	t.Run("status update returns the new status and writes nothing", func(t *testing.T) {
 		f := newDryRunFixture(t, false)
 		stored := f.seed(t, "dry-status")
-		statusWriter := &recordingStatusWriter{}
 		mirrored := false
 		status := &statusDualWriter{
 			legacy:        f.storage,
-			statusWriter:  statusWriter,
+			service:       f.service,
 			writesUnified: func(context.Context) bool { mirrored = true; return true },
 		}
 		changed := stored.DeepCopy()
@@ -264,7 +258,11 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 		rule := out.(*v1beta1.AlertRule)
 		require.Equal(t, "set by dry run", *rule.Status.LastError)
 		require.Equal(t, "original", rule.Spec.Title)
-		require.Zero(t, statusWriter.calls)
+		saved := f.ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+			c, ok := cmd.(fakes.GenericRecordedQuery)
+			return c, ok && c.Name == "SaveAlertRuleStatus"
+		})
+		require.Empty(t, saved, "a dry run must not persist the status")
 		require.False(t, mirrored, "a dry run must not mirror the status to unified storage")
 	})
 }
