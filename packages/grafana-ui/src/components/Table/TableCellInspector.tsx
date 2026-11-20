@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
+import { CodeMirrorEditor } from '../CodeMirror/CodeEditorLazy';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
 import { CodeEditor } from '../Monaco/CodeEditor';
@@ -25,6 +26,11 @@ interface TableCellInspectorProps {
   mode: TableCellInspectorMode;
 }
 
+interface TableCellInspectorDrawerProps extends TableCellInspectorProps {
+  /** Show the code view in CodeMirror instead of Monaco. */
+  codeMirrorEnabled?: boolean;
+}
+
 const toString = (value: unknown): string => {
   if (typeof value === 'string') {
     return value;
@@ -32,7 +38,22 @@ const toString = (value: unknown): string => {
   return value?.toString?.() ?? '';
 };
 
-export function TableCellInspector({ value, plainText, onDismiss, mode }: TableCellInspectorProps) {
+export function TableCellInspector(props: TableCellInspectorProps) {
+  return <TableCellInspectorDrawer {...props} />;
+}
+
+/**
+ * @internal
+ * Lets TableNG move the code view to CodeMirror behind `table.refresh` without
+ * changing the public `TableCellInspector` props.
+ */
+export function TableCellInspectorDrawer({
+  value,
+  plainText,
+  onDismiss,
+  mode,
+  codeMirrorEnabled = false,
+}: TableCellInspectorDrawerProps) {
   const [currentMode, setMode] = useState(mode);
   const text = toString(value).trim();
   // The plain text tab shows the value as it came from the data source, without the
@@ -69,7 +90,17 @@ export function TableCellInspector({ value, plainText, onDismiss, mode }: TableC
         <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
           <Trans i18nKey="grafana-ui.table.copy">Copy to Clipboard</Trans>
         </ClipboardButton>
-        {currentMode === 'code' ? (
+        {currentMode === 'code' && codeMirrorEnabled ? (
+          <CodeMirrorEditor
+            height="500px"
+            language="json"
+            value={text}
+            onChange={() => {}}
+            readOnly
+            lineWrapping
+            aria-label={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')}
+          />
+        ) : currentMode === 'code' ? (
           <CodeEditor
             width="100%"
             height={500}

@@ -43,43 +43,36 @@ Availability depends on where you run Grafana:
 - **Grafana Cloud:** The API is rolling out gradually and might not be available on your stack yet.
 - **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
 
-All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 **Alert annotations aren't available in this API yet**
 
 ## Requirements
 
-If you're running Grafana Enterprise or Grafana Cloud, you need specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
-
-| Operation                          | Action               |
-| ---------------------------------- | -------------------- |
-| Get, list, search, and list tags   | `annotations:read`   |
-| Create (including Graphite format) | `annotations:create` |
-| Update and patch                   | `annotations:write`  |
-| Delete                             | `annotations:delete` |
-
-The scope you need depends on the type of annotation:
+If you're running Grafana Enterprise or Grafana Cloud, you need the `annotations` action for the operation, such as `annotations:read` or `annotations:create`, with a scope that matches the annotation type:
 
 - **Organization annotations** (no `dashboardUID`): `annotations:*`, `annotations:type:*`, or `annotations:type:organization`.
 - **Dashboard annotations**: `dashboards:*` or `dashboards:uid:<DASHBOARD_UID>`, or the equivalent `folders:*` or `folders:uid:<FOLDER_UID>` scope for the folder that contains the dashboard.
 
-Listing tags requires `annotations:read` with an organization scope.
+Listing tags requires `annotations:read` with the `annotations:type:organization` scope. For the full list of actions and scopes, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 
 These are the available endpoints:
 
-| Method | Summary                                                                             | URI                                                                               |
-| ------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| GET    | [List annotations](#list-annotations)                                               | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
-| GET    | [Search annotations](#search-annotations)                                           | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`             |
-| GET    | [Find annotation tags](#find-annotation-tags)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`               |
-| GET    | [Get an annotation](#get-an-annotation)                                             | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| POST   | [Create an annotation](#create-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
-| POST   | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format) | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`           |
-| PUT    | [Update an annotation](#update-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| PATCH  | [Patch an annotation](#patch-an-annotation)                                         | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| DELETE | [Delete an annotation](#delete-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+**Base path:** `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                                             | Path                 |
+| ------ | ----------------------------------------------------------------------------------- | -------------------- |
+| GET    | [List annotations](#list-annotations)                                               | `annotations`        |
+| GET    | [Search annotations](#search-annotations)                                           | `search`             |
+| GET    | [Find annotation tags](#find-annotation-tags)                                       | `tags`               |
+| GET    | [Get an annotation](#get-an-annotation)                                             | `annotations/{name}` |
+| POST   | [Create an annotation](#create-an-annotation)                                       | `annotations`        |
+| POST   | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format) | `graphite`           |
+| PUT    | [Update an annotation](#update-an-annotation)                                       | `annotations/{name}` |
+| PATCH  | [Patch an annotation](#patch-an-annotation)                                         | `annotations/{name}` |
+| DELETE | [Delete an annotation](#delete-an-annotation)                                       | `annotations/{name}` |
 
 ## The annotation resource
 
@@ -179,12 +172,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Search annotations
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`
@@ -257,17 +244,11 @@ Content-Type: application/json
 
 If `metadata.continue` is empty or missing, there are no more results. Otherwise, pass its value as the `continue` parameter to get the next page.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Find annotation tags
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`
 
-Lists the tags used by annotations, with the number of annotations that use each tag.
+Lists the tags used by annotations, with the number of annotations that use each tag. Tags are organization-wide, so the list and counts cover every annotation in the organization.
 
 **Path parameters**:
 
@@ -305,12 +286,6 @@ Content-Type: application/json
   ]
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
 
 ## Get an annotation
 
@@ -361,14 +336,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist, or you don't have access to it
-- **410:** The annotation was deleted
 
 ## Create an annotation
 
@@ -435,14 +402,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (an annotation with the same `metadata.name` already exists)
-
 ## Create an annotation in Graphite format
 
 `POST /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`
@@ -507,13 +466,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **400:** The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future
-- **401:** Unauthorized
-- **403:** Access denied
 
 ## Update an annotation
 
@@ -583,15 +535,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist
-- **410:** The annotation was deleted
-
 ## Patch an annotation
 
 `PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
@@ -650,15 +593,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** The request is invalid. For example, the patch isn't valid JSON or changes an immutable field
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist
-- **410:** The annotation was deleted
-
 ## Delete an annotation
 
 `DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
@@ -697,12 +631,27 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist, or you don't have read access to it
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                      | Returned by                                                                                                                                                                                                                                                                                              |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                                          | [List](#list-annotations), [Search](#search-annotations), [Find](#find-annotation-tags), [Get](#get-an-annotation), [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format), [Update](#update-an-annotation), [Patch](#patch-an-annotation), [Delete](#delete-an-annotation) |
+| `201` | Created.                                                                                                                                                                     | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `400` | The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set.                           | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `400` | The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future.                                           | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format)                                                                                                                                                                                                                      |
+| `400` | The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed.                                                       | [Update](#update-an-annotation)                                                                                                                                                                                                                                                                          |
+| `400` | The request is invalid. For example, the patch isn't valid JSON or changes an immutable field.                                                                               | [Patch](#patch-an-annotation)                                                                                                                                                                                                                                                                            |
+| `400` | The request is invalid. For example, a selector isn't supported, or the `continue` token isn't valid or doesn't match `limit`.                                               | [List](#list-annotations), [Search](#search-annotations)                                                                                                                                                                                                                                                 |
+| `400` | The request is invalid. For example, the query parameters can't be combined.                                                                                                 | [Find](#find-annotation-tags)                                                                                                                                                                                                                                                                            |
+| `401` | Unauthorized.                                                                                                                                                                | All endpoints                                                                                                                                                                                                                                                                                            |
+| `403` | Access denied (for [List](#list-annotations), [Search](#search-annotations), and [Get](#get-an-annotation), only if the namespace doesn't belong to your organization).      | All endpoints                                                                                                                                                                                                                                                                                            |
+| `404` | The annotation doesn't exist, or you don't have access to it.                                                                                                                | [Get](#get-an-annotation)                                                                                                                                                                                                                                                                                |
+| `404` | The annotation doesn't exist.                                                                                                                                                | [Update](#update-an-annotation), [Patch](#patch-an-annotation)                                                                                                                                                                                                                                           |
+| `404` | The annotation doesn't exist, or you don't have read access to it.                                                                                                           | [Delete](#delete-an-annotation)                                                                                                                                                                                                                                                                          |
+| `409` | Conflict (an annotation with the same `metadata.name` already exists).                                                                                                       | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `410` | The annotation was deleted. Only storage backends that keep deleted annotations return this code. With the default `legacy-sql` backend, a deleted annotation returns `404`. | [Get](#get-an-annotation), [Update](#update-an-annotation), [Patch](#patch-an-annotation)                                                                                                                                                                                                                |
 
 ## Migrate from the legacy Annotations API
 
@@ -725,5 +674,6 @@ The following table describes how the legacy API maps to this API:
 | `data`.                                                               | Not available.                                                                                                                    |
 | `PUT` and `PATCH` can change `time` and `timeEnd`.                    | `PUT` and `PATCH` can update `text` and `tags`. You can't modify `time`, `timeEnd`, `dashboardUID`, and `panelID` after creation. |
 | `GET /api/annotations/tags` with `tag` filter. Tags are in `result`.  | `GET /tags` with `contains` filter. Tags are at the top level of the response.                                                    |
+| `GET /api/annotations/tags` requires `annotations:read`.              | `GET /tags` requires `annotations:read` with the `annotations:type:organization` scope.                                           |
 | `POST /api/annotations/mass-delete`.                                  | Not available. Delete annotations individually.                                                                                   |
 | `POST /api/annotations/graphite`.                                     | `POST /graphite`, with the same request body. The response is the created annotation.                                             |

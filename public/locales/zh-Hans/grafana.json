@@ -1493,9 +1493,29 @@
         "records": "录制",
         "to": "至"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "未找到录制规则",
@@ -1526,7 +1546,7 @@
           "label": "标签匹配器：label:key（存在）、label:!key（不存在）、label:key=value（等于）、label:key!=value（不等于）、label:key=~re（正则表达式）、label:key!~re（非正则表达式）。用引号括起包含空格的值：label:team=\"a b\"。",
           "metric": "录制的指标名称（精确匹配）。",
           "panel-id": "规则关联的面板。面板 ID 是数据面板本地的；与 dashboard: 配对。",
-          "paused": "规则是否已暂停 (true/false)。",
+          "paused": "",
           "plugins": "plugins:hide 排除由插件创建的规则。",
           "policy": "命名通知策略（与 contactPoint: 互斥）。",
           "rule": "规则标题文本搜索（等同于自由文本）。",
@@ -1542,7 +1562,6 @@
         "invalid-tokens": "无法应用某些筛选条件：{{tokens}}",
         "invalid-value": "为 {{key}} 使用以下值之一：{{values}}",
         "label": "搜索",
-        "not-paused-unavailable": "按“未暂停”筛选的功能尚不可用。",
         "placeholder": "按名称搜索或输入筛选条件查询…",
         "property": {
           "contact-point": "联络点",
@@ -1570,12 +1589,84 @@
         "view-list": "列表",
         "wildcard-in-text": "搜索文本不能包含 * 或 %。"
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
+      "sequence-pill": {
+        "label-with-interval": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "加载更多",
         "load-more-error": "加载更多结果失败",
         "loading-rules": "正在加载规则",
         "refresh-error": "刷新结果失败",
         "retry": "重试"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "评估规则失败",
@@ -1789,17 +1880,18 @@
         "autosync-rules-error-title": "规则导入失败",
         "autosync-rules-imported-note": "您选择的警报规则也已导入。",
         "autosync-rules-note": "您选择的警报规则也将被导入。",
-        "autosync-success-body": "已启用自动同步。正在重定向...",
+        "autosync-success-body": "",
         "autosync-success-title": "已启用自动同步",
         "autosync-title": "确认自动同步",
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "导入失败",
         "importing-body": "正在将资源导入到 Grafana Alerting。请稍候…",
         "importing-title": "正在导入...",
-        "success-body": "资源已成功导入。正在重定向...",
+        "success-body": "",
         "success-title": "导入成功",
         "title": "确认导入"
       },
@@ -2378,6 +2470,7 @@
       "contact-points": "联络点",
       "notification-policies": "通知策略",
       "recently-deleted": "最近删除",
+      "recording-rules": "",
       "templates": "模板",
       "time-intervals": "时间间隔"
     },
@@ -2890,6 +2983,37 @@
           "description": "此字段受到保护，只能由具有提升权限的用户编辑"
         }
       }
+    },
+    "recently-deleted": {
+      "action": {
+        "restore": "",
+        "review": ""
+      },
+      "empty": "",
+      "error": "",
+      "load-more": "",
+      "restore": {
+        "body": "",
+        "confirm": "",
+        "conflict": "",
+        "error": "",
+        "restoring": "",
+        "title": ""
+      },
+      "retry": "",
+      "review": {
+        "advanced": "",
+        "deleted-at": "",
+        "deleted-by": "",
+        "title": ""
+      },
+      "table": {
+        "deleted": "",
+        "deleted-by": "",
+        "folder": "",
+        "title": ""
+      },
+      "unknown": ""
     },
     "recording-rule": {
       "term": "录制规则"
@@ -4745,6 +4869,12 @@
     "folder-owners": {
       "owned-by": "所有者："
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
@@ -5302,6 +5432,7 @@
       "change-theme": "更改主题",
       "dark-theme": "深色",
       "dashboard-from-template": "来自模板的数据面板",
+      "experimental": "",
       "light-theme": "浅色",
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
@@ -5540,6 +5671,36 @@
       "view-json-diff": "查看 JSON 差异以查看所有更改"
     }
   },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
+    }
+  },
   "correlations": {
     "add-new": "添加新的",
     "alert": {
@@ -5760,7 +5921,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
         "hint-remove": "",
@@ -6162,8 +6323,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6357,9 +6517,6 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "临时转换在编辑模式下已禁用"
     },
     "plan-building-overlay": {
       "quip-corners": "正在润饰面板边角…",
@@ -6737,8 +6894,6 @@
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
         "query-options": {
-          "close": "关闭",
-          "old-modal-title": "查询变量",
           "preview": "预览"
         },
         "remove": "移除",
@@ -7643,11 +7798,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "lifecycle": {
-      "applied": "已将您的更改应用于 {{title}}",
-      "apply": "应用",
-      "apply-body": "所有有访问权限的人都会看到它们。您可以从版本历史记录中还原以前的版本。",
-      "apply-failed": "无法应用更改。请重试，或先进行比较。",
-      "apply-needs-edit": "应用更改需要拥有“{{title}}”的编辑权限。您可以预览这些更改，但无法应用它们。",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待处理的更改",
       "change-added": "已添加",
@@ -7679,7 +7830,6 @@
       "draft-discarded": "",
       "draft-title": "草稿",
       "edited-dashboard": "",
-      "highlight-changes": "突出显示数据面板上的更改",
       "pending-body": "正在预览待处理的更改，只有您才能看到它们。",
       "pending-body-source": "正在预览待处理的更改 {{source}}，只有您可以看到它们。",
       "pending-changes-changed": "",
@@ -7688,12 +7838,15 @@
       "pending-stale": "自您进行更改以来，数据面板已更新",
       "pending-title": "待处理的更改",
       "preview-changes": "预览更改",
-      "rebase": "变基",
       "record-pending-change-failed": "",
       "save": "保存",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "显示原始数据面板",
-      "stop-highlighting-changes": "停止突出显示更改",
-      "apply-title_other": "将 {{count}} 项更改应用于“{{title}}”？"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "添加链接",
@@ -7862,16 +8015,6 @@
     "query-editor": {
       "query": "查询"
     },
-    "query-editor-banner": {
-      "description-classic": "尝试改进后的查询编辑体验。",
-      "description-new": "欢迎来到改进后的查询编辑体验。",
-      "dismiss": "忽略",
-      "downgrade-title": "新查询编辑器",
-      "give-feedback": "提供反馈",
-      "go-back": "返回经典版",
-      "try-it": "立即试用",
-      "upgrade-title": "新编辑器已推出"
-    },
     "query-variable-editor": {
       "modal": {
         "apply": "应用",
@@ -7943,6 +8086,12 @@
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "允许",
@@ -8131,6 +8280,12 @@
       "switch-options": "切换选项",
       "value-pair-type": "值对类型",
       "value-pair-type-description": "选择开关状态的值类型"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -9718,13 +9873,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "",
     "button": {
       "aria-label": "功能控制",
       "close-tooltip": "关闭功能控制",
       "open-tooltip": "打开功能控制"
     },
+    "cancel-flag": "",
+    "close": "",
     "delete-flag": "删除",
     "description": "在本地覆盖前端功能标志，用于测试和开发目的。",
+    "disable-overrides": "",
     "dismiss": {
       "label": "移除 UI 和工具栏按钮",
       "tooltip": "任何已定义的功能标志覆盖都将保持有效状态。<br/>在 URL 中使用 <3>{{ param }}</3> 以再次启用 UI。"
@@ -9734,11 +9893,18 @@
     "flag-type": "标志类型",
     "flag-value": "标志值",
     "menu": "打开菜单",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP 评估",
     "ofrep-reason": "原因：<2>{{reason}}</2>",
     "ofrep-variant": "变体：<2>{{variant}}</2>",
+    "override-status": {
+      "different": "",
+      "new": "",
+      "same": ""
+    },
+    "restore-overrides": "",
     "save-flag": "保存",
+    "suspended-warning": "",
+    "suspended-warning-body": "",
     "title": "功能控制"
   },
   "folder-filter": {
@@ -10727,6 +10893,8 @@
       "tooltip": {
         "category": "工具提示",
         "description-hover-proximity": "光标必须多么靠近某个点才能触发工具提示，以像素为单位",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "全部",
           "label-hidden": "隐藏",
@@ -11243,6 +11411,9 @@
         "trigger": "切换工具提示"
       },
       "wrapping-disabled-warning": "由于某个值过长，已针对此列禁用文本换行。使用“检查值”以查看完整内容。"
+    },
+    "tag": {
+      "remove": ""
     },
     "tags": {
       "list-label": "标签"
@@ -12319,7 +12490,7 @@
     },
     "description-allow-download": "启用控件后，在显示屏上显示下载日志的选项。",
     "description-enable-field-selector": "实验性。显示一个组件用于管理日志中显示的字段。",
-    "description-enable-infinite-scrolling": "实验性。通过滚动到日志列表底部来请求更多结果。",
+    "description-enable-infinite-scrolling": "",
     "description-enable-logs-highlighting": "使用预定义的着色方案来突出显示日志行的相关部分。",
     "description-order": "首先显示最新或最早的日志。选择“最早的日志优先”时，视图会自动滚动到最底部的最新日志。",
     "description-prettify-json": "使用缩进和换行符来格式化 JSON 日志条目。",
@@ -13005,6 +13176,10 @@
       "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
@@ -13329,6 +13504,34 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": ""
+    },
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "面包屑"
     },
@@ -13343,15 +13546,8 @@
         "open": "打开 {{title}}",
         "open-all": "打开 AI 助手和侧边栏应用"
       },
-      "floating-resize": "调整侧边栏宽度"
-    },
-    "fullscreen-workspace": {
-      "enter": "进入工作区",
-      "error-exit": "退出工作区",
-      "error-message": "无法加载 Grafana 助手工作区。",
-      "error-reload": "重新加载页面",
-      "error-title": "工作区不可用",
-      "workspace": "工作区"
+      "floating-resize": "调整侧边栏宽度",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "帮助",
@@ -13389,6 +13585,7 @@
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "关闭菜单",
       "customise": "自定义导航",
       "customise-cancel": "取消",
@@ -13423,7 +13620,10 @@
       "aria-label": "新建",
       "new-template-dashboard-button": "使用模板"
     },
-    "rss-button": "最新博客"
+    "rss-button": "最新博客",
+    "section-nav-menu": {
+      "label": ""
+    }
   },
   "news": {
     "category-news": "新闻",
@@ -13541,8 +13741,10 @@
       "drag-handle": "拖动以重新排序",
       "duplicate": "复制块",
       "frame": {
-        "aria-label-collapsed": "已折叠的块：{{name}}",
-        "aria-label-panel": "可视化块：{{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13604,6 +13806,8 @@
       "cancel": "取消",
       "card-author": "作者：{{author}}",
       "card-updated": "更新于 {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "笔记本名称",
       "create-name-required": "笔记本名称为必填项",
       "create-name-taken": "已存在具有此名称的笔记本",
@@ -13622,6 +13826,8 @@
       "lock-time-range-description": "将此可视化保留在其被捕获的窗口中。解锁后，它将遵循笔记本的时间范围。",
       "lock-time-ranges": "将面板锁定到其显示的时间范围",
       "lock-time-ranges-description": "将每个可视化保留在其被捕获的窗口中。解锁后，它们将遵循笔记本的时间范围。",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "按标题搜索",
       "sort-alphabetical": "按字母顺序 (A-Z)",
       "sort-label": "对笔记本进行排序",
@@ -13630,7 +13836,7 @@
       "submit": "添加到笔记本",
       "success": "面板已添加至 {{title}}",
       "success-cells": "已添加到 {{title}}",
-      "success-link": "查看笔记本",
+      "success-open-link": "",
       "tag-placeholder": "按标签筛选",
       "target-description": "选择要添加面板的位置。",
       "target-existing": "现有笔记本",
@@ -13801,7 +14007,8 @@
       "swatch-placeholder-aria-label": "选择一个颜色，{{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "为序列添加颜色的方式"
+      "color-by-label": "为序列添加颜色的方式",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "超出范围。{{range}}",
@@ -13851,6 +14058,32 @@
     },
     "units": {
       "clear-tooltip": "清除单位选择"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14281,6 +14514,9 @@
     },
     "empty-state": {
       "message": "找不到插件"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "请检查控制台，了解有关错误的更多详细信息。",
@@ -14873,9 +15109,6 @@
       "success-title": "文件夹元数据已成功修复",
       "title": "修复文件夹元数据"
     },
-    "folder-permissions": {
-      "loading": "正在加载…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 个资源由 Git 同步管理。",
@@ -15028,13 +15261,16 @@
       "path-required": "存储库路径为必填项"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "管理者：文件预置",
       "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
       "provisioned": "已预置",
+      "read-only": "",
       "terraform": "管理者：Terraform",
+      "view-source": "",
       "view-source-file": "查看源文件"
     },
     "managed-by-repository-tooltip": "管理者：存储库",
@@ -15212,8 +15448,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15235,9 +15469,6 @@
       "message-repository-onprem_other": "您的实例最多可连接 {{count}} 个存储库。",
       "message-resource_other": "您的账户中的每个存储库最多可拥有 {{count}} 个同步资源。",
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15367,28 +15598,14 @@
       "pure-git-description": "连接到任何 Git 存储库",
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
     },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "数据面板",
-      "dashboards": "数据面板",
-      "datasource": "",
-      "datasources": "",
-      "folder": "文件夹",
-      "folders": "文件夹",
-      "library-panel": "库面板",
-      "library-panels": "库面板",
-      "playlist": "播放列表",
-      "playlists": "播放列表",
-      "repositories": "",
-      "repository": ""
-    },
     "resource-tree": {
       "header-hash": "哈希",
       "header-status": "状态",
       "header-title": "标题",
       "header-type": "类型",
       "missing-folder-metadata": "缺少文件夹元数据文件",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "按路径或标题搜索",
       "source": "来源",
       "status-filter-aria-label": "按状态过滤",
@@ -15944,12 +16161,6 @@
       "width-of-panel": "面板宽度"
     },
     "edit-query-name": "编辑查询名称",
-    "experimental-button": {
-      "aria-label": "实验性功能选项",
-      "back-to-classic": "返回经典编辑器",
-      "give-feedback": "提供反馈",
-      "tooltip": "实验性功能选项"
-    },
     "header": {
       "alert": "警报",
       "enter-stacked-view": "",
@@ -16312,8 +16523,6 @@
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",
-      "type-dashboard": "仪表板",
-      "type-folder": "文件夹",
       "type-header": "类型"
     },
     "search-input": {

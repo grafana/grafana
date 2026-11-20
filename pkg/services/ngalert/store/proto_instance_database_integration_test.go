@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
@@ -133,6 +135,85 @@ func TestIntegration_CompressedAlertRuleStateOperations(t *testing.T) {
 	}
 }
 
+// Under MySQL's default REPEATABLE READ, INSERT ... ON DUPLICATE KEY UPDATE takes a lock on the primary key
+// supremum pseudo-record, so an open upsert of one rule blocked the state write of every other rule.
+func TestIntegration_SaveAlertInstancesForRule_DoesNotBlockOnOtherRulesMySQL(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbMySQL() {
+		t.Skip("lock behaviour is specific to MySQL")
+	}
+
+	ctx := context.Background()
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	rule1 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	rule2 := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+
+	instancesFor := func(ruleUID string) []models.AlertInstance {
+		return []models.AlertInstance{
+			*models.AlertInstanceGen(
+				models.InstanceMuts.WithOrgID(1),
+				models.InstanceMuts.WithRuleUID(ruleUID),
+				models.InstanceMuts.WithLabelsHash("hash"),
+			),
+		}
+	}
+	require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule1.GetKeyWithGroup(), instancesFor(rule1.UID)))
+	require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), instancesFor(rule2.UID)))
+
+	holderHasLock := make(chan struct{})
+	releaseHolder := make(chan struct{})
+	holderDone := make(chan error, 1)
+	go func() {
+		holderDone <- dbstore.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Exec(
+				"INSERT INTO alert_rule_state (org_id, rule_uid, data, updated_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = VALUES(updated_at)",
+				1, rule1.UID, []byte("held"), time.Now(),
+			)
+			close(holderHasLock)
+			<-releaseHolder
+			return err
+		})
+	}()
+	t.Cleanup(func() {
+		select {
+		case <-releaseHolder:
+		default:
+			close(releaseHolder)
+		}
+		<-holderDone
+	})
+	<-holderHasLock
+
+	saveDone := make(chan error, 1)
+	go func() {
+		saveDone <- ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), instancesFor(rule2.UID))
+	}()
+
+	select {
+	case err := <-saveDone:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		require.Fail(t, "saving the state of one rule is blocked by an open write of another rule")
+	}
+
+	// updated_at has second precision, so saves of identical state in the same second change no row.
+	// The test connection string has no clientFoundRows, so they report 0 affected rows.
+	unchanged := instancesFor(rule2.UID)
+	for range 5 {
+		unchangedDone := make(chan error, 1)
+		go func() {
+			unchangedDone <- ng.InstanceStore.SaveAlertInstancesForRule(ctx, rule2.GetKeyWithGroup(), unchanged)
+		}()
+		select {
+		case err := <-unchangedDone:
+			require.NoError(t, err)
+		case <-time.After(10 * time.Second):
+			require.Fail(t, "saving unchanged state is blocked by an open write of another rule")
+		}
+	}
+}
+
 // containsHash is a helper function to check if an instance with
 // a given labels hash exists in the list of alert instances.
 func containsHash(t *testing.T, instances []*models.AlertInstance, hash string) {
@@ -211,4 +292,151 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 	}
 
 	return instances.Instances, nil
+}
+
+func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	recording := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	alerting := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	seriesStore, ok := ng.InstanceStore.(state.RecordingSeriesStore)
+	require.True(t, ok)
+
+	series := []models.RecordingSeries{
+		{TargetDatasourceUID: "ds", Metric: "metric", Labels: map[string]string{"job": "a"}, LastUpdate: time.Unix(1000, 0).UTC()},
+		{TargetDatasourceUID: "ds", Metric: "metric", Labels: map[string]string{"job": "b"}, LastUpdate: time.Unix(1000, 0).UTC()},
+	}
+	instance := func(rule *models.AlertRule, hash string) models.AlertInstance {
+		return *models.AlertInstanceGen(
+			models.InstanceMuts.WithOrgID(rule.OrgID),
+			models.InstanceMuts.WithRuleUID(rule.UID),
+			models.InstanceMuts.WithLabelsHash(hash),
+			models.InstanceMuts.WithState(models.InstanceStateNormal),
+			models.InstanceMuts.WithLabels(models.InstanceLabels{"label": hash}),
+		)
+	}
+	rowCount := func(t *testing.T, rule *models.AlertRule) int64 {
+		t.Helper()
+		var n int64
+		err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.SQL("SELECT COUNT(*) FROM alert_rule_state WHERE org_id = ? AND rule_uid = ?", rule.OrgID, rule.UID).Get(&n)
+			return err
+		})
+		require.NoError(t, err)
+		return n
+	}
+
+	t.Run("saved series are listed and are not alert instances", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: recording.OrgID})
+		require.NoError(t, err)
+		require.Empty(t, instances)
+	})
+
+	t.Run("an empty set can be saved and keeps the row", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), nil))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got[recording.UID])
+		require.EqualValues(t, 1, rowCount(t, recording))
+	})
+
+	t.Run("saving alert instances for one rule keeps the series of another", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+
+		require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, alerting.GetKeyWithGroup(), []models.AlertInstance{instance(alerting, "h1")}))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+	})
+
+	t.Run("a full sync writes a row that has only series", func(t *testing.T) {
+		err := seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h2")},
+			map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): series},
+			0, nil)
+		require.NoError(t, err)
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("a plain full sync replaces a malformed blob", func(t *testing.T) {
+		err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.Exec("UPDATE alert_rule_state SET data = ? WHERE rule_uid = ?", []byte("not snappy"), alerting.UID)
+			return err
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, ng.InstanceStore.FullSync(ctx, []models.AlertInstance{instance(alerting, "h8")}, 0, nil))
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("deleting the series keeps the alert instances of the row", func(t *testing.T) {
+		mixed := alerting.GetKeyWithGroup()
+		require.NoError(t, seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h4")},
+			map[models.AlertRuleKey][]models.RecordingSeries{alerting.GetKey(): series},
+			0, nil))
+
+		require.NoError(t, seriesStore.DeleteRecordingSeriesForRule(ctx, mixed))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, alerting.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got)
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("a full sync with only empty series sets leaves the table alone", func(t *testing.T) {
+		require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, alerting.GetKeyWithGroup(), []models.AlertInstance{instance(alerting, "h5")}))
+
+		err := seriesStore.FullSyncWithSeries(ctx, nil, map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): {}}, 0, nil)
+		require.NoError(t, err)
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("a full sync does not keep the row of an empty set", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), nil))
+		require.EqualValues(t, 1, rowCount(t, recording))
+
+		err := seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h6")},
+			map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): {}},
+			0, nil)
+		require.NoError(t, err)
+
+		require.EqualValues(t, 0, rowCount(t, recording))
+		require.EqualValues(t, 1, rowCount(t, alerting))
+	})
+
+	t.Run("deleting the series of a series-only row removes the row", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+		require.EqualValues(t, 1, rowCount(t, recording))
+
+		require.NoError(t, seriesStore.DeleteRecordingSeriesForRule(ctx, recording.GetKeyWithGroup()))
+		require.EqualValues(t, 0, rowCount(t, recording))
+	})
 }

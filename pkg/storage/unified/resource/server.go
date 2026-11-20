@@ -350,8 +350,7 @@ type ResourceStats struct {
 	Count           int64
 	ResourceVersion int64
 
-	// LastSearchedAt is when a global index was last searched before a restart,
-	// so its idle time carries on. Zero when unknown.
+	// LastSearchedAt carries idle time across restarts. Zero when unknown.
 	LastSearchedAt time.Time
 }
 
@@ -385,7 +384,7 @@ type QueueConfig struct {
 }
 
 type BlobConfig struct {
-	// The CDK configuration URL
+	// Retained to reject configured external storage instead of silently losing access to its blobs.
 	URL string
 
 	// Directly implemented blob support
@@ -721,14 +720,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		return nil, err
 	}
 
-	if b, ok := opts.Backend.(*kvStorageBackend); ok {
-		if external, ok := blobstore.(*cdkBlobSupport); ok {
-			b.blobGCMu.Lock()
-			b.blobGC = NewBlobGarbageCollector(NewCDKBlobGCStore(external.bucket, external.root), b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
-			b.blobGCMu.Unlock()
-		}
-	}
-
 	logger := log.New("resource-server")
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
@@ -799,22 +790,20 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	return s, nil
 }
 
+func ValidateBlobURL(url string) error {
+	if url != "" {
+		return fmt.Errorf("blob_url is no longer supported by unified storage")
+	}
+	return nil
+}
+
 // initializeBlobStorage initializes blob storage from the provided options.
 func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+	if err := ValidateBlobURL(opts.Blob.URL); err != nil {
+		return nil, err
+	}
 	if opts.Blob.Backend != nil {
 		return opts.Blob.Backend, nil
-	}
-
-	if opts.Blob.URL != "" {
-		ctx := context.Background()
-		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-		})
 	}
 
 	// Check if the backend supports blob storage
@@ -1513,7 +1502,19 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(user.GetUID())
+	// An access-policy caller (a service, authenticated from its token) may delete on a user's
+	// behalf; record that user rather than the service. Any other caller cannot choose the
+	// recorded deleter. The in-context service identity is not matched here: the server derives
+	// the caller from the token, whose subject is the service's own access policy.
+	deletedBy := user.GetUID()
+	if req.ActingUserUid != "" {
+		if user.GetIdentityType() == claims.TypeAccessPolicy {
+			deletedBy = req.ActingUserUid
+		} else {
+			s.log.Debug("ignoring acting user on delete from a non-service caller", "caller", user.GetUID())
+		}
+	}
+	obj.SetUpdatedBy(deletedBy)
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 	event.ObjectOld = oldObj

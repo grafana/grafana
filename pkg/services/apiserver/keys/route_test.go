@@ -14,6 +14,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
+const componentPrefix = "#/components/schemas/"
+
 func testRoute(t *testing.T) Route {
 	t.Helper()
 	h := NewHandler(&fakeStore{}, noop.NewTracerProvider().Tracer("test"))

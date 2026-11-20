@@ -4,12 +4,12 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { CommonTableNG } from './CommonTableNG';
 
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 it.each([false, true])('opens inspected JSON strings with new features=%s', async (enabled) => {

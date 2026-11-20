@@ -2,7 +2,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
-import { assertPluginIdFormat } from '../pluginUtils';
+import { assertPluginIdFormat, getApiVersion } from '../pluginUtils';
 
 import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
@@ -10,12 +10,8 @@ import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
 import { defaultSpec } from './types/plugin/types.spec.gen';
 
-function getApiVersion(): string {
-  return 'v0alpha1';
-}
-
-export function getPluginMetasUrl(): string {
-  return `apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`;
+export async function getPluginMetasUrl(): Promise<string> {
+  return `apis/plugins.grafana.app/${await getApiVersion()}/namespaces/${config.namespace}/metas`;
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
@@ -24,7 +20,7 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
     return result;
   }
 
-  const requestUrl = getPluginMetasUrl();
+  const requestUrl = await getPluginMetasUrl();
   const metas = await fetch(requestUrl);
   if (!metas.ok) {
     const error = new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
@@ -47,17 +43,18 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
     return;
   }
 
+  const apiVersion = await getApiVersion();
   const spec = { ...defaultSpec(), id: pluginId, version };
   const metadata = { name: pluginId, namespace: config.namespace };
   const data: Plugin = {
-    apiVersion: `plugins.grafana.app/${getApiVersion()}`,
+    apiVersion: `plugins.grafana.app/${apiVersion}`,
     kind: 'Plugin',
     metadata,
     spec,
     status: {},
   };
 
-  const result = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/plugins`, {
+  const result = await fetch(`apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: { 'content-type': 'application/json' },
@@ -82,7 +79,7 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   }
 
   const result = await fetch(
-    `apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
+    `apis/plugins.grafana.app/${await getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
     {
       method: 'DELETE',
     }

@@ -14,12 +14,10 @@ import {
 import {
   DataHoverClearEvent,
   DataHoverEvent,
-  FALLBACK_COLOR,
   type DataFrame,
   type Field,
   FieldType,
   type GrafanaTheme2,
-  getDisplayProcessor,
   formattedValueToString,
   type TimeRange,
 } from '@grafana/data';
@@ -32,12 +30,7 @@ import {
   type RenderRowProps,
   Row,
 } from '@grafana/react-data-grid';
-import {
-  FieldColorModeId,
-  TableCellDisplayMode,
-  TableCellTooltipPlacement,
-  type TableFooterOptions,
-} from '@grafana/schema';
+import { TableCellDisplayMode, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { type PanelContext } from '../../PanelChrome';
 
@@ -207,38 +200,20 @@ export type FromFieldsFn = (
 ) => FromFieldsResult;
 
 /**
- * Returns a copy of `fields` with the table's cell-type-specific display processors attached — the
- * Pill mappings override and the JSON pretty-printer. These are derived on fresh field objects
- * rather than mutated onto the caller's fields: the column builder used to attach them by mutating
- * the shared field objects mid-render, which leaked into other consumers of the data frame and made
- * any display-dependent measurement order-sensitive (widths could shift once the builder had run,
- * e.g. on sort). Fields that need neither processor are returned by reference, unchanged.
+ * Returns a copy of `fields` with the table's cell-type-specific display processors attached.
+ * These are derived on fresh field objects rather than mutated onto the caller's fields: the column
+ * builder used to attach them by mutating the shared field objects mid-render, which leaked into
+ * other consumers of the data frame and made any display-dependent measurement order-sensitive
+ * (widths could shift once the builder had run, e.g. on sort). Fields that need no processor are
+ * returned by reference, unchanged.
  */
 export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): Field[] {
   return fields.map((field) => {
     const cellType = getCellOptions(field).type;
     let prepared = field;
 
-    // Pill cells with value mappings: use the single fixed-color calculator so mappings win over the
-    // default thresholds mode (a hack), then recompute the display for that adjusted config.
-    if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
-      prepared = {
-        ...field,
-        config: {
-          ...field.config,
-          color: {
-            ...field.config.color,
-            mode: FieldColorModeId.Fixed,
-            fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
-          },
-        },
-      };
-      prepared.display = getDisplayProcessor({ field: prepared, theme });
-    }
-
     // JSONView cells, and `other` fields left on the default cell type, render their value as
-    // pretty-printed JSON. Copy first (if the Pill branch above didn't already) so the original
-    // field object is never mutated.
+    // pretty-printed JSON. Copy first so the original field object is never mutated.
     if (rendersAsJson(field, cellType)) {
       prepared = prepared === field ? { ...field } : prepared;
       prepared.display = displayJsonValue(prepared);
