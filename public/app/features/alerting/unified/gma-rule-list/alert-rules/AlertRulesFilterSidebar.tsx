@@ -89,7 +89,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
       </SidebarSection>
       <Divider spacing={0} />
       <SidebarSection>
-        <FolderFilter folderUids={filter.folders} onChange={(uids) => apply({ folder: uids })} />
+        <FolderFilter folderUids={filter.folderUids} onChange={(uids) => apply({ folderUid: uids })} />
         <DataSourceFilter dataSourceUids={filter.dataSourceUids} onChange={(uids) => apply({ datasource: uids })} />
       </SidebarSection>
       <Divider spacing={0} />
