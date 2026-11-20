@@ -132,3 +132,27 @@ describe('rule search configuration in rules.alerting/v0alpha1', () => {
     expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
   });
 });
+
+describe('global search configuration in search/v0alpha1', () => {
+  if (!('outputFiles' in config)) {
+    throw new Error('expected output files');
+  }
+  const apiConfig = config.outputFiles['../clients/rtkq/search/v0alpha1/endpoints.gen.ts'];
+
+  // The global routes have the same shape as a per-resource search, so the default filter would drop them.
+  it('keeps the global search routes', () => {
+    expect(apiConfig.filterEndpoints).toBeUndefined();
+  });
+
+  it.each([
+    ['/global/search', 'post', true],
+    ['/global/search/hybrid', 'post', true],
+  ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
+    const override = apiConfig.endpointOverrides?.[0];
+    expect(override?.type).toBe('query');
+    if (typeof override?.pattern !== 'function') {
+      throw new Error('expected an endpoint matcher');
+    }
+    expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
+  });
+});
