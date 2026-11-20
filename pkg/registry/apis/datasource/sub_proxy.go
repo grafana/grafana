@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -113,14 +114,17 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
+	entry := pluginproxy.RequestLog{
+		PluginID:      r.builder.pluginJSON.ID,
+		DatasourceUID: name,
+		Namespace:     k8srequest.NamespaceValue(ctx),
+	}
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
-		r.recordRequest(ctx, pluginproxy.RequestLog{
-			PluginID: r.builder.pluginJSON.ID, DatasourceUID: name,
-			Namespace: k8srequest.NamespaceValue(ctx),
-			Status:    http.StatusInternalServerError, Source: string(requestmeta.StatusSourceServer),
-		})
+		entry.Status = http.StatusInternalServerError
+		entry.Source = string(requestmeta.StatusSourceServer)
+		r.recordRequest(ctx, entry)
 		return nil, errors.New("datasource proxy is not configured")
 	}
 
@@ -130,30 +134,27 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		defer m.Record()
 
 		start := time.Now()
-		recorder := newProxyStatusRecorder(w)
-		w = recorder
-		// Errors go through the responder rather than w, so their status is taken from the error.
-		var errStatus int
+		recorder := builder.NewResponseWriterWithStatus(w)
+		result := entry
+		result.Method = req.Method
+		result.Path = proxyPathFromRequest(req, name)
 		defer func() {
-			status := recorder.Status()
-			if errStatus != 0 {
-				status = errStatus
+			if result.Status == 0 {
+				result.Status = recorder.StatusCode()
 			}
-			r.recordRequest(req.Context(), pluginproxy.RequestLog{
-				PluginID:      r.builder.pluginJSON.ID,
-				DatasourceUID: name,
-				Namespace:     k8srequest.NamespaceValue(req.Context()),
-				Method:        req.Method,
-				Path:          proxyPathFromRequest(req, name),
-				Status:        status,
-				Source:        pluginproxy.StatusSource(req.Context(), status),
-				Duration:      time.Since(start),
-			})
+			result.Source = pluginproxy.StatusSource(req.Context(), result.Status)
+			result.Duration = time.Since(start)
+			r.recordRequest(req.Context(), result)
 		}()
 
 		respondError := func(err error) {
 			err = proxyResponseError(req.Context(), err)
-			errStatus = errorStatus(err)
+			// The Kubernetes responder writes to the original response writer.
+			result.Status = http.StatusInternalServerError
+			var s apierrors.APIStatus
+			if errors.As(err, &s) && s.Status().Code != 0 {
+				result.Status = int(s.Status().Code)
+			}
 			responder.Error(err)
 		}
 		if r.builder.cfg.HandlerOrigin != "" {
@@ -215,8 +216,8 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		proxy, err := pluginproxy.NewDataSourceProxy(
 			loader,
 			r.builder.pluginJSON.Routes,
-			pluginproxy.HTTPContext{Req: req, Resp: w},
-			proxyPathFromRequest(req, name),
+			pluginproxy.HTTPContext{Req: req, Resp: recorder},
+			result.Path,
 			deps.ProxyCfg,
 			deps.HTTPClientProvider,
 			deps.OAuthTokenService,
@@ -239,15 +240,6 @@ func (r *subProxyREST) recordRequest(ctx context.Context, entry pluginproxy.Requ
 	if record := r.builder.cfg.RecordProxyRequest; record != nil {
 		record(ctx, entry.PluginID, entry.Status, entry.Source)
 	}
-}
-
-// errorStatus returns the HTTP status the apiserver reports for err.
-func errorStatus(err error) int {
-	var status apierrors.APIStatus
-	if errors.As(err, &status) && status.Status().Code != 0 {
-		return int(status.Status().Code)
-	}
-	return http.StatusInternalServerError
 }
 
 // proxyResponseError reports a request the client abandoned as 499, as the
@@ -323,49 +315,4 @@ var proxyRouteChecks = map[string]proxyRouteCheck{
 	accesscontrol.ActionAlertingInstancesExternalWrite:     {"alertinstances", utils.VerbUpdate},
 	accesscontrol.ActionAlertingNotificationsExternalRead:  {"alertnotifications", utils.VerbGet},
 	accesscontrol.ActionAlertingNotificationsExternalWrite: {"alertnotifications", utils.VerbUpdate},
-}
-
-// proxyStatusRecorder records the final status written to the wrapped ResponseWriter.
-type proxyStatusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-// newProxyStatusRecorder wraps w.
-func newProxyStatusRecorder(w http.ResponseWriter) *proxyStatusRecorder {
-	return &proxyStatusRecorder{ResponseWriter: w}
-}
-
-// Unwrap lets http.ResponseController reach the wrapped writer's Flusher and
-// Hijacker, which the reverse proxy needs for streaming and protocol upgrades.
-func (r *proxyStatusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
-
-func (r *proxyStatusRecorder) WriteHeader(code int) {
-	// Informational responses are not the final status. 101 ends the exchange.
-	if r.status == 0 && (code >= 200 || code == http.StatusSwitchingProtocols) {
-		r.status = code
-	}
-	r.ResponseWriter.WriteHeader(code)
-}
-
-func (r *proxyStatusRecorder) Write(b []byte) (int, error) {
-	if r.status == 0 {
-		r.status = http.StatusOK
-	}
-	return r.ResponseWriter.Write(b)
-}
-
-func (r *proxyStatusRecorder) Flush() {
-	if r.status == 0 {
-		r.status = http.StatusOK
-	}
-	_ = http.NewResponseController(r.ResponseWriter).Flush()
-}
-
-// Status returns the recorded status, or 200 if nothing was written, which is what net/http sends.
-func (r *proxyStatusRecorder) Status() int {
-	if r.status == 0 {
-		return http.StatusOK
-	}
-	return r.status
 }

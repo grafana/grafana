@@ -57,31 +57,17 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		return provider
 	}
 
-	t.Run("a successful request", func(t *testing.T) {
-		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok")) }))
-		defer target.Close()
-
-		calls, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
-		require.Equal(t, http.StatusOK, rec.Code)
-		require.Equal(t, []series{{200, "server"}}, calls)
-	})
-
-	t.Run("a datasource 4xx is not a downstream failure", func(t *testing.T) {
-		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNotFound) }))
-		defer target.Close()
-
-		calls, _, _ := serve(t, providerFor(target.URL), proxyTestContext())
-		require.Equal(t, []series{{404, "server"}}, calls)
-	})
-
-	t.Run("a datasource 5xx is downstream", func(t *testing.T) {
-		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) }))
-		defer target.Close()
-
-		calls, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
-		require.Equal(t, http.StatusInternalServerError, rec.Code, "the response status is not rewritten")
-		require.Equal(t, []series{{500, "downstream"}}, calls)
-	})
+	for _, tc := range []series{{200, "server"}, {404, "server"}, {500, "downstream"}} {
+		t.Run(http.StatusText(tc.status), func(t *testing.T) {
+			target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tc.status)
+			}))
+			t.Cleanup(target.Close)
+			calls, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
+			require.Equal(t, tc.status, rec.Code)
+			require.Equal(t, []series{tc}, calls)
+		})
+	}
 
 	t.Run("outer middleware sees the same downstream 503 as the proxy", func(t *testing.T) {
 		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -138,39 +124,5 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		_, err := r.Connect(proxyTestContext(), "test-ds", nil, &resourceMockResponder{})
 		require.Error(t, err)
 		require.Equal(t, []series{{500, "server"}}, *calls)
-	})
-}
-
-func TestStatusRecorder(t *testing.T) {
-	t.Run("defaults to 200 when nothing is written", func(t *testing.T) {
-		require.Equal(t, http.StatusOK, newProxyStatusRecorder(httptest.NewRecorder()).Status())
-	})
-
-	t.Run("records the first final status", func(t *testing.T) {
-		rec := newProxyStatusRecorder(httptest.NewRecorder())
-		rec.WriteHeader(http.StatusBadGateway)
-		require.Equal(t, http.StatusBadGateway, rec.Status())
-	})
-
-	t.Run("ignores informational statuses", func(t *testing.T) {
-		rec := newProxyStatusRecorder(httptest.NewRecorder())
-		rec.WriteHeader(http.StatusContinue)
-		rec.WriteHeader(http.StatusTeapot)
-		require.Equal(t, http.StatusTeapot, rec.Status())
-	})
-
-	t.Run("a body write implies 200", func(t *testing.T) {
-		rec := newProxyStatusRecorder(httptest.NewRecorder())
-		_, err := rec.Write([]byte("x"))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, rec.Status())
-	})
-
-	t.Run("keeps flushing and unwrapping available to the reverse proxy", func(t *testing.T) {
-		inner := httptest.NewRecorder()
-		rec := newProxyStatusRecorder(inner)
-		require.NoError(t, http.NewResponseController(rec).Flush())
-		require.True(t, inner.Flushed)
-		require.Same(t, inner, rec.Unwrap())
 	})
 }
