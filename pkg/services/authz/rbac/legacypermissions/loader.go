@@ -52,7 +52,7 @@ type Loader struct {
 	features          featuremgmt.FeatureToggles
 	openFeatureClient *openfeature.Client
 	license           licensing.Licensing
-	enforced          bool
+	enforced          bool // Standalone loading always uses SQL-backed permissions without a license service.
 	zanzana           MigratedPermissions
 	scopeResolver     legacyscopes.ScopeResolver
 	flight            singleflight.Group
