@@ -305,7 +305,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -369,7 +370,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegisterer()
@@ -469,7 +469,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -610,7 +610,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -1112,7 +1112,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -1176,7 +1177,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	registerer := metrics.ProvideRegistererForTest()
@@ -1265,7 +1265,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -1414,7 +1414,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	playlistMigrator := playlist.ProvidePlaylistMigrator(legacyDatabaseProvider)
 	shortURLMigrator := migrator3.ProvideShortURLMigrator(legacyDatabaseProvider)
 	snapshotMigrator := migrator4.ProvideSnapshotMigrator(legacyDatabaseProvider, secretsService)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -1920,14 +1920,14 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
 	secretsService, err := manager.ProvideSecretsService(tracingService, secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
@@ -2073,7 +2073,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -2088,7 +2089,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
@@ -2207,7 +2207,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, legacyDatabaseProvider, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
 	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
 	service12 := service4.ProvideService(sqlStore, secretsService)
 	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
@@ -2237,7 +2237,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
-	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	secretsKVStore, err := kvstore2.ProvideService(legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
