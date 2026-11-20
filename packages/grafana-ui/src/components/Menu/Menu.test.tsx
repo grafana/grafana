@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -66,4 +67,24 @@ it('applies compact density to grouped menu items while allowing an item overrid
     padding: '4px 12px',
     minHeight: '32px',
   });
+});
+
+it('keeps replacement items reachable by Tab without stealing focus', async () => {
+  const user = userEvent.setup();
+  const renderMenu = (key: string) => (
+    <>
+      <button>Before menu</button>
+      <Menu autoFocus={false}>
+        <MenuItem key={key} label="Open dashboard" url="#dashboard" onClick={() => {}} />
+      </Menu>
+    </>
+  );
+  const { rerender } = render(renderMenu('initial'));
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'Before menu' })).toHaveFocus();
+
+  rerender(renderMenu('replacement'));
+  expect(screen.getByRole('button', { name: 'Before menu' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toHaveFocus();
 });

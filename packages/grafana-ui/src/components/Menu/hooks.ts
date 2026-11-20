@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
@@ -43,10 +43,15 @@ export const useMenuFocus = ({
     if (autoFocus || localRef.current?.contains(document.activeElement)) {
       menuItems?.[focusedItem]?.focus();
     }
+  }, [localRef, focusedItem, autoFocus]);
+
+  // Reconcile replacement items before paint without moving focus on parent updates.
+  useLayoutEffect(() => {
+    const menuItems = localRef.current?.querySelectorAll<HTMLElement>('[data-role="menuitem"]:not([data-disabled])');
     menuItems?.forEach((menuItem, i) => {
       menuItem.tabIndex = i === focusedItem ? 0 : -1;
     });
-  }, [localRef, focusedItem, autoFocus]);
+  });
 
   useEffectOnce(() => {
     onOpen?.(setFocusedItem);
