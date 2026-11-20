@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -47,28 +46,23 @@ func TestMetrics_RecordMetricsAndLog(t *testing.T) {
 	m.RecordMetricsAndLog(Observation{PluginID: "prometheus", Status: 502, Source: SourceDownstream, Duration: time.Second})
 	m.RecordMetricsAndLog(Observation{Status: 42, Source: "bogus", Duration: time.Millisecond})
 
-	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "200", SourceServer)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "502", SourceDownstream)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("unknown", "0", SourceServer)))
-
 	families, err := reg.Gather()
 	require.NoError(t, err)
-	wantLabels := map[string][]string{
-		"grafana_datasource_proxy_requests_total":           {"variant", "plugin_id", "status_code", "status_source"},
-		"grafana_datasource_proxy_request_duration_seconds": {"variant", "plugin_id", "status_class"},
-	}
-	require.Len(t, families, len(wantLabels))
-	for _, f := range families {
-		require.Len(t, f.GetMetric(), 3, f.GetName())
-		for _, metric := range f.GetMetric() {
-			labels := make([]string, 0, len(metric.GetLabel()))
-			for _, l := range metric.GetLabel() {
-				labels = append(labels, l.GetName())
-				if l.GetName() == "variant" {
-					require.Equal(t, VariantMT, l.GetValue(), f.GetName())
-				}
-			}
-			require.ElementsMatch(t, wantLabels[f.GetName()], labels, f.GetName())
+	require.Len(t, families, 1)
+	family := families[0]
+	require.Equal(t, "grafana_datasource_proxy_request_duration_seconds", family.GetName())
+	require.Len(t, family.GetMetric(), 3)
+	for _, metric := range family.GetMetric() {
+		labels := make(map[string]string, len(metric.GetLabel()))
+		for _, label := range metric.GetLabel() {
+			labels[label.GetName()] = label.GetValue()
+		}
+		require.Len(t, labels, 3)
+		require.Equal(t, VariantMT, labels["variant"])
+		require.NotEmpty(t, labels["status_class"])
+		require.NotEmpty(t, labels["plugin_id"])
+		if labels["status_class"] == "2xx" {
+			require.EqualValues(t, 2, metric.GetHistogram().GetSampleCount())
 		}
 	}
 }

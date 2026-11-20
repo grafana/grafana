@@ -57,6 +57,9 @@ type DataSourceAPIBuilderConfig struct {
 	// HandlerOrigin, when non-empty, is written as the X-Grafana-DS-Apiserver
 	// response header on every subresource request. Set to "remote" when MultiTenancy is enabled.
 	HandlerOrigin string
+
+	// RecordProxyRequest lets the hosting service count completed HTTP proxy requests.
+	RecordProxyRequest func(ctx context.Context, pluginID string, statusCode int, statusSource string)
 }
 
 // DataSourceAPIBuilder is used just so wire has something unique to return

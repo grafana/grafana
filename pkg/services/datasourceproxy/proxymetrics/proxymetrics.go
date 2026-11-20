@@ -50,11 +50,10 @@ const (
 
 // Metrics holds the proxy collectors. The zero value and nil are valid and record nothing.
 //
-// The counter deliberately has no path or per-datasource label: those are
+// The histogram deliberately has no path or per-datasource label: those are
 // unbounded, and a multi-tenant process serves many stacks. That detail goes to
 // the log, which RecordMetricsAndLog writes for failures and a sample of other requests.
 type Metrics struct {
-	requests *prometheus.CounterVec
 	duration *prometheus.HistogramVec
 	log      log.Logger
 	seen     atomic.Uint64
@@ -69,11 +68,6 @@ func New(reg prometheus.Registerer, variant string) *Metrics {
 
 	return &Metrics{
 		log: log.New("datasource.proxy").New("variant", variant),
-		requests: factory.NewCounterVec(prometheus.CounterOpts{
-			Name:        "grafana_datasource_proxy_requests_total",
-			Help:        "Total requests proxied to a datasource, by plugin, status code and status source.",
-			ConstLabels: constLabels,
-		}, []string{"plugin_id", "status_code", "status_source"}),
 		duration: factory.NewHistogramVec(prometheus.HistogramOpts{
 			Name:        "grafana_datasource_proxy_request_duration_seconds",
 			Help:        "Duration of requests proxied to a datasource, by plugin and status class.",
@@ -135,7 +129,6 @@ func (m *Metrics) RecordMetricsAndLog(o Observation) {
 		pluginID = unknownPlugin
 	}
 	source := sourceLabel(o.Source)
-	m.requests.WithLabelValues(pluginID, statusCodeLabel(o.Status), source).Inc()
 	m.duration.WithLabelValues(pluginID, statusClass(o.Status)).Observe(o.Duration.Seconds())
 
 	failed := o.Status >= 500 || source != SourceServer
@@ -171,13 +164,6 @@ func loggedPath(path string) string {
 		path = path[:maxLoggedPath]
 	}
 	return path
-}
-
-func statusCodeLabel(status int) string {
-	if status < 100 || status > 599 {
-		return "0"
-	}
-	return strconv.Itoa(status)
 }
 
 func statusClass(status int) string {
