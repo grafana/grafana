@@ -85,7 +85,6 @@ declare module "@openfeature/core" {
     | "alertingPrometheusRulesPrimary"
     | "rolePickerDrawer"
     | "enableExtensionsAdminPage"
-    | "crashDetection"
     | "azureMonitorEnableUserAuth"
     | "alertingEnrichmentPerRule"
     | "alertingEnrichmentAssistantInvestigations"

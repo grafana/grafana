@@ -606,11 +606,6 @@ export interface FeatureToggles {
   */
   enableSCIM?: boolean;
   /**
-  * Enables browser crash detection reporting to Faro.
-  * @default false
-  */
-  crashDetection?: boolean;
-  /**
   * Enables user auth for Azure Monitor datasource only
   * @default true
   */

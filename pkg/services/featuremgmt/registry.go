@@ -1397,14 +1397,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "crashDetection",
-			Description: "Enables browser crash detection reporting to Faro.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "azureMonitorEnableUserAuth",
 			Description: "Enables user auth for Azure Monitor datasource only",
 			Stage:       FeatureStageGeneralAvailability,
