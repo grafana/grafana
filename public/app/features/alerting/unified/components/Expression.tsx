@@ -2,11 +2,14 @@ import { css, cx } from '@emotion/css';
 import Prism, { type Grammar, type Token, type TokenStream } from 'prismjs';
 import { type FC, Fragment, type ReactNode, useMemo } from 'react';
 
+import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { lokiGrammar } from '@grafana/lezer-logql';
 import { promqlGrammar } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui';
 import { type RulesSource } from 'app/types/unified-alerting';
+
+type Language = 'promql' | 'logql';
 
 import { DataSourceType } from '../utils/datasource';
 import { isCloudRulesSource } from '../utils/rulesSource';
@@ -18,7 +21,7 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-const GRAMMARS: Record<'promql' | 'logql', Grammar> = {
+const GRAMMARS: Record<Language, Grammar> = {
   promql: promqlGrammar,
   logql: lokiGrammar,
 };
@@ -53,7 +56,7 @@ function renderTokenStream(stream: TokenStream): ReactNode {
   });
 }
 
-const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
+const HighlightedQuery: FC<{ language: Language; expr: string }> = ({ language, expr }) => {
   const styles = useStyles2(getStyles);
   const tokens = useMemo<Array<string | Token>>(() => Prism.tokenize(expr, GRAMMARS[language]), [expr, language]);
 
@@ -64,17 +67,26 @@ const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ 
   );
 };
 
+// Sources with another query language (e.g. VictoriaLogs' LogsQL) have no grammar here and render as plain text.
+function getLanguage(rulesSource: RulesSource): Language | undefined {
+  if (!isCloudRulesSource(rulesSource)) {
+    return undefined;
+  }
+  if (rulesSource.type === DataSourceType.Loki) {
+    return 'logql';
+  }
+  if (isSupportedExternalPrometheusFlavoredRulesSourceType(rulesSource.type)) {
+    return 'promql';
+  }
+  return undefined;
+}
+
 export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   const styles = useStyles2(getStyles);
+  const language = getLanguage(rulesSource);
 
   return (
-    <Well className={styles.well}>
-      {isCloudRulesSource(rulesSource) ? (
-        <HighlightedQuery expr={query} language={rulesSource.type === DataSourceType.Loki ? 'logql' : 'promql'} />
-      ) : (
-        query
-      )}
-    </Well>
+    <Well className={styles.well}>{language ? <HighlightedQuery expr={query} language={language} /> : query}</Well>
   );
 };
 

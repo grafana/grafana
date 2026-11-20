@@ -153,7 +153,14 @@ describe('useRulesSourceDataSources', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(hookMock).toHaveBeenCalledWith({
-      type: ['loki', 'prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'],
+      type: [
+        'loki',
+        'victoriametrics-logs-datasource',
+        'prometheus',
+        'grafana-amazonprometheus-datasource',
+        'grafana-azureprometheus-datasource',
+        'victoriametrics-metrics-datasource',
+      ],
       all: true,
     });
   });

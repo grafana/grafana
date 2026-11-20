@@ -5,6 +5,7 @@ import {
   type SupportedExternalRulesSourceType,
   isAlertManagerWithConfigAPI,
   isDataSourceManagingAlerts,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
   isSupportedExternalRulesSourceType,
 } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
@@ -340,6 +341,13 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
     name: ruleIdentifier.ruleSourceName,
     ruleSourceType: 'datasource',
   };
+}
+
+/**
+ * Returns true for data source types whose query model follows Prometheus/Loki conventions (e.g. the `instant` flag).
+ */
+export function hasPromOrLokiQueryModel(type: string): boolean {
+  return type === 'loki' || isSupportedExternalPrometheusFlavoredRulesSourceType(type);
 }
 
 /**
