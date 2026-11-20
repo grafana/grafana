@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -336,6 +338,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
 	}
 
+	var routerConfigProvider apiserver.RestConfigProvider
 	for group, url := range apiServerURLs {
 		// Build audiences: always include the group, and add provisioning.GROUP only if different
 		audiences := []string{group}
@@ -363,6 +366,15 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
 		configProviders[group] = NewDirectConfigProvider(config)
+		if group == resources.AnyGroup {
+			routerConfig := rest.CopyConfig(config)
+			routerConfig.WrapTransport = clientauth.NewTokenExchangeTransportWrapper(
+				tokenExchangeClient,
+				clientauth.NewStaticAudienceProvider(provisioning.GROUP, resources.DashboardResource.Group, resources.FolderResource.Group),
+				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
+			)
+			routerConfigProvider = NewDirectConfigProvider(routerConfig)
+		}
 	}
 
 	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
@@ -377,6 +389,12 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
+	if routerConfigProvider != nil {
+		clients = &routerClientFactory{
+			router:    resources.NewClientFactory(routerConfigProvider, supportedResourceProvider),
+			dedicated: clients,
+		}
+	}
 	c.clients = clients
 	return clients, nil
 }
@@ -914,6 +932,18 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
+}
+
+type routerClientFactory struct {
+	router    resources.ClientFactory
+	dedicated resources.ClientFactory
+}
+
+func (f *routerClientFactory) Clients(ctx context.Context, namespace string) (resources.ResourceClients, error) {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningRouterClient, false, openfeature.TransactionContext(ctx)) {
+		return f.router.Clients(ctx, namespace)
+	}
+	return f.dedicated.Clients(ctx, namespace)
 }
 
 func defaultConnectionTypes(extras []connection.Extra) []string {
