@@ -30,6 +30,8 @@ jest.mock('@grafana/runtime', () => ({
     })),
   },
   reportInteraction: jest.fn(),
+  // The landing asks whether the Assistant plugin offers its prompt.
+  usePluginComponent: jest.fn(() => ({ component: () => null, isLoading: false })),
   getDataSourceSrv: jest.fn(() => ({
     getInstanceSettings: jest.fn((uid: string) => ({
       uid,
