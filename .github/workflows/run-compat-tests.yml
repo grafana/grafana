@@ -166,7 +166,7 @@ jobs:
           cache-build: ${{ inputs.edition == 'enterprise' && 'true' || 'false' }}
 
       - name: Test the compatibility phase runner
-        run: bash .github/actions/run-compat-phase/test.sh
+        run: go test -count=1 ./.github/actions/run-compat-phase
 
       - name: Summarize the tested versions
         env:
