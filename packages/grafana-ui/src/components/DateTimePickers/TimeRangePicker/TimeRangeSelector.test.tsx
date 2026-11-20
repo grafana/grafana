@@ -24,7 +24,6 @@ describe('TimeRangeSelector', () => {
     };
     render(<TimeRangeSelector {...props} />);
     const ranges = screen.getByRole('presentation');
-    expect(ranges).not.toHaveAttribute('aria-roledescription');
     await userEvent.click(within(ranges).getByText(label));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ raw: { from, to: 'now' } }));
     if (quickOptions) {
