@@ -13,6 +13,7 @@ import {
   type FrameNotification,
   type RenderCommand,
   type MermaidCommand,
+  type StylesCommand,
 } from './sandboxProtocol';
 
 const bootstrap = document.currentScript;
@@ -38,13 +39,20 @@ const scriptPolicy = window.trustedTypes?.createPolicy('grafana-text-panel-runti
 
 let disposed = false;
 let verified = policy === undefined;
-let started = false;
+let revision = -1;
+let styleRevision = -1;
+let style: HTMLStyleElement | undefined;
+let globalCss: string | undefined;
+let diagramWork: Promise<void> = Promise.resolve();
 let violationTimer = 0;
 let verificationTimer = 0;
 let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
-let receiveMermaid: ((source: string) => void) | undefined;
+let lastDimensions: { height: number; contentHeight: number } | undefined;
+let receiveMermaid: ((source?: string) => void) | undefined;
+// Reused documents keep the evaluated bundle; re-sending and re-evaluating it per update costs megabytes.
+let mermaidRenderer: RenderDiagrams | undefined;
 const resources: Array<{
   directive: string;
   origin?: string;
@@ -56,7 +64,10 @@ const check = document.createElement('img');
 
 function send(message: FrameNotification) {
   if (!disposed) {
-    window.parent.postMessage({ ...message, protocol: TEXT_FRAME_PROTOCOL, channel }, parentOrigin);
+    window.parent.postMessage(
+      { ...message, protocol: TEXT_FRAME_PROTOCOL, channel, ...(message.type !== 'ready' && { revision }) },
+      parentOrigin
+    );
   }
 }
 
@@ -163,40 +174,77 @@ function measure() {
     first instanceof HTMLElement && last instanceof HTMLElement
       ? last.offsetTop + last.offsetHeight - first.offsetTop
       : 0;
-  send({ type: 'resize', height: Math.max(1, Math.ceil(content.getBoundingClientRect().height)), contentHeight });
+  const height = Math.max(1, Math.ceil(content.getBoundingClientRect().height));
+  // Width-only observations need no parent message unless wrapping changes a reported height.
+  if (lastDimensions?.height === height && lastDimensions.contentHeight === contentHeight) {
+    return;
+  }
+  lastDimensions = { height, contentHeight };
+  send({ type: 'resize', height, contentHeight });
 }
 
 async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
-  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || disposed) {
+  const isCancelled = () => disposed || revision !== command.revision;
+  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || isCancelled()) {
     return;
   }
-  const source = await new Promise<string>((resolve) => {
+  mermaidRenderer ??= await loadMermaid();
+  if (!mermaidRenderer || isCancelled()) {
+    return;
+  }
+  await mermaidRenderer(command, container, isCancelled);
+}
+
+/** Resolves undefined when a newer render cancels the request. */
+async function loadMermaid(): Promise<RenderDiagrams | undefined> {
+  const source = await new Promise<string | undefined>((resolve) => {
     receiveMermaid = resolve;
     send({ type: 'mermaid-needed' });
   });
-  if (disposed) {
-    return;
+  if (source === undefined || disposed) {
+    return undefined;
   }
-  let render: RenderDiagrams | undefined;
+  let renderer: RenderDiagrams | undefined;
   const script = Object.assign(document.createElement('script'), {
     nonce,
     textContent: scriptPolicy?.createScript(source) ?? source,
-    registerMermaid: (renderer: RenderDiagrams) => {
-      render = renderer;
+    registerMermaid: (registered: RenderDiagrams) => {
+      renderer = registered;
     },
   });
   document.head.append(script);
   script.remove();
-  if (!render) {
+  if (!renderer) {
     throw new Error('Text diagram runtime did not initialize');
   }
-  await render(command, container, () => disposed);
+  return renderer;
+}
+
+function applyStyles(css: string) {
+  if (!style) {
+    style = document.createElement('style');
+    document.head.append(style);
+  }
+  if (globalCss !== css) {
+    style.textContent = `${css}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
+    globalCss = css;
+  }
+}
+
+async function updateStyles(command: StylesCommand) {
+  applyStyles(command.globalCss);
+  await document.fonts.ready;
+  if (!disposed && revision === command.revision && styleRevision === command.styleRevision) {
+    measure();
+  }
 }
 
 async function render(command: RenderCommand) {
-  const style = document.createElement('style');
-  style.textContent = `${command.globalCss}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
-  document.head.append(style);
+  const isCancelled = () => disposed || revision !== command.revision;
+  if (command.globalCss !== undefined) {
+    applyStyles(command.globalCss);
+  }
+  content?.remove();
   content = document.createElement('div');
   content.className = 'markdown-html';
   content.setAttribute('data-text-blocks', '');
@@ -209,23 +257,32 @@ async function render(command: RenderCommand) {
   } else {
     content.innerHTML = command.html;
   }
+  const container = content;
   observer = new ResizeObserver(measure);
   observer.observe(content);
   await document.fonts.ready;
-  await renderDiagrams(command, content);
-  if (disposed) {
+  if (isCancelled()) {
+    return;
+  }
+  if (command.mermaid && container.querySelector('code.language-mermaid, pre.mermaid')) {
+    // Mermaid uses document-global state and ids, so let cancelled work finish before starting another diagram.
+    const work = diagramWork.then(() => renderDiagrams(command, container));
+    diagramWork = work.catch(() => {});
+    await work;
+  }
+  if (isCancelled()) {
     return;
   }
   measure();
   // Hidden/offscreen cross-origin frames can suspend animation frames. Yield a task for queued CSP reports instead.
   readyTimer = window.setTimeout(() => {
-    if (!disposed) {
+    if (!isCancelled()) {
       send({ type: 'rendered' });
     }
   }, 0);
 }
 
-function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
+function onMessage(event: MessageEvent<RenderCommand | MermaidCommand | StylesCommand>) {
   const command = event.data;
   if (
     event.source !== window.parent ||
@@ -238,26 +295,58 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
   ) {
     return;
   }
-  if (command.type === 'mermaid-source' && typeof command.source === 'string') {
+  if (command.type === 'styles') {
+    if (
+      !content ||
+      command.revision !== revision ||
+      !Number.isSafeInteger(command.styleRevision) ||
+      command.styleRevision <= styleRevision ||
+      typeof command.globalCss !== 'string'
+    ) {
+      return;
+    }
+    // Style changes must not cancel diagrams, replay scripts, or discard reports for unchanged content.
+    styleRevision = command.styleRevision;
+    void updateStyles(command).catch(() => {
+      if (!disposed && revision === command.revision && styleRevision === command.styleRevision) {
+        send({ type: 'error' });
+      }
+    });
+    return;
+  }
+  if (command.type === 'mermaid-source' && command.revision === revision && typeof command.source === 'string') {
     receiveMermaid?.(command.source);
     receiveMermaid = undefined;
     return;
   }
   if (
     command.type !== 'render' ||
-    started ||
+    !Number.isSafeInteger(command.revision) ||
+    command.revision <= revision ||
+    (policy === undefined && revision >= 0) ||
     typeof command.html !== 'string' ||
-    typeof command.globalCss !== 'string'
+    (command.globalCss === undefined ? globalCss === undefined : typeof command.globalCss !== 'string')
   ) {
     return;
   }
-  started = true;
-  void render(command).catch(() => send({ type: 'error' }));
+  revision = command.revision;
+  receiveMermaid?.();
+  receiveMermaid = undefined;
+  observer?.disconnect();
+  clearTimeout(violationTimer);
+  clearTimeout(readyTimer);
+  resources.length = 0;
+  lastDimensions = undefined;
+  void render(command).catch(() => {
+    if (revision === command.revision) {
+      send({ type: 'error' });
+    }
+  });
 }
 
 function dispose() {
   disposed = true;
-  receiveMermaid?.('');
+  receiveMermaid?.();
   receiveMermaid = undefined;
   observer?.disconnect();
   clearTimeout(violationTimer);

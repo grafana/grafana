@@ -203,6 +203,8 @@ export interface NotebookCreatedProperties extends EventProperty, Partial<AddedP
   target?: NotebookAddTarget;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. Left off with `target`. */
   lockTimeRange?: boolean;
+  /** Whether the person typed text in the add-panel modal, added as a text block above the panel. Left off with `target`. */
+  hasText?: boolean;
 }
 
 /**
@@ -367,6 +369,11 @@ export interface NotebookCellAddedFromAddToNotebookProperties extends EventPrope
   target: NotebookAddTarget;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
   lockTimeRange: boolean;
+  /**
+   * Whether the person typed text in the add-panel modal. That text is not reported as a cell of its own
+   * (it is added as a text block above the panel), so this is how its use is counted.
+   */
+  hasText: boolean;
 }
 
 export interface NotebookAutosaveFailedProperties extends EventProperty {
@@ -434,6 +441,8 @@ export interface NotebookAddFailedProperties extends EventProperty {
   reason: NotebookAddFailedReason;
   /** Whether the add-panel modal pinned the panel to the time range it was sent with. */
   lockTimeRange: boolean;
+  /** Whether the person had typed text in the add-panel modal. */
+  hasText: boolean;
 }
 
 export const NOTEBOOK_INCIDENT_ACTION = {
