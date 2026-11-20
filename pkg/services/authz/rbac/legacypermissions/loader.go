@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const cacheTTL = ac.PermissionCacheTTL
@@ -62,7 +63,7 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
 	return &Loader{
-		store:             permissionStore{sql},
+		store:             permissionStore{database: legacysql.NewDatabaseProvider(sql)},
 		catalog:           catalog,
 		actions:           actionResolver,
 		cache:             cache,

@@ -1,6 +1,7 @@
 package api
 
 import (
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
@@ -15,4 +16,5 @@ type RuleStore interface {
 	rulestore.RuleAdminWriter
 	rulestore.RuleVersionReader
 	rulestore.StatusWriter
+	ngrulesvc.DeltaCalculator
 }
