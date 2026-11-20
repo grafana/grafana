@@ -1,11 +1,14 @@
-import { type AlertRule, useCreateAlertRuleMutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { isFetchError } from '@grafana/runtime';
+import {
+  type AlertRule,
+  type ObjectMeta,
+  useCreateAlertRuleMutation,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-import { type DeletedRule, type RestoreResult } from './types';
+import { type DeletedRule, type RestoreResult, toRestoreResult } from './deletedRulesPage';
 
 const GROUP_LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
 
-export function sanitizeForRestore(rule: DeletedRule): DeletedRule {
+export function sanitizeForRestore(rule: DeletedRule) {
   const { resourceVersion, deletionTimestamp, managedFields, finalizers, generation, ...cleanMeta } =
     rule.metadata ?? {};
 
@@ -13,10 +16,14 @@ export function sanitizeForRestore(rule: DeletedRule): DeletedRule {
     Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !GROUP_LABELS_TO_REMOVE.has(key))
   );
 
+  // Explicitly typed so callers can access ObjectMeta fields (e.g. in tests) even though
+  // the destructured fields above are removed at runtime.
+  const sanitizedMeta: ObjectMeta = { ...cleanMeta, labels: cleanLabels };
+
   return {
     apiVersion: rule.apiVersion,
     kind: rule.kind,
-    metadata: { ...cleanMeta, labels: cleanLabels },
+    metadata: sanitizedMeta,
     spec: rule.spec,
   };
 }
@@ -27,13 +34,7 @@ export function useRestoreAlertRule() {
   const restore = async (rule: DeletedRule): Promise<RestoreResult> => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const payload = sanitizeForRestore(rule) as AlertRule;
-    const result = await createAlertRule({ alertRule: payload });
-
-    if ('error' in result) {
-      const isConflict = isFetchError(result.error) && result.error.status === 409;
-      return { success: false, isConflict, error: result.error };
-    }
-    return { success: true, isConflict: false };
+    return toRestoreResult(await createAlertRule({ alertRule: payload }));
   };
 
   return { restore, isRestoring: isLoading };

@@ -1,19 +1,26 @@
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 import { makeDeletedRule } from '../mocks/handlers';
 
 import { RestoreModal } from './RestoreModal';
 
-const mockNavigate = jest.fn();
+function makeRestorer(overrides?: Partial<{ restore: jest.Mock; isRestoring: boolean }>) {
+  return { restore: jest.fn(), isRestoring: false, ...overrides };
+}
 
 describe('RestoreModal', () => {
   it('shows the rule title in the confirmation', () => {
     render(
       <RestoreModal
+        kind="alert"
         rule={makeDeletedRule()}
-        restore={jest.fn()}
-        isRestoring={false}
-        navigateAfterRestore={mockNavigate}
+        restorer={makeRestorer()}
+        title="Restore alert rule"
         onDismiss={jest.fn()}
       />
     );
@@ -24,10 +31,10 @@ describe('RestoreModal', () => {
     const onDismiss = jest.fn();
     render(
       <RestoreModal
+        kind="alert"
         rule={makeDeletedRule()}
-        restore={jest.fn()}
-        isRestoring={false}
-        navigateAfterRestore={mockNavigate}
+        restorer={makeRestorer()}
+        title="Restore alert rule"
         onDismiss={onDismiss}
       />
     );
@@ -35,38 +42,37 @@ describe('RestoreModal', () => {
     expect(onDismiss).toHaveBeenCalled();
   });
 
-  it('calls navigateAfterRestore and onSuccess after a successful restore', async () => {
-    const navigate = jest.fn();
-    const onSuccess = jest.fn();
+  it('calls restore with the rule on confirm', async () => {
+    const restore = jest.fn().mockResolvedValue({ success: true, isConflict: false });
     const rule = makeDeletedRule();
     rule.metadata.name = 'my-rule-uid';
 
     render(
       <RestoreModal
+        kind="alert"
         rule={rule}
-        restore={jest.fn().mockResolvedValue({ success: true, isConflict: false })}
-        isRestoring={false}
-        navigateAfterRestore={navigate}
+        restorer={makeRestorer({ restore })}
+        title="Restore alert rule"
         onDismiss={jest.fn()}
-        onSuccess={onSuccess}
       />
     );
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('my-rule-uid'));
-    expect(onSuccess).toHaveBeenCalled();
+    await waitFor(() => expect(restore).toHaveBeenCalledWith(rule));
   });
 
   it('shows the API error message inline on failure', async () => {
     render(
       <RestoreModal
+        kind="alert"
         rule={makeDeletedRule()}
-        restore={jest.fn().mockResolvedValue({
-          success: false,
-          isConflict: false,
-          error: { status: 403, data: { message: 'folder not found or not writable' } },
+        restorer={makeRestorer({
+          restore: jest.fn().mockResolvedValue({
+            success: false,
+            isConflict: false,
+            error: { status: 403, data: { message: 'folder not found or not writable' } },
+          }),
         })}
-        isRestoring={false}
-        navigateAfterRestore={mockNavigate}
+        title="Restore alert rule"
         onDismiss={jest.fn()}
       />
     );
@@ -77,10 +83,10 @@ describe('RestoreModal', () => {
   it('shows conflict message on conflict result', async () => {
     render(
       <RestoreModal
+        kind="alert"
         rule={makeDeletedRule()}
-        restore={jest.fn().mockResolvedValue({ success: false, isConflict: true })}
-        isRestoring={false}
-        navigateAfterRestore={mockNavigate}
+        restorer={makeRestorer({ restore: jest.fn().mockResolvedValue({ success: false, isConflict: true }) })}
+        title="Restore alert rule"
         onDismiss={jest.fn()}
       />
     );
@@ -88,15 +94,14 @@ describe('RestoreModal', () => {
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
   });
 
-  it('uses a custom title when provided', () => {
+  it('shows a custom title', () => {
     render(
       <RestoreModal
+        kind="recording"
         rule={makeDeletedRule()}
-        restore={jest.fn()}
-        isRestoring={false}
-        navigateAfterRestore={mockNavigate}
-        onDismiss={jest.fn()}
+        restorer={makeRestorer()}
         title="Restore recording rule"
+        onDismiss={jest.fn()}
       />
     );
     expect(screen.getByText('Restore recording rule')).toBeInTheDocument();

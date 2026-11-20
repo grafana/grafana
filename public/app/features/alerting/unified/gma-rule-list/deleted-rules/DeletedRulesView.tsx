@@ -1,31 +1,21 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 
-import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 
-import { grafanaRulesNav } from '../../utils/navigation';
-import { DeletedRulesTable } from '../deleted-rules/DeletedRulesTable';
-import { RestoreModal } from '../deleted-rules/RestoreModal';
-import { ReviewDrawer } from '../deleted-rules/ReviewDrawer';
-import {
-  trackRecordingRuleJsonOpened,
-  trackRecordingRuleRestoreAttempt,
-  trackRecordingRuleRestoreFailure,
-  trackRecordingRuleRestoreSuccess,
-  trackRecordingRuleReviewOpened,
-  useTrackDeletedRecordingRulesPageView,
-} from '../deleted-rules/analytics';
-import { type DeletedRule } from '../deleted-rules/types';
-import { useRestoreRecordingRule } from '../deleted-rules/useRestoreRecordingRule';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
+import { type RuleKind } from '../shared/ruleKind';
 
-import { useDeletedRecordingRules } from './useDeletedRecordingRules';
+import { DeletedRulesTable } from './DeletedRulesTable';
+import { RestoreModal } from './RestoreModal';
+import { ReviewDrawer } from './ReviewDrawer';
+import { trackJsonOpened, trackReviewOpened, useTrackDeletedRulesPageView } from './analytics';
+import { type DeletedRule, type RuleRestorer, type UseDeletedRulesResult } from './deletedRulesPage';
 
-function useDeletedByNames(rules: RecordingRule[]): Record<string, string> {
+/** Batch-resolves user UIDs to display names via IAM getDisplayMapping. */
+function useDeletedByNames(rules: DeletedRule[]): Record<string, string> {
   const userUids = useMemo(() => {
     const uids = new Set<string>();
     for (const rule of rules) {
@@ -37,6 +27,8 @@ function useDeletedByNames(rules: RecordingRule[]): Record<string, string> {
     return Array.from(uids);
   }, [rules]);
 
+  // The annotation may already be an identity ref ("user:<uid>") or a raw UID.
+  // Normalise to "user:<uid>" for the IAM key without double-prefixing.
   const iamKeys = userUids.map((uid) => (uid.includes(':') ? uid : `user:${uid}`));
   const { data } = useGetDisplayMappingQuery(iamKeys.length > 0 ? { key: iamKeys } : skipToken);
 
@@ -44,6 +36,8 @@ function useDeletedByNames(rules: RecordingRule[]): Record<string, string> {
     const map: Record<string, string> = {};
     for (const entry of data?.display ?? []) {
       if (entry.identity.type && entry.identity.name) {
+        // Store under both "user:<name>" and raw "<name>" to handle annotations
+        // that may carry either an identity ref or a plain UID.
         map[`${entry.identity.type}:${entry.identity.name}`] = entry.displayName;
         map[entry.identity.name] = entry.displayName;
       }
@@ -52,15 +46,20 @@ function useDeletedByNames(rules: RecordingRule[]): Record<string, string> {
   }, [data]);
 }
 
-export function RecordingRulesDeletedView() {
-  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } =
-    useDeletedRecordingRules();
+interface DeletedRulesViewProps {
+  kind: RuleKind;
+  list: UseDeletedRulesResult<DeletedRule>;
+  restorer: RuleRestorer;
+  restoreTitle: string;
+}
+
+export function DeletedRulesView({ kind, list, restorer, restoreTitle }: DeletedRulesViewProps) {
+  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = list;
   const [reviewing, setReviewing] = useState<DeletedRule | null>(null);
   const [restoring, setRestoring] = useState<DeletedRule | null>(null);
   const userNames = useDeletedByNames(items);
-  const { restore, isRestoring } = useRestoreRecordingRule();
 
-  useTrackDeletedRecordingRulesPageView(totalFromApi);
+  useTrackDeletedRulesPageView(kind, totalFromApi);
 
   if (isLoading) {
     return <RuleListSkeleton />;
@@ -83,7 +82,7 @@ export function RecordingRulesDeletedView() {
         folderPaths={{}}
         userNames={userNames}
         onReview={(rule) => {
-          trackRecordingRuleReviewOpened();
+          trackReviewOpened(kind);
           setReviewing(rule);
         }}
         onRestore={setRestoring}
@@ -96,19 +95,15 @@ export function RecordingRulesDeletedView() {
           rule={reviewing}
           deletedByName={userNames[reviewing.metadata?.annotations?.['grafana.app/updatedBy'] ?? '']}
           onClose={() => setReviewing(null)}
-          onJsonOpen={trackRecordingRuleJsonOpened}
+          onJsonOpen={() => trackJsonOpened(kind)}
         />
       )}
       {restoring && (
         <RestoreModal
+          kind={kind}
           rule={restoring}
-          restore={restore}
-          isRestoring={isRestoring}
-          navigateAfterRestore={(uid) => locationService.push(grafanaRulesNav.editLink(uid))}
-          title={t('alerting.recently-deleted.restore.recording-title', 'Restore recording rule')}
-          onAttempt={trackRecordingRuleRestoreAttempt}
-          onSuccess={trackRecordingRuleRestoreSuccess}
-          onFailure={trackRecordingRuleRestoreFailure}
+          restorer={restorer}
+          title={restoreTitle}
           onDismiss={() => setRestoring(null)}
           onRefetch={refetch}
         />

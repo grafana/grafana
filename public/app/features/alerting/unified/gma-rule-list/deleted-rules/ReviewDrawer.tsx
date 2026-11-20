@@ -7,7 +7,7 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
 
-import { type DeletedRule } from './types';
+import { type DeletedRule } from './deletedRulesPage';
 
 interface ReviewDrawerProps {
   rule: DeletedRule;

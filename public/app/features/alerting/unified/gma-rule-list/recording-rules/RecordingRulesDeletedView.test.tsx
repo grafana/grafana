@@ -16,11 +16,11 @@ import {
   mockTrashRecordingRules,
 } from '../mocks/handlers';
 
-import { RecordingRulesDeletedView } from './RecordingRulesDeletedView';
+import RecordingRulesDeletedPage from './RecordingRulesDeletedPage';
 
 setupMswServer();
 
-describe('RecordingRulesDeletedView', () => {
+describe('RecordingRulesDeletedPage (deleted view)', () => {
   beforeEach(() => {
     server.use(
       http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [] })),
@@ -44,7 +44,7 @@ describe('RecordingRulesDeletedView', () => {
         return HttpResponse.json({ kind: 'RecordingRuleList', metadata: {}, items: [] });
       })
     );
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     expect(screen.getByRole('list', { name: /Loading rules/i })).toBeInTheDocument();
     releasePage();
     expect(await screen.findByText(/No recently deleted/i)).toBeInTheDocument();
@@ -52,19 +52,19 @@ describe('RecordingRulesDeletedView', () => {
 
   it('shows deleted rules after load', async () => {
     mockTrashRecordingRules([makeDeletedRecordingRule()]);
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     expect(await screen.findByText('Deleted recording rule')).toBeInTheDocument();
   });
 
   it('shows empty state when no deleted rules', async () => {
     mockTrashRecordingRules([]);
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     expect(await screen.findByText(/No recently deleted/i)).toBeInTheDocument();
   });
 
   it('opens Review drawer when Review is clicked', async () => {
     mockTrashRecordingRules([makeDeletedRecordingRule()]);
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     await screen.findByText('Test Admin');
     await userEvent.click(screen.getByRole('button', { name: /Review/i }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('RecordingRulesDeletedView', () => {
 
   it('opens Restore modal when Restore is clicked', async () => {
     mockTrashRecordingRules([makeDeletedRecordingRule()]);
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     await screen.findByText('Test Admin');
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
     expect(await screen.findByText(/Restore "Deleted recording rule"/i)).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('RecordingRulesDeletedView', () => {
 
   it('shows error state with retry on fetch failure', async () => {
     server.use(http.get(TRASH_RECORDING_RULES_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-    render(<RecordingRulesDeletedView />);
+    render(<RecordingRulesDeletedPage />);
     expect(await screen.findByRole('button', { name: /Retry/i })).toBeInTheDocument();
   });
 });

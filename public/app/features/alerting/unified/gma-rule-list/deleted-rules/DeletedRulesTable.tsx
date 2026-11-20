@@ -4,7 +4,7 @@ import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } fro
 
 import { FolderByUid } from '../folder-browsing/FolderByUid';
 
-import { type DeletedRule } from './types';
+import { type DeletedRule } from './deletedRulesPage';
 
 interface DeletedRulesTableProps {
   rules: DeletedRule[];

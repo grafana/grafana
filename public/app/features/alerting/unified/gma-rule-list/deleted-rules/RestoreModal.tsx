@@ -1,55 +1,43 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import { Alert, ConfirmModal } from '@grafana/ui';
 
-import { type DeletedRule, type RestoreResult } from './types';
+import { grafanaRulesNav } from '../../utils/navigation';
+import { type RuleKind } from '../shared/ruleKind';
+
+import { trackRestoreAttempt, trackRestoreFailure, trackRestoreSuccess } from './analytics';
+import { type DeletedRule, type RuleRestorer } from './deletedRulesPage';
 
 interface RestoreModalProps {
+  kind: RuleKind;
   rule: DeletedRule;
-  restore: (rule: DeletedRule) => Promise<RestoreResult>;
-  isRestoring: boolean;
-  navigateAfterRestore: (uid: string) => void;
-  /** Modal title. Defaults to 'Restore alert rule'. */
-  title?: string;
-  onAttempt?: () => void;
-  onSuccess?: () => void;
-  onFailure?: (reason: 'conflict' | 'error') => void;
+  restorer: RuleRestorer;
+  title: string;
   onDismiss: () => void;
   onRefetch?: () => void;
 }
 
-export function RestoreModal({
-  rule,
-  restore,
-  isRestoring,
-  navigateAfterRestore,
-  title,
-  onAttempt,
-  onSuccess,
-  onFailure,
-  onDismiss,
-  onRefetch,
-}: RestoreModalProps) {
+export function RestoreModal({ kind, rule, restorer, title, onDismiss, onRefetch }: RestoreModalProps) {
   const [error, setError] = useState<string | null>(null);
   const ruleTitle = rule.spec?.title ?? '';
   const uid = rule.metadata?.name ?? '';
 
   const handleConfirm = async () => {
     setError(null);
-    onAttempt?.();
+    trackRestoreAttempt(kind);
     try {
-      const result = await restore(rule);
+      const result = await restorer.restore(rule);
       if (result.success) {
-        onSuccess?.();
-        navigateAfterRestore(uid);
+        trackRestoreSuccess(kind);
+        locationService.push(grafanaRulesNav.viewLink(uid, { includeReturnTo: true }));
       } else if (result.isConflict) {
-        onFailure?.('conflict');
+        trackRestoreFailure(kind, 'conflict');
         onRefetch?.();
         setError(t('alerting.recently-deleted.restore.conflict', 'A rule with this name already exists.'));
       } else {
-        onFailure?.('error');
+        trackRestoreFailure(kind, 'error');
         const errorData = isFetchError(result.error) ? result.error.data : null;
         const apiMessage =
           errorData !== null &&
@@ -63,7 +51,7 @@ export function RestoreModal({
         );
       }
     } catch (err) {
-      onFailure?.('error');
+      trackRestoreFailure(kind, 'error');
       setError(t('alerting.recently-deleted.restore.error', 'Failed to restore rule. Please try again.'));
     }
   };
@@ -71,7 +59,7 @@ export function RestoreModal({
   return (
     <ConfirmModal
       isOpen
-      title={title ?? t('alerting.recently-deleted.restore.title', 'Restore alert rule')}
+      title={title}
       body={
         <>
           {t('alerting.recently-deleted.restore.body', 'Restore "{{title}}"?', {
@@ -82,13 +70,13 @@ export function RestoreModal({
         </>
       }
       confirmText={
-        isRestoring
+        restorer.isRestoring
           ? t('alerting.recently-deleted.restore.restoring', 'Restoring…')
           : t('alerting.recently-deleted.restore.confirm', 'Restore')
       }
       onConfirm={handleConfirm}
       onDismiss={onDismiss}
-      disabled={isRestoring}
+      disabled={restorer.isRestoring}
     />
   );
 }
