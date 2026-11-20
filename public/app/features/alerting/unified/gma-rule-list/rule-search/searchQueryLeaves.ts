@@ -123,6 +123,13 @@ export function buildHealthLeaves(
   return [{ key: 'health', leaf: { filter: { field: 'health', operator: 'In', values: [value] } } }];
 }
 
+export function buildPausedLeaves(filter: SharedRuleFilter): Array<SourcedLeaf<SharedFilterKey>> {
+  // NotIn is only accepted on labels, state and health, so "not paused" is paused=false.
+  return filter.paused
+    ? [{ key: 'paused', leaf: { filter: { field: 'paused', operator: 'In', values: [filter.paused] } } }]
+    : [];
+}
+
 /** One leaf as itself and several as one flat `and`, so a rejection's `where.and[i]` counts in `leaves` order. */
 export function toWhere(leaves: SourcedLeaf[]): SearchQueryNode | undefined {
   if (leaves.length === 0) {

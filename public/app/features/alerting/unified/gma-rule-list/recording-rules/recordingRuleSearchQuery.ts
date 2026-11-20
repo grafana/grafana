@@ -1,7 +1,13 @@
 import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import {
+  type SourcedLeaf,
+  buildHealthLeaves,
+  buildPausedLeaves,
+  buildSharedLeaves,
+  toWhere,
+} from '../rule-search/searchQueryLeaves';
 import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type RecordingFilterKey, type RecordingRuleFilter } from './recordingRuleFilters';
@@ -26,6 +32,7 @@ export function buildRecordingRuleLeaves(
     ...buildSharedLeaves(apiArgs),
     ...buildRecordingLeaves(apiArgs.filter),
     ...buildHealthLeaves(apiArgs.filter, 'Recording'),
+    ...buildPausedLeaves(apiArgs.filter),
   ];
 }
 

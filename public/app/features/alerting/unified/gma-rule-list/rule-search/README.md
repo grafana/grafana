@@ -95,7 +95,7 @@ Filters the old list doesn't have:
 
 | Token                           | Page      | Search field          |
 | ------------------------------- | --------- | --------------------- |
-| `paused:true` \| `paused:false` | Alert     | `paused`              |
+| `paused:true` \| `paused:false` | Both      | `paused`              |
 | `panelId:<id>`                  | Alert     | `panelID`             |
 | `metric:<name>`                 | Recording | `metric`              |
 | `targetDatasource:<uid>`        | Recording | `targetDatasourceUID` |
