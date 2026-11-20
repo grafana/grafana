@@ -173,7 +173,7 @@ const (
 	// internalChanSize is the buffer for internal subscribe/unsubscribe coordination channels.
 	internalChanSize = 100
 
-	// defaultCacheSize is the ring buffer size for replaying recent events to new subscribers.
+	// defaultCacheSize limits the replay history retained per collection.
 	defaultCacheSize = 500
 
 	// defaultCacheMaxBytes bounds retained event memory independently of event count.
@@ -184,8 +184,7 @@ const (
 	defaultCacheMaxEvents = 10 * defaultCacheSize
 
 	// watchChanSize is the per-subscriber event delivery channel buffer.
-	// Must be larger than defaultCacheSize so that readInto never fills the
-	// channel completely, leaving headroom for new events.
+	// Must be larger than defaultCacheSize so replay leaves room for live events.
 	watchChanSize = 1000
 
 	// defaultOverflowCap is the maximum number of items in a subscriber's overflow
