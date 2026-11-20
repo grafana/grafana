@@ -1315,13 +1315,13 @@ describe('dry-run wiring (wizard-level)', () => {
   });
 
   it('disables the step 1 inputs while the click-time check runs, then re-enables them on failure', async () => {
-    let previewDone = false;
     // Keep every pending request, not just the last one, so none is left hanging with the inputs disabled.
     const pendingChecks: Array<() => void> = [];
     server.use(
-      http.post(CONVERT_URL, async () => {
-        if (!previewDone) {
-          previewDone = true;
+      http.post(CONVERT_URL, async ({ request }) => {
+        // Only the check for the edited name fails. Matching on it, instead of on request order, keeps the
+        // initial preview (which Next could otherwise reuse while it is in flight) from satisfying the click.
+        if (request.headers.get('X-Grafana-Alerting-Config-Identifier') !== 'prometheus-prod-edited') {
           return HttpResponse.json(convertResponse());
         }
         await new Promise<void>((resolve) => {
@@ -1333,9 +1333,9 @@ describe('dry-run wiring (wizard-level)', () => {
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification configuration/i });
-    await waitFor(() => expect(previewDone).toBe(true));
 
     const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.type(input, '-edited');
     await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
 
     await waitFor(() => expect(input).toBeDisabled());
