@@ -9,6 +9,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -261,4 +262,22 @@ func TestRosterGetAndWatch(t *testing.T) {
 	require.Equal(t, watch.Error, (<-w.ResultChan()).Type)
 	_, open := <-w.ResultChan()
 	require.False(t, open)
+}
+
+func TestRosterUpdateRejectsDirectoryScopedPolicy(t *testing.T) {
+	ctx := identity.WithRequester(request.WithNamespace(t.Context(), "stacks-1"), &identity.StaticRequester{Type: authlib.TypeAccessPolicy, Namespace: "stacks-1"})
+	item := iam.Team{ObjectMeta: metav1.ObjectMeta{Name: "oncall", Namespace: "stacks-1"}, Spec: iam.TeamSpec{
+		Members: []iam.TeamTeamMember{{Kind: "User", Name: "sam"}, {Kind: "User", Name: "hidden"}}, ExternalGroups: []string{"synced"},
+	}}
+	inner := &teamReadFixture{teams: &iam.TeamList{Items: []iam.Team{item}}}
+	store := NewRosterStore(inner, &rosterAccess{}, &rosterDirectory{}, hiddenLogins)
+	obj, err := store.Get(ctx, item.Name, nil)
+	require.NoError(t, err)
+	projected := obj.(*iam.Team)
+	require.Equal(t, item.Spec.Members[:1], projected.Spec.Members)
+	require.Empty(t, projected.Spec.ExternalGroups)
+	projected.Spec.Title = "Renamed"
+	_, _, err = store.Update(ctx, item.Name, rest.DefaultUpdatedObjectInfo(projected), nil, nil, false, &metav1.UpdateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "%v", err)
+	require.Equal(t, item, inner.teams.Items[0])
 }

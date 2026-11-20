@@ -85,6 +85,31 @@ func (s *rosterStore) Get(ctx context.Context, name string, opts *metav1.GetOpti
 	return s.projectTeam(ctx, obj)
 }
 
+// PUT and PATCH both use Update. A filtered Team cannot safely replace the stored roster.
+func (s *rosterStore) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, opts *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	ident, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	namespace := request.NamespaceValue(ctx)
+	forbidden := apierrors.NewForbidden(iam.TeamResourceInfo.GroupResource(), name, fmt.Errorf("updating a Team requires full roster visibility"))
+	if s.access == nil || namespace == "" || namespace == "*" || !authlib.NamespaceMatches(ident.GetNamespace(), namespace) || usesDirectoryRoster(ident) {
+		return nil, false, forbidden
+	}
+	canReadRoster, err := s.checker(ctx, ident, namespace, "teams", utils.VerbGetPermissions)
+	if err != nil {
+		return nil, false, err
+	}
+	if !canReadRoster(name, "") {
+		return nil, false, forbidden
+	}
+	return s.Storage.Update(ctx, name, info, createValidation, updateValidation, forceAllowCreate, opts)
+}
+
+func usesDirectoryRoster(ident identity.Requester) bool {
+	return ident.IsIdentityType(authlib.TypeAccessPolicy) && !identity.IsServiceIdentityAuth(ident)
+}
+
 func (s *rosterStore) projectTeam(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	t, ok := obj.(*iam.Team)
 	if !ok {
@@ -158,7 +183,7 @@ func (s *rosterStore) filterMembers(ctx context.Context, ident identity.Requeste
 	if err != nil {
 		return err
 	}
-	directoryScoped := ident.IsIdentityType(authlib.TypeAccessPolicy) && !identity.IsServiceIdentityAuth(ident)
+	directoryScoped := usesDirectoryRoster(ident)
 	var canReadUser authlib.ItemChecker
 	if directoryScoped {
 		canReadUser, err = s.checker(ctx, ident, namespace, "users", utils.VerbList)
