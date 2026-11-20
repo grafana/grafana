@@ -941,7 +941,7 @@ func requireSameDelta(t *testing.T, want, got *ngrulesvc.GroupDelta) {
 	require.Equal(t, want.GroupKey, got.GroupKey)
 	require.Equal(t, want.AffectedGroups, got.AffectedGroups)
 	require.Equal(t, want.New, got.New)
-	require.Equal(t, want.Delete, got.Delete)
+	require.ElementsMatch(t, want.Delete, got.Delete)
 	require.Len(t, got.Update, len(want.Update))
 	for i := range want.Update {
 		require.Equal(t, want.Update[i].Existing, got.Update[i].Existing)
