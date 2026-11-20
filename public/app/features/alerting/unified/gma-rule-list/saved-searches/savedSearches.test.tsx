@@ -59,6 +59,10 @@ describe('GMA rule list saved searches', () => {
     setupBackend();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('applies the default saved search when the page opens without a search parameter', async () => {
     await saveCollection('alert', [{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
 
@@ -67,6 +71,16 @@ describe('GMA rule list saved searches', () => {
     expect(await ui.searchInput.find()).toHaveValue('cpu');
     expect(searchParam()).toBe('cpu');
     expect(screen.getByText('Busy CPUs (default)')).toBeInTheDocument();
+  });
+
+  it('lists the rules unfiltered when the saved searches cannot be loaded', async () => {
+    jest.spyOn(UserStorage.prototype, 'getItem').mockRejectedValue(new Error('storage unavailable'));
+
+    renderAlertRules('/?view=list');
+
+    expect(await screen.findByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Disk full' })).toBeInTheDocument();
+    expect(ui.searchInput.get()).toHaveValue('');
   });
 
   it('keeps an empty search parameter unfiltered instead of applying the default', async () => {
