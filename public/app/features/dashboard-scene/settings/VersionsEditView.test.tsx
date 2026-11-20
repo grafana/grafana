@@ -14,6 +14,10 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { VersionsEditView } from './VersionsEditView';
 import * as DashboardTemplateExtensionModule from './enterprise-components/DashboardTemplateExtension';
 
+jest.mock('./enterprise-components/DashboardTemplateExtension', () =>
+  makeSpyable('./enterprise-components/DashboardTemplateExtension')
+);
+
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
 }
