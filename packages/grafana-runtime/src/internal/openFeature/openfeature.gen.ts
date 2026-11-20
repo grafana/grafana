@@ -198,6 +198,8 @@ export const FlagKeys = {
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
+  /** Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
+  GrafanaDashboardQuestions: "grafana.dashboardQuestions",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
@@ -1437,6 +1439,17 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardQuestions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardQuestions", false, options).value;
+};
+
+/**
  * Redesigns dashboard settings page into Advanced Settings in a modal window
  *
  * **Details:**
@@ -1947,10 +1960,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", true, options).value;
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -2255,10 +2268,10 @@ export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `queryEditorNext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNext", false, options).value;
+  return useFlag("queryEditorNext", true, options).value;
 };
 
 /**

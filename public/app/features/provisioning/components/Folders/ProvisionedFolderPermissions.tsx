@@ -1,35 +1,23 @@
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl/Permissions';
+import { PermissionsLoading } from 'app/core/components/AccessControl/PermissionsLoading';
 
 import { useFolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
 import { MissingFolderMetadataBanner } from './MissingFolderMetadataBanner';
 
-interface FolderPermissionsProps {
+interface ProvisionedFolderPermissionsProps {
   folderUID: string;
   canSetPermissions: boolean;
-  isProvisionedFolder: boolean;
 }
 
-export function FolderPermissions({ folderUID, canSetPermissions, isProvisionedFolder }: FolderPermissionsProps) {
-  if (!isProvisionedFolder || !config.provisioningEnabled) {
-    return <Permissions resource="folders" resourceId={folderUID} canSetPermissions={canSetPermissions} />;
-  }
-
-  return <FolderPermissionsWithMetadataCheck folderUID={folderUID} canSetPermissions={canSetPermissions} />;
-}
-
-function FolderPermissionsWithMetadataCheck({
-  folderUID,
-  canSetPermissions,
-}: Omit<FolderPermissionsProps, 'isProvisionedFolder'>) {
+export function ProvisionedFolderPermissions({ folderUID, canSetPermissions }: ProvisionedFolderPermissionsProps) {
   const { status: metadataStatus, repositoryName } = useFolderMetadataStatus(folderUID);
 
   switch (metadataStatus) {
     case 'loading':
-      return <LoadingPlaceholder text={t('provisioning.folder-permissions.loading', 'Loading...')} />;
+      return <PermissionsLoading />;
     case 'missing':
       return (
         <>

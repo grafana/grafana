@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -1015,7 +1016,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
 					assert.Len(t, change.New, 1)
@@ -1061,7 +1062,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
 					assert.Contains(t, change.AffectedGroups, change.GroupKey)
@@ -1108,7 +1109,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return expectedErr
 			}
 
@@ -1289,7 +1290,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -1320,7 +1321,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return expectedErr
 			}
 
@@ -1553,7 +1554,7 @@ func TestDeleteAlertRule(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -1581,7 +1582,7 @@ func TestDeleteAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return expectedErr
 			}
 
@@ -1651,7 +1652,7 @@ func TestDeleteAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r, orgID, models.ProvenanceNone))
 
-		ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+		ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 			// expect single delete and affected group contains exactly the rule
 			require.Len(t, change.Delete, 1)
 			require.Contains(t, change.AffectedGroups, change.GroupKey)
@@ -2128,7 +2129,7 @@ func TestReplaceGroup(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return expectedErr
 			}
 
@@ -2151,7 +2152,7 @@ func TestReplaceGroup(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return nil
 			}
 
@@ -2306,7 +2307,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				return expectedErr
 			}
 
@@ -2326,7 +2327,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -2443,7 +2444,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 					return false, nil
 				}
 				expectedErr := errors.New("test error")
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 					return expectedErr
 				}
 
@@ -2463,7 +2464,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *ngrulesvc.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, groupKey1, change.GroupKey)
 					assert.ElementsMatch(t, rules1, change.AffectedGroups[groupKey1])
@@ -2665,7 +2666,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	}
 
 	return AlertRuleService{
-		ruleStore:              store,
+		ruleStore:              ngrulesvc.NewService(&store),
 		provenanceStore:        provenanceStore,
 		quotas:                 &quotas,
 		xact:                   sqlStore,

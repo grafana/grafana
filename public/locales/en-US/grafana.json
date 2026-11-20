@@ -1629,6 +1629,7 @@
         "dashboard": "Dashboard",
         "datasource": "Query data source",
         "datasource-placeholder": "Select data sources",
+        "filters": "Filters",
         "folder": "Folder",
         "folder-description": "Rules directly in this folder",
         "folder-help": "Folder filter help",
@@ -1648,6 +1649,8 @@
         "label-value-placeholder": "value",
         "label-value-unset": "none",
         "labels": "Labels",
+        "metric": "Recorded metric",
+        "metric-placeholder": "Exact metric name",
         "operator-absent": "absent",
         "operator-absent-description": "Lacks this label",
         "operator-equal": "Equals",
@@ -1672,7 +1675,9 @@
         "state-firing": "Firing",
         "state-normal": "Normal",
         "state-pending": "Pending",
-        "state-recovering": "Recovering"
+        "state-recovering": "Recovering",
+        "target-datasource": "Target data source",
+        "target-datasource-placeholder": "Select data source"
       },
       "status": {
         "error": "Failed to evaluate rule",
@@ -4910,9 +4915,10 @@
     "folder-owners": {
       "owned-by": "Owned by:"
     },
+    "folder-permissions": {
+      "no-access": "You do not have permission to view the permissions of this folder."
+    },
     "folder-permissions-exposed": {
-      "loading": "Loading...",
-      "no-access": "You do not have permission to view the permissions of this folder.",
       "not-found": "Unable to load this folder."
     },
     "folder-picker": {
@@ -5712,6 +5718,36 @@
         "version": "Version"
       },
       "view-json-diff": "View JSON diff to see all changes"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "connection",
+      "label-plural": "connections"
+    },
+    "dashboard": {
+      "label": "dashboard",
+      "label-plural": "dashboards"
+    },
+    "datasource": {
+      "label": "data source",
+      "label-plural": "data sources"
+    },
+    "folder": {
+      "label": "folder",
+      "label-plural": "folders"
+    },
+    "librarypanel": {
+      "label": "library panel",
+      "label-plural": "library panels"
+    },
+    "playlist": {
+      "label": "playlist",
+      "label-plural": "playlists"
+    },
+    "repository": {
+      "label": "repository",
+      "label-plural": "repositories"
     }
   },
   "correlations": {
@@ -8034,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Query"
-    },
-    "query-editor-banner": {
-      "description-classic": "Try the improved query editing experience.",
-      "description-new": "Welcome to the improved query editing experience.",
-      "dismiss": "Dismiss",
-      "downgrade-title": "New query editor",
-      "give-feedback": "Give feedback",
-      "go-back": "Back to classic",
-      "try-it": "Try it out",
-      "upgrade-title": "New editor available"
     },
     "query-variable-editor": {
       "modal": {
@@ -11471,6 +11497,9 @@
       },
       "wrapping-disabled-warning": "Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content."
     },
+    "tag": {
+      "remove": "Remove tag: {{name}}"
+    },
     "tags": {
       "list-label": "Tags"
     },
@@ -13624,7 +13653,8 @@
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       },
-      "floating-resize": "Resize sidebar width"
+      "floating-resize": "Resize sidebar width",
+      "floating-resize-height": "Resize sidebar height"
     },
     "help": {
       "aria-label": "Help",
@@ -13888,6 +13918,8 @@
       "cancel": "Cancel",
       "card-author": "By {{author}}",
       "card-updated": "Updated {{when}}",
+      "convert-to-absolute": "Convert to an absolute time range",
+      "convert-to-absolute-description": "Lock to the exact times the relative range covers now.",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
@@ -13906,6 +13938,8 @@
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
       "lock-time-ranges": "Lock panels to the time ranges they showed",
       "lock-time-ranges-description": "Keep each visualization on the window it was captured in. Unlocked, they follow the notebook time range.",
+      "note-description": "Added to the notebook as a text block before the panel.",
+      "note-label": "Text above the panel (optional)",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -15191,9 +15225,6 @@
       "success-title": "Folder metadata fixed successfully",
       "title": "Fix folder metadata"
     },
-    "folder-permissions": {
-      "loading": "Loading..."
-    },
     "folder-repository-list": {
       "all-resources-managed_one": "All {{count}} resources are managed",
       "all-resources-managed_other": "All {{count}} resources are managed",
@@ -15348,13 +15379,16 @@
       "path-required": "Repository path is required"
     },
     "managed-badge": {
+      "actions": "Managed resource actions",
       "classic-file-provisioning": "Managed by: File provisioning",
       "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
+      "read-only": "Read only, {{managedBy}}",
       "terraform": "Managed by: Terraform",
+      "view-source": "View source",
       "view-source-file": "View source file"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
@@ -15537,8 +15571,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "Grafana only reads from this directory and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
-    "pull-only-remote-tooltip": "Grafana only reads from this repository and never writes to it. Add a workflow in the repository settings to allow saving changes back.",
     "pull-request-options": {
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
@@ -15568,9 +15600,6 @@
       "to-increase-limits": "To add more {{type}},",
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
-    },
-    "read-only-badge": {
-      "pull-only": "Pull only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -15699,22 +15728,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
-    },
-    "resource-kind": {
-      "connection": "connection",
-      "connections": "Connections",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboards",
-      "datasource": "data source",
-      "datasources": "Data sources",
-      "folder": "folder",
-      "folders": "Folders",
-      "library-panel": "library panel",
-      "library-panels": "Library panels",
-      "playlist": "playlist",
-      "playlists": "Playlists",
-      "repositories": "Repositories",
-      "repository": "repository"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16282,12 +16295,6 @@
       "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
-    "experimental-button": {
-      "aria-label": "Experimental feature options",
-      "back-to-classic": "Go back to classic editor",
-      "give-feedback": "Give feedback",
-      "tooltip": "Experimental feature options"
-    },
     "header": {
       "alert": "Alert",
       "enter-stacked-view": "Enter stacked view",
@@ -16657,8 +16664,6 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Folder",
       "type-header": "Type"
     },
     "search-input": {
