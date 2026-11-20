@@ -78,6 +78,15 @@ describe('RealDrilldownPage', () => {
     expect(screen.getByRole('button', { name: 'Data sources' })).toBeInTheDocument();
   });
 
+  it('puts the signals to start from above the services, as in the design', () => {
+    renderPage();
+
+    const signals = screen.getByRole('heading', { name: 'Start from a signal' });
+    const services = screen.getByRole('heading', { name: 'Your services' });
+
+    expect(signals.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('writes a picked service to the URL and loads its scope', async () => {
     const { user } = renderPage();
 

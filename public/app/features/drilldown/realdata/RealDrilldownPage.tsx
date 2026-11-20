@@ -213,8 +213,8 @@ export function RealDrilldownPage() {
             {/* Extra space below the input separates asking from browsing. */}
             <Box paddingTop={2}>
               <Stack direction="column" gap={4}>
-                <DrilldownServices onPick={onPickScope} appUrls={appUrls} />
                 <DrilldownSignals appUrls={appUrls} />
+                <DrilldownServices onPick={onPickScope} appUrls={appUrls} />
               </Stack>
             </Box>
           </>

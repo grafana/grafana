@@ -9141,13 +9141,23 @@
       "view-traces": "View traces"
     },
     "signals": {
-      "connect": "Connect a data source",
-      "coverage-databases": "{{covered}} of {{total}} databases",
-      "coverage-services": "{{covered}} of {{total}} services",
-      "no-source": "No data source connected",
-      "not-measured": "Not measured",
-      "setup": "Set up for {{services}}",
-      "title": "Explore by signal"
+      "logs-configure": "Configure logs",
+      "logs-description": "See log volume and patterns for each service.",
+      "logs-view": "View all logs",
+      "metrics-configure": "Configure metrics",
+      "metrics-description": "Browse every metric by label, no PromQL needed.",
+      "metrics-view": "View all metrics",
+      "not-set-up": "Not set up yet.",
+      "profiles-configure": "Configure profiles",
+      "profiles-description": "See which function burns the CPU or memory.",
+      "profiles-view": "View all profiles",
+      "sql-configure": "Configure SQL",
+      "sql-description": "See slow queries in your Postgres and MySQL databases.",
+      "sql-view": "View all SQL",
+      "title": "Start from a signal",
+      "traces-configure": "Configure traces",
+      "traces-description": "Find slow and failing requests across services.",
+      "traces-view": "View all traces"
     },
     "subtitle": "Drill down into your data using Grafana's powerful queryless apps",
     "time-controls": {

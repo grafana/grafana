@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Link, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
+import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type AppKey, SIGNALS, type SignalCoverage } from '../liveScenario';
 
@@ -13,8 +12,15 @@ interface Props {
   appUrls: Partial<Record<AppKey, string>>;
 }
 
-// Straight into a signal, without a scope. Each signal is part of one experience, and a signal
-// that doesn't cover all of your services promotes its own setup.
+const ICONS: Record<AppKey, IconName> = {
+  metrics: 'chart-line',
+  logs: 'gf-logs',
+  traces: 'gf-traces',
+  profiles: 'fire',
+  sql: 'database',
+};
+
+// Straight into a signal, without a scope. A signal with no data source says so and offers to set it up.
 export function DrilldownSignals({ appUrls }: Props) {
   const styles = useStyles2(getStyles);
   const appNames = getAppNames();
@@ -22,7 +28,7 @@ export function DrilldownSignals({ appUrls }: Props) {
   return (
     <section className={styles.section} aria-labelledby="drilldown-signals-title">
       <Text element="h2" variant="h3" id="drilldown-signals-title">
-        {t('drilldown-real.signals.title', 'Explore by signal')}
+        {t('drilldown-real.signals.title', 'Start from a signal')}
       </Text>
       <div className={styles.grid}>
         {SIGNALS.map((signal) => (
@@ -35,52 +41,62 @@ export function DrilldownSignals({ appUrls }: Props) {
 
 function SignalTile({ signal, name, url }: { signal: SignalCoverage; name: string; url?: string }) {
   const styles = useStyles2(getStyles);
-  const complete = signal.missing.length === 0 && !signal.noSource && !signal.notMeasured;
-  const counts = { covered: signal.covered, total: signal.total };
-  const coverage = signal.noSource
-    ? t('drilldown-real.signals.no-source', 'No data source connected')
-    : signal.notMeasured
-      ? t('drilldown-real.signals.not-measured', 'Not measured')
-      : signal.unit === 'databases'
-        ? t('drilldown-real.signals.coverage-databases', '{{covered}} of {{total}} databases', counts)
-        : t('drilldown-real.signals.coverage-services', '{{covered}} of {{total}} services', counts);
+  const texts = getTexts()[signal.app];
+  const notSetUp = Boolean(signal.noSource);
 
   return (
     <div className={styles.tile}>
-      {url ? (
-        // Stretched over the whole tile, so the tile is the click target.
-        <Link href={url} className={styles.stretched}>
-          <Text weight="medium">{name}</Text>
-        </Link>
-      ) : (
+      <Stack gap={1} alignItems="center">
+        <Icon name={ICONS[signal.app]} />
         <Text weight="medium">{name}</Text>
-      )}
-      <Text variant="bodySmall" color="secondary">
-        {signal.question}
-      </Text>
-      <Stack gap={0.5} alignItems="center">
-        <Icon name={complete ? 'check-circle' : 'exclamation-circle'} className={complete ? styles.ok : styles.gap} />
-        <Text variant="bodySmall" color={complete ? 'secondary' : 'warning'}>
-          {coverage}
-        </Text>
       </Stack>
-      {!complete && !signal.notMeasured && url && (
-        <LinkButton
-          href={url}
-          size="sm"
-          variant="primary"
-          fill="outline"
-          icon="plus"
-          className={styles.setup}
-          title={signal.noSource ? undefined : signal.missing.join(', ')}
-        >
-          {signal.noSource
-            ? t('drilldown-real.signals.connect', 'Connect a data source')
-            : t('drilldown-real.signals.setup', 'Set up for {{services}}', { services: signal.missing.join(', ') })}
-        </LinkButton>
+      <Text variant="bodySmall" color="secondary">
+        {notSetUp
+          ? `${t('drilldown-real.signals.not-set-up', 'Not set up yet.')} ${texts.description}`
+          : texts.description}
+      </Text>
+      {url && (
+        <div className={styles.action}>
+          <LinkButton href={url} size="sm" variant={notSetUp ? 'primary' : 'secondary'}>
+            {notSetUp ? texts.configure : texts.view}
+          </LinkButton>
+        </div>
       )}
     </div>
   );
+}
+
+function getTexts(): Record<AppKey, { description: string; view: string; configure: string }> {
+  return {
+    metrics: {
+      description: t('drilldown-real.signals.metrics-description', 'Browse every metric by label, no PromQL needed.'),
+      view: t('drilldown-real.signals.metrics-view', 'View all metrics'),
+      configure: t('drilldown-real.signals.metrics-configure', 'Configure metrics'),
+    },
+    logs: {
+      description: t('drilldown-real.signals.logs-description', 'See log volume and patterns for each service.'),
+      view: t('drilldown-real.signals.logs-view', 'View all logs'),
+      configure: t('drilldown-real.signals.logs-configure', 'Configure logs'),
+    },
+    traces: {
+      description: t('drilldown-real.signals.traces-description', 'Find slow and failing requests across services.'),
+      view: t('drilldown-real.signals.traces-view', 'View all traces'),
+      configure: t('drilldown-real.signals.traces-configure', 'Configure traces'),
+    },
+    profiles: {
+      description: t('drilldown-real.signals.profiles-description', 'See which function burns the CPU or memory.'),
+      view: t('drilldown-real.signals.profiles-view', 'View all profiles'),
+      configure: t('drilldown-real.signals.profiles-configure', 'Configure profiles'),
+    },
+    sql: {
+      description: t(
+        'drilldown-real.signals.sql-description',
+        'See slow queries in your Postgres and MySQL databases.'
+      ),
+      view: t('drilldown-real.signals.sql-view', 'View all SQL'),
+      configure: t('drilldown-real.signals.sql-configure', 'Configure SQL'),
+    },
+  };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -95,44 +111,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
   }),
   tile: css({
-    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: theme.spacing(0.75),
-    padding: theme.spacing(1.5, 2),
+    gap: theme.spacing(1),
+    padding: theme.spacing(2),
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    '&:hover': {
-      borderColor: theme.colors.border.strong,
-    },
   }),
-  stretched: css({
-    color: 'inherit',
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      borderRadius: theme.shape.radius.default,
-    },
-    '&:focus-visible::after': getFocusStyles(theme),
-  }),
-  setup: css({
-    // Above the stretched link, so it gets its own click.
-    position: 'relative',
-    zIndex: 1,
-    marginTop: theme.spacing(0.5),
-    // The button label never wraps, so a long list of services is cut at the tile edge.
-    maxWidth: '100%',
-    '& > span:last-child': {
-      textOverflow: 'ellipsis',
-    },
-  }),
-  ok: css({
-    color: theme.colors.success.text,
-  }),
-  gap: css({
-    color: theme.colors.warning.text,
+  // Pinned to the bottom, so the buttons of tiles with texts of different lengths sit on one line.
+  action: css({
+    marginTop: 'auto',
+    paddingTop: theme.spacing(1),
   }),
 });
