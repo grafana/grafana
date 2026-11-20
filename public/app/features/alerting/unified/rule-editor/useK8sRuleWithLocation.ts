@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { toRulerNotificationSettings } from '@grafana/alerting/convert';
@@ -37,14 +38,24 @@ export interface EditableRuleState {
   resourceVersion?: string;
 }
 
+export type RuleKind = 'alert' | 'recording';
+
 /**
- * Loads a Grafana-managed rule from the rules API. The UID doesn't say whether it is an alert or a
- * recording rule, so both are requested and the one that exists wins.
+ * Loads a Grafana-managed rule from the rules API. Alert and recording rules have separate endpoints and
+ * the UID doesn't say which one a rule lives in, so without a `kind` the alert rule is tried first and
+ * the recording rule only after a 404.
  */
-export function useK8sRuleWithLocation(uid: string): EditableRuleState {
-  const alertRule = useGetAlertRuleQuery({ name: uid }, { refetchOnMountOrArgChange: true });
-  const recordingRule = useGetRecordingRuleQuery({ name: uid }, { refetchOnMountOrArgChange: true });
+export function useK8sRuleWithLocation(uid: string, kind?: RuleKind): EditableRuleState {
+  const alertRule = useGetAlertRuleQuery(kind === 'recording' ? skipToken : { name: uid }, {
+    refetchOnMountOrArgChange: true,
+  });
+  const tryRecordingRule = kind === 'recording' || (!kind && isNotFoundError(alertRule.error));
+  const recordingRule = useGetRecordingRuleQuery(tryRecordingRule ? { name: uid } : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
   const resource = alertRule.currentData ?? recordingRule.currentData;
+  const alertPending = kind !== 'recording' && (alertRule.isUninitialized || alertRule.isFetching);
+  const recordingPending = tryRecordingRule && (recordingRule.isUninitialized || recordingRule.isFetching);
 
   return useMemo(() => {
     if (resource) {
@@ -54,12 +65,12 @@ export function useK8sRuleWithLocation(uid: string): EditableRuleState {
         resourceVersion: resource.metadata.resourceVersion,
       };
     }
-    if (alertRule.isFetching || recordingRule.isFetching) {
+    if (alertPending || recordingPending) {
       return { loading: true };
     }
     const error = [alertRule.error, recordingRule.error].find((err) => err && !isNotFoundError(err));
     return { loading: false, error };
-  }, [resource, alertRule.isFetching, alertRule.error, recordingRule.isFetching, recordingRule.error]);
+  }, [resource, alertPending, alertRule.error, recordingPending, recordingRule.error]);
 }
 
 /**
