@@ -169,8 +169,9 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    // Pending changes are saved through the plugin that keeps them; a copy of them is a new dashboard.
-    if (!saveAsCopy && savesPendingChanges(dashboard)) {
+    // Pending changes are saved through the plugin that keeps them, unless a repository keeps the
+    // dashboard: they are committed to it then, as any other change is. A copy of them is a new dashboard.
+    if (!saveAsCopy && target !== 'repository' && savesPendingChanges(dashboard)) {
       return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
 

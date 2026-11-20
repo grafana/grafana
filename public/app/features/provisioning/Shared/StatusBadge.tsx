@@ -5,7 +5,7 @@ import { locationService } from '@grafana/runtime';
 import { Badge, type BadgeColor, type IconName } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-import { PROVISIONING_URL } from '../constants';
+import { getRepositoryOverviewUrl } from '../utils/repository';
 
 interface BadgeConfig {
   color: BadgeColor;
@@ -82,7 +82,7 @@ export function StatusBadge({ repo, displayOnly = false }: StatusBadgeProps) {
     if (displayOnly || !repoName) {
       return;
     }
-    locationService.push(`${PROVISIONING_URL}/${repoName}/?tab=overview`);
+    locationService.push(getRepositoryOverviewUrl(repoName));
   }, [repoName, displayOnly]);
 
   if (!repo) {

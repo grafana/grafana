@@ -92,6 +92,12 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		for _, perm := range k8sPermissions {
 			allowedActions = append(allowedActions, perm.Action)
 		}
+		// Plugin app platform actions, such as "assistant.ext.grafana.app/pages:create",
+		// are literally named group/resource:verb and have no mapping to translate.
+		// Keep each restriction as an action name too, so the identity keeps the
+		// ones it holds. It cannot widen access: the map below only keeps actions
+		// the identity already has.
+		allowedActions = append(allowedActions, k8sRestrictions...)
 
 		// Add Grafana actions directly
 		allowedActions = append(allowedActions, grafanaRestrictions...)
