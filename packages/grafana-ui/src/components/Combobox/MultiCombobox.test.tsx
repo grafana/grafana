@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -560,6 +561,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
@@ -596,6 +598,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(10));

@@ -18,7 +18,7 @@ import {
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -29,7 +29,7 @@ import { TablePanel } from './TablePanel';
 import { plugin } from './module';
 
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
   standardEditorsRegistry.setInit(getAllOptionEditors);
   standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
   setPluginImportUtils({
