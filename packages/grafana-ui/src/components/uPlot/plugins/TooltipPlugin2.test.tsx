@@ -221,6 +221,29 @@ describe('TooltipPlugin2', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument());
   });
 
+  it('tabs to the pinned close button before tooltip content', async () => {
+    const user = userEvent.setup();
+    const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+      render: () => <button type="button">Tooltip action</button>,
+    });
+    await act(async () => {
+      initCallback(mockUPlot);
+      setSeriesCallback(mockUPlot, 1);
+      setLegendCallback(mockUPlot);
+      mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+    });
+
+    const close = await screen.findByRole('button', { name: 'Close' });
+    await user.tab();
+    expect(close).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Tooltip action' })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(close).toHaveFocus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument());
+  });
+
   describe('clientZoom', () => {
     it('zooms y-axis without issuing query', async () => {
       const posToVal = identityPosToVal();
