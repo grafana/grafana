@@ -82,7 +82,6 @@ import {
   useReturnToPreviousInternal,
 } from './core/context/GrafanaContext';
 import { createErrorNotification } from './core/copy/appNotification';
-import { initializeCrashDetection } from './core/crash';
 import { NAMESPACES, GRAFANA_NAMESPACE } from './core/internationalization/constants';
 import { loadTranslations } from './core/internationalization/loadTranslations';
 import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
@@ -413,10 +412,6 @@ export class GrafanaApp {
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setMegaMenuOpenHook(useMegaMenuOpenInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
-
-      if (config.featureToggles.crashDetection) {
-        initializeCrashDetection();
-      }
 
       if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardLevelTimeMacros, false)) {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
