@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.2.0 -->
+<!-- version: 2.3.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 

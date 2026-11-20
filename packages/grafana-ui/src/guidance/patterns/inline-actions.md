@@ -1,6 +1,7 @@
 # Inline actions
 
 Use `InlineButton` for actions within text or data, such as opening a details dialog.
+For inline text that navigates to another page, use `TextLink` instead.
 Don't make a `Button` look inline by stripping its padding and border with `className`:
 
 ```tsx
