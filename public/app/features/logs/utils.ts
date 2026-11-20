@@ -190,7 +190,7 @@ export const checkLogsFromTimeMachine = (logRow: LogRowModel): string | undefine
   if (!logRow.labels.__time_machine__) {
     return undefined;
   }
-  return 'This log line was retrieved from Time Machine';
+  return 'This log line was dropped by Adaptive Logs but remains available for a limited time';
 };
 
 export const escapeUnescapedString = (string: string) =>
