@@ -124,6 +124,14 @@ var appManifestData = app.ManifestData{
 							Description:      "Whether the user is disabled",
 						},
 						{
+							Name:             "provisioned",
+							Path:             "spec.provisioned",
+							Type:             "boolean",
+							Capabilities:     []string{"retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "Whether the user is provisioned",
+						},
+						{
 							Name:         "externalAuthModules",
 							Path:         "spec.externalAuthInfo[*].module",
 							Type:         "string",
