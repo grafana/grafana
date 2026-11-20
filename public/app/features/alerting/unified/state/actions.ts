@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, logMeasurement } from '@grafana/runtime';
+import { locationService, logMeasurement, logWarning } from '@grafana/runtime';
 import { type AlertManagerCortexConfig, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type ThunkResult } from 'app/types/store';
 import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
@@ -14,8 +14,11 @@ import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { type FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { type FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
+import { getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
+import { RuleAction } from '../hooks/abilities/types';
+import { getDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
-import { getAllRulesSourceNames } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { withAppEvents, withSerializedError } from '../utils/redux';
 import { getAlertInfo } from '../utils/rules';
@@ -121,6 +124,23 @@ interface FetchPromRulesRulesActionProps {
   state?: string[];
 }
 
+/** The names of all rules sources that the user can see, as `getAllRulesSourceNames` returns them. */
+async function getRulesSourceNames(): Promise<string[]> {
+  let names: string[] = [];
+  try {
+    names = (await getDataSourcesForRules()).map((ds) => ds.name);
+  } catch (error) {
+    // The Grafana-managed rules must still load when the data source list fails.
+    logWarning('Failed to load the rules source list', { error: String(error) });
+  }
+
+  if (getGlobalRuleAbility(RuleAction.View).granted) {
+    names.push(GRAFANA_RULES_SOURCE_NAME);
+  }
+
+  return names;
+}
+
 export function fetchAllPromAndRulerRulesAction(
   force = false,
   options: FetchPromRulesRulesActionProps = {}
@@ -128,8 +148,10 @@ export function fetchAllPromAndRulerRulesAction(
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
+    const rulesSourceNames = await getRulesSourceNames();
+
     await Promise.allSettled(
-      getAllRulesSourceNames().map(async (rulesSourceName) => {
+      rulesSourceNames.map(async (rulesSourceName) => {
         const { data: dsFeatures } = await dispatch(
           featureDiscoveryApi.endpoints.discoverDsFeatures.initiate({ rulesSourceName })
         );
@@ -161,8 +183,9 @@ export function fetchAllPromRulesAction(
   options: FetchPromRulesRulesActionProps = {}
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
+    const rulesSourceNames = await getRulesSourceNames();
     const { promRules } = getStore().unifiedAlerting;
-    getAllRulesSourceNames().map((rulesSourceName) => {
+    rulesSourceNames.map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
         dispatch(fetchPromRulesAction({ rulesSourceName, ...options }));
       }
