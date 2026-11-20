@@ -98,8 +98,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
   // dragging would follow the link or open the actions menu instead of
   // selecting a range.
   const isWrappedInAnchor = (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 0;
-  const canSelectTimeRange =
-    cellOptions.selectTimeRange && sparkline.x?.type === FieldType.time && !isWrappedInAnchor;
+  const canSelectTimeRange = cellOptions.selectTimeRange && sparkline.x?.type === FieldType.time && !isWrappedInAnchor;
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
