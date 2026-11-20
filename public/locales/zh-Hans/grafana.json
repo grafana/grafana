@@ -1546,7 +1546,7 @@
           "label": "标签匹配器：label:key（存在）、label:!key（不存在）、label:key=value（等于）、label:key!=value（不等于）、label:key=~re（正则表达式）、label:key!~re（非正则表达式）。用引号括起包含空格的值：label:team=\"a b\"。",
           "metric": "录制的指标名称（精确匹配）。",
           "panel-id": "规则关联的面板。面板 ID 是数据面板本地的；与 dashboard: 配对。",
-          "paused": "规则是否已暂停 (true/false)。",
+          "paused": "",
           "plugins": "plugins:hide 排除由插件创建的规则。",
           "policy": "命名通知策略（与 contactPoint: 互斥）。",
           "rule": "规则标题文本搜索（等同于自由文本）。",
@@ -1562,7 +1562,6 @@
         "invalid-tokens": "无法应用某些筛选条件：{{tokens}}",
         "invalid-value": "为 {{key}} 使用以下值之一：{{values}}",
         "label": "搜索",
-        "not-paused-unavailable": "按“未暂停”筛选的功能尚不可用。",
         "placeholder": "按名称搜索或输入筛选条件查询…",
         "property": {
           "contact-point": "联络点",
@@ -1609,6 +1608,65 @@
         "loading-rules": "正在加载规则",
         "refresh-error": "刷新结果失败",
         "retry": "重试"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "评估规则失败",
@@ -4811,6 +4869,12 @@
     "folder-owners": {
       "owned-by": "所有者："
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
@@ -5605,6 +5669,36 @@
         "version": "版本"
       },
       "view-json-diff": "查看 JSON 差异以查看所有更改"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -7920,16 +8014,6 @@
     },
     "query-editor": {
       "query": "查询"
-    },
-    "query-editor-banner": {
-      "description-classic": "尝试改进后的查询编辑体验。",
-      "description-new": "欢迎来到改进后的查询编辑体验。",
-      "dismiss": "忽略",
-      "downgrade-title": "新查询编辑器",
-      "give-feedback": "提供反馈",
-      "go-back": "返回经典版",
-      "try-it": "立即试用",
-      "upgrade-title": "新编辑器已推出"
     },
     "query-variable-editor": {
       "modal": {
@@ -11328,6 +11412,9 @@
       },
       "wrapping-disabled-warning": "由于某个值过长，已针对此列禁用文本换行。使用“检查值”以查看完整内容。"
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "标签"
     },
@@ -13459,7 +13546,8 @@
         "open": "打开 {{title}}",
         "open-all": "打开 AI 助手和侧边栏应用"
       },
-      "floating-resize": "调整侧边栏宽度"
+      "floating-resize": "调整侧边栏宽度",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "帮助",
@@ -13718,6 +13806,8 @@
       "cancel": "取消",
       "card-author": "作者：{{author}}",
       "card-updated": "更新于 {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "笔记本名称",
       "create-name-required": "笔记本名称为必填项",
       "create-name-taken": "已存在具有此名称的笔记本",
@@ -13736,6 +13826,8 @@
       "lock-time-range-description": "将此可视化保留在其被捕获的窗口中。解锁后，它将遵循笔记本的时间范围。",
       "lock-time-ranges": "将面板锁定到其显示的时间范围",
       "lock-time-ranges-description": "将每个可视化保留在其被捕获的窗口中。解锁后，它们将遵循笔记本的时间范围。",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "按标题搜索",
       "sort-alphabetical": "按字母顺序 (A-Z)",
       "sort-label": "对笔记本进行排序",
@@ -15017,9 +15109,6 @@
       "success-title": "文件夹元数据已成功修复",
       "title": "修复文件夹元数据"
     },
-    "folder-permissions": {
-      "loading": "正在加载…"
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "没有找到与您的查询匹配的结果",
       "partial-managed": "{{managedCount}}/{{resourceCount}} 个资源由 Git 同步管理。",
@@ -15172,13 +15261,16 @@
       "path-required": "存储库路径为必填项"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "管理者：文件预置",
       "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
       "provisioned": "已预置",
+      "read-only": "",
       "terraform": "管理者：Terraform",
+      "view-source": "",
       "view-source-file": "查看源文件"
     },
     "managed-by-repository-tooltip": "管理者：存储库",
@@ -15356,8 +15448,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15379,9 +15469,6 @@
       "message-repository-onprem_other": "您的实例最多可连接 {{count}} 个存储库。",
       "message-resource_other": "您的账户中的每个存储库最多可拥有 {{count}} 个同步资源。",
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15510,22 +15597,6 @@
       "pure-git": "纯 Git",
       "pure-git-description": "连接到任何 Git 存储库",
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "数据面板",
-      "dashboards": "数据面板",
-      "datasource": "",
-      "datasources": "",
-      "folder": "文件夹",
-      "folders": "文件夹",
-      "library-panel": "库面板",
-      "library-panels": "库面板",
-      "playlist": "播放列表",
-      "playlists": "播放列表",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -16090,12 +16161,6 @@
       "width-of-panel": "面板宽度"
     },
     "edit-query-name": "编辑查询名称",
-    "experimental-button": {
-      "aria-label": "实验性功能选项",
-      "back-to-classic": "返回经典编辑器",
-      "give-feedback": "提供反馈",
-      "tooltip": "实验性功能选项"
-    },
     "header": {
       "alert": "警报",
       "enter-stacked-view": "",
@@ -16458,8 +16523,6 @@
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",
-      "type-dashboard": "仪表板",
-      "type-folder": "文件夹",
       "type-header": "类型"
     },
     "search-input": {
