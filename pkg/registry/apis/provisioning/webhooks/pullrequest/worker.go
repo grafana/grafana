@@ -28,6 +28,7 @@ func ProvidePullRequestWorker(
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
+	supportedResourceProvider resources.SupportedResourceProvider,
 	registry prometheus.Registerer,
 ) *PullRequestWorker {
 	// Screenshot images are fetched server-side by the Git provider's image
@@ -45,7 +46,7 @@ func ProvidePullRequestWorker(
 
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
-	clients := resources.NewClientFactory(configProvider, nil)
+	clients := resources.NewClientFactory(configProvider, supportedResourceProvider)
 	parsers := resources.NewParserFactory(clients)
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
