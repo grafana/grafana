@@ -9,8 +9,7 @@
         "gdev",
         "panel-tests",
         "graph-ng"
-      ],
-      "score": 0.603
+      ]
     },
     {
       "resource": "dashboards",
@@ -20,9 +19,7 @@
         "gdev",
         "panel-tests",
         "graph-ng"
-      ],
-      "score": 0.573
+      ]
     }
-  ],
-  "maxScore": 0.603
+  ]
 }

@@ -4,6 +4,7 @@ import {
   applyNullInsertThreshold,
   // colorManipulator,
   type DataFrame,
+  type Field,
   type FieldConfig,
   type AbsoluteTimeRange,
   type FieldSparkline,
@@ -12,10 +13,13 @@ import {
   getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
+  getScaleCalculator,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
+  reduceField,
+  ReducerID,
   roundDecimals,
   sortDataFrame,
 } from '@grafana/data';
@@ -140,6 +144,18 @@ const defaultConfig: GraphFieldConfig = {
   pointSize: 0,
 };
 
+// getFieldSeriesColor's default `last` reducer returns a trailing null, which it scores as 0,
+// so a series ending in a gap would get the bottom scheme color. Use the last real value instead.
+function getSeriesColor(field: Field, theme: GrafanaTheme2): string {
+  const seriesBy = field.config.color?.seriesBy ?? ReducerID.last;
+  if (!getFieldColorModeForField(field).isByValue || seriesBy !== ReducerID.last) {
+    return getFieldSeriesColor(field, theme).color;
+  }
+
+  const { lastNotNull } = reduceField({ field, reducers: [ReducerID.lastNotNull] });
+  return getScaleCalculator(field, theme)(lastNotNull ?? 0).color;
+}
+
 export const prepareSeries = (
   sparkline: FieldSparkline,
   _theme: GrafanaTheme2,
@@ -209,7 +225,7 @@ export const prepareConfig = (
     // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
     // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
     // series (e.g. TableNG's default hue). A solid color sidesteps that.
-    const pointColor = yField ? getFieldSeriesColor(yField, theme).color : theme.colors.text.primary;
+    const pointColor = yField ? getSeriesColor(yField, theme) : theme.colors.text.primary;
     builder.setCursor({
       show: true,
       x: true,
@@ -299,7 +315,6 @@ export const prepareConfig = (
     });
 
     const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
     if (hasHighlightIndex) {
@@ -318,7 +333,9 @@ export const prepareConfig = (
       colorMode,
       thresholds: config.thresholds,
       drawStyle: customConfig.drawStyle!,
-      lineColor: customConfig.lineColor ?? seriesColor,
+      // By-value schemes need a representative value; calculating at (0, 0) always yields the
+      // first scheme color, e.g. red for Red-Yellow-Green or the panel background for Reds.
+      lineColor: customConfig.lineColor ?? getSeriesColor(field, theme),
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,

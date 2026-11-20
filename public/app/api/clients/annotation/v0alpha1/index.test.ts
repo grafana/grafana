@@ -114,13 +114,27 @@ describe('annotationK8sClient', () => {
     expect(patchUrl).toBe(`${baseURL}/annotations/a-2`);
     expect(patchBody.spec).toMatchObject({
       text: 'new',
-      time: 2,
-      timeEnd: 5,
-      dashboardUID: 'dash-1',
-      panelID: 3,
       scopes: ['scope-a'],
     });
     expect(patchOpts.headers['Content-Type']).toBe('application/merge-patch+json');
+  });
+
+  it('update sends only the mutable text, tags, and scopes', async () => {
+    patchFn.mockResolvedValue({});
+
+    await annotationK8sClient.update({
+      id: '4',
+      time: 1,
+      timeEnd: 5,
+      isRegion: true,
+      text: 'x',
+      tags: ['t'],
+      dashboardUID: 'dash-1',
+      panelId: 3,
+    });
+
+    const [, patchBody] = patchFn.mock.calls[0];
+    expect(patchBody.spec).toEqual({ text: 'x', tags: ['t'], scopes: null });
   });
 
   it('update accepts an already-prefixed a-{id} name without double-prefixing', async () => {
@@ -138,7 +152,6 @@ describe('annotationK8sClient', () => {
     const [, patchBody] = patchFn.mock.calls[0];
     // Explicit null is required for JSON Merge Patch to remove a field;
     // an omitted field would be a no-op.
-    expect(patchBody.spec.timeEnd).toBeNull();
     expect(patchBody.spec.tags).toBeNull();
     expect(patchBody.spec.scopes).toBeNull();
   });

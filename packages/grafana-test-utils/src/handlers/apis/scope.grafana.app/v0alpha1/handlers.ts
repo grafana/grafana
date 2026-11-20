@@ -4,7 +4,6 @@ import {
   MOCK_DEFAULT_SCOPE,
   MOCK_NODES,
   MOCK_SCOPES,
-  MOCK_SCOPE_DASHBOARD_BINDINGS,
   MOCK_SCOPE_NAVIGATIONS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
@@ -84,23 +83,6 @@ const findScopeNodeChildrenHandler = () =>
   });
 
 /**
- * GET /apis/scope.grafana.app/v0alpha1/namespaces/:namespace/find/scope_dashboard_bindings
- *
- * Finds scope dashboard bindings for the given scope names.
- */
-const findScopeDashboardBindingsHandler = () =>
-  http.get(`${API_BASE}/find/scope_dashboard_bindings`, ({ request }) => {
-    const url = new URL(request.url);
-    const scopeNames = url.searchParams.getAll('scope');
-
-    const bindings = MOCK_SCOPE_DASHBOARD_BINDINGS.filter((b) => scopeNames.includes(b.spec.scope));
-
-    return HttpResponse.json({
-      items: bindings,
-    });
-  });
-
-/**
  * GET /apis/scope.grafana.app/v0alpha1/namespaces/:namespace/find/scope_navigations
  *
  * Finds scope navigations for the given scope names.
@@ -142,7 +124,6 @@ export default [
   getScopeHandler(),
   getScopeNodeHandler(),
   findScopeNodeChildrenHandler(),
-  findScopeDashboardBindingsHandler(),
   findScopeNavigationsHandler(),
   findDefaultScopeHandler(),
 ];

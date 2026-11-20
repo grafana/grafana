@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -110,10 +111,10 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  []resources.SupportedResource
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets            []provisioning.SyncTargetType
+	supportedResourceProvider resources.SupportedResourceProvider
+	allowImageRendering       bool
+	minSyncInterval           time.Duration
 
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
@@ -136,6 +137,7 @@ type APIBuilder struct {
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
+	namespaceStats    resources.NamespaceStatsReader
 	unified           resource.ResourceClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
@@ -154,7 +156,6 @@ type APIBuilder struct {
 	restConfigGetter              func(context.Context) (*clientrest.Config, error)
 	registry                      prometheus.Registerer
 	quotaGetter                   quotas.QuotaGetter
-	folderMetadataEnabled         bool
 	maxFileSize                   int64
 	maxJobBodySize                int64
 	syncResourceTimeout           time.Duration
@@ -223,7 +224,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources []resources.SupportedResource,
+	supportedResourceProvider resources.SupportedResourceProvider,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -231,7 +232,6 @@ func NewAPIBuilder(
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
-	folderMetadataEnabled bool,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 	maxJobBodySize int64,
@@ -240,13 +240,13 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResources...)
+		clients = resources.NewClientFactory(configProvider, supportedResourceProvider)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	parsers := resources.NewParserFactory(clients)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -267,7 +267,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		supportedResources:                  supportedResources,
+		supportedResourceProvider:           supportedResourceProvider,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -282,7 +282,6 @@ func NewAPIBuilder(
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
-		folderMetadataEnabled:               folderMetadataEnabled,
 		incrementalPolicy:                   incrementalPolicy,
 		// Per-file cap for the files API. Non-positive (<=0) disables the cap.
 		maxFileSize: maxFileSize,
@@ -290,7 +289,7 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -307,18 +306,22 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 // from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
 // the repository resources factory captures the lister.
 func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources)
-	if err != nil {
+	// This lister is also what serves /resources, so an apis reader here would call that route to
+	// answer it. The mode applies to callers outside the apiserver, which is why only the index
+	// reader is built here.
+	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(lister)
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResourceProvider.Get()))
 	return nil
 }
 
-// setResourceLister points the lister and the factory that captures it at the same reader.
-func (b *APIBuilder) setResourceLister(lister resources.ResourceLister) {
+// setResourceLister points the lister, the namespace-wide stats route and the factory that captures
+// the lister at the same reader.
+func (b *APIBuilder) setResourceLister(lister *resources.ResourceListerFromSearch) {
 	b.resourceLister = lister
-	b.repositoryResources = resources.NewRepositoryResourcesFactory(b.parsers, b.clients, lister, b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)) //nolint:staticcheck
+	b.namespaceStats = lister
+	b.repositoryResources = resources.NewRepositoryResourcesFactory(b.parsers, b.clients, lister)
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -356,6 +359,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
+	ctx context.Context,
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -374,6 +378,7 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
+	manifests resource.ManifestDiscovery,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -385,16 +390,24 @@ func RegisterAPIService(
 	}
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
-	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	configured, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
+	supportedResourceProvider := resources.NewSupportedResourceProvider(configured)
+	// The router always publishes the manifests, but it serves their groups only as middleware.
+	if router.MiddlewareEnabled(cfg, features) {
+		watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+		manifestWatcher := resource.NewLocalManifestWatcher(manifests, watcherReg, supportedResourceProvider.Update, cfg.Logger)
+		if err := manifestWatcher.StartAsync(ctx); err != nil {
+			return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
+	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	maxJobBodySize := cfg.ProvisioningMaxJobBodySize
-	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
+	incrementalPolicy := repository.NewIncrementalSyncPolicy(cfg.ProvisioningMaxIncrementalChanges)
 	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
 
 	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
@@ -429,7 +442,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -437,7 +450,6 @@ func RegisterAPIService(
 		nil,   // newStandaloneClientFactoryFunc
 		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
-		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
 		maxJobBodySize,
@@ -484,7 +496,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -492,7 +504,6 @@ func RegisterAPIService(
 		nil,   // newStandaloneClientFactoryFunc
 		false, // useExclusivelyAccessCheckerForAuthz
 		quotaGetter,
-		folderMetadataEnabled,
 		incrementalPolicy,
 		maxFileSize,
 		maxJobBodySize,
@@ -589,7 +600,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
+//   - Subresources: files (any auth), refs (editor), resources/stats/history/status (admin)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -718,7 +729,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only).
+	// Read-only subresources: resources, stats, history, status (admin only).
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -728,7 +739,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "resources", "history", "status":
+	case "resources", "stats", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -951,20 +962,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
-		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
-			Group:    r.Group,
-			Kind:     r.Kind,
-			Disabled: !r.IsActive(),
-		})
-	}
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
-	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled))
+	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, performanceEnabled))
 	b.admissionHandler.RegisterValidator(
 		provisioning.JobResourceInfo.GetName(),
 		appadmission.NewCombinedValidator(
-			appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled),
+			appjobs.NewAdmissionValidator(b.jobSupportedResources, performanceEnabled),
 			jobAuthz,
 		))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -1036,11 +1039,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// folderless repository (see resources.NewFilesAuthorizer). Repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.accessWithAdmin, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("stats")] = WithTimeout(NewStatsConnector(b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
-	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled)
+	jobsConnector := NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, performanceEnabled)
 	jobsConnector.SetMaxBodySize(b.maxJobBodySize)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(jobsConnector, 30*time.Second)
 
@@ -1076,6 +1080,19 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	return b.admissionHandler.Validate(ctx, a, o)
+}
+
+func (b *APIBuilder) jobSupportedResources() []provisioning.SupportedResource {
+	supported := b.supportedResourceProvider.Get()
+	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(supported))
+	for _, r := range supported {
+		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+	return jobSupportedResources
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -1150,13 +1167,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -1173,7 +1189,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			migrateExportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
@@ -1490,6 +1505,31 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		},
 	}
 
+	sub = oas.Paths.Paths[repoprefix+"/resources"]
+	if sub != nil {
+		sub.Get.Description = "Get the resources this repository manages"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "limit",
+					In:          "query",
+					Description: "maximum number of items to return; omit for all of them",
+					Schema:      spec.Int64Property(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "continue",
+					In:          "query",
+					Description: "continue token from the metadata of the previous page",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+	}
+
 	sub = oas.Paths.Paths[repoprefix+"/history"]
 	if sub != nil {
 		sub.Get.Description = "Get the history of the repository"
@@ -1516,6 +1556,13 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
 		s := defs[compBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/stats"]
+	if sub != nil {
+		sub.Get.Description = "Count the resources this repository manages"
+		sub.Get.Summary = "Repository resource stats"
+		sub.Get.Responses = getJSONResponse("#/components/schemas/" + refsBase + "ResourceCountList")
 	}
 
 	// Show a special list command
@@ -1875,6 +1922,10 @@ spec:
 	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
+
+	schema = oas.Components.Schemas[compBase+"ResourceCountList"].Properties["items"]
+	schema.Items = countSpec
+	oas.Components.Schemas[compBase+"ResourceCountList"].Properties["items"] = schema
 
 	// Clean up version-specific schemas and metadata
 	switch b.gv.Version {

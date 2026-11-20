@@ -9,15 +9,19 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+// What the lister returns for a repository the managed-object index has no counts for.
+var errNoCounts = apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, "test-repo")
 
 func TestSyncWorker_IsSupported(t *testing.T) {
 	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
@@ -74,53 +78,37 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 	tests := []struct {
 		name                      string
 		maxResourcesPerRepository int64
-		stats                     *provisioning.ResourceStats
+		stats                     []provisioning.ResourceCount
 		expectedQuotaReason       string
 		expectedQuotaStatus       bool // true = ConditionTrue, false = ConditionFalse
 	}{
 		{
 			name:                      "quota unlimited when no limit configured",
 			maxResourcesPerRepository: 0,
-			stats: &provisioning.ResourceStats{
-				Managed: []provisioning.ManagerStats{
-					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 100}}},
-				},
-			},
-			expectedQuotaReason: provisioning.ReasonQuotaUnlimited,
-			expectedQuotaStatus: true,
+			stats:                     []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 100}},
+			expectedQuotaReason:       provisioning.ReasonQuotaUnlimited,
+			expectedQuotaStatus:       true,
 		},
 		{
 			name:                      "quota exceeded when over limit",
 			maxResourcesPerRepository: 5,
-			stats: &provisioning.ResourceStats{
-				Managed: []provisioning.ManagerStats{
-					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
-				},
-			},
-			expectedQuotaReason: provisioning.ReasonQuotaExceeded,
-			expectedQuotaStatus: false,
+			stats:                     []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}},
+			expectedQuotaReason:       provisioning.ReasonQuotaExceeded,
+			expectedQuotaStatus:       false,
 		},
 		{
 			name:                      "quota reached when at limit",
 			maxResourcesPerRepository: 10,
-			stats: &provisioning.ResourceStats{
-				Managed: []provisioning.ManagerStats{
-					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}}},
-				},
-			},
-			expectedQuotaReason: provisioning.ReasonQuotaReached,
-			expectedQuotaStatus: true,
+			stats:                     []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10}},
+			expectedQuotaReason:       provisioning.ReasonQuotaReached,
+			expectedQuotaStatus:       true,
 		},
 		{
 			name:                      "within quota when under limit",
 			maxResourcesPerRepository: 100,
-			stats: &provisioning.ResourceStats{
-				Managed: []provisioning.ManagerStats{
-					{Kind: apiutils.ManagerKindRepo, Identity: "test-repo", Stats: []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}}},
-				},
-			},
-			expectedQuotaReason: provisioning.ReasonWithinQuota,
-			expectedQuotaStatus: true,
+			stats:                     []provisioning.ResourceCount{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 50}},
+			expectedQuotaReason:       provisioning.ReasonWithinQuota,
+			expectedQuotaStatus:       true,
 		},
 	}
 
@@ -305,7 +293,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			repositoryPatchFn.On("Execute", mock.Anything, repoConfig, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 			mockRepoResources := resources.NewMockRepositoryResources(t)
-			mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+			mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 			repoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 			mockClients := resources.NewMockResourceClients(t)
@@ -602,7 +590,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
@@ -648,7 +636,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
@@ -703,7 +691,7 @@ func TestSyncWorker_Process(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "stats returns nil stats and nil error",
+			name: "repository manages nothing that can be counted",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -714,7 +702,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rw.MockRepository.On("Config").Return(repoConfig)
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				// Initial patch with granular updates
@@ -751,21 +739,7 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				stats := &provisioning.ResourceStats{
-					Managed: []provisioning.ManagerStats{
-						{
-							Kind:     apiutils.ManagerKindRepo,
-							Identity: "test-repo",
-							Stats: []provisioning.ResourceCount{
-								{
-									Group:    "test",
-									Resource: "test",
-									Count:    42,
-								},
-							},
-						},
-					},
-				}
+				stats := []provisioning.ResourceCount{{Group: "test", Resource: "test", Count: 42}}
 				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
@@ -773,71 +747,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				rpf.On("Execute", mock.Anything, mock.Anything,
 					mock.MatchedBy(matchPatchPath("/status/sync")),
 					mock.MatchedBy(matchStatsPatch("test", "test", 42)),
-					mock.MatchedBy(matchPatchPath("/status/conditions")),
-				).Return(nil).Once()
-
-				// Simple mocks for other calls
-				mockClients := resources.NewMockResourceClients(t)
-				cf.On("Clients", mock.Anything, mock.Anything).Return(mockClients, nil)
-				pr.On("SetMessage", mock.Anything, mock.Anything).Return()
-				pr.On("StrictMaxErrors", 20).Return()
-				pr.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{State: provisioning.JobStateSuccess})
-				pr.On("ResultReasons").Return([]string(nil))
-				s.On("Sync", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("new-ref", nil)
-			},
-			expectedError: "",
-		},
-		{
-			// The count request filters on the manager id alone, so a repository whose id is
-			// also another manager's -- the bootstrap repository is managed by
-			// file-provisioning under its own name -- gets an entry per kind.
-			name: "stats returns an entry for each manager sharing the id",
-			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
-				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
-				}
-				rw.MockRepository.On("Config").Return(repoConfig)
-
-				mockRepoResources := resources.NewMockRepositoryResources(t)
-				stats := &provisioning.ResourceStats{
-					Managed: []provisioning.ManagerStats{
-						{
-							Kind:     apiutils.ManagerKindFileProvisioning,
-							Identity: "test-repo",
-							Stats: []provisioning.ResourceCount{
-								{
-									Group:    "provisioning.grafana.app",
-									Resource: "repositories",
-									Count:    1,
-								},
-							},
-						},
-						{
-							Kind:     apiutils.ManagerKindRepo,
-							Identity: "test-repo",
-							Stats: []provisioning.ResourceCount{
-								{
-									Group:    "dashboard.grafana.app",
-									Resource: "dashboards",
-									Count:    24,
-								},
-							},
-						},
-					},
-				}
-				mockRepoResources.On("Stats", mock.Anything).Return(stats, nil)
-				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
-
-				// Initial patch with granular updates
-				rpf.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-
-				// The repository's own entry is the one that lands in its stats.
-				rpf.On("Execute", mock.Anything, mock.Anything,
-					mock.MatchedBy(matchPatchPath("/status/sync")),
-					mock.MatchedBy(matchPatchPath("/status/stats")),
 					mock.MatchedBy(matchPatchPath("/status/conditions")),
 				).Return(nil).Once()
 
@@ -874,7 +783,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)
@@ -913,7 +822,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 				// Setup resources and clients
 				mockRepoResources := resources.NewMockRepositoryResources(t)
-				mockRepoResources.On("Stats", mock.Anything).Return(nil, nil)
+				mockRepoResources.On("Stats", mock.Anything).Return(nil, errNoCounts)
 				rrf.On("Client", mock.Anything, mock.Anything, mock.Anything).Return(mockRepoResources, nil)
 
 				mockClients := resources.NewMockResourceClients(t)

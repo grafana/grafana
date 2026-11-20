@@ -16,6 +16,8 @@ import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { type PanelSettingSource } from '../utils/interactions';
+import { getPanelLinksChange, trackPanelSettingChange } from '../utils/trackPanelSettingChange';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelStylesSection } from './PanelStylesSection';
@@ -83,7 +85,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
         addon: (
           <LazyGenAIPanelTitleButton
-            onGenerate={(title) => editPanelTitleAction(panel, title)}
+            onGenerate={(title) => editPanelTitleAction(panel, title, undefined, 'genai')}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
           />
@@ -120,7 +122,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
           id: 'panel-frame-options-panel-links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+          render: () => <ScenePanelLinksEditor panel={panel} panelLinks={panelLinksObject ?? undefined} />,
         })
       )
     );
@@ -144,16 +146,23 @@ export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescr
 }
 
 interface ScenePanelLinksEditorProps {
+  panel: VizPanel;
   panelLinks?: VizPanelLinks;
 }
 
-function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
+export function ScenePanelLinksEditor({ panel, panelLinks }: ScenePanelLinksEditorProps) {
   const { rawLinks: links } = panelLinks ? panelLinks.useState() : { rawLinks: [] };
 
   return (
     <DataLinksInlineEditor
       links={links}
-      onChange={(links) => panelLinks?.setState({ rawLinks: links })}
+      onChange={(newLinks) => {
+        const change = getPanelLinksChange(links ?? [], newLinks);
+        panelLinks?.setState({ rawLinks: newLinks });
+        if (change) {
+          trackPanelSettingChange(panel, change);
+        }
+      }}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
     />
@@ -207,6 +216,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
       perform: () => panel.setState({ [propName]: value }),
       undo: () => panel.setState({ [propName]: prevValue }),
     });
+    // The field commits on every blur, so only report a description that changed.
+    if (value !== prevValue) {
+      trackPanelSettingChange(panel, 'change_panel_description');
+    }
   };
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,6 +246,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
         }
       },
     });
+    // With no text to move, the toggle changes nothing.
+    if (description || subtitle) {
+      trackPanelSettingChange(panel, 'toggle_panel_subtitle');
+    }
   };
 
   const label = (
@@ -289,6 +306,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
       perform: () => panel.setState({ displayMode: newDisplayMode }),
       undo: () => panel.setState({ displayMode: displayMode }),
     });
+    trackPanelSettingChange(panel, 'change_panel_background');
   };
 
   return <Switch value={displayMode === 'transparent'} id={id} onChange={onChange} />;
@@ -298,7 +316,12 @@ function updatePanelTitleState(panel: VizPanel, title: string) {
   getDashboardSceneFor(panel).updatePanelTitle(panel, title);
 }
 
-function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
+function editPanelTitleAction(
+  panel: VizPanel,
+  title: string,
+  prevTitle: string = panel.state.title,
+  source?: PanelSettingSource
+) {
   if (title === prevTitle) {
     return;
   }
@@ -310,4 +333,5 @@ function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string 
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),
   });
+  trackPanelSettingChange(panel, 'change_panel_title', source);
 }
