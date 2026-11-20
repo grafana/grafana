@@ -3,15 +3,20 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	pluginlog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -50,7 +55,7 @@ func TestErrorRecordingChunkedWriterForwardsOnChunk(t *testing.T) {
 	raw := &fakeRawChunkWriter{}
 	w := &errorRecordingChunkedWriter{ChunkedDataWriter: raw}
 
-	receiver, ok := interface{}(w).(chunked.RawChunkReceiver)
+	receiver, ok := w.writer().(chunked.RawChunkReceiver)
 	require.True(t, ok, "wrapper must satisfy chunked.RawChunkReceiver")
 
 	require.NoError(t, receiver.OnChunk(&pluginv2.QueryChunkedDataResponse{RefId: "A"}))
@@ -143,4 +148,70 @@ func TestChunkedLoggerIncludesPartialErrorSource(t *testing.T) {
 	require.Equal(t, "B", logger.fields["refID"])
 	require.Len(t, raw.chunks, 1)
 	require.Same(t, sent, raw.chunks[0])
+}
+
+// fakeChunkStreamClient streams the given chunks, as a plugin does for QueryChunkedData.
+type fakeChunkStreamClient struct {
+	pluginv2.DataClient
+	chunks []*pluginv2.QueryChunkedDataResponse
+}
+
+func (c fakeChunkStreamClient) QueryChunkedData(context.Context, *pluginv2.QueryChunkedDataRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
+	return &fakeChunkStream{chunks: c.chunks}, nil
+}
+
+type fakeChunkStream struct {
+	grpc.ClientStream
+	chunks []*pluginv2.QueryChunkedDataResponse
+}
+
+func (s *fakeChunkStream) Recv() (*pluginv2.QueryChunkedDataResponse, error) {
+	if len(s.chunks) == 0 {
+		return nil, io.EOF
+	}
+	chunk := s.chunks[0]
+	s.chunks = s.chunks[1:]
+	return chunk, nil
+}
+
+// typedChunkWriter keeps the refID and the name of each frame, and the refID and the status of each error.
+type typedChunkWriter struct {
+	frames []string
+	errors map[string]backend.Status
+}
+
+func (w *typedChunkWriter) WriteFrame(_ context.Context, refID string, _ string, f *data.Frame) error {
+	w.frames = append(w.frames, refID+":"+f.Name)
+	return nil
+}
+
+func (w *typedChunkWriter) WriteError(_ context.Context, refID string, status backend.Status, _ error) error {
+	if w.errors == nil {
+		w.errors = map[string]backend.Status{}
+	}
+	w.errors[refID] = status
+	return nil
+}
+
+func TestChunkedMiddlewareDeliversChunksToTypedWriter(t *testing.T) {
+	frame, err := data.NewFrame("one", data.NewField("v", nil, []int64{1})).MarshalArrow()
+	require.NoError(t, err)
+	client := &grpcplugin.ClientV2{DataClient: fakeChunkStreamClient{chunks: []*pluginv2.QueryChunkedDataResponse{
+		{RefId: "A", FrameId: "1", Frame: frame},
+		{RefId: "B", Status: int32(backend.StatusBadRequest), Error: "bad query", ErrorSource: "downstream"},
+	}}}
+	pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+	require.NoError(t, pluginsRegistry.Add(t.Context(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Backend: true}}))
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
+		NewMetricsMiddleware(prometheus.NewRegistry(), pluginsRegistry),
+		NewLoggerMiddleware(pluginlog.NewTestLogger(), pluginsRegistry),
+	))
+	cdt.TestHandler.QueryChunkedDataFunc = client.QueryChunkedData
+	w := &typedChunkWriter{}
+	req := &backend.QueryChunkedDataRequest{PluginContext: backend.PluginContext{PluginID: pluginID}}
+
+	require.NoError(t, cdt.MiddlewareHandler.QueryChunkedData(t.Context(), req, w))
+
+	require.Equal(t, []string{"A:one"}, w.frames)
+	require.Equal(t, map[string]backend.Status{"B": backend.StatusBadRequest}, w.errors)
 }

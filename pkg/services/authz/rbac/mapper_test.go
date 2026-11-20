@@ -43,7 +43,7 @@ func TestMapperRegistry_DatasourceAliases(t *testing.T) {
 func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	for _, subresource := range []string{"", "query", "caching"} {
+	for _, subresource := range []string{"", "query", "caching", "alertrules", "alertinstances", "alertnotifications"} {
 		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
 		require.True(t, ok)
 		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
@@ -109,7 +109,10 @@ func TestMapperRegistry_DatasourceEnumeration(t *testing.T) {
 	for _, mapping := range mappings {
 		resources = append(resources, mapping.APIResource)
 	}
-	assert.ElementsMatch(t, []string{"datasources", "datasources/query", "datasources/caching"}, resources)
+	assert.ElementsMatch(t, []string{
+		"datasources", "datasources/query", "datasources/caching",
+		"datasources/alertrules", "datasources/alertinstances", "datasources/alertnotifications",
+	}, resources)
 
 	// A plugin's own registered resources must not be replaced with shared datasource mappings.
 	reg.(mapper)["loki.datasource.grafana.app"] = map[string]translation{
