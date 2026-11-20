@@ -192,6 +192,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// Grafana-owned annotations are derived by Grafana, never taken from the file
 	// (or request body). Drop them before anything below stamps its own.
 	stripGrafanaOwnedAnnotations(parsed.Obj.Object)
+	if err := validateUserAnnotations(parsed.Obj.Object); err != nil {
+		return nil, NewResourceValidationError(err)
+	}
 
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
@@ -647,8 +650,9 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	if name == "" {
 		delete(obj, "metadata")
 	} else {
+		stripGrafanaOwnedAnnotations(obj)
 		metadata := map[string]any{"name": name}
-		if annotations := userAnnotations(obj); len(annotations) > 0 {
+		if annotations, ok := rawAnnotations(obj); ok && len(annotations) > 0 {
 			metadata["annotations"] = annotations
 		}
 		obj["metadata"] = metadata

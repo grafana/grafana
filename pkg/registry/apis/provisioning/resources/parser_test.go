@@ -296,6 +296,27 @@ spec:
 		require.Equal(t, string(written), string(rewritten))
 	})
 
+	t.Run("rejects user annotations that are not strings instead of dropping them all", func(t *testing.T) {
+		_, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "dash.yaml",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: dash
+  annotations:
+    grafana.app/managerSuspended: true
+    grafana.app/useCrossDashboardVariables: '{"global":"all","folder":"none"}'
+    example.com/count: 3
+spec:
+  title: Test dashboard
+`),
+		})
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr)
+		require.ErrorContains(t, err, "metadata.annotations[example.com/count]")
+		require.NotContains(t, err.Error(), "managerSuspended", "Grafana-owned annotations are dropped, whatever their value")
+	})
+
 	t.Run("an annotation-only change produces a different file", func(t *testing.T) {
 		withSelection := func(selection string) []byte {
 			parsed, err := parser.Parse(context.Background(), &repository.FileInfo{

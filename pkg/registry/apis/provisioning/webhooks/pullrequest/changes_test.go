@@ -2184,6 +2184,19 @@ func TestHasStrippedMetadata(t *testing.T) {
 		require.True(t, hasRemovedMetadata(original, updated))
 	})
 
+	t.Run("Grafana-owned annotation with a non-string value removed", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"grafana.app/managerSuspended": true},
+			},
+		}}
+		updated := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.True(t, hasRemovedMetadata(original, updated))
+	})
+
 	t.Run("user annotation removed is an intentional change, not stripped", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
