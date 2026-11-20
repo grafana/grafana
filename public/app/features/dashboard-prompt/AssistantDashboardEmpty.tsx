@@ -178,15 +178,16 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   }, []);
   const panelWaits = showTemplates && templatesOpen && !promptReady;
   const waiting = panelWaits && !waitedForPrompt;
-  // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
-  // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
+  // Opening or closing the templates keeps the block's top where it is, so the toggle stays under the person's pointer
+  // instead of moving with the free space; the actions below move. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
-  const [held, setHeld] = useState<{ fit: typeof fit; height: number }>();
-  const heldHeight = held && held.fit === fit ? held.height : undefined;
+  const [held, setHeld] = useState<{ fit: typeof fit; top: number }>();
+  const heldTop = held && held.fit === fit ? held.top : undefined;
   const onTemplatesToggle = useCallback(() => {
-    const height = contentRef.current?.getBoundingClientRect().height;
-    if (height !== undefined) {
-      setHeld({ fit, height });
+    const content = contentRef.current;
+    const root = content?.parentElement;
+    if (content && root) {
+      setHeld({ fit, top: content.getBoundingClientRect().top - root.getBoundingClientRect().top });
     }
     store.set(TEMPLATES_OPEN_KEY, !templatesOpen);
     setTemplatesOpenedByUser(!templatesOpen);
@@ -293,14 +294,14 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   return (
     <div
       ref={fitRef}
-      className={cx(styles.root, fit && styles.rootFit)}
+      className={cx(styles.root, fit && styles.rootFit, heldTop !== undefined && styles.rootHeld)}
       // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
       style={fit ? { minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
     >
       <div
         ref={contentRef}
         className={cx(styles.content, waiting && styles.contentWaiting)}
-        style={heldHeight ? { minHeight: heldHeight } : undefined}
+        style={heldTop !== undefined ? { marginTop: heldTop } : undefined}
         aria-busy={waiting || undefined}
       >
         {waiting && (
@@ -390,6 +391,12 @@ function getStyles(theme: GrafanaTheme2) {
       '&::after': {
         content: '""',
         flex: `${FREE_SPACE_BELOW} 0 0`,
+      },
+    }),
+    // The block's top held by its own margin while the room below takes up the change.
+    rootHeld: css({
+      '&::before': {
+        display: 'none',
       },
     }),
     // As wide as the dashboard area lets it, with or without templates; the empty-state wrapper sets the cap.
