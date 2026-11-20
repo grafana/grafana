@@ -79,8 +79,11 @@ export interface TemplateSelectionProps {
   onSelectTemplate?: (selection: TemplateSelection) => void;
   /** The picked template's `TemplateSelection.id`, shown as selected. */
   selectedTemplateId?: string;
-  /** Reports how many templates the list has once they load, before `searchQuery`, so the host can react to none. */
-  onTemplatesLoad?: (count: number) => void;
+  /**
+   * Reports how many templates the list has once they load, before `searchQuery`, so the host can react to none; with no
+   * count when the list fails to load, so the host stops waiting for it without reading the failure as none.
+   */
+  onTemplatesLoad?: (count?: number) => void;
   /** Shows only the templates whose title or description contains it, ignoring case, as the template modal's search. */
   searchQuery?: string;
   /** Sorts the templates by title. */

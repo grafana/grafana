@@ -22,9 +22,9 @@ interface Props {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
   /**
-   * Called once the cards show, with how many templates each list offers (a list that is not shown, or has not
-   * reported, has no count): when every list has loaded, or after `LOAD_WAIT_MS` with the ones that have, and again
-   * as late lists report. The host drops the toggle when there are none and reports what was on offer.
+   * Called once the cards show, with how many templates each list offers (a list that is not shown, has not reported,
+   * or failed has no count): when every list is done, or after `LOAD_WAIT_MS` when the loaded ones have templates, and
+   * again as late lists report. The host drops the toggle when there are none and reports what was on offer.
    */
   onTemplatesCount?: (counts: TemplateCounts) => void;
   className?: string;
@@ -98,15 +98,19 @@ export function LandingTemplates({
   // The template modal's search and sort, applied to every list.
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<TemplateSortOrder>();
-  const onCustomTemplatesLoad = useCallback((custom: number) => setCounts((current) => ({ ...current, custom })), []);
-  const onGrafanaTemplatesLoad = useCallback(
-    (grafana: number) => setCounts((current) => ({ ...current, grafana })),
-    []
-  );
+  // The lists that are done: loaded with a count, or failed without one, so a failure is not read as none.
+  const [reported, setReported] = useState<Partial<Record<keyof TemplateCounts, true>>>({});
+  const reportLoad = useCallback((list: keyof TemplateCounts, count?: number) => {
+    setReported((current) => ({ ...current, [list]: true }));
+    if (count !== undefined) {
+      setCounts((current) => ({ ...current, [list]: count }));
+    }
+  }, []);
+  const onCustomTemplatesLoad = useCallback((count?: number) => reportLoad('custom', count), [reportLoad]);
+  const onGrafanaTemplatesLoad = useCallback((count?: number) => reportLoad('grafana', count), [reportLoad]);
   // Registered by the enterprise build; `showCustomTemplates` is only set when it is.
   const DashboardTemplatesTab = showCustomTemplates ? getDashboardTemplatesTab() : null;
-  const allLoaded =
-    (!showCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
+  const allLoaded = (!showCustomTemplates || reported.custom) && (!showGrafanaTemplates || reported.grafana);
   const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
   // A slow list must not hold back the cards the others loaded.
   const [waitedLong, setWaitedLong] = useState(false);
@@ -117,9 +121,8 @@ export function LandingTemplates({
     const timeout = setTimeout(() => setWaitedLong(true), LOAD_WAIT_MS);
     return () => clearTimeout(timeout);
   }, [allLoaded]);
-  // After the wait the panel goes with what it has, so a list that fails without reporting cannot keep it loading.
-  const loaded = allLoaded || waitedLong;
-  const isEmpty = loaded && total === 0;
+  const loaded = allLoaded || (waitedLong && total > 0);
+  const isEmpty = allLoaded && total === 0;
   useEffect(() => {
     if (loaded) {
       onTemplatesCount?.(counts);

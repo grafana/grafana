@@ -10,6 +10,8 @@ import { LandingTemplates, LandingTemplatesToggle } from './LandingTemplates';
 // `undefined` keeps a list loading.
 let mockGrafanaCount: number | undefined = 1;
 let mockCustomCount: number | undefined = 1;
+// The custom list reports its load as failed, with no count.
+let mockCustomFails = false;
 type ListProps = TemplateSelectionProps & { entryPoint?: string; loadedFiredRef?: MutableRefObject<boolean> };
 // What the Grafana list was last rendered with.
 let mockGrafanaProps: ListProps = {};
@@ -55,7 +57,9 @@ const CustomTemplates = (props: ListProps) => {
   const { onTemplatesLoad } = props;
   mockCustomProps(props);
   useEffect(() => {
-    if (mockCustomCount !== undefined) {
+    if (mockCustomFails) {
+      onTemplatesLoad?.();
+    } else if (mockCustomCount !== undefined) {
       onTemplatesLoad?.(mockCustomCount);
     }
   }, [onTemplatesLoad]);
@@ -85,6 +89,7 @@ describe('LandingTemplates', () => {
   beforeEach(() => {
     mockGrafanaCount = 1;
     mockCustomCount = 1;
+    mockCustomFails = false;
     mockGetDashboardTemplatesTab.mockReturnValue(CustomTemplates);
   });
 
@@ -192,7 +197,7 @@ describe('LandingTemplates', () => {
       expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1, custom: 2 });
     });
 
-    it('goes with what it has after the wait, so a list that never reports cannot keep it loading', () => {
+    it('keeps waiting while no list has shown a card, and does not call the panel empty', () => {
       mockCustomCount = undefined;
       mockGrafanaCount = 0;
       const onTemplatesCount = jest.fn();
@@ -200,9 +205,19 @@ describe('LandingTemplates', () => {
 
       act(() => jest.advanceTimersByTime(1500));
 
-      expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 0 });
-      expect(screen.getByText('No templates available')).toBeInTheDocument();
+      expect(onTemplatesCount).not.toHaveBeenCalled();
+      expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
     });
+  });
+
+  it('stops waiting for a list that fails, without counting it as having none', () => {
+    mockCustomFails = true;
+    mockGrafanaCount = 0;
+    const onTemplatesCount = jest.fn();
+    renderTemplates({ onTemplatesCount });
+
+    expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 0 });
+    expect(screen.getByText('No templates available')).toBeInTheDocument();
   });
 
   it('tells its host when no list has templates, and says so while open', () => {
