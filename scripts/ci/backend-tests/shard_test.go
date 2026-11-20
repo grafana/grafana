@@ -110,6 +110,97 @@ example.com/grafana/removed 200
 	}
 }
 
+func TestSQLIntegrationRunnerRunsEachBinaryOnce(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/integration\n"), 0o600))
+	for _, pkg := range []string{"first/api", "second/api"} {
+		dir := filepath.Join(root, pkg)
+		require.NoError(t, os.MkdirAll(dir, 0o700))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "marker"), []byte(pkg+"\n"), 0o600))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "api_test.go"), []byte(`package api
+
+import (
+	"flag"
+	"os"
+	"strings"
+	"testing"
+)
+
+func TestMain(m *testing.M) {
+	marker, err := os.ReadFile("marker")
+	if err != nil {
+		panic(err)
+	}
+	file, err := os.OpenFile(os.Getenv("TEST_INVOCATIONS"), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+	if _, err := file.Write(marker); err != nil {
+		panic(err)
+	}
+	if err := file.Close(); err != nil {
+		panic(err)
+	}
+	os.Exit(m.Run())
+}
+
+func TestIntegrationFixture(t *testing.T) {
+	if timeout := flag.Lookup("test.timeout").Value.String(); timeout != "12m0s" {
+		t.Fatalf("unexpected timeout %s", timeout)
+	}
+	marker, err := os.ReadFile("marker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSpace(string(marker)) == os.Getenv("FAIL_PACKAGE") {
+		t.Fatal("intentional test failure")
+	}
+}
+
+func TestUnitFixture(t *testing.T) {
+	t.Fatal("unit tests must be excluded")
+}
+`), 0o600))
+	}
+
+	inactive := filepath.Join(root, "inactive")
+	require.NoError(t, os.MkdirAll(inactive, 0o700))
+	require.NoError(t, os.WriteFile(filepath.Join(inactive, "package.go"), []byte("package inactive\n"), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(inactive, "inactive_test.go"), []byte(`//go:build ignore
+
+package inactive
+
+func TestIntegrationIgnored() {}
+`), 0o600))
+
+	script, err := filepath.Abs("run-sql-integration-shard.sh")
+	require.NoError(t, err)
+	for _, tc := range []struct{ name, fail string }{
+		{name: "all packages pass"},
+		{name: "continues after a failure", fail: "first/api"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			invocations := filepath.Join(t.TempDir(), "invocations")
+			cmd := exec.CommandContext(t.Context(), "bash", script, "1/1")
+			cmd.Dir = root
+			cmd.Env = append(cmd.Environ(), "GOWORK=off", "GOPROXY=off", "RUNNER_TEMP="+t.TempDir(),
+				"TEST_INVOCATIONS="+invocations, "FAIL_PACKAGE="+tc.fail)
+			output, err := cmd.CombinedOutput()
+			if tc.fail == "" {
+				require.NoError(t, err, "%s", output)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, string(output), "intentional test failure")
+			}
+			calls, err := os.ReadFile(invocations)
+			require.NoError(t, err)
+			require.ElementsMatch(t, []string{"first/api", "second/api"}, strings.Fields(string(calls)))
+			require.Regexp(t, `(?m)^ok\s+example\.com/integration/second/api\s+`, string(output))
+			require.Regexp(t, `(?m)^\?\s+example\.com/integration/inactive\s+\[no test files\]`, string(output))
+		})
+	}
+}
+
 func shardFixture(t *testing.T) (string, []string) {
 	t.Helper()
 	root, err := filepath.EvalSymlinks(t.TempDir())

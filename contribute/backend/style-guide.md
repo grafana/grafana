@@ -62,6 +62,8 @@ CI runs `TestIntegration*` tests separately for SQLite, MySQL, and PostgreSQL. R
 
 SQLite, MySQL, and PostgreSQL CI assign the longest packages to the least-loaded shard using shared [package weights](../../scripts/ci/backend-tests/sql-integration-weights.txt). Within Enterprise jobs, the same assignment accounts for both modules. Update a weight using the package runtime from a representative MySQL CI run. Unlisted packages receive an 8-second weight.
 
+MySQL and PostgreSQL jobs build test binaries in parallel, then run them serially against the job's database.
+
 Tests using only in-memory storage (including Badger), embedded services, local files, or test doubles should use ordinary `Test*` names and run once in the normal `-short` suite. Do not use integration short-mode skips for these tests. When converting an existing test, remove skips from nested subtests too and verify that all cases actually execute with `-short`.
 
 Tests that only run against SQLite can also use ordinary `Test*` names and run once with `-short`. This includes tests that explicitly create a SQLite database and tests that skip other backends using `db.IsTestDbSQLite()`. Tests that default to SQLite but also run against MySQL or PostgreSQL through `GRAFANA_TEST_DB` still need the database matrix.
