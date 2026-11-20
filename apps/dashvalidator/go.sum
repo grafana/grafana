@@ -144,7 +144,6 @@ github.com/armon/go-radix v1.0.0 h1:F4z6KzEeeQIMeLFa97iZU6vupzoecKdU5TX24SNppXI=
 github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/at-wat/mqtt-go v0.19.6 h1:+jo59yGHB3oqBU8nSFYbq6KDgN4ngMpqts5Qtyq61pc=
 github.com/at-wat/mqtt-go v0.19.6/go.mod h1:Y/YrYwUlLE4N53//699Zir3WJnxSdJojvLEAbZxJjgQ=
-github.com/aws/aws-sdk-go v1.38.35/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go v1.55.8 h1:JRmEUbU52aJQZ2AjX4q4Wu7t4uZjOu71uyNmaWlUkJQ=
 github.com/aws/aws-sdk-go v1.55.8/go.mod h1:ZkViS9AqA6otK+JBBNH2++sx1sgxrPKcSzPPvQkUtXk=
 github.com/aws/aws-sdk-go-v2 v1.46.0 h1:1kt7m/EKcEHt5mlyyxx9cSlMddRPIKbjb6DIQsu4HPk=
@@ -543,8 +542,8 @@ github.com/googleapis/gax-go/v2 v2.24.1/go.mod h1:bWeBei0NVwaNZKb2y1HUBS7gLXIF3/
 github.com/googleapis/google-cloud-go-testing v0.0.0-20200911160855-bcd43fbb19e8/go.mod h1:dvDLG8qkwmyD9a/MJJN3XJcT3xFxOKAvTZGvuZmac9g=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 h1:ak8gpuBF34UVt5IrfLPp4K9QGCa4BQAVgVLIAqdXyCo=
-github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050/go.mod h1:CVJjUIKwmdcHp6HYPb5iA5tplm68TJwagtlUCc+krr8=
+github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293 h1:2jXHQukEVsA332FEjULNkYYvEzYwpIsqfpVWTTqp8/U=
+github.com/grafana/alerting v0.0.0-20261120142630-6b20a0ecf293/go.mod h1:w6WjlRw178k8vWrLk3L0NXgXasSxr21EaPMBuy4ZuBA=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c h1:Pky+hqnm0GSA9NGMDN+E1GDBc4SaJDGNCrMjtctAavg=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
 github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add h1:uvDiO+HucdyuXsQJ8jRvxHb1nShJsQ/CXk0KnYJJpu4=
@@ -569,8 +568,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.302.0 h1:034qMvUG6ohHnfzF/FS4qZ9d1Xu
 github.com/grafana/grafana-plugin-sdk-go v0.302.0/go.mod h1:HQpZ7gOfxlW9q806q38LXqkxj6XPEIs6cINUCTHVmCM=
 github.com/grafana/otel-profiling-go v0.7.0 h1:Q6CBLSgAnYmNQNNrj4ipG0S/K/K8iazA9E4kYRzZf0I=
 github.com/grafana/otel-profiling-go v0.7.0/go.mod h1:Gt7LHg3HEfBoU8ZVArhqYaiA65EjcBe3nd3+arX6eMY=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623 h1:bHvgpgiN5QEnJTA8F6/REFyBB7s/OwAjlU/f6C+0eEY=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20261009142442-7daeb08a4623/go.mod h1:zvcfvXbBCOpviFiPtQ1KClxQXJiteuDUwleRwaPUIZ0=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6 h1:bA0hyj0bW8MHJzg3pghx47p4D1QNSLYsdn5VfhhcMsk=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20261119191137-fc531ea850e6/go.mod h1:OYkHDpWp79xcbKrjR3AnZXIvUpABvtvXlvtPRbWcoIA=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+efWVI/tBTd0oeWeDHI=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12/go.mod h1:aNSXN1bn1VHAd06EiepmwhAabHsMc67gx8itecdF2c8=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7EAJ0BHIethd+J6LqxFNw5mSiI2bM=
@@ -891,7 +890,6 @@ github.com/prometheus/client_golang v1.0.0/go.mod h1:db9x61etRT2tGnBNRi70OPL5Fsn
 github.com/prometheus/client_golang v1.3.0/go.mod h1:hJaj2vgQTGQmVCsAACORcieXFeDPbaTKGT+JTgUa3og=
 github.com/prometheus/client_golang v1.4.0/go.mod h1:e9GMxYsXl05ICDXkRhurwBS4Q3OK1iX/F2sw+iXX5zU=
 github.com/prometheus/client_golang v1.7.1/go.mod h1:PY5Wy2awLA44sXw4AOSfFBetzPP4j5+D6mVACh+pe2M=
-github.com/prometheus/client_golang v1.11.0/go.mod h1:Z6t4BnS23TR94PD6BsDNk8yVqroYurpAkEiz0P2BEV0=
 github.com/prometheus/client_golang v1.11.1/go.mod h1:Z6t4BnS23TR94PD6BsDNk8yVqroYurpAkEiz0P2BEV0=
 github.com/prometheus/client_golang v1.25.0 h1:cDtW1TcFsMi1RJc8khwCKB4VhzwV04aKqbYtNOXuiK0=
 github.com/prometheus/client_golang v1.25.0/go.mod h1:j2X/4/kaQHLPnmyEU8zjmkndo1T317VpCIQEml8LTKk=
@@ -909,11 +907,8 @@ github.com/prometheus/common v0.7.0/go.mod h1:DjGbpBbp5NYNiECxcL/VnbXCCaQpKd3tt2
 github.com/prometheus/common v0.9.1/go.mod h1:yhUN8i9wzaXS3w1O07YhxHEBxD+W35wd8bs7vj7HSQ4=
 github.com/prometheus/common v0.10.0/go.mod h1:Tlit/dnDKsSWFlCLTWaA1cyBgKHSMdTB80sz/V91rCo=
 github.com/prometheus/common v0.26.0/go.mod h1:M7rCNAaPfAosfx8veZJCuw84e35h3Cfd9VFqTh1DIvc=
-github.com/prometheus/common v0.29.0/go.mod h1:vu+V0TpY+O6vW9J44gczi3Ap/oXXR10b+M/gUGO4Hls=
 github.com/prometheus/common v0.74.0 h1:6iYW8MsYvmEnXFD9zLGgF0qmReaRhs3OMONu1c/nrLI=
 github.com/prometheus/common v0.74.0/go.mod h1:i/02C+FCst5B1etKgWesNrD49n+onplJCqUCtUKkOeA=
-github.com/prometheus/common/sigv4 v0.1.0 h1:qoVebwtwwEhS85Czm2dSROY5fTo2PAPEVdDeppTwGX4=
-github.com/prometheus/common/sigv4 v0.1.0/go.mod h1:2Jkxxk9yYvCkE5G1sQT7GuEXm57JrvHu9k5YwTjsNtI=
 github.com/prometheus/exporter-toolkit v0.19.0 h1:JljWCzE5naAiZ7Ukeb8PwjNbU+WwISuW0ktgdXMnMhc=
 github.com/prometheus/exporter-toolkit v0.19.0/go.mod h1:kOoEK/7wbe2Ns33l7wYHOXDZAZ/XGLyJqoGwmJxK+QU=
 github.com/prometheus/otlptranslator v1.0.0 h1:s0LJW/iN9dkIH+EnhiD3BlkkP5QVIUVEoIwkU+A6qos=
@@ -1012,8 +1007,6 @@ github.com/thomaspoignant/go-feature-flag v1.42.0 h1:C7embmOTzaLyRki+OoU2RvtVjJE
 github.com/thomaspoignant/go-feature-flag v1.42.0/go.mod h1:y0QiWH7chHWhGATb/+XqwAwErORmPSH2MUsQlCmmWlM=
 github.com/tjhop/slog-gokit v0.2.0 h1:tUNkuukDjpswQ2abhsugEobRRxN1aHEW8h4rvwdHMqU=
 github.com/tjhop/slog-gokit v0.2.0/go.mod h1:yA48zAHvV+Sg4z4VRyeFyFUNNXd3JY5Zg84u3USICq0=
-github.com/trivago/tgo v1.0.7 h1:uaWH/XIy9aWYWpjm2CU3RpcqZXmX2ysQ9/Go+d9gyrM=
-github.com/trivago/tgo v1.0.7/go.mod h1:w4dpD+3tzNIIiIfkWWa85w5/B77tlvdZckQ+6PkFnhc=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/uber/jaeger-client-go v2.30.0+incompatible h1:D6wyKGCecFaSRUpo8lCVbaOOb6ThwMmTEbhRwtKR97o=
 github.com/uber/jaeger-client-go v2.30.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
@@ -1229,7 +1222,6 @@ golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4/go.mod h1:RBQZq4jEuRlivfhVLd
 golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4/go.mod h1:p54w0d4576C0XHj96bSt6lcn1PtDYWL6XObtHCRCNQM=
 golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1/go.mod h1:9tjilg8BloeKEkVJvy7fQ90B1CfIiPueXVOjqfkSzI8=
 golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
-golang.org/x/net v0.0.0-20210525063256-abc453219eb5/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220225172249-27dd8689420f/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
