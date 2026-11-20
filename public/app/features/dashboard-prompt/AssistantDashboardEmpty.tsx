@@ -6,7 +6,7 @@ import { AppEvents, type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -36,6 +36,8 @@ const FREE_SPACE_BELOW = 2;
 
 /** How the person last left the templates panel, open or closed, kept for their next visit. */
 const TEMPLATES_OPEN_KEY = 'grafana.dashboard.landing.templatesOpen';
+/** Whether the last visit found templates of the account's own, which opens the panel on the next one. */
+const HAS_CUSTOM_TEMPLATES_KEY = 'grafana.dashboard.landing.hasCustomTemplates';
 
 /** Why the Assistant cannot take the prompt now, if it cannot: a reason to show the person. */
 async function findHandoffProblem(): Promise<string | undefined> {
@@ -114,23 +116,24 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const showTemplates = isAvailable && !assistantDriven;
   const { ref: fitRef, fit } = useFitToScrollArea();
   const [templateCounts, setTemplateCounts] = useState<TemplateCounts>();
-  // The block is shaped by the first counts the lists report (within LOAD_WAIT_MS), so it shows once and never moves:
-  // whether there is a toggle, and whether the panel starts open, only when the account has templates of its own. A
-  // list that reports later does not change it. Until then the block waits out of sight.
-  const [firstCounts, setFirstCounts] = useState<TemplateCounts>();
-  const onTemplatesCount = useCallback((counts: TemplateCounts) => {
-    setTemplateCounts(counts);
-    setFirstCounts((current) => current ?? counts);
-  }, []);
-  const ready = !showTemplates || firstCounts !== undefined;
-  const firstCustom = firstCounts?.custom ?? 0;
-  const withTemplates = showTemplates && firstCustom + (firstCounts?.grafana ?? 0) > 0;
   const templatesId = useId();
-  // The person's last toggle wins over the default.
+  // The page shows at once and the panel's open state is set from what is known then, so the block never moves as
+  // the lists load: the person's last toggle, or else open when the last visit found templates of the account's own.
+  // What this visit finds is kept for the next one.
   const [templatesOpenedByUser, setTemplatesOpenedByUser] = useState(() =>
     store.exists(TEMPLATES_OPEN_KEY) ? store.getBool(TEMPLATES_OPEN_KEY, false) : undefined
   );
-  const templatesOpen = templatesOpenedByUser ?? firstCustom > 0;
+  const [hadCustomTemplates] = useState(() => store.getBool(HAS_CUSTOM_TEMPLATES_KEY, false));
+  const templatesOpen = templatesOpenedByUser ?? hadCustomTemplates;
+  useEffect(() => {
+    if (templateCounts?.custom !== undefined) {
+      store.set(HAS_CUSTOM_TEMPLATES_KEY, templateCounts.custom > 0);
+    }
+  }, [templateCounts?.custom]);
+  // The toggle goes once the lists turn out to have no templates, unless its panel is open: it then says so in place.
+  const noTemplates =
+    templateCounts !== undefined && (templateCounts.custom ?? 0) + (templateCounts.grafana ?? 0) === 0;
+  const showToggle = showTemplates && !(noTemplates && !templatesOpen);
   // Opening or closing the templates keeps the content's height, so the block stays put under the person's pointer
   // instead of moving with the free space; the actions move and the room goes below them. A new fit places it again.
   const contentRef = useRef<HTMLDivElement>(null);
@@ -250,17 +253,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
       // A minimum, not a height: a screen too short for the content scrolls the page instead of cutting it off.
       style={fit ? { minHeight: fit.height, marginTop: -fit.pullUp } : undefined}
     >
-      <div
-        ref={contentRef}
-        className={cx(styles.content, !ready && styles.contentWaiting)}
-        style={heldHeight ? { minHeight: heldHeight } : undefined}
-        aria-busy={!ready || undefined}
-      >
-        {!ready && (
-          <div className={styles.waiting}>
-            <Spinner size="xl" />
-          </div>
-        )}
+      <div ref={contentRef} className={styles.content} style={heldHeight ? { minHeight: heldHeight } : undefined}>
         <div className={styles.top}>
           <div className={styles.heading}>
             <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -279,17 +272,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               }
               hostContextItems={template ? [template.contextItem] : []}
               onHostContextItemRemove={onTemplatePillRemove}
-              renderHostActions={withTemplates ? renderTemplatesToggle : undefined}
+              renderHostActions={showToggle ? renderTemplatesToggle : undefined}
             />
           </div>
         </div>
 
         {showTemplates && (
-          // Mounted at once so the templates load alongside the prompt, out of the layout until there are some to show.
+          // Mounted at once so the templates load alongside the prompt; closed, the panel takes no room.
           <LandingTemplates
             id={templatesId}
-            isOpen={withTemplates && templatesOpen}
-            onTemplatesCount={onTemplatesCount}
+            isOpen={templatesOpen}
+            onTemplatesCount={setTemplateCounts}
             className={styles.templates}
             testDataSource={testDataSource}
             showGrafanaTemplates={showGrafanaTemplates}
@@ -347,7 +340,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     // As wide as the dashboard area lets it, with or without templates; the empty-state wrapper sets the cap.
     content: css({
-      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(4),
@@ -359,18 +351,6 @@ function getStyles(theme: GrafanaTheme2) {
         paddingRight: 0,
         paddingBottom: theme.spacing(6),
       },
-    }),
-    // Laid out but out of sight, so it shows in place once it is ready.
-    contentWaiting: css({
-      visibility: 'hidden',
-    }),
-    waiting: css({
-      position: 'absolute',
-      inset: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      visibility: 'visible',
     }),
     top: css({
       display: 'flex',

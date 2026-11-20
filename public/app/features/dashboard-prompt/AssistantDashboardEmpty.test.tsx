@@ -222,6 +222,7 @@ describe('AssistantDashboardEmpty', () => {
     };
 
     const OPEN_KEY = 'grafana.dashboard.landing.templatesOpen';
+    const HAS_CUSTOM_KEY = 'grafana.dashboard.landing.hasCustomTemplates';
     const reportCounts = (counts: { custom?: number; grafana?: number }) =>
       act(() => latestTemplatesProps?.onTemplatesCount?.(counts));
     const queryToggle = () => screen.queryByRole('button', { name: 'Start from a template' });
@@ -229,60 +230,60 @@ describe('AssistantDashboardEmpty', () => {
     beforeEach(() => {
       Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
       window.localStorage.removeItem(OPEN_KEY);
+      window.localStorage.removeItem(HAS_CUSTOM_KEY);
     });
 
-    it('loads the templates out of the layout, with no toggle, until the lists report some', () => {
+    const toggle = () => screen.getByRole('button', { name: 'Start from a template' });
+    const panel = () => screen.getByTestId('landing-templates');
+
+    it('shows the page and the toggle at once, with the panel closed on a first visit', () => {
       renderEmpty();
-      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
-      expect(queryToggle()).not.toBeInTheDocument();
 
-      reportCounts({ custom: 1, grafana: 2 });
-
-      expect(screen.getByTestId('landing-templates')).toBeVisible();
-      expect(within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button')).toHaveAccessibleName(
-        'Start from a template'
-      );
+      expect(screen.getByRole('heading')).toBeVisible();
+      expect(within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button')).toBe(toggle());
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+      expect(panel()).not.toBeVisible();
     });
 
-    it('keeps the page out of sight behind a spinner until the lists report, then shows it in place', () => {
+    it('opens the panel at once on a visit after one that found custom templates, and keeps it open', () => {
+      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
       renderEmpty();
-      const heading = screen.getByRole('heading', { hidden: true });
-      expect(heading).not.toBeVisible();
-      // In a browser it shows over the hidden block, which jsdom's visibility check does not model.
-      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+      expect(panel()).toBeVisible();
 
       reportCounts({ custom: 0, grafana: 2 });
 
-      expect(heading).toBeVisible();
-      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+      expect(panel()).toBeVisible();
+      expect(window.localStorage.getItem(HAS_CUSTOM_KEY)).toBe('false');
     });
 
-    it('keeps the page as it first showed when a list reports later', () => {
+    it('keeps the panel closed when this visit finds custom templates, and opens it on the next', () => {
+      const first = renderEmpty();
+      reportCounts({ custom: 2, grafana: 3 });
+      expect(panel()).not.toBeVisible();
+      first.unmount();
+
       renderEmpty();
-      reportCounts({ grafana: 0 });
 
-      reportCounts({ grafana: 0, custom: 3 });
-
-      expect(queryToggle()).not.toBeInTheDocument();
-      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+      expect(panel()).toBeVisible();
     });
 
-    it('keeps the templates and their toggle out when the lists have none', () => {
+    it('drops the toggle when the lists have no templates', () => {
       renderEmpty();
 
       reportCounts({ custom: 0, grafana: 0 });
 
-      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
       expect(queryToggle()).not.toBeInTheDocument();
+      expect(panel()).not.toBeVisible();
     });
 
-    it('starts the templates closed when the account has no templates of its own', () => {
+    it('keeps an open panel, which then says there are none, when the lists have no templates', () => {
+      window.localStorage.setItem(OPEN_KEY, 'true');
       renderEmpty();
 
-      reportCounts({ custom: 0, grafana: 5 });
+      reportCounts({ custom: 0, grafana: 0 });
 
-      expect(queryToggle()).toHaveAttribute('aria-expanded', 'false');
-      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+      expect(toggle()).toHaveAttribute('aria-expanded', 'true');
+      expect(panel()).toBeVisible();
     });
 
     it('does not list templates when none are available, and shows the page at once', () => {
@@ -291,40 +292,33 @@ describe('AssistantDashboardEmpty', () => {
 
       expect(screen.getByRole('heading')).toBeVisible();
       expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Start from a template' })).not.toBeInTheDocument();
+      expect(queryToggle()).not.toBeInTheDocument();
     });
 
     it("opens and closes the templates from a toggle next to the prompt's + button", async () => {
       const { user } = renderEmpty();
-      reportCounts({ custom: 1, grafana: 2 });
-      const toggle = within(screen.getByTestId('dashboard-landing-prompt')).getByRole('button', {
-        name: 'Start from a template',
-      });
-      expect(latestTemplatesProps?.isOpen).toBe(true);
 
-      await user.click(toggle);
+      await user.click(toggle());
+      expect(latestTemplatesProps?.isOpen).toBe(true);
+      expect(toggle()).toHaveAttribute('aria-expanded', 'true');
+
+      await user.click(toggle());
       expect(latestTemplatesProps?.isOpen).toBe(false);
-      expect(toggle).toHaveAttribute('aria-expanded', 'false');
-
-      await user.click(toggle);
-      expect(latestTemplatesProps?.isOpen).toBe(true);
     });
 
-    it('keeps the templates as the person last left them on the next visit', async () => {
+    it('keeps the templates as the person last left them on the next visit, over what the lists found', async () => {
       const first = renderEmpty();
-      reportCounts({ custom: 1, grafana: 2 });
-      await first.user.click(screen.getByRole('button', { name: 'Start from a template' }));
+      await first.user.click(toggle());
       first.unmount();
 
       const second = renderEmpty();
-      reportCounts({ custom: 1, grafana: 2 });
-      expect(queryToggle()).toHaveAttribute('aria-expanded', 'false');
-      await second.user.click(screen.getByRole('button', { name: 'Start from a template' }));
+      expect(panel()).toBeVisible();
+      await second.user.click(toggle());
       second.unmount();
 
+      window.localStorage.setItem(HAS_CUSTOM_KEY, 'true');
       renderEmpty();
-      reportCounts({ custom: 0, grafana: 2 });
-      expect(queryToggle()).toHaveAttribute('aria-expanded', 'true');
+      expect(panel()).not.toBeVisible();
     });
 
     it('attaches the picked template to the prompt and swaps it on the next pick', () => {

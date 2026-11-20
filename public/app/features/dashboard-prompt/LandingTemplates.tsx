@@ -5,6 +5,7 @@ import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/da
 import { t, Trans } from '@grafana/i18n';
 import { Button, FilterInput, Icon, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
+import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelection, type TemplateSortOrder } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
@@ -13,10 +14,7 @@ import { getTemplateSortOptions } from 'app/features/dashboard/dashgrid/Dashboar
 interface Props {
   /** The panel's id, which its toggle in the prompt controls. */
   id?: string;
-  /**
-   * Open or closed. Closed, the panel takes no room and its lists keep loading; the host opens it once
-   * `onTemplatesCount` reports templates, so the cards arrive together.
-   */
+  /** Open or closed, as the toggle in the prompt sets it. Closed, the panel takes no room; its lists keep loading. */
   isOpen: boolean;
   testDataSource: DataSourceInstanceListItem | undefined;
   showGrafanaTemplates: boolean;
@@ -24,9 +22,9 @@ interface Props {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
   /**
-   * Called once every list has loaded, or after `LOAD_WAIT_MS` with the ones that have, with how many templates each
-   * offers (a list that is not shown, or has not reported, has no count), and again as late lists report. The host
-   * waits for it to show the page, shows the panel only when there are templates, and reports what was on offer.
+   * Called once the cards show, with how many templates each list offers (a list that is not shown, or has not
+   * reported, has no count): when every list has loaded, or after `LOAD_WAIT_MS` when the loaded ones have templates,
+   * and again as late lists report. The host drops the toggle when there are none and reports what was on offer.
    */
   onTemplatesCount?: (counts: TemplateCounts) => void;
   className?: string;
@@ -46,7 +44,9 @@ const ENTRY_POINT = 'emptyDashboardPrompt';
 const CARD_HEIGHT = 160;
 /** How much of the next row shows under the first, so a longer list reads as one that scrolls. */
 const NEXT_ROW_PEEK = 0.1;
-/** How long the page waits for every list before going ahead with the ones that have loaded. */
+/** A row on a desktop and the next one: the panel's loading cards, at the height the real ones take. */
+const LOADING_CARDS = 8;
+/** How long the cards wait for every list before showing the ones that have loaded. */
 export const LOAD_WAIT_MS = 1500;
 
 interface ToggleProps {
@@ -108,7 +108,8 @@ export function LandingTemplates({
   const hasCustomTemplates = Boolean(DashboardTemplatesTab);
   const allLoaded =
     (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
-  // A slow list must not hold back the page or the cards the others loaded.
+  const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
+  // A slow list must not hold back the cards the others loaded.
   const [waitedLong, setWaitedLong] = useState(false);
   useEffect(() => {
     if (allLoaded) {
@@ -117,7 +118,8 @@ export function LandingTemplates({
     const timeout = setTimeout(() => setWaitedLong(true), LOAD_WAIT_MS);
     return () => clearTimeout(timeout);
   }, [allLoaded]);
-  const loaded = allLoaded || waitedLong;
+  const loaded = allLoaded || (waitedLong && total > 0);
+  const isEmpty = allLoaded && total === 0;
   useEffect(() => {
     if (loaded) {
       onTemplatesCount?.(counts);
@@ -156,48 +158,67 @@ export function LandingTemplates({
       hidden={!isOpen}
     >
       <div className={styles.header}>
-        <FilterInput
-          className={styles.search}
-          placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
-          value={searchQuery}
-          escapeRegex={false}
-          onChange={setSearchQuery}
-        />
-        <div className={styles.sort}>
-          <SortPicker
-            value={sortOrder}
-            onChange={(change) => setSortOrder(change?.value)}
-            getSortOptions={getTemplateSortOptions}
-            placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
-            isClearable
-            width="auto"
-          />
-        </div>
+        {loaded && !isEmpty && (
+          <>
+            <FilterInput
+              className={styles.search}
+              placeholder={t('dashboard-library.custom-dashboard-template-filters.search-placeholder', 'Search')}
+              value={searchQuery}
+              escapeRegex={false}
+              onChange={setSearchQuery}
+            />
+            <div className={styles.sort}>
+              <SortPicker
+                value={sortOrder}
+                onChange={(change) => setSortOrder(change?.value)}
+                getSortOptions={getTemplateSortOptions}
+                placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
+                isClearable
+                width="auto"
+              />
+            </div>
+          </>
+        )}
       </div>
       <div className={styles.list}>
-        <div className={styles.grid}>
-          {renderCustomTemplates()}
-          {showGrafanaTemplates && (
-            <GrafanaTemplatesTab
-              entryPoint={ENTRY_POINT}
-              testDataSource={testDataSource}
-              onClose={noop}
-              loadedFiredRef={loadedFiredRef}
-              onSelectTemplate={onSelectTemplate}
-              selectedTemplateId={selectedTemplateId}
-              onTemplatesLoad={onGrafanaTemplatesLoad}
-              searchQuery={searchQuery}
-              sortOrder={sortOrder}
-            />
-          )}
-        </div>
-        {searchQuery.trim() && (
-          <p className={styles.noMatches}>
-            <Trans i18nKey="dashboard-library.grafana-dashboard-template-modal.no-results-found">
-              No template dashboards found
-            </Trans>
+        {isEmpty && (
+          <p className={styles.empty}>
+            <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
           </p>
         )}
+        {!loaded && (
+          <div className={styles.grid}>
+            {Array.from({ length: LOADING_CARDS }).map((_, index) => (
+              <DashboardCard.Skeleton key={index} fluid />
+            ))}
+          </div>
+        )}
+        {/* Shown once every list has loaded, so the cards arrive together instead of reflowing list by list. */}
+        <div hidden={!loaded}>
+          <div className={styles.grid}>
+            {renderCustomTemplates()}
+            {showGrafanaTemplates && (
+              <GrafanaTemplatesTab
+                entryPoint={ENTRY_POINT}
+                testDataSource={testDataSource}
+                onClose={noop}
+                loadedFiredRef={loadedFiredRef}
+                onSelectTemplate={onSelectTemplate}
+                selectedTemplateId={selectedTemplateId}
+                onTemplatesLoad={onGrafanaTemplatesLoad}
+                searchQuery={searchQuery}
+                sortOrder={sortOrder}
+              />
+            )}
+          </div>
+          {searchQuery.trim() && (
+            <p className={styles.noMatches}>
+              <Trans i18nKey="dashboard-library.grafana-dashboard-template-modal.no-results-found">
+                No template dashboards found
+              </Trans>
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -244,7 +265,7 @@ function getStyles(theme: GrafanaTheme2) {
         display: 'none',
       },
     }),
-    // A set height, the same with or without the sort picker, which a phone drops.
+    // A set height, so the row keeps its height while the lists load and the cards do not jump.
     header: css({
       display: 'flex',
       alignItems: 'center',
@@ -282,6 +303,11 @@ function getStyles(theme: GrafanaTheme2) {
       gap,
     }),
     // Shown while a search is on and no list has a card for it.
+    empty: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
     noMatches: css({
       margin: 0,
       color: theme.colors.text.secondary,

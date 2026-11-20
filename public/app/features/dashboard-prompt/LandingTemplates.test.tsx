@@ -134,7 +134,7 @@ describe('LandingTemplates', () => {
     await user.type(screen.getByPlaceholderText('Search'), 'nothing like it');
 
     // The no-matches line sits under the grid, in the list.
-    const list = screen.getByText('No template dashboards found').parentElement;
+    const list = screen.getByText('No template dashboards found').parentElement?.parentElement;
     expect(list).toHaveStyle({ height: 'calc(160px + 16px + 16px + 4px)' });
   });
 
@@ -150,48 +150,57 @@ describe('LandingTemplates', () => {
     expect(screen.getByTestId('grafana-card')).toBe(card);
   });
 
-  it('tells its host nothing until all lists have loaded, so it can show the cards together', () => {
+  it('holds every card back until all lists have loaded, so they do not reflow', () => {
     mockCustomCount = undefined;
-    const onTemplatesCount = jest.fn();
-    renderTemplates({ onTemplatesCount });
+    renderTemplates();
 
-    expect(onTemplatesCount).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Start from a template' })).toBeVisible();
+    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
   });
 
   describe('when a list never reports', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());
 
-    it('tells its host about the lists that loaded after a short wait', () => {
+    it('shows the cards that loaded after a short wait, and tells its host about them', () => {
       mockCustomCount = undefined;
       const onTemplatesCount = jest.fn();
       renderTemplates({ onTemplatesCount });
-
-      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
-
-      expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1 });
-    });
-
-    it('tells its host after the wait even when no list has reported, so the page does not wait on it', () => {
-      mockCustomCount = undefined;
-      mockGrafanaCount = undefined;
-      const onTemplatesCount = jest.fn();
-      renderTemplates({ onTemplatesCount });
+      expect(screen.getByTestId('grafana-card')).not.toBeVisible();
       expect(onTemplatesCount).not.toHaveBeenCalled();
 
       act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
 
-      expect(onTemplatesCount).toHaveBeenLastCalledWith({});
+      expect(screen.getByTestId('grafana-card')).toBeVisible();
+      expect(onTemplatesCount).toHaveBeenLastCalledWith({ grafana: 1 });
+    });
+
+    it('keeps waiting while no list has shown a card, and does not call the panel empty', () => {
+      mockCustomCount = undefined;
+      mockGrafanaCount = undefined;
+      const onTemplatesCount = jest.fn();
+      renderTemplates({ onTemplatesCount });
+
+      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
+
+      expect(onTemplatesCount).not.toHaveBeenCalled();
+      expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
     });
   });
 
-  it('tells its host when no list has templates', () => {
+  it('tells its host when no list has templates, and says so while open', () => {
     mockGrafanaCount = 0;
     mockCustomCount = 0;
     const onTemplatesCount = jest.fn();
     renderTemplates({ onTemplatesCount });
 
     expect(onTemplatesCount).toHaveBeenLastCalledWith({ custom: 0, grafana: 0 });
+    expect(screen.getByText('No templates available')).toBeInTheDocument();
+    // In the room a row of cards takes, so an open panel keeps its size.
+    expect(screen.getByText('No templates available').parentElement).toHaveStyle({
+      height: 'calc(160px + 16px + 16px + 4px)',
+    });
+    expect(screen.queryByPlaceholderText('Search')).not.toBeInTheDocument();
   });
 
   it('tells its host how many templates each list has once all have loaded', () => {
@@ -200,6 +209,7 @@ describe('LandingTemplates', () => {
     renderTemplates({ onTemplatesCount });
 
     expect(onTemplatesCount).toHaveBeenLastCalledWith({ custom: 0, grafana: 1 });
+    expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
   });
 
   it('leaves out custom templates when they are not available', () => {
