@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"net/http"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
@@ -45,6 +48,56 @@ func TestKVStorageBackendWriteLeases(t *testing.T) {
 			release()
 		})
 	}
+}
+
+type batchFailingKV struct {
+	KV
+	err error
+}
+
+func (f *batchFailingKV) Batch(context.Context, string, []BatchOp) error {
+	return f.err
+}
+
+func TestKVStorageBackendWriteLeaseBackendFailure(t *testing.T) {
+	key := &resourcepb.ResourceKey{Group: "group", Resource: "resources", Namespace: "ns", Name: "name"}
+	newBackend := func(err error) *kvStorageBackend {
+		store := &batchFailingKV{KV: setupBadgerKV(t), err: err}
+		manager := lease.NewManager(store, "test", "storage", nil, lease.WithGarbageCollectionDisabled)
+		return &kvStorageBackend{leaseManager: manager, log: &logging.NoOpLogger{}}
+	}
+
+	t.Run("store failure is an internal error without backend details", func(t *testing.T) {
+		// A remote KV reports failed batch operations, including database errors, as Aborted.
+		backend := newBackend(status.Error(codes.Aborted,
+			"batch operation 0 failed: Error 1290 (HY000): The MySQL server is running with the --read-only option"))
+		_, _, writeErr := backend.acquireWriteLease(t.Context(), WriteEvent{Key: key})
+		_, _, bulkErr := backend.acquireBulkLeases(t.Context(), []*resourcepb.ResourceKey{key})
+
+		for _, err := range []error{writeErr, bulkErr} {
+			require.Error(t, err)
+			res := AsErrorResult(err)
+			require.Equal(t, int32(http.StatusInternalServerError), res.Code)
+			require.NotContains(t, res.Message, "MySQL")
+			require.NotContains(t, res.Message, "group/resources/ns")
+			require.Equal(t, codes.Internal, status.Code(GRPCStatusError(res)))
+		}
+	})
+
+	t.Run("remote deadline with a live request is an internal error", func(t *testing.T) {
+		backend := newBackend(status.Error(codes.DeadlineExceeded, "remote timeout"))
+		_, _, err := backend.acquireWriteLease(t.Context(), WriteEvent{Key: key})
+		require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(err).Code)
+	})
+
+	t.Run("request cancellation is preserved without lease details", func(t *testing.T) {
+		backend := newBackend(context.Canceled)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		_, _, err := backend.acquireWriteLease(ctx, WriteEvent{Key: key})
+		require.ErrorIs(t, err, context.Canceled)
+		require.NotContains(t, err.Error(), "group/resources/ns")
+	})
 }
 
 func TestKVStorageBackendStorageLeaseLossCancelsContext(t *testing.T) {

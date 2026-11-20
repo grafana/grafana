@@ -1118,9 +1118,26 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 			k.metrics.recordConflict(event)
 			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 		}
-		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
+		return nil, nil, k.leaseAcquisitionError(ctx, "write", err)
 	}
 	return leaseCtx, release, nil
+}
+
+// leaseAcquisitionError keeps lease keys and raw store errors out of client
+// responses. A remote KV reports failed batches, database errors included, as
+// gRPC Aborted, which would otherwise be classified as a 409 conflict.
+func (k *kvStorageBackend) leaseAcquisitionError(ctx context.Context, kind string, err error) error {
+	// A remote KV timeout also looks like cancellation, so require the request's own context to be done.
+	if ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
+		return ctx.Err()
+	}
+	k.log.WithContext(ctx).Error("failed to acquire storage lease", "kind", kind, "error", err)
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: fmt.Sprintf("failed to acquire %s lease", kind),
+	}}
 }
 
 func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*resourcepb.ResourceKey) (context.Context, func(), error) {
@@ -1137,7 +1154,10 @@ func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*
 			Message: "bulk import is already running",
 		}}
 	}
-	return leaseCtx, release, err
+	if err != nil {
+		return nil, nil, k.leaseAcquisitionError(ctx, "bulk", err)
+	}
+	return leaseCtx, release, nil
 }
 
 func recordSpanError(span trace.Span, err error) {
