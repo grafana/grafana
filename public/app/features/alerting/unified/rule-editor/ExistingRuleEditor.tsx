@@ -10,6 +10,7 @@ import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWar
 import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
+import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
@@ -40,7 +41,10 @@ export function ExistingRuleEditor(props: ExistingRuleEditorProps) {
 }
 
 function K8sRuleEditor({ uid, ...props }: ExistingRuleEditorProps & { uid: string }) {
-  return <ExistingRuleEditorView {...props} ruleState={useK8sRuleWithLocation(uid)} />;
+  const [queryParams] = useURLSearchParams();
+  const kind = queryParams.get('kind');
+  const ruleState = useK8sRuleWithLocation(uid, kind === 'alert' || kind === 'recording' ? kind : undefined);
+  return <ExistingRuleEditorView {...props} ruleState={ruleState} />;
 }
 
 function RulerRuleEditor(props: ExistingRuleEditorProps) {

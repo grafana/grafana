@@ -4,6 +4,7 @@ import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 
 import { createReturnTo } from '../hooks/useReturnTo';
+import { type RuleKind } from '../rule-editor/useK8sRuleWithLocation';
 import { type RuleFormValues } from '../types/rule-form';
 
 import { ROOT_ROUTE_NAME } from './k8s/constants';
@@ -160,7 +161,9 @@ export const grafanaRulesNav = {
     const params: Record<string, string> = options?.includeReturnTo ? { returnTo: createReturnTo() } : {};
     return createRelativeUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`, params);
   },
-  editLink: (uid: string) => createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`),
+  /** `kind` lets the editor fetch only that kind of rule; without it the editor tries both. */
+  editLink: (uid: string, kind?: RuleKind) =>
+    createRelativeUrl(`/alerting/${encodeURIComponent(uid)}/edit`, kind ? { kind } : {}),
   /** Absolute URL for sharing — handles sub-path installs via config.appUrl. */
   shareLink: (uid: string) => createAbsoluteUrl(`/alerting/grafana/${encodeURIComponent(uid)}/view`),
   newAlertRuleLink: () => createRelativeUrl('/alerting/new/alerting', { returnTo: createReturnTo() }),

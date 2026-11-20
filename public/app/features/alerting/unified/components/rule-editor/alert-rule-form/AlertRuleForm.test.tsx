@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
@@ -100,6 +100,9 @@ const selectGroup = async (user: ReturnType<typeof renderRuleEditor>['user']) =>
 };
 
 const failWith = (message: string) => async () => HttpResponse.json({ message }, { status: 500 });
+
+const getAlertRuleHandlerFailingWith = (message: string) =>
+  http.get('/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/:name', failWith(message));
 
 // Like the apiserver: a replace that doesn't carry the stored resourceVersion is a conflict.
 const echoIfVersion = (storedVersion: string) => async (info: Parameters<typeof echoBodyResolver>[0]) => {
@@ -212,6 +215,14 @@ describe('AlertRuleForm — alerting.gmaOnlyListView on (k8s rules API)', () => 
     await user.click(ui.buttons.save.get());
 
     expect(await screen.findByText(/Rule updated successfully/i)).toBeInTheDocument();
+  });
+
+  it('loads only the kind of rule the edit link names', async () => {
+    server.use(getAlertRuleHandlerFailingWith('alert rules API was used'));
+
+    renderRuleEditor(`${grafanaRulerRecordingRule.grafana_alert.uid}?kind=recording`);
+
+    expect(await ui.inputs.name.find()).toHaveValue(grafanaRulerRecordingRule.grafana_alert.title);
   });
 
   it('shows that the rule does not exist when neither rules API kind has it', async () => {
