@@ -247,7 +247,7 @@ function getStyles(theme: GrafanaTheme2) {
     // Where `:has` is missing, nothing waits.
     waitForPrompt: css({
       '@supports selector(:has(a))': {
-        [`&:not(:has(.${prompt} [role="textbox"]))`]: {
+        [`&:not(:has(.${prompt} :is([role="textbox"], textarea)))`]: {
           visibility: 'hidden',
           // A switch, not motion, so it holds whatever the person's motion setting.
           [theme.transitions.handleMotion('no-preference', 'reduce')]: {
