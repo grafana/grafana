@@ -72,7 +72,7 @@ To configure authentication for the Grafana Provider:
    - To obtain the regional Cloud Provider API endpoint, use your access policy token and the following command to return a list of all of the Grafana stacks you own, along with their respective Cloud Provider API hostnames:
 
    ```bash
-   curl -sH "Authorization: Bearer @@@GRAFANA_CLOUD_ACCESS_POLICY_TOKEN@@@" "https://grafana.com/api/instances" | \
+   curl -sH "Authorization: Bearer <GRAFANA_CLOUD_ACCESS_POLICY_TOKEN>" "https://grafana.com/api/instances" | \
    jq '[.items[]|{stackName: .slug, clusterName:.clusterSlug, cloudProviderAPIURL: "https://cloud-provider-api-\(.clusterSlug).grafana.net"}]'
    ```
 
@@ -83,25 +83,32 @@ To configure authentication for the Grafana Provider:
 
 1. Create a file named `cloud-provider.tf` and add the following code block:
 
-   ```tf
+   ```terraform
    terraform {
-       required_providers {
+     required_providers {
        grafana = {
-           source  = "grafana/grafana"
+         source = "grafana/grafana"
        }
      }
    }
 
    provider "grafana" {
-       cloud_provider_url      = "<@@@CLOUD_PROVIDER_URL@@@"
-       cloud_access_policy_token     = "@@@CLOUD_ACCESS_POLICY_TOKEN@@@>"
+     cloud_provider_url          = "<CLOUD_PROVIDER_URL>"
+     cloud_provider_access_token = "<CLOUD_PROVIDER_ACCESS_TOKEN>"
    }
    ```
 
-1. Create a `variables.tf` file and paste the `CLOUD_ACCESS_POLICY_TOKEN` and `CLOUD_PROVIDER_URL` variables with your values.
-1. Run the following Terraform command:
-   ```tf
-   terraform apply -var-file="variables.tf"
+1. Replace the following placeholders:
+   - _`<CLOUD_PROVIDER_URL>`_: The regional Cloud Provider API endpoint from the previous step.
+   - _`<CLOUD_PROVIDER_ACCESS_TOKEN>`_: The Grafana Cloud access policy token you created in step 1.
+
+   Alternatively, set the `GRAFANA_CLOUD_PROVIDER_URL` and `GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN` environment variables instead of hardcoding them in `cloud-provider.tf`.
+
+1. Initialize and apply your Terraform configuration once you have added your resource definitions:
+
+   ```bash
+   terraform init
+   terraform apply
    ```
 
 ## Configure your resources
