@@ -790,10 +790,17 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	return s, nil
 }
 
+func ValidateBlobURL(url string) error {
+	if url != "" {
+		return fmt.Errorf("blob_url is no longer supported by unified storage")
+	}
+	return nil
+}
+
 // initializeBlobStorage initializes blob storage from the provided options.
 func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
-	if opts.Blob.URL != "" {
-		return nil, fmt.Errorf("blob_url is no longer supported by unified storage")
+	if err := ValidateBlobURL(opts.Blob.URL); err != nil {
+		return nil, err
 	}
 	if opts.Blob.Backend != nil {
 		return opts.Blob.Backend, nil

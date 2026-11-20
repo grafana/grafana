@@ -177,7 +177,7 @@ func NewStorageBackend(
 		for _, opt := range opts {
 			opt(&kvOpts)
 		}
-		if err := validateBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString("")); err != nil {
+		if err := resource.ValidateBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString("")); err != nil {
 			return nil, err
 		}
 		return NewBackend(BackendOptions{

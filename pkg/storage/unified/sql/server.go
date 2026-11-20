@@ -189,17 +189,10 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
-	if err := validateBlobURL(resourceOpts.Blob.URL); err != nil {
+	if err := resource.ValidateBlobURL(resourceOpts.Blob.URL); err != nil {
 		return err
 	}
 	resourceOpts.Blob.Backend = opts.BlobBackend
-	return nil
-}
-
-func validateBlobURL(url string) error {
-	if url != "" {
-		return fmt.Errorf("blob_url is no longer supported by unified storage")
-	}
 	return nil
 }
 
