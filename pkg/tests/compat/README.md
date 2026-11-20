@@ -40,6 +40,9 @@ If your resource needs more, the test fails on the PR that adds it and asks for 
 - a fixture in `smoke/testdata/<group>/<resource>.yaml`, in any served version; annotate it with `compat.grafana.app/server-named: "true"` if the server derives the name, or
 - an entry in `smoke/skip.yaml`, which also covers feature flags, legacy storage, and stale writes; its header explains each section.
 
+A failing smoke test logs the owners of the fixtures in `smoke/testdata/<group>/` when that directory has its own CODEOWNERS entry.
+Without one, failures go to the owners of `apps/<app>/`, or of `pkg/apps/<app>/` or `pkg/registry/<app>/` in grafana-enterprise for an Enterprise app, else to the owners of this directory.
+
 Each version follows its own `skip.yaml`, and stale entries fail the test, so the list shrinks as resources move on.
 
 ## Deep tests: one package per resource
@@ -75,6 +78,8 @@ GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' "${pkgs[@]}
 For rollback then re-upgrade, swap the directories.
 For Enterprise, overlay grafana-enterprise onto both checkouts with its `build.sh` and set `GOFLAGS=-tags=enterprise`.
 
+Smoke resource assertion failures log their owners from CODEOWNERS and add a resource entry to the GitHub Actions job summary.
+For every failed phase, including a crash or timeout, the phase runner adds a package-owner entry with the version role and round trip. A crash can leave only the package entry.
 Update and Verify change and delete the data, so each round trip needs a new `GRAFANA_COMPAT_DIR`.
 Without `GRAFANA_COMPAT_DIR` every test skips, so these tests never run as part of the unit or integration suites.
 Only SQLite is supported for now.
