@@ -1,9 +1,9 @@
 package router
 
 import (
-	v2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"net/http"
 
+	v2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 

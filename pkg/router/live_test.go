@@ -29,20 +29,24 @@ func TestLiveRequiresCertifiedStackAndMatchingPlugin(t *testing.T) {
 	entries := map[string]servingEntry{group: {handler: handler, use: newHandlerUse(handler), watches: routeCtx}}
 	r.snapshot.Store(&entries)
 	pc := &v2.PluginContext{PluginId: id, OrgId: 1, Namespace: "default"}
-	_, _, _, err := gate.target(t.Context(), pc)
-	require.Equal(t, codes.Unauthenticated, status.Code(err))
+	checkRejected := func(ctx context.Context, want codes.Code) {
+		t.Helper()
+		_, _, release, err := gate.target(ctx, pc)
+		if release != nil {
+			defer release()
+		}
+		require.Equal(t, want, status.Code(err))
+	}
+	checkRejected(t.Context(), codes.Unauthenticated)
 	cert := &x509.Certificate{DNSNames: []string{"stack-101"}, NotAfter: time.Now().Add(time.Minute)}
 	ctx := peer.NewContext(t.Context(), &peer.Peer{AuthInfo: credentials.TLSInfo{State: tls.ConnectionState{VerifiedChains: [][]*x509.Certificate{{cert}}}}})
 	wrong := metadata.NewIncomingContext(ctx, metadata.Pairs("stackid", "202"))
-	_, _, _, err = gate.target(wrong, pc)
-	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	checkRejected(wrong, codes.PermissionDenied)
 	pc.Namespace = "stacks-202"
-	_, _, _, err = gate.target(ctx, pc)
-	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	checkRejected(ctx, codes.PermissionDenied)
 	pc.Namespace = "stacks-101"
-	denied := func() { _, _, _, e := gate.target(ctx, pc); require.Equal(t, codes.NotFound, status.Code(e)) }
 	require.NoError(t, r.SetGroupVisibility([]string{group}, nil))
-	denied()
+	checkRejected(ctx, codes.NotFound)
 	require.NoError(t, r.SetGroupVisibility(nil, nil))
 	out, client, done, err := gate.target(ctx, pc)
 	require.NoError(t, err)
