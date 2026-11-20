@@ -42,14 +42,16 @@ func hardcodedOwnerFromName(group, kindResource string) *ownerFromName {
 	}
 	return &ownerFromName{
 		owners:            []resource.Owner{resource.UserResourceOwner},
-		parse:             parseUserStorageName,
+		ownerOfName:       parseServiceUserName,
 		allowGrafanaAdmin: true,
-		denyList:          true,
+		readScope:         readNone,
 	}
 }
 
-// parseUserStorageName reads the user from a <service>:<user_uid> name.
-func parseUserStorageName(name string) (resource.OwnerReference, bool) {
+// parseServiceUserName reads the user from a <service>:<user_uid> name: one
+// object per user for each service, as user storage and Logs Drilldown name
+// them.
+func parseServiceUserName(name string) (resource.OwnerReference, bool) {
 	parts := strings.Split(name, ":")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return resource.OwnerReference{}, false

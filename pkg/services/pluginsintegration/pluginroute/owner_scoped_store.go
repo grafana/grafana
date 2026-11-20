@@ -153,7 +153,7 @@ func (s *ownerScopedStore) ownedObjects(ctx context.Context) (items []runtime.Ob
 	if err != nil {
 		return nil, false, err
 	}
-	if s.owned.allowGrafanaAdmin && user.GetIsGrafanaAdmin() {
+	if s.owned.readScope == readAll || (s.owned.allowGrafanaAdmin && user.GetIsGrafanaAdmin()) {
 		return nil, true, nil
 	}
 	var names []string

@@ -14,9 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -277,4 +279,26 @@ func TestOwnerScopedStoreGrafanaAdminListsAll(t *testing.T) {
 	_, all, err := store.ownedObjects(ctxFor(admin))
 	require.NoError(t, err)
 	require.True(t, all)
+}
+
+func TestOwnerScopedStoreReadAll(t *testing.T) {
+	owned := &ownerFromName{owners: []resource.Owner{resource.UserResourceOwner}, ownerOfName: parseServiceUserName, readScope: readAll}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleViewer}
+
+	// Every object is listed, and any one may be read...
+	_, all, err := (&ownerScopedStore{owned: owned}).ownedObjects(ctxFor(user))
+	require.NoError(t, err)
+	require.True(t, all)
+	for verb, want := range map[string]authorizer.Decision{
+		"get":    authorizer.DecisionAllow,
+		"update": authorizer.DecisionDeny, // ...but only the owner's written
+		"delete": authorizer.DecisionDeny,
+	} {
+		got, _, err := owned.authorize(context.Background(), user, authorizer.AttributesRecord{Verb: verb, Name: "svc:other", ResourceRequest: true}, nil)
+		require.NoError(t, err)
+		require.Equal(t, want, got, verb)
+	}
+	got, _, err := owned.authorize(context.Background(), user, authorizer.AttributesRecord{Verb: "update", Name: "svc:abc", ResourceRequest: true}, nil)
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, got)
 }

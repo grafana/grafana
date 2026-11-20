@@ -11,6 +11,14 @@ userStorageV0alpha1: {
 	// naming strategy can declare a <service>:<user_uid> name.
 	folderScoped: false
 
+	// No need for search
+	search: {
+		endpoint: false
+		trash:    false
+		hybrid:   false
+		global:   false
+	}
+
 	schema: {
 		spec: {
 			// Data is the key:value stored in the user storage for a service.

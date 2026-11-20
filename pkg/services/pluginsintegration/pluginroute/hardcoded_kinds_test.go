@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -63,5 +64,16 @@ func TestHardcodedOwnerFromName(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got, reason)
 		})
+	}
+}
+
+func TestParseServiceUserName(t *testing.T) {
+	owner, ok := parseServiceUserName("svc:abc")
+	require.True(t, ok)
+	require.Equal(t, resource.UserOwner("abc"), owner)
+
+	for _, name := range []string{"abc", "svc:", ":abc", "svc:abc:x", "user-abc"} {
+		_, ok := parseServiceUserName(name)
+		require.False(t, ok, name)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -96,6 +97,24 @@ func runScenario(t *testing.T, routed bool) []string {
 	_, err := ownerClient.Create(ctx, newUserStorage(ownName, map[string]any{"a": "1"}), metav1.CreateOptions{})
 	record("owner creates own", err)
 	require.NoError(t, err)
+
+	// The objects are private to their user, so no generic read route serves
+	// them: the kind opts out of search and trash, and users may not list keys.
+	for _, u := range []struct {
+		who  string
+		user apis.User
+	}{{"owner", owner}, {"server admin", helper.Org1.Admin}} {
+		rest := u.user.RESTClient(t, &userstorage.GroupVersion)
+		for _, route := range []string{"search", "trash", "list-keys"} {
+			var code int
+			rest.Post().
+				AbsPath("apis", gvr.Group, gvr.Version, "namespaces", "default", gvr.Resource, route).
+				Body([]byte("{}")).SetHeader("Content-Type", "application/json").
+				Do(ctx).StatusCode(&code)
+			steps = append(steps, fmt.Sprintf("%s posts %s: %d", u.who, route, code))
+			require.NotEqual(t, http.StatusOK, code, "%s %s", u.who, route)
+		}
+	}
 
 	_, err = ownerClient.Create(ctx, newUserStorage(otherName, map[string]any{"a": "1"}), metav1.CreateOptions{})
 	record("owner creates for another user", err)
