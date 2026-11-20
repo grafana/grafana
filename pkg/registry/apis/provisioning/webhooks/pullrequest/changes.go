@@ -487,22 +487,30 @@ func hasRemovedMetadata(original, updated *unstructured.Unstructured) bool {
 	if original.GetNamespace() != "" && updated.GetNamespace() != original.GetNamespace() {
 		return true
 	}
-	if hasMissingKeys(original.GetLabels(), updated.GetLabels(), func(string) bool { return true }) {
+	if hasMissingKeys(original, updated, "labels", func(string) bool { return true }) {
 		return true
 	}
-	return hasMissingKeys(original.GetAnnotations(), updated.GetAnnotations(), resources.IsGrafanaOwnedAnnotation)
+	return hasMissingKeys(original, updated, "annotations", resources.IsGrafanaOwnedAnnotation)
 }
 
-// hasMissingKeys returns true if any key in original selected by include is
-// absent from updated.
-func hasMissingKeys(original, updated map[string]string, include func(string) bool) bool {
-	for k := range original {
+// hasMissingKeys returns true if any key of original's metadata.<field> selected
+// by include is absent from updated's. It reads the raw maps because the typed
+// getters return nil as soon as one value is not a string.
+func hasMissingKeys(original, updated *unstructured.Unstructured, field string, include func(string) bool) bool {
+	updatedKeys := rawMetadataMap(updated, field)
+	for k := range rawMetadataMap(original, field) {
 		if !include(k) {
 			continue
 		}
-		if _, exists := updated[k]; !exists {
+		if _, exists := updatedKeys[k]; !exists {
 			return true
 		}
 	}
 	return false
+}
+
+func rawMetadataMap(obj *unstructured.Unstructured, field string) map[string]any {
+	value, _, _ := unstructured.NestedFieldNoCopy(obj.Object, "metadata", field)
+	m, _ := value.(map[string]any)
+	return m
 }

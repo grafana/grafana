@@ -45,6 +45,7 @@ func TestIsGrafanaOwnedAnnotation(t *testing.T) {
 
 	user := []string{
 		utils.AnnoKeyUseCrossDashboardVariables,
+		"alerting.grafana.app/allow-group-writes",
 		"team",
 		"grafana.app",
 		"/foo",
@@ -113,25 +114,26 @@ func TestStripGrafanaOwnedAnnotations(t *testing.T) {
 	})
 }
 
-func TestUserAnnotations(t *testing.T) {
-	obj := map[string]any{"metadata": map[string]any{"annotations": map[string]any{
-		utils.AnnoKeyFolder:                     "f",
-		utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all"}`,
-		"example.com/owner":                     "team-a",
-	}}}
+func TestValidateUserAnnotations(t *testing.T) {
+	valid := []map[string]any{
+		{},
+		{"metadata": map[string]any{"name": "dash"}},
+		{"metadata": map[string]any{"annotations": nil}},
+		{"metadata": map[string]any{"annotations": map[string]any{"example.com/owner": "team-a"}}},
+	}
+	for _, obj := range valid {
+		require.NoError(t, validateUserAnnotations(obj))
+	}
 
-	kept := userAnnotations(obj)
+	err := validateUserAnnotations(map[string]any{"metadata": map[string]any{"annotations": map[string]any{
+		"example.com/owner": "team-a",
+		"example.com/count": float64(3),
+		"example.com/flag":  true,
+	}}})
+	require.EqualError(t, err, `metadata.annotations[example.com/count]: Invalid value: 3: annotation values must be strings`)
 
-	require.Equal(t, map[string]any{
-		utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all"}`,
-		"example.com/owner":                     "team-a",
-	}, kept)
-	kept["example.com/owner"] = "changed"
-	require.Equal(t, "team-a", obj["metadata"].(map[string]any)["annotations"].(map[string]any)["example.com/owner"],
-		"the result must be a copy")
-
-	require.Nil(t, userAnnotations(map[string]any{"metadata": map[string]any{"annotations": map[string]any{utils.AnnoKeyFolder: "f"}}}))
-	require.Nil(t, userAnnotations(map[string]any{}))
+	err = validateUserAnnotations(map[string]any{"metadata": map[string]any{"annotations": "not-a-map"}})
+	require.EqualError(t, err, `metadata.annotations: Invalid value: "not-a-map": must be a map of strings`)
 }
 
 func deepCopyMap(t *testing.T, in map[string]any) map[string]any {

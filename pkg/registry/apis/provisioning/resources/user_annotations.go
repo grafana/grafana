@@ -1,10 +1,14 @@
 package resources
 
 import (
+	"maps"
+	"slices"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	alertingv1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -22,6 +26,9 @@ var (
 // user content, so they round-trip through the repository like user annotations.
 var userGrafanaAnnotations = map[string]struct{}{
 	utils.AnnoKeyUseCrossDashboardVariables: {},
+	// The rule's author opts in to setting rule group labels; admission rejects
+	// grouped rules without it.
+	alertingv1beta1.AllowGroupWritesAnnotationKey: {},
 }
 
 // IsGrafanaOwnedAnnotation reports whether an annotation key is owned by Grafana
@@ -82,22 +89,24 @@ func stripGrafanaOwnedAnnotations(obj map[string]any) {
 	}
 }
 
-// userAnnotations returns a copy of the user-owned annotations of obj, or nil
-// when there are none.
-func userAnnotations(obj map[string]any) map[string]any {
-	annotations, ok := rawAnnotations(obj)
-	if !ok {
+// validateUserAnnotations rejects annotations that are not a map of strings.
+// Kubernetes requires string values, and a single non-string value makes the
+// whole map unreadable through unstructured.GetAnnotations, so the stamping that
+// follows in Parse would silently drop every other annotation of the file.
+func validateUserAnnotations(obj map[string]any) error {
+	value, found, err := unstructured.NestedFieldNoCopy(obj, "metadata", "annotations")
+	if err != nil || !found || value == nil {
 		return nil
 	}
-	var kept map[string]any
-	for key, value := range annotations {
-		if IsGrafanaOwnedAnnotation(key) {
-			continue
-		}
-		if kept == nil {
-			kept = make(map[string]any, len(annotations))
-		}
-		kept[key] = value
+	path := field.NewPath("metadata", "annotations")
+	annotations, ok := value.(map[string]any)
+	if !ok {
+		return field.Invalid(path, value, "must be a map of strings")
 	}
-	return kept
+	for _, key := range slices.Sorted(maps.Keys(annotations)) {
+		if _, ok := annotations[key].(string); !ok {
+			return field.Invalid(path.Key(key), annotations[key], "annotation values must be strings")
+		}
+	}
+	return nil
 }

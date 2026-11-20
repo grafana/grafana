@@ -188,7 +188,6 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 	})
 
 	t.Run("an annotation-only change is written and applied", func(t *testing.T) {
-		specBefore := committedFile(t, path)["spec"]
 		body := frontendBody(t, liveDashboard(t, name))
 		sent := bodyAnnotations(t, body)
 		sent[crossVarsKey] = crossVarsPicked
@@ -203,7 +202,7 @@ func TestIntegrationProvisioning_FileWritesKeepUserAnnotations(t *testing.T) {
 				crossVarsKey: crossVarsPicked,
 			},
 		}, file["metadata"])
-		require.Equal(t, specBefore, file["spec"], "the spec should be unchanged")
+		require.Equal(t, asDecodedJSON(t, body["spec"]), file["spec"], "the spec should be written as sent")
 
 		annotations := liveDashboard(t, name).GetAnnotations()
 		require.Equal(t, crossVarsPicked, annotations[crossVarsKey], "the write should apply the new selection")
