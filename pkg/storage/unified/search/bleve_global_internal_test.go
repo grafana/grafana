@@ -239,6 +239,15 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
+	// The creator is faceted only here; per-resource search still filters on it.
+	f, ok = global.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.facetable)
+	f, ok = perResource.keywordFields[resource.SEARCH_FIELD_CREATED_BY]
+	require.True(t, ok)
+	assert.True(t, f.filterable)
+	assert.False(t, f.facetable)
+
 	// Timestamps are sortable in both, so results can be ordered by time.
 	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)

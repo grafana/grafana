@@ -313,7 +313,7 @@ func globalSources(namespace string, types []schema.GroupResource) []NamespacedR
 // GlobalSearchFieldDefinitions returns the searchable fields of a
 // namespace-wide index: the standard set, because such an index holds nothing
 // resource-specific, plus the resource type of each document, so a query can
-// pick out one type from an index holding several.
+// pick out one type from an index holding several, and a facet on the creator.
 func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 	standard := StandardSearchFieldDefinitions()
 	out := make([]SearchFieldDefinition, 0, len(standard)+1)
@@ -325,7 +325,16 @@ func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 		Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet},
 		Description:  "Resource type of the document, as {group}/{resource}.",
 	})
-	return append(out, standard...)
+	for _, def := range standard {
+		// Faceted here so a caller can group hits by owner. Adding the facet to the
+		// standard set instead would change every per-resource index's hash and
+		// rebuild them all.
+		if def.Name == SEARCH_FIELD_CREATED_BY {
+			def.Capabilities = append(slices.Clone(def.Capabilities), SearchCapabilityFacet)
+		}
+		out = append(out, def)
+	}
+	return out
 }
 
 // IndexFieldDefinitions returns the field sets an index declares beyond its own
