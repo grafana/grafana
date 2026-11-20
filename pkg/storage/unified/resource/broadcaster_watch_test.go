@@ -47,8 +47,11 @@ func newWatchBroadcaster(t *testing.T, floor int64, seed ...*WrittenEvent) (*bro
 
 func checkedWatch(t *testing.T, b *broadcaster[*WrittenEvent], gr GroupResource, since int64) (<-chan *WrittenEvent, error) {
 	t.Helper()
-	stream, _, err := b.subscribeWatch(t.Context(), "test", gr, &watchResume{since: since, requestedRV: since})
-	return stream, err
+	sub, err := b.subscribeWatch(t.Context(), "test", gr, &watchResume{since: since, requestedRV: since})
+	if err != nil {
+		return nil, err
+	}
+	return sub.events(), nil
 }
 
 var intGR = GroupResource{Resource: "r"}
@@ -175,9 +178,9 @@ func TestCheckedWatchCancellation(t *testing.T) {
 		for range 250 {
 			ctx, cancel := context.WithCancel(t.Context())
 			wg.Go(func() {
-				stream, _, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
+				sub, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
 				if err == nil {
-					b.Unsubscribe(stream)
+					b.Unsubscribe(sub.events())
 				}
 			})
 			cancel()
@@ -203,13 +206,13 @@ func TestCheckedWatchWaitsForSeed(t *testing.T) {
 				}
 			}})
 		type result struct {
-			stream <-chan *WrittenEvent
-			err    error
+			sub *watchSubscription[*WrittenEvent]
+			err error
 		}
 		subscribed := make(chan result, 1)
 		go func() {
-			stream, _, err := b.subscribeWatch(t.Context(), "watch", gr, &watchResume{since: 50, requestedRV: 50})
-			subscribed <- result{stream, err}
+			sub, err := b.subscribeWatch(t.Context(), "watch", gr, &watchResume{since: 50, requestedRV: 50})
+			subscribed <- result{sub: sub, err: err}
 		}()
 		input <- cacheEvent(gr, 51)
 		input <- cacheEvent(gr, 52)
@@ -219,11 +222,11 @@ func TestCheckedWatchWaitsForSeed(t *testing.T) {
 		res := <-subscribed
 		require.NoError(t, res.err)
 		for _, want := range []int64{50, 51, 52} {
-			require.Equal(t, want, (<-res.stream).ResourceVersion)
+			require.Equal(t, want, (<-res.sub.events()).ResourceVersion)
 		}
 		synctest.Wait()
-		require.Empty(t, res.stream)
-		b.Unsubscribe(res.stream)
+		require.Empty(t, res.sub.events())
+		b.Unsubscribe(res.sub.events())
 	})
 }
 func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
@@ -257,7 +260,7 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 
 		first := make(chan error, 1)
 		go func() {
-			_, _, err := b.subscribeWatch(t.Context(), "first", intGR, nil)
+			_, err := b.subscribeWatch(t.Context(), "first", intGR, nil)
 			first <- err
 		}()
 		synctest.Wait()
@@ -266,15 +269,15 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		require.Equal(t, int32(1), attempts.Load())
 
 		type result struct {
-			stream <-chan int
-			err    error
+			sub *watchSubscription[int]
+			err error
 		}
 		const watcherCount = 10
 		second := make(chan result, watcherCount)
 		for range watcherCount {
 			go func() {
-				stream, _, err := b.subscribeWatch(t.Context(), "second", intGR, intResume(0))
-				second <- result{stream: stream, err: err}
+				sub, err := b.subscribeWatch(t.Context(), "second", intGR, intResume(0))
+				second <- result{sub: sub, err: err}
 			}()
 		}
 		synctest.Wait()
@@ -284,8 +287,8 @@ func TestBroadcasterRetriesInitializationOnNextCheckedWatch(t *testing.T) {
 		for range watcherCount {
 			res := <-second
 			require.NoError(t, res.err)
-			require.Equal(t, 50, <-res.stream)
-			streams = append(streams, res.stream)
+			require.Equal(t, 50, <-res.sub.events())
+			streams = append(streams, res.sub.events())
 		}
 
 		input <- 51
@@ -310,16 +313,16 @@ func TestBroadcasterFatalInitializationFailureRejectsWatches(t *testing.T) {
 			}})
 		waiting := make(chan error, 1)
 		go func() {
-			_, _, err := b.subscribeWatch(t.Context(), "waiting", intGR, nil)
+			_, err := b.subscribeWatch(t.Context(), "waiting", intGR, nil)
 			waiting <- err
 		}()
 		synctest.Wait()
 		close(release)
 		require.ErrorContains(t, <-waiting, "cache capacity")
 		<-b.terminated
-		stream, _, err := b.subscribeWatch(t.Context(), "after failure", intGR, nil)
+		sub, err := b.subscribeWatch(t.Context(), "after failure", intGR, nil)
 		require.ErrorContains(t, err, "cache capacity")
-		require.Nil(t, stream)
+		require.Nil(t, sub)
 	})
 }
 func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
@@ -332,7 +335,7 @@ func TestCheckedWatchCancellationDuringInitialization(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
 		go func() {
-			_, _, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
+			_, err := b.subscribeWatch(ctx, "cancel", intGR, nil)
 			done <- err
 		}()
 		synctest.Wait()
@@ -350,9 +353,9 @@ func TestCheckedWatchRoutesByGroupResource(t *testing.T) {
 		const subBuf, ovfCap = 4, 8
 		b := newBroadcasterWithSizes(t.Context(), input, subBuf, ovfCap, newBroadcasterMetrics(prometheus.NewRegistry()), writtenEventIdentity, nil)
 
-		scoped, _, err := b.subscribeWatch(t.Context(), "playlists", playlist, nil)
+		scoped, err := b.subscribeWatch(t.Context(), "playlists", playlist, nil)
 		require.NoError(t, err)
-		slow, _, err := b.subscribeWatch(t.Context(), "dashboards", dashboard, nil)
+		slow, err := b.subscribeWatch(t.Context(), "dashboards", dashboard, nil)
 		require.NoError(t, err)
 
 		// A burst past the overflow cap disconnects the slow dashboards watcher
@@ -362,10 +365,10 @@ func TestCheckedWatchRoutesByGroupResource(t *testing.T) {
 		}
 		input <- cacheEvent(playlist, 100)
 		synctest.Wait()
-		require.Equal(t, int64(100), (<-scoped).ResourceVersion)
-		require.Empty(t, scoped)
-		requireClosedAfterDrain(t, slow)
-		b.Unsubscribe(scoped)
+		require.Equal(t, int64(100), (<-scoped.events()).ResourceVersion)
+		require.Empty(t, scoped.events())
+		requireClosedAfterDrain(t, slow.events())
+		b.Unsubscribe(scoped.events())
 	})
 }
 
@@ -389,10 +392,10 @@ func TestCheckedWatchReplaysOnlyOnResume(t *testing.T) {
 	dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	b, _ := newWatchBroadcaster(t, 10, cacheEvent(playlist, 10), cacheEvent(dashboard, 11), cacheEvent(playlist, 12))
 
-	fresh, _, err := b.subscribeWatch(t.Context(), "list", playlist, nil)
+	fresh, err := b.subscribeWatch(t.Context(), "list", playlist, nil)
 	require.NoError(t, err)
-	require.Empty(t, fresh, "watches starting from a list or the latest RV must not replay")
-	b.Unsubscribe(fresh)
+	require.Empty(t, fresh.events(), "watches starting from a list or the latest RV must not replay")
+	b.Unsubscribe(fresh.events())
 
 	resumed, err := checkedWatch(t, b, playlist, 10)
 	require.NoError(t, err)
@@ -408,35 +411,36 @@ func TestBroadcasterWatchProgress(t *testing.T) {
 		dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 		b, input := newWatchBroadcaster(t, 10, cacheEvent(playlist, 10))
 		// Replayed events count as delivered too.
-		stream, progress, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 10, requestedRV: 10})
+		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 10, requestedRV: 10})
 		require.NoError(t, err)
+		stream := sub.events()
 		defer b.Unsubscribe(stream)
 		consumed := int64(0)
-		require.Zero(t, progress.rv(consumed), "progress must not cover the unread replay")
+		require.Zero(t, sub.rv(consumed), "progress must not cover the unread replay")
 		require.Equal(t, int64(10), (<-stream).ResourceVersion)
 		consumed++
 		// The watch advances from its replay directly; shared progress only
 		// counts events received after it subscribed.
-		require.Zero(t, progress.rv(consumed), "nothing newer than the watch's start")
+		require.Zero(t, sub.rv(consumed), "nothing newer than the watch's start")
 
 		input <- cacheEvent(dashboard, 20)
 		synctest.Wait()
-		require.Equal(t, int64(20), progress.rv(consumed), "other group/resources establish progress")
+		require.Equal(t, int64(20), sub.rv(consumed), "other group/resources establish progress")
 
 		input <- cacheEvent(playlist, 30)
 		input <- cacheEvent(dashboard, 40)
 		synctest.Wait()
-		require.Zero(t, progress.rv(consumed), "progress must not cover undelivered events")
+		require.Zero(t, sub.rv(consumed), "progress must not cover undelivered events")
 		require.Equal(t, int64(30), (<-stream).ResourceVersion)
 		consumed++
-		require.Equal(t, int64(40), progress.rv(consumed))
+		require.Equal(t, int64(40), sub.rv(consumed))
 
 		input <- cacheEvent(dashboard, 35)
 		synctest.Wait()
-		require.Equal(t, int64(40), progress.rv(consumed), "late events must not regress progress")
+		require.Equal(t, int64(40), sub.rv(consumed), "late events must not regress progress")
 
 		b.Unsubscribe(stream)
 		synctest.Wait()
-		require.Zero(t, progress.rv(consumed), "a removed subscription has no progress")
+		require.Zero(t, sub.rv(consumed), "a removed subscription has no progress")
 	})
 }

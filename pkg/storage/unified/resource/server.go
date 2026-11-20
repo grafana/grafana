@@ -2346,10 +2346,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		resume = &watchResume{since: requestedSince, requestedRV: req.Since, unchecked: req.Since < 0}
 	}
 	gr := GroupResource{Group: key.Group, Resource: key.Resource}
-	stream, progress, err := b.subscribeWatch(ctx, name, gr, resume)
+	sub, err := b.subscribeWatch(ctx, name, gr, resume)
 	if err != nil {
 		return err
 	}
+	stream := sub.events()
 	defer b.Unsubscribe(stream)
 
 	since := requestedSince
@@ -2519,7 +2520,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			// collections are not routed to this stream, so take their progress
 			// from the broadcaster. Legacy SQL polls collections separately.
 			if isKVBackend {
-				processedRV = max(processedRV, progress.rv(consumed))
+				processedRV = max(processedRV, sub.rv(consumed))
 			}
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
 			cutoffRV := cutoff.UnixMicro()

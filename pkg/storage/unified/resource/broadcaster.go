@@ -200,7 +200,7 @@ const (
 	overflowLogInterval = 10 * time.Second
 )
 
-func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) error {
+func (b *broadcaster[T]) submit(req *subscribeRequest[T]) error {
 	sub := req.sub
 	b.submissionMu.RLock()
 	defer b.submissionMu.RUnlock()
@@ -212,9 +212,9 @@ func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) e
 	default:
 	}
 	select {
-	case <-ctx.Done():
+	case <-req.ctx.Done():
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultCtxCanceled).Inc()
-		return ctx.Err()
+		return req.ctx.Err()
 	case <-b.terminated:
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.gr.Resource, subscriptionResultTerminated).Inc()
 		return io.EOF
@@ -226,33 +226,31 @@ func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) e
 // subscribeWatch acknowledges replay capture and live registration in the same
 // operation as floor validation. The subscriber only receives gr's events. Only
 // resumes replay the cache: other watches start at or above every cached RV.
-func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, resume *watchResume) (<-chan T, *watchProgress[T], error) {
+func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, resume *watchResume) (*watchSubscription[T], error) {
 	if err := b.ensureReady(ctx); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	sub := &subscription[T]{name: name, gr: gr, ch: make(chan T, b.watchBufSize)}
 	req := &subscribeRequest[T]{sub: sub, ctx: ctx, resume: resume, ack: make(chan error, 1)}
-	if err := b.submit(ctx, req); err != nil {
-		return nil, nil, err
+	if err := b.submit(req); err != nil {
+		return nil, err
 	}
 	select {
 	case <-ctx.Done():
-		// Unsubscribe drains queued admissions before removing the subscriber,
-		// including when cancellation wins the race with the acknowledgment.
-		b.Unsubscribe(sub.ch)
-		return nil, nil, ctx.Err()
 	case <-b.terminated:
-		return nil, nil, io.EOF
+		return nil, io.EOF
 	case err := <-req.ack:
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		if err := ctx.Err(); err != nil {
-			b.Unsubscribe(sub.ch)
-			return nil, nil, err
-		}
-		return sub.ch, &watchProgress[T]{b: b, sub: sub}, nil
 	}
+	// Cancellation can race with acknowledgment. Unsubscribe drains queued
+	// admissions before removing the subscriber.
+	if err := ctx.Err(); err != nil {
+		b.Unsubscribe(sub.ch)
+		return nil, err
+	}
+	return &watchSubscription[T]{b: b, sub: sub}, nil
 }
 
 // ensureReady starts a new initialization attempt after a retryable failure.
@@ -324,11 +322,13 @@ func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, er
 	close(attempt.done)
 }
 
-// watchProgress lets a watch read its own delivery progress. It reads only
-// atomics, so bookmark ticks add no work to the broadcaster.
-type watchProgress[T any] struct {
+type watchSubscription[T any] struct {
 	b   *broadcaster[T]
 	sub *subscription[T]
+}
+
+func (s *watchSubscription[T]) events() <-chan T {
+	return s.sub.ch
 }
 
 // rv returns the highest RV the broadcaster has received once the watch has
@@ -337,11 +337,11 @@ type watchProgress[T any] struct {
 // removed. This stands in for the progress other collections' events used to
 // carry; replayed and live events of its own collection still advance the
 // watch directly.
-func (p *watchProgress[T]) rv(consumed int64) int64 {
+func (s *watchSubscription[T]) rv(consumed int64) int64 {
 	// received is published after delivery, so every event it covers is
 	// already counted in delivered.
-	received := p.b.received.Load()
-	if received <= p.sub.startRV || p.sub.removed.Load() || p.sub.delivered.Load() != consumed {
+	received := s.b.received.Load()
+	if received <= s.sub.startRV || s.sub.removed.Load() || s.sub.delivered.Load() != consumed {
 		return 0
 	}
 	return received

@@ -18,9 +18,9 @@ func TestSubscriptionReplayFailureContract(t *testing.T) {
 				return cacheSeed[int]{items: []int{1, 2}}, nil
 			}})
 
-		stream, _, err := b.subscribeWatch(t.Context(), "checked", intGR, intResume(0))
+		sub, err := b.subscribeWatch(t.Context(), "checked", intGR, intResume(0))
 		require.ErrorIs(t, err, io.ErrShortBuffer)
-		require.Nil(t, stream)
+		require.Nil(t, sub)
 		synctest.Wait()
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("r", subscriptionResultReplayFailed), 1)
 		require.Empty(t, b.subs)
