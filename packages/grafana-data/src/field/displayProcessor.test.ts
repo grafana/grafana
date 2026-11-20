@@ -272,6 +272,18 @@ describe('Format value', () => {
     expect(instance(1).text).toEqual('B');
   });
 
+  it('should keep enum color when value mapping only sets a text', () => {
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '0': { text: 'Zero' } } }];
+
+    const instance = getDisplayProcessorFromConfig(
+      { mappings: valueMappings, type: { enum: { text: ['A', 'B'], color: ['#FF0000', '#00FF00'] } } },
+      FieldType.enum
+    );
+
+    expect(instance(0).text).toEqual('Zero');
+    expect(instance(0).color).toEqual('#FF0000');
+  });
+
   it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
     const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '1': { text: '' } } }];
     const value = '1';

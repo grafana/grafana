@@ -123,14 +123,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (field.type === FieldType.enum) {
       // Apply enum display handling for whatever the value mappings did not set
-      if (value == null) {
-        if (text == null && color == null) {
-          return {
-            text: '',
-            numeric: NaN,
-          };
-        }
-      } else if (config && config.type && config.type.enum) {
+      if (value == null && !mappings?.length) {
+        return {
+          text: '',
+          numeric: NaN,
+        };
+      }
+
+      if (value != null && config && config.type && config.type.enum) {
         const enumIndex = +value;
         const { text: enumText, color: enumColor } = config.type.enum;
 
