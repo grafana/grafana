@@ -28,7 +28,7 @@ export function LockTimeRangeField({ control, capturedTimeRanges, disabled }: Pr
           onChange={(event) => onChange(event.currentTarget.checked)}
           label={
             single
-              ? t('notebooks.add-panel.lock-time-range', 'Lock time range')
+              ? t('notebooks.add-panel.lock-time-range-short', 'Lock time range')
               : t('notebooks.add-panel.lock-time-ranges', 'Lock panels to the time ranges they showed')
           }
           description={
