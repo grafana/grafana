@@ -25,17 +25,17 @@ A _playlist_ is a list of dashboards that are displayed in a sequence. You might
 
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
-You can access the **Playlist** feature from Grafana's side menu, in the Dashboards submenu.
+To access playlists, navigate to **Dashboards > Playlists** in the main menu.
 
 ## Playlist permissions
 
 The following table outlines the permissions you need for playlists.
 
-| Role action       | Description                                                                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `playlists:read`  | Lets you view and play playlists. By default, the Viewer role includes this permission.                                                                             |
-| `playlists:write` | Lets you create, update, and delete playlists. By default, the Editor and Admin roles include this permission.                                                      |
-| `dashboards:read` | Needed, in addition to `playlists:read`, to play a playlist. You need it on the dashboards in the playlist. Without it, the playlist doesn't show those dashboards. |
+| Role action       | Description                                                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `playlists:read`  | Lets you view and play playlists. By default, the Viewer role includes this permission.                                                                                                |
+| `playlists:write` | Lets you create, update, and delete playlists. By default, the Editor and Admin roles include this permission.                                                                         |
+| `dashboards:read` | Needed, in addition to `playlists:read`, to play a playlist. You must have this permission for the dashboards in the playlist. Without it, the playlist doesn't show those dashboards. |
 
 Note the following behaviors and limits:
 
