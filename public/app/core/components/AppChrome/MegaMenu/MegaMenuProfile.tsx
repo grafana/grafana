@@ -24,11 +24,6 @@ export function MegaMenuProfile({ profileNode }: Props) {
     <>
       <Dropdown overlay={renderMenu} placement="top-start">
         <button type="button" className={styles.trigger}>
-          {gravatarUrl ? (
-            <img className={styles.avatar} src={gravatarUrl} alt="" />
-          ) : (
-            <Icon name="user" size="lg" className={styles.avatar} />
-          )}
           {/* Names the button as the profile, as the top bar button did, ahead of the user it belongs to. */}
           <span className="sr-only">{t('navigation.profile.aria-label', 'Profile')}</span>{' '}
           <span className={styles.identity}>
@@ -40,6 +35,11 @@ export function MegaMenuProfile({ profileNode }: Props) {
               </>
             )}
           </span>
+          {gravatarUrl ? (
+            <img className={styles.avatar} src={gravatarUrl} alt="" />
+          ) : (
+            <Icon name="user" size="lg" className={styles.avatar} />
+          )}
           <Icon name="angle-down" className={styles.chevron} />
         </button>
       </Dropdown>
@@ -60,7 +60,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     height: theme.spacing(5),
     margin: theme.spacing(0, 1, 1),
-    padding: theme.spacing(0, 1),
+    // The name starts where a section heading above it does, and the chevron lines up with the section's controls.
+    padding: theme.spacing(0, 0.5),
     textAlign: 'left',
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
