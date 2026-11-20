@@ -13,9 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestLiveRequiresCertifiedStackAndMatchingPlugin(t *testing.T) {
@@ -80,6 +83,35 @@ func TestManagedLiveRequiresVerifiedBackendTLS(t *testing.T) {
 			target.poll(t.Context(), make(chan struct{}, 1))
 			require.Len(t, target.Backends(), 1)
 			require.Equal(t, tc.want, target.Backends()[0].(*PluginBackend).routedLive)
+		})
+	}
+}
+
+func TestLiveConnectionAge(t *testing.T) {
+	section := func(values map[string]string) *setting.DynamicSection {
+		cfg := setting.NewCfg()
+		for k, v := range values {
+			cfg.Raw.Section("router.live").Key(k).SetValue(v)
+		}
+		return cfg.SectionWithEnvOverrides("router.live")
+	}
+
+	t.Run("defaults match the operator", func(t *testing.T) {
+		got, err := liveConnectionAge(section(nil))
+		require.NoError(t, err)
+		require.Equal(t, keepalive.ServerParameters{MaxConnectionAge: 5 * time.Minute, MaxConnectionAgeGrace: 30 * time.Second}, got)
+	})
+
+	t.Run("configured", func(t *testing.T) {
+		got, err := liveConnectionAge(section(map[string]string{"max_connection_age": "2m", "max_connection_age_grace": "10s"}))
+		require.NoError(t, err)
+		require.Equal(t, keepalive.ServerParameters{MaxConnectionAge: 2 * time.Minute, MaxConnectionAgeGrace: 10 * time.Second}, got)
+	})
+
+	for key, value := range map[string]string{"max_connection_age": "0s", "max_connection_age_grace": "soon"} {
+		t.Run("invalid "+key, func(t *testing.T) {
+			_, err := liveConnectionAge(section(map[string]string{key: value}))
+			require.ErrorContains(t, err, "router.live: "+key+" must be")
 		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	v2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -18,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
@@ -154,9 +156,13 @@ func (r *GrafanaRouter) LiveService(cfg *setting.Cfg) (services.Service, error) 
 	if len(groups) == 0 {
 		return nil, fmt.Errorf("router.live requires plugin_groups")
 	}
+	age, err := liveConnectionAge(section)
+	if err != nil {
+		return nil, err
+	}
 	tc := cfg.GRPCServer.TLSConfig.Clone()
 	tc.ClientAuth = tls.RequireAndVerifyClientCert
-	srv := grpc.NewServer(grpc.Creds(credentials.NewTLS(tc)))
+	srv := grpc.NewServer(grpc.Creds(credentials.NewTLS(tc)), grpc.KeepaliveParams(age))
 	r.RegisterLiveStreams(srv, groups)
 	var listener net.Listener
 	return services.NewBasicService(func(ctx context.Context) error {
@@ -168,4 +174,27 @@ func (r *GrafanaRouter) LiveService(cfg *setting.Cfg) (services.Service, error) 
 		defer end()
 		return srv.Serve(listener)
 	}, func(error) error { srv.Stop(); return nil }).WithName("router-live"), nil
+}
+
+// The router closes each Live connection gracefully after a maximum age, as the
+// operator does. Once the router sends GOAWAY, Grafana starts new calls,
+// including publishes, on a fresh connection. Streams still open when the grace
+// period ends are closed, and Grafana reopens them. Keep the age well below the
+// stack certificate lifetime, so connections rarely reach the hard expiry
+// deadline.
+const (
+	defaultLiveMaxConnectionAge      = 5 * time.Minute
+	defaultLiveMaxConnectionAgeGrace = 30 * time.Second
+)
+
+func liveConnectionAge(section *setting.DynamicSection) (keepalive.ServerParameters, error) {
+	age, err := parsePositiveDurationKey(section, "max_connection_age", defaultLiveMaxConnectionAge)
+	if err != nil {
+		return keepalive.ServerParameters{}, fmt.Errorf("router.live: %w", err)
+	}
+	grace, err := parsePositiveDurationKey(section, "max_connection_age_grace", defaultLiveMaxConnectionAgeGrace)
+	if err != nil {
+		return keepalive.ServerParameters{}, fmt.Errorf("router.live: %w", err)
+	}
+	return keepalive.ServerParameters{MaxConnectionAge: age, MaxConnectionAgeGrace: grace}, nil
 }

@@ -567,6 +567,13 @@ stack workload credentials, each with exactly one DNS SAN of the form
 authenticate users within its own stack and supports org 1. Certificate
 expiry cancels its streams.
 
+The listener closes each connection gracefully after `max_connection_age`
+(default `5m`), then allows `max_connection_age_grace` (default `30s`) before
+closing streams that are still open. These match the operator. New calls,
+including publishes, move to a fresh connection, and Grafana reopens closed
+streams. Keep the age well below the stack certificate lifetime, so connections
+rarely reach the hard expiry deadline.
+
 The router looks up the installed group, holds its handler until the call
 finishes, and cancels streams on retirement. A managed plugin from
 `plugins_url` with verified backend TLS and a client certificate can receive
