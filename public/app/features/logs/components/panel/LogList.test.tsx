@@ -311,9 +311,7 @@ describe('LogList', () => {
       await user.hover(icon);
 
       expect(
-        await screen.findByText(
-          'This log line was dropped by Adaptive Logs but remains available for a limited time'
-        )
+        await screen.findByText('This log line was dropped by Adaptive Logs but remains available for a limited time')
       ).toBeInTheDocument();
     });
 
