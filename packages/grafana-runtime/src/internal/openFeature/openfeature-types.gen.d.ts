@@ -95,6 +95,7 @@ declare module "@openfeature/core" {
     | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "alerting.ruleQualityFix"
+    | "alerting.ruleQualityFixAll"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
