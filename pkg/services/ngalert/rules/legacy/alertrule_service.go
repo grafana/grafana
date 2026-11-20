@@ -2,6 +2,7 @@ package legacy
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
@@ -107,6 +108,16 @@ func (r *AlertRules) Delete(ctx context.Context, user identity.Requester, orgID 
 		return err
 	}
 	return r.service.DeleteAlertRule(ctx, user, rule.Name, managerProps, dryRun)
+}
+
+// SaveStatus stores the status subresource of the rule. It does not check the rule's kind or the user's access; the
+// caller reads the rule through Get first.
+func (r *AlertRules) SaveStatus(ctx context.Context, orgID int64, name string, status v1beta1.AlertRuleStatus) error {
+	data, err := json.Marshal(status)
+	if err != nil {
+		return fmt.Errorf("failed to marshal status: %w", err)
+	}
+	return r.service.saveAlertRuleStatus(ctx, orgID, name, data)
 }
 
 // DeleteMany deletes the rules in one transaction, each as the manager recorded on its object. A single provenance or

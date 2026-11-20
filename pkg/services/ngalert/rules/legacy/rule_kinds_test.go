@@ -138,6 +138,24 @@ func TestRuleKindsUseRequestOrg(t *testing.T) {
 	assert.Equal(t, want, alerts.Items[0].Namespace)
 }
 
+func TestRuleKindsSaveStatus(t *testing.T) {
+	e := newKindsEnv(t)
+	ctx := context.Background()
+	const requestOrg int64 = 2
+
+	require.NoError(t, e.alerts.SaveStatus(ctx, requestOrg, e.alerting.UID, v1beta1.AlertRuleStatus{LastError: new("alert failed")}))
+	require.NoError(t, e.records.SaveStatus(ctx, requestOrg, e.recording.UID, v1beta1.RecordingRuleStatus{LastError: new("record failed")}))
+
+	saved := e.ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+		c, ok := cmd.(fakes.GenericRecordedQuery)
+		return c, ok && c.Name == "SaveAlertRuleStatus"
+	})
+	assert.Equal(t, []any{
+		fakes.GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{requestOrg, e.alerting.UID, []byte(`{"lastError":"alert failed"}`)}},
+		fakes.GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{requestOrg, e.recording.UID, []byte(`{"lastError":"record failed"}`)}},
+	}, saved)
+}
+
 func TestRuleKindsListFiltersByKind(t *testing.T) {
 	e := newKindsEnv(t)
 	ctx := context.Background()

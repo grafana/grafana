@@ -37,7 +37,6 @@ func (v *switchableValidator) ValidateRuleMutations(context.Context, []*ngmodels
 
 type dryRunFixture struct {
 	storage   *legacyStorage
-	service   *legacy.LegacyRuleService
 	ruleStore *fakes.RuleStore
 	validator *switchableValidator
 	ctx       context.Context
@@ -63,7 +62,6 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
 		storage:   &legacyStorage{rules: legacy.NewAlertRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))},
-		service:   svc,
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,
@@ -247,7 +245,6 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 		mirrored := false
 		status := &statusDualWriter{
 			legacy:        f.storage,
-			service:       f.service,
 			writesUnified: func(context.Context) bool { mirrored = true; return true },
 		}
 		changed := stored.DeepCopy()

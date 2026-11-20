@@ -2,7 +2,6 @@ package alertrule
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,10 +29,9 @@ import (
 // the resource advances past Mode0 for parity metrics and the eventual read-from-
 // unified cutover). The mirror is skipped in Mode0, see writesUnified.
 type statusDualWriter struct {
-	gv      schema.GroupVersion
-	status  *appsdkapiserver.StatusREST
-	legacy  *legacyStorage
-	service *legacy.LegacyRuleService
+	gv     schema.GroupVersion
+	status *appsdkapiserver.StatusREST
+	legacy *legacyStorage
 	// writesUnified reports whether the resource writes to unified storage (modes 1-5).
 	// It is evaluated per request because the storage mode can change at runtime.
 	writesUnified func(ctx context.Context) bool
@@ -55,7 +53,6 @@ func NewStatusStorage(
 	return &statusDualWriter{
 		gv:            ResourceInfo.GroupVersionResource().GroupVersion(),
 		status:        unified,
-		service:       &legacySvc,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
 			rules:          legacy.NewAlertRules(&legacySvc, namespacer),
@@ -97,10 +94,6 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		}
 	}
 
-	data, err := json.Marshal(newRule.Status)
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to marshal status: %w", err)
-	}
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		// What the re-read below would return: the stored rule with the new status.
 		stored, ok := old.(*v1beta1.AlertRule)
@@ -111,7 +104,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 		out.Status = newRule.Status
 		return out, false, nil
 	}
-	if err := s.service.SaveAlertRuleStatus(ctx, info.OrgID, name, data); err != nil {
+	if err := s.legacy.rules.SaveStatus(ctx, info.OrgID, name, newRule.Status); err != nil {
 		return nil, false, err
 	}
 

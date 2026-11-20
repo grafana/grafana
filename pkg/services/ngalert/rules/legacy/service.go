@@ -902,6 +902,6 @@ func userUidOrFallback(user identity.Requester) *models.UserUID {
 	return userUID
 }
 
-func (s *LegacyRuleService) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+func (s *LegacyRuleService) saveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
 	return s.ruleStore.SaveAlertRuleStatus(ctx, orgID, ruleUID, data)
 }
