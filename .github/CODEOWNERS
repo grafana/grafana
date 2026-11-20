@@ -108,6 +108,7 @@
 /apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
+/apps/userstorage/ @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/scope/ @grafana/grafana-operator-experience-squad
 /apps/advisor/ @grafana/grafana-catalog
@@ -124,7 +125,6 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/appplugin @grafana/grafana-catalog
 /pkg/apis/datasource @grafana/grafana-datasources-core-services
-/pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
 /pkg/cmd/ @grafana/grafana-backend-services-squad
@@ -232,6 +232,7 @@
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
 /pkg/tests/apis/shorturl @grafana/sharing-squad
+/pkg/tests/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tests/api/swagger/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad

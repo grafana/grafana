@@ -353,6 +353,7 @@ replace (
 	github.com/grafana/grafana/apps/scope => ../scope
 	github.com/grafana/grafana/apps/secret => ../secret
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
+	github.com/grafana/grafana/apps/userstorage => ../userstorage
 
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
