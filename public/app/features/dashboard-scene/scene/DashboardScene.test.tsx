@@ -2488,6 +2488,17 @@ describe('DashboardScene', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
       expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
     });
+
+    it('Should use the repeat source panel ID for public dashboard requests', () => {
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'public-token';
+      try {
+        const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
+        expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(2);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
   });
 
   describe('When variables change', () => {
