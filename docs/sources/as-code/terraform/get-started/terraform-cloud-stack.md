@@ -9,6 +9,7 @@ title: Create and manage a Grafana Cloud stack using Terraform
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/get-started/terraform-cloud-stack/
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-cloud-stack/
   - ../terraform-cloud-stack/
   - ../../infrastructure-as-code/terraform/terraform-cloud-stack/
 ---

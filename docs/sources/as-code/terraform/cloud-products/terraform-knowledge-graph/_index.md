@@ -1,5 +1,8 @@
 ---
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-knowledge-graph/
+  - ../infrastructure-as-code/terraform/knowledge-graph-slo/
+  - ./knowledge-graph-slo/
   - ../terraform-knowledge-graph/
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/
   - ../../infrastructure-as-code/terraform/knowledge-graph-slo/

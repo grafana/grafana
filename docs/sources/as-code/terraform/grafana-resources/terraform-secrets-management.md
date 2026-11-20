@@ -15,6 +15,7 @@ weight: 300
 review_date: '2026-09-14'
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/terraform-secrets-management/
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-secrets-management/
   - ../terraform-secrets-management/
   - ../../infrastructure-as-code/terraform/terraform-secrets-management/
 ---

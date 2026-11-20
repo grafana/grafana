@@ -10,6 +10,7 @@ title: Manage Cloud Provider Observability in Grafana Cloud using Terraform
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-cloud-provider-o11y/
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-cloud-provider-o11y/
   - ../terraform-cloud-provider-o11y/
   - ../../infrastructure-as-code/terraform/terraform-cloud-provider-o11y/
 ---

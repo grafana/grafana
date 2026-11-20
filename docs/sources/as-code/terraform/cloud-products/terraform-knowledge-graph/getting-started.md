@@ -10,6 +10,7 @@ keywords:
   - Getting Started
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/getting-started/
 aliases:
+  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/getting-started/
   - ../../terraform-knowledge-graph/getting-started/
   - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/getting-started/
 ---

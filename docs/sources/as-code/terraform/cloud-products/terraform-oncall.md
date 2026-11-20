@@ -11,6 +11,7 @@ title: Manage Grafana IRM in Grafana Cloud using Terraform
 weight: 400
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-oncall/
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-oncall/
   - ../terraform-oncall/
   - ../../infrastructure-as-code/terraform/terraform-oncall/
 ---

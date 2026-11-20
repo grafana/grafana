@@ -16,6 +16,7 @@ title: Manage Fleet Management in Grafana Cloud using Terraform
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-fleet-management/
 aliases:
+  - ../infrastructure-as-code/terraform/terraform-fleet-management/
   - ../terraform-fleet-management/
   - ../../infrastructure-as-code/terraform/terraform-fleet-management/
 ---

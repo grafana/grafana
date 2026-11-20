@@ -12,6 +12,7 @@ keywords:
   - Health Thresholds
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/thresholds/
 aliases:
+  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/thresholds/
   - ../../terraform-knowledge-graph/thresholds/
   - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/thresholds/
 ---

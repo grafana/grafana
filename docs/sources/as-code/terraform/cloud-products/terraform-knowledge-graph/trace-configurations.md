@@ -11,6 +11,7 @@ keywords:
   - Tempo
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/trace-configurations/
 aliases:
+  - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/trace-configurations/
   - ../../terraform-knowledge-graph/trace-configurations/
   - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/trace-configurations/
 ---
