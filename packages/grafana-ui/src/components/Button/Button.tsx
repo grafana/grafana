@@ -304,12 +304,15 @@ export const getButtonStyles = (props: StyleProps) => {
         })
       : undefined,
     content: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
       whiteSpace: 'nowrap',
       overflow: 'hidden',
-      height: '100%',
+      textOverflow: 'ellipsis',
+      // Keep custom children in their original flex layout. Text labels use a single line box.
+      '&:has(> *)': {
+        display: 'flex',
+        alignItems: 'center',
+        height: '100%',
+      },
     }),
   };
 };
