@@ -11,9 +11,17 @@ enterprise_dir=${2:-}
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 discover="$script_dir/pkgs-with-tests-named.sh"
 
-sqlite_timeout=12m
-if [[ -n "$enterprise_dir" ]]; then
-    sqlite_timeout=16m
+test_timeout=12
+test_parallelism=1
+if (( sqlite )); then
+    if [[ ${GOMAXPROCS:-} =~ ^[1-9][0-9]*$ ]]; then
+        test_parallelism=$GOMAXPROCS
+    else
+        test_parallelism=$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN)
+    fi
+    if [[ -n "$enterprise_dir" ]]; then
+        test_timeout=16
+    fi
 fi
 
 grafana_packages=$("$discover" -b TestIntegration -i)
@@ -39,8 +47,29 @@ while IFS= read -r package; do
     esac
 done <<< "$packages"
 
+run_test_binary() {
+    local pkg=$1 dir=$2 binary=$3 minutes=$4
+    local result_file="$binary.log" started=$SECONDS
+    # Give the test binary one extra minute to handle its own test timeout.
+    if (
+        cd "$dir" &&
+            timeout -s QUIT -k 5s "$((minutes + 1))m" \
+                "$binary" -test.paniconexit0 -test.timeout="${minutes}m" -test.run '^TestIntegration'
+    ) > "$result_file" 2>&1; then
+        if grep -Fqx 'testing: warning: no tests to run' "$result_file"; then
+            printf 'ok  \t%s\t%ss [no tests to run]\n' "$pkg" "$((SECONDS - started))"
+        else
+            printf 'ok  \t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
+        fi
+    else
+        cat "$result_file"
+        printf 'FAIL\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
+        return 1
+    fi
+}
+
 run_compiled_tests() {
-    local binaries package_dirs go_root pkg dir has_tests name parent started result_file status=0
+    local binaries package_dirs go_root pkg dir has_tests name parent
     local -a batch=() collisions=()
     local -A seen=() binary_paths=()
     binaries=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/sql-integration.XXXXXXXX")
@@ -78,28 +107,12 @@ run_compiled_tests() {
     done
 
     echo "Running compiled tests"
-    result_file="$binaries/test.log"
+    export -f run_test_binary
     while IFS=$'\t' read -r pkg dir has_tests; do
         [[ -n "$has_tests" ]] || continue
-        started=$SECONDS
-        # Give the test binary one extra minute to handle its own test timeout.
-        if (
-            cd "$dir" &&
-                PATH="$go_root/bin:$PATH" CGO_ENABLED=0 timeout -s QUIT -k 5s 13m \
-                    "${binary_paths[$pkg]}" -test.paniconexit0 -test.timeout=12m -test.run '^TestIntegration'
-        ) > "$result_file" 2>&1; then
-            if grep -Fqx 'testing: warning: no tests to run' "$result_file"; then
-                printf 'ok  \t%s\t%ss [no tests to run]\n' "$pkg" "$((SECONDS - started))"
-            else
-                printf 'ok  \t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
-            fi
-        else
-            cat "$result_file"
-            printf 'FAIL\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
-            status=1
-        fi
-    done <<< "$package_dirs"
-    return "$status"
+        printf '%s\0' "$pkg" "$dir" "${binary_paths[$pkg]}" "$test_timeout"
+    done <<< "$package_dirs" |
+        PATH="$go_root/bin:$PATH" CGO_ENABLED=0 xargs -0 -n 4 -P "$test_parallelism" bash -c 'run_test_binary "$@"' _
 }
 
 run_tests() {
@@ -109,12 +122,7 @@ run_tests() {
     fi
 
     echo "Testing packages in $PWD"
-    if (( sqlite )); then
-        echo "Running tests now"
-        CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -timeout="$sqlite_timeout" -run '^TestIntegration' "$@"
-    else
-        run_compiled_tests "$@"
-    fi
+    run_compiled_tests "$@"
 }
 
 run_tests "${grafana_shard[@]}"

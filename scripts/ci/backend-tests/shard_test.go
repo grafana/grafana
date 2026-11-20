@@ -176,16 +176,25 @@ func `+"TestIntegrationIgnored"+`() {}
 
 	script, err := filepath.Abs("run-sql-integration-shard.sh")
 	require.NoError(t, err)
-	for _, tc := range []struct{ name, fail string }{
+	for _, tc := range []struct {
+		name   string
+		fail   string
+		sqlite bool
+	}{
 		{name: "all packages pass"},
 		{name: "continues after a failure", fail: "first/api"},
+		{name: "SQLite uses the compiled binaries", sqlite: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			invocations := filepath.Join(t.TempDir(), "invocations")
-			cmd := exec.CommandContext(t.Context(), "bash", script, "1/1")
+			args := []string{script}
+			if tc.sqlite {
+				args = append(args, "--sqlite")
+			}
+			cmd := exec.CommandContext(t.Context(), "bash", append(args, "1/1")...)
 			cmd.Dir = root
 			cmd.Env = append(cmd.Environ(), "GOWORK=off", "GOPROXY=off", "RUNNER_TEMP="+t.TempDir(),
-				"TEST_INVOCATIONS="+invocations, "FAIL_PACKAGE="+tc.fail)
+				"GOMAXPROCS=2", "TEST_INVOCATIONS="+invocations, "FAIL_PACKAGE="+tc.fail)
 			output, err := cmd.CombinedOutput()
 			if tc.fail == "" {
 				require.NoError(t, err, "%s", output)
@@ -196,6 +205,7 @@ func `+"TestIntegrationIgnored"+`() {}
 			calls, err := os.ReadFile(invocations)
 			require.NoError(t, err)
 			require.ElementsMatch(t, []string{"first/api", "second/api"}, strings.Fields(string(calls)))
+			require.Contains(t, string(output), "Compiling test binaries")
 			require.Regexp(t, `(?m)^ok\s+example\.com/integration/second/api\s+`, string(output))
 			require.Regexp(t, `(?m)^\?\s+example\.com/integration/inactive\s+\[no test files\]`, string(output))
 		})
