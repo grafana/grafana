@@ -791,7 +791,7 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 func (b *kvStorageBackend) runGarbageCollectionWithLease(ctx context.Context, cutoffTimeStamp int64) {
 	// Own the complete resource and blob pass, including dry runs. This lease
 	// coordinates collectors; it does not fence in-flight storage operations.
-	ctx, release, err := b.acquireStorageLeases(ctx, []string{"garbage-collection"}, lease.WithAutoRenew())
+	ctx, release, err := b.acquireStorageLeases(ctx, "garbage collection", []string{"garbage-collection"}, lease.WithAutoRenew())
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			b.log.Debug("Garbage collection is running on another instance; skipping this cycle")
@@ -1066,7 +1066,9 @@ func conflictError(event WriteEvent, message string) error {
 
 // acquireStorageLeases cancels the returned context if any lease is lost.
 // Partial acquisitions are released on failure; callers must defer release on success.
-func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []string, opts ...lease.AcquireOption) (context.Context, func(), error) {
+// Failures other than [lease.ErrLeaseAlreadyHeld] and request cancellation are
+// logged and returned as a generic internal error naming only kind.
+func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, kind string, names []string, opts ...lease.AcquireOption) (context.Context, func(), error) {
 	leaseCtx, cancel := context.WithCancel(ctx)
 	leases := make([]*lease.Lease, 0, len(names))
 	var watchers sync.WaitGroup
@@ -1086,8 +1088,13 @@ func (k *kvStorageBackend) acquireStorageLeases(ctx context.Context, names []str
 	for _, name := range names {
 		l, err := k.leaseManager.Acquire(leaseCtx, name, opts...)
 		if err != nil {
+			// Checked before release, which ignores cancellation and can outlast the request.
+			requestErr := ctx.Err()
 			release()
-			return nil, nil, fmt.Errorf("acquiring lease %q: %w", name, err)
+			if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+				return nil, nil, fmt.Errorf("acquiring lease %q: %w", name, err)
+			}
+			return nil, nil, k.leaseAcquisitionError(ctx, requestErr, kind, name, err)
 		}
 		leases = append(leases, l)
 		watchers.Add(1)
@@ -1112,15 +1119,29 @@ func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEve
 	if k.leaseTTL > 0 {
 		opts = append(opts, lease.WithTTL(k.leaseTTL))
 	}
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, []string{name}, opts...)
-	if err != nil {
-		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
-			k.metrics.recordConflict(event)
-			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
-		}
-		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, "write", []string{name}, opts...)
+	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+		k.metrics.recordConflict(event)
+		return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 	}
-	return leaseCtx, release, nil
+	return leaseCtx, release, err
+}
+
+// leaseAcquisitionError keeps lease keys and raw store errors out of client
+// responses. A remote KV reports failed batches, database errors included, as
+// gRPC Aborted, which would otherwise be classified as a 409 conflict.
+func (k *kvStorageBackend) leaseAcquisitionError(ctx context.Context, requestErr error, kind, name string, err error) error {
+	// A remote KV timeout also looks like cancellation, so require the request itself to have ended.
+	if requestErr != nil && resourceutil.OnlyCancellationErrors(err) {
+		return requestErr
+	}
+	k.log.WithContext(ctx).Error("failed to acquire storage lease", "kind", kind, "name", name, "error", err)
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusInternalServerError,
+		Reason:  metav1.StatusReasonInternalError,
+		Message: fmt.Sprintf("failed to acquire %s lease", kind),
+	}}
 }
 
 func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*resourcepb.ResourceKey) (context.Context, func(), error) {
@@ -1130,7 +1151,7 @@ func (k *kvStorageBackend) acquireBulkLeases(ctx context.Context, collection []*
 	}
 	slices.Sort(names)
 	names = slices.Compact(names)
-	leaseCtx, release, err := k.acquireStorageLeases(ctx, names, lease.WithAutoRenew())
+	leaseCtx, release, err := k.acquireStorageLeases(ctx, "bulk", names, lease.WithAutoRenew())
 	if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 		return nil, nil, &apierrors.StatusError{ErrStatus: metav1.Status{
 			Code:    http.StatusPreconditionFailed,

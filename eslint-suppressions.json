@@ -2684,11 +2684,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/SignalExplorer/SignalExplorer.tsx": {
     "react-hooks/refs": {
       "count": 1
