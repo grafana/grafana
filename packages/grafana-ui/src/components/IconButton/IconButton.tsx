@@ -13,7 +13,7 @@ import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-export type IconButtonVariant = 'primary' | 'secondary' | 'destructive' | 'warning';
+export type IconButtonVariant = 'primary' | 'secondary' | 'destructive' | 'warning' | 'info';
 
 type LimitedIconSize = ComponentSize | 'xl';
 
@@ -134,6 +134,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   } else if (variant === 'warning') {
     iconColor = theme.colors.warning.text;
     hoverColor = theme.colors.warning.transparent;
+  } else if (variant === 'info') {
+    iconColor = theme.colors.info.text;
+    hoverColor = theme.colors.info.transparent;
   } else if (solid) {
     iconColor = theme.colors.primary.contrastText;
     hoverColor = theme.colors.primary.backgroundEmphasis;

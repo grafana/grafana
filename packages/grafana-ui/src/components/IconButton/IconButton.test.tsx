@@ -12,6 +12,7 @@ describe('IconButton', () => {
     ['secondary', theme.colors.secondary.text],
     ['destructive', theme.colors.error.text],
     ['warning', theme.colors.warning.text],
+    ['info', theme.colors.info.text],
   ] as const)('colors the %s variant icon with its theme text color', (variant, expectedColor) => {
     render(<IconButton name="exclamation-triangle" variant={variant} aria-label="Status" />);
 
