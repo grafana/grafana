@@ -5,6 +5,7 @@ import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/ru
 import server from '@grafana/test-utils/server';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
+import { SEARCH_MAX_LIMIT } from '../rule-search/useRuleSearchApiArgs';
 import { type RuleKind } from '../shared/ruleKind';
 
 import { FOLDER_ANNOTATION, folderItem } from './factories';
@@ -104,14 +105,12 @@ export function setupRuleListBackend({
       }
 
       const scope = nameFilterValues(body.where);
-      // Like the index: every word in the title, ignoring case.
-      const words = leaves(body.where)
-        .find((leaf) => leaf.text)
-        ?.text?.value.toLowerCase()
-        .split(/\s+/);
+      const text = leaves(body.where).find((leaf) => leaf.text)?.text?.value;
+      const words = text === undefined ? undefined : searchWords(text);
       const listed = folders
         .filter((folder) => allRules.some((rule) => parentOf(rule) === nameOf(folder)))
         .filter((folder) => !scope || scope.includes(nameOf(folder)))
+        // Like the index: every word in the title, ignoring case.
         .filter((folder) => !words || words.every((word) => folder.spec.title.toLowerCase().includes(word)))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
@@ -221,6 +220,13 @@ function leaves(where?: SearchWhere): SearchWhere[] {
   return where.and ?? [where];
 }
 
+/** Like the index, drops words shorter than 3 characters, unless every word is that short. */
+function searchWords(text: string) {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+  const longWords = words.filter((word) => word.length >= 3);
+  return longWords.length > 0 ? longWords : words;
+}
+
 function nameFilterValues(where?: SearchWhere) {
   return leaves(where).find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
 }
@@ -277,6 +283,3 @@ function ruleHit(kind: RuleKind, rule: RuleResource) {
     },
   };
 }
-
-// The real search's cap per request.
-const SEARCH_MAX_LIMIT = 500;

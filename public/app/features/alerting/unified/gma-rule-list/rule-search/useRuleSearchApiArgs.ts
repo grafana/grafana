@@ -24,7 +24,7 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
       ? {
           searchQuery: {
             ...buildFolderListSearchQuery(kind, undefined, filter),
-            limit: FOLDER_NAME_LOOKUP_LIMIT,
+            limit: SEARCH_MAX_LIMIT,
           },
         }
       : skipToken
@@ -70,4 +70,4 @@ export function withFolderLookup<Hit>(
 }
 
 // The search API returns at most 500 items per request.
-export const FOLDER_NAME_LOOKUP_LIMIT = 500;
+export const SEARCH_MAX_LIMIT = 500;
