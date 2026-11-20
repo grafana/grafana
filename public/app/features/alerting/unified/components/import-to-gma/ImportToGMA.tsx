@@ -42,11 +42,11 @@ function Wizard({ notificationsLock, rulesOnly }: { notificationsLock?: Notifica
   );
 }
 
-export function ImportWizardGate() {
+export function ImportWizardGate({ rulesOnly: forceRulesOnly = false }: { rulesOnly?: boolean }) {
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
   // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
   const { canImportNotifications } = useCanImportToGMA();
-  const rulesOnly = !canImportNotifications;
+  const rulesOnly = forceRulesOnly || !canImportNotifications;
   const { isActive, isLoading } = useIsAutoSyncActive();
   const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
     skip: !importAlertmanagerAPIEnabled || rulesOnly,
@@ -74,14 +74,17 @@ export function ImportWizardGate() {
   return <Wizard notificationsLock={notificationsLock} />;
 }
 
-/** Rule import for users who can't open Settings > Import, in the regular alert rules shell. */
+/**
+ * Rule import for users who can't open Settings > Import, in the regular alert rules shell. Always rules only,
+ * because a notifications import ends in Settings, where these users can't go.
+ */
 export const ImportRulesPage = withPageErrorBoundary(function ImportRulesPage() {
   return (
     <AlertingPageWrapper
       navId={getAlertRulesNavId()}
       pageNav={{ text: t('alerting.import-to-gma.pageTitle', 'Import alert rules') }}
     >
-      <ImportWizardGate />
+      <ImportWizardGate rulesOnly />
     </AlertingPageWrapper>
   );
 });

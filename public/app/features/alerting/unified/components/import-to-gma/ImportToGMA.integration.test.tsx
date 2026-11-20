@@ -343,3 +343,14 @@ describe('ImportToGMA wizard — user who can only import rules', () => {
     expect(await screen.findByRole('group', { name: /import rules/i })).toBeInTheDocument();
   });
 });
+
+describe('ImportRulesPage — user who can also write notifications', () => {
+  // Notification imports end in Settings > Import, which only admins can open, so this page stays rules only.
+  it('shows only the rules and review steps', async () => {
+    render(<ImportRulesPage />);
+
+    expect(await screen.findByRole('group', { name: /import rules/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /notification configuration/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /review & import/i })).toBeInTheDocument();
+  });
+});
