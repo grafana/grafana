@@ -74,7 +74,16 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 		dsUID = web.Params(c.Req)[":uid"]
 	}
 
-	if !util.IsValidShortUID(dsUID) {
+	entry := pluginproxy.RequestLog{Method: c.Req.Method, Path: getProxyPath(c)}
+	var ds *datasources.DataSource
+	validUID := util.IsValidShortUID(dsUID)
+	if validUID {
+		entry.DatasourceUID = dsUID
+	}
+	entry.Start()
+	defer func() { completeProxyRequest(c, ds, entry) }()
+
+	if !validUID {
 		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
 		return
 	}
@@ -89,6 +98,10 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+	entry := pluginproxy.RequestLog{Method: c.Req.Method, Path: getProxyPath(c)}
+	entry.Start()
+	var ds *datasources.DataSource
+	defer func() { completeProxyRequest(c, ds, entry) }()
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
@@ -96,6 +109,18 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.Re
 		return
 	}
 	p.proxyDatasourceRequest(c, ds)
+}
+
+func completeProxyRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, entry pluginproxy.RequestLog) {
+	if c.Resp == nil {
+		return
+	}
+	if ds != nil {
+		entry.PluginID = ds.Type
+		entry.DatasourceUID = ds.UID
+	}
+	status := c.Resp.Status()
+	entry.Complete(status, pluginproxy.StatusSource(c.Req.Context(), status))
 }
 
 func toAPIError(c *contextmodel.ReqContext, err error) {

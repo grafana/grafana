@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -112,10 +113,15 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
+	requestLog := pluginproxy.RequestLog{
+		PluginID: r.builder.pluginJSON.ID, DatasourceUID: name, Namespace: k8srequest.NamespaceValue(ctx),
+	}
 	record := r.builder.cfg.RecordProxyRequest
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
+		requestLog.Start()
+		requestLog.Complete(http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
 		if record != nil {
 			record(ctx, r.builder.pluginJSON.ID, http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
 		}
@@ -127,17 +133,23 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
+		path := proxyPathFromRequest(req, name)
+		entry := requestLog
+		entry.Method, entry.Path = req.Method, path
+		entry.Start()
+		recorder := builder.NewResponseWriterWithStatus(w)
+		w = recorder
 		var status int
-		if record != nil {
-			recorder := builder.NewResponseWriterWithStatus(w)
-			w = recorder
-			defer func() {
-				if status == 0 {
-					status = recorder.StatusCode()
-				}
-				record(req.Context(), r.builder.pluginJSON.ID, status, pluginproxy.StatusSource(req.Context(), status))
-			}()
-		}
+		defer func() {
+			if status == 0 {
+				status = recorder.StatusCode()
+			}
+			source := pluginproxy.StatusSource(req.Context(), status)
+			entry.Complete(status, source)
+			if record != nil {
+				record(req.Context(), r.builder.pluginJSON.ID, status, source)
+			}
+		}()
 
 		respondError := func(err error) {
 			err = proxyResponseError(req.Context(), err)
@@ -209,7 +221,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			loader,
 			r.builder.pluginJSON.Routes,
 			pluginproxy.HTTPContext{Req: req, Resp: w},
-			proxyPathFromRequest(req, name),
+			path,
 			deps.ProxyCfg,
 			deps.HTTPClientProvider,
 			deps.OAuthTokenService,
