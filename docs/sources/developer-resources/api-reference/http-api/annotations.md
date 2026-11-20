@@ -52,7 +52,7 @@ If you're running Grafana Enterprise or Grafana Cloud, you need the `annotations
 - **Organization annotations** (no `dashboardUID`): `annotations:*`, `annotations:type:*`, or `annotations:type:organization`.
 - **Dashboard annotations**: `dashboards:*` or `dashboards:uid:<DASHBOARD_UID>`, or the equivalent `folders:*` or `folders:uid:<FOLDER_UID>` scope for the folder that contains the dashboard.
 
-Listing tags requires `annotations:read` with an organization scope. For the full list of actions and scopes, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+Listing tags requires `annotations:read` with the `annotations:type:organization` scope. For the full list of actions and scopes, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 
@@ -248,7 +248,7 @@ If `metadata.continue` is empty or missing, there are no more results. Otherwise
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`
 
-Lists the tags used by annotations, with the number of annotations that use each tag.
+Lists the tags used by annotations, with the number of annotations that use each tag. Tags are organization-wide, so the list and counts cover every annotation in the organization.
 
 **Path parameters**:
 
@@ -674,5 +674,6 @@ The following table describes how the legacy API maps to this API:
 | `data`.                                                               | Not available.                                                                                                                    |
 | `PUT` and `PATCH` can change `time` and `timeEnd`.                    | `PUT` and `PATCH` can update `text` and `tags`. You can't modify `time`, `timeEnd`, `dashboardUID`, and `panelID` after creation. |
 | `GET /api/annotations/tags` with `tag` filter. Tags are in `result`.  | `GET /tags` with `contains` filter. Tags are at the top level of the response.                                                    |
+| `GET /api/annotations/tags` requires `annotations:read`.              | `GET /tags` requires `annotations:read` with the `annotations:type:organization` scope.                                           |
 | `POST /api/annotations/mass-delete`.                                  | Not available. Delete annotations individually.                                                                                   |
 | `POST /api/annotations/graphite`.                                     | `POST /graphite`, with the same request body. The response is the created annotation.                                             |
