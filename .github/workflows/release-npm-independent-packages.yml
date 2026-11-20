@@ -92,8 +92,9 @@ jobs:
   release:
     name: Prepare the next version pull request
     needs: [plan, tag]
-    # The tag job is skipped when there is nothing to tag, but when it failed the label stays pending and the next
-    # run tries again. A manual run that publishes given tags does not prepare a version pull request.
+    # The tag job is skipped when there is nothing to tag. When it failed, the label stays pending: re-run the failed
+    # jobs or start the workflow by hand within 2 to 3 days, before the merged version pull request is no longer found.
+    # When starting it by hand, leave the tags input empty: a run with tags only publishes them and skips this job.
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && inputs.tags == '' }}
     runs-on: ubuntu-x64
     permissions:

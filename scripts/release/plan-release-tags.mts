@@ -153,7 +153,8 @@ export interface ClosedPr {
 
 const PENDING_LABEL = 'nx-release:pending';
 const PAGE_SIZE = 100;
-// Three pages of closed pull requests reach back several days, long enough to re-run a failed release job.
+// The 300 most recently updated closed pull requests reach back about two to three working days. A version pull
+// request older than that is no longer found, so a failed tag job must be fixed within that time (see the workflow).
 const MAX_PAGES = 3;
 
 export function selectPendingPrs(prs: ClosedPr[]): PendingPr[] {
