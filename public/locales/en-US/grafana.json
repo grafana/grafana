@@ -1999,6 +1999,7 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
+        "rules-error": "Could not read the rules file",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Rules",
         "skipped": "Skipped",
@@ -2012,7 +2013,8 @@
         "will-import-config": "Will import this configuration",
         "will-import-rules": "Will import rules",
         "will-import-rules-count_one": "Will import {{count}} rules",
-        "will-import-rules-count_other": "Will import {{count}} rules"
+        "will-import-rules-count_other": "Will import {{count}} rules",
+        "yaml-datasource": "Data source"
       },
       "rules-preview": "Alert rules preview",
       "source": {
@@ -2117,9 +2119,14 @@
         "target-datasource-required": "Please select a target data source",
         "target-folder": "Target folder",
         "target-folder-desc": "Folder where imported rules will be stored",
+        "yaml-empty-group": "The group \"{{group}}\" has no rules",
         "yaml-error": "Failed to parse YAML file: {{error}}",
         "yaml-file": "Rules YAML file",
-        "yaml-required": "Please select a file"
+        "yaml-no-rules": "No rules found in this file",
+        "yaml-required": "Please select a file",
+        "yaml-target-datasource": "Data source",
+        "yaml-target-datasource-desc": "Select the data source that will be queried by the imported rules. Make sure metrics used in the imported rules are available in this data source.",
+        "yaml-target-datasource-required": "Please select a data source"
       },
       "success": "Successfully imported alert rules to Grafana-managed rules.",
       "target-folder": {
@@ -5745,6 +5752,10 @@
     "librarypanel": {
       "label": "library panel",
       "label-plural": "library panels"
+    },
+    "notebook": {
+      "label": "notebook",
+      "label-plural": "notebooks"
     },
     "playlist": {
       "label": "playlist",
@@ -13635,7 +13646,7 @@
       "page-assistant-below": "Page with Assistant below",
       "page-floating-assistant": "Page with floating Assistant",
       "page-only": "Page only",
-      "pop-up": "Pop up",
+      "pop-out": "Pop out",
       "right": "Right"
     },
     "assistant-workspace": {
@@ -17648,6 +17659,16 @@
       "review": "Review blocked content",
       "text_one": "External content from {{host}} is blocked pending viewer approval",
       "text_other": "External content from {{count}} sources are blocked pending viewer approval"
+    },
+    "display-completion": {
+      "color": "Color of the value mapping that matched, or else of the threshold",
+      "helper": "Display value of a field on the current row: formatted text, unit, and value mapping or threshold color",
+      "icon": "Icon of the value mapping that matched",
+      "numeric": "Value as a number",
+      "percent": "Position of the value from 0 to 1, between the lowest and highest values across all numeric fields, unless the query results set a field min or max",
+      "prefix": "Unit shown before the value, such as $",
+      "suffix": "Unit shown after the value, such as %",
+      "text": "Formatted value without its unit, or the text of the value mapping that matched"
     },
     "editor": {
       "aria-label-content": "Text content",

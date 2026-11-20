@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
-import { clearButtonStyles } from './Button';
+import { clearButtonStyles } from './StyledButton.styles';
 
 export interface InlineButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
