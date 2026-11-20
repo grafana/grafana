@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAsyncRetry } from 'react-use';
 
+import { type Playlist, playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { useStoredString } from 'app/core/hooks/useStored';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry, type PageHistoryKind } from 'app/core/services/pageHistory/types';
@@ -12,6 +13,7 @@ import {
   getExploreDataSources,
 } from 'app/features/explore/utils/describeExplorePanes';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { dispatch } from 'app/store/store';
 
 /** Last chosen kind filter; remembered per browser. */
 const FILTER_KEY = 'grafana.home.recentActivity.filter';
@@ -19,12 +21,30 @@ const NO_ITEMS: RecentActivityItem[] = [];
 const NO_DATA_SOURCES: ExploreDataSources = new Map();
 
 /** Every kind, in the order the filter and the rows present them; Pages next to Dashboards, as in the nav. */
-const PAGE_KINDS: readonly PageHistoryKind[] = ['dashboard', 'page', 'explore', 'alerting', 'app'];
+const PAGE_KINDS: readonly PageHistoryKind[] = [
+  'dashboard',
+  'folder',
+  'notebook',
+  'playlist',
+  'page',
+  'explore',
+  'alerting',
+  'app',
+];
 
 type PageKindCounts = Record<PageHistoryKind, number>;
 
 function countByKind(items: ReadonlyArray<{ kind: PageHistoryKind }>): PageKindCounts {
-  const counts: PageKindCounts = { dashboard: 0, page: 0, explore: 0, alerting: 0, app: 0 };
+  const counts: PageKindCounts = {
+    dashboard: 0,
+    folder: 0,
+    notebook: 0,
+    playlist: 0,
+    page: 0,
+    explore: 0,
+    alerting: 0,
+    app: 0,
+  };
   for (const { kind } of items) {
     counts[kind]++;
   }
@@ -40,8 +60,9 @@ type EntryOf<K extends PageHistoryKind> = Extract<PageHistoryEntry, { kind: K }>
  */
 export type RecentActivityItem =
   | (EntryOf<'dashboard'> & { dashboard: DashboardQueryResult })
+  | (EntryOf<'playlist'> & { playlistName: string })
   | (EntryOf<'explore'> & { panes: ExplorePaneDescription[] })
-  | EntryOf<'page' | 'alerting' | 'app'>;
+  | EntryOf<'folder' | 'notebook' | 'page' | 'alerting' | 'app'>;
 
 export type RecentActivityFilter = PageHistoryKind | 'all';
 
@@ -62,14 +83,29 @@ export interface RecentActivity {
   clear: () => Promise<void>;
 }
 
+/** Names of the playlists the user can see, by uid. One list call; none when no playlist is in the history. */
+async function getPlaylistNames(entries: PageHistoryEntry[]): Promise<Map<string, string>> {
+  if (!entries.some((entry) => entry.kind === 'playlist')) {
+    return new Map();
+  }
+  const request = dispatch(playlistAPIv1.endpoints.listPlaylist.initiate({}));
+  try {
+    const { items } = await request.unwrap();
+    return new Map(items.map((playlist: Playlist) => [playlist.metadata.name ?? '', playlist.spec.title]));
+  } finally {
+    request.unsubscribe();
+  }
+}
+
 /**
- * Newest first. The history is already capped per kind, so no display cap is needed. Dashboards the user
+ * Newest first. The history is already capped per kind, so no display cap is needed. Dashboards and playlists the user
  * can no longer see are dropped. A failed dashboard search propagates: one error surface for the tab.
  */
 async function getRecentActivity(): Promise<RecentActivityItem[]> {
   const entries = await pageHistorySrv.getEntries();
-  const [dashboards, dataSources] = await Promise.all([
+  const [dashboards, playlistNames, dataSources] = await Promise.all([
     searchDashboardsByUid(entries.flatMap((entry) => (entry.kind === 'dashboard' ? [entry.uid] : []))),
+    getPlaylistNames(entries),
     entries.some((entry) => entry.kind === 'explore') ? getExploreDataSources() : NO_DATA_SOURCES,
   ]);
   return entries.flatMap((entry): RecentActivityItem[] => {
@@ -77,6 +113,10 @@ async function getRecentActivity(): Promise<RecentActivityItem[]> {
       case 'dashboard': {
         const dashboard = dashboards.get(entry.uid);
         return dashboard ? [{ ...entry, dashboard }] : [];
+      }
+      case 'playlist': {
+        const playlistName = playlistNames.get(entry.uid);
+        return playlistName === undefined ? [] : [{ ...entry, playlistName }];
       }
       case 'explore':
         return [{ ...entry, panes: describeExplorePanes(entry.search, dataSources) }];
