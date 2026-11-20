@@ -12,7 +12,6 @@ import { type AppendedElement } from '../addPanel/appendPanelToNotebook';
 import { useNotebookPicker } from '../addPanel/useNotebookPicker';
 import { type NotebookRow } from '../list/useNotebooksList';
 
-
 import { AddToNotebookFormExposedComponent } from './AddToNotebookFormExposedComponent';
 
 jest.mock('../addPanel/useNotebookPicker', () => ({
