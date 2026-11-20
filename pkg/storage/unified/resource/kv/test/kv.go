@@ -32,6 +32,7 @@ const (
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
 	TestKVBatch          = "batch operations"
+	TestKVProperties     = "property-based test"
 
 	// Use `eventsSection` as the section for the tests, as the sqlkv implementation
 	// needs a real section to determine which table to use.
@@ -84,6 +85,7 @@ func RunKVTest(t *testing.T, kv kvpkg.KV, opts *KVTestOptions) {
 		{TestKVBatchGet, runTestKVBatchGet},
 		{TestKVBatchDelete, runTestKVBatchDelete},
 		{TestKVBatch, runTestKVBatch},
+		{TestKVProperties, runTestKVProperties},
 	}
 
 	for _, tc := range cases {
