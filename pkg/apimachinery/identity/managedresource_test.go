@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -187,7 +188,7 @@ func TestCheckOnUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := identity.CheckManagerOnUpdate(tt.auth, tt.proposed, tt.old)
+			err := identity.CheckManagerOnUpdate(tt.auth, tt.proposed, tt.old, "")
 			if tt.forbidden {
 				require.Error(t, err)
 				return
@@ -201,13 +202,98 @@ func TestCheckOnCreateAndDelete(t *testing.T) {
 	who := identities(t)
 	repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 
-	require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo), identity.ErrResourceIsManagedInRepository)
+	require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo, ""), identity.ErrResourceIsManagedInRepository)
 	require.ErrorIs(t, identity.CheckManagerOnDelete(who.user, repo), identity.ErrResourceIsManagedInRepository)
-	require.NoError(t, identity.CheckManagerOnCreate(who.provisioner, repo))
+	require.NoError(t, identity.CheckManagerOnCreate(who.provisioner, repo, ""))
 	require.NoError(t, identity.CheckManagerOnDelete(who.provisioner, repo))
 
 	// Create additionally gates the classic-file-provisioning assignment.
 	classicFP := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicFP}) //nolint:staticcheck
-	require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, classicFP)))
+	require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, classicFP, "")))
 	require.NoError(t, identity.CheckManagerOnDelete(who.user, classicFP))
+}
+
+type multiServiceIdentity struct {
+	*identity.StaticRequester
+	ids []string
+}
+
+func (m multiServiceIdentity) GetExtra() map[string][]string {
+	return map[string][]string{authn.ServiceIdentityKey: m.ids}
+}
+
+func TestGrafanaCloudAssignment(t *testing.T) {
+	who := identities(t)
+	accessPolicy := func(serviceIdentity string) authtypes.AuthInfo {
+		return &identity.StaticRequester{
+			Type:    authtypes.TypeAccessPolicy,
+			UserUID: "6f1c2a90-policy",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{ServiceIdentity: serviceIdentity},
+			},
+		}
+	}
+	const writer = "cloud-writer"
+	cloudWriter := accessPolicy(writer)
+	cloud := func() utils.GrafanaMetaAccessor {
+		return managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindGrafanaCloud, Identity: "grafanacloud"})
+	}
+	cloudWithoutIdentity := func() utils.GrafanaMetaAccessor {
+		meta := unmanaged(t)
+		meta.SetAnnotation(utils.AnnoKeyManagerKind, string(utils.ManagerKindGrafanaCloud))
+		return meta
+	}
+	forbidden := func(t *testing.T, err error, what string) {
+		t.Helper()
+		require.True(t, apierrors.IsForbidden(err), "%s: %v", what, err)
+	}
+
+	for name, auth := range map[string]authtypes.AuthInfo{
+		"user":                      who.user,
+		"org admin":                 who.orgAdmin,
+		"server admin":              who.serverAdmin,
+		"internal service identity": who.service,
+		"provisioning service":      who.provisioner,
+		"another service's token":   accessPolicy("some-other-service"),
+		"a near-miss service name":  accessPolicy("cloud-write"),
+		"a token with two service identities": multiServiceIdentity{
+			StaticRequester: &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "6f1c2a90-policy"},
+			ids:             []string{writer, "some-other-service"},
+		},
+	} {
+		t.Run(name+" may not assign it", func(t *testing.T) {
+			forbidden(t, identity.CheckManagerOnCreate(auth, cloud(), writer), "create")
+			forbidden(t, identity.CheckManagerOnCreate(auth, cloudWithoutIdentity(), writer), "create without a manager identity")
+			forbidden(t, identity.CheckManagerOnUpdate(auth, cloud(), unmanaged(t), writer), "adopt")
+			forbidden(t, identity.CheckManagerOnUpdate(auth, cloudWithoutIdentity(), unmanaged(t), writer), "adopt without a manager identity")
+		})
+
+		t.Run(name+" may change a resource that already carries it", func(t *testing.T) {
+			require.NoError(t, identity.CheckManagerOnUpdate(auth, cloud(), cloud(), writer), "update")
+			require.NoError(t, identity.CheckManagerOnUpdate(auth, cloudWithoutIdentity(), cloud(), writer), "update dropping the manager identity")
+			require.NoError(t, identity.CheckManagerOnUpdate(auth, unmanaged(t), cloud(), writer), "release")
+			require.NoError(t, identity.CheckManagerOnDelete(auth, cloud()), "delete")
+		})
+	}
+
+	t.Run("the configured service may assign it", func(t *testing.T) {
+		require.NoError(t, identity.CheckManagerOnCreate(cloudWriter, cloud(), writer), "create")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), unmanaged(t), writer), "adopt")
+	})
+
+	t.Run("an empty identity lets nobody assign it", func(t *testing.T) {
+		forbidden(t, identity.CheckManagerOnCreate(cloudWriter, cloud(), ""), "create")
+		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), unmanaged(t), ""), "adopt")
+		forbidden(t, identity.CheckManagerOnCreate(accessPolicy(""), cloud(), ""), "a token without the claim")
+	})
+
+	t.Run("the kind may not change from another manager", func(t *testing.T) {
+		repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), repo, writer), "repo to grafana-cloud")
+	})
+
+	t.Run("the configured service gets no other manager's rights", func(t *testing.T) {
+		repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		require.ErrorIs(t, identity.CheckManagerOnCreate(cloudWriter, repo, writer), identity.ErrResourceIsManagedInRepository)
+	})
 }

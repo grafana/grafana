@@ -698,7 +698,7 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 		// Classic shim kinds (legacy file/API provisioning) have no meaningful identity,
 		// so allow them through without one.
 		kind := ParseManagerKindString(annot[AnnoKeyManagerKind])
-		if !kind.IsClassic() {
+		if !kind.hasOptionalIdentity() {
 			// If the identity is not set, we should ignore the other annotations and return the default values.
 			//
 			// This is to prevent inadvertently marking resources as managed,

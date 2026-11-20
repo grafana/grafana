@@ -15,6 +15,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +46,36 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	}}
 }
 
+// CheckGrafanaCloudAssignment blocks assigning the grafana-cloud manager.
+// Only the service identity the store is configured with may set it.
+func CheckGrafanaCloudAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+	if kind != utils.ManagerKindGrafanaCloud {
+		return nil
+	}
+
+	if isGrafanaCloudServiceIdentity(auth, grafanaCloudServiceIdentity) {
+		return nil
+	}
+
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: "Can not set the grafana-cloud resource manager",
+	}}
+}
+
+// isGrafanaCloudServiceIdentity reports whether auth carries exactly one serviceIdentity claim and
+// it matches grafanaCloudServiceIdentity.
+func isGrafanaCloudServiceIdentity(auth authtypes.AuthInfo, grafanaCloudServiceIdentity string) bool {
+	if auth == nil || grafanaCloudServiceIdentity == "" {
+		return false
+	}
+	ids := auth.GetExtra()[authn.ServiceIdentityKey]
+	return len(ids) == 1 && ids[0] == grafanaCloudServiceIdentity
+}
+
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
@@ -66,7 +97,8 @@ func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccess
 		utils.ManagerKindPlugin,
 		utils.ManagerKindClassicFP,                  // nolint:staticcheck
 		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
-		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus, // nolint:staticcheck
+		utils.ManagerKindGrafanaCloud:
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
@@ -93,10 +125,15 @@ func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 
 // CheckManagerOnCreate refuses creating a resource with manager annotations the
 // caller may not assign.
-func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
+
+	if err := CheckGrafanaCloudAssignment(auth, obj, grafanaCloudServiceIdentity); err != nil {
+		return err
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }
 
@@ -104,7 +141,7 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 // annotations do not allow, or that the caller is not entitled to make. Adding,
 // rewriting and removing a manager are each gated differently, so this needs both
 // the proposed and the stored object.
-func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) error {
+func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
 	managerNew, hasNew := obj.GetManagerProperties()
 	managerOld, hasOld := old.GetManagerProperties()
 
@@ -138,12 +175,18 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return err
 	}
 
-	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
-	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP or
+	// grafana-cloud assignment: rewriting one that already carries it must keep working (allowUiUpdates).
 	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
+	if !hasOld || managerOld.Kind != utils.ManagerKindGrafanaCloud {
+		if err := CheckGrafanaCloudAssignment(auth, obj, grafanaCloudServiceIdentity); err != nil {
+			return err
+		}
+	}
+
 	return CheckManagerWriteAuthz(auth, obj)
 }

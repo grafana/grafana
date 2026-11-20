@@ -115,6 +115,9 @@ type StorageOptions struct {
 	// the scheme's natural version order and the configured cap are both available; nil disables
 	// enforcement.
 	VersionPolicy *versionpolicy.VersionPolicyRegistry
+
+	// The serviceIdentity claim allowed to assign the grafana-cloud resource manager; empty allows nobody
+	GrafanaCloudServiceIdentity string
 }
 
 // unifiedStorageConfigValue implements pflag.Value for parsing unified storage config
@@ -191,6 +194,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
 	fs.IntVar(&o.GrpcClientMaxRecvMsgSize, "grpc-client-max-recv-msg-size", o.GrpcClientMaxRecvMsgSize, "Maximum gRPC response message size in bytes for storage and search clients; 0 uses the gRPC default (4 MiB).")
+	fs.StringVar(&o.GrafanaCloudServiceIdentity, "grafana-apiserver-grafana-cloud-service-identity", o.GrafanaCloudServiceIdentity, "Service identity allowed to assign the grafana-cloud resource manager; empty allows nobody")
 
 	// Use custom flag value for unified storage config
 	fs.Var(&unifiedStorageConfigValue{config: &o.UnifiedStorageConfig},
@@ -319,7 +323,9 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	o.SearchIndexClient = unified
 	o.KeysStoreClient = unified
 
-	serverConfig.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
+	getter.SetGrafanaCloudServiceIdentity(o.GrafanaCloudServiceIdentity)
+	serverConfig.RESTOptionsGetter = getter
 	return nil
 }
 

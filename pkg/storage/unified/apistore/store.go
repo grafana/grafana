@@ -130,6 +130,10 @@ type StorageOptions struct {
 	// VersionPolicy rejects a write whose storage version outranks the group's maxAllowedVersion cap.
 	// Shared across resources (set via the RESTOptionsGetter); nil disables enforcement.
 	VersionPolicy *versionpolicy.VersionPolicyRegistry
+
+	// GrafanaCloudServiceIdentity is the serviceIdentity claim allowed to set
+	// `grafana.app/managedBy: grafana-cloud` on a resource. Empty lets nobody set it.
+	GrafanaCloudServiceIdentity string
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.

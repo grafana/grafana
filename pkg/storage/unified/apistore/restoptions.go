@@ -134,6 +134,22 @@ type RESTOptionsGetter struct {
 
 	// versionPolicy is shared across every resource this getter serves; nil disables maxAllowedVersion enforcement.
 	versionPolicy *versionpolicy.VersionPolicyRegistry
+
+	// grafanaCloudServiceIdentity is shared across every resource this getter serves.
+	grafanaCloudServiceIdentity string
+}
+
+// SetGrafanaCloudServiceIdentity sets the serviceIdentity claim allowed to assign the grafana-cloud
+// manager on every resource this getter serves.
+func (r *RESTOptionsGetter) SetGrafanaCloudServiceIdentity(serviceIdentity string) {
+	r.grafanaCloudServiceIdentity = serviceIdentity
+}
+
+// GrafanaCloudServiceIdentity returns the identity SetGrafanaCloudServiceIdentity set. A getter that
+// wraps this one and replaces the RESTOptions decorator has to copy it onto the StorageOptions it
+// builds, or nobody can assign the grafana-cloud manager on the resources it serves.
+func (r *RESTOptionsGetter) GrafanaCloudServiceIdentity() string {
+	return r.grafanaCloudServiceIdentity
 }
 
 // VersionPolicy returns the registry this getter enforces against; nil when enforcement is disabled.
@@ -176,8 +192,8 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 
 // restOptions builds a resource's RESTOptions around an already resolved set of
 // StorageOptions, whether they came from the by-GroupResource map or from a
-// caller that knows the version. SecureValues and VersionPolicy are filled in
-// here so neither path can omit them.
+// caller that knows the version. SecureValues, VersionPolicy and
+// GrafanaCloudServiceIdentity are filled in here so neither path can omit them.
 func (r *RESTOptionsGetter) restOptions(resource schema.GroupResource, opts StorageOptions) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
@@ -211,6 +227,7 @@ func (r *RESTOptionsGetter) restOptions(resource schema.GroupResource, opts Stor
 		) (storage.Interface, factory.DestroyFunc, error) {
 			opts.SecureValues = r.secrets
 			opts.VersionPolicy = r.versionPolicy
+			opts.GrafanaCloudServiceIdentity = r.grafanaCloudServiceIdentity
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 				trigger, indexers, r.configProvider, opts)
 		},
