@@ -810,14 +810,14 @@ describe('display', () => {
 
     it('run once per value, however many of its properties a template reads', () => {
       const { context, cpu } = setup();
-      expect(cpu).toHaveBeenCalledTimes(3);
+      expect(cpu).toHaveBeenCalledTimes(0);
 
       render(
         '{{#each data}}{{display "cpu" "color"}}{{display "cpu" "text"}}{{display "cpu" "suffix"}}{{#display "cpu"}}{{color}}{{/display}}{{/each}}',
         context
       );
 
-      expect(cpu).toHaveBeenCalledTimes(6);
+      expect(cpu).toHaveBeenCalledTimes(3);
     });
 
     it('run only for the fields a template asks for', () => {
@@ -825,7 +825,7 @@ describe('display', () => {
 
       render('{{#each data}}{{display "cpu" "color"}}{{status}}{{fmt.status}}{{/each}}', context);
 
-      expect(cpu).toHaveBeenCalledTimes(6);
+      expect(cpu).toHaveBeenCalledTimes(3);
       expect(status).toHaveBeenCalledTimes(3);
     });
 
