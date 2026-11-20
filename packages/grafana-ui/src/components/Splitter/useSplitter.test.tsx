@@ -281,6 +281,18 @@ describe('useSplitter', () => {
       expect(separator).toHaveAttribute('aria-valuenow', '50');
     });
 
+    // A pane max size can stop the pane short of the even split, so the value has to come from
+    // the measured pane rather than the reset ratio.
+    it('reports the measured share when a flex reset is held back by a pane size limit', () => {
+      const heldPane = 300;
+      const separator = mountSplitter({ direction: 'row', initialSize: 0.8 }, heldPane);
+
+      fireEvent.doubleClick(separator);
+
+      // 300 of the 984px beside the handle
+      expect(separator).toHaveAttribute('aria-valuenow', '30');
+    });
+
     // The branch the options pane takes. It is not behind a feature flag, so this is the reset that
     // reaches every user — the pane it reports must clear its own collapse threshold.
     it('reports the configured size for a secondary-pixel splitter', () => {
