@@ -162,8 +162,10 @@ func TestIntegrationEnforcedLoaderTeamsAndDuplicates(t *testing.T) {
 		t.Run(fmt.Sprintf("cache=%t", cached), func(t *testing.T) {
 			loader := legacypermissions.NewEnforcedLoader(legacysql.NewDatabaseProvider(sql), resourcepermissions.NewActionSetService(),
 				localcache.New(0, 0), loaderConfig(cached), featuremgmt.WithFeatures(), nil, nil)
+			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
+			requester.TeamIDs = []int64{42} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
 			for _, options := range []ac.Options{{}, {}, {ReloadCache: true}} {
-				got, err := loader.GetUserPermissions(context.Background(), &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone, TeamIDs: []int64{42}}, options)
+				got, err := loader.GetUserPermissions(context.Background(), requester, options)
 				require.NoError(t, err)
 				require.ElementsMatch(t, []ac.Permission{grant, grant, {Action: "folders:read", Scope: "folders:uid:sharedwithme"}}, got)
 			}
