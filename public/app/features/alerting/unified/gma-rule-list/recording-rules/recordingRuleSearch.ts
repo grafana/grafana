@@ -47,10 +47,10 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
 export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
-  const lookup = useRuleSearchApiArgs('recording', filter);
+  const folderLookup = useRuleSearchApiArgs('recording', filter);
   return withFolderLookup(
-    lookup,
-    useRuleSearchResult(useSearchRecordingRulesInfiniteQuery(lookup.apiArgs ?? skipToken))
+    folderLookup,
+    useRuleSearchResult(useSearchRecordingRulesInfiniteQuery(folderLookup.apiArgs ?? skipToken))
   );
 }
 

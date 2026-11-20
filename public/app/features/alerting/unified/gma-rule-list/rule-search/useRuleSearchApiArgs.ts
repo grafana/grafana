@@ -55,17 +55,17 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
 }
 
 export function withFolderLookup<Hit>(
-  lookup: ReturnType<typeof useRuleSearchApiArgs>,
+  folderLookup: ReturnType<typeof useRuleSearchApiArgs>,
   result: ReturnType<typeof useRuleSearchResult<Hit, unknown>>
 ) {
   return {
     ...result,
-    noMatchingFolder: lookup.noMatchingFolder,
-    folderLimitReached: lookup.folderLimitReached,
+    noMatchingFolder: folderLookup.noMatchingFolder,
+    folderLimitReached: folderLookup.folderLimitReached,
     // `useRuleSearchResult` reports a skipped search as loading.
-    isLoading: lookup.isLookingUp || (lookup.apiArgs !== undefined && result.isLoading),
-    error: lookup.lookupError ?? result.error,
-    retry: lookup.lookupError ? lookup.retryLookup : result.retry,
+    isLoading: folderLookup.isLookingUp || (folderLookup.apiArgs !== undefined && result.isLoading),
+    error: folderLookup.lookupError ?? result.error,
+    retry: folderLookup.lookupError ? folderLookup.retryLookup : result.retry,
   };
 }
 
