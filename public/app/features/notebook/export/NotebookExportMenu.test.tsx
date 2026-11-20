@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { useAssistant } from '@grafana/assistant';
 import { config } from '@grafana/runtime';
+import { useFlagDashboardNotebookCreatePage } from '@grafana/runtime/internal';
 import { Menu } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
@@ -18,6 +20,18 @@ jest.mock('./openNotebookPdf', () => ({
   navigateToNotebookPdf: jest.fn(),
 }));
 jest.mock('../analytics/main', () => ({ NotebookAnalytics: { exported: jest.fn() } }));
+jest.mock('@grafana/assistant', () => ({
+  createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
+  useAssistant: jest.fn(),
+}));
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagDashboardNotebookCreatePage: jest.fn(),
+}));
+
+const mockUseAssistant = jest.mocked(useAssistant);
+const mockUseCreatePageFlag = jest.mocked(useFlagDashboardNotebookCreatePage);
+const mockOpenAssistant = jest.fn();
 
 const mockDownloadMarkdown = jest.mocked(downloadMarkdown);
 const mockCanExportNotebookPdf = jest.mocked(canExportNotebookPdf);
@@ -77,6 +91,14 @@ describe('NotebookExportMenu', () => {
     // `new URL(path, undefined)` throws, which the menu would report as an export failure.
     config.appUrl = 'https://host/';
     mockCanExportNotebookPdf.mockReturnValue(false);
+    mockUseCreatePageFlag.mockReturnValue(false);
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant: mockOpenAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
   });
 
   afterEach(() => {
@@ -254,6 +276,97 @@ describe('NotebookExportMenu', () => {
     expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
     expect(mockDownloadMarkdown).not.toHaveBeenCalled();
     expect(mockExported).not.toHaveBeenCalled();
+  });
+
+  describe('create page', () => {
+    it('stays hidden while the feature is off', () => {
+      setup(async () => buildSpec());
+
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create presentation page with Assistant' })
+      ).not.toBeInTheDocument();
+    });
+
+    it('stays hidden when the Assistant is unavailable', () => {
+      mockUseCreatePageFlag.mockReturnValue(true);
+      mockUseAssistant.mockReturnValue({
+        isLoading: false,
+        isAvailable: false,
+        openAssistant: undefined,
+        closeAssistant: undefined,
+        toggleAssistant: undefined,
+      });
+      setup(async () => buildSpec());
+
+      expect(
+        screen.queryByRole('menuitem', { name: 'Create presentation page with Assistant' })
+      ).not.toBeInTheDocument();
+    });
+
+    it('opens the Assistant with the notebook, a presentation prompt, after saving pending edits', async () => {
+      mockUseCreatePageFlag.mockReturnValue(true);
+      const flushPendingChanges = jest.fn().mockResolvedValue(undefined);
+      const { user } = setup(async () => buildSpec(), 'notebook_toolbar', flushPendingChanges);
+
+      await user.click(screen.getByRole('menuitem', { name: 'Create presentation page with Assistant' }));
+
+      await waitFor(() => expect(mockOpenAssistant).toHaveBeenCalledTimes(1));
+      const props = mockOpenAssistant.mock.calls[0][0];
+      expect(props).toEqual(
+        expect.objectContaining({
+          mode: 'assistant',
+          autoSend: true,
+          prompt: expect.stringContaining('presentation'),
+        })
+      );
+      expect(props.context).toHaveLength(1);
+      expect(props.context[0].type).toBe('structured');
+      expect(props.context[0].params.data).toEqual(
+        expect.objectContaining({
+          kind: 'notebook',
+          uid: 'nb1',
+          path: '/notebooks/nb1.nb',
+          title: 'Q2 latency regression',
+          markdown: expect.stringContaining('Findings'),
+        })
+      );
+      expect(flushPendingChanges.mock.invocationCallOrder[0]).toBeLessThan(
+        mockOpenAssistant.mock.invocationCallOrder[0]
+      );
+      expect(mockExported).toHaveBeenCalledWith('nb1', 'page', 'notebook_toolbar');
+    });
+
+    it('opens the Assistant with an exec summary prompt', async () => {
+      mockUseCreatePageFlag.mockReturnValue(true);
+      const { user } = setup(async () => buildSpec());
+
+      await user.click(screen.getByRole('menuitem', { name: 'Create exec summary page with Assistant' }));
+
+      await waitFor(() => expect(mockOpenAssistant).toHaveBeenCalledTimes(1));
+      expect(mockOpenAssistant.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
+          prompt: expect.stringContaining('exec summary'),
+        })
+      );
+      expect(mockExported).toHaveBeenCalledWith('nb1', 'page', 'notebook_list');
+    });
+
+    it('does not open the Assistant when the pending edits cannot be saved', async () => {
+      mockUseCreatePageFlag.mockReturnValue(true);
+      const { user } = setup(
+        async () => buildSpec(),
+        'notebook_toolbar',
+        async () => {
+          throw new Error('The notebook was changed by someone else.');
+        }
+      );
+
+      await user.click(screen.getByRole('menuitem', { name: 'Create presentation page with Assistant' }));
+
+      expect(await screen.findByText('Failed to export notebook')).toBeInTheDocument();
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+      expect(mockExported).not.toHaveBeenCalled();
+    });
   });
 
   it('treats a missing notebook as a failure too', async () => {

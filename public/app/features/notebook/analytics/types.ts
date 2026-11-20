@@ -247,6 +247,9 @@ export const NOTEBOOK_EXPORT_DESTINATION = {
   // Reported once the PDF tab is pointed at the renderer. The render itself happens in that tab, so
   // this says the export started, not that a PDF came out.
   PDF: 'pdf',
+  // Reported once the Assistant opens with the notebook attached. Whether a Page gets built is up to
+  // the conversation that follows, which the Assistant reports on its own.
+  PAGE: 'page',
 } as const;
 
 export type NotebookExportDestination = (typeof NOTEBOOK_EXPORT_DESTINATION)[keyof typeof NOTEBOOK_EXPORT_DESTINATION];

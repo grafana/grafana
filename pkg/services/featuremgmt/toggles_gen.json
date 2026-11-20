@@ -1658,6 +1658,20 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebookCreatePage",
+        "resourceVersion": "1795016557296",
+        "creationTimestamp": "2026-11-18T15:42:37Z"
+      },
+      "spec": {
+        "description": "Adds a Create page action to notebooks that asks Grafana Assistant to build a Page telling the notebook's story",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1792173756887",
         "creationTimestamp": "2026-07-09T13:38:44Z",

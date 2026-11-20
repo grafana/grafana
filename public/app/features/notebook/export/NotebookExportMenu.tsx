@@ -1,4 +1,6 @@
+import { useAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
+import { useFlagDashboardNotebookCreatePage } from '@grafana/runtime/internal';
 import { Menu, copyTextToClipboard } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -9,6 +11,7 @@ import { notebookShareUrl } from '../urls';
 
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
+import { type NotebookPageKind, notebookPageAssistantProps } from './openNotebookAsPage';
 import { canExportNotebookPdf, navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
 
 interface Props {
@@ -37,6 +40,8 @@ interface Props {
 /** The export actions, shared by the notebook page toolbar and the list page's row menu. */
 export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }: Props) {
   const notifyApp = useAppNotification();
+  const createPageEnabled = useFlagDashboardNotebookCreatePage();
+  const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
   // Throws rather than reporting, so each action owns its own outcome: the copy cannot know whether
   // it succeeded until the clipboard write settles, which is after the spec has loaded.
@@ -106,6 +111,23 @@ export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }
     }
   };
 
+  // Flushes like the PDF export: the Skill reads the notebook back from the server, so an edit still
+  // on autosave's debounce would be missing from the Page.
+  const onCreatePage = async (kind: NotebookPageKind) => {
+    if (!openAssistant) {
+      return;
+    }
+
+    try {
+      await flushPendingChanges?.();
+      const spec = await loadSpec();
+      openAssistant(notebookPageAssistantProps(uid, spec, kind));
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.PAGE, source);
+    } catch (error) {
+      reportFailure();
+    }
+  };
+
   return (
     <>
       <Menu.Item label={t('notebooks.export.copy-markdown', 'Copy as Markdown')} icon="copy" onClick={onCopy} />
@@ -118,6 +140,20 @@ export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }
           a plain dropdown item has no room for the explanatory alert a disabled state would need. */}
       {canExportNotebookPdf() && (
         <Menu.Item label={t('notebooks.export.pdf', 'Export as PDF')} icon="file-alt" onClick={onExportPdf} />
+      )}
+      {createPageEnabled && assistantAvailable && openAssistant && (
+        <>
+          <Menu.Item
+            label={t('notebooks.export.create-presentation', 'Create presentation page with Assistant')}
+            icon="ai-sparkle"
+            onClick={() => onCreatePage('presentation')}
+          />
+          <Menu.Item
+            label={t('notebooks.export.create-exec-summary', 'Create exec summary page with Assistant')}
+            icon="ai-sparkle"
+            onClick={() => onCreatePage('exec-summary')}
+          />
+        </>
       )}
     </>
   );
