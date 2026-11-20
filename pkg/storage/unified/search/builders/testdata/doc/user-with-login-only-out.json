@@ -16,6 +16,7 @@
     "disabled": false,
     "lastSeenAt": 0,
     "login": "user.two",
+    "provisioned": false,
     "role": "Viewer"
   },
   "selectableFields": {
