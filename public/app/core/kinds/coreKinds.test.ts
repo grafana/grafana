@@ -47,6 +47,7 @@ describe('collection groups', () => {
 describe('findKind', () => {
   it('tells apart kinds that share a group', () => {
     expect(findKind('dashboard.grafana.app', 'Dashboard')).toBe(CORE_KINDS.dashboard);
+    expect(findKind('dashboard.grafana.app', 'Notebook')).toBe(CORE_KINDS.notebook);
     expect(findKind('dashboard.grafana.app', 'LibraryPanel')).toBe(CORE_KINDS.librarypanel);
   });
 

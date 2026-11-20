@@ -1,5 +1,5 @@
+import { type KindInfo } from '@grafana/runtime/unstable';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
-import { type KindInfo } from 'app/core/kinds/types';
 
 /**
  * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and kind; this says how

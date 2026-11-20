@@ -699,6 +699,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/logging @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
+/packages/grafana-runtime/src/services/KindRegistry.ts @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/services/LocationService.test.tsx @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/services/LocationService.tsx @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/services/LocationSrv.ts @grafana/grafana-frontend-navigation
