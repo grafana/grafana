@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	grpccodes "google.golang.org/grpc/codes"
@@ -23,9 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
-
-	authlib "github.com/grafana/authlib/types"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -56,9 +56,47 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
 	)
 
+	t.Run("namespace from context", func(t *testing.T) {
+		for _, tt := range []struct {
+			name             string
+			requestNamespace string
+			objectNamespace  string
+			wantError        bool
+		}{
+			{name: "sets missing namespace", requestNamespace: "default"},
+			{name: "preserves matching namespace", requestNamespace: "default", objectNamespace: "default"},
+			{name: "rejects mismatched namespace", requestNamespace: "default", objectNamespace: "other", wantError: true},
+			{name: "allows empty namespaces"},
+			{name: "rejects namespace without request namespace", objectNamespace: "default", wantError: true},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				ctx := request.WithNamespace(ctx, tt.requestNamespace)
+				dashboard := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+					Name:      "test-name",
+					Namespace: tt.objectNamespace,
+				}}
+				v, err := s.prepareObjectForStorage(ctx, dashboard)
+				if tt.wantError {
+					require.Error(t, err)
+					require.True(t, apierrors.IsBadRequest(err))
+					require.ErrorContains(t, err, "namespace mismatch")
+					require.Empty(t, v.raw)
+					return
+				}
+				require.NoError(t, err)
+				newObject, err := s.serializer.Decode(ctx, v.raw, &dashv1.Dashboard{})
+				require.NoError(t, err)
+				obj, err := utils.MetaAccessor(newObject)
+				require.NoError(t, err)
+				require.Equal(t, tt.requestNamespace, obj.GetNamespace())
+			})
+		}
+	})
+
 	t.Run("Error getting auth info from context", func(t *testing.T) {
 		_, err := s.prepareObjectForStorage(context.Background(), nil)
 		require.Error(t, err)
+		require.True(t, apierrors.IsUnauthorized(err))
 		require.Contains(t, err.Error(), "missing auth info")
 	})
 
@@ -418,6 +456,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{}, &dashv1.Dashboard{})
 		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err))
 		require.Contains(t, err.Error(), "updated object must have a name")
 
 		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
@@ -426,6 +465,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 			Name: "not-the-same-name",
 		}})
 		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err))
 		require.Contains(t, err.Error(), "name mismatch between")
 
 		_, err = s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
@@ -434,6 +474,82 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		}})
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
+	})
+}
+
+func TestPrepareObjectForUpdatePreservesNamespace(t *testing.T) {
+	s := &Storage{serializer: &jsonSerializer{}, opts: StorageOptions{GVK: dashv1.DashboardResourceInfo.GroupVersionKind()}}
+	for _, namespace := range []string{"", "default", "other"} {
+		t.Run(fmt.Sprintf("submitted namespace %q", namespace), func(t *testing.T) {
+			ctx := request.WithNamespace(testContext(t), "default")
+			previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+				Name: "test", Namespace: "default", UID: "original-uid", Generation: 5,
+			}}
+			updated := previous.DeepCopy()
+			updated.Namespace = namespace
+			result, err := s.prepareObjectForUpdate(ctx, updated, previous)
+			require.NoError(t, err)
+			require.False(t, result.hasChanged)
+			stored := &dashv1.Dashboard{}
+			require.NoError(t, json.Unmarshal(result.raw, stored))
+			require.Equal(t, "default", stored.Namespace)
+			require.Equal(t, int64(5), stored.Generation)
+			require.Equal(t, "default", previous.Namespace)
+		})
+	}
+}
+
+func TestPrepareObjectMetadataIdentity(t *testing.T) {
+	s := &Storage{serializer: &jsonSerializer{}, opts: StorageOptions{GVK: dashv1.DashboardResourceInfo.GroupVersionKind()}}
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "caller", Type: authlib.TypeUser})
+	for _, tt := range []struct {
+		name, originalUID, wantUID string
+	}{
+		{name: "original identity", originalUID: "user:original", wantUID: "user:original"},
+		{name: "empty identity falls back to caller", wantUID: "user:caller"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithOriginalIdentityUID(ctx, tt.originalUID)
+			dashboard := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test"}}
+			created := getPreparedObject(t, ctx, s, dashboard, nil)
+			require.Equal(t, tt.wantUID, created.GetCreatedBy())
+			require.Equal(t, tt.wantUID, created.GetUpdatedBy())
+
+			previous := dashboard.DeepCopy()
+			previous.Annotations[utils.AnnoKeyCreatedBy] = "user:creator"
+			previous.Annotations[utils.AnnoKeyUpdatedBy] = "user:previous-editor"
+			updated := previous.DeepCopy()
+			updated.Spec = v0alpha1.Unstructured{Object: map[string]any{"title": "changed"}}
+			stored := getPreparedObject(t, ctx, s, updated, previous)
+			require.Equal(t, "user:creator", stored.GetCreatedBy())
+			require.Equal(t, tt.wantUID, stored.GetUpdatedBy())
+			require.Equal(t, previous.Generation+1, stored.GetGeneration())
+
+			unchanged := getPreparedObject(t, ctx, s, previous.DeepCopy(), previous)
+			require.Equal(t, "user:previous-editor", unchanged.GetUpdatedBy())
+			require.Equal(t, previous.Generation, unchanged.GetGeneration())
+		})
+	}
+}
+
+func TestPrepareRejectsObjectsWithoutMetadata(t *testing.T) {
+	s := &Storage{}
+	ctx := testContext(t)
+	valid := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test"}}
+	t.Run("create", func(t *testing.T) {
+		result, err := s.prepareObjectForStorage(ctx, &runtime.Unknown{})
+		require.Error(t, err)
+		require.Empty(t, result.raw)
+	})
+	t.Run("update", func(t *testing.T) {
+		result, err := s.prepareObjectForUpdate(ctx, &runtime.Unknown{}, valid)
+		require.Error(t, err)
+		require.Empty(t, result.raw)
+	})
+	t.Run("previous object", func(t *testing.T) {
+		result, err := s.prepareObjectForUpdate(ctx, valid, &runtime.Unknown{})
+		require.Error(t, err)
+		require.Empty(t, result.raw)
 	})
 }
 

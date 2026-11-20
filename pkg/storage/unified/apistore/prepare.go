@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -144,7 +145,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	v := objectForStorage{}
 	info, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return v, errors.New("missing auth info")
+		return v, apierrors.NewUnauthorized("prepare missing auth info")
 	}
 	s.checkGVK(newObject)
 
@@ -202,6 +203,13 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
+
+	ns := request.NamespaceValue(ctx)
+	if obj.GetNamespace() == "" {
+		obj.SetNamespace(ns) // set the missing namespace
+	} else if obj.GetNamespace() != ns {
+		return v, apierrors.NewBadRequest("namespace mismatch")
+	}
 
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
@@ -289,7 +297,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 	if obj.GetName() == "" {
-		return v, fmt.Errorf("updated object must have a name")
+		return v, apierrors.NewBadRequest("updated object must have a name")
 	}
 
 	previous, err := utils.MetaAccessor(previousObject)
@@ -309,13 +317,14 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if obj.GetName() != previous.GetName() {
-		return v, fmt.Errorf("name mismatch between existing and updated object")
+		return v, apierrors.NewBadRequest("name mismatch between existing and updated object")
 	}
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
 	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
+	obj.SetNamespace(previous.GetNamespace())
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
