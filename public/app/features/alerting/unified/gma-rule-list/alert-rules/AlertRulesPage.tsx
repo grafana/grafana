@@ -128,7 +128,12 @@ function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
     );
   }
   if (mode === 'folders') {
-    return <AlertRulesFoldersView key={filter.folders.join()} folderUids={filter.folders} />;
+    return (
+      <AlertRulesFoldersView
+        key={JSON.stringify([filter.folder, filter.folderUids])}
+        scope={{ folder: filter.folder, folderUids: filter.folderUids }}
+      />
+    );
   }
   return <AlertRulesListView filter={filter} />;
 }
