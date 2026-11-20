@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,7 @@ import (
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -366,6 +368,22 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 	}
 
 	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(supportedResourceProvider.Configured())}
+}
+
+func NewRouterSwitchClientFactory(router, dedicated ClientFactory) ClientFactory {
+	return &routerSwitchClientFactory{router: router, dedicated: dedicated}
+}
+
+type routerSwitchClientFactory struct {
+	router    ClientFactory
+	dedicated ClientFactory
+}
+
+func (f *routerSwitchClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningRouterClient, false, openfeature.TransactionContext(ctx)) {
+		return f.router.Clients(ctx, namespace)
+	}
+	return f.dedicated.Clients(ctx, namespace)
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -390,10 +388,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
 	if routerConfigProvider != nil {
-		clients = &routerClientFactory{
-			router:    resources.NewClientFactory(routerConfigProvider, supportedResourceProvider),
-			dedicated: clients,
-		}
+		clients = resources.NewRouterSwitchClientFactory(resources.NewClientFactory(routerConfigProvider, supportedResourceProvider), clients)
 	}
 	c.clients = clients
 	return clients, nil
@@ -932,18 +927,6 @@ func NewDirectConfigProvider(cfg *rest.Config) apiserver.RestConfigProvider {
 
 func (r *directConfigProvider) GetRestConfig(ctx context.Context) (*rest.Config, error) {
 	return r.cfg, nil
-}
-
-type routerClientFactory struct {
-	router    resources.ClientFactory
-	dedicated resources.ClientFactory
-}
-
-func (f *routerClientFactory) Clients(ctx context.Context, namespace string) (resources.ResourceClients, error) {
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningRouterClient, false, openfeature.TransactionContext(ctx)) {
-		return f.router.Clients(ctx, namespace)
-	}
-	return f.dedicated.Clients(ctx, namespace)
 }
 
 func defaultConnectionTypes(extras []connection.Extra) []string {
