@@ -41,14 +41,14 @@ func TestWatchCacheReplayAndValidity(t *testing.T) {
 	require.NoError(t, validate(unknown, 40))
 
 	replayed := make(chan *WrittenEvent, 2)
-	require.NoError(t, cache.replay(replayed, second))
+	require.NoError(t, cache.replay(replayed, second, 0))
 	require.Equal(t, int64(70), (<-replayed).ResourceVersion)
 	require.Equal(t, int64(80), (<-replayed).ResourceVersion)
-	require.NoError(t, cache.replay(replayed, first))
+	require.NoError(t, cache.replay(replayed, first, 0))
 	require.Equal(t, int64(50), (<-replayed).ResourceVersion)
-	require.NoError(t, cache.replay(replayed, unknown))
+	require.NoError(t, cache.replay(replayed, unknown, 0))
 	require.Empty(t, replayed)
-	require.ErrorIs(t, cache.replay(make(chan *WrittenEvent, 1), second), io.ErrShortBuffer)
+	require.ErrorIs(t, cache.replay(make(chan *WrittenEvent, 1), second, 0), io.ErrShortBuffer)
 }
 
 func TestWatchCacheByteLimit(t *testing.T) {
@@ -104,7 +104,7 @@ func TestWatchCacheOversizedEvent(t *testing.T) {
 	cache.add(next)
 	require.Equal(t, next.sizeBytes(), cache.sizeBytes)
 	replayed := make(chan *WrittenEvent, 3)
-	require.NoError(t, cache.replay(replayed, gr))
+	require.NoError(t, cache.replay(replayed, gr, 0))
 	require.Equal(t, []*WrittenEvent{next}, drainChan(replayed))
 }
 
@@ -118,7 +118,7 @@ func TestWatchCacheByteAccountingWraparound(t *testing.T) {
 		cache.add(event)
 		require.LessOrEqual(t, cache.sizeBytes, cache.maxBytes)
 		replayed := make(chan *WrittenEvent, 3)
-		require.NoError(t, cache.replay(replayed, gr))
+		require.NoError(t, cache.replay(replayed, gr, 0))
 		items := drainChan(replayed)
 		require.Len(t, items, min(int(rv), 2))
 		var total int64
@@ -180,7 +180,7 @@ func TestWatchCacheRejectsOversizedSeed(t *testing.T) {
 func replayRVs(t *testing.T, cache *watchCache[*WrittenEvent], gr GroupResource) []int64 {
 	t.Helper()
 	replayed := make(chan *WrittenEvent, cache.size)
-	require.NoError(t, cache.replay(replayed, gr))
+	require.NoError(t, cache.replay(replayed, gr, 0))
 	events := drainChan(replayed)
 	if len(events) == 0 {
 		return nil

@@ -740,6 +740,12 @@ func TestIntegrationSQLBackendWatchesFromNATS(t *testing.T) {
 			require.Equal(t, "item", got.Key.Name, name)
 			require.Equal(t, "folderuid", got.Folder, name)
 			require.Contains(t, string(got.Value), "item "+w.typ.String(), name)
+
+			listRV, err := reader.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: got.Key},
+			}, func(resource.ListIterator) error { return nil })
+			require.NoError(t, err)
+			require.GreaterOrEqual(t, listRV, got.ResourceVersion, "a current list RV must cover an already published event")
 		}
 	}
 }

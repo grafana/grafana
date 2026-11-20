@@ -209,15 +209,22 @@ func (c *watchCache[T]) validateResume(gr GroupResource, resume watchResume) err
 	return nil
 }
 
-// replay sends gr's cached events.
-func (c *watchCache[T]) replay(dst chan<- T, gr GroupResource) error {
+// replay sends cached events after a positive cursor. A nonpositive cursor replays the entire ring.
+func (c *watchCache[T]) replay(dst chan<- T, gr GroupResource, since int64) error {
 	ring := c.rings[gr]
 	if ring == nil {
 		return nil
 	}
 	for i := range ring.len {
+		item := ring.at(i).item
+		if since > 0 {
+			_, rv := c.identity(item)
+			if rv <= since {
+				continue
+			}
+		}
 		select {
-		case dst <- ring.at(i).item:
+		case dst <- item:
 		default:
 			return io.ErrShortBuffer
 		}

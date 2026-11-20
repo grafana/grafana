@@ -223,8 +223,8 @@ func (b *broadcaster[T]) submit(req *subscribeRequest[T]) error {
 }
 
 // subscribeWatch acknowledges replay capture and live registration in the same
-// operation as floor validation. The subscriber only receives gr's events. Only
-// resumes replay the cache: other watches start at or above every cached RV.
+// operation as floor validation. The subscriber only receives gr's events.
+// A nil resume registers for live delivery only.
 func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name string, gr GroupResource, resume *watchResume) (*watchSubscription[T], error) {
 	if err := b.ensureReady(ctx); err != nil {
 		return nil, err
@@ -548,8 +548,7 @@ func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
 				return
 			}
 		}
-		// send initial batch of cached items
-		if err := b.cache.replay(sub.ch, sub.gr); err != nil {
+		if err := b.cache.replay(sub.ch, sub.gr, req.resume.since); err != nil {
 			reject(err, subscriptionResultReplayFailed)
 			return
 		}

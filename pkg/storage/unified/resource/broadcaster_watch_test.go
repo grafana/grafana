@@ -113,10 +113,8 @@ func TestWatchCacheFloors(t *testing.T) {
 	replay, err := checkedWatch(t, b, plugin, 1200)
 	require.NoError(t, err)
 	defer b.Unsubscribe(replay)
-	for _, want := range [][2]int64{{701, 1100}, {1602, 1701}} {
-		for rv := want[0]; rv <= want[1]; rv++ {
-			require.Equal(t, rv, (<-replay).ResourceVersion)
-		}
+	for rv := int64(1602); rv <= 1701; rv++ {
+		require.Equal(t, rv, (<-replay).ResourceVersion)
 	}
 	require.Empty(t, replay, "replay must not include other group/resources")
 }
@@ -159,11 +157,7 @@ func TestCheckedWatchConcurrentEviction(t *testing.T) {
 		// Admission before eviction owns all subsequent events independently
 		// of the shared ring, even though a new resume would now expire.
 		for rv := int64(101); rv <= 601; rv++ {
-			event := <-stream
-			if event.ResourceVersion == 100 {
-				event = <-stream
-			}
-			require.Equal(t, rv, event.ResourceVersion)
+			require.Equal(t, rv, (<-stream).ResourceVersion)
 		}
 		b.Unsubscribe(stream)
 	}
@@ -219,7 +213,7 @@ func TestCheckedWatchWaitsForSeed(t *testing.T) {
 		close(release)
 		res := <-subscribed
 		require.NoError(t, res.err)
-		for _, want := range []int64{50, 51, 52} {
+		for _, want := range []int64{51, 52} {
 			require.Equal(t, want, (<-res.sub.events()).ResourceVersion)
 		}
 		synctest.Wait()
@@ -397,19 +391,25 @@ func TestCheckedWatchReplaysOnlyOnResume(t *testing.T) {
 
 	resumed, err := checkedWatch(t, b, playlist, 10)
 	require.NoError(t, err)
-	require.Equal(t, int64(10), (<-resumed).ResourceVersion)
 	require.Equal(t, int64(12), (<-resumed).ResourceVersion)
 	require.Empty(t, resumed)
 	b.Unsubscribe(resumed)
+
+	negative, err := checkedWatch(t, b, playlist, -1)
+	require.NoError(t, err)
+	defer b.Unsubscribe(negative)
+	require.Equal(t, int64(10), (<-negative).ResourceVersion)
+	require.Equal(t, int64(12), (<-negative).ResourceVersion)
+	require.Empty(t, negative)
 }
 
 func TestBroadcasterWatchProgress(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		playlist := GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
 		dashboard := GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
-		b, input := newWatchBroadcaster(t, 10, cacheEvent(playlist, 10))
+		b, input := newWatchBroadcaster(t, 9, cacheEvent(playlist, 10))
 		// Replayed events count as delivered too.
-		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 10, requestedRV: 10})
+		sub, err := b.subscribeWatch(t.Context(), "playlists", playlist, &watchResume{since: 9, requestedRV: 9})
 		require.NoError(t, err)
 		stream := sub.events()
 		defer b.Unsubscribe(stream)

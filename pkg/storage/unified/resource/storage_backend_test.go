@@ -634,6 +634,12 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					require.Equal(t, event.Object.GetFolder(), writtenEvent.Folder)
 					require.Equal(t, rvs[j], writtenEvent.ResourceVersion)
 
+					listRV, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+						Options: &resourcepb.ListOptions{Key: writtenEvent.Key},
+					}, func(ListIterator) error { return nil })
+					require.NoError(t, err)
+					require.GreaterOrEqual(t, listRV, writtenEvent.ResourceVersion, "a current list RV must cover an already published event")
+
 					if j > 0 {
 						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
 						previousAction := DataActionCreated
