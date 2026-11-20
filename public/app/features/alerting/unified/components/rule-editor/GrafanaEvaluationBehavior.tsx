@@ -172,23 +172,23 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        {gmaOnlyListView && wasGroupedRule && (
-          <Alert
-            severity="warning"
-            title={t(
-              'alerting.rule-form.evaluation.ungroup-warning-title',
-              'This will remove the alert rule from its group'
-            )}
-          >
-            <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
-              This action is irreversible. After you save, you will not be able to add it back to a group.
-            </Trans>
-          </Alert>
-        )}
         {showGroupSelection ? (
           <EvaluationGroupPicker enableProvisionedGroups={enableProvisionedGroups} />
         ) : (
-          <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
+          <>
+            <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
+            {gmaOnlyListView && wasGroupedRule && (
+              <Alert
+                severity="warning"
+                title={t('alerting.rule-form.evaluation.retired-group-title', 'Evaluation groups are retired')}
+              >
+                <Trans i18nKey="alerting.rule-form.evaluation.retired-group">
+                  This rule used to belong to an evaluation group. It now belongs directly to its folder, and its
+                  evaluation interval is set on the rule.
+                </Trans>
+              </Alert>
+            )}
+          </>
         )}
         {isGrafanaAlertingRule && (
           <>

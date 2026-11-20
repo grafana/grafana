@@ -182,7 +182,7 @@ function EvaluationBehaviorWrapper({
   );
 }
 
-const ungroupWarning = /This will remove the alert rule from its group/i;
+const ungroupWarning = /Evaluation groups are retired/i;
 
 describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => {
   testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
