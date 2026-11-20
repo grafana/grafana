@@ -58,7 +58,7 @@ You only need to define `TestMain` in one `_test.go` file within each package.
 
 ### Integration Tests
 
-CI runs `TestIntegration*` tests separately for SQLite, MySQL, and PostgreSQL. Reserve this prefix for tests that need coverage across these SQL databases, not simply tests that combine several components or happen to use a database.
+CI runs `TestIntegration*` tests separately for SQLite, MySQL, and PostgreSQL. Draft PRs run only SQLite. Marking a PR ready for review triggers the full database matrix. Reserve this prefix for tests that need coverage across these SQL databases, not simply tests that combine several components or happen to use a database.
 
 SQLite, MySQL, and PostgreSQL CI assign the longest packages to the least-loaded shard using shared [package weights](../../scripts/ci/backend-tests/sql-integration-weights.txt). Within Enterprise jobs, the same assignment accounts for both modules. Update a weight using the package runtime from a representative MySQL CI run. Unlisted packages receive an 8-second weight.
 
