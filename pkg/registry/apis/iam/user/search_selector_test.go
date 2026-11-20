@@ -33,7 +33,7 @@ func TestUserSearchModeChanges(t *testing.T) {
 		}}
 	}
 	selector := dualwrite.NewSelector(dualwrite.ProvideServiceForTests(cfg), gr, backend("legacy"), backend("unified"))
-	handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil)
+	handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil, nil)
 
 	for _, tt := range []struct {
 		mode rest.DualWriterMode
@@ -75,7 +75,7 @@ func TestUserSearchPagination(t *testing.T) {
 				got = query
 				return iamv0.NewGetSearchUsersResponse(), nil
 			}}
-			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil)
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil, nil)
 			req := httptest.NewRequest("GET", tt.url, nil)
 			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1"}))
 			w := httptest.NewRecorder()
@@ -132,7 +132,7 @@ func TestUserSearchSelectionError(t *testing.T) {
 		return nil, nil
 	}}
 	selector := dualwrite.NewSelector[SearchBackend](reader, iamv0.UserResourceInfo.GroupResource(), backend, backend)
-	handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil)
+	handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil, nil)
 	ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1", IsGrafanaAdmin: true})
 	req := httptest.NewRequest("GET", "/searchUsers", nil).WithContext(ctx)
 	w := httptest.NewRecorder()
@@ -161,7 +161,7 @@ func TestUserSearchDoesNotFallback(t *testing.T) {
 			}}
 		}
 		selector := dualwrite.NewSelector(dualwrite.ProvideServiceForTests(cfg), iamv0.UserResourceInfo.GroupResource(), backend(&legacyCalls), backend(&unifiedCalls))
-		handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil)
+		handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil, nil)
 		req := httptest.NewRequest("GET", "/searchUsers", nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1"}))
 		w := httptest.NewRecorder()
