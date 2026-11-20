@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
-import { OverlayContainer } from '@react-aria/overlays';
+import { OverlayContainer, usePreventScroll } from '@react-aria/overlays';
 import { type ComponentProps, type PropsWithChildren, useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
@@ -45,6 +45,8 @@ export function ModalBase({
   const styles = useStyles2(getModalStyles);
   const theme = useTheme2();
   const backdropRef = useRef<HTMLDivElement>(null);
+
+  usePreventScroll({ isDisabled: !isOpen });
 
   const { context, refs } = useFloating({
     open: isOpen,
