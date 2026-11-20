@@ -220,6 +220,50 @@ describe('OutsideRangePlugin', () => {
       expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 500, to: 1000 });
     });
 
+    it('renders when a null after trailing undefined values ends the last value before the time range', () => {
+      const { getByText } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, 2, undefined, null],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+    });
+
+    it('renders when every joined series has ended before the time range', () => {
+      const { getByText } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, undefined, null, undefined],
+          [undefined, 2, undefined, null],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+    });
+
+    it('does not render when one joined series is still held into the time range', () => {
+      const { container } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, undefined, null, undefined],
+          [undefined, 2, undefined, undefined],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
     it('renders when all values start after the time range', () => {
       const { getByText } = renderPlugin(jest.fn(), true);
 
