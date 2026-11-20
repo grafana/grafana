@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	userstorage "github.com/grafana/grafana/apps/userstorage/pkg/apis/userstorage/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -124,6 +125,13 @@ func runScenario(t *testing.T, routed bool) []string {
 	record("owner creates a malformed name", err)
 	require.Error(t, err)
 
+	// A generated name could not be checked against the caller.
+	generated := newUserStorage("", map[string]any{"a": "1"})
+	generated.SetGenerateName("my-service:")
+	_, err = ownerClient.Create(ctx, generated, metav1.CreateOptions{})
+	record("owner creates with a generated name", err)
+	require.Error(t, err)
+
 	got, err := ownerClient.Get(ctx, ownName, metav1.GetOptions{})
 	record("owner gets own", err)
 	require.NoError(t, err)
@@ -145,8 +153,43 @@ func runScenario(t *testing.T, routed bool) []string {
 	record("other updates owner's", err)
 	require.Error(t, err)
 
+	// The frontend client (grafana-runtime userStorage) writes with merge
+	// patches, deletes a key by patching it to null, and retries on a conflict.
+	patched, err := ownerClient.Patch(ctx, ownName, types.MergePatchType,
+		[]byte(`{"spec":{"data":{"b":null,"c":"4"}}}`), metav1.PatchOptions{})
+	record("owner merge-patches own", err)
+	require.NoError(t, err)
+	data, _, _ = unstructured.NestedStringMap(patched.Object, "spec", "data")
+	require.Equal(t, map[string]string{"a": "2", "c": "4"}, data)
+
+	stale := fmt.Sprintf(`{"metadata":{"resourceVersion":%q},"spec":{"data":{"a":"stale"}}}`, updated.GetResourceVersion())
+	_, err = ownerClient.Patch(ctx, ownName, types.MergePatchType, []byte(stale), metav1.PatchOptions{})
+	record("owner patches with a stale version", err)
+	require.True(t, apierrors.IsConflict(err), "got %v", err)
+
+	_, err = ownerClient.Create(ctx, newUserStorage(ownName, map[string]any{"a": "1"}), metav1.CreateOptions{})
+	record("owner creates own again", err)
+	require.True(t, apierrors.IsAlreadyExists(err), "got %v", err)
+
+	_, err = otherClient.Patch(ctx, ownName, types.MergePatchType, []byte(`{"spec":{"data":{"a":"x"}}}`), metav1.PatchOptions{})
+	record("other patches owner's", err)
+	require.Error(t, err)
+
+	missingName := "other-service:" + uid(owner)
+	_, err = ownerClient.Patch(ctx, missingName, types.MergePatchType, []byte(`{"spec":{"data":{"a":"x"}}}`), metav1.PatchOptions{})
+	record("owner patches a missing object", err)
+	require.True(t, apierrors.IsNotFound(err), "a patch must not create the object: %v", err)
+
 	_, err = ownerClient.List(ctx, metav1.ListOptions{})
 	record("owner lists", err)
+	require.Error(t, err)
+
+	_, err = ownerClient.List(ctx, metav1.ListOptions{FieldSelector: "metadata.name=" + ownName})
+	record("owner lists their own name", err)
+	require.Error(t, err)
+
+	err = ownerClient.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{})
+	record("owner deletes the collection", err)
 	require.Error(t, err)
 
 	_, err = adminClient.Get(ctx, ownName, metav1.GetOptions{})

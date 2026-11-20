@@ -232,6 +232,7 @@
 /pkg/tests/apis/folder @grafana/grafana-search-and-storage
 /pkg/tests/apis/iam @grafana/identity-access-team
 /pkg/tests/apis/shorturl @grafana/sharing-squad
+/pkg/tests/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tests/api/swagger/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad

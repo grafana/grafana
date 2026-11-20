@@ -393,6 +393,12 @@ func TestIntegrationStarsUpsert(t *testing.T) {
 				_, err := viewerStars.Resource.Create(ctx, starsNamed("user-someone-else"), metav1.CreateOptions{})
 				require.True(t, apierrors.IsInvalid(err), "got %v", err)
 
+				// A generated name is only made after the name is checked.
+				generated := starsNamed("")
+				generated.SetGenerateName("user-")
+				_, err = viewerStars.Resource.Create(ctx, generated, metav1.CreateOptions{})
+				require.True(t, apierrors.IsInvalid(err), "got %v", err)
+
 				require.NoError(t, viewerStars.Resource.Delete(ctx, viewerName, metav1.DeleteOptions{}))
 				_, err = viewerStars.Resource.Create(ctx, starsNamed(viewerName), metav1.CreateOptions{})
 				require.NoError(t, err)

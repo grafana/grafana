@@ -43,6 +43,10 @@ type ownerFromName struct {
 
 	// readScope is which objects a user may get and list.
 	readScope readScope
+
+	// createOnUpdate lets a put or patch create the object when it does not
+	// exist, so a kind with no other create step is written by its name alone.
+	createOnUpdate bool
 }
 
 // readScope is which objects of a kind a user may get and list. Writes are
@@ -76,6 +80,7 @@ func ownerFromKind(group string, kind app.ManifestVersionKind) *ownerFromName {
 		allowOrgAdmin:        strategy.Owner.AllowOrgAdmin,
 		nonUserNamespaceOnly: hardcodedNonUserNamespaceOnly(group, kind.Resource),
 		readScope:            readOwned,
+		createOnUpdate:       true,
 	}
 }
 
@@ -132,11 +137,14 @@ func (b *ownerFromName) authorize(ctx context.Context, user identity.Requester, 
 		return authorizer.DecisionAllow, "", nil
 	}
 
+	// A list for a metadata.name selector carries the name, and is still a list.
+	if b.readScope == readNone && (attr.GetVerb() == "list" || attr.GetVerb() == "watch") {
+		return authorizer.DecisionDeny, "the owned objects cannot be listed", nil
+	}
+
 	name := attr.GetName()
 	if name == "" {
 		switch {
-		case b.readScope == readNone && (attr.GetVerb() == "list" || attr.GetVerb() == "watch"):
-			return authorizer.DecisionDeny, "the owned objects cannot be listed", nil
 		case attr.IsReadOnly():
 			return authorizer.DecisionAllow, "", nil
 		case attr.GetVerb() == "create":

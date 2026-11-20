@@ -40,11 +40,13 @@ type ownerScopedStore struct {
 	stored   func(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error)
 	newList  func() runtime.Object
 	create   func(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error)
+	update   func(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error)
+	newObj   func() runtime.Object
 	resource schema.GroupResource
 }
 
 func newOwnerScopedStore(store *kindstore.Store, owned *ownerFromName, access authlib.AccessChecker) *ownerScopedStore {
-	return &ownerScopedStore{Store: store, owned: owned, access: access, stored: store.Get, newList: store.NewList, create: store.Create, resource: store.DefaultQualifiedResource}
+	return &ownerScopedStore{Store: store, owned: owned, access: access, stored: store.Get, newList: store.NewList, create: store.Create, update: store.Update, newObj: store.New, resource: store.DefaultQualifiedResource}
 }
 
 // Create authorizes the name in the object, as the authorizer does for a
@@ -62,6 +64,14 @@ func (s *ownerScopedStore) Create(ctx context.Context, obj runtime.Object, creat
 			return nil, apierrors.NewBadRequest(err.Error())
 		}
 		name := accessor.GetName()
+		if name == "" && !s.owned.allowsAll(user) {
+			// A generated name is only made after this check, so it could
+			// not be authorized: the name is the access control.
+			gk := schema.GroupKind{Group: s.resource.Group, Kind: obj.GetObjectKind().GroupVersionKind().Kind}
+			return nil, apierrors.NewInvalid(gk, accessor.GetGenerateName(), field.ErrorList{
+				field.Required(field.NewPath("metadata", "name"), "the name is the access control, so it cannot be generated"),
+			})
+		}
 		attrs := authorizer.AttributesRecord{User: user, Verb: "create", Name: name, Namespace: requestK8s.NamespaceValue(ctx), ResourceRequest: true}
 		decision, reason, err := s.owned.authorize(ctx, user, attrs, s.access)
 		if err != nil {
@@ -184,20 +194,21 @@ func (s *ownerScopedStore) ownedObjects(ctx context.Context) (items []runtime.Ob
 }
 
 // Update replaces the object without the caller reading it first: an update that
-// leaves out the resource version is made against the one stored. It creates
-// the object when it does not exist, for a patch as well as a put, so the
-// owner of the name writes it without having to create it first. The update is
-// attempted first, and only a not-found takes the create path.
+// leaves out the resource version is made against the one stored. When the kind
+// creates on update, it also creates the object when it does not exist, for a
+// patch as well as a put, so the owner of the name writes it without having to
+// create it first. The update is attempted first, and only a not-found takes
+// the create path.
 func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	unconditional := withStoredResourceVersion{UpdatedObjectInfo: objInfo, resource: s.resource}
-	updated, created, err := s.Store.Update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
-	if err == nil || !apierrors.IsNotFound(err) {
+	updated, created, err := s.update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
+	if err == nil || !apierrors.IsNotFound(err) || !s.owned.createOnUpdate {
 		return updated, created, err
 	}
 
 	// Nothing stored yet: apply the update to an empty placeholder and create it.
 	// The placeholder carries a UID, which the patch handler needs to merge into it.
-	placeholder := s.New()
+	placeholder := s.newObj()
 	accessor, err := meta.Accessor(placeholder)
 	if err != nil {
 		return nil, false, err
@@ -209,11 +220,14 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 	if err != nil {
 		return nil, false, err
 	}
-	// "0" asks for a create only, and a create takes no version.
 	objMeta, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, false, err
 	}
+	if objMeta.GetName() != name {
+		return nil, false, apierrors.NewBadRequest(fmt.Sprintf("the object's name %q does not match the name %q in the request", objMeta.GetName(), name))
+	}
+	// "0" asks for a create only, and a create takes no version.
 	if objMeta.GetResourceVersion() == "0" {
 		objMeta.SetResourceVersion("")
 	}
@@ -221,7 +235,10 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 	if options != nil {
 		createOptions.DryRun, createOptions.FieldManager, createOptions.FieldValidation = options.DryRun, options.FieldManager, options.FieldValidation
 	}
-	createdObj, err := s.Create(ctx, obj, createValidation, createOptions)
+	// The name in the URL was authorized for this update, and the object must
+	// carry it, so this is not authorized again as a create: a team's object
+	// would then need the unscoped permission to create teams.
+	createdObj, err := s.create(ctx, obj, createValidation, createOptions)
 	if err == nil {
 		return createdObj, true, nil
 	}
@@ -229,7 +246,7 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 		return nil, false, err
 	}
 	// Lost a race with a concurrent create: apply as a regular update.
-	return s.Store.Update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
+	return s.update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
 }
 
 // withStoredResourceVersion gives an updated object that names no resource

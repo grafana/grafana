@@ -27,6 +27,9 @@ func TestHardcodedOwnerFromName(t *testing.T) {
 
 	owned := hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")
 	require.NotNil(t, owned)
+	// Legacy user storage has a create step, and a write to a missing object
+	// is not found rather than a create.
+	require.False(t, owned.createOnUpdate)
 
 	// An org admin is not a server admin: they reach only their own objects.
 	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleAdmin}
@@ -53,6 +56,7 @@ func TestHardcodedOwnerFromName(t *testing.T) {
 		{"an owner name is not a user storage name", user, "get", "user-abc", authorizer.DecisionDeny},
 		{"a user cannot list", user, "list", "", authorizer.DecisionDeny},
 		{"a user cannot watch", user, "watch", "", authorizer.DecisionDeny},
+		{"a list for the user's own name is still a list", user, "list", "svc:abc", authorizer.DecisionDeny},
 		{"a user cannot delete a collection", user, "deletecollection", "", authorizer.DecisionDeny},
 		{"server admin gets any", serverAdmin, "get", "svc:abc", authorizer.DecisionAllow},
 		{"server admin lists", serverAdmin, "list", "", authorizer.DecisionAllow},

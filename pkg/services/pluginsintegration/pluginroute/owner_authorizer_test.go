@@ -205,3 +205,10 @@ func TestOwnerFromKindNonUserNamespaceOnly(t *testing.T) {
 	require.True(t, ownerFromKind("preferences.grafana.app", kind("preferences")).nonUserNamespaceOnly)
 	require.False(t, ownerFromKind("collections.grafana.app", kind("stars")).nonUserNamespaceOnly)
 }
+
+func TestOwnerFromKindCreatesOnUpdate(t *testing.T) {
+	// Stars have no create step of their own: a write to the name creates it.
+	stars := ownerFor(t, "collections.grafana.app", "stars")
+	require.NotNil(t, stars)
+	require.True(t, stars.createOnUpdate)
+}
