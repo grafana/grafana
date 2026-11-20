@@ -379,6 +379,8 @@ func TestGlobalIndexFacetsOnCreator(t *testing.T) {
 		counts[term.Term] = term.Count
 	}
 	assert.Equal(t, map[string]int64{"user:alice": 2, "user:bob": 1}, counts)
+	assert.Equal(t, int64(3), facet.Total)
+	assert.Equal(t, int64(1), facet.Missing, "the readable document without a creator")
 }
 
 var (
