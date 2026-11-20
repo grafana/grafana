@@ -13,6 +13,7 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
+import { getFieldNames } from '../handlebars';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import {
   getInterpolateFormat,
@@ -25,6 +26,7 @@ import {
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { displayCompletion } from './displayCompletion';
 import { getEditorLayoutStyles } from './editorLayout';
 import { reducerCompletion, variableCompletionOptions } from './variableCompletion';
 import { type ViewMode } from './viewMode';
@@ -190,7 +192,19 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
-  const completionSources = isTextNewFeaturesEnabled() ? [reducerCompletion] : undefined;
+  const fieldNames = useMemo(() => {
+    const frames = series ?? [];
+    return Array.from(new Set(frames.flatMap((frame) => getFieldNames(frame, frames))));
+  }, [series]);
+
+  const newFeaturesEnabled = isTextNewFeaturesEnabled();
+  const completionSources = useMemo(() => {
+    if (!newFeaturesEnabled) {
+      return undefined;
+    }
+
+    return mode === TextMode.Code ? [reducerCompletion] : [reducerCompletion, displayCompletion(fieldNames)];
+  }, [fieldNames, mode, newFeaturesEnabled]);
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),

@@ -11,12 +11,14 @@ import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useAlertRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
@@ -47,9 +49,11 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <RuleSequenceDrawerProvider>
-            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
-          </RuleSequenceDrawerProvider>
+          <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
+            <RuleSequenceDrawerProvider>
+              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </RuleSequenceDrawerProvider>
+          </FilterSidebarLayout>
         </Stack>
       </Box>
     </AlertingPageWrapper>
@@ -102,7 +106,12 @@ function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
     );
   }
   if (mode === 'folders') {
-    return <AlertRulesFoldersView key={filter.folders.join()} folderUids={filter.folders} />;
+    return (
+      <AlertRulesFoldersView
+        key={JSON.stringify([filter.folder, filter.folderUids])}
+        scope={{ folder: filter.folder, folderUids: filter.folderUids }}
+      />
+    );
   }
   return <AlertRulesListView filter={filter} />;
 }

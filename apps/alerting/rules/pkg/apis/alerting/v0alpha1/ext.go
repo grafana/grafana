@@ -19,6 +19,9 @@ const (
 	FolderLabelKey      = FolderAnnotationKey
 	// Annotation key mirroring the legacy PrometheusStyleRule original definition.
 	PrometheusRuleDefinitionAnnotationKey = "alerting.grafana.app/prometheus-rule-definition"
+	// Annotation that opts a write in to setting the group labels, which admission otherwise
+	// rejects on create and when grouping an ungrouped rule. Value must be "true".
+	AllowGroupWritesAnnotationKey = "alerting.grafana.app/allow-group-writes"
 )
 
 // NOTE: This is a copy of the constants from the alertrule package to avoid circular imports.

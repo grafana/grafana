@@ -693,6 +693,6 @@ describe('TextNGEditor variable completion', () => {
 
     expect(mockEditorProps?.variableSuggestions).toBe(suggestions);
     expect(mockEditorProps?.variableCompletionOptions).toBe(variableCompletionOptions);
-    expect(mockEditorProps?.completionSources).toEqual([reducerCompletion]);
+    expect(mockEditorProps?.completionSources).toEqual([reducerCompletion, expect.any(Function)]);
   });
 });

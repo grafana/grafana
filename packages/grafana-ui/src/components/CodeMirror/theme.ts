@@ -6,7 +6,7 @@ import { tags } from '@lezer/highlight';
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { getPropertiesForVariant } from '../Button/Button';
+import { getPropertiesForVariant } from '../Button/StyledButton.styles';
 
 import { type CodeMirrorThemeOverrides } from './types';
 

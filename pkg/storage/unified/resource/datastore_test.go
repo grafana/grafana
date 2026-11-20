@@ -1700,20 +1700,9 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 	})
 }
 
-// runLatestKeyLookupTest runs testFn on both KV engines, with the fast
-// latest-key lookup off and on.
 func runLatestKeyLookupTest(t *testing.T, testFn func(*testing.T, context.Context, *dataStore)) {
-	for _, fast := range []bool{false, true} {
-		withFast := func(newStore func(*testing.T) *dataStore) func(*testing.T) *dataStore {
-			return func(t *testing.T) *dataStore {
-				ds := newStore(t)
-				ds.fastLatestKeyLookup = fast
-				return ds
-			}
-		}
-		runDataStoreTestWith(t, fmt.Sprintf("badger/fast=%t", fast), withFast(setupTestDataStore), testFn)
-		runDataStoreTestWith(t, fmt.Sprintf("sqlkv/fast=%t", fast), withFast(setupTestDataStoreSqlKv), testFn)
-	}
+	runDataStoreTestWith(t, "badger", setupTestDataStore, testFn)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testFn)
 }
 
 func TestIntegrationDataStore_GetLatestResourceKey(t *testing.T) {
@@ -1920,11 +1909,10 @@ func (k *keysRecordingKV) Keys(ctx context.Context, section string, opt ListOpti
 	return k.KV.Keys(ctx, section, opt)
 }
 
-func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
+func TestDataStore_GetLatestResourceKey_ReadsOnlyNewestKey(t *testing.T) {
 	ctx := context.Background()
 	recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
 	ds := newDataStore(recorder)
-	require.False(t, ds.fastLatestKeyLookup, "fast latest-key lookup must be off by default")
 
 	key := GetRequestKey{Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource"}
 	var latest DataKey
@@ -1940,28 +1928,14 @@ func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
 		require.NoError(t, ds.Save(ctx, latest, bytes.NewReader([]byte("v"))))
 	}
 
-	t.Run("disabled scans the history in ascending order", func(t *testing.T) {
-		ds.fastLatestKeyLookup = false
-		recorder.calls = nil
-		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
-		require.NoError(t, err)
-		require.Equal(t, latest, got)
+	recorder.calls = nil
+	got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
+	require.NoError(t, err)
+	require.Equal(t, latest, got)
 
-		require.Len(t, recorder.calls, 1)
-		require.Equal(t, SortOrderAsc, recorder.calls[0].Sort)
-	})
-
-	t.Run("enabled reads only the newest key", func(t *testing.T) {
-		ds.fastLatestKeyLookup = true
-		recorder.calls = nil
-		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
-		require.NoError(t, err)
-		require.Equal(t, latest, got)
-
-		require.Len(t, recorder.calls, 1)
-		require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
-		require.Equal(t, int64(1), recorder.calls[0].Limit)
-	})
+	require.Len(t, recorder.calls, 1)
+	require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
+	require.Equal(t, int64(1), recorder.calls[0].Limit)
 }
 
 func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {

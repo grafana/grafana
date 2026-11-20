@@ -67,7 +67,8 @@ export {
   usePanelChromeHeaderControls,
   type PanelChromeHeaderControls,
 } from '../components/PanelChrome/PanelChromeHeaderControlsContext';
-export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
+export { getButtonStyles } from '../components/Button/StyledButton.styles';
+export { type ButtonLinkProps } from '../components/LinkButton/LinkButton';
 export {
   type TableSortByFieldState,
   type TableFieldOptions,
