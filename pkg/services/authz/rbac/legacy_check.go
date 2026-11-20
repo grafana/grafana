@@ -19,6 +19,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // LegacyCheck is a deprecated compatibility RPC used by ST callers during the
@@ -225,16 +226,10 @@ func (s *Service) getLegacyIdentityPermissions(
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
 	case types.TypeRenderService:
-		for _, action := range actions {
-			scopes, err := s.getRendererPermissions(ctx, action)
-			if err != nil {
-				return nil, fmt.Errorf("could not get renderer permissions: %w", err)
-			}
-			if scopes["*"] {
-				permissions[action] = []string{"*"}
-			}
-		}
-		return permissions, nil
+		// TODO: this is a "temporary" fix. We are aiming to ask a render team to use JWT tokens intead
+		//		and remove the types.TypeRenderService.
+		// Local evaluation authenticates the render service with the Admin org role.
+		query.Role = string(org.RoleAdmin)
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
