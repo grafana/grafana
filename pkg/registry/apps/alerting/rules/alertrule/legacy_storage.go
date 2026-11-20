@@ -66,14 +66,14 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 // listSpecialMode handles the reserved label selectors (grafana.app/get-history and
 // grafana.app/get-trash). It returns handled=true when the selector matched and the result was
 // produced; callers should otherwise continue with the regular list pipeline.
-func (s *legacyStorage) listSpecialMode(ctx context.Context, user identity.Requester, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) listSpecialMode(ctx context.Context, user identity.Requester, orgID int64, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
 	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
 	if err != nil {
 		return nil, true, k8serrors.NewBadRequest(err.Error())
 	}
 	switch mode {
 	case common.ListModeHistory:
-		out, err := s.rules.History(ctx, user, ruleName)
+		out, err := s.rules.History(ctx, user, orgID, ruleName)
 		if err != nil {
 			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return nil, true, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
@@ -82,7 +82,7 @@ func (s *legacyStorage) listSpecialMode(ctx context.Context, user identity.Reque
 		}
 		return out, true, nil
 	case common.ListModeTrash:
-		out, err := s.rules.Trash(ctx, user)
+		out, err := s.rules.Trash(ctx, user, orgID)
 		return out, true, err
 	case common.ListModeNormal:
 	}
@@ -90,7 +90,8 @@ func (s *legacyStorage) listSpecialMode(ctx context.Context, user identity.Reque
 }
 
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
-	if _, err := request.NamespaceInfoFrom(ctx, true); err != nil {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, err
 	}
 
@@ -99,7 +100,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	if out, handled, err := s.listSpecialMode(ctx, user, opts); handled || err != nil {
+	if out, handled, err := s.listSpecialMode(ctx, user, info.OrgID, opts); handled || err != nil {
 		return out, err
 	}
 
@@ -168,7 +169,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	return s.rules.List(ctx, user, legacy.ListAlertRulesOptions{
+	return s.rules.List(ctx, user, info.OrgID, legacy.ListAlertRulesOptions{
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,
 		GroupFilter:            groupFilter,
@@ -184,7 +185,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if _, err := request.NamespaceInfoFrom(ctx, true); err != nil {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, err
 	}
 	user, err := identity.GetRequester(ctx)
@@ -192,7 +194,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, err := s.rules.Get(ctx, user, name)
+	rule, err := s.rules.Get(ctx, user, info.OrgID, name)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
@@ -203,7 +205,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 }
 
 func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	if _, err := request.NamespaceInfoFrom(ctx, true); err != nil {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, err
 	}
 
@@ -228,7 +231,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
 	}
 
-	created, err := s.rules.Create(ctx, user, p, options != nil && dryrun.IsDryRun(options.DryRun))
+	created, err := s.rules.Create(ctx, user, info.OrgID, p, options != nil && dryrun.IsDryRun(options.DryRun))
 	if err != nil {
 		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
@@ -247,7 +250,8 @@ func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, ob
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if _, err := request.NamespaceInfoFrom(ctx, true); err != nil {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, false, err
 	}
 
@@ -270,7 +274,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
-	if err := s.rules.Delete(ctx, user, p, opts != nil && dryrun.IsDryRun(opts.DryRun)); err != nil {
+	if err := s.rules.Delete(ctx, user, info.OrgID, p, opts != nil && dryrun.IsDryRun(opts.DryRun)); err != nil {
 		return old, false, err
 	}
 	return old, false, nil
@@ -280,7 +284,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 // is validated, authorized and deleted in its own transaction, so a page is deleted entirely or not at all. Like the
 // upstream apiserver, a failure stops the call with the pages before it already deleted.
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	if _, err := request.NamespaceInfoFrom(ctx, true); err != nil {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
 		return nil, err
 	}
 	user, err := identity.GetRequester(ctx)
@@ -323,7 +328,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 			rules = append(rules, rule)
 			page = append(page, *rule)
 		}
-		if err := s.rules.DeleteMany(ctx, user, rules, options != nil && dryrun.IsDryRun(options.DryRun)); err != nil {
+		if err := s.rules.DeleteMany(ctx, user, info.OrgID, rules, options != nil && dryrun.IsDryRun(options.DryRun)); err != nil {
 			return nil, err
 		}
 		deleted.Items = append(deleted.Items, page...)

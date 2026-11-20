@@ -84,20 +84,20 @@ func TestRuleKindsGet(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns the rule of its own kind", func(t *testing.T) {
-		alertRule, err := e.alerts.Get(ctx, e.user, e.alerting.UID)
+		alertRule, err := e.alerts.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
 		require.NoError(t, err)
 		assert.Equal(t, e.alerting.UID, alertRule.Name)
 
-		recordingRule, err := e.records.Get(ctx, e.user, e.recording.UID)
+		recordingRule, err := e.records.Get(ctx, e.user, e.user.OrgID, e.recording.UID)
 		require.NoError(t, err)
 		assert.Equal(t, e.recording.UID, recordingRule.Name)
 	})
 
 	t.Run("reports a rule of the other kind as not found", func(t *testing.T) {
-		_, err := e.alerts.Get(ctx, e.user, e.recording.UID)
+		_, err := e.alerts.Get(ctx, e.user, e.user.OrgID, e.recording.UID)
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 
-		_, err = e.records.Get(ctx, e.user, e.alerting.UID)
+		_, err = e.records.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 	})
 
@@ -105,7 +105,7 @@ func TestRuleKindsGet(t *testing.T) {
 		manager := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf"}
 		e.managers[e.alerting.UID] = manager
 
-		alertRule, err := e.alerts.Get(ctx, e.user, e.alerting.UID)
+		alertRule, err := e.alerts.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
 		require.NoError(t, err)
 		meta, err := utils.MetaAccessor(alertRule)
 		require.NoError(t, err)
@@ -115,6 +115,29 @@ func TestRuleKindsGet(t *testing.T) {
 	})
 }
 
+func TestRuleKindsUseRequestOrg(t *testing.T) {
+	// A Grafana server admin can call another org's namespace, so the objects carry the request's org, not the user's.
+	e := newKindsEnv(t)
+	ctx := context.Background()
+	const requestOrg int64 = 2
+	require.NotEqual(t, requestOrg, e.user.OrgID)
+	want := nsMapperForTest()(requestOrg)
+
+	alertRule, err := e.alerts.Get(ctx, e.user, requestOrg, e.alerting.UID)
+	require.NoError(t, err)
+	assert.Equal(t, want, alertRule.Namespace)
+
+	recordingRule, err := e.records.Get(ctx, e.user, requestOrg, e.recording.UID)
+	require.NoError(t, err)
+	assert.Equal(t, want, recordingRule.Namespace)
+
+	e.ruleStore.Rules[e.user.OrgID] = []*models.AlertRule{e.alerting}
+	alerts, err := e.alerts.List(ctx, e.user, requestOrg, ListAlertRulesOptions{})
+	require.NoError(t, err)
+	require.Len(t, alerts.Items, 1)
+	assert.Equal(t, want, alerts.Items[0].Namespace)
+}
+
 func TestRuleKindsListFiltersByKind(t *testing.T) {
 	e := newKindsEnv(t)
 	ctx := context.Background()
@@ -122,12 +145,12 @@ func TestRuleKindsListFiltersByKind(t *testing.T) {
 	// The fake store ignores the rule type, so give each call only rules of the kind it asks for, and check the
 	// recorded queries. The caller's rule type is ignored: each facade only lists its own kind.
 	e.ruleStore.Rules[e.user.OrgID] = []*models.AlertRule{e.alerting}
-	alerts, err := e.alerts.List(ctx, e.user, ListAlertRulesOptions{RuleType: models.RuleTypeFilterRecording})
+	alerts, err := e.alerts.List(ctx, e.user, e.user.OrgID, ListAlertRulesOptions{RuleType: models.RuleTypeFilterRecording})
 	require.NoError(t, err)
 	require.Len(t, alerts.Items, 1)
 
 	e.ruleStore.Rules[e.user.OrgID] = []*models.AlertRule{e.recording}
-	records, err := e.records.List(ctx, e.user, ListAlertRulesOptions{RuleType: models.RuleTypeFilterAlerting})
+	records, err := e.records.List(ctx, e.user, e.user.OrgID, ListAlertRulesOptions{RuleType: models.RuleTypeFilterAlerting})
 	require.NoError(t, err)
 	require.Len(t, records.Items, 1)
 
@@ -151,34 +174,34 @@ func TestRuleKindsDeleteUsesManagerFromObject(t *testing.T) {
 		obj, err := AlertRuleToK8s(e.alerting.OrgID, e.alerting, otherManager, nsMapperForTest())
 		require.NoError(t, err)
 
-		err = e.alerts.Delete(ctx, e.user, obj, false)
+		err = e.alerts.Delete(ctx, e.user, e.user.OrgID, obj, false)
 		require.ErrorContains(t, err, "provenance")
 	})
 
 	t.Run("an object carrying the stored manager is deleted", func(t *testing.T) {
 		e := newKindsEnv(t)
 		e.managers[e.alerting.UID] = manager
-		obj, err := e.alerts.Get(ctx, e.user, e.alerting.UID)
+		obj, err := e.alerts.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
 		require.NoError(t, err)
 
-		require.NoError(t, e.alerts.Delete(ctx, e.user, obj, false))
-		_, err = e.alerts.Get(ctx, e.user, e.alerting.UID)
+		require.NoError(t, e.alerts.Delete(ctx, e.user, e.user.OrgID, obj, false))
+		_, err = e.alerts.Get(ctx, e.user, e.user.OrgID, e.alerting.UID)
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 	})
 
 	t.Run("a batch is checked against each object's manager", func(t *testing.T) {
 		e := newKindsEnv(t)
 		e.managers[e.recording.UID] = manager
-		managed, err := e.records.Get(ctx, e.user, e.recording.UID)
+		managed, err := e.records.Get(ctx, e.user, e.user.OrgID, e.recording.UID)
 		require.NoError(t, err)
 		other, err := RecordingRuleToK8s(e.recording.OrgID, e.recording, otherManager, nsMapperForTest())
 		require.NoError(t, err)
 
-		err = e.records.DeleteMany(ctx, e.user, []*v1beta1.RecordingRule{other}, false)
+		err = e.records.DeleteMany(ctx, e.user, e.user.OrgID, []*v1beta1.RecordingRule{other}, false)
 		require.ErrorContains(t, err, "provenance")
 
-		require.NoError(t, e.records.DeleteMany(ctx, e.user, []*v1beta1.RecordingRule{managed}, false))
-		_, err = e.records.Get(ctx, e.user, e.recording.UID)
+		require.NoError(t, e.records.DeleteMany(ctx, e.user, e.user.OrgID, []*v1beta1.RecordingRule{managed}, false))
+		_, err = e.records.Get(ctx, e.user, e.user.OrgID, e.recording.UID)
 		require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
 	})
 }

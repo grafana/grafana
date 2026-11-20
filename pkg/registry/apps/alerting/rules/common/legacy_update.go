@@ -13,11 +13,12 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 // LegacyRuleUpdateFunc saves a rule through the legacy rule service, for example legacy.AlertRules.Update. With dryRun
 // nothing is written and it returns the rule that would have been stored.
-type LegacyRuleUpdateFunc[T resource.Object] func(ctx context.Context, user identity.Requester, rule T, dryRun bool) (T, error)
+type LegacyRuleUpdateFunc[T resource.Object] func(ctx context.Context, user identity.Requester, orgID int64, rule T, dryRun bool) (T, error)
 
 // LegacyRuleUpdate applies an update to a rule kept in legacy storage. With dryRun nothing is saved and the result is
 // what the rule service would have stored.
@@ -87,6 +88,10 @@ func applyLegacyRuleUpdate[T resource.Object](
 	resourceInfo utils.ResourceInfo,
 	update LegacyRuleUpdateFunc[T],
 ) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +102,7 @@ func applyLegacyRuleUpdate[T resource.Object](
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected valid %s object", resourceInfo.GroupVersionKind().Kind))
 	}
 
-	rule, err := update(ctx, user, new, dryRun)
+	rule, err := update(ctx, user, info.OrgID, new, dryRun)
 	if err != nil {
 		return nil, ToAPIError(resourceInfo.GroupResource(), name, err)
 	}
