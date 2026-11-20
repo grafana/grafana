@@ -28,8 +28,8 @@ export function toRestoreResult(result: { data: unknown } | { error: unknown }):
   return { success: true, isConflict: false };
 }
 
-export const TRASH_LABEL_SELECTOR = 'grafana.app/get-trash=true';
-export const PAGE_SIZE = DEFAULT_PER_PAGE_PAGINATION;
+const TRASH_LABEL_SELECTOR = 'grafana.app/get-trash=true';
+const PAGE_SIZE = DEFAULT_PER_PAGE_PAGINATION;
 
 type GeneratedListRequest<Rule> = ThunkAction<
   PromiseLike<{
