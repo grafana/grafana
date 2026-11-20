@@ -299,6 +299,35 @@ describe('LogList', () => {
     });
   });
 
+  describe('Time Machine log lines', () => {
+    test('Shows the Time Machine icon and tooltip when the flag is enabled', async () => {
+      setBooleanFlags({ 'logs.enableTimeMachine': true });
+      const user = userEvent.setup();
+      const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
+
+      render(<LogList {...defaultProps} logs={timeMachineLogs} />);
+      const icon = screen.getByLabelText('Dropped log, temporarily available');
+
+      await user.hover(icon);
+
+      expect(
+        await screen.findByText(
+          'This log line was dropped by Adaptive Logs but remains available for a limited time'
+        )
+      ).toBeInTheDocument();
+    });
+
+    test('Hides the Time Machine icon when the flag is disabled, even if the log has the marker', () => {
+      setBooleanFlags({ 'logs.enableTimeMachine': false });
+      const timeMachineLogs = [createLogRow({ uid: '1', labels: { __time_machine__: 'true' } })];
+
+      render(<LogList {...defaultProps} logs={timeMachineLogs} />);
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Dropped log, temporarily available')).not.toBeInTheDocument();
+    });
+  });
+
   describe('Popover menu', () => {
     function setup(overrides: Partial<Props> = {}) {
       return render(
