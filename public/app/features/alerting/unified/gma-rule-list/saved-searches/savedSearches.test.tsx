@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 import { byPlaceholderText, byRole } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
@@ -122,13 +122,28 @@ describe('GMA rule list saved searches', () => {
     expect(screen.queryByText('Full disks')).not.toBeInTheDocument();
   });
 
+  it('keeps the view and adds one history entry when a saved search is applied', async () => {
+    await saveCollection('alert', [{ id: '1', name: 'Full disks', query: 'disk', isDefault: false }]);
+    const { user } = renderAlertRules('/?view=list&search=cpu');
+
+    await user.click(await ui.savedSearchesButton.find());
+    await user.click(await screen.findByRole('link', { name: 'Full disks' }));
+
+    await waitFor(() => expect(searchParam()).toBe('disk'));
+    expect(new URLSearchParams(locationService.getLocation().search).get('view')).toBe('list');
+
+    act(() => locationService.getHistory().goBack());
+
+    await waitFor(() => expect(searchParam()).toBe('cpu'));
+  });
+
   it('names a saved search when a typed query reads the same, whatever the token order', async () => {
     await saveCollection('alert', [
-      { id: '1', name: 'Team API', query: 'label:team=api plugins:hide', isDefault: false },
+      { id: '1', name: 'Team API', query: 'label:team=api label:env=prod plugins:hide', isDefault: false },
     ]);
     const { user } = renderAlertRules('/?view=list&search=');
 
-    await user.type(await ui.searchInput.find(), 'plugins:hide label:team=api{Enter}');
+    await user.type(await ui.searchInput.find(), 'plugins:hide label:env=prod label:team=api{Enter}');
 
     expect(await screen.findByText('Team API')).toBeInTheDocument();
   });

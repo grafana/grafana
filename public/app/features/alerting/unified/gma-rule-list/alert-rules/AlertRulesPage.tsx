@@ -60,12 +60,7 @@ function AlertRulesPage() {
               }
               trailing={
                 <Stack direction="row" gap={1} alignItems="center">
-                  <RuleListSavedSearches
-                    kind="alert"
-                    query={query}
-                    onApply={applyQuery}
-                    savedSearches={savedSearches}
-                  />
+                  <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
                   <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
                 </Stack>
               }

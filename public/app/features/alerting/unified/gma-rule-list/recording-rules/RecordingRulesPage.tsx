@@ -59,12 +59,7 @@ function RecordingRulesPage() {
               }
               trailing={
                 <Stack direction="row" gap={1} alignItems="center">
-                  <RuleListSavedSearches
-                    kind="recording"
-                    query={query}
-                    onApply={applyQuery}
-                    savedSearches={savedSearches}
-                  />
+                  <RuleListSavedSearches kind="recording" savedSearches={savedSearches} />
                   <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
                 </Stack>
               }
