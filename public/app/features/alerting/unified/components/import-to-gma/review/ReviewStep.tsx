@@ -403,7 +403,7 @@ export function ReviewStep({
             variant="primary"
             icon={willEnableAutoSync ? 'sync' : 'upload'}
             onClick={onStartImport}
-            disabled={nothingToImport || isLoadingRules}
+            disabled={nothingToImport || isLoadingRules || Boolean(rulesError)}
           >
             {willEnableAutoSync
               ? t('alerting.import-to-gma.review.enable-autosync', 'Enable auto-sync')
