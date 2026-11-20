@@ -41,6 +41,31 @@ while IFS= read -r package; do
     esac
 done <<< "$packages"
 
+run_compiled_tests() {
+    local binaries package_dirs go_root pkg dir started status=0
+    binaries=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/sql-integration.XXXXXXXX")
+    package_dirs=$(CGO_ENABLED=0 go list "${build_tags[@]}" -f '{{.ImportPath}}{{"\t"}}{{.Dir}}' "$@")
+    go_root=$(go env GOROOT)
+
+    echo "Compiling test binaries"
+    CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -c -o "$binaries/" "$@"
+    echo "Running compiled tests"
+    while IFS=$'\t' read -r pkg dir; do
+        started=$SECONDS
+        if (
+            cd "$dir" &&
+                PATH="$go_root/bin:$PATH" CGO_ENABLED=0 "$binaries/${pkg##*/}.test" -test.paniconexit0 -test.timeout=12m -test.run '^TestIntegration'
+        ) > "$binaries/test.log" 2>&1; then
+            printf 'ok\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
+        else
+            cat "$binaries/test.log"
+            printf 'FAIL\t%s\t%ss\n' "$pkg" "$((SECONDS - started))"
+            status=1
+        fi
+    done <<< "$package_dirs"
+    return "$status"
+}
+
 run_tests() {
     if (( $# == 0 )); then
         echo "No packages in this shard for $PWD"
@@ -49,6 +74,10 @@ run_tests() {
 
     echo "Testing packages in $PWD"
     if (( ! sqlite )); then
+        if [[ "${GRAFANA_CI_COMPILE_ONCE:-}" == "true" ]]; then
+            run_compiled_tests "$@"
+            return
+        fi
         echo "Precompiling, no tests will be run"
         CGO_ENABLED=0 go test -vet=off "${build_tags[@]}" -run='^$' "$@"
     fi

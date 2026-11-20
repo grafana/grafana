@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release-*.*.*
+      - macabu/ci-profile-compile-once
   pull_request:
     types:
       - opened
@@ -41,7 +42,7 @@ env:
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    if: github.ref_name != 'macabu/ci-profile-compile-once' && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -195,7 +196,7 @@ jobs:
   #### Enterprise
   sqlite-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
-    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    if: github.ref_name != 'macabu/ci-profile-compile-once' && ((github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false))
     strategy:
       matrix:
         # Sqlite shards finish well before MySQL/Postgres, so more shards
@@ -239,16 +240,13 @@ jobs:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
-      matrix:
-        shard: [
-           1/16,  2/16,  3/16,  4/16,
-           5/16,  6/16,  7/16,  8/16,
-           9/16, 10/16, 11/16, 12/16,
-          13/16, 14/16, 15/16, 16/16,
-        ]
+      matrix: >-
+        ${{ fromJSON(github.ref_name == 'macabu/ci-profile-compile-once' &&
+          '{"shard":["15/16"],"compile_once":[false,true]}' ||
+          '{"shard":["1/16","2/16","3/16","4/16","5/16","6/16","7/16","8/16","9/16","10/16","11/16","12/16","13/16","14/16","15/16","16/16"],"compile_once":[false]}') }}
       fail-fast: false
 
-    name: MySQL Enterprise (${{ matrix.shard }})
+    name: MySQL Enterprise (${{ matrix.shard }})${{ matrix.compile_once && ' compile once' || '' }}
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
@@ -295,6 +293,7 @@ jobs:
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
+          GRAFANA_CI_COMPILE_ONCE: ${{ matrix.compile_once }}
         run: bash ./scripts/ci/backend-tests/run-sql-integration-shard.sh "$SHARD" ../grafana-enterprise
       - name: Cleanup MySQL
         if: always()
@@ -302,7 +301,7 @@ jobs:
 
   postgres-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
-    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    if: github.ref_name != 'macabu/ci-profile-compile-once' && ((github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false))
     strategy:
       matrix:
         shard: [
