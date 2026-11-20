@@ -287,16 +287,3 @@ func (r *ringBuffer[T]) removeOldest() T {
 func (r *ringBuffer[T]) at(i int) T {
 	return r.buf[(r.zero+i)%len(r.buf)]
 }
-
-// readInto sends all cached items to dst without blocking. Returns true if all
-// items were sent, false if dst's buffer was full (slow consumer).
-func (r *ringBuffer[T]) readInto(dst chan<- T) bool {
-	for i := 0; i < r.len; i++ {
-		select {
-		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
-		default:
-			return false
-		}
-	}
-	return true
-}

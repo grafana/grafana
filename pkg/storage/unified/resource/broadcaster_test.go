@@ -34,45 +34,31 @@ func requireMetricEventually(t *testing.T, collector prometheus.Collector, expec
 }
 
 func TestRingBuffer(t *testing.T) {
-	c := newRingBuffer[int](10)
-
-	// empty buffer
-	dst := make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Empty(t, drainChan(dst))
-
-	c.add(1)
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{1}, drainChan(dst))
-
-	for i := 2; i <= 6; i++ {
-		c.add(i)
+	ring := newRingBuffer[int](10)
+	check := func(want ...int) {
+		t.Helper()
+		require.Equal(t, len(want), ring.len)
+		for i, item := range want {
+			require.Equal(t, item, ring.at(i), "index %d", i)
+		}
 	}
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{1, 2, 3, 4, 5, 6}, drainChan(dst))
+
+	check()
+	ring.add(1)
+	check(1)
+	for i := 2; i <= 6; i++ {
+		ring.add(i)
+	}
+	check(1, 2, 3, 4, 5, 6)
 
 	for i := 7; i <= 11; i++ {
-		c.add(i)
+		ring.add(i)
 	}
+	check(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-	// buffer is full (size 10), oldest item (1) evicted
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, drainChan(dst))
-
-	c.add(12)
-	c.add(13)
-
-	// two more evictions
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, drainChan(dst))
-
-	// destination too small — returns false
-	small := make(chan int, 1)
-	require.False(t, c.readInto(small))
+	ring.add(12)
+	ring.add(13)
+	check(4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 }
 
 func TestBroadcaster(t *testing.T) {
@@ -300,14 +286,13 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	})
 }
 
-func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
+func TestBroadcasterReplayLeavesChannelHeadroom(t *testing.T) {
 	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
 
-	// Subscriber buffer (defaultCacheSize + 100) > defaultCacheSize,
-	// so readInto should leave headroom.
+	// Replay should leave room for live events in the subscriber buffer.
 	const subBuf = defaultCacheSize + 100
 	const ovfCap = 1000
 	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, intIdentity, nil)
@@ -318,7 +303,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 		ch <- i
 	}
 
-	// Resume — readInto sends all cached items into the subscriber channel.
+	// A resume sends the cached events into the subscriber channel.
 	sub, err := b.subscribeWatch(ctx, "test", intGR, intResume(0))
 	require.NoError(t, err)
 

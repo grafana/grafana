@@ -131,10 +131,8 @@ func TestRingBufferEvictionWraparound(t *testing.T) {
 		}
 	}
 	require.Equal(t, defaultCacheSize, ring.len)
-	dst := make(chan int, defaultCacheSize)
-	require.True(t, ring.readInto(dst))
-	for i := 3 * defaultCacheSize; i < 4*defaultCacheSize; i++ {
-		require.Equal(t, i, <-dst)
+	for i := range ring.len {
+		require.Equal(t, 3*defaultCacheSize+i, ring.at(i))
 	}
 }
 
