@@ -296,14 +296,11 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
       setMatchingGroupPageUrl(updatedGroupIdentifier);
     } catch (error) {
       const message = stringifyErrorLike(error);
-      const loggedError = error instanceof Error ? error : new Error(message);
-      logError(loggedError, {
+      logError(new Error('Failed to update rule group'), {
         operation: 'updateRuleGroup',
-        message,
         ...(isFetchError(error) && {
           status: String(error.status),
           statusText: error.statusText ?? '',
-          url: error.config?.url ?? '',
         }),
       });
       appInfo.error(t('alerting.group-edit.form.update-error', 'Failed to update rule group'), message);

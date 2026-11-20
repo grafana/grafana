@@ -1555,7 +1555,7 @@
           "label": "Labelmatcher: label:key (bestaat), label:!key (afwezig), label:key=value (gelijk aan), label:key!=value (niet gelijk aan), label:key=~re (regex), label:key!~re (geen regex). Zet een waarde met spaties tussen aanhalingstekens: label:team=\"a b\".",
           "metric": "Geregistreerde metricnaam (exacte overeenkomst).",
           "panel-id": "Paneel waaraan de regel is gekoppeld. Paneel-id's zijn dashboard-lokaal; koppel met dashboard:.",
-          "paused": "Of de regel is gepauzeerd (waar/onwaar).",
+          "paused": "",
           "plugins": "plugins:hide sluit regels uit die zijn aangemaakt door plug-ins.",
           "policy": "Benoemd meldingsbeleid (sluit elkaar uit met contactPoint:).",
           "rule": "Tekstzoekopdracht voor regeltitel (gelijk aan vrije tekst).",
@@ -1571,7 +1571,6 @@
         "invalid-tokens": "Sommige filters konden niet worden toegepast: {{tokens}}",
         "invalid-value": "Gebruik een van deze waarden voor {{key}}: {{values}}",
         "label": "Zoeken",
-        "not-paused-unavailable": "Filteren op niet gepauzeerd is nog niet beschikbaar.",
         "placeholder": "Zoeken op naam of filterquery invoeren...",
         "property": {
           "contact-point": "Contactpunt",
@@ -1618,6 +1617,65 @@
         "loading-rules": "Regels laden",
         "refresh-error": "Kan resultaten niet vernieuwen",
         "retry": "Opnieuw proberen"
+      },
+      "sidebar": {
+        "all": "",
+        "contact-point": "",
+        "contact-point-description": "",
+        "contact-point-help": "",
+        "contact-point-placeholder": "",
+        "dashboard": "",
+        "datasource": "",
+        "datasource-placeholder": "",
+        "filters": "",
+        "folder": "",
+        "folder-description": "",
+        "folder-help": "",
+        "folder-placeholder": "",
+        "health": "",
+        "health-error": "",
+        "health-nodata": "",
+        "health-ok": "",
+        "health-unknown": "",
+        "label-add": "",
+        "label-key": "",
+        "label-key-placeholder": "",
+        "label-operator": "",
+        "label-remove": "",
+        "label-value": "",
+        "label-value-any": "",
+        "label-value-placeholder": "",
+        "label-value-unset": "",
+        "labels": "",
+        "metric": "",
+        "metric-placeholder": "",
+        "operator-absent": "",
+        "operator-absent-description": "",
+        "operator-equal": "",
+        "operator-exists": "",
+        "operator-exists-description": "",
+        "operator-not-equal": "",
+        "operator-not-regex": "",
+        "operator-regex": "",
+        "panel-id": "",
+        "paused": "",
+        "paused-true": "",
+        "plugin-rules": "",
+        "plugin-rules-hide": "",
+        "plugin-rules-show": "",
+        "policy": "",
+        "policy-description": "",
+        "policy-help": "",
+        "policy-placeholder": "",
+        "rule-name": "",
+        "rule-name-placeholder": "",
+        "state": "",
+        "state-firing": "",
+        "state-normal": "",
+        "state-pending": "",
+        "state-recovering": "",
+        "target-datasource": "",
+        "target-datasource-placeholder": ""
       },
       "status": {
         "error": "Regel evalueren mislukt",
@@ -4857,6 +4915,12 @@
     "folder-owners": {
       "owned-by": "Eigendom van:"
     },
+    "folder-permissions": {
+      "no-access": ""
+    },
+    "folder-permissions-exposed": {
+      "not-found": ""
+    },
     "folder-picker": {
       "accessible-label": "Map selecteren: {{ label }} is momenteel geselecteerd",
       "button-label": "Map selecteren",
@@ -5654,6 +5718,36 @@
         "version": "Versie"
       },
       "view-json-diff": "JSON diff weergeven om alle wijzigingen te bekijken"
+    }
+  },
+  "core-kinds": {
+    "connection": {
+      "label": "",
+      "label-plural": ""
+    },
+    "dashboard": {
+      "label": "",
+      "label-plural": ""
+    },
+    "datasource": {
+      "label": "",
+      "label-plural": ""
+    },
+    "folder": {
+      "label": "",
+      "label-plural": ""
+    },
+    "librarypanel": {
+      "label": "",
+      "label-plural": ""
+    },
+    "playlist": {
+      "label": "",
+      "label-plural": ""
+    },
+    "repository": {
+      "label": "",
+      "label-plural": ""
     }
   },
   "correlations": {
@@ -7976,16 +8070,6 @@
     },
     "query-editor": {
       "query": "Query"
-    },
-    "query-editor-banner": {
-      "description-classic": "Probeer de verbeterde ervaring voor het bewerken van query's.",
-      "description-new": "Welkom bij de verbeterde ervaring voor het bewerken van query's.",
-      "dismiss": "Sluiten",
-      "downgrade-title": "Nieuwe query-editor",
-      "give-feedback": "Feedback geven",
-      "go-back": "Terug naar de klassieke versie",
-      "try-it": "Probeer het uit",
-      "upgrade-title": "Nieuwe editor beschikbaar"
     },
     "query-variable-editor": {
       "modal": {
@@ -11411,6 +11495,9 @@
       },
       "wrapping-disabled-warning": "Tekstterugloop is uitgeschakeld voor deze kolom omdat een waarde te lang is. Gebruik Waarde inspecteren om de volledige inhoud te bekijken."
     },
+    "tag": {
+      "remove": ""
+    },
     "tags": {
       "list-label": "Tags"
     },
@@ -13564,7 +13651,8 @@
         "open": "{{title}} openen",
         "open-all": "AI-assistenten en zijbalk-apps openen"
       },
-      "floating-resize": "Breedte van zijbalk wijzigen"
+      "floating-resize": "Breedte van zijbalk wijzigen",
+      "floating-resize-height": ""
     },
     "help": {
       "aria-label": "Help",
@@ -13828,6 +13916,8 @@
       "cancel": "Annuleren",
       "card-author": "Door {{author}}",
       "card-updated": "Bijgewerkte {{when}}",
+      "convert-to-absolute": "",
+      "convert-to-absolute-description": "",
       "create-name": "Notitieboeknaam",
       "create-name-required": "Een notitieboeknaam is vereist",
       "create-name-taken": "Er bestaat al een notitieboek met deze naam",
@@ -13846,6 +13936,8 @@
       "lock-time-range-description": "Houd deze visualisatie in het venster waarin deze is vastgelegd. Als het niet is vastgezet, volgt het paneel het tijdsbereik van het notitieboek.",
       "lock-time-ranges": "Panelen vergrendelen op de tijdsbereiken die ze hebben weergegeven",
       "lock-time-ranges-description": "Houd elke visualisatie in het venster waarin deze is vastgelegd. Als ze niet zijn vastgezet, volgen de panelen het tijdsbereik van het notitieboek.",
+      "note-description": "",
+      "note-label": "",
       "search-placeholder": "Zoeken op titel",
       "sort-alphabetical": "Alfabetisch (a-z)",
       "sort-label": "Notitieboeken sorteren",
@@ -15131,9 +15223,6 @@
       "success-title": "Mapmetadata zijn succesvol hersteld",
       "title": "Mapmetadata herstellen"
     },
-    "folder-permissions": {
-      "loading": "Laden..."
-    },
     "folder-repository-list": {
       "no-results-matching-your-query": "Geen resultaten die overeenkomen met je query",
       "partial-managed": "{{managedCount}}/{{resourceCount}} bronnen beheerd door Git-synchronisatie.",
@@ -15288,13 +15377,16 @@
       "path-required": "Repository-pad is vereist"
     },
     "managed-badge": {
+      "actions": "",
       "classic-file-provisioning": "Beheerd door: Bestandsprocedure",
       "file-provisioning": "",
       "kubectl": "Beheerd door: Kubectl",
       "manage-repository": "Repository beheren",
       "plugin": "Beheerd door: Plugin {{id}}",
       "provisioned": "Geprovisioneerd",
+      "read-only": "",
       "terraform": "Beheerd door: Terraform",
+      "view-source": "",
       "view-source-file": "Bronbestand bekijken"
     },
     "managed-by-repository-tooltip": "Beheerd door: Repository",
@@ -15477,8 +15569,6 @@
         }
       }
     },
-    "pull-only-local-tooltip": "",
-    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "Vul de titel van het pull-verzoek in de opslagdialoogvensters vooraf in vanuit het bovenstaande sjabloon en maak deze alleen-lezen.",
       "description-title-template": "Sjabloon voor de titel van het pull-verzoek geopend door de branch-workflow. Beschikbare tijdelijke aanduidingen: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Laat leeg om de eerste regel van het commitbericht te gebruiken.",
@@ -15508,9 +15598,6 @@
       "message-resource_other": "Je account is beperkt tot {{count}} gesynchroniseerde bronnen per repository.",
       "message-resource-onprem_one": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository.",
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
-    },
-    "read-only-badge": {
-      "pull-only": ""
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
@@ -15639,22 +15726,6 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Verbinden met elke Git-repository",
       "pure-git-tooltip": "Maakt verbinding met elke Git-repository via het Smart HTTP-protocol v2. Basis synchronisatieworkflow zonder providerspecifieke functies (webhooks, PR-opmerkingen, dieplinks)."
-    },
-    "resource-kind": {
-      "connection": "",
-      "connections": "",
-      "dashboard": "dashboard",
-      "dashboards": "Dashboards",
-      "datasource": "",
-      "datasources": "",
-      "folder": "map",
-      "folders": "Mappen",
-      "library-panel": "bibliotheekpaneel",
-      "library-panels": "Bibliotheekpanelen",
-      "playlist": "afspeellijst",
-      "playlists": "Afspeellijsten",
-      "repositories": "",
-      "repository": ""
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -16222,12 +16293,6 @@
       "width-of-panel": "Breedte van het paneel"
     },
     "edit-query-name": "Querynaam bewerken",
-    "experimental-button": {
-      "aria-label": "Opties voor experimentele functies",
-      "back-to-classic": "Terug naar de klassieke editor",
-      "give-feedback": "Feedback geven",
-      "tooltip": "Opties voor experimentele functies"
-    },
     "header": {
       "alert": "Waarschuwing",
       "enter-stacked-view": "",
@@ -16597,8 +16662,6 @@
       "location-header": "Locatie",
       "name-header": "Naam",
       "tags-header": "Tags",
-      "type-dashboard": "Dashboard",
-      "type-folder": "Map",
       "type-header": "Type"
     },
     "search-input": {

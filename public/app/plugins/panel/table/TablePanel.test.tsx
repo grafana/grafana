@@ -21,7 +21,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { TableCellDisplayMode, TableCellHeight, type TableOptions } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -65,7 +65,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id) => (id === 'table' ? plugin : getPanelPlugin({ id })),
 });
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => mockBoundingClientRect({ width: 800, height: 600 }));
 afterEach(() => setTestFlags({}));
 
 it.each(['defaults', 'override'])('preserves image cell %s when rebuilding ad-hoc source fields', (mode) => {
