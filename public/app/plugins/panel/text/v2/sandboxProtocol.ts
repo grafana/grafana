@@ -20,9 +20,11 @@ export function randomId() {
 export interface RenderCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
+  revision: number;
   type: 'render';
   html: string;
-  globalCss: string;
+  /** Required for the first render; omitted on updates to retain the document's stylesheet. */
+  globalCss?: string;
   mermaid?: MermaidConfig;
   diagramError: string;
 }
@@ -30,8 +32,23 @@ export interface RenderCommand {
 export interface MermaidCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
+  revision: number;
   type: 'mermaid-source';
   source: string;
+}
+
+/**
+ * Updates application-owned CSS without replacing panel content or advancing its render revision.
+ * Content revisions invalidate pending content work; font/style updates must let that work (such as Mermaid) finish.
+ * A separate styleRevision rejects superseded style updates and font completions without cancelling content work.
+ */
+export interface StylesCommand {
+  protocol: typeof TEXT_FRAME_PROTOCOL;
+  channel: string;
+  type: 'styles';
+  revision: number;
+  styleRevision: number;
+  globalCss: string;
 }
 
 export type FrameNotification =
@@ -42,7 +59,7 @@ export type FrameNotification =
 
 export function isFrameNotification(
   value: unknown
-): value is FrameNotification & { protocol: string; channel: string } {
+): value is FrameNotification & { protocol: string; channel: string; revision?: number } {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -51,6 +68,12 @@ export function isFrameNotification(
     !('channel' in value) ||
     typeof value.channel !== 'string' ||
     !('type' in value)
+  ) {
+    return false;
+  }
+  if (
+    value.type !== 'ready' &&
+    (!('revision' in value) || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0)
   ) {
     return false;
   }

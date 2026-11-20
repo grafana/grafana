@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 
-import { type Field, FieldType, type LinkModel } from '@grafana/data';
+import { createTheme, type Field, FieldType, type LinkModel } from '@grafana/data';
 
 import { TableCellDisplayMode } from '../../types';
 
-import { DataLinksCell } from './DataLinksCell';
+import { DataLinksCell, getStyles } from './DataLinksCell';
 
 describe('DataLinksCell', () => {
   describe('Displays data Links', () => {
@@ -74,6 +74,42 @@ describe('DataLinksCell', () => {
           expect(screen.queryByText(link.title)).not.toBeInTheDocument();
         }
       });
+    });
+
+    it('removes the right border from the final link when cell actions follow the links', () => {
+      const linksForField = [
+        { href: 'http://asdasd.com', title: 'Test Title' } as LinkModel,
+        { href: 'http://asdasd2.com', title: 'Test Title2' } as LinkModel,
+      ];
+      const field = getFieldWithLinks(linksForField);
+      const cellClass = getStyles(createTheme(), {
+        textWrap: false,
+        textAlign: 'left',
+        shouldOverflow: false,
+        hoverOverflow: false,
+      });
+
+      render(
+        <div className={cellClass}>
+          <DataLinksCell field={field} rowIdx={0} />
+          <div data-testid="cell-actions" />
+        </div>
+      );
+
+      const links = screen.getAllByRole('link');
+      const cellRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter(
+          (rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && rule.selectorText.includes(`.${cellClass}`)
+        );
+      const borderRule = cellRules.find((rule) => rule.style.getPropertyValue('border-right').startsWith('2px solid'));
+      const finalLinkRule = cellRules.find((rule) => rule.style.getPropertyValue('border-right') === 'none');
+
+      expect(borderRule).toBeDefined();
+      expect(finalLinkRule).toBeDefined();
+      expect(links.every((link) => link.matches(borderRule!.selectorText))).toBe(true);
+      expect(links[0].matches(finalLinkRule!.selectorText)).toBe(false);
+      expect(links[1].matches(finalLinkRule!.selectorText)).toBe(true);
     });
   });
 });

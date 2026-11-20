@@ -198,6 +198,8 @@ export const FlagKeys = {
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
+  /** Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
+  GrafanaDashboardQuestions: "grafana.dashboardQuestions",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
@@ -228,6 +230,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enable infinite scroll for logs when scrolling top */
+  GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
   GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
@@ -240,6 +244,8 @@ export const FlagKeys = {
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
   GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
+  /** Shows Administration as a single row in the mega menu, with its destinations in the section nav */
+  GrafanaNavigationAdminSubNav: "grafana.navigationAdminSubNav",
   /** Enables the refreshed information architecture for Grafana's navigation */
   GrafanaNavigationInfoArchRefresh: "grafana.navigationInfoArchRefresh",
   /** Enables a new UI for query errors and notices */
@@ -1283,10 +1289,10 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  *
  * **Details:**
  * - flag key: `flameGraph.tableNg`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("flameGraph.tableNg", false, options).value;
+  return useFlag("flameGraph.tableNg", true, options).value;
 };
 
 /**
@@ -1430,6 +1436,17 @@ export const useFlagGrafanaDashboardPreferences = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardPreviewMode", false, options).value;
+};
+
+/**
+ * Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardQuestions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardQuestions", false, options).value;
 };
 
 /**
@@ -1598,6 +1615,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enable infinite scroll for logs when scrolling top
+ *
+ * **Details:**
+ * - flag key: `grafana.logsInfiniteScrollTop`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogsInfiniteScrollTop = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logsInfiniteScrollTop", false, options).value;
+};
+
+/**
  * Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button
  *
  * **Details:**
@@ -1661,6 +1689,17 @@ export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantUserPermissions", false, options).value;
+};
+
+/**
+ * Shows Administration as a single row in the mega menu, with its destinations in the section nav
+ *
+ * **Details:**
+ * - flag key: `grafana.navigationAdminSubNav`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNavigationAdminSubNav = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.navigationAdminSubNav", false, options).value;
 };
 
 /**
@@ -1921,10 +1960,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `true`
+ * - default value: `false`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", true, options).value;
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -2229,10 +2268,10 @@ export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluatio
  *
  * **Details:**
  * - flag key: `queryEditorNext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNext", false, options).value;
+  return useFlag("queryEditorNext", true, options).value;
 };
 
 /**
@@ -2306,10 +2345,10 @@ export const useFlagQueryeditorCoauthoringUi = (options?: ReactFlagEvaluationOpt
  *
  * **Details:**
  * - flag key: `rawPrometheus.tableNg`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("rawPrometheus.tableNg", false, options).value;
+  return useFlag("rawPrometheus.tableNg", true, options).value;
 };
 
 /**
@@ -2537,10 +2576,10 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `table.inspectDataTableNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.inspectDataTableNG", false, options).value;
+  return useFlag("table.inspectDataTableNG", true, options).value;
 };
 
 /**
