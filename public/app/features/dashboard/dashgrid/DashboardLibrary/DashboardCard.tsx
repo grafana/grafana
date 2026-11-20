@@ -253,6 +253,7 @@ function DashboardCardComponent({
           <img
             src={imageUrl}
             alt={title}
+            loading="lazy"
             className={cx(
               isLogo ? styles.logo : styles.thumbnail,
               dimThumbnail && showDatasourceProvidedBadge && styles.dimmedImage,
