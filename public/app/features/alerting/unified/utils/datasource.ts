@@ -97,6 +97,9 @@ function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by uid.
+ */
 export function getRulesDataSourceByUID(uid: string) {
   return getRulesDataSources().find((x) => x.uid === uid);
 }
@@ -283,6 +286,9 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by name.
+ */
 export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
   if ('uid' in rulesSourceIdentifier) {
     return rulesSourceIdentifier.uid;
