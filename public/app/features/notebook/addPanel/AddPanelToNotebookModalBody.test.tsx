@@ -324,7 +324,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           false,
-          false
+          false,
+          undefined
         )
       );
       // Built on submit, so a panel edited while the modal was open is the one that lands.
@@ -348,7 +349,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           false,
-          false
+          false,
+          undefined
         )
       );
     });
@@ -548,7 +550,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           false,
-          false
+          false,
+          undefined
         )
       );
     });
@@ -567,7 +570,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           false,
-          false
+          false,
+          undefined
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -636,7 +640,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           true,
-          false
+          false,
+          undefined
         )
       );
     });
@@ -656,7 +661,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'dashboard_panel',
           'user',
           false,
-          false
+          false,
+          undefined
         )
       );
     });
@@ -1127,7 +1133,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'plugin',
           'assistant',
           false,
-          false
+          false,
+          undefined
         )
       );
       expect(mockCreateSuccessNotification).toHaveBeenCalledWith(
