@@ -2,17 +2,13 @@ package pluginproxy
 
 import (
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 )
 
-var (
-	requestLogger = log.New("datasource.proxy")
-	sampleCount   atomic.Uint64
-)
+var requestLogger = log.New("datasource.proxy")
 
 type RequestLog struct {
 	PluginID, DatasourceUID, Namespace string
@@ -23,12 +19,8 @@ type RequestLog struct {
 }
 
 func (r RequestLog) Log() {
-	failed := r.Status >= 500 || r.Source == "client" || r.Source == string(requestmeta.StatusSourceDownstream)
-	if !failed && sampleCount.Add(1)%1000 != 0 {
-		return
-	}
 	write := requestLogger.Info
-	if failed {
+	if r.Status >= 500 || r.Source == "client" || r.Source == string(requestmeta.StatusSourceDownstream) {
 		write = requestLogger.Warn
 	}
 	// The query string can contain user queries. Keep only the bounded path.
