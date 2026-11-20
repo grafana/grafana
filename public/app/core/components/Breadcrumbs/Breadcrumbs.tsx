@@ -20,9 +20,9 @@ export function Breadcrumbs({ breadcrumbs, className }: Props) {
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
           <BreadcrumbItem
+            key={index}
             {...breadcrumb}
             isCurrent={index === breadcrumbs.length - 1}
-            key={index}
             index={index}
             flexGrow={getFlexGrow(index, breadcrumbs.length)}
           />

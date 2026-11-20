@@ -85,7 +85,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
-    'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
+    '^react-inlinesvg$': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     // resolve directly as monaco and kusto don't have main property in package.json which jest needs
     '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
     '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
