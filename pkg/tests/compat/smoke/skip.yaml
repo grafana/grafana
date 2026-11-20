@@ -24,6 +24,7 @@ feature_flags:
   dashboardpreferences.dashboard.grafana.app: grafana.dashboardPreferences
   dashboardtemplates.dashboardtemplates.grafana.app: grafana.customDashboardTemplates
   comments.comments.grafana.app: dashboard.notebookComments
+  saveddashboardviews.dashboardviews.grafana.app: grafana.savedDashboardViews
 all:
   configs.notifications.alerting.grafana.app: singleton seeded by the server, cannot be created through the API
   configs.rules.alerting.grafana.app: singleton seeded by the server, cannot be created through the API
