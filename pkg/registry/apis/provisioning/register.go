@@ -301,20 +301,6 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 	b.repoValidatorOpts = opts
 }
 
-// SetResourceListerMode selects where the managed-resource list and the repository stats are read
-// from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
-// the repository resources factory captures the lister.
-func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	// This lister is also what serves /resources, so an apis reader here would call that route to
-	// answer it. The mode applies to callers outside the apiserver, which is why only the index
-	// reader is built here.
-	if err := resources.ValidateListerMode(mode); err != nil {
-		return err
-	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources))
-	return nil
-}
-
 // setResourceLister points the lister, the namespace-wide stats route and the factory that captures
 // the lister at the same reader.
 func (b *APIBuilder) setResourceLister(lister *resources.ResourceListerFromSearch) {
@@ -445,9 +431,6 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-	if err := builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-		return nil, err
-	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.urlValidator = urlValidator
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
@@ -506,9 +489,6 @@ func RegisterAPIService(
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
-	if err := v1beta1Builder.SetResourceListerMode(cfg.ProvisioningResourceLister); err != nil {
-		return nil, err
-	}
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	v1beta1Builder.keysOnlyReList = keysOnlyReList
