@@ -57,6 +57,7 @@ export const CORE_KINDS = {
     group: DASHBOARD_API_GROUP,
     kind: 'Notebook',
     resource: 'notebooks',
+    searchKind: 'notebook',
     // The kind manifest scopes notebooks to folders, but storage refuses the folder annotation until
     // notebooks get folder permissions. Flip this together with `notebookStorageOpts` on the backend.
     folderScoped: false,

@@ -1,4 +1,4 @@
-import { CORE_KINDS, coversGroup, findKind } from './coreKinds';
+import { CORE_KINDS, coversGroup, findKind, findKindBySearchKind } from './coreKinds';
 
 describe('getRoute', () => {
   it('encodes the object name', () => {
@@ -53,5 +53,11 @@ describe('findKind', () => {
 
   it('finds nothing for a kind the group does not serve', () => {
     expect(findKind('dashboard.grafana.app', 'Playlist')).toBeUndefined();
+  });
+});
+
+describe('findKindBySearchKind', () => {
+  it('finds the notebook that global search rows name "notebook"', () => {
+    expect(findKindBySearchKind('notebook')).toBe(CORE_KINDS.notebook);
   });
 });
