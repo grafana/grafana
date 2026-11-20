@@ -9,7 +9,7 @@ interface OpenAPISchema {
 }
 
 interface JSONSchema {
-  type?: string;
+  type?: string | string[];
   properties?: Record<string, JSONSchema>;
   items?: JSONSchema;
   $ref?: string;
@@ -29,8 +29,8 @@ function getOpenAPIEndpoint(group: string, version: string): string {
   return `/openapi/v3/apis/${group}/${version}`;
 }
 
-function getDashboardSpecSchemaKey(version: string): string {
-  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.DashboardSpec`;
+function getDashboardSchemaKey(version: string): string {
+  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.Dashboard`;
 }
 
 let cachedSchema: JSONSchema | null = null;
@@ -56,7 +56,7 @@ async function doFetchSchema(): Promise<JSONSchema> {
   await dashboardAPIVersionResolver.resolve();
   const { group, version } = getK8sV2DashboardApiConfig();
   const endpoint = getOpenAPIEndpoint(group, version);
-  const schemaKey = getDashboardSpecSchemaKey(version);
+  const schemaKey = getDashboardSchemaKey(version);
 
   const openApiSchema = await getBackendSrv().get<OpenAPISchema>(endpoint);
 
@@ -65,9 +65,12 @@ async function doFetchSchema(): Promise<JSONSchema> {
   }
 
   const schemas = openApiSchema.components.schemas;
-  const specSchema = schemas[schemaKey];
-  if (!specSchema) {
-    throw new Error(`Dashboard spec schema not found: ${schemaKey}`);
+  const theSchema = schemas[schemaKey];
+  if (!theSchema) {
+    throw new Error(`Dashboard schema not found: ${schemaKey}`);
+  }
+  if (theSchema.required) {
+    theSchema.required = theSchema.required.filter((prop) => prop !== 'status'); // ignore status
   }
 
   const definitions: Record<string, JSONSchema> = {};
@@ -77,7 +80,7 @@ async function doFetchSchema(): Promise<JSONSchema> {
 
   const jsonSchema: JSONSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    ...flattenSingleRefAllOf(specSchema),
+    ...flattenSingleRefAllOf(theSchema),
     definitions,
   };
 
@@ -110,6 +113,7 @@ function convertRefToDefinitionKey(key: string): string {
 // - kind fields are emitted as plain strings instead of const values
 // - scalar union types are emitted as structs instead of oneOf
 // - map[string]interface{} values are constrained to objects instead of any
+// - nullable numbers are emitted as required plain numbers
 // - discriminated unions are emitted as struct properties instead of if/then
 
 function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
@@ -117,6 +121,7 @@ function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
   fixScalarUnions(definitions);
   fixOpaqueMaps(definitions);
   fixAnyValueProperties(definitions);
+  fixNullableNumbers(definitions);
   fixDiscriminatedUnions(definitions);
 }
 
@@ -215,6 +220,35 @@ function fixAnyValueProperties(definitions: Record<string, JSONSchema>): void {
             schema.properties[p] = {};
           }
         }
+      }
+    }
+  }
+}
+
+// `float64 | null` fields where null means an open-ended bound (-Infinity or +Infinity). The
+// generator emits them as required numbers, so null fails validation. The scene serializer also
+// drops null values before saving, and the API reads a missing value as null, so they must be
+// optional too. Otherwise any dashboard with a base threshold or an open-ended range mapping
+// can't be saved from the editor.
+const NULLABLE_NUMBER_PROPERTIES: Array<{ key: RegExp; props: string[] }> = [
+  { key: /_DashboardThreshold$/, props: ['value'] },
+  // The generator prefixes this one with the API version, e.g. DashboardV2beta1RangeMapOptions.
+  { key: /_DashboardV\w+RangeMapOptions$/, props: ['from', 'to'] },
+];
+
+function fixNullableNumbers(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const { key: pattern, props } of NULLABLE_NUMBER_PROPERTIES) {
+      if (!pattern.test(key)) {
+        continue;
+      }
+      for (const p of props) {
+        if (schema.properties?.[p]) {
+          schema.properties[p] = { ...schema.properties[p], type: ['number', 'null'] };
+        }
+      }
+      if (schema.required) {
+        schema.required = schema.required.filter((prop) => !props.includes(prop));
       }
     }
   }

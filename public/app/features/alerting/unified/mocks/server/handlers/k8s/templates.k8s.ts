@@ -5,11 +5,11 @@ import {
   API_VERSION,
   type TemplateGroup,
   type TemplateGroupTemplateKind,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);

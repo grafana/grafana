@@ -12,7 +12,7 @@ import (
 )
 
 func TestNamespaceAuthorizer(t *testing.T) {
-	auth := newNamespaceAuthorizer()
+	auth := NewNamespaceAuthorizer()
 
 	tests := []struct {
 		name         string

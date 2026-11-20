@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode, useEffect, useState } from 'react';
+import { memo, type ReactNode, useState } from 'react';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -20,10 +21,12 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
-import { type PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { type DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
@@ -32,6 +35,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -39,7 +43,18 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+  const hasNewToolbar = isDashboardNewLayoutsEnabled();
+  const { planning } = dashboard.useState();
+
+  // A plan preview replaces the whole toolbar with just the banner: the preview never enters
+  // edit mode, so none of the normal actions (Edit, Save, Settings, Share) apply, and checking
+  // this before any other branching keeps both toolbar variants consistent.
+  // While the plan is building there is nothing left to decide, so the toolbar stays empty.
+  if (planning) {
+    return (
+      <AppChromeUpdate actions={planning.phase === 'preview' ? <PlanningBanner planning={planning} /> : undefined} />
+    );
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -77,10 +92,11 @@ export function ToolbarActions({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanel);
-  const isEditedPanelDirty = usePanelEditDirty(editPanel);
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
+  // Pending changes are unsaved changes until Save saves them.
+  const hasUnsavedChanges = isDirty || savesPendingChanges(dashboard);
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -92,6 +108,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -125,15 +142,14 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (isReadOnlyRepo) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: true,
-      render: () => {
-        return <ReadOnlyBadge repoType={repoType} />;
-      },
-    });
-  }
+  // Only users who could otherwise edit need to know why they can't.
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isReadOnlyRepo && dashboard.canEditDashboard(),
+    render: () => {
+      return <ReadOnlyBadge key="read-only-badge" repoType={repoType} />;
+    },
+  });
 
   // Visible to viewers too, so they know the dashboard is externally managed;
   // the badge itself gates its actions (source/repo links) by permission.
@@ -174,10 +190,10 @@ export function ToolbarActions({ dashboard }: Props) {
               key="add-visualization"
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
-              onClick={() => {
-                const vizPanel = dashboard.onCreateNewPanel();
+              onClick={async () => {
+                const vizPanel = await dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+                openPanelEditor(dashboard, vizPanel, true);
               }}
             />
             <Menu.Item
@@ -273,7 +289,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: (isViewingPanel || isEditingPanel) && !isEditingLibraryPanel,
+    condition: isViewingPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -316,7 +332,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {
@@ -342,7 +364,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      !editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {
@@ -417,87 +445,6 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onDiscard}
-        tooltip={
-          editPanel?.state.isNewPanel
-            ? t('dashboard.toolbar.discard-panel-new', 'Discard panel')
-            : t('dashboard.toolbar.discard-panel', 'Discard panel changes')
-        }
-        size="sm"
-        disabled={!isEditedPanelDirty}
-        key="discard"
-        fill="outline"
-        variant="destructive"
-        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
-      >
-        {editPanel?.state.isNewPanel ? (
-          <Trans i18nKey="dashboard.toolbar.discard-panel-new">Discard panel</Trans>
-        ) : (
-          <Trans i18nKey="dashboard.toolbar.discard-panel">Discard panel changes</Trans>
-        )}
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onDiscard}
-        tooltip={t('dashboard.toolbar.discard-library-panel-changes', 'Discard library panel changes')}
-        size="sm"
-        key="discardLibraryPanel"
-        fill="outline"
-        variant="destructive"
-        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.discard-library-panel-changes">Discard library panel changes</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onUnlinkLibraryPanel}
-        tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
-        size="sm"
-        key="unlinkLibraryPanel"
-        fill="outline"
-        variant="secondary"
-        data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditingPanel && isEditingLibraryPanel && !editview && !isViewingPanel,
-    render: () => (
-      <Button
-        onClick={editPanel?.onSaveLibraryPanel}
-        tooltip={t('dashboard.toolbar.save-library-panel', 'Save library panel')}
-        size="sm"
-        key="saveLibraryPanel"
-        fill="outline"
-        variant="primary"
-        data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.save-library-panel">Save library panel</Trans>
-      </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
     condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
@@ -530,7 +477,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
             key="save"
             size="sm"
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
           </Button>
@@ -553,6 +500,7 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
+            testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
           />
         </Menu>
       );
@@ -566,7 +514,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
             size="sm"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
           </Button>
@@ -574,8 +522,9 @@ export function ToolbarActions({ dashboard }: Props) {
             <Button
               aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
               icon="angle-down"
-              variant={isDirty ? 'primary' : 'secondary'}
+              variant={hasUnsavedChanges ? 'primary' : 'secondary'}
               size="sm"
+              data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
           </Dropdown>
         </ButtonGroup>
@@ -624,26 +573,6 @@ function addDynamicActions(
       }
     }
   }
-}
-
-// This hook handles when panelEditor is not defined to avoid conditionally hook usage
-function usePanelEditDirty(panelEditor?: PanelEditor) {
-  const [isDirty, setIsDirty] = useState<Boolean | undefined>();
-
-  useEffect(() => {
-    if (panelEditor) {
-      const unsub = panelEditor.subscribeToState((state) => {
-        if (state.isDirty !== isDirty) {
-          setIsDirty(state.isDirty);
-        }
-      });
-
-      return () => unsub.unsubscribe();
-    }
-    return;
-  }, [panelEditor, isDirty]);
-
-  return isDirty;
 }
 
 interface ToolbarAction {

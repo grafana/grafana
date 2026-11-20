@@ -2,19 +2,33 @@ import { type PayloadAction } from '@reduxjs/toolkit';
 
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
-import { isRootFolderUID } from '../../search/constants';
+import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
-import { type fetchNextChildrenPage, type refetchChildren } from './actions';
-import { findItem } from './utils';
+import { type applyRefreshPlan, type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
+import { ancestorsOf, collectionGeneration, collectionKeyOf, isOwnedByRepository } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
+type RefetchChildrenPendingAction = ReturnType<typeof refetchChildren.pending>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
+type ApplyRefreshPlanAction = ReturnType<typeof applyRefreshPlan>;
+type RefreshTreeFulfilledAction = ReturnType<typeof refreshTree.fulfilled>;
+
+/** A refetch supersedes whatever is in flight for its collection, so the last one started wins. */
+export function refetchChildrenPending(state: BrowseDashboardsState, action: RefetchChildrenPendingAction) {
+  bumpCollectionGeneration(state, collectionKeyOf(action.meta.arg.parentUID));
+}
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
-  const { children, page, kind, lastPageOfKind } = action.payload;
+  const { children, page, kind, lastPageOfKind, generation } = action.payload;
   const { parentUID } = action.meta.arg;
+  const key = collectionKeyOf(parentUID);
+
+  // Started against an older listing than the one now in place; a newer load superseded it.
+  if (generation !== collectionGeneration(state, key)) {
+    return;
+  }
 
   const newCollection = {
     items: children,
@@ -24,11 +38,12 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID && !isRootFolderUID(parentUID)) {
-    state.childrenByParentUID[parentUID] = newCollection;
+  if (key) {
+    state.childrenByParentUID[key] = newCollection;
   } else {
     state.rootItems = newCollection;
   }
+  bumpCollectionGeneration(state, key);
 }
 
 export function fetchNextChildrenPageFulfilled(
@@ -41,8 +56,13 @@ export function fetchNextChildrenPageFulfilled(
     return;
   }
 
-  const { children, page, kind, lastPageOfKind } = payload;
+  const { children, page, kind, lastPageOfKind, generation } = payload;
   const { parentUID, excludeKinds = [] } = action.meta.arg;
+
+  // A page of a listing that was dropped or replaced meanwhile; appending it would resurrect it.
+  if (generation !== collectionGeneration(state, collectionKeyOf(parentUID))) {
+    return;
+  }
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
@@ -113,23 +133,10 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting a child, we also need to unselect all ancestors.
+  // A folder cannot stay selected once one of its descendants is unselected
   if (!isSelected) {
-    let nextParentUID = item.parentUID;
-
-    while (nextParentUID) {
-      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
-
-      // This case should not happen, but a find can theortically return undefined, and it
-      // helps limit infinite loops
-      if (!parent) {
-        break;
-      }
-
-      // A folder cannot be selected if any of it's children are unselected
-      state.selectedItems[parent.kind][parent.uid] = false;
-
-      nextParentUID = parent.parentUID;
+    for (const parent of ancestorsOf(item, state.rootItems?.items ?? [], state.childrenByParentUID)) {
+      state.selectedItems.folder[parent.uid] = false;
     }
   }
 
@@ -139,9 +146,9 @@ export function setItemSelectionState(
 
 export function setAllSelection(
   state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeUIDs?: string[] }>
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined; excludeFolderUIDs?: string[] }>
 ) {
-  const { isSelected, folderUID: folderUIDArg, excludeUIDs } = action.payload;
+  const { isSelected, folderUID: folderUIDArg, excludeFolderUIDs } = action.payload;
 
   // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
@@ -178,8 +185,7 @@ export function setAllSelection(
           continue;
         }
 
-        // Skip items in the exclude list
-        if (excludeUIDs?.includes(child.uid)) {
+        if (child.kind === 'folder' && excludeFolderUIDs?.includes(child.uid)) {
           continue;
         }
 
@@ -214,13 +220,64 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
   const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
 
   for (const folderUID of folderUIDs) {
-    if (!folderUID) {
-      state.rootItems = undefined;
-    } else {
-      state.childrenByParentUID[folderUID] = undefined;
+    clearFolder(state, folderUID);
+  }
+}
 
-      // close the folder to require it to be refetched next time its opened
-      state.openFolders[folderUID] = false;
+/**
+ * Drops the off-screen collections a pull may have changed; the on-screen ones are refetched by the
+ * thunk. Items the repository owns leave the selection: once gone, so is the metadata that routes
+ * them to the right flow.
+ */
+export function refreshPlanApplied(state: BrowseDashboardsState, action: ApplyRefreshPlanAction) {
+  const { repository, plan } = action.payload;
+
+  for (const uid of plan.evict) {
+    unselectItemsOf(state, uid, () => true);
+    clearFolder(state, uid);
+  }
+  for (const uid of plan.refetch) {
+    unselectItemsOf(state, uid, (item) => isOwnedByRepository(item, repository));
+  }
+}
+
+export function refreshTreeFulfilled(state: BrowseDashboardsState, action: RefreshTreeFulfilledAction) {
+  const { repository, syncedAt } = action.meta.arg;
+  (state.repositorySyncedAt ??= {})[repository.name] = syncedAt;
+}
+
+export function setRepositorySyncedAt(state: BrowseDashboardsState, action: PayloadAction<Record<string, number>>) {
+  Object.assign((state.repositorySyncedAt ??= {}), action.payload);
+}
+
+function unselectItemsOf(
+  state: BrowseDashboardsState,
+  folderUID: string | undefined,
+  shouldUnselect: (item: DashboardViewItem) => boolean
+) {
+  const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
+  for (const item of collection?.items ?? []) {
+    if (state.selectedItems[item.kind][item.uid] && shouldUnselect(item)) {
+      state.selectedItems[item.kind][item.uid] = false;
+      state.selectedItems.$all = false;
     }
   }
+}
+
+function clearFolder(state: BrowseDashboardsState, folderUID: string | undefined) {
+  if (!folderUID) {
+    state.rootItems = undefined;
+  } else {
+    state.childrenByParentUID[folderUID] = undefined;
+
+    // close the folder to require it to be refetched next time its opened
+    state.openFolders[folderUID] = false;
+  }
+  bumpCollectionGeneration(state, folderUID);
+}
+
+function bumpCollectionGeneration(state: BrowseDashboardsState, collectionKey: string | undefined) {
+  const key = collectionKey ?? GENERAL_FOLDER_UID;
+  const generations = (state.collectionGenerations ??= {});
+  generations[key] = (generations[key] ?? 0) + 1;
 }

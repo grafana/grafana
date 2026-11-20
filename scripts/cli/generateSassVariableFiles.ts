@@ -1,5 +1,6 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'path';
+import { compileAsync } from 'sass';
 
 import { createTheme } from '@grafana/data';
 
@@ -7,30 +8,41 @@ import { darkThemeVarsTemplate } from './themeTemplates/_variables.dark.scss.tmp
 import { lightThemeVarsTemplate } from './themeTemplates/_variables.light.scss.tmpl';
 import { commonThemeVarsTemplate } from './themeTemplates/_variables.scss.tmpl';
 
-const darkThemeVariablesPath = resolve(__dirname, 'public', 'sass', '_variables.dark.generated.scss');
-const lightThemeVariablesPath = resolve(__dirname, 'public', 'sass', '_variables.light.generated.scss');
-const defaultThemeVariablesPath = resolve(__dirname, 'public', 'sass', '_variables.generated.scss');
+const sassDirectory = resolve(__dirname, 'public', 'sass');
+const darkThemeVariablesPath = resolve(sassDirectory, '_variables.dark.generated.scss');
+const lightThemeVariablesPath = resolve(sassDirectory, '_variables.light.generated.scss');
+const defaultThemeVariablesPath = resolve(sassDirectory, '_variables.generated.scss');
 
-async function writeVariablesFile(path: string, data: string) {
-  try {
-    await writeFile(path, data);
-  } catch (error) {
-    console.error('\nWriting SASS variable files failed', error);
-    process.exit(1);
-  }
+async function writeFileOrThrow(path: string, data: string) {
+  await writeFile(path, data);
 }
 
-async function generateSassVariableFiles() {
+async function generateThemeCss(themeName: 'dark' | 'light') {
+  const sourcePath = resolve(sassDirectory, `grafana.${themeName}.scss`);
+  const outputPath = resolve(sassDirectory, `grafana.${themeName}.css`);
+  const sassResult = await compileAsync(sourcePath, {
+    silenceDeprecations: ['import', 'global-builtin'],
+    style: 'expanded',
+  });
+  await writeFileOrThrow(outputPath, sassResult.css);
+}
+
+async function generateThemeStyles() {
   const darkTheme = createTheme();
   const lightTheme = createTheme({ colors: { mode: 'light' } });
+
   try {
-    await writeVariablesFile(darkThemeVariablesPath, darkThemeVarsTemplate(darkTheme));
-    await writeVariablesFile(lightThemeVariablesPath, lightThemeVarsTemplate(lightTheme));
-    await writeVariablesFile(defaultThemeVariablesPath, commonThemeVarsTemplate(darkTheme));
+    await mkdir(sassDirectory, { recursive: true });
+    await Promise.all([
+      writeFileOrThrow(darkThemeVariablesPath, darkThemeVarsTemplate(darkTheme)),
+      writeFileOrThrow(lightThemeVariablesPath, lightThemeVarsTemplate(lightTheme)),
+      writeFileOrThrow(defaultThemeVariablesPath, commonThemeVarsTemplate(darkTheme)),
+    ]);
+    await Promise.all([generateThemeCss('dark'), generateThemeCss('light')]);
   } catch (error) {
-    console.error('\nWriting SASS variable files failed', error);
+    console.error('\nGenerating theme CSS failed', error);
     process.exit(1);
   }
 }
 
-generateSassVariableFiles();
+generateThemeStyles();

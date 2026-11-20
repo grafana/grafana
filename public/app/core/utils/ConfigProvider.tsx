@@ -1,59 +1,89 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { getThemeById, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagDatavizTabularNums, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 
 import { appEvents } from '../app_events';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { contextSrv } from '../services/context_srv';
 
 // temporarily remap dark/light to the visual refresh themes if the flag is enabled
 // when delivering the visual refresh, remove this remapping and use the updated dark/light themes directly
-function maybeRemapTheme(theme: GrafanaTheme2, visualRefreshEnabled: boolean): GrafanaTheme2 {
+function maybeRemapTheme(theme: GrafanaTheme2, visualRefreshEnabled: boolean, tabularNums: boolean): GrafanaTheme2 {
+  let remappedTheme = theme;
+
   if (visualRefreshEnabled) {
     if (theme.name === 'Dark') {
-      return getThemeById('visual_refresh_dark');
+      remappedTheme = getThemeById('visual_refresh_dark');
     } else if (theme.name === 'Light') {
-      return getThemeById('visual_refresh_light');
+      remappedTheme = getThemeById('visual_refresh_light');
+    }
+  } else {
+    if (theme.name === 'Visual Refresh (Dark)') {
+      remappedTheme = getThemeById('dark');
+    } else if (theme.name === 'Visual Refresh (Light)') {
+      remappedTheme = getThemeById('light');
     }
   }
-  return theme;
+
+  // returning the same reference when nothing changed lets React bail out of re-rendering
+  // the whole theme tree every time AppWrapper passes config.theme2 back in as the value prop
+  if (
+    remappedTheme.flags.visualDesignRefresh === visualRefreshEnabled &&
+    remappedTheme.flags.tabularNums === tabularNums
+  ) {
+    return remappedTheme;
+  }
+
+  return {
+    ...remappedTheme,
+    flags: {
+      ...remappedTheme.flags,
+      visualDesignRefresh: visualRefreshEnabled,
+      tabularNums,
+    },
+  };
 }
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const tabularNums = useFlagDatavizTabularNums();
 
-  const [theme, setTheme] = useState(() => maybeRemapTheme(value, visualRefreshEnabled));
+  const [theme, setTheme] = useState(() => maybeRemapTheme(value, visualRefreshEnabled, tabularNums));
 
-  const themeWithFlags = useMemo(
-    () => ({
-      ...theme,
-      flags: {
-        ...theme.flags,
-        visualDesignRefresh: visualRefreshEnabled,
-      },
-    }),
-    [theme, visualRefreshEnabled]
-  );
+  config.theme2 = theme;
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
-      const newTheme = maybeRemapTheme(event.payload, visualRefreshEnabled);
-      config.theme2 = newTheme;
+      const newTheme = maybeRemapTheme(event.payload, visualRefreshEnabled, tabularNums);
       setTheme(newTheme);
     });
 
     return () => sub.unsubscribe();
-  }, [visualRefreshEnabled]);
+  }, [visualRefreshEnabled, tabularNums]);
 
   useEffect(() => {
-    setTheme(maybeRemapTheme(value, visualRefreshEnabled));
-  }, [value, visualRefreshEnabled]);
+    if (contextSrv.user.theme !== 'system') {
+      return;
+    }
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      setTheme(maybeRemapTheme(getThemeById(e.matches ? 'dark' : 'light'), visualRefreshEnabled, tabularNums));
+    };
+    query.addEventListener('change', handler);
+
+    return () => query.removeEventListener('change', handler);
+  }, [visualRefreshEnabled, tabularNums]);
+
+  useEffect(() => {
+    setTheme(maybeRemapTheme(value, visualRefreshEnabled, tabularNums));
+  }, [value, visualRefreshEnabled, tabularNums]);
 
   return (
-    <ThemeContext.Provider value={themeWithFlags}>
+    <ThemeContext.Provider value={theme}>
       <SkeletonTheme
         baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
         highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}

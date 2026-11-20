@@ -204,6 +204,7 @@ function DashboardCardComponent({
             }
           >
             <IconButton
+              variant="primary"
               name="ellipsis-v"
               aria-label={t('dashboard-library.card.more-actions-label', 'More actions for {{title}}', { title })}
             />
@@ -238,19 +239,6 @@ function DashboardCardComponent({
               e.currentTarget.style.display = 'none';
             }}
           />
-        ) : isCustomTemplate ? (
-          <div className={styles.customTemplateContent}>
-            <h3 className={styles.customTemplateTitle}>
-              <span className={styles.titleText}>{title}</span>
-            </h3>
-            <p
-              data-testid="dashboard-card-description"
-              className={cx(styles.customTemplateDescription, { [styles.noDescription]: !dashboard.description })}
-            >
-              {dashboard.description ||
-                t('dashboard-library.dashboard-card.no-description', 'No description available')}
-            </p>
-          </div>
         ) : (
           <div className={styles.noImage}>
             <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
@@ -308,15 +296,21 @@ function DashboardCardComponent({
         </div>
       </div>
       <div className={styles.bottomSection}>
-        {!isCustomTemplate && (
+        {isCustomTemplate && (
+          <h3 className={styles.customTemplateTitle}>
+            <span className={styles.titleText}>{title}</span>
+          </h3>
+        )}
+        {dashboard.description && (
           <div title={dashboard.description}>
-            <p
-              data-testid="dashboard-card-description"
-              className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
-            >
-              {dashboard.description ||
-                t('dashboard-library.dashboard-card.no-description', 'No description available')}
+            <p data-testid="dashboard-card-description" className={styles.description}>
+              {dashboard.description}
             </p>
+          </div>
+        )}
+        {tags && tags.length > 0 && (
+          <div className={styles.tagsContainer}>
+            <TagList tags={tags} className={styles.tagList} />
           </div>
         )}
         {isCustomTemplate && createdByName && (
@@ -326,11 +320,6 @@ function DashboardCardComponent({
             </span>{' '}
             {createdByName}
           </p>
-        )}
-        {tags && tags.length > 0 && (
-          <div className={styles.tagsContainer}>
-            <TagList tags={tags} className={styles.tagList} />
-          </div>
         )}
         {hasCompatActions && (
           <div className={styles.actionsContainer}>
@@ -415,35 +404,35 @@ function DeleteTemplateConfirm({ title, isDeleting, onCancel, onConfirm }: Delet
   );
 }
 
-function DetailsTooltipContent({ details }: { details: Details }) {
-  const Section = ({ label, value }: { label: string; value: string }) => {
-    return (
-      <Box display="flex" direction="column" gap={1}>
-        <Text element="p">{label}</Text>
-        <Text element="p" color="secondary">
-          {value}
-        </Text>
-      </Box>
-    );
-  };
+function DetailsSection({ label, value }: { label: string; value: string }) {
+  return (
+    <Box display="flex" direction="column" gap={1}>
+      <Text element="p">{label}</Text>
+      <Text element="p" color="secondary">
+        {value}
+      </Text>
+    </Box>
+  );
+}
 
+function DetailsTooltipContent({ details }: { details: Details }) {
   return (
     <Box display="flex">
       <Box display="flex" direction="column" gap={1} width={{ xs: 'auto', md: 340 }}>
-        <Section label={t('dashboard-library.dashboard-card.details.id', 'ID')} value={details.id} />
-        <Section
+        <DetailsSection label={t('dashboard-library.dashboard-card.details.id', 'ID')} value={details.id} />
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.datasource', 'Datasource')}
           value={details.datasource}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.dependencies', 'Dependencies')}
           value={details.dependencies.join(' | ')}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.published-by', 'Published By')}
           value={details.publishedBy}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.last-update', 'Last Update')}
           value={details.lastUpdate}
         />
@@ -474,18 +463,6 @@ function getStyles(theme: GrafanaTheme2) {
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'opacity 0.15s ease',
     },
-  });
-
-  const customTemplateContent = css({
-    position: 'absolute',
-    inset: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(2),
-    pointerEvents: 'none',
   });
 
   return {
@@ -608,7 +585,6 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    customTemplateContent,
     customTemplateThumbnail: css({
       '&::after': {
         content: 'none',
@@ -630,16 +606,6 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '100%',
-    }),
-    customTemplateDescription: css({
-      display: '-webkit-box',
-      WebkitLineClamp: 3,
-      WebkitBoxOrient: 'vertical',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      margin: 0,
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
     }),
     createdBy: css({
       margin: 0,
@@ -689,9 +655,6 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
-    }),
-    noDescription: css({
-      fontStyle: 'italic',
     }),
     tagsContainer: css({
       paddingTop: theme.spacing(1),

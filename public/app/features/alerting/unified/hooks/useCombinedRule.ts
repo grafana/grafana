@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
+import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/rulesSource';
 import {
   type CombinedRule,
   type RuleGroupIdentifierV2,
@@ -129,10 +129,18 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       refetchOnMountOrArgChange: true,
     }
   );
-  // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
   const isGrafanaRule = isGrafanaRulesSource(ruleSourceName);
   const folder = useFolder(isGrafanaRule ? ruleLocation?.namespace : undefined);
-  const namespaceName = isGrafanaRule && folder.folder ? stringifyFolder(folder.folder) : ruleLocation?.namespace;
+  // Use Prometheus's fullpath instead of deriving it in the client to avoid escaping mismatches.
+  let namespaceName = ruleLocation?.namespace;
+  if (isGrafanaRule) {
+    const promNamespaceName = promRuleNs.at(0)?.name;
+    if (promNamespaceName !== undefined) {
+      namespaceName = promNamespaceName;
+    } else if (folder.folder) {
+      namespaceName = stringifyFolder(folder.folder);
+    }
+  }
 
   const [
     fetchRulerRuleGroup,

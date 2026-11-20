@@ -1,17 +1,35 @@
-import { render, screen, act } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { render as rtlRender, screen, act, waitFor } from '@testing-library/react';
+import { type ReactElement, type ReactNode, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, reportInteraction } from '@grafana/runtime';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
+import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
-  ExtensionSidebarContextProvider,
-  useExtensionSidebarContext,
+  type FloatingExtensionSidebarHeightOptions,
+  holdFloatingExtensionSidebar,
+  onExtensionSidebarClosed,
+  resetExtensionSidebarPresentationForTests,
+  setExtensionSidebarFloatingOverride,
+  setExtensionSidebarDockSide,
+  setExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
+} from './extensionSidebarLayout';
+import {
+  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
-  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
-} from './ExtensionSidebarProvider';
+} from './extensionSidebarUtils';
+
+// The provider reads its feature flag through OpenFeature, which the app provides above it.
+const FlagsWrapper = ({ children }: { children: ReactNode }) => (
+  <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
+);
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: FlagsWrapper });
 
 const mockComponent = {
   title: 'Test Component',
@@ -31,6 +49,12 @@ const mockPluginMeta = {
   addedLinks: [],
 };
 
+const mockPathfinderMeta = {
+  pluginId: 'grafana-pathfinder-app',
+  addedComponents: [mockComponent],
+  addedLinks: [],
+};
+
 // Mock the store
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -44,6 +68,7 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   locationService: {
     getLocation: jest.fn().mockReturnValue({ pathname: '/test-path' }),
     getLocationObservable: jest.fn(),
@@ -52,6 +77,10 @@ jest.mock('@grafana/runtime', () => ({
     links: [
       {
         pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+      {
+        pluginId: mockPathfinderMeta.pluginId,
         title: mockComponent.title,
       },
     ],
@@ -487,6 +516,394 @@ describe('ExtensionSidebarProvider', () => {
     expect(unsubscribeMocks[0]).toHaveBeenCalled();
     expect(unsubscribeMocks[1]).toHaveBeenCalled();
     expect(unsubscribeMocks[2]).toHaveBeenCalled();
+  });
+
+  describe('bottom dock height', () => {
+    const originalInnerHeight = window.innerHeight;
+    const HeightComponent = () => <div data-testid="height">{useExtensionSidebarContext().extensionSidebarHeight}</div>;
+    const resizeWindowTo = (height: number) => {
+      Object.defineProperty(window, 'innerHeight', { value: height, configurable: true, writable: true });
+      window.dispatchEvent(new Event('resize'));
+    };
+
+    afterEach(() => {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true, writable: true });
+      window.localStorage.removeItem('grafana.navigation.extensionSidebarHeight');
+    });
+
+    it('keeps it at most half the window, as the window resizes', async () => {
+      resizeWindowTo(1200);
+      window.localStorage.setItem('grafana.navigation.extensionSidebarHeight', '600');
+      render(
+        <ExtensionSidebarContextProvider>
+          <HeightComponent />
+        </ExtensionSidebarContextProvider>
+      );
+      expect(screen.getByTestId('height')).toHaveTextContent('600');
+
+      act(() => resizeWindowTo(700));
+
+      await waitFor(() => expect(screen.getByTestId('height')).toHaveTextContent('350'));
+    });
+  });
+
+  describe('floating height', () => {
+    const FLOATING_HEIGHT_KEY = 'grafana.navigation.extensionSidebarFloatingHeight';
+    const FloatingHeightComponent = () => {
+      const { floatingExtensionSidebarHeight, setFloatingExtensionSidebarHeight } = useExtensionSidebarContext();
+      return (
+        <>
+          <div data-testid="floating-height">{String(floatingExtensionSidebarHeight)}</div>
+          <button onClick={() => setFloatingExtensionSidebarHeight(undefined)}>Reset</button>
+        </>
+      );
+    };
+    const renderFloatingHeight = () =>
+      render(
+        <ExtensionSidebarContextProvider>
+          <FloatingHeightComponent />
+        </ExtensionSidebarContextProvider>
+      );
+
+    afterEach(() => {
+      window.localStorage.removeItem(FLOATING_HEIGHT_KEY);
+      resetExtensionSidebarPresentationForTests();
+    });
+
+    it('applies the remembered height only while the extension lets core resize it, within its minimum', () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '300');
+      renderFloatingHeight();
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('400');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 200 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('300');
+
+      act(() => setFloatingExtensionSidebarHeightOptions(null));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+    });
+
+    it('keeps the remembered height inside the window', () => {
+      // jsdom's window is 768px tall.
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '900');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('720');
+    });
+
+    it("forgets the remembered height to go back to the extension's own", () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '500');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('500');
+
+      act(() => screen.getByRole('button', { name: 'Reset' }).click());
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+      expect(window.localStorage.getItem(FLOATING_HEIGHT_KEY)).toBeNull();
+    });
+
+    it('forgets the sizes when the sidebar closes or shows another extension, keeping the ones the next declares', () => {
+      const declared: Record<string, FloatingExtensionSidebarHeightOptions | undefined> = {
+        [mockComponent.title]: { minHeight: 400 },
+        [mockDifferentComponent.title]: { minHeight: 300 },
+      };
+      // Declares as it mounts, as an extension calling setSizing from an effect does.
+      const Extension = ({ title }: { title: string }) => {
+        useEffect(() => {
+          const options = declared[title];
+          if (options) {
+            setFloatingExtensionSidebarHeightOptions(options);
+          }
+        }, [title]);
+        return null;
+      };
+      const Sidebar = () => {
+        const { dockedComponentId, floatingHeightOptions } = useExtensionSidebarContext();
+        const title = getComponentMetaFromComponentId(dockedComponentId ?? '')?.componentTitle;
+        return (
+          <>
+            {title && <Extension key={title} title={title} />}
+            <div data-testid="height-options">{JSON.stringify(floatingHeightOptions)}</div>
+          </>
+        );
+      };
+      render(
+        <ExtensionSidebarContextProvider>
+          <Sidebar />
+        </ExtensionSidebarContextProvider>
+      );
+      const options = () => screen.getByTestId('height-options');
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":300}');
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(options()).toHaveTextContent('null');
+
+      declared[mockDifferentComponent.title] = undefined;
+      open(mockComponent.title);
+      expect(options()).toHaveTextContent('{"minHeight":400}');
+      open(mockDifferentComponent.title);
+      expect(options()).toHaveTextContent('null');
+    });
+  });
+
+  describe('presentation', () => {
+    const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+    const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
+    const PresentationComponent = () => (
+      <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
+    );
+    const renderPresentation = (pluginId = mockPluginMeta.pluginId) => {
+      (store.get as jest.Mock).mockReturnValue(getComponentIdFromComponentMeta(pluginId, mockComponent.title));
+      render(
+        <ExtensionSidebarContextProvider>
+          <PresentationComponent />
+        </ExtensionSidebarContextProvider>
+      );
+    };
+
+    afterEach(async () => {
+      resetExtensionSidebarPresentationForTests();
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    describe('held hidden by a page', () => {
+      const componentId = () => getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
+      const HiddenComponent = () => {
+        const context = useExtensionSidebarContext();
+        return (
+          <>
+            <div data-testid="is-open">{context.isOpen.toString()}</div>
+            <div data-testid="floating-hidden">{context.floatingHidden.toString()}</div>
+          </>
+        );
+      };
+      const renderOpen = async () => {
+        await act(async () => {
+          setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+        });
+        (store.get as jest.Mock).mockReturnValue(componentId());
+        render(
+          <ExtensionSidebarContextProvider>
+            <HiddenComponent />
+          </ExtensionSidebarContextProvider>
+        );
+      };
+      const latestSubscriber = (eventType: unknown) =>
+        subscribeSpy.mock.calls.filter(([type]) => type === eventType).at(-1)![1];
+      const payload = { pluginId: mockPluginMeta.pluginId, componentTitle: mockComponent.title };
+
+      it('hides an open floating sidebar while held, and shows it again when released', async () => {
+        await renderOpen();
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+
+        let release = () => {};
+        act(() => {
+          release = holdFloatingExtensionSidebar();
+        });
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('true');
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+
+        act(() => release());
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on any request to open it', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(OpenExtensionSidebarEvent)(new OpenExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('shows it on a toggle, instead of closing it unseen', async () => {
+        await renderOpen();
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        act(() => latestSubscriber(ToggleExtensionSidebarEvent)(new ToggleExtensionSidebarEvent(payload)));
+
+        expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+
+      it('reports the layout an open happens in, and no open or close for a layout switch alone', async () => {
+        await renderOpen();
+        const changes = () =>
+          jest
+            .mocked(reportInteraction)
+            .mock.calls.filter(([name]) => name === 'grafana_extension_sidebar_changed')
+            .map(([, properties]) => properties);
+        expect(changes()).toEqual([expect.objectContaining({ opened: true, presentation: 'floating' })]);
+
+        act(() => setExtensionSidebarPresentation('docked'));
+
+        expect(changes()).toHaveLength(1);
+      });
+
+      it('never hides a docked sidebar', async () => {
+        await renderOpen();
+        act(() => setExtensionSidebarPresentation('docked'));
+        act(() => {
+          holdFloatingExtensionSidebar();
+        });
+
+        expect(screen.getByTestId('floating-hidden')).toHaveTextContent('false');
+      });
+    });
+
+    it('starts floating and follows setExtensionSidebarPresentation while floating is allowed', async () => {
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+      });
+      renderPresentation();
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      act(() => setExtensionSidebarPresentation('docked'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+    });
+
+    it('docks a plugin that does not support floating, even when floating is requested', async () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => setExtensionSidebarPresentation('floating'));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_extension_sidebar_changed',
+        expect.objectContaining({
+          opened: true,
+          pluginId: mockPathfinderMeta.pluginId,
+          presentation: 'docked',
+          placement: 'right',
+        })
+      );
+    });
+
+    it('stays docked when floating is requested with the flag off', () => {
+      renderPresentation();
+
+      act(() => setExtensionSidebarPresentation('floating'));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('floats while the override is on, with the flag off', () => {
+      renderPresentation();
+
+      act(() => setExtensionSidebarFloatingOverride(true));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      act(() => setExtensionSidebarFloatingOverride(false));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks a plugin that does not support floating, even while the override is on', () => {
+      useAsyncMock.mockReturnValue({
+        loading: false,
+        value: new Map([
+          [mockPluginMeta.pluginId, mockPluginMeta],
+          [mockPathfinderMeta.pluginId, mockPathfinderMeta],
+        ]),
+      });
+      renderPresentation(mockPathfinderMeta.pluginId);
+
+      act(() => setExtensionSidebarFloatingOverride(true));
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('tells close listeners when the open sidebar closes or switches component, not when it opens', () => {
+      const closed = jest.fn();
+      const stop = onExtensionSidebarClosed(closed);
+      renderPresentation();
+      const open = (title: string) =>
+        act(() =>
+          getAppEvents().publish(
+            new OpenExtensionSidebarEvent({ pluginId: mockPluginMeta.pluginId, componentTitle: title })
+          )
+        );
+
+      open(mockComponent.title);
+      expect(closed).not.toHaveBeenCalled();
+
+      open(mockDifferentComponent.title);
+      expect(closed).toHaveBeenCalledTimes(1);
+
+      act(() => getAppEvents().publish(new CloseExtensionSidebarEvent()));
+      expect(closed).toHaveBeenCalledTimes(2);
+      stop();
+    });
+
+    it('docks a floating sidebar when the flag is turned off', async () => {
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+      });
+      renderPresentation();
+      act(() => setExtensionSidebarPresentation('floating'));
+      expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: false });
+      });
+
+      expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks on the side the user picked while the sidebar can float, and on the right otherwise', async () => {
+      const DockSideComponent = () => <div data-testid="dock-side">{useExtensionSidebarContext().dockSide}</div>;
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+      });
+      (store.get as jest.Mock).mockReturnValue(
+        getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title)
+      );
+      render(
+        <ExtensionSidebarContextProvider>
+          <DockSideComponent />
+        </ExtensionSidebarContextProvider>
+      );
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('right');
+
+      act(() => setExtensionSidebarDockSide('left'));
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('left');
+
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: false });
+      });
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('right');
+    });
   });
 
   it('should subscribe to location service observable', () => {

@@ -4,6 +4,8 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -82,7 +84,7 @@ func TestTemplates(t *testing.T) {
 		return &v
 	}
 
-	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery, withDatasourceType bool) sqltemplate.SQLTemplate {
+	getListResourcePermissionsQuery := func(q *ListResourcePermissionsQuery) sqltemplate.SQLTemplate {
 		v := listResourcePermissionsQueryTemplate{
 			SQLTemplate:        sqltemplate.New(nodb.DialectForDriver()),
 			Query:              q,
@@ -94,7 +96,6 @@ func TestTemplates(t *testing.T) {
 			UserRoleTable:      nodb.Table("user_role"),
 			TeamRoleTable:      nodb.Table("team_role"),
 			ManagedRolePattern: "managed:%",
-			WithDatasourceType: withDatasourceType,
 		}
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
@@ -183,7 +184,7 @@ func TestTemplates(t *testing.T) {
 			resourcePermissionsQueryTplt: {
 				{
 					Name: "basic_query",
-					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{}, false),
+					Data: getListResourcePermissionsQuery(&ListResourcePermissionsQuery{OrgID: 3}),
 				},
 				{
 					Name: "with_all_fields",
@@ -191,7 +192,7 @@ func TestTemplates(t *testing.T) {
 						Scopes:     []string{"123"},
 						OrgID:      3,
 						ActionSets: []string{"folders:admin", "folders:edit", "folders:view"},
-					}, true),
+					}),
 				},
 			},
 			resourcePermissionDeletionQueryTplt: {
@@ -213,4 +214,12 @@ func TestTemplates(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestListResourcePermissionsQueryTemplateRequiresOrgID(t *testing.T) {
+	err := (listResourcePermissionsQueryTemplate{
+		Query: &ListResourcePermissionsQuery{},
+	}).Validate()
+
+	require.EqualError(t, err, "orgID must be set")
 }

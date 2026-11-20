@@ -1,7 +1,8 @@
 import { clamp } from 'lodash';
-import z from 'zod';
+import * as z from 'zod/mini';
 
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -10,8 +11,7 @@ import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
-import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, defaultAnnotations } from '../utils/constants';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -37,26 +37,6 @@ const KEEP_FIRING_FOR_DEFAULT = '0s';
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
-
-function getValidDefaultTargetDatasourceUid(): string | undefined {
-  const configuredDefaultUid = config.unifiedAlerting?.defaultRecordingRulesTargetDatasourceUID;
-
-  if (!configuredDefaultUid) {
-    return undefined;
-  }
-
-  try {
-    const datasource = getDataSourceSrv().getInstanceSettings(configuredDefaultUid);
-    if (datasource && isValidRecordingRulesTarget(datasource)) {
-      return configuredDefaultUid;
-    }
-  } catch (error) {
-    // If datasource doesn't exist or can't be retrieved,
-    // just return undefined
-  }
-
-  return undefined;
-}
 
 export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
@@ -100,7 +80,6 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
     overrideTimings: false,
     muteTimeIntervals: [],
     editorSettings: getDefaultEditorSettings(ruleType),
-    targetDatasourceUid: getValidDefaultTargetDatasourceUid(),
 
     // cortex / loki
     namespace: '',
@@ -113,7 +92,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
 export const getDefautManualRouting = () => {
   // check in local storage
   // if it's not set, we'll default to true
-  const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const manualRouting = store.get(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
 
@@ -123,8 +102,8 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
   }
 
   //then, check in local storage if the user has saved last rule with sections simplified
-  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
-  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const queryEditorSettings = store.get(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = store.get(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
     simplifiedNotificationEditor: notificationStepSettings !== 'false',
@@ -161,56 +140,54 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
 // TODO: add this to the DMA new plugin.
 
 const cloudRuleFormValuesSchema = z.looseObject({
-  name: z.string().optional(),
-  type: z.enum(RuleFormType).catch(RuleFormType.grafana),
-  dataSourceName: z.string().optional().default(''),
-  group: z.string().optional(),
-  labels: z
-    .array(
+  name: z.optional(z.string()),
+  type: z.catch(z.enum(RuleFormType), RuleFormType.grafana),
+  dataSourceName: z._default(z.string(), ''),
+  group: z.optional(z.string()),
+  labels: z._default(
+    z.array(
       z.object({
         key: z.string(),
         value: z.string(),
       })
-    )
-    .optional()
-    .default([]),
-  annotations: z
-    .array(
+    ),
+    []
+  ),
+  annotations: z._default(
+    z.array(
       z.object({
         key: z.string(),
         value: z.string(),
       })
-    )
-    .optional()
-    .default([]),
-  queries: z.array(z.any()).optional(),
-  condition: z.string().optional(),
-  noDataState: z
-    .enum(GrafanaAlertStateDecision)
-    .optional()
-    .default(GrafanaAlertStateDecision.NoData)
-    .catch(GrafanaAlertStateDecision.NoData),
-  execErrState: z
-    .enum(GrafanaAlertStateDecision)
-    .optional()
-    .default(GrafanaAlertStateDecision.Error)
-    .catch(GrafanaAlertStateDecision.Error),
-  folder: z
-    .union([
+    ),
+    []
+  ),
+  queries: z.optional(z.array(z.any())),
+  condition: z.optional(z.string()),
+  noDataState: z.catch(
+    z._default(z.enum(GrafanaAlertStateDecision), GrafanaAlertStateDecision.NoData),
+    GrafanaAlertStateDecision.NoData
+  ),
+  execErrState: z.catch(
+    z._default(z.enum(GrafanaAlertStateDecision), GrafanaAlertStateDecision.Error),
+    GrafanaAlertStateDecision.Error
+  ),
+  folder: z.optional(
+    z.union([
       z.object({
         title: z.string(),
         uid: z.string(),
       }),
       z.undefined(),
     ])
-    .optional(),
-  evaluateEvery: z.string().optional(),
-  evaluateFor: z.string().optional().default('0s'),
-  keepFiringFor: z.string().optional(),
-  isPaused: z.boolean().optional().default(false),
-  manualRouting: z.boolean().optional(),
-  contactPoints: z
-    .record(
+  ),
+  evaluateEvery: z.optional(z.string()),
+  evaluateFor: z._default(z.string(), '0s'),
+  keepFiringFor: z.optional(z.string()),
+  isPaused: z._default(z.boolean(), false),
+  manualRouting: z.optional(z.boolean()),
+  contactPoints: z.optional(
+    z.record(
       z.string(),
       z.object({
         selectedContactPoint: z.string(),
@@ -224,18 +201,18 @@ const cloudRuleFormValuesSchema = z.looseObject({
         activeTimeIntervals: z.array(z.string()),
       })
     )
-    .optional(),
-  editorSettings: z
-    .object({
+  ),
+  editorSettings: z.optional(
+    z.object({
       simplifiedQueryEditor: z.boolean(),
       simplifiedNotificationEditor: z.boolean(),
     })
-    .optional(),
-  metric: z.string().optional(),
-  targetDatasourceUid: z.string().optional(),
-  namespace: z.string().optional(),
-  expression: z.string().optional(),
-  missingSeriesEvalsToResolve: z.number().optional(),
+  ),
+  metric: z.optional(z.string()),
+  targetDatasourceUid: z.optional(z.string()),
+  namespace: z.optional(z.string()),
+  expression: z.optional(z.string()),
+  missingSeriesEvalsToResolve: z.optional(z.number()),
 });
 
 export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {

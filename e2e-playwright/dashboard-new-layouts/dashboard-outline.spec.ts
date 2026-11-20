@@ -1,12 +1,8 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Sidebar } from './page-objects';
+import { expect, test } from './fixtures';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 
@@ -18,12 +14,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, controls, sidebar }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
 
@@ -44,15 +36,10 @@ test.describe(
 
     test('outline expanded state persists after closing and reopening the pane', async ({
       gotoDashboardPage,
-      selectors,
-      page,
-      components,
+      controls,
+      sidebar,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
 
@@ -73,15 +60,10 @@ test.describe(
 
     test('outline expanded state persists after discarding edit mode changes', async ({
       gotoDashboardPage,
-      selectors,
-      page,
-      components,
+      controls,
+      sidebar,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
 

@@ -25,7 +25,7 @@ func (f FakeReceiverPermissionsService) CopyPermissions(ctx context.Context, org
 	return 0, nil
 }
 
-var _ accesscontrol.ReceiverPermissionsService = new(FakeReceiverPermissionsService)
+var _ accesscontrol.ReceiverPermissionsService = (*FakeReceiverPermissionsService)(nil)
 
 type FakeRoutePermissionsService struct {
 	*actest.FakePermissionsService
@@ -41,4 +41,11 @@ func (f FakeRoutePermissionsService) SetDefaultPermissions(ctx context.Context, 
 	return f.ExpectedErr
 }
 
-var _ accesscontrol.RoutePermissionsService = new(FakeRoutePermissionsService)
+var _ accesscontrol.RoutePermissionsService = (*FakeRoutePermissionsService)(nil)
+
+// NewFakeFolderPermissionsService returns a no-op FolderPermissionsService for
+// tests. FolderPermissionsService is just PermissionsService, which
+// actest.FakePermissionsService already implements.
+func NewFakeFolderPermissionsService() accesscontrol.FolderPermissionsService {
+	return &actest.FakePermissionsService{}
+}

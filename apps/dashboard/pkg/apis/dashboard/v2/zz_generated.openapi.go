@@ -84,6 +84,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref),
 		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref),
 		DashboardPreferences{}.OpenAPIModelName():                                                                                           schema_pkg_apis_dashboard_v2_DashboardPreferences(ref),
+		DashboardPrompt{}.OpenAPIModelName():                                                                                                schema_pkg_apis_dashboard_v2_DashboardPrompt(ref),
+		DashboardPromptSource{}.OpenAPIModelName():                                                                                          schema_pkg_apis_dashboard_v2_DashboardPromptSource(ref),
 		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref),
 		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref),
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref),
@@ -363,8 +365,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAction(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardActionVariable{}.OpenAPIModelName()),
+										Ref: ref(DashboardActionVariable{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -452,9 +453,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAdHocFilterWithLabels(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -472,9 +472,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAdHocFilterWithLabels(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -534,9 +533,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableKind(ref common.Referenc
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -582,8 +580,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
+										Ref: ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -595,8 +592,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
+										Ref: ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -608,8 +604,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAdhocVariableSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardMetricFindValue{}.OpenAPIModelName()),
+										Ref: ref(DashboardMetricFindValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -723,9 +718,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAnnotationPanelFilter(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: 0,
-										Type:    []string{"number"},
-										Format:  "double",
+										Type:   []string{"number"},
+										Format: "double",
 									},
 								},
 							},
@@ -832,8 +826,7 @@ func schema_pkg_apis_dashboard_v2_DashboardAnnotationQuerySpec(ref common.Refere
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAnnotationEventFieldMapping{}.OpenAPIModelName()),
+										Ref: ref(DashboardAnnotationEventFieldMapping{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -911,6 +904,12 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutItemSpec(ref common.Ref
 					"conditionalRendering": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardConditionalRenderingGroupKind{}.OpenAPIModelName()),
+						},
+					},
+					"fitContent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 				},
@@ -1018,14 +1017,49 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref common.Referen
 							Format: "",
 						},
 					},
+					"fitContent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"minHeightMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"minHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"maxHeightMode": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"maxHeight": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"matchRowHeights": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAutoGridLayoutItemKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardAutoGridLayoutItemKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1544,8 +1578,7 @@ func schema_pkg_apis_dashboard_v2_DashboardCustomVariableSpec(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1677,9 +1710,8 @@ func schema_pkg_apis_dashboard_v2_DashboardDashboardLink(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1806,9 +1838,8 @@ func schema_pkg_apis_dashboard_v2_DashboardDataQueryKind(ref common.ReferenceCal
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1948,8 +1979,7 @@ func schema_pkg_apis_dashboard_v2_DashboardDatasourceVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2112,9 +2142,8 @@ func schema_pkg_apis_dashboard_v2_DashboardFetchOptions(ref common.ReferenceCall
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2133,9 +2162,8 @@ func schema_pkg_apis_dashboard_v2_DashboardFetchOptions(ref common.ReferenceCall
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2317,8 +2345,7 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfig(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAction{}.OpenAPIModelName()),
+										Ref: ref(DashboardAction{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2360,6 +2387,21 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfig(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"varMappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -2389,8 +2431,7 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfigSource(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardV2FieldConfigSourceOverrides{}.OpenAPIModelName()),
+										Ref: ref(DashboardV2FieldConfigSourceOverrides{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2596,8 +2637,7 @@ func schema_pkg_apis_dashboard_v2_DashboardGridLayoutSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardGridLayoutItemKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardGridLayoutItemKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2640,9 +2680,8 @@ func schema_pkg_apis_dashboard_v2_DashboardGroupByVariableKind(ref common.Refere
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -2699,8 +2738,7 @@ func schema_pkg_apis_dashboard_v2_DashboardGroupByVariableSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2790,9 +2828,8 @@ func schema_pkg_apis_dashboard_v2_DashboardInfinityOptions(ref common.ReferenceC
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2818,9 +2855,8 @@ func schema_pkg_apis_dashboard_v2_DashboardInfinityOptions(ref common.ReferenceC
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2898,8 +2934,7 @@ func schema_pkg_apis_dashboard_v2_DashboardIntervalVariableSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3111,8 +3146,7 @@ func schema_pkg_apis_dashboard_v2_DashboardList(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Dashboard{}.OpenAPIModelName()),
+										Ref: ref(Dashboard{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3235,7 +3269,8 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelKindOrLibraryPanelKind(ref commo
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{
@@ -3340,9 +3375,16 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -3351,8 +3393,7 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDataLink{}.OpenAPIModelName()),
+										Ref: ref(DashboardDataLink{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3377,7 +3418,7 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
@@ -3403,6 +3444,73 @@ func schema_pkg_apis_dashboard_v2_DashboardPreferences(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			DashboardAutoGridLayoutKindOrGridLayoutKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardPrompt(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"sources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPromptSource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"text"},
+			},
+		},
+		Dependencies: []string{
+			DashboardPromptSource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardPromptSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A panel that a prompt is answered from.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"element": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The panel, by its name in dashboard.spec.elements.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(DashboardElementReference{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"element"},
+			},
+		},
+		Dependencies: []string{
+			DashboardElementReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -3446,8 +3554,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardPanelQueryKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardPanelQueryKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3459,8 +3566,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTransformationKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardTransformationKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3488,6 +3594,12 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref common.Reference
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeTo": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -3720,8 +3832,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryVariableSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3766,8 +3877,7 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryVariableSpec(ref common.Referenc
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4032,12 +4142,37 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutRowSpec(ref common.Referenc
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardRowRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -4053,8 +4188,7 @@ func schema_pkg_apis_dashboard_v2_DashboardRowsLayoutSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardRowsLayoutRowKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardRowsLayoutRowKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4081,8 +4215,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4135,8 +4268,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDashboardLink{}.OpenAPIModelName()),
+										Ref: ref(DashboardDashboardLink{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4171,9 +4303,8 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4206,6 +4337,19 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 					"preferences": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardPreferences{}.OpenAPIModelName()),
@@ -4216,7 +4360,7 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -4287,9 +4431,8 @@ func schema_pkg_apis_dashboard_v2_DashboardStringOrArrayOfString(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4494,8 +4637,7 @@ func schema_pkg_apis_dashboard_v2_DashboardTabsLayoutSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTabsLayoutTabKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardTabsLayoutTabKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4577,12 +4719,37 @@ func schema_pkg_apis_dashboard_v2_DashboardTabsLayoutTabSpec(ref common.Referenc
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"prompts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(DashboardPrompt{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"layout"},
 			},
 		},
 		Dependencies: []string{
-			DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardConditionalRenderingGroupKind{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPrompt{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTabRepeatOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -4695,6 +4862,13 @@ func schema_pkg_apis_dashboard_v2_DashboardThreshold(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"color": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -4728,8 +4902,7 @@ func schema_pkg_apis_dashboard_v2_DashboardThresholdsConfig(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardThreshold{}.OpenAPIModelName()),
+										Ref: ref(DashboardThreshold{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4823,9 +4996,8 @@ func schema_pkg_apis_dashboard_v2_DashboardTimeSettingsSpec(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4838,8 +5010,7 @@ func schema_pkg_apis_dashboard_v2_DashboardTimeSettingsSpec(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTimeRangeOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardTimeRangeOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4927,6 +5098,13 @@ func schema_pkg_apis_dashboard_v2_DashboardTransformationSpec(ref common.Referen
 				Description: "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",
@@ -5042,8 +5220,7 @@ func schema_pkg_apis_dashboard_v2_DashboardV2FieldConfigSourceOverrides(ref comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDynamicConfigValue{}.OpenAPIModelName()),
+										Ref: ref(DashboardDynamicConfigValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5194,8 +5371,7 @@ func schema_pkg_apis_dashboard_v2_DashboardValueMap(ref common.ReferenceCallback
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardValueMappingResult{}.OpenAPIModelName()),
+										Ref: ref(DashboardValueMappingResult{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5319,9 +5495,8 @@ func schema_pkg_apis_dashboard_v2_DashboardVariableOption(ref common.ReferenceCa
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},

@@ -126,6 +126,17 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
+
+	t.Run("no-op when context is already cancelled", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		tw.handleTenant(ctx, pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		assert.ErrorIs(t, err, ErrNotFound)
+	})
 }
 
 func TestTenantClearPendingDelete(t *testing.T) {
@@ -185,7 +196,7 @@ func TestTenantClearPendingDelete(t *testing.T) {
 
 func TestTenantResourceLabelling(t *testing.T) {
 	t.Run("adds pending-delete label to all tenant resources", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -219,7 +230,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("removes pending-delete label when tenant is restored", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -256,7 +267,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("record exists with LabelingComplete=false when labelling fails", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		failingWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
 			return 0, fmt.Errorf("simulated write failure")
 		}
@@ -278,7 +289,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("does not delete record if unlabelling fails", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		failingWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
 			return 0, fmt.Errorf("simulated write failure")
 		}
@@ -307,7 +318,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("skips resources that already have the correct label state", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -326,7 +337,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("conflict error during labelling succeeds when latest version already has label", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 
 		// Save the resource at RV 100 without the label (this is what the stale dataKey will read).
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
@@ -356,7 +367,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("conflict error during labelling fails when latest version does not have label", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 
 		// Save the resource at RV 100 without the label.
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
@@ -388,7 +399,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("retry succeeds after transient conflict", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 
 		callCount := 0
@@ -420,7 +431,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("context cancellation stops retry on conflict", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -450,7 +461,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("partial labelling failure followed by tenant unmark cleans up orphaned labels", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		collector := &writeEventCollector{}
 
 		// Two resources: the writer will fail on the second one.
@@ -498,7 +509,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("incomplete record is retried on next event", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
 
@@ -533,7 +544,7 @@ func TestTenantResourceLabelling(t *testing.T) {
 	})
 
 	t.Run("orphaned record prevents unlabelling during clear", func(t *testing.T) {
-		ds := newDataStore(setupBadgerKV(t), nil)
+		ds := newDataStore(setupBadgerKV(t))
 		collector := &writeEventCollector{}
 		tw := &TenantWatcher{
 			log:                log.NewNopLogger(),
@@ -868,7 +879,7 @@ func newFakeTenantClient(t *testing.T, tenants ...*unstructured.Unstructured) *d
 
 func newTestTenantWatcher(t *testing.T) *TenantWatcher {
 	t.Helper()
-	ds := newDataStore(setupBadgerKV(t), nil)
+	ds := newDataStore(setupBadgerKV(t))
 	return &TenantWatcher{
 		log:                log.NewNopLogger(),
 		pendingDeleteStore: newPendingDeleteStore(ds.kv),

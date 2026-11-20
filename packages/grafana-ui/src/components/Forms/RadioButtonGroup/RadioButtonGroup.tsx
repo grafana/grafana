@@ -5,6 +5,7 @@ import { type GrafanaTheme2, type SelectableValue, toIconName } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
+import { type IconSize } from '../../../types/icon';
 import { Icon } from '../../Icon/Icon';
 import { useFieldContext } from '../FieldContext';
 
@@ -103,6 +104,7 @@ export function RadioButtonGroup<T>({
         const icon = opt.icon ? toIconName(opt.icon) : undefined;
         const hasNonIconPart = Boolean(opt.imgUrl || opt.label || opt.component);
         const labelTitle = typeof opt.label === 'string' ? opt.label : undefined;
+        const iconSize = getIconSize(size);
 
         return (
           <RadioButton
@@ -110,6 +112,7 @@ export function RadioButtonGroup<T>({
             disabled={isItemDisabled || disabled}
             active={value === opt.value}
             key={`o.label-${i}`}
+            data-testid={getDataTestId(opt)}
             aria-label={opt.ariaLabel}
             aria-invalid={!!invalid}
             aria-describedby={ariaDescribedBy}
@@ -121,7 +124,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
+            {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} size={iconSize} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label != null && <span className={styles.labelText}>{opt.label}</span>}
             {opt.component ? <opt.component /> : null}
@@ -133,6 +136,16 @@ export function RadioButtonGroup<T>({
 }
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
+
+function getIconSize(size: RadioButtonSize): IconSize {
+  switch (size) {
+    case 'sm':
+      return 'xs';
+    case 'md':
+    default:
+      return 'sm';
+  }
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -175,3 +188,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export function getDataTestId(option: SelectableValue): string | undefined {
+  if (option.dataTestId) {
+    return option.dataTestId;
+  }
+
+  // Keyed on the option's value, not its label, so the selector survives translation.
+  // Skipped for objects and undefined, which have no meaningful string form.
+  if (typeof option.value !== 'string' && typeof option.value !== 'number' && typeof option.value !== 'boolean') {
+    return;
+  }
+
+  return selectors.components.RadioButton.option(String(option.value));
+}

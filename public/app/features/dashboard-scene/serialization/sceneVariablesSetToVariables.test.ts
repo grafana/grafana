@@ -11,7 +11,7 @@ import {
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
-import { config, setRunRequest } from '@grafana/runtime';
+import { setRunRequest } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -28,7 +28,9 @@ import { type DataSourceRef, VariableHide, VariableRefresh } from '@grafana/sche
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
-import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToSchemaV2Variables';
+import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
@@ -86,6 +88,7 @@ jest.mock('@grafana/runtime', () => ({
       getDataSourceMock(ds, vars);
       return Promise.resolve(fakeDsMock);
     },
+    getInstanceSettings: (name: string) => (name === 'fake-std' ? { uid: 'fake-uid', type: 'fake-type' } : undefined),
   }),
 }));
 
@@ -606,6 +609,27 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
+  it('should skip SnapshotVariable without throwing', () => {
+    const variable = new SnapshotVariable({
+      name: 'test',
+      label: 'test-label',
+      value: 'selected-value',
+      text: 'selected-value-text',
+      options: [{ label: 'selected-value-text', value: 'selected-value' }],
+      hide: VariableHide.dontHide,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    let result: ReturnType<typeof sceneVariablesSetToVariables> = [];
+    expect(() => {
+      result = sceneVariablesSetToVariables(set);
+    }).not.toThrow();
+    expect(result).toHaveLength(0);
+  });
+
   describe('should adapt AdHocFiltersVariable filters', () => {
     it('should remove non dashboard originated filters from schema', () => {
       const variable = new AdHocFiltersVariable({
@@ -810,98 +834,29 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
-  describe('when the groupByVariable feature toggle is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
-    });
-
-    it('should handle GroupByVariable', () => {
-      const variable = new GroupByVariable({
-        name: 'test',
-        label: 'test-label',
-        description: 'test-desc',
-        allowCustomValue: true,
-        hide: VariableHide.inControlsMenu,
-        datasource: { uid: 'fake-uid', type: 'fake-type' },
-        defaultOptions: [
-          {
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-      });
-      const set = new SceneVariableSet({
-        variables: [variable],
-      });
-
-      const result = sceneVariablesSetToVariables(set);
-
-      expect(result).toHaveLength(1);
-      expect(result[0]).toMatchInlineSnapshot(`
-      {
-        "allowCustomValue": true,
-        "current": {
-          "text": [],
-          "value": [],
+  it('should not handle GroupByVariable and throw an error', () => {
+    const variable = new GroupByVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      hide: VariableHide.inControlsMenu,
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
+      defaultOptions: [
+        {
+          text: 'Foo',
+          value: 'foo',
         },
-        "datasource": {
-          "type": "fake-type",
-          "uid": "fake-uid",
+        {
+          text: 'Bar',
+          value: 'bar',
         },
-        "defaultValue": undefined,
-        "description": "test-desc",
-        "hide": 3,
-        "label": "test-label",
-        "name": "test",
-        "options": [
-          {
-            "text": "Foo",
-            "value": "foo",
-          },
-          {
-            "text": "Bar",
-            "value": "bar",
-          },
-        ],
-        "type": "groupby",
-      }
-      `);
+      ],
     });
-  });
-
-  describe('when the groupByVariable feature toggle is disabled', () => {
-    it('should not handle GroupByVariable and throw an error', () => {
-      const variable = new GroupByVariable({
-        name: 'test',
-        label: 'test-label',
-        description: 'test-desc',
-        hide: VariableHide.inControlsMenu,
-        datasource: { uid: 'fake-uid', type: 'fake-type' },
-        defaultOptions: [
-          {
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-      });
-      const set = new SceneVariableSet({
-        variables: [variable],
-      });
-
-      expect(() => sceneVariablesSetToVariables(set)).toThrow('Unsupported variable type');
+    const set = new SceneVariableSet({
+      variables: [variable],
     });
+
+    expect(() => sceneVariablesSetToVariables(set)).toThrow('Unsupported variable type');
   });
 
   it('should handle SwitchVariable with "true" value', () => {
@@ -1107,6 +1062,33 @@ describe('sceneVariablesSetToVariables', () => {
 
       expect(result.map((v) => v.name)).toEqual(expect.arrayContaining(['predefined', 'local']));
       expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('QueryVariable datasource', () => {
+    const datasourceOf = (datasource: unknown) => {
+      const variable = new QueryVariable({ name: 'test', query: 'query', datasource: datasource as DataSourceRef });
+      return sceneVariablesSetToVariables(new SceneVariableSet({ variables: [variable] }))[0].datasource;
+    };
+
+    it('keeps a full datasource ref', () => {
+      expect(datasourceOf({ uid: 'fake-uid', type: 'fake-type' })).toEqual({ uid: 'fake-uid', type: 'fake-type' });
+    });
+
+    it('keeps a uid-only datasource ref', () => {
+      expect(datasourceOf({ uid: 'fake-uid' })).toEqual({ uid: 'fake-uid' });
+    });
+
+    it('keeps a legacy variable reference as a uid', () => {
+      expect(datasourceOf('$ds')).toEqual({ uid: '$ds' });
+    });
+
+    it('keeps an unknown legacy datasource name as a uid', () => {
+      expect(datasourceOf('unknown')).toEqual({ uid: 'unknown' });
+    });
+
+    it.each([null, undefined, {}])('omits the datasource when it is %p', (datasource) => {
+      expect(datasourceOf(datasource)).toBeUndefined();
     });
   });
 
@@ -1602,151 +1584,91 @@ describe('sceneVariablesSetToVariables', () => {
     `);
     });
 
-    describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {
-      beforeAll(() => {
-        config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    it('should skip SnapshotVariable without throwing', () => {
+      const variable = new SnapshotVariable({
+        name: 'test',
+        label: 'test-label',
+        value: 'selected-value',
+        text: 'selected-value-text',
+        options: [{ label: 'selected-value-text', value: 'selected-value' }],
+        hide: VariableHide.dontHide,
       });
 
-      afterAll(() => {
-        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
 
-      it('should persist enableGroupBy as enableGroupBy', () => {
-        const variable = new AdHocFiltersVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          filters: [],
-          baseFilters: [],
-          enableGroupBy: true,
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
-
-        const result = sceneVariablesSetToSchemaV2Variables(set);
-
-        expect(result).toHaveLength(1);
-        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
-      });
-
-      it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
-        const variable = new AdHocFiltersVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          filters: [],
-          baseFilters: [],
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
-
-        const result = sceneVariablesSetToSchemaV2Variables(set);
-
-        expect(result).toHaveLength(1);
-        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
-      });
+      let result: ReturnType<typeof sceneVariablesSetToSchemaV2Variables> = [];
+      expect(() => {
+        result = sceneVariablesSetToSchemaV2Variables(set);
+      }).not.toThrow();
+      expect(result).toHaveLength(0);
     });
 
-    describe('when the groupByVariable feature toggle is enabled', () => {
-      beforeAll(() => {
-        config.featureToggles.groupByVariable = true;
+    it('should persist enableGroupBy as enableGroupBy', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+        enableGroupBy: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
 
-      afterAll(() => {
-        config.featureToggles.groupByVariable = false;
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
+    });
+
+    it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
 
-      it('should handle GroupByVariable', () => {
-        const variable = new GroupByVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          defaultOptions: [
-            {
-              text: 'Foo',
-              value: 'foo',
-            },
-            {
-              text: 'Bar',
-              value: 'bar',
-            },
-          ],
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
+      const result = sceneVariablesSetToSchemaV2Variables(set);
 
-        const result = sceneVariablesSetToSchemaV2Variables(set);
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
+    });
 
-        expect(result).toHaveLength(1);
-        expect(result[0]).toMatchInlineSnapshot(`
-      {
-        "datasource": {
-          "name": "fake-uid",
-        },
-        "group": "fake-type",
-        "kind": "GroupByVariable",
-        "spec": {
-          "current": {
-            "text": [],
-            "value": [],
+    it('should not handle GroupByVariable and throw an error', () => {
+      const variable = new GroupByVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        defaultOptions: [
+          {
+            text: 'Foo',
+            value: 'foo',
           },
-          "defaultValue": undefined,
-          "description": "test-desc",
-          "hide": "inControlsMenu",
-          "label": "test-label",
-          "multi": true,
-          "name": "test",
-          "options": [
-            {
-              "text": "Foo",
-              "value": "foo",
-            },
-            {
-              "text": "Bar",
-              "value": "bar",
-            },
-          ],
-          "skipUrlSync": false,
-        },
-      }
-      `);
+          {
+            text: 'Bar',
+            value: 'bar',
+          },
+        ],
       });
-    });
-
-    describe('when the groupByVariable feature toggle is disabled', () => {
-      it('should not handle GroupByVariable and throw an error', () => {
-        const variable = new GroupByVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          defaultOptions: [
-            {
-              text: 'Foo',
-              value: 'foo',
-            },
-            {
-              text: 'Bar',
-              value: 'bar',
-            },
-          ],
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
-
-        expect(() => sceneVariablesSetToSchemaV2Variables(set)).toThrow('Unsupported variable type');
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
+
+      expect(() => sceneVariablesSetToSchemaV2Variables(set)).toThrow('Unsupported variable type');
     });
 
     it('should handle SwitchVariable with true value', () => {

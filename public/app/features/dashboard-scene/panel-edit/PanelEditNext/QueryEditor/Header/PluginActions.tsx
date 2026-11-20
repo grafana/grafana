@@ -9,11 +9,15 @@ import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { type QueryActionComponent, RowActionComponents } from 'app/features/query/components/QueryActionComponent';
+import { useQueryEditorRowExtensionActions } from 'app/features/query/components/QueryEditorRowExtensionActions';
 
 import { QueryEditorType } from '../../constants';
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { useActionsContext, useQueryRunnerContext } from '../QueryEditorContext';
+
+import { type QueryActionTarget } from './headerActionTarget';
 
 interface PluginActionsProps {
+  target: QueryActionTarget;
   app?: CoreApp;
 }
 
@@ -24,16 +28,13 @@ interface PluginActionsProps {
  * These are controlled by plugins and rendered as icon buttons, so they
  * need to live at the header level rather than inside a menu.
  */
-export function PluginActions({ app }: PluginActionsProps) {
+export function PluginActions({ target, app }: PluginActionsProps) {
   const { queries, data } = useQueryRunnerContext();
   const { addQuery } = useActionsContext();
-  const { selectedQuery, selectedQueryDsData, cardType } = useQueryEditorUIContext();
+  const { query, cardType, dsData } = target;
+  const dsSettings = dsData?.dsSettings;
 
   const extraActions = useMemo(() => {
-    if (!selectedQuery) {
-      return [];
-    }
-
     const unscopedActions = RowActionComponents.getAllExtraRenderAction();
 
     let scopedActions: QueryActionComponent[] = [];
@@ -44,24 +45,31 @@ export function PluginActions({ app }: PluginActionsProps) {
     return [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
-          query: selectedQuery,
+          query,
           queries,
           timeRange: data?.timeRange,
           onAddQuery: addQuery,
-          dataSource: selectedQueryDsData?.dsSettings,
+          dataSource: dsSettings,
           key: index,
         })
       )
       .filter(Boolean);
-  }, [selectedQuery, app, queries, data?.timeRange, addQuery, selectedQueryDsData?.dsSettings]);
+  }, [query, app, queries, data?.timeRange, addQuery, dsSettings]);
 
-  const telemetryComponents = useAdaptiveTelemetryComponents(selectedQuery);
+  const telemetryComponents = useAdaptiveTelemetryComponents(query);
+  const extensionActions = useQueryEditorRowExtensionActions({
+    query,
+    queries,
+    dataSource: dsSettings,
+    app,
+    timeRange: data?.timeRange,
+  });
 
-  if (!selectedQuery || cardType === QueryEditorType.Expression) {
+  if (cardType === QueryEditorType.Expression) {
     return null;
   }
 
-  if (extraActions.length === 0 && !telemetryComponents) {
+  if (extraActions.length === 0 && !telemetryComponents && extensionActions.length === 0) {
     return null;
   }
 
@@ -69,6 +77,7 @@ export function PluginActions({ app }: PluginActionsProps) {
     <Stack gap={0.5} alignItems="center">
       {extraActions}
       {telemetryComponents}
+      {extensionActions}
     </Stack>
   );
 }

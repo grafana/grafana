@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
@@ -103,7 +104,7 @@ jest.mock('../../components/rules/MultipleDataSourcePicker', () => {
 setupPluginsExtensionsHook();
 
 const ui = {
-  searchInput: byTestId('search-query-input'),
+  searchInput: byTestId(selectors.pages.Alerting.searchInput),
 };
 
 beforeEach(() => {

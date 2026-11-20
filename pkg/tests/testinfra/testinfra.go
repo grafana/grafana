@@ -41,23 +41,33 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeForTest etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 // findTestLicense returns the absolute path to the enterprise test license
-// fixture bundled in the enterprise tree, or "" if it is not present (OSS build).
-// Used when wiring MT-mode Zanzana tests that need FeatureAccessControl enabled.
+// fixture, or "" if it is not present. Used when wiring MT-mode
+// Zanzana tests that need FeatureAccessControl enabled.
 func findTestLicense() string {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return ""
 	}
-	candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "extensions", "apiserver", "testdata", "valid", "license.jwt")
-	if exists, err := fs.Exists(candidate); err != nil || !exists {
-		return ""
+	rootDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
+	for _, candidate := range []string{
+		filepath.Join(rootDir, "pkg", "extensions", "apiserver", "testdata", "valid", "license.jwt"),
+		filepath.Join(rootDir, "..", "grafana-enterprise", "pkg", "apiserver", "testdata", "valid", "license.jwt"),
+	} {
+		if exists, err := fs.Exists(candidate); err == nil && exists {
+			return candidate
+		}
 	}
-	return candidate
+	return ""
 }
 
 // StartGrafana starts a Grafana server.
@@ -85,6 +95,13 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 // test, e.g. when shared across an entire package via sync.Once.
 func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
 	t.Helper()
+	return startGrafana(t, t, grafDir, cfgPath)
+}
+
+// startGrafana takes the ITestDB separately so a cluster peer can pass a
+// sqlutil.TestDBPeer and join the database instead of resetting it.
+func startGrafana(t *testing.T, testDBT sqlutil.ITestDB, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
+	t.Helper()
 	ctx := context.Background()
 
 	setting.IsEnterprise = extensions.IsEnterprise
@@ -99,6 +116,10 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	grpcServerAuthSection := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
 	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
+
+	// Plugins, and apps served from this process, call this server's API on its listener.
+	localAPIURL := cfg.Raw.Section("plugins").Key("local_api_url")
+	localAPIURL.SetValue(strings.Replace(localAPIURL.String(), "<placeholder>", listener.Addr().String(), 1))
 
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
@@ -142,7 +163,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
-	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(ctx, testDBT, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)
@@ -176,16 +197,19 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
+		kvStore, err := sql.ProvideKV(env.Cfg, eDB)
+		require.NoError(t, err)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, kvStore, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
-		backendService := storageBackend.(services.Service)
-		require.NotNil(t, backendService)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		if backendService, ok := storageBackend.(services.Service); ok {
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		}
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
-			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, grpcService)
+			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
 		require.NoError(t, err)
+		grpcService.Health.Register(storage, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
 		err = grpcService.AwaitRunning(ctx)
@@ -269,33 +293,7 @@ func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
 func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
-	// Search upwards in directory tree for project root
-	var rootDir string
-	found := false
-	for range 20 {
-		rootDir = filepath.Join(rootDir, "..")
-
-		dir, err := filepath.Abs(rootDir)
-		require.NoError(t, err)
-
-		// When running within an enterprise test, we need to move to the grafana directory
-		if strings.HasSuffix(dir, "grafana-enterprise") {
-			rootDir = filepath.Join(rootDir, "..", "grafana")
-			dir, err = filepath.Abs(rootDir)
-			require.NoError(t, err)
-		}
-
-		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
-		require.NoError(t, err)
-
-		if exists {
-			rootDir = dir
-			found = true
-			break
-		}
-	}
-
-	require.True(t, found, "Couldn't detect project root directory")
+	rootDir := testutil.GrafanaRootDir(t)
 
 	cfgDir := filepath.Join(tmpDir, "conf")
 	err := os.MkdirAll(cfgDir, 0o750)
@@ -353,9 +351,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	  `
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(mockAssets), 0o750)
 	require.NoError(t, err)
-	// Also write the React 19 manifest so tests work regardless of the react19 feature flag state
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest-react19.json"), []byte(mockAssets), 0o750)
-	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
 	err = os.Symlink(filepath.Join(rootDir, "public", "emails"), emailsDir)
@@ -408,10 +403,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
 	require.NoError(t, err)
-	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
-	require.NoError(t, err)
 
-	if opts.OpenFeatureAPIEnabled {
+	if opts.OpenFeatureStaticProvider {
 		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
@@ -528,8 +521,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
-	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
-	require.NoError(t, err)
 	// Disable phone-home services in tests. Each of these makes outbound
 	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
 	// a source of flakiness on CI runners and adds nothing to the tests.
@@ -546,6 +537,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
+	if opts.UnsafeGRPCServerAuthentication {
+		_, err = grpcServerAuth.NewKey("unsafe", "true")
+		require.NoError(t, err)
+	}
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
@@ -628,6 +623,21 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = anonSect.NewKey("enabled", "false")
 		require.NoError(t, err)
 	}
+	if opts.ExtJWTJWKSURL != "" {
+		extJWTSect, err := getOrCreateSection("auth.extended_jwt")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = extJWTSect.NewKey("jwks_url", opts.ExtJWTJWKSURL)
+		require.NoError(t, err)
+	}
+	if opts.LocalPluginAPI {
+		// The listener is only known when the server starts, which fills in the address.
+		pluginsSect, err := getOrCreateSection("plugins")
+		require.NoError(t, err)
+		_, err = pluginsSect.NewKey("local_api_url", "http://<placeholder>")
+		require.NoError(t, err)
+	}
 	if opts.PluginAdminEnabled {
 		pluginsSect, err := getOrCreateSection("plugins")
 		require.NoError(t, err)
@@ -669,6 +679,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 		require.NoError(t, err)
 		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
+	if opts.UnifiedAlertingDisableExecuteAlerts {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("execute_alerts", "false")
 		require.NoError(t, err)
 	}
 	if !opts.EnableLog {
@@ -821,29 +837,53 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	// Always written so the defaults.ini default can't start an embedded server,
+	// bound to the fixed cluster_port, in every parallel test binary.
+	natsSect, err := getOrCreateSection("nats")
+	require.NoError(t, err)
+	_, err = natsSect.NewKey("enabled", strconv.FormatBool(opts.NATSEnabled))
+	require.NoError(t, err)
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
 			listenAddress = "127.0.0.1"
 		}
-		section, err := getOrCreateSection("nats")
+		_, err = natsSect.NewKey("mode", "embedded")
 		require.NoError(t, err)
-		_, err = section.NewKey("enabled", "true")
+		_, err = natsSect.NewKey("listen_address", listenAddress)
 		require.NoError(t, err)
-		_, err = section.NewKey("mode", "embedded")
+		_, err = natsSect.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("listen_address", listenAddress)
+		_, err = natsSect.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
+		// Single-node test bus unless the test builds a cluster.
+		_, err = natsSect.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
 		require.NoError(t, err)
-		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
-		require.NoError(t, err)
-		// Single-node test bus: skip KV-backed peer discovery/clustering.
-		_, err = section.NewKey("discovery_enabled", "false")
-		require.NoError(t, err)
+		if opts.NATSAdvertiseAddress != "" {
+			_, err = natsSect.NewKey("advertise_address", opts.NATSAdvertiseAddress)
+			require.NoError(t, err)
+		}
+		if opts.NATSDiscoveryInterval > 0 {
+			_, err = natsSect.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
+			require.NoError(t, err)
+		}
+		if opts.NATSDiscoveryTTL > 0 {
+			_, err = natsSect.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
+			require.NoError(t, err)
+		}
+		for k, v := range opts.NATSExtraSettings {
+			_, err = natsSect.NewKey(k, v)
+			require.NoError(t, err)
+		}
 	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
+		require.NoError(t, err)
+	}
+	if opts.Provisioning == FeatureDisabled {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("enabled", "false")
 		require.NoError(t, err)
 	}
 	if len(opts.ProvisioningAllowedTargets) > 0 {
@@ -858,6 +898,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningBootstrapPath != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("bootstrap_path", opts.ProvisioningBootstrapPath)
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningAllowInsecure {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -870,16 +916,46 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("public_root_url", opts.ProvisioningPublicRootURL)
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningWebhookRateLimitRPS > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("webhook_rate_limit_rps", fmt.Sprintf("%d", opts.ProvisioningWebhookRateLimitRPS))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningWebhookTrustedIPHeader != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("webhook_trusted_ip_header", opts.ProvisioningWebhookTrustedIPHeader)
+		require.NoError(t, err)
+	}
 	if len(opts.ProvisioningRepositoryTypes) > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("repository_types", strings.Join(opts.ProvisioningRepositoryTypes, "|"))
 		require.NoError(t, err)
 	}
+	if len(opts.ProvisioningConnectionTypes) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("connection_types", strings.Join(opts.ProvisioningConnectionTypes, "|"))
+		require.NoError(t, err)
+	}
 	if opts.ProvisioningMaxResourcesPerRepository > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningKeysOnlyReList {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningResourceLister != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
 		require.NoError(t, err)
 	}
 	// Write max_repositories if explicitly set.
@@ -940,6 +1016,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableKeysAPI {
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("enable_keys_api", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.SecretsManagerEnableDBMigrations {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
@@ -997,10 +1080,33 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
 	require.NoError(t, err)
 
+	if opts.PendingDeletionResourceEnabled {
+		section, err := getOrCreateSection("folder")
+		require.NoError(t, err)
+		_, err = section.NewKey("pending_deletion_resource_enabled", "true")
+		require.NoError(t, err)
+	}
 	if opts.APIServerRuntimeConfig != "" {
 		section, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
 		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
+		require.NoError(t, err)
+	}
+
+	if opts.EnableGlobalSearch {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_global_search_api", "true")
+		require.NoError(t, err)
+		usSection, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = usSection.NewKey("global_search_index_enabled", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableGlobalHybridSearch {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_global_hybrid_api", "true")
 		require.NoError(t, err)
 	}
 
@@ -1025,6 +1131,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		// and other startup components share the same pool.
 		maxConns = 5
 	}
+
+	// Adding default provisioning allowlist for integration tests
+	provisioningSect, err := getOrCreateSection("provisioning")
+	require.NoError(t, err)
+	_, err = provisioningSect.NewKey("allowed_git_urls", "localhost, 127.0.0.1, github.enterprise.example.com, ghes.example.com")
+	require.NoError(t, err)
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
@@ -1055,6 +1167,17 @@ func SQLiteIntegrationTest(t *testing.T) {
 	}
 }
 
+// FeatureMode toggles a test option whose underlying config defaults to
+// enabled. The zero value is FeatureEnabled, so callers only need to set the
+// field when they want to opt out — unlike a bool, whose zero value would
+// silently mean "disabled" and require every caller to opt in instead.
+type FeatureMode int
+
+const (
+	FeatureEnabled FeatureMode = iota
+	FeatureDisabled
+)
+
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
@@ -1069,38 +1192,53 @@ type GrafanaOpts struct {
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
-	PluginAdminEnabled                    bool
-	PluginAdminExternalManageEnabled      bool
-	AppModeProduction                     bool
-	DisableLegacyAlerting                 bool
-	EnableUnifiedAlerting                 bool
-	UnifiedAlertingDisabledOrgs           []int64
-	UnifiedAlertingAllowedIntegrations    []string
-	UnifiedAlertingEmailsToOrgOnly        bool
-	EnableLog                             bool
-	GRPCServerAddress                     string
-	QueryRetries                          int
-	TransactionRetries                    int
-	GrafanaComAPIURL                      string
-	UnifiedStorageConfig                  map[string]setting.UnifiedStorageConfig
-	UnifiedStorageDisableSearch           bool
-	SearchInjectFailuresPercent           int
-	UnifiedStorageMaxPageSizeBytes        int
+	// ExtJWTJWKSURL enables [auth.extended_jwt] with this JWKS URL, so a test can authenticate as an
+	// access policy with a token signed by its own key.
+	ExtJWTJWKSURL string
+	// LocalPluginAPI sets [plugins] local_api_url to the test server's listener,
+	// for plugins and apps that call Grafana's API from this process.
+	LocalPluginAPI                      bool
+	PluginAdminEnabled                  bool
+	PluginAdminExternalManageEnabled    bool
+	AppModeProduction                   bool
+	DisableLegacyAlerting               bool
+	EnableUnifiedAlerting               bool
+	UnifiedAlertingDisabledOrgs         []int64
+	UnifiedAlertingAllowedIntegrations  []string
+	UnifiedAlertingEmailsToOrgOnly      bool
+	UnifiedAlertingDisableExecuteAlerts bool
+	EnableLog                           bool
+	GRPCServerAddress                   string
+	QueryRetries                        int
+	TransactionRetries                  int
+	GrafanaComAPIURL                    string
+	UnifiedStorageConfig                map[string]setting.UnifiedStorageConfig
+	UnifiedStorageDisableSearch         bool
+	SearchInjectFailuresPercent         int
+	UnifiedStorageMaxPageSizeBytes      int
 	// UnifiedStorageResourceVersionBatchTransactionTimeout, if > 0, sets
 	// [unified_storage] resource_version_batch_transaction_timeout in the test
 	// server's ini. Bounds one batched RV WithTx; used by provisioning
 	// integration tests on slow CI.
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
-	ProvisioningAllowedTargets                           []string
-	ProvisioningAllowInsecure                            bool
-	ProvisioningPublicRootURL                            string
-	ProvisioningRepositoryTypes                          []string
-	ProvisioningResources                                []string
-	ProvisioningMaxResourcesPerRepository                int64
-	ProvisioningMaxRepositories                          int64
-	ProvisioningMaxIncrementalChanges                    *int
-	ProvisioningMaxFileSize                              *int64
+	// Provisioning controls [provisioning] enabled. Zero value (FeatureEnabled)
+	// matches the ini default; set FeatureDisabled for DualWriterMode0/1 tests
+	// where provisioning requires unified storage.
+	Provisioning                          FeatureMode
+	ProvisioningAllowedTargets            []string
+	ProvisioningAllowInsecure             bool
+	ProvisioningPublicRootURL             string
+	ProvisioningRepositoryTypes           []string
+	ProvisioningConnectionTypes           []string
+	ProvisioningResources                 []string
+	ProvisioningBootstrapPath             string
+	ProvisioningMaxResourcesPerRepository int64
+	ProvisioningMaxRepositories           int64
+	ProvisioningMaxIncrementalChanges     *int
+	ProvisioningMaxFileSize               *int64
+	ProvisioningWebhookRateLimitRPS       int
+	ProvisioningWebhookTrustedIPHeader    string
 	// ProvisioningControllerResyncInterval overrides [provisioning]
 	// resync_interval (repo/connection/job informer re-list). Set it
 	// high in NATS tests so a fast reconcile can only be a live notification, not
@@ -1110,10 +1248,10 @@ type GrafanaOpts struct {
 	// (HistoricJob retention + historic-job informer resync). Set it low to
 	// exercise the re-list-driven cleanup quickly. Zero leaves the default (10m).
 	ProvisioningHistoryExpiration time.Duration
-	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval (job
-	// driver fallback poll). Set it high in NATS tests so a job that completes
-	// quickly can only have been woken by the live notification, not the poll.
-	// Zero leaves the default (30s).
+	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval, the
+	// jobs informer's resync/re-list interval. Set it high in NATS tests so a job
+	// that is picked up quickly can only have been woken by the live
+	// notification, not the re-list. Zero leaves the default (30s).
 	ProvisioningJobPollInterval time.Duration
 	GrafanaComSSOAPIToken       string
 	LicensePath                 string
@@ -1127,10 +1265,32 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+
+	PendingDeletionResourceEnabled bool
+
+	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
+	// connection informer's periodic re-list ask storage for keys instead of whole
+	// objects. Off by default, matching the shipped default.
+	ProvisioningKeysOnlyReList bool
+	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
+	// Empty leaves the shipped default.
+	ProvisioningResourceLister string
+
+	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
+	EnableKeysAPI bool
+
+	// EnableGlobalSearch turns on the search that spans resource types, and the
+	// index it reads. Both are off by default.
+	EnableGlobalSearch bool
+
+	// EnableGlobalHybridSearch turns on the global hybrid search endpoint, off by default.
+	EnableGlobalHybridSearch bool
+
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
 	// watch. Publishing requires EnableSQLKVBackend=true.
+	// Test servers keep NATS off without it, whatever conf/defaults.ini ships.
 	NATSEnabled bool
 	// NATSListenAddress is the embedded server's bind address; defaults to
 	// 127.0.0.1 when empty.
@@ -1138,10 +1298,22 @@ type GrafanaOpts struct {
 	// NATSClientPort / NATSClusterPort are the embedded server's ports. Callers
 	// should pass free ports so parallel test binaries don't collide on the
 	// conventional 4222/6222.
-	NATSClientPort                      int
-	NATSClusterPort                     int
+	NATSClientPort  int
+	NATSClusterPort int
+	// NATSDiscoveryEnabled turns on DB-backed peer discovery so the embedded
+	// servers of a StartGrafanaCluster form a mesh. Off by default.
+	NATSDiscoveryEnabled bool
+	// NATSAdvertiseAddress sets the host peers dial for this server's routes.
+	NATSAdvertiseAddress string
+	// NATSDiscoveryInterval / NATSDiscoveryTTL override the heartbeat cadence and
+	// how long a silent peer keeps its route. Zero leaves the ini defaults.
+	NATSDiscoveryInterval time.Duration
+	NATSDiscoveryTTL      time.Duration
+	// NATSExtraSettings sets more [nats] keys, applied last so they override the
+	// ones above (e.g. per-instance cluster TLS paths).
+	NATSExtraSettings                   map[string]string
 	SecretsManagerEnableDBMigrations    bool
-	OpenFeatureAPIEnabled               bool
+	OpenFeatureStaticProvider           bool
 	DisableAuthZClientCache             bool
 	ZanzanaReconciliationInterval       time.Duration
 	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
@@ -1157,6 +1329,9 @@ type GrafanaOpts struct {
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Accept local test-exchanger tokens without an external signing-key service.
+	UnsafeGRPCServerAuthentication bool
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
@@ -1186,10 +1361,10 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		legacysql.NewDatabaseProvider(store), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -1201,4 +1376,18 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u
+}
+
+// RunWithFeatureToggle runs each mode sequentially so the environment override is
+// restored after its servers are stopped. The callback must create a fresh test environment.
+func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
+	t.Helper()
+
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
+			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
+
+			run(t)
+		})
+	}
 }

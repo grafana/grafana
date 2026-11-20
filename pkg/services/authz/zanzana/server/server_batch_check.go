@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -117,6 +118,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 			correlationID: item.GetCorrelationId(),
 			resource:      resource,
 			relation:      relation,
+			resolved:      isLegacyPermissionDelegation(item.GetGroup(), item.GetResource(), item.GetSubresource()),
 		}
 	}
 
@@ -279,7 +281,7 @@ func collectFolderPermissionChecks(items map[string]*batchCheckItem) []folderChe
 		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
 			continue
 		}
-		relation := common.FolderPermissionRelation(item.relation)
+		relation := common.FolderContentPermissionRelation(item.relation)
 		entries = append(entries, folderCheckEntry{
 			correlationID: item.correlationID,
 			relation:      relation,
@@ -558,12 +560,6 @@ func expandedSubresourcePermissionRelations(relation string) []string {
 		return []string{
 			common.RelationSubresourceGet,
 			common.RelationSubresourceSetView,
-			common.RelationSubresourceSetEdit,
-			common.RelationSubresourceSetAdmin,
-		}
-	case common.RelationSubresourceCreate:
-		return []string{
-			common.RelationSubresourceCreate,
 			common.RelationSubresourceSetEdit,
 			common.RelationSubresourceSetAdmin,
 		}
@@ -870,17 +866,12 @@ func (s *Server) doOpenFGABatchCheck(
 	// Split into sub-batches
 	allResults := make(map[string]*openfgav1.BatchCheckSingleResult, len(checks))
 	for i := 0; i < len(checks); i += maxChecks {
-		end := i + maxChecks
-		if end > len(checks) {
-			end = len(checks)
-		}
+		end := min(i+maxChecks, len(checks))
 		results, err := s.executeBatchCheck(ctx, store, checks[i:end])
 		if err != nil {
 			return nil, err
 		}
-		for k, v := range results {
-			allResults[k] = v
-		}
+		maps.Copy(allResults, results)
 	}
 
 	return allResults, nil

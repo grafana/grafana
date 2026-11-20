@@ -1,11 +1,12 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type ScopedVars } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
+import { makeQueryActionTarget, makeStackedMode, renderWithQueryEditorProvider } from '../testUtils';
 
-import { ContentHeader } from './ContentHeader';
+import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
 // Capture the picker props so we can assert how `current` and `scopedVars` are resolved.
 const mockDataSourcePicker = jest.fn();
@@ -17,9 +18,14 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   },
 }));
 
-// These read from QueryEditor context, which is out of scope for these prop-based wiring tests.
-jest.mock('./HeaderActions', () => ({ HeaderActions: () => null }));
-jest.mock('./EditableQueryName', () => ({ EditableQueryName: () => null }));
+// Reads from QueryEditor context, which is out of scope for these header wiring tests.
+const mockHeaderActions = jest.fn();
+jest.mock('./HeaderActions', () => ({
+  HeaderActions: (props: unknown) => {
+    mockHeaderActions(props);
+    return null;
+  },
+}));
 
 const resolvedSettings: DataSourceInstanceSettings = {
   uid: '${metrics_source}',
@@ -78,5 +84,79 @@ describe('ContentHeader datasource picker', () => {
     renderHeader({ refId: 'A' }, { scopedVars });
 
     expect(pickerProps().scopedVars).toBe(scopedVars);
+  });
+});
+
+describe('ContentHeader query name', () => {
+  it('stays editable while a bulk selection is active', () => {
+    // The header describes the active card only, so a bulk selection elsewhere in the sidebar
+    // is no reason to lock renaming.
+    const query = { refId: 'A' };
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, {
+      queries: [query, { refId: 'B' }],
+      selectedQuery: query,
+      uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+    });
+
+    expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+});
+
+describe('ContentHeaderSceneWrapper with a target', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('describes the target card instead of the selected one', () => {
+    const queryA = { refId: 'A' };
+    const queryB = { refId: 'B' };
+    const target = makeQueryActionTarget(queryB, { dsData: { dsSettings: resolvedSettings } });
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper target={target} variant="stacked" />, {
+      queries: [queryA, queryB],
+      selectedQuery: queryA,
+      uiStateOverrides: { stackedMode: makeStackedMode({ enabled: true }) },
+    });
+
+    expect(pickerProps().current).toBe(resolvedSettings);
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
+      target,
+      source: 'stacked_header',
+    });
+  });
+
+  it('reports the content header source for a stacked-variant header in single mode', () => {
+    const query = { refId: 'A' };
+
+    renderWithQueryEditorProvider(
+      <ContentHeaderSceneWrapper target={makeQueryActionTarget(query)} variant="stacked" />,
+      {
+        queries: [query],
+        uiStateOverrides: { stackedMode: makeStackedMode({ enabled: false }) },
+      }
+    );
+
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({ source: 'content_header' });
+  });
+
+  it('ignores a pending picker that belongs to the selection', () => {
+    const query = { refId: 'B' };
+
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper target={makeQueryActionTarget(query)} />, {
+      queries: [query],
+      uiStateOverrides: { pendingExpression: { insertAfter: 'A' } },
+    });
+
+    expect(screen.queryByText('Select an expression')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+
+  it('acts on the selected card from the default header', () => {
+    renderWithQueryEditorProvider(<ContentHeaderSceneWrapper />, { selectedQuery: { refId: 'A' } });
+
+    expect(mockHeaderActions.mock.lastCall?.[0]).toMatchObject({
+      target: undefined,
+      source: 'content_header',
+    });
   });
 });

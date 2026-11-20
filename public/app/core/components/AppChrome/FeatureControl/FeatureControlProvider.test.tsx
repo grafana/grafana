@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { locationService } from '@grafana/runtime';
+import { getLocalStorageProvider } from '@grafana/runtime/internal';
 
 import { FeatureControlContextProvider, useFeatureControlContext } from './FeatureControlProvider';
 
@@ -23,8 +24,9 @@ describe('FeatureControlProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
     window.localStorage.clear();
+    getLocalStorageProvider().clearFlags();
+    delete window.__grafanaPreviewAssets;
     locationServiceMock.getSearchObject.mockReturnValue({});
     locationServiceMock.getLocationObservable.mockReturnValue({
       subscribe: jest.fn().mockReturnValue({
@@ -34,14 +36,35 @@ describe('FeatureControlProvider', () => {
   });
 
   const TestComponent = () => {
-    const { isAccessible, setIsAccessible, isOpen, setIsOpen } = useFeatureControlContext();
+    const {
+      isAccessible,
+      setIsAccessible,
+      isOpen,
+      setIsOpen,
+      overrides,
+      isSuspended,
+      resetToDefaults,
+      restoreOverrides,
+    } = useFeatureControlContext();
 
     return (
       <div>
         <div data-testid="is-accessible">{isAccessible.toString()}</div>
         <div data-testid="is-open">{isOpen.toString()}</div>
+        <div data-testid="is-suspended">{isSuspended.toString()}</div>
         <button onClick={() => setIsAccessible(true)}>Enable accessibility</button>
         <button onClick={() => setIsOpen(true)}>Open feature control</button>
+        <button
+          onClick={() => {
+            setIsAccessible(false);
+            setIsOpen(false);
+          }}
+        >
+          Dismiss feature control
+        </button>
+        <button onClick={resetToDefaults}>Reset to defaults</button>
+        <button onClick={restoreOverrides}>Restore overrides</button>
+        <div data-testid="overrides">{JSON.stringify(overrides)}</div>
       </div>
     );
   };
@@ -63,10 +86,24 @@ describe('FeatureControlProvider', () => {
     expect(window.localStorage.getItem(STORAGE_KEYS.open)).toBe(isOpen);
   };
 
+  const expectOverrides = (overrides: Array<{ key: string; value: string }>) => {
+    expect(screen.getByTestId('overrides')).toHaveTextContent(JSON.stringify(overrides));
+  };
+
   it('should provide default context values', () => {
     renderProvider();
 
     expectState({ isAccessible: false, isOpen: false });
+  });
+
+  it('should load flag overrides from local storage', () => {
+    getLocalStorageProvider().setFlags({ alpha: true, beta: 'custom-value' });
+    renderProvider();
+
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
   });
 
   it.each([
@@ -89,13 +126,79 @@ describe('FeatureControlProvider', () => {
     expectStorage({ isAccessible: 'true', isOpen: 'true' });
   });
 
-  it('should update accessibility and open state', async () => {
+  it('should default to accessible and open when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
     renderProvider();
 
-    await userEvent.click(screen.getByText('Enable accessibility'));
-    await userEvent.click(screen.getByText('Open feature control'));
+    expectState({ isAccessible: true, isOpen: true });
+  });
+
+  it('should override a stored dismissal on the first page load when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+    window.localStorage.setItem(STORAGE_KEYS.accessible, 'false');
+    window.localStorage.setItem(STORAGE_KEYS.open, 'false');
+    renderProvider();
+
+    expectState({ isAccessible: true, isOpen: true });
+    expectStorage({ isAccessible: 'false', isOpen: 'false' });
+  });
+
+  it('should allow feature control to be dismissed during a preview session', async () => {
+    const user = userEvent.setup();
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+    renderProvider();
+
+    await user.click(screen.getByText('Dismiss feature control'));
+
+    expectState({ isAccessible: false, isOpen: false });
+    expectStorage({ isAccessible: 'false', isOpen: 'false' });
+  });
+
+  it('should update accessibility and open state', async () => {
+    const user = userEvent.setup();
+    renderProvider();
+
+    await user.click(screen.getByText('Enable accessibility'));
+    await user.click(screen.getByText('Open feature control'));
 
     expectState({ isAccessible: true, isOpen: true });
     expectStorage({ isAccessible: 'true', isOpen: 'true' });
+  });
+
+  it('should temporarily reset overrides to defaults and restore them', async () => {
+    const user = userEvent.setup();
+    getLocalStorageProvider().setFlags({ alpha: true, beta: 'custom-value' });
+    renderProvider();
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('false');
+
+    await user.click(screen.getByText('Reset to defaults'));
+
+    // Flags are cleared from the provider so they evaluate to defaults, but the
+    // snapshot is still surfaced so the panel can show them (greyed out).
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('true');
+    expect(Object.keys(getLocalStorageProvider().getFlags())).toHaveLength(0);
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+
+    await user.click(screen.getByText('Restore overrides'));
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('false');
+    expectOverrides([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
+  });
+
+  it('should keep the suspended state across reloads', () => {
+    getLocalStorageProvider().setFlags({ alpha: true });
+    window.localStorage.setItem('grafana.feature-control.suspended', JSON.stringify({ alpha: 'true' }));
+    getLocalStorageProvider().clearFlags();
+
+    renderProvider();
+
+    expect(screen.getByTestId('is-suspended')).toHaveTextContent('true');
   });
 });

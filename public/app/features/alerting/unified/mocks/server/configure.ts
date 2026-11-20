@@ -3,12 +3,14 @@ import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type Pat
 import { type PluginMeta } from '@grafana/data';
 import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
-import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
+import { type RulesAPIVersion } from 'app/features/alerting/unified/api/rulesApiVersion';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
-import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { getFolderAccessHandler, getFolderHandlers } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { getRulesAPIGroupHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import {
   getDisabledPluginHandler,
@@ -20,6 +22,11 @@ import {
   getK8sResponse,
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
+import {
+  installAppPluginMeta,
+  pluginMeta as pluginMetas,
+  uninstallAppPluginMeta,
+} from 'app/features/alerting/unified/testSetup/plugins';
 import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import {
   type AlertmanagerAlert,
@@ -59,18 +66,18 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
 };
 
 /**
- * Makes the mock server respond with different folder access control settings
+ * Makes the mock server report the given access control for every folder. Only access is overridden: a folder outside
+ * `DEFAULT_FOLDERS` still has to be seeded with `setFolderResponse`, or `useGetCombinedFolderQuery` reports it as missing.
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
-  server.use(getFolderHandler(mockFolder({ hasAcl: true, accessControl })));
+  server.use(getFolderAccessHandler(accessControl));
 };
 
 /**
  * Makes the mock server respond with different folder response, for just the folder in question
  */
 export const setFolderResponse = (response: Partial<FolderDTO>) => {
-  const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
-  server.use(handler);
+  server.use(...getFolderHandlers(response));
 };
 
 export const setUpdateGrafanaRulerRuleNamespaceResolver = (
@@ -86,11 +93,12 @@ export const setUpdateGrafanaRulerRuleNamespaceResolver = (
 
 export const setCreateGrafanaRuleResolver = (
   resolver: HttpResponseResolver<{ namespace: string }, DefaultBodyType, undefined>,
-  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules',
+  version: RulesAPIVersion = 'v1beta1'
 ) => {
   server.use(
     http.post<{ namespace: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}`,
+      `/apis/rules.alerting.grafana.app/${version}/namespaces/:namespace/${endpoint}`,
       resolver
     )
   );
@@ -98,14 +106,20 @@ export const setCreateGrafanaRuleResolver = (
 
 export const setReplaceGrafanaRuleResolver = (
   resolver: HttpResponseResolver<{ namespace: string; name: string }, DefaultBodyType, undefined>,
-  endpoint: 'alertrules' | 'recordingrules' = 'alertrules'
+  endpoint: 'alertrules' | 'recordingrules' = 'alertrules',
+  version: RulesAPIVersion = 'v1beta1'
 ) => {
   server.use(
     http.put<{ namespace: string; name: string }, DefaultBodyType, undefined>(
-      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/${endpoint}/:name`,
+      `/apis/rules.alerting.grafana.app/${version}/namespaces/:namespace/${endpoint}/:name`,
       resolver
     )
   );
+};
+
+/** Sets which versions the mocked apiserver serves for the rules API group. */
+export const setRulesAPIGroupVersions = (versions: RulesAPIVersion[]) => {
+  server.use(getRulesAPIGroupHandler(versions));
 };
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
@@ -366,23 +380,28 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
   invalidatePluginSettingsCache(pluginId);
+  installAppPluginMeta(pluginMetas[pluginId]);
   server.use(getDisabledPluginHandler(pluginId));
 };
 
 /** Make a plugin respond with a 404, as if it is not installed */
 export const removePlugin = (pluginId: SupportedPlugin) => {
   invalidatePluginSettingsCache(pluginId);
+  uninstallAppPluginMeta(pluginId);
   server.use(getPluginMissingHandler(pluginId));
 };
 
 /** Make an additional plugin respond as installed and enabled */
 export const addPlugin = (pluginMeta: PluginMeta) => {
+  installAppPluginMeta(pluginMeta);
   server.use(getSpecificPluginHandler(pluginMeta));
 };
 
 /** Make a plugin settings request fail with a given HTTP status code (default 500) */
 export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
   invalidatePluginSettingsCache(pluginId);
+  // the plugin must look installed, otherwise the settings request is never made
+  installAppPluginMeta(pluginMetas[pluginId]);
   server.use(
     http.get(`/api/plugins/${pluginId}/settings`, () =>
       HttpResponse.json({ message: 'Internal server error' }, { status })

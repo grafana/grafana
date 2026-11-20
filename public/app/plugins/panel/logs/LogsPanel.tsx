@@ -5,7 +5,6 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  type AbsoluteTimeRange,
   CoreApp,
   type DataFrame,
   DataHoverClearEvent,
@@ -31,15 +30,21 @@ import {
   store,
 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+import { useFlagGrafanaLogsInfiniteScrollTop } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import {
+  type InfiniteScrollTimeRange,
+  withLokiInfiniteScrollBound,
+} from 'app/features/logs/components/infiniteScrollUtils';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
+import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
+import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
-import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
 import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
 import { dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
@@ -170,10 +175,11 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     grammar,
   } = options;
   const style = useStyles2(getStyles);
+  const infiniteScrollTopEnabled = useFlagGrafanaLogsInfiniteScrollTop();
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
-  const [infiniteScrolling, setInfiniteScrolling] = useState(false);
+  const [loadMoreState, setLoadMoreState] = useState<LoadingState>(LoadingState.Done);
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
@@ -397,17 +403,18 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [options.displayedFields]);
 
   const loadMoreLogs = useCallback(
-    async (scrollRange: AbsoluteTimeRange) => {
+    async (scrollRange: InfiniteScrollTimeRange) => {
       if (!data.request || loadingRef.current) {
         return;
       }
 
       loadingRef.current = true;
-      setInfiniteScrolling(true);
+      setLoadMoreState(LoadingState.Loading);
 
       const onNewLogsReceivedCallback = isOnNewLogsReceivedType(onNewLogsReceived) ? onNewLogsReceived : undefined;
 
       let newSeries: DataFrame[] = [];
+      let errored = false;
       try {
         newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
         const panel = getDashboardSrv().getCurrent()?.getPanelById(id);
@@ -415,9 +422,10 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
           newSeries = await lastValueFrom(transformDataFrame(panel?.transformations, newSeries));
         }
       } catch (e) {
+        errored = true;
         console.error(e);
       } finally {
-        setInfiniteScrolling(false);
+        setLoadMoreState(errored ? LoadingState.Error : LoadingState.Done);
         loadingRef.current = false;
       }
 
@@ -507,8 +515,9 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
             getFieldLinks={getFieldLinks}
             grammar={isGrammar(grammar) ? grammar : undefined}
             isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            infiniteScrollTop={Boolean(enableInfiniteScrolling) && infiniteScrollTopEnabled}
             initialScrollPosition={initialScrollPosition}
-            loading={infiniteScrolling}
+            loadingState={loadMoreState}
             logLineMenuCustomItems={
               isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined
             }
@@ -594,7 +603,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
 async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
-  timeRange: AbsoluteTimeRange,
+  timeRange: InfiniteScrollTimeRange,
   timeZone: TimeZone,
   onNewLogsReceived?: onNewLogsReceivedType
 ) {
@@ -620,7 +629,16 @@ async function requestMoreLogs(
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid],
+        targets: targetGroups[uid].map((target) =>
+          withLokiInfiniteScrollBound(
+            {
+              ...target,
+              supportingQueryType: SupportingQueryType.InfiniteScroll,
+            },
+            timeRange,
+            dataSource.type
+          )
+        ),
       })
     );
   }

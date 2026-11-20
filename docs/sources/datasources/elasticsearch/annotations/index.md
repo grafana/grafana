@@ -15,6 +15,7 @@ labels:
 menuTitle: Annotations
 title: Elasticsearch annotations
 weight: 500
+review_date: 2026-08-10
 ---
 
 # Elasticsearch annotations
@@ -22,7 +23,7 @@ weight: 500
 Annotations overlay event data on your dashboard graphs, helping you correlate log events with metrics.
 You can use Elasticsearch as a data source for annotations to display events such as deployments, alerts, or other significant occurrences on your visualizations.
 
-For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
+For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/).
 
 ## Before you begin
 
@@ -36,7 +37,8 @@ Before creating Elasticsearch annotations, ensure you have:
 
 To add an Elasticsearch annotation to your dashboard:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Annotation query**.
 1. Enter a name for the annotation query.
@@ -52,7 +54,7 @@ To add an Elasticsearch annotation to your dashboard:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Query
 

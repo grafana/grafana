@@ -1,6 +1,13 @@
 /**
  * Shared validation utilities for import-to-gma steps
  */
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
+import { type ComboboxOption } from '@grafana/ui';
+
+import { type ValidateAlertmanagerConfigImportArgs } from '../../../api/convertToGMAApi';
+import { isAutoSyncSelected } from '../Wizard/steps';
+import { type ImportFormValues, type Step1Values } from '../types';
 
 /** RFC 1123 subdomain pattern — must match the backend's identifier validation */
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
@@ -26,7 +33,7 @@ export function validatePolicyTreeName(value: string): string | true {
 /**
  * Validates that a source selection has the required data based on the source type
  */
-export function hasValidSourceSelection(
+function hasValidSourceSelection(
   source: 'yaml' | 'datasource',
   yamlFile: File | null | undefined,
   datasourceUID: string | null | undefined
@@ -40,23 +47,67 @@ export function hasValidSourceSelection(
   return true;
 }
 
+/**
+ * Returns the first template file name that occurs more than once, or undefined if all names are unique.
+ * Template files are keyed by file name when combined into the convert payload, so duplicate names are
+ * ambiguous and must be rejected.
+ */
+export function findDuplicateTemplateFileName(files: File[] = []): string | undefined {
+  const seen = new Set<string>();
+  for (const file of files) {
+    if (seen.has(file.name)) {
+      return file.name;
+    }
+    seen.add(file.name);
+  }
+  return undefined;
+}
+
 export interface Step1ValidationParams {
   policyTreeName: string | null;
   notificationsSource: 'yaml' | 'datasource';
   notificationsYamlFile: File | null;
   notificationsDatasourceUID: string | null | undefined;
+  notificationsTemplateFiles: File[];
+  autoSyncNotificationsEnabled: boolean;
 }
 
 /**
- * Validates that Step 1 form is complete and valid
+ * Validates that Step 1 form is complete and valid. When Auto-sync is selected, only a data
+ * source is required — there's no staged config to name or dry-run.
  */
 export function isStep1Valid(params: Step1ValidationParams): boolean {
-  const { policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID } = params;
+  const {
+    policyTreeName,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
+  } = params;
 
-  if (!policyTreeName) {
+  if (isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource)) {
+    return Boolean(notificationsDatasourceUID);
+  }
+
+  if (!policyTreeName || validatePolicyTreeName(policyTreeName) !== true) {
+    return false;
+  }
+  if (findDuplicateTemplateFileName(notificationsTemplateFiles)) {
     return false;
   }
   return hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
+}
+
+/**
+ * Auto-sync always returns false here, unlike isStep1Valid — it has no staged config to
+ * validate, even though a selected Auto-sync datasource is sufficient for isStep1Valid.
+ */
+export function canRunDryRun(params: Step1ValidationParams): boolean {
+  if (isAutoSyncSelected(params.autoSyncNotificationsEnabled, params.notificationsSource)) {
+    return false;
+  }
+  return isStep1Valid({ ...params, autoSyncNotificationsEnabled: false });
 }
 
 export interface Step2ValidationParams {
@@ -84,4 +135,69 @@ export function isStep2Valid(params: Step2ValidationParams): boolean {
     return false;
   }
   return true;
+}
+
+export function pickStep1Values(values: ImportFormValues): Step1Values {
+  return {
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsDatasourceName: values.notificationsDatasourceName,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled,
+  };
+}
+
+/**
+ * The dry run checks the configuration, so it can run as soon as there is one: a file was uploaded or a
+ * datasource picked. A valid policy tree name is sent along when there is one, since contact points that
+ * clash with existing ones are renamed after it. Auto-sync names the tree itself, so its dry run uses the
+ * name the sync will pick, and waits until that is known.
+ */
+export function buildDryRunArgs(
+  values: Step1Values,
+  autoSyncIdentifier: string | undefined
+): ValidateAlertmanagerConfigImportArgs | typeof skipToken {
+  const autoSyncActive = isAutoSyncSelected(values.autoSyncNotificationsEnabled ?? false, values.notificationsSource);
+  const hasSource =
+    !findDuplicateTemplateFileName(values.notificationsTemplateFiles) &&
+    hasValidSourceSelection(
+      values.notificationsSource,
+      values.notificationsYamlFile,
+      values.notificationsDatasourceUID
+    );
+  if (!hasSource || (autoSyncActive && !autoSyncIdentifier)) {
+    return skipToken;
+  }
+  let configIdentifier: string | undefined;
+  if (autoSyncActive) {
+    configIdentifier = autoSyncIdentifier;
+  } else if (values.policyTreeName && validatePolicyTreeName(values.policyTreeName) === true) {
+    configIdentifier = values.policyTreeName;
+  }
+  return {
+    source: values.notificationsSource,
+    yamlFile: values.notificationsYamlFile,
+    templateFiles: values.notificationsTemplateFiles,
+    datasourceName: values.notificationsDatasourceName ?? undefined,
+    configIdentifier,
+  };
+}
+
+/**
+ * The policy trees the rules step can route to: the ones the API knows, plus the one step 1 will create.
+ * That tree isn't known to the API yet, so it is offered first as the most relevant option.
+ */
+export function getRoutingTreeOptions(
+  existingTreeOptions: Array<ComboboxOption<string>>,
+  createdTreeName: string,
+  step1Completed: boolean
+): Array<ComboboxOption<string>> {
+  const isUncreatedTree =
+    step1Completed && createdTreeName && !existingTreeOptions.some((option) => option.value === createdTreeName);
+
+  return isUncreatedTree
+    ? [{ label: createdTreeName, value: createdTreeName }, ...existingTreeOptions]
+    : existingTreeOptions;
 }

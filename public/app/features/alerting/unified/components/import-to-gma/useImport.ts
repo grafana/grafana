@@ -1,114 +1,42 @@
-import { load } from 'js-yaml';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 
 import { isDefaultRoutingTreeName } from '@grafana/alerting';
-import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  type ConvertAlertmanagerResponse,
+  type MergeStats,
+  type NotificationSettings,
+} from '@grafana/alerting/convert';
+import {
+  type RulerCloudRuleDTO,
+  type RulerCloudRulesConfigDTO,
+  type RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
-import { fetchAlertManagerConfig } from '../../api/alertmanager';
-import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { stringifyErrorLike } from '../../utils/misc';
+import { convertApi } from '../../api/convertToGMAApi';
+import { rulerRuleType } from '../../utils/rules';
 
-import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
-
-interface ParsedAlertmanagerYaml {
-  alertmanagerConfig: string;
-  templateFiles: Record<string, string>;
-}
-
-function isStringRecord(value: unknown): value is Record<string, string> {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  return Object.values(value).every((v) => typeof v === 'string');
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/**
- * Parse an Alertmanager YAML file and separate template_files from the alertmanager config.
- *
- * YAML files may contain `template_files` at the top level alongside the config fields
- * (route, receivers, templates, time_intervals, etc.). The backend API expects them
- * as two separate fields in the request body:
- *   { alertmanager_config: "<config string>", template_files: { ... } }
- *
- * This function extracts `template_files` and re-serializes the remaining config as JSON.
- */
-function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
-  let parsed: unknown;
-  try {
-    parsed = load(yamlContent);
-  } catch {
-    return { alertmanagerConfig: yamlContent, templateFiles: {} };
-  }
-
-  if (!isRecord(parsed)) {
-    return { alertmanagerConfig: yamlContent, templateFiles: {} };
-  }
-
-  const { template_files, ...configWithoutTemplates } = parsed;
-  const templateFiles = isStringRecord(template_files) ? template_files : {};
-
-  return {
-    alertmanagerConfig: JSON.stringify(configWithoutTemplates),
-    templateFiles,
-  };
-}
-
-interface NotificationsSourceParams {
-  source: 'datasource' | 'yaml';
-  /** Datasource name (not UID) - required when source is 'datasource' */
-  datasourceName?: string;
-  yamlFile: File | null;
-  /** Configuration identifier - the name of the extra config (policy tree name) */
-  configIdentifier: string;
-  /** If true, promote (merge) the imported config into the main Grafana config */
-  promote?: boolean;
-}
-
-/**
- * Resolve the alertmanager config and template files from a YAML file or datasource.
- * Shared between import and dry-run flows.
- */
-async function resolveAlertmanagerConfig(params: NotificationsSourceParams): Promise<ParsedAlertmanagerYaml> {
-  const { source, datasourceName, yamlFile } = params;
-
-  if (source === 'yaml' && yamlFile) {
-    const yamlContent = await yamlFile.text();
-    return parseAlertmanagerYaml(yamlContent);
-  }
-
-  if (source === 'datasource' && datasourceName) {
-    const config = await fetchAlertManagerConfig(datasourceName);
-    return {
-      alertmanagerConfig: JSON.stringify(config.alertmanager_config),
-      templateFiles: config.template_files ?? {},
-    };
-  }
-
-  throw new Error('Invalid import source configuration');
-}
+import { type NotificationsSourceParams, resolveAlertmanagerConfig } from './resolveAlertmanagerConfig';
+import type { DryRunState, DryRunValidationResult, PromoteStatsSummary } from './types';
 
 interface MigrateRulesBaseParams {
   dataSourceUID: string;
   targetFolderUID?: string;
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
-  payload: RulerRulesConfigDTO;
+  payload: RulerCloudRulesConfigDTO;
   targetDatasourceUID?: string;
 }
 
-type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: string };
+type MigrateRulesParams = MigrateRulesBaseParams & { notificationSettings?: NotificationSettings | null };
 
 export function buildRoutingParams(
   selectedRoutingTreeName: string | undefined
 ): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    notificationSettings: isDefaultRoutingTreeName(selectedRoutingTreeName)
-      ? undefined
-      : JSON.stringify({ policy: selectedRoutingTreeName }),
+    notificationSettings:
+      !selectedRoutingTreeName || isDefaultRoutingTreeName(selectedRoutingTreeName)
+        ? null
+        : { type: 'NamedRoutingTree', routingTree: selectedRoutingTreeName },
   };
 }
 
@@ -117,18 +45,18 @@ export function buildRoutingParams(
  * Uses the /api/convert/api/v1/alerts endpoint via RTK Query
  */
 export function useImportNotifications() {
-  const [convertAlertmanagerConfig] = convertToGMAApi.useConvertAlertmanagerConfigMutation();
+  const [convertAlertmanagerConfig] = convertApi.usePostAlertmanagerConfigMutation();
 
   return useCallback(
     async (params: NotificationsSourceParams) => {
-      const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
+      const payload = await resolveAlertmanagerConfig(params);
 
       return await convertAlertmanagerConfig({
-        alertmanagerConfig,
-        templateFiles,
-        configIdentifier: params.configIdentifier,
+        payload,
+        identifier: params.configIdentifier,
         forceReplace: true,
         promote: params.promote,
+        source: 'wizard',
       }).unwrap();
     },
     [convertAlertmanagerConfig]
@@ -137,10 +65,10 @@ export function useImportNotifications() {
 
 /**
  * Hook to import alert rules and recording rules
- * Uses the convertToGMAApi (same as ImportToGMARules)
+ * Uses the convert API client from @grafana/alerting/convert
  */
 export function useImportRules() {
-  const [convert] = convertToGMAApi.useConvertToGMAMutation();
+  const [convert] = convertApi.usePostRuleGroupsMutation();
 
   return useCallback(
     async (params: MigrateRulesParams) => {
@@ -155,13 +83,16 @@ export function useImportRules() {
       } = params;
 
       await convert({
-        dataSourceUID,
-        targetFolderUID,
-        pauseRecordingRules,
-        pauseAlerts: pauseAlertingRules,
         payload,
-        targetDatasourceUID,
+        datasourceUid: dataSourceUID,
+        folderUid: targetFolderUID,
+        recordingRulesPaused: pauseRecordingRules,
+        alertRulesPaused: pauseAlertingRules,
+        targetDatasourceUid: targetDatasourceUID,
         notificationSettings,
+        // Imported rules stay editable in the UI.
+        disableProvenance: true,
+        source: 'wizard',
       }).unwrap();
     },
     [convert]
@@ -175,8 +106,8 @@ export function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
-): { filteredConfig: RulerRulesConfigDTO; someRulesAreSkipped: boolean } {
-  const filteredConfig: RulerRulesConfigDTO = {};
+): { filteredConfig: RulerCloudRulesConfigDTO; someRulesAreSkipped: boolean } {
+  const filteredConfig: RulerCloudRulesConfigDTO = {};
   let someRulesAreSkipped = false;
 
   Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
@@ -192,8 +123,9 @@ export function filterRulerRulesConfig(
         return true;
       })
       .map((group) => {
-        const filteredRules = group.rules.filter((rule) => {
-          const shouldSkip = isRuleManagedByExternalSystem(rule);
+        // Only data source rules can be imported, so Grafana-managed rules are skipped too.
+        const filteredRules = group.rules.filter((rule): rule is RulerCloudRuleDTO => {
+          const shouldSkip = !rulerRuleType.dataSource.rule(rule) || isRuleManagedByExternalSystem(rule);
           if (shouldSkip) {
             someRulesAreSkipped = true;
             return false;
@@ -273,35 +205,39 @@ export function parseDryRunResponse(response: ConvertAlertmanagerResponse): DryR
 }
 
 /**
- * Hook to perform dry-run validation for Alertmanager config import.
- * Uses POST /api/convert/api/v1/alerts with X-Grafana-Alerting-Dry-Run: true.
- * Validates the config and checks for conflicts without saving.
+ * Combine the dry-run mutation's cached data with any error into a single UI result.
+ * A pre-run failure (e.g. a template conflict) sets an error while the previous
+ * successful response is still cached, so the error must take precedence over the
+ * stale data — otherwise the review step would report the config as ready to import.
  */
-export function useDryRunNotifications() {
-  const [dryRunAlertmanagerConfig, { isLoading, data, error: mutationError }] =
-    convertToGMAApi.useDryRunAlertmanagerConfigMutation();
-  const [preRunError, setPreRunError] = useState<string>();
+export function deriveDryRunResult(
+  dryRunData: DryRunValidationResult | undefined,
+  dryRunError: string | undefined
+): DryRunValidationResult | undefined {
+  if (dryRunError) {
+    return { valid: false, error: dryRunError, renamedReceivers: [], renamedTimeIntervals: [], stats: undefined };
+  }
+  if (dryRunData) {
+    return dryRunData;
+  }
+  return undefined;
+}
 
-  const runDryRun = useCallback(
-    async (params: NotificationsSourceParams): Promise<void> => {
-      setPreRunError(undefined);
-      try {
-        const { alertmanagerConfig, templateFiles } = await resolveAlertmanagerConfig(params);
-        await dryRunAlertmanagerConfig({
-          alertmanagerConfig,
-          templateFiles,
-          configIdentifier: params.configIdentifier,
-          promote: params.promote,
-        });
-      } catch (err) {
-        setPreRunError(stringifyErrorLike(err));
-      }
-    },
-    [dryRunAlertmanagerConfig]
-  );
-
-  const result = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
-  const error = mutationError ? stringifyErrorLike(mutationError) : preRunError;
-
-  return { runDryRun, isLoading, result, error };
+/** Derives the UI-facing dry-run state from a mutation's async state (isLoading/result/error). */
+export function deriveDryRunState(
+  isLoading: boolean,
+  result: DryRunValidationResult | undefined,
+  error: string | undefined
+): DryRunState {
+  if (isLoading) {
+    return 'loading';
+  }
+  if (error || (result && !result.valid)) {
+    return 'error';
+  }
+  if (result?.valid) {
+    const hasRenames = result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0;
+    return hasRenames ? 'warning' : 'success';
+  }
+  return 'idle';
 }

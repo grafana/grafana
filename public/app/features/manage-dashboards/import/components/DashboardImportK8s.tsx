@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 
 import { AppEvents, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
+import {
+  isDashboardNewLayoutsEnabled,
+  isDashboardV1Resource,
+  isDashboardV2Resource,
+} from 'app/features/dashboard/api/utils';
 
 import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
@@ -44,7 +48,69 @@ const initialState: ImportState = {
 };
 
 export function DashboardImportK8s({ queryParams }: Props) {
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
+
+  async function processDashboardJson(
+    json: unknown,
+    source = DashboardSource.Json,
+    meta: ImportState['meta'] = { updatedAt: '', orgName: '' }
+  ) {
+    const format = detectExportFormat(json);
+
+    if (format === ExportFormat.V2Resource && !dashboardNewLayoutsEnabled) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      appEvents.emit(AppEvents.alertError, [
+        'Import failed',
+        'Dashboard using new layout cannot be imported because the feature is not enabled',
+      ]);
+      return;
+    }
+
+    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
+
+    try {
+      const isV2Resource = isDashboardV2Resource(json);
+      // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
+      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
+      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
+      const inputs =
+        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+
+      setState({
+        status: LoadingState.Done,
+        dashboard,
+        dashboardUid,
+        inputs,
+        meta,
+        source,
+        format,
+      });
+    } catch (error) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      appEvents.emit(AppEvents.alertError, ['Failed to process dashboard', message]);
+    }
+  }
+
+  async function fetchGcomDashboard(id: string) {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
+
+    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
+
+    try {
+      const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
+      await processDashboardJson(response.json, DashboardSource.Gcom, {
+        updatedAt: response.updatedAt,
+        orgName: response.orgName,
+      });
+    } catch (error) {
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
+      if (isFetchError(error)) {
+        appEvents.emit(AppEvents.alertError, ['Failed to load dashboard', error.data?.message || 'Unknown error']);
+      }
+    }
+  }
 
   // Handle gcom dashboard ID from query params on mount
   useEffect(() => {
@@ -54,35 +120,6 @@ export function DashboardImportK8s({ queryParams }: Props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function fetchGcomDashboard(id: string) {
-    reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
-
-    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
-
-    try {
-      const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-      const dashboard = response.json;
-      const format = detectExportFormat(dashboard);
-      const inputs =
-        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
-
-      setState({
-        status: LoadingState.Done,
-        dashboard,
-        dashboardUid: undefined,
-        inputs,
-        meta: { updatedAt: response.updatedAt, orgName: response.orgName },
-        source: DashboardSource.Gcom,
-        format,
-      });
-    } catch (error) {
-      setState((prev) => ({ ...prev, status: LoadingState.Error }));
-      if (isFetchError(error)) {
-        appEvents.emit(AppEvents.alertError, ['Failed to load dashboard', error.data?.message || 'Unknown error']);
-      }
-    }
-  }
 
   async function handleFileUpload(result: string | ArrayBuffer | null) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_uploaded' });
@@ -101,44 +138,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_pasted' });
 
     const json = JSON.parse(formData.dashboardJson);
-
-    if ((json.spec?.elements || json.elements) && !config.featureToggles.dashboardNewLayouts) {
-      appEvents.emit(AppEvents.alertError, [
-        'Import failed',
-        'Dashboard using new layout cannot be imported because the feature is not enabled',
-      ]);
-      return;
-    }
-
     await processDashboardJson(json);
-  }
-
-  async function processDashboardJson(json: unknown) {
-    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
-
-    try {
-      const format = detectExportFormat(json);
-      const isV2Resource = isDashboardV2Resource(json);
-      // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
-      const dashboard = isV2Resource || isDashboardV1Resource(json) ? json.spec : json;
-      const dashboardUid = isV2Resource ? json.metadata.name : undefined;
-      const inputs =
-        format === ExportFormat.V2Resource ? await extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
-
-      setState({
-        status: LoadingState.Done,
-        dashboard,
-        dashboardUid,
-        inputs,
-        meta: { updatedAt: '', orgName: '' },
-        source: DashboardSource.Json,
-        format,
-      });
-    } catch (error) {
-      setState((prev) => ({ ...prev, status: LoadingState.Error }));
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      appEvents.emit(AppEvents.alertError, ['Failed to process dashboard', message]);
-    }
   }
 
   function handleGcomSubmit(formData: { gcomDashboard: string }) {

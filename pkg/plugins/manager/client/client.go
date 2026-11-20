@@ -155,6 +155,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
 		}
 
+		if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled {
+			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
+		}
+
 		return plugins.ErrPluginRequestFailureErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
@@ -254,48 +258,6 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 
 	return plugin.RunStream(ctx, req, sender)
-}
-
-// ConvertObject implements plugins.Client.
-func (s *Service) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
-	if !exists {
-		return nil, plugins.ErrPluginNotRegistered
-	}
-
-	return plugin.ConvertObjects(ctx, req)
-}
-
-// MutateAdmission implements plugins.Client.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
-	if !exists {
-		return nil, plugins.ErrPluginNotRegistered
-	}
-
-	return plugin.MutateAdmission(ctx, req)
-}
-
-// ValidateAdmission implements plugins.Client.
-func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
-	if !exists {
-		return nil, plugins.ErrPluginNotRegistered
-	}
-
-	return plugin.ValidateAdmission(ctx, req)
 }
 
 func SetCSPHeader(header http.Header) {

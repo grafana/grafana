@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type LibraryPanel } from '@grafana/schema';
@@ -64,20 +65,23 @@ export const AddLibraryPanelContents = ({
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <Field
+        noMargin
         label={t('library-panel.add-modal.name', 'Library panel name')}
         invalid={invalidInput}
         error={invalidInput ? t('library-panel.add-modal.error', 'Library panel with this name already exists') : ''}
       >
         <Input
           id="share-panel-library-panel-name-input"
+          data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.nameInput}
           name="name"
           value={panelName}
           onChange={(e) => setPanelName(e.currentTarget.value)}
         />
       </Field>
       <Field
+        noMargin
         label={t('library-panel.add-modal.folder', 'Save in folder')}
         description={t(
           'library-panel.add-modal.folder-description',
@@ -87,13 +91,17 @@ export const AddLibraryPanelContents = ({
         <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
       </Field>
       <Stack gap={1} justifyContent={'start'}>
-        <Button onClick={onCreate} disabled={invalidInput}>
+        <Button
+          onClick={onCreate}
+          disabled={invalidInput}
+          data-testid={selectors.components.Drawer.NewLibraryPanelDrawer.createButton}
+        >
           <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
         </Button>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
-    </>
+    </Stack>
   );
 };

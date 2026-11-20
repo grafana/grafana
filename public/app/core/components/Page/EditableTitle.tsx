@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
@@ -20,10 +21,11 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const [errorMessage, setErrorMessage] = useState<string>();
   const shouldSkipBlurSubmit = useRef(false);
 
-  // sync local value with prop value
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     setLocalValue(value);
-  }, [value]);
+  }
 
   const onCancel = () => {
     setLocalValue(value);
@@ -89,6 +91,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           size="lg"
           tooltip={t('page.editable-title.edit-tooltip', 'Edit title')}
           onClick={() => setIsEditing(true)}
+          data-testid={selectors.components.EditableTitle.editButton}
         />
       </div>
     </div>
@@ -120,6 +123,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           onBlur={onBlur}
           onChange={(event) => setLocalValue(event.currentTarget.value)}
           onFocus={() => setIsEditing(true)}
+          data-testid={selectors.components.EditableTitle.titleInput}
         />
       </Field>
       <div className={styles.buttons}>
@@ -178,6 +182,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       height: theme.spacing(theme.components.height.md),
+
+      h1: {
+        lineHeight: 'normal',
+      },
     }),
     buttons: css({
       display: 'flex',

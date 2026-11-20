@@ -4,7 +4,7 @@ import { type Dispatch, type SetStateAction, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { FileDropzone, useStyles2, Button, type DropzoneFile, Field } from '@grafana/ui';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 
 import { MediaType } from '../types';
 
@@ -35,7 +35,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   const [dropped, setDropped] = useState<boolean>(false);
   const [file, setFile] = useState<string>('');
 
-  const Preview = () => (
+  const preview = (
     <Field label={t('dimensions.file-uploader.preview.label-preview', 'Preview')}>
       <div className={styles.iconPreview}>
         {mediaType === MediaType.Icon && <SanitizedSVG src={file} className={styles.img} />}
@@ -69,13 +69,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
         },
       }}
     >
-      {error.message !== '' && dropped ? (
-        <p>{error.message}</p>
-      ) : dropped ? (
-        <Preview />
-      ) : (
-        <FileDropzoneCustomChildren />
-      )}
+      {error.message !== '' && dropped ? <p>{error.message}</p> : dropped ? preview : <FileDropzoneCustomChildren />}
     </FileDropzone>
   );
 };

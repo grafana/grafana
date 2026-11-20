@@ -19,8 +19,21 @@ const (
 	UnifiedVectorBackend    string = "unified-vector-backend"
 	NATS                    string = "nats"
 	FrontendServer          string = "frontend-server"
+	SwaggerServer           string = "swagger-server"
+	Router                  string = "router"
 	OperatorServer          string = "operator"
+
+	// CloudCoreAppsServer is registered by enterprise builds.
+	CloudCoreAppsServer string = "cloud-core-apps-server"
+	// CloudPluginOperator is registered by enterprise builds.
+	CloudPluginOperator string = "cloud-plugin-operator"
+	// CloudPluginManifests is registered by enterprise builds.
+	CloudPluginManifests string = "cloud-plugin-manifests"
 )
+
+// CloudCoreAppsServerPath is the path cloud-core-apps-server serves its apps
+// at on the instrumentation server.
+const CloudCoreAppsServerPath = "/cloud-core-apps-server/apps"
 
 var dependencyMap = map[string][]string{
 	MemberlistKV:     {InstrumentationServer},
@@ -32,15 +45,18 @@ var dependencyMap = map[string][]string{
 	SearchServer:  {UnifiedBackend, UnifiedVectorBackend, InstrumentationServer, GRPCServer, SearchServerRing},
 
 	// UnifiedBackend publishes resource watch notifications through the NATS
-	// publisher, so NATS must be initialized first.
+	// publisher, so NATS must be initialized first. It also depends on
+	// UnifiedVectorBackend so the vector backend is constructed before
+	// the backend's tenant deleter.
 	NATS:           {InstrumentationServer},
-	UnifiedBackend: {NATS},
+	UnifiedBackend: {NATS, UnifiedVectorBackend},
 
 	ZanzanaServer:           {InstrumentationServer},
-	AuthnServer:             {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, GRPCServer, MemberlistKV, SearchServerRing},
 	Core:                    {},
 	All:                     {Core},
 	FrontendServer:          {},
+	SwaggerServer:           {},
+	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
 }

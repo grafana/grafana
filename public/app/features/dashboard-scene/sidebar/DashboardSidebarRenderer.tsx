@@ -1,0 +1,352 @@
+import { css } from '@emotion/css';
+import { type ReactElement, useCallback, useEffect, useSyncExternalStore } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import {
+  useFlagGrafanaPanelActionsPopover,
+  useFlagGrafanaViewPanelPane,
+  useFlagFeedbackButton,
+} from '@grafana/runtime/internal';
+import {
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  type SceneVariable,
+  useSceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
+import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+
+import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
+import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
+import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
+import { DashboardInteractions } from '../utils/interactions';
+import { findVizPanelByPathId } from '../utils/pathId';
+import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+
+import { ShareExportDashboardButton } from './DashboardExportButton';
+import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
+import { ToggleViewPanePaneEvent } from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
+import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
+
+export interface Props {
+  dashboard: DashboardScene;
+}
+
+/**
+ * Making the Sidebar rendering completely standalone (not using sidebar.Component) in order to pass custom react props
+ */
+export function DashboardSidebarRenderer({ dashboard }: Props) {
+  const sidebar = dashboard.state.sidebar;
+  const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
+    shouldActivateOrKeepAlive: true,
+  });
+  const dashboardState = dashboard.useState();
+  const { meta, uid, viewPanel } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
+  const styles = useStyles2(getStyles, isEditing);
+  const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
+  const selectedObject = sidebar.getSelectedObject();
+  const sidebarContext = useSidebarContext();
+  const viewPanelPane = useFlagGrafanaViewPanelPane();
+  const feedbackButton = useFlagFeedbackButton();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+
+  const onOpenAddPane = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
+      if (!signal.aborted) {
+        sidebar.openPane(new AddNewPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  const onOpenCodePane = useCallback(async () => {
+    if (sidebar.state.openPane?.getId() !== 'code') {
+      DashboardInteractions.codePaneOpened();
+    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardCodePane({}));
+      }
+    });
+  }, [sidebar]);
+
+  const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      sidebar.closePane('explicit');
+      sidebarContext?.setIsHidden(true);
+      e.currentTarget.blur();
+    },
+    [sidebar, sidebarContext]
+  );
+
+  /**
+   * Clear selection if the object no longer exists
+   */
+  useEffect(() => {
+    if (!selectedObject && selectionContext.selected.length > 0) {
+      sidebar.fixSelectionOfRemovedObject();
+      return;
+    }
+  }, [selectedObject, selectionContext.selected, sidebar]);
+
+  return (
+    <>
+      {(openPane || isLoading) && (
+        <Sidebar.OpenPane>
+          {isLoading && <DashboardLoadingBar label={t('dashboard.loading.sidebar', 'Loading sidebar')} />}
+          {openPane ? (
+            <openPane.Component key={openPane.state.key} model={openPane} />
+          ) : (
+            <Sidebar.PaneHeader title={t('dashboard.loading.sidebar-title', 'Loading…')} />
+          )}
+        </Sidebar.OpenPane>
+      )}
+      <Sidebar.Toolbar>
+        {isEditing && (
+          <div className={styles.editGroup}>
+            <Sidebar.Button
+              icon="plus"
+              variant="primary"
+              onClick={onOpenAddPane}
+              title={t('dashboard.sidebar.add.title', 'Add')}
+              tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
+              data-testid={selectors.pages.Dashboard.Sidebar.addButton}
+              active={openPane?.getId() === 'add'}
+            />
+            <Sidebar.Button
+              icon="cog"
+              onClick={() => {
+                if (selectedObject === dashboard && openPane?.getId() === 'element') {
+                  sidebar.closePane();
+                } else {
+                  sidebar.openElementSettings(dashboard);
+                }
+              }}
+              title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
+              tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
+              data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
+              active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
+            />
+            {feedbackButton && (
+              <Sidebar.Button
+                style={{ color: '#ff671d' }}
+                icon="comment-alt-message"
+                onClick={() =>
+                  window.open(
+                    'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
+                    '_blank'
+                  )
+                }
+                title={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
+                tooltip={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
+              />
+            )}
+            <Sidebar.Button
+              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
+              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
+              icon="brackets-curly"
+              onClick={onOpenCodePane}
+              data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
+              active={openPane?.getId() === 'code'}
+            />
+          </div>
+        )}
+        <div className={styles.viewGroup}>
+          {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
+          <Sidebar.Button
+            icon="list-ui-alt"
+            onClick={() => {
+              DashboardInteractions.dashboardOutlineClicked();
+              sidebar.openPane(outlinePane!);
+            }}
+            title={t('dashboard.sidebar.outline.title', 'Outline')}
+            tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
+            data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
+            active={openPane instanceof DashboardOutline}
+          />
+          {dashboardNewLayoutsEnabled && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
+          {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
+          {renderEnterpriseItems()}
+          <DashboardSidebarExtensionPoint />
+          {viewPanel && viewPanelPane && (
+            <ViewPanelControlsButton
+              dashboard={dashboard}
+              viewPanel={viewPanel}
+              active={openPane?.getId() === 'view-panel-pane'}
+              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
+            />
+          )}
+          {Boolean(meta.isSnapshot) && (
+            <Sidebar.Button
+              data-testid="button-snapshot"
+              tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
+              title={t('dashboard.sidebar.snapshot.title', 'Source')}
+              icon="link"
+              onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
+            />
+          )}
+          <Sidebar.Divider />
+          <Sidebar.Button
+            icon={'arrow-to-right'}
+            onClick={onClickHideSidebar}
+            title={t('grafana-ui.sidebar.hide', 'Hide')}
+            data-testid={selectors.components.Sidebar.showHideToggle}
+          />
+        </div>
+      </Sidebar.Toolbar>
+    </>
+  );
+}
+
+function FiltersOverviewButton({
+  sidebar,
+  openPane,
+}: {
+  sidebar: DashboardSidebarLike;
+  openPane: DashboardSidebarPane | undefined;
+}) {
+  const variables: SceneVariable[] = sceneGraph.getVariables(sidebar)?.useState().variables ?? [];
+  const hasFilters = variables.some((v) => v.state.type === 'adhoc');
+
+  const onClick = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardFiltersOverviewPane } = await import(
+        /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardFiltersOverviewPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  if (!hasFilters) {
+    return null;
+  }
+
+  return (
+    <Sidebar.Button
+      icon="filter"
+      onClick={onClick}
+      title={t('dashboard.sidebar.filters.title', 'Filters')}
+      tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
+      active={openPane?.getId() === 'filters'}
+    />
+  );
+}
+
+interface ViewPanelControlsButtonProps {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: ViewPanelControlsButtonProps) {
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
+
+  const button = (
+    <Sidebar.Button
+      icon="layer-group"
+      onClick={onClick}
+      title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+      data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+      active={active}
+    />
+  );
+
+  if (!isActionsPopoverEnabled) {
+    return button;
+  }
+
+  return (
+    <ViewPanelControlsButtonForPathId dashboard={dashboard} viewPanel={viewPanel}>
+      {button}
+    </ViewPanelControlsButtonForPathId>
+  );
+}
+
+function ViewPanelControlsButtonForPathId({
+  dashboard,
+  viewPanel,
+  children,
+}: {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  children: ReactElement;
+}) {
+  const panel = useVizPanelByPathId(dashboard, viewPanel);
+
+  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{children}</ViewPanelControlsButtonForPanel> : null;
+}
+
+function useVizPanelByPathId(dashboard: DashboardScene, pathId: string): VizPanel | null {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      // The panel can be added after the first render, e.g. a repeat clone once its variable resolves.
+      // State changes anywhere in the dashboard bubble up to it, so any of them can be that addition.
+      const sub = dashboard.subscribeToEvent(SceneObjectStateChangedEvent, onChange);
+      return () => sub.unsubscribe();
+    },
+    [dashboard]
+  );
+
+  return useSyncExternalStore(subscribe, () => findVizPanelByPathId(dashboard, pathId));
+}
+
+function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel; children: ReactElement }) {
+  // Re-renders once the panel plugin, and with it its view panel options, has loaded.
+  panel.useState();
+
+  // Without the actions popover, the pane holds the only "Back to dashboard" button, so it always has content.
+  return !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel) ? children : null;
+}
+
+function renderEnterpriseItems() {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const showProps = { dashboard };
+
+  return dynamicDashNavActions.right.map((action, index) => {
+    if (action.show(showProps)) {
+      const ActionComponent = action.component;
+      return <ActionComponent key={index} dashboard={dashboard} />;
+    }
+    return null;
+  });
+}
+
+function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {
+  return {
+    editGroup: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderTopRightRadius: theme.shape.radius.default,
+    }),
+    viewGroup: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      paddingTop: isEditing ? 0 : theme.spacing(1),
+    }),
+  };
+}

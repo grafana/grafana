@@ -81,7 +81,7 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *back
 	return false, CachedResourceDataResponse{}, ""
 }
 
-var _ CachingService = &OSSCachingService{}
+var _ CachingService = (*OSSCachingService)(nil)
 
 // GetKey creates a prefixed cache key and uses the internal `encoder` to encode the query into a string
 func GetKey(namespace, prefix string, query interface{}) (string, error) {

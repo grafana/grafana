@@ -2,7 +2,7 @@
 /* eslint no-restricted-syntax: ["error", "SpreadElement"] */
 
 import { debounce } from 'lodash';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -34,7 +34,18 @@ export function useOptions<T extends string | number>(
 ) {
   const isAsync = typeof rawOptions === 'function';
 
-  const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
+  // Read `options` through a ref so the debounced loader keeps a stable identity even when
+  // consumers pass a new function on every render.
+  // TODO: switch to useEffectEvent once React stabilises it.
+  const rawOptionsRef = useRef(rawOptions);
+  rawOptionsRef.current = rawOptions;
+
+  const stableRawOptions = useCallback((searchTerm: string) => {
+    const currentRawOptions = rawOptionsRef.current;
+    return typeof currentRawOptions === 'function' ? currentRawOptions(searchTerm) : asyncNoop();
+  }, []);
+
+  const loadOptions = useLatestAsyncCall(stableRawOptions);
 
   const debouncedLoadOptions = useMemo(
     () =>
@@ -59,6 +70,10 @@ export function useOptions<T extends string | number>(
     [loadOptions]
   );
 
+  // Runs only on unmount (debouncedLoadOptions is stable): cancels a pending debounce timer
+  // so it can't fire after unmount. In-flight requests are handled by useLatestAsyncCall.
+  useEffect(() => () => debouncedLoadOptions.cancel(), [debouncedLoadOptions]);
+
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
   const [asyncError, setAsyncError] = useState(false);
@@ -70,6 +85,7 @@ export function useOptions<T extends string | number>(
   const addCustomValue = useCallback(
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
+      let customValueOption: ComboboxOption<T> | undefined;
       if (createCustomValue && userTypedSearch) {
         // Since the label of a normal option does not have to match its value and a custom option has the same value and label,
         // we just focus on the value to check if the option already exists
@@ -77,14 +93,15 @@ export function useOptions<T extends string | number>(
         if (!customValueExists) {
           // Make sure to clone the array first to avoid mutating the original array!
           currentOptions = currentOptions.slice();
-          currentOptions.unshift({
+          customValueOption = {
             label: userTypedSearch,
             value: userTypedSearch as T,
             description: customValueDescription ?? t('combobox.custom-value.description', 'Use custom value'),
-          });
+          };
+          currentOptions.unshift(customValueOption);
         }
       }
-      return currentOptions;
+      return { options: currentOptions, customValueOption };
     },
     [createCustomValue, customValueDescription, userTypedSearch]
   );
@@ -114,17 +131,26 @@ export function useOptions<T extends string | number>(
     return fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
   }, [asyncOptions, isAsync, rawOptions, stringifiedOptions, userTypedSearch]);
 
-  const [finalOptions, groupStartIndices] = useMemo(() => {
+  const finalOptions = useMemo(() => {
     const { options, groupStartIndices } = sortByGroup(filteredOptions);
+    const { options: optionsWithCustomValue, customValueOption } = addCustomValue(options);
 
-    return [addCustomValue(options), groupStartIndices];
+    return { options: optionsWithCustomValue, groupStartIndices, customValueOption };
   }, [filteredOptions, addCustomValue]);
 
   const resetSearch = useCallback(() => {
     setUserTypedSearch('');
   }, []);
 
-  return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError, resetSearch };
+  return {
+    options: finalOptions.options,
+    groupStartIndices: finalOptions.groupStartIndices,
+    customValueOption: finalOptions.customValueOption,
+    updateOptions,
+    asyncLoading,
+    asyncError,
+    resetSearch,
+  };
 }
 
 /**

@@ -98,7 +98,8 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 			ExpectedClient: &LDAPMock{
 				UserSearchResult: nil,
 			},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -164,7 +165,8 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -234,7 +236,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -320,7 +323,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -374,8 +378,9 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 
 	_, server := setupAPITest(t, func(a *Service) {
 		a.ldapService = &service.LDAPFakeService{
-			ExpectedClient: &LDAPMock{},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedClient:  &LDAPMock{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -405,6 +410,61 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
+func TestGetLDAPStatusAPIEndpoint_EnabledOnlyViaSSOSettings(t *testing.T) {
+	pingResult = []*multildap.ServerStatus{
+		{Host: "10.0.0.3", Port: 361, Available: true, Error: nil},
+	}
+
+	_, server := setupAPITest(t, func(a *Service) {
+		a.cfg.Enabled = false
+		a.ldapService = &service.LDAPFakeService{
+			ExpectedClient:  &LDAPMock{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true, // enabled via SSO settings
+		}
+	})
+
+	req := server.NewGetRequest("/api/admin/ldap/status")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.status:read": {}},
+		},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}
+
+func TestGetLDAPStatusAPIEndpoint_DisabledViaSSOSettings(t *testing.T) {
+	_, server := setupAPITest(t, func(a *Service) {
+		a.ldapService = &service.LDAPFakeService{
+			ExpectedClient:  &LDAPMock{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: false,
+		}
+	})
+
+	req := server.NewGetRequest("/api/admin/ldap/status")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.status:read": {}},
+		},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, `{"message":"LDAP is not enabled"}`, string(bodyBytes))
+}
+
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
@@ -415,7 +475,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 			ExpectedClient: &LDAPMock{UserSearchResult: &login.ExternalUserInfo{
 				Login: "ldap-daniel",
 			}},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -450,8 +511,9 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	_, server := setupAPITest(t, func(a *Service) {
 		a.userService = userServiceMock
 		a.ldapService = &service.LDAPFakeService{
-			ExpectedClient: &LDAPMock{},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedClient:  &LDAPMock{},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -487,8 +549,9 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		a.userService = userServiceMock
 		a.adminUser = "ldap-daniel"
 		a.ldapService = &service.LDAPFakeService{
-			ExpectedClient: &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedClient:  &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -521,8 +584,9 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 		a.userService = userServiceMock
 		a.authInfoService = &authinfotest.FakeService{ExpectedExternalUser: &login.ExternalUserInfo{IsDisabled: true, UserId: 34}}
 		a.ldapService = &service.LDAPFakeService{
-			ExpectedClient: &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
-			ExpectedConfig: &ldap.ServersConfig{},
+			ExpectedClient:  &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
+			ExpectedConfig:  &ldap.ServersConfig{},
+			ExpectedEnabled: true,
 		}
 	})
 
@@ -658,7 +722,8 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 					ExpectedClient: &LDAPMock{UserSearchResult: &login.ExternalUserInfo{
 						Login: "ldap-daniel",
 					}},
-					ExpectedConfig: &ldap.ServersConfig{},
+					ExpectedConfig:  &ldap.ServersConfig{},
+					ExpectedEnabled: true,
 				}
 			})
 			// Add minimal setup to pass handler

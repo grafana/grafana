@@ -3,8 +3,8 @@ import { autoUpdate, offset, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { debounce } from 'lodash';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { debounce, uniqueId } from 'lodash';
+import { useCallback, useEffect, useId, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -13,7 +13,18 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
-import { Button, floatingUtils, Icon, Input, ModalsController, Portal, ScrollContainer, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  floatingUtils,
+  Icon,
+  IconButton,
+  Input,
+  ModalsController,
+  Portal,
+  ScrollContainer,
+  Spinner,
+  useStyles2,
+} from '@grafana/ui';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { type GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
@@ -22,7 +33,7 @@ import { useDatasource, useDatasources } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { dataSourceLabel } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -44,8 +55,17 @@ export interface DataSourcePickerProps {
   noDefault?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  invalid?: boolean;
+  isLoading?: boolean;
+  /** When provided, a clear button is shown while a data source is selected */
+  onClear?: () => void;
   /** When provided, used to resolve variable expressions (e.g. section-level datasource variables) */
   scopedVars?: ScopedVars;
+  /**
+   * Where the picker is rendered, for the datasource_picker_select CUJ. Only needed where the URL
+   * doesn't identify the surface (e.g. the dashboard edit pane); otherwise it is derived from the URL.
+   */
+  journeySurface?: 'variable_editor' | 'annotation_editor';
 
   // DS filters
   tracing?: boolean;
@@ -71,6 +91,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     noDefault = false,
     disabled = false,
     placeholder = 'Select data source',
+    invalid = false,
+    isLoading = false,
+    onClear,
+    journeySurface,
     ...restProps
   } = props;
 
@@ -78,6 +102,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
+  const listboxId = useId();
+  const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
@@ -101,6 +127,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
+
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -147,11 +174,72 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     [refs]
   );
 
-  const onClose = useCallback(() => {
+  const closeDropdown = useCallback(() => {
     setFilterTerm('');
     setOpen(false);
     markerElement?.focus();
   }, [setOpen, markerElement]);
+
+  // The open dropdown's cycle ID, for the datasource_picker_select CUJ. Events carry it so a late
+  // event from one picker can't end the journey of another picker opened in the meantime.
+  const cycleIdRef = useRef<string | null>(null);
+  // Kept after handing off to the advanced modal, whose selection comes back through onChange.
+  const modalCycleIdRef = useRef<string | null>(null);
+
+  // Ends the open cycle, reporting how it ended. Without an interaction name the cycle is handed off
+  // to select_ds, which the journey already listens to.
+  const endCycle = useCallback(
+    (interaction?: string, properties: Record<string, unknown> = {}) => {
+      // A pending search belongs to this cycle, so send it before the cycle ends
+      debouncedTrackSearch.flush();
+      const cycleId = cycleIdRef.current;
+      cycleIdRef.current = null;
+      modalCycleIdRef.current = null;
+      if (cycleId && interaction) {
+        reportInteraction(interaction, { ...properties, cycle_id: cycleId }, { silent: true });
+      }
+    },
+    [debouncedTrackSearch]
+  );
+
+  // Every close that isn't a choice (click outside, Escape, Tab out) is a dismissal.
+  const onClose = useCallback(() => {
+    endCycle('dashboards_dspicker_dismissed');
+    closeDropdown();
+  }, [endCycle, closeDropdown]);
+
+  const closeHandedOff = useCallback(() => {
+    endCycle();
+    closeDropdown();
+  }, [endCycle, closeDropdown]);
+
+  const handOffToModal = useCallback(() => {
+    debouncedTrackSearch.flush();
+    modalCycleIdRef.current = cycleIdRef.current;
+    cycleIdRef.current = null;
+    closeDropdown();
+  }, [debouncedTrackSearch, closeDropdown]);
+
+  useEffect(() => () => endCycle('dashboards_dspicker_dismissed', { reason: 'unmount' }), [endCycle]);
+
+  // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
+  const suffix = (
+    <>
+      {onClear && currentValue && !isLoading && (
+        <IconButton
+          name="times"
+          aria-label={t('datasources.data-source-picker.clear-button', 'Clear data source')}
+          onClick={(e) => {
+            // Don't let the click bubble up to the trigger, which would open the dropdown
+            e.stopPropagation();
+            onClose();
+            onClear();
+          }}
+        />
+      )}
+      {isLoading ? <Spinner inline /> : <Icon name={isOpen ? 'search' : 'angle-down'} />}
+    </>
+  );
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -172,6 +260,17 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   );
 
   function openDropdown() {
+    if (!cycleIdRef.current) {
+      // Module-wide rather than useId(), which is only unique within one React root
+      const cycleId = uniqueId('dspicker-');
+      cycleIdRef.current = cycleId;
+      modalCycleIdRef.current = null;
+      reportInteraction(
+        'dashboards_dspicker_opened',
+        { surface: journeySurface ?? '', cycle_id: cycleId },
+        { silent: true }
+      );
+    }
     setOpen(true);
     markerElement?.focus();
   }
@@ -243,9 +342,15 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
           aria-label={t('datasources.data-source-picker.aria-label-select-a-data-source', 'Select a data source')}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          aria-activedescendant={isOpen ? activeItemId : undefined}
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
-          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
+          suffix={suffix}
+          invalid={invalid}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
           onFocus={() => {
             setInputHasFocus(true);
@@ -279,9 +384,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-                onClose();
                 if (ds.uid !== currentValue?.uid) {
-                  onChange(ds, defaultQueries);
+                  closeHandedOff();
+                  // Reported before onChange so the journey still ends if onChange throws or navigates
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
@@ -289,13 +394,29 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                       ? favoriteDataSources.isFavoriteDatasource(ds.uid)
                       : undefined,
                   });
+                  onChange(ds, defaultQueries);
+                } else {
+                  // A selection in the advanced modal comes back here after the dropdown handed off its cycle
+                  cycleIdRef.current ??= modalCycleIdRef.current;
+                  endCycle('dashboards_dspicker_current_reselected', { ds_type: ds.type });
+                  closeDropdown();
                 }
               }}
-              onClose={onClose}
-              onDismiss={onClose}
+              onClose={handOffToModal}
+              onListRendered={(listedCount, searched) => {
+                if (cycleIdRef.current) {
+                  reportInteraction(
+                    'dashboards_dspicker_list_rendered',
+                    { total_listed: listedCount, searched, cycle_id: cycleIdRef.current },
+                    { silent: true }
+                  );
+                }
+              }}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
+              listboxId={listboxId}
+              onActiveItemChange={setActiveItemId}
             />
           </div>
         </Portal>
@@ -316,6 +437,7 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
       pointerEvents: props.disabled ? 'none' : 'auto',
     }),
     input: css({
+      cursor: 'pointer',
       'input::placeholder': {
         color: props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary,
       },
@@ -327,12 +449,15 @@ interface PickerContentProps extends DataSourcePickerProps {
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
+  /** Closes the dropdown to hand off to the advanced modal */
   onClose: () => void;
-  onDismiss: () => void;
+  onListRendered: (listedCount: number, searched: boolean) => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
+  listboxId: string;
+  onActiveItemChange: (id: string | undefined) => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -358,7 +483,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
-          filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
+          searchTerm={filterTerm ?? ''}
+          nonSearchFilter={filter}
           onClickEmptyStateCTA={() =>
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
@@ -366,6 +492,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           }
           dataSources={dataSources}
           scrollRef={scrollRef}
+          onRendered={props.onListRendered}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>
@@ -377,28 +504,40 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 PickerContent.displayName = 'PickerContent';
 
 function getStylesPickerContent(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-      background: theme.colors.background.elevated,
-      borderRadius: theme.shape.radius.default,
-      boxShadow: theme.shadows.z3,
-      overflow: 'hidden',
-      minWidth: calculateMinWidth('97vw'),
-      [theme.breakpoints.up('md')]: {
-        minWidth: calculateMinWidth('80vw'),
+    container: css(
+      {
+        display: 'flex',
+        flexDirection: 'column',
+        background: theme.colors.background.elevated,
+        borderRadius: theme.shape.radius.default,
+        boxShadow: theme.shadows.z3,
+        overflow: 'hidden',
+        // floating-ui's size() middleware sets the actual max height, but only after the first render. Without an
+        // initial bound the list would be as tall as all its rows when the virtualizer first measures it, and every
+        // row would get rendered.
+        maxHeight: '100vh',
+        minWidth: calculateMinWidth('97vw'),
+        [theme.breakpoints.up('md')]: {
+          minWidth: calculateMinWidth('80vw'),
+        },
+        [theme.breakpoints.up('lg')]: {
+          minWidth: calculateMinWidth('60vw'),
+        },
+        [theme.breakpoints.up('xl')]: {
+          minWidth: calculateMinWidth('50vw'),
+        },
+        [theme.breakpoints.up('xxl')]: {
+          minWidth: calculateMinWidth('40vw'),
+        },
       },
-      [theme.breakpoints.up('lg')]: {
-        minWidth: calculateMinWidth('60vw'),
-      },
-      [theme.breakpoints.up('xl')]: {
-        minWidth: calculateMinWidth('50vw'),
-      },
-      [theme.breakpoints.up('xxl')]: {
-        minWidth: calculateMinWidth('40vw'),
-      },
-    }),
+      visualRefreshEnabled && {
+        boxShadow: theme.shadows.z2,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+      }
+    ),
     picker: css({
       background: theme.colors.background.secondary,
     }),

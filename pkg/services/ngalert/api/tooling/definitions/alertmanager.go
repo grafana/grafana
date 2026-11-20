@@ -3,19 +3,16 @@ package definitions
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
-
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -250,26 +247,13 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	Receiver                  = definition.Receiver
-	Regexp                    = config.Regexp
-	Matchers                  = config.Matchers
-	MatchRegexps              = config.MatchRegexps
+	Regexp                    = common.Regexp
+	Matchers                  = common.Matchers
+	MatchRegexps              = common.MatchRegexps
 	AmMuteTimeInterval        = config.MuteTimeInterval
 	TimeInterval              = config.TimeInterval
-	InhibitRule               = config.InhibitRule
+	InhibitRule               = common.InhibitRule
 )
-
-const (
-	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
-)
-
-var (
-	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
-)
-
-func errInvalidExtraConfiguration(err error) error {
-	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
-}
 
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
@@ -410,31 +394,15 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	c := config.Config{}
-	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+	var cfg PostableApiAlertingConfig
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &cfg); err != nil {
 		return err
 	}
 
 	s.Cluster = amStatus.Cluster
-	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:            c.Global,
-		Route:             AsGrafanaRoute(c.Route),
-		InhibitRules:      c.InhibitRules,
-		Templates:         c.Templates,
-		MuteTimeIntervals: c.MuteTimeIntervals,
-		TimeIntervals:     c.TimeIntervals,
-	}}
+	s.Config = &cfg
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
-
-	type overrides struct {
-		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-	}
-
-	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &overrides{Receivers: &s.Config.Receivers}); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -612,6 +580,9 @@ type ExtraConfiguration struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// ManagedBy is "manual" or "auto-sync", computed server-side so callers don't need configs:get
+	// to tell the two apart.
+	ManagedBy string `yaml:"managed_by" json:"managed_by"`
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
@@ -625,15 +596,6 @@ func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
 	}
 
 	return prometheusConfig, nil
-}
-
-func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
-	prometheusConfig, err := c.parsePrometheusConfig()
-	if err != nil {
-		return PostableApiAlertingConfig{}, err
-	}
-
-	return fromPrometheusConfig(prometheusConfig), nil
 }
 
 // GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
@@ -650,115 +612,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 	}
 
 	return string(configYAML), nil
-}
-
-func (c ExtraConfiguration) Validate() error {
-	if c.Identifier == "" {
-		return errors.New("identifier is required")
-	}
-
-	cfg, err := c.GetAlertmanagerConfig()
-	if err != nil {
-		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
-	}
-	err = cfg.Validate()
-	if err != nil {
-		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
-	}
-
-	return nil
-}
-
-func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
-	config := PostableApiAlertingConfig{
-		Config: Config{
-			Global:            prometheusConfig.Global,
-			Route:             AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules:      prometheusConfig.InhibitRules,
-			TimeIntervals:     prometheusConfig.TimeIntervals,
-			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
-			Templates:         prometheusConfig.Templates,
-		},
-	}
-
-	for _, receiver := range prometheusConfig.Receivers {
-		config.Receivers = append(config.Receivers, &PostableApiReceiver{
-			Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver),
-		})
-	}
-
-	return config
-}
-
-// ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
-// GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to
-// definitions.Route explicit.
-type ManagedRoutes map[string]*definition.Route
-
-func (mr *ManagedRoutes) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain ManagedRoutes
-	if err := unmarshal((*plain)(mr)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
-	// Divert to the yaml unmarshaller as downstream Routes only define UnmarshalYAML.
-	return yaml.Unmarshal(b, &mr)
-}
-
-// swagger:model
-type PostableUserConfig struct {
-	TemplateFiles          map[string]string                         `yaml:"template_files,omitempty" json:"template_files,omitempty"`
-	ManagedTemplates       map[string]definition.PostableApiTemplate `yaml:"managed_templates,omitempty" json:"managed_templates,omitempty"`
-	AlertmanagerConfig     PostableApiAlertingConfig                 `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs           []ExtraConfiguration                      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes          ManagedRoutes                             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
-	ManagedInhibitionRules ManagedInhibitionRules                    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
-}
-
-func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
-	type plain PostableUserConfig
-	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
-		return err
-	}
-
-	// validate first
-	if err := c.validate(); err != nil {
-		return err
-	}
-
-	if len(c.ExtraConfigs) > 1 {
-		return errors.New("only one extra config is supported")
-	}
-
-	return nil
-}
-
-func (c *PostableUserConfig) validate() error {
-	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
-	if c.AlertmanagerConfig.Route == nil {
-		return fmt.Errorf("no route provided in config")
-	}
-
-	// Check if continue in root route.
-	if c.AlertmanagerConfig.Route.Continue {
-		return fmt.Errorf("cannot have continue in root route")
-	}
-
-	return nil
-}
-
-// GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
-func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
-	UIDs := make(map[string]*PostableGrafanaReceiver)
-	for _, r := range c.AlertmanagerConfig.Receivers {
-		for _, gr := range r.GrafanaManagedReceivers {
-			UIDs[gr.UID] = gr
-		}
-	}
-	return UIDs
 }
 
 // swagger:model

@@ -28,12 +28,18 @@ type Connection interface {
 	// The repo parameter specifies the repository name the token should be scoped to.
 	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*ExpirableSecureValue, error)
 
+	// Test checks if the connection information actually works.
+	Test(ctx context.Context) (*provisioning.TestResults, error)
+}
+
+// RepositoryLister is an optional interface that connections can implement if their
+// provider can list the repositories accessible through the connection.
+//
+//go:generate mockery --name RepositoryLister --structname MockRepositoryLister --inpackage --filename connection_repository_lister_mock.go --with-expecter
+type RepositoryLister interface {
 	// ListRepositories returns the list of repositories accessible through this connection.
 	// The repositories returned are external repositories from the git provider (e.g., GitHub, GitLab).
 	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
-
-	// Test checks if the connection information actually works.
-	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
 // TokenConnection is an optional interface that connections can implement if they need
@@ -41,13 +47,23 @@ type Connection interface {
 //
 //go:generate mockery --name TokenConnection --structname MockTokenConnection --inpackage --filename connection_token_mock.go --with-expecter
 type TokenConnection interface {
-	// TokenCreationTime returns when the underlying token has been created.
-	TokenCreationTime(ctx context.Context) (time.Time, error)
-	// TokenExpiration returns the underlying token expiration.
-	TokenExpiration(ctx context.Context) (time.Time, error)
-	// TokenValid returns whether the underlying token is valid.
-	TokenValid(ctx context.Context) bool
-	// GenerateConnectionToken generates a connection-level token.
-	// Returns the generated token value.
-	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)
+	// ValidateToken checks that the stored token can authenticate requests
+	// right now, and reports when it stops working (zero when it never expires).
+	ValidateToken() (expiresAt time.Time, err error)
+	// GenerateConnectionToken mints a new connection-level token and returns it
+	// together with when it expires (zero ExpiresAt when the token never expires),
+	// so the controller can persist the expiration on the connection status.
+	GenerateConnectionToken(ctx context.Context) (*ExpirableSecureValue, error)
+}
+
+// OAuthConnection is the interface implemented by all OAuth app connections.
+//
+//go:generate mockery --name OAuthConnection --structname MockOAuthConnection --inpackage --filename connection_oauth_mock.go --with-expecter
+type OAuthConnection interface {
+	// ExchangeAuthorizationCode exchanges an OAuth authorization code for tokens.
+	// Returns the value to store as the connection token together with when it
+	// expires (zero ExpiresAt when the token never expires), so the authorization
+	// handler can persist the expiration on the connection status — matching the
+	// refresh path, so an OAuth token's very first lifetime is also observable.
+	ExchangeAuthorizationCode(ctx context.Context, code, redirectURI string) (*ExpirableSecureValue, error)
 }

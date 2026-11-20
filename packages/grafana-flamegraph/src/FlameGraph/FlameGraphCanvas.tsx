@@ -9,7 +9,6 @@ import {
   type ColorScheme,
   type ColorSchemeDiff,
   type PaneView,
-  type SelectedView,
   type ViewMode,
   type TextAlign,
 } from '../types';
@@ -48,10 +47,10 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  selectedView?: SelectedView;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
+  sandwichItem?: string;
 };
 
 const FlameGraphCanvas = ({
@@ -77,10 +76,10 @@ const FlameGraphCanvas = ({
   setCollapsedMap,
   collapsing,
   getExtraContextMenuButtons,
-  selectedView,
   viewMode,
   paneView,
   search,
+  sandwichItem,
 }: Props) => {
   const styles = getStyles();
 
@@ -236,10 +235,10 @@ const FlameGraphCanvas = ({
           allGroupsCollapsed={Array.from(collapsedMap.values()).every((i) => i.collapsed)}
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
-          selectedView={selectedView}
           viewMode={viewMode}
           paneView={paneView}
           search={search}
+          sandwichItem={sandwichItem}
         />
       )}
     </div>

@@ -1,0 +1,150 @@
+import { CoreApp } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
+import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
+import { QueryEditorType } from './constants';
+import {
+  type CardActionSource,
+  trackEditorVersionToggle,
+  isPanelEditorApp,
+  trackQueryMenuAction,
+  trackReorder,
+  trackTransformationSearch,
+  trackTransformationToolAction,
+} from './tracking';
+
+jest.mock('@grafana/faro-web-sdk', () => ({
+  faro: {
+    api: {
+      pushEvent: jest.fn(),
+    },
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const mockPushEvent = jest.mocked(faro.api.pushEvent);
+const mockReportInteraction = jest.mocked(reportInteraction);
+
+describe('trackEditorVersionToggle', () => {
+  afterEach(() => {
+    setTestFlags({});
+    jest.clearAllMocks();
+  });
+
+  it.each([
+    ['upgrade', false],
+    ['upgrade', true],
+    ['downgrade', false],
+    ['downgrade', true],
+  ] as const)('dual-writes direction=%s with paneledit.buttonLabels=%s', (direction, buttonLabelsEnabled) => {
+    setTestFlags({ [FlagKeys.PaneleditButtonLabels]: buttonLabelsEnabled });
+
+    trackEditorVersionToggle(direction);
+
+    const payload = {
+      action: 'toggle_editor_version',
+      direction,
+      'paneledit.buttonLabels': String(buttonLabelsEnabled),
+    };
+    expect(mockPushEvent).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', payload);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', payload);
+  });
+});
+
+describe.each([
+  [
+    'trackQueryMenuAction',
+    (source?: CardActionSource) => trackQueryMenuAction('duplicate', QueryEditorType.Query, source),
+  ],
+  [
+    'trackTransformationToolAction',
+    (source?: CardActionSource) => trackTransformationToolAction('toggle_help', source),
+  ],
+])('%s', (_, track) => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('includes the source when given', () => {
+    track('stacked_header');
+
+    expect(mockReportInteraction.mock.calls[0][1]).toHaveProperty('source', 'stacked_header');
+  });
+
+  it('omits the source when not given', () => {
+    track();
+
+    expect(mockReportInteraction.mock.calls[0][1]).not.toHaveProperty('source');
+  });
+});
+
+describe('events both query editors send', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('reports the next editor by default', () => {
+    trackReorder('query');
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'reorder', item_type: 'query', editor: 'next' },
+      undefined
+    );
+  });
+
+  it('reports the classic editor, silently when asked', () => {
+    trackReorder('query', { editor: 'classic', silent: true });
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'reorder', item_type: 'query', editor: 'classic' },
+      { silent: true }
+    );
+  });
+});
+
+describe('isPanelEditorApp', () => {
+  it.each([
+    { app: undefined, expected: true },
+    { app: CoreApp.PanelEditor, expected: true },
+    { app: CoreApp.Explore, expected: false },
+    { app: CoreApp.UnifiedAlerting, expected: false },
+  ])('returns $expected for $app', ({ app, expected }) => {
+    expect(isPanelEditorApp(app)).toBe(expected);
+  });
+});
+
+describe('trackTransformationSearch', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it('reports that a search happened without the search text', () => {
+    trackTransformationSearch('customer revenue');
+    jest.advanceTimersByTime(300);
+
+    expect(mockReportInteraction).toHaveBeenCalledTimes(1);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+      action: 'search_transformations',
+    });
+  });
+
+  it('does not report a cleared search', () => {
+    trackTransformationSearch('');
+    jest.advanceTimersByTime(300);
+
+    expect(mockReportInteraction).not.toHaveBeenCalled();
+  });
+});

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -37,6 +38,10 @@ type PluginProxy struct {
 	tracer           tracing.Tracer
 	transport        *http.Transport
 	features         featuremgmt.FeatureToggles
+	// idTokenDeriver mints X-Grafana-Id from signedInUser's OBO access token when signedInUser
+	// carries no id token of its own. Nil disables that fallback (see
+	// proxyutil.ApplyForwardIDHeader).
+	idTokenDeriver authnlib.IDTokenDeriver
 }
 
 // NewPluginProxy creates a plugin proxy.
@@ -45,7 +50,8 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 	proxyPath string,
 	dataProxyLogging bool, sendUserHeader bool,
 	secureJsonData pluginsettings.DecryptedSecureJSONLoader, tracer tracing.Tracer,
-	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
+	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles,
+	idTokenDeriver authnlib.IDTokenDeriver) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:    accessControl,
 		ps:               ps,
@@ -60,31 +66,18 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 		tracer:           tracer,
 		transport:        transport,
 		features:         features,
+		idTokenDeriver:   idTokenDeriver,
 	}, nil
 }
 
 func (proxy *PluginProxy) HandleRequest() {
-	// found route if there are any
-	for _, route := range proxy.pluginRoutes {
-		// method match
-		if route.Method != "" && route.Method != "*" && route.Method != proxy.req.Method {
-			continue
-		}
-
-		t := web.NewTree()
-		t.Add(route.Path, nil)
-		_, params, isMatch := t.Match(proxy.proxyPath)
-
-		if !isMatch {
-			continue
-		}
-
+	if route, path, hasPath := MatchRoute(proxy.pluginRoutes, proxy.req.Method, proxy.proxyPath); route != nil {
 		if !proxy.hasAccessToRoute(route) {
 			writeJSONErr(proxy.resp, proxy.req, http.StatusForbidden, "plugin proxy route access denied", nil)
 			return
 		}
 
-		if path, exists := params["*"]; exists {
+		if hasPath {
 			hasSlash := strings.HasSuffix(proxy.proxyPath, "/")
 			proxy.proxyPath = path
 
@@ -97,7 +90,6 @@ func (proxy *PluginProxy) HandleRequest() {
 		}
 
 		proxy.matchedRoute = route
-		break
 	}
 
 	if proxy.matchedRoute == nil {
@@ -136,6 +128,27 @@ func (proxy *PluginProxy) HandleRequest() {
 	reverseProxy.ServeHTTP(proxy.resp, proxy.req)
 }
 
+// MatchRoute returns the first of routes, in the order they are declared, that
+// serves method and proxyPath. path is what a final * in the route's path
+// matched, and hasPath is whether it has one.
+func MatchRoute(routes []*plugins.Route, method, proxyPath string) (route *plugins.Route, path string, hasPath bool) {
+	for _, route := range routes {
+		if route.Method != "" && route.Method != "*" && route.Method != method {
+			continue
+		}
+
+		t := web.NewTree()
+		t.Add(route.Path, nil)
+		_, params, isMatch := t.Match(proxyPath)
+		if !isMatch {
+			continue
+		}
+		path, hasPath = params["*"]
+		return route, path, hasPath
+	}
+	return nil, "", false
+}
+
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	if route.ReqAction != "" {
 		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
@@ -150,7 +163,10 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 		return hasAccess
 	}
 	if route.ReqRole.IsValid() {
-		return proxy.signedInUser.GetOrgRole().Includes(route.ReqRole)
+		if hasUserRole := proxy.signedInUser.GetOrgRole().Includes(route.ReqRole); !hasUserRole {
+			logger.FromContext(proxy.req.Context()).Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.req.URL.Path, "role", route.ReqRole)
+			return false
+		}
 	}
 	return true
 }
@@ -197,7 +213,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
 	proxyutil.ApplyUserHeader(proxy.sendUserHeader, req, proxy.signedInUser)
-	proxyutil.ApplyForwardIDHeader(req, proxy.signedInUser)
+	proxyutil.ApplyForwardIDHeader(req.Context(), req, proxy.signedInUser, proxy.idTokenDeriver)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to render plugin headers", err)

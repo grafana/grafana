@@ -12,10 +12,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	v1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
@@ -24,6 +23,9 @@ var appManifestData = app.ManifestData{
 	AppDisplayName:   "folder",
 	Group:            "folder.grafana.app",
 	PreferredVersion: "v1",
+	Embed: map[string]app.ManifestResourceEmbed{
+		"folders": {ReembedVersion: 1},
+	},
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1",
@@ -32,17 +34,46 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: new(true),
+						Global: new(true),
+					},
+					Embed: &app.ManifestVersionKindEmbed{
+						Fields: []app.ManifestVersionKindEmbedField{
+							{
+								Name: "title",
+								Path: "spec.title",
+							},
+							{
+								Name: "description",
+								Path: "spec.description",
+							},
+						},
+					},
 					SelectableFields: []string{
 						"spec.title",
 					},
 				},
 			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
+		},
+
+		{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "PendingFolderDeletion",
+					Plural:     "PendingFolderDeletions",
+					Resource:   "pendingfolderdeletions",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: new(false),
+					},
+				},
 			},
 		},
 
@@ -53,17 +84,29 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Folder",
 					Plural:     "Folders",
+					Resource:   "folders",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: new(true),
+						Global: new(true),
+					},
+					Embed: &app.ManifestVersionKindEmbed{
+						Fields: []app.ManifestVersionKindEmbedField{
+							{
+								Name: "title",
+								Path: "spec.title",
+							},
+							{
+								Name: "description",
+								Path: "spec.description",
+							},
+						},
+					},
 					SelectableFields: []string{
 						"spec.title",
 					},
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},
@@ -78,8 +121,9 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Folder/v1":      v1.FolderKind(),
-	"Folder/v1beta1": v1beta1.FolderKind(),
+	"Folder/v1":                      v1.FolderKind(),
+	"PendingFolderDeletion/v1alpha1": v1alpha1.PendingFolderDeletionKind(),
+	"Folder/v1beta1":                 v1beta1.FolderKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

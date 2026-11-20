@@ -4,21 +4,16 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToSchemaV2Variables';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  getEffectiveVariableParentPath,
-  isSectionVariablesFeatureEnabled,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
@@ -27,7 +22,7 @@ export type UpdateVariablePayload = z.infer<typeof updateVariablePayloadSchema>;
 
 export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
   name: 'UPDATE_VARIABLE',
-  description: payloads.updateVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.updateVariable)?.description ?? '',
 
   payloadSchema: payloads.updateVariable,
   permission: requiresEdit,
@@ -39,13 +34,12 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind, parentPath } = payload;
-      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
-      const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
+      const effectiveParentPath = parentPath ?? '/';
 
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }
@@ -68,12 +62,33 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       }
 
       const previousState = currentVariables[existingIndex].state;
+      const previousSet = scopeOwner.state.$variables;
+      const previousValue = previousSet
+        ? sceneVariablesSetToSchemaV2Variables(previousSet).find((variable) => variable.spec.name === name)
+        : undefined;
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
+      // Preserve scene identity across the replacement - element pickers, highlight
+      // overlays, and attached assistant context address the variable by scene key.
+      newSceneVariable.setState({ key: previousState.key });
       currentVariables[existingIndex] = newSceneVariable;
 
-      replaceScopeVariableSet(scopeOwner, currentVariables);
+      const newSet = replaceScopeVariableSet(scopeOwner, currentVariables);
+      const newValue = newSet
+        ? sceneVariablesSetToSchemaV2Variables(newSet).find(
+            (variable) => variable.spec.name === newSceneVariable.state.name
+          )
+        : undefined;
+
+      // The element edit pane memoizes its editable element per selection, so a pane
+      // open on the replaced variable would keep editing the detached object.
+      // Re-selecting the successor (same key, force) remounts the pane against it.
+      const editPane = scene.state.sidebar;
+      const selected = editPane?.state.selectionContext.selected;
+      if (selected?.length === 1 && selected[0].id === previousState.key) {
+        editPane.selectObject(newSceneVariable, { force: true });
+      }
 
       const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
@@ -83,8 +98,8 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
         changes: [
           {
             path: changePath,
-            previousValue: previousState,
-            newValue: variableKind,
+            previousValue,
+            newValue,
           },
         ],
       };

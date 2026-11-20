@@ -30,10 +30,9 @@ import {
   type StreamingDataFrame,
   DataTopic,
 } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceInstance } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/runSharedRequest';
@@ -525,5 +524,5 @@ async function getDataSource(
     return datasource;
   }
 
-  return await getDatasourceSrv().get(datasource, scopedVars);
+  return await getDataSourceInstance(datasource, scopedVars);
 }

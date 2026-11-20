@@ -1,4 +1,9 @@
-import { displayNameOverrideProcessor, identityOverrideProcessor } from '../../field/overrides/processors';
+import {
+  displayNameOverrideProcessor,
+  identityOverrideProcessor,
+  numberOverrideProcessor,
+  thresholdsOverrideProcessor,
+} from '../../field/overrides/processors';
 import { ThresholdsMode } from '../../types/thresholds';
 
 export const mockStandardProperties = () => {
@@ -42,7 +47,8 @@ export const mockStandardProperties = () => {
 
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
+    process: numberOverrideProcessor,
 
     settings: {
       placeholder: 'auto',
@@ -58,7 +64,8 @@ export const mockStandardProperties = () => {
 
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
+    process: numberOverrideProcessor,
 
     settings: {
       placeholder: 'auto',
@@ -92,7 +99,8 @@ export const mockStandardProperties = () => {
 
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    // the real processor, so applyFieldOverrides-level tests exercise varMappings resolution
+    process: numberOverrideProcessor,
 
     settings: {
       placeholder: 'auto',
@@ -112,7 +120,8 @@ export const mockStandardProperties = () => {
 
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    // the real processor, so applyFieldOverrides-level tests exercise valueExpr resolution
+    process: thresholdsOverrideProcessor,
     settings: {},
     defaultValue: {
       mode: ThresholdsMode.Absolute,

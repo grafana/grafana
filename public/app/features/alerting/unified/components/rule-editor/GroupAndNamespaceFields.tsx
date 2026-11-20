@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
@@ -17,7 +18,6 @@ interface Props {
 export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const {
     control,
-    watch,
     formState: { errors },
     setValue,
   } = useFormContext<RuleFormValues>();
@@ -25,7 +25,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const style = useStyles2(getStyle);
   const { namespaceGroups, isLoading } = useGetNameSpacesByDatasourceName(rulesSourceName);
 
-  const namespace = watch('namespace');
+  const namespace = useWatch({ control, name: 'namespace' });
 
   const namespaceOptions: Array<SelectableValue<string>> = useMemo(
     () =>
@@ -77,7 +77,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         />
       </Field>
       <Field
-        data-testid="group-picker"
+        data-testid={selectors.components.AlertRules.groupPicker}
         label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it

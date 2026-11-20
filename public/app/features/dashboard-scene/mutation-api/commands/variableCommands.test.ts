@@ -1,5 +1,4 @@
 import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -11,8 +10,10 @@ import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+function buildMockScene(
+  options: { editable?: boolean; isEditing?: boolean; isPlanning?: boolean } = {}
+): DashboardScene {
+  const { editable = true, isEditing = false, isPlanning = false } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
@@ -21,10 +22,12 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => isPlanning),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -50,10 +53,6 @@ describe('Variable mutation commands', () => {
     client = new DashboardMutationClient(scene);
   });
 
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   it('ADD_VARIABLE adds a variable to the dashboard', async () => {
     const result: MutationResult = await client.execute({
       type: 'ADD_VARIABLE',
@@ -71,6 +70,42 @@ describe('Variable mutation commands', () => {
     expect(result.success).toBe(true);
     expect(result.changes.length).toBeGreaterThan(0);
     expect(result.changes[0].path).toBe('/variables/env');
+  });
+
+  it('ADD_VARIABLE rejects the deprecated GroupByVariable kind and points to enableGroupBy', async () => {
+    const result = await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: {
+          kind: 'GroupByVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: { name: 'groupBy' },
+        },
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('variable.kind: GroupByVariable is no longer supported');
+    expect(result.error).toContain('spec.enableGroupBy: true');
+  });
+
+  it('UPDATE_VARIABLE rejects turning a variable into a GroupByVariable', async () => {
+    await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: { variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } } },
+    });
+
+    const result = await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: {
+        name: 'env',
+        variable: { kind: 'GroupByVariable', group: 'prometheus', datasource: { name: 'prom' }, spec: { name: 'env' } },
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('variable.kind: GroupByVariable is no longer supported');
   });
 
   it('LIST_VARIABLES returns dashboard variables', async () => {
@@ -184,8 +219,41 @@ describe('Variable mutation commands', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
-    expect(result.changes[0].path).toBe('/variables/env');
+    expect(result.changes).toEqual([
+      {
+        path: '/variables/env',
+        previousValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod' }),
+        }),
+        newValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod,canary' }),
+        }),
+      },
+    ]);
+  });
+
+  it('UPDATE_VARIABLE preserves the scene key across the replacement', async () => {
+    await client.execute({
+      type: 'ADD_VARIABLE',
+      payload: {
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod' } },
+      },
+    });
+    const keyBefore = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyBefore).toBeDefined();
+
+    await client.execute({
+      type: 'UPDATE_VARIABLE',
+      payload: {
+        name: 'env',
+        variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,prod,canary' } },
+      },
+    });
+
+    const keyAfter = scene.state.$variables?.state.variables.find((v) => v.state.name === 'env')?.state.key;
+    expect(keyAfter).toBe(keyBefore);
   });
 
   it('UPDATE_VARIABLE returns error when variable not found', async () => {
@@ -219,10 +287,10 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect(result.changes).toEqual([{ path: '/isEditing', previousValue: false, newValue: true }]);
-    expect(scene.onEnterEditMode).toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
-  it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
+  it('ENTER_EDIT_MODE applies the Assistant presentation when already editing', async () => {
     scene = buildMockScene({ editable: true, isEditing: true });
     client = new DashboardMutationClient(scene);
 
@@ -233,6 +301,20 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect((result.data as { wasAlreadyEditing: boolean }).wasAlreadyEditing).toBe(true);
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
+  });
+
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed, like every other mutating command', async () => {
+    scene = buildMockScene({ editable: true, isPlanning: true });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'ENTER_EDIT_MODE',
+      payload: {},
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('read-only');
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
@@ -275,10 +357,6 @@ describe('Variable mutation commands', () => {
   });
 
   describe('parentPath (section variables)', () => {
-    beforeEach(() => {
-      setTestFlags({ dashboardSectionVariables: true });
-    });
-
     function buildSceneWithRow(): DashboardScene {
       const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });
       const body = new RowsLayoutManager({ rows: [row] });
@@ -291,10 +369,12 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -327,10 +407,12 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -360,10 +442,12 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -500,26 +584,6 @@ describe('Variable mutation commands', () => {
       expect(rowVars.map((v) => v.spec.name)).toEqual(['rowVar']);
     });
 
-    it('ADD_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      scene = buildSceneWithRow();
-      client = new DashboardMutationClient(scene);
-
-      const result = await client.execute({
-        type: 'ADD_VARIABLE',
-        payload: {
-          parentPath: '/rows/0',
-          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
-        },
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
-      expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeDefined();
-      const body = scene.state.body as RowsLayoutManager;
-      expect(body.state.rows[0].state.$variables?.getByName('fallbackDashVar')).toBeUndefined();
-    });
-
     it('ADD_VARIABLE works for parentPath on an inactive tab', async () => {
       scene = buildSceneWithInactiveTab();
       client = new DashboardMutationClient(scene);
@@ -537,102 +601,9 @@ describe('Variable mutation commands', () => {
       const body = scene.state.body as TabsLayoutManager;
       expect(body.state.tabs[1].state.$variables?.getByName('inactiveTabVar')).toBeDefined();
     });
-
-    it('UPDATE_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      scene = buildSceneWithRow();
-      client = new DashboardMutationClient(scene);
-
-      await client.execute({
-        type: 'ADD_VARIABLE',
-        payload: {
-          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
-        },
-      });
-
-      const result = await client.execute({
-        type: 'UPDATE_VARIABLE',
-        payload: {
-          parentPath: '/rows/0',
-          name: 'fallbackDashVar',
-          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2,3' } },
-        },
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
-    });
-
-    it('REMOVE_VARIABLE ignores parentPath when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      scene = buildSceneWithRow();
-      client = new DashboardMutationClient(scene);
-
-      await client.execute({
-        type: 'ADD_VARIABLE',
-        payload: {
-          variable: { kind: 'CustomVariable', spec: { name: 'fallbackDashVar', query: '1,2' } },
-        },
-      });
-
-      const result = await client.execute({
-        type: 'REMOVE_VARIABLE',
-        payload: {
-          parentPath: '/rows/0',
-          name: 'fallbackDashVar',
-        },
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.changes[0].path).toBe('/variables/fallbackDashVar');
-      expect((scene.state.$variables as SceneVariableSet).getByName('fallbackDashVar')).toBeUndefined();
-    });
-
-    it('REMOVE_VARIABLE does not section-scan when dashboardSectionVariables is disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      scene = buildSceneWithRow();
-      client = new DashboardMutationClient(scene);
-
-      const body = scene.state.body as RowsLayoutManager;
-      const rowVarSet = new SceneVariableSet({
-        variables: [new CustomVariable({ name: 'onlyRow', query: 'a,b' })],
-      });
-      body.state.rows[0].setState({ $variables: rowVarSet });
-      rowVarSet.activate();
-
-      const result = await client.execute({
-        type: 'REMOVE_VARIABLE',
-        payload: {
-          parentPath: '/rows/0',
-          name: 'onlyRow',
-        },
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Variable 'onlyRow' not found");
-      expect(result.error).not.toContain('not on the dashboard');
-    });
-
-    it('LIST_VARIABLES returns effective scopePath when section variables are disabled', async () => {
-      setTestFlags({ dashboardSectionVariables: false });
-      scene = buildSceneWithRow();
-      client = new DashboardMutationClient(scene);
-
-      const result = await client.execute({
-        type: 'LIST_VARIABLES',
-        payload: { parentPath: '/rows/0' },
-      });
-
-      expect(result.success).toBe(true);
-      expect((result.data as { scopePath: string }).scopePath).toBe('/');
-    });
   });
 
   describe('real DashboardScene coverage', () => {
-    beforeEach(() => {
-      setTestFlags({ dashboardSectionVariables: true });
-    });
-
     it('runs section variable mutations against a real DashboardScene instance', async () => {
       const scene = getTestDashboardSceneFromSaveModel();
       const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });

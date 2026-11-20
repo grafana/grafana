@@ -29,7 +29,7 @@ func GenerateWideSeriesFrame(size int, resolution time.Duration) *data.Frame {
 	tmili := time.Now().UnixMilli()
 	tmili = tmili - tmili%resolution.Milliseconds()
 	current := time.UnixMilli(tmili).Add(-resolution * time.Duration(size))
-	for i := 0; i < size; i++ {
+	for i := range size {
 		vals := make([]any, 0, len(frame.Fields))
 		vals = append(vals, current)
 		for i := 1; i < cap(vals); i++ {

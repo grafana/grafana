@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Button, EmptyState, LoadingPlaceholder, Stack, Text, Tooltip } from '@grafana/ui';
 import { type RuleGroupIdentifierV2, type RuleIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
@@ -16,7 +15,7 @@ import {
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { isGranted } from '../../../hooks/abilities/abilityUtils';
 import { useRuleAdministrationAbility } from '../../../hooks/abilities/rules/rulerRuleAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 
 import { ComparisonDrawer } from './version-history/ComparisonDrawer';
@@ -65,7 +64,7 @@ export function AlertVersionHistory({ rule }: AlertVersionHistoryProps) {
     groupOrigin: 'grafana',
   };
   const { restore: restoreAbility } = useRuleAdministrationAbility(rule, groupIdentifier);
-  const canRestore = isGranted(restoreAbility) && Boolean(config.featureToggles.alertingRuleVersionHistoryRestore);
+  const canRestore = isGranted(restoreAbility);
 
   //tracking functions for restore action
   const onRestoreSuccess = useCallback(

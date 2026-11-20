@@ -13,32 +13,6 @@ labels:
 menuTitle: Multi-dimensional alerts
 title: Example of multi-dimensional alerts on time series data
 weight: 1101
-refs:
-  testdata-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
-  table-data-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
-  reduce-expression:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#reduce
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#reduce
-  alert-grouping:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
 # Example of multi-dimensional alerts on time series data
@@ -99,7 +73,7 @@ With a threshold condition like `$A > 80`, Grafana evaluates each instance separ
 
 Multi-dimensional alerts help you surface issues on individual components—problems that might be missed when alerting on aggregated data (like total CPU usage).
 
-Each alert instance targets a specific component, identified by its unique label set. This makes alerts more specific and actionable. For example, you can set a [`summary` annotation](ref:annotations) in your alert rule that identifies the affected CPU:
+Each alert instance targets a specific component, identified by its unique label set. This makes alerts more specific and actionable. For example, you can set a [`summary` annotation](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations) in your alert rule that identifies the affected CPU:
 
 ```
 High CPU usage on {{$labels.cpu}}
@@ -112,7 +86,7 @@ In the previous example, the two firing alert instances would display summaries 
 
 ## Try it with TestData
 
-You can quickly experiment with multi-dimensional alerts using the [**TestData** data source](ref:testdata-data-source), which can generate multiple random time series.
+You can quickly experiment with multi-dimensional alerts using the [**TestData** data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/), which can generate multiple random time series.
 
 1. Add the **TestData** data source through the **Connections** menu.
 1. Go to **Alerting** and create an alert rule
@@ -137,7 +111,7 @@ Grafana Alerting provides several ways to reduce time series data:
 - **Data source query functions**. The earlier example used the Prometheus `sum` function to sum the rate results by `cpu,`producing a single value per CPU core.
 - **Reduce expression**. In the query and condition section, Grafana provides the `Reduce` expression to aggregate time series data.
   - In **Default mode**, the **When** input selects a reducer (like `last`, `mean`, or `min`), and the threshold compares that reduced value.
-  - In **Advanced mode**, you can add the [**Reduce** expression](ref:reduce-expression) (e.g., `last()`, `mean()`) before defining the threshold (alert condition).
+  - In **Advanced mode**, you can add the [**Reduce** expression](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#reduce) (e.g., `last()`, `mean()`) before defining the threshold (alert condition).
 
 For demo purposes, this example uses the **Advanced mode** with a **Reduce** expression:
 
@@ -161,5 +135,5 @@ This example shows how Grafana Alerting implements a multi-dimensional alerting 
 For additional learning resources, check out:
 
 - [Get started tutorial – Create multi-dimensional alerts and route them](https://grafana.com/tutorials/alerting-get-started-pt2/)
-- [Example of alerting on tabular data](ref:table-data-example)
+- [Example of alerting on tabular data](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/)
   Update the interval of a rule group or modify the rules of the group.

@@ -50,7 +50,7 @@ export default defineConfig<PluginOptions>({
   ...baseConfig,
   ...(!process.env.GRAFANA_URL && {
     webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      command: 'pnpm run e2e:plugin:build && ./e2e-playwright/start-server',
       url: DEFAULT_URL,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -92,36 +92,29 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     withAuth({
-      name: 'mysql',
-      testDir: path.join(pluginDirRoot, '/mysql'),
-    }),
-    withAuth({
       name: 'extensions-test-app',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
+    }),
+    // Baseline (MT flags off); the MT variant is a separate project below. Both toggle the same
+    // fixture, so they must not run concurrently — the MT project depends on this one to serialize.
+    withAuth({
+      name: 'grafana-e2etest-app',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-app'),
+      testIgnore: /useMTPlugins/,
+    }),
+    withAuth({
+      name: 'grafana-e2etest-app-mt',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-app/tests/useMTPlugins'),
+      // Runs only after grafana-e2etest-app finishes, so the two never toggle the fixture at once.
+      dependencies: ['grafana-e2etest-app'],
     }),
     withAuth({
       name: 'grafana-e2etest-datasource',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
     }),
     withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
-    }),
-    withAuth({
-      name: 'azuremonitor',
-      testDir: path.join(pluginDirRoot, '/azuremonitor'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
-    }),
-    withAuth({
-      name: 'influxdb',
-      testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
-      name: 'grafana-postgresql-datasource',
-      testDir: path.join(pluginDirRoot, '/grafana-postgresql-datasource'),
     }),
     withAuth({
       name: 'canvas',
@@ -131,6 +124,10 @@ export default defineConfig<PluginOptions>({
       name: 'unauthenticated',
       testDir: path.join(testDirRoot, '/unauthenticated'),
     },
+    withAuth({
+      name: 'mt-instant-fallback',
+      testDir: path.join(testDirRoot, '/mt-instant-fallback-suite'),
+    }),
     withAuth({
       name: 'various',
       testDir: path.join(testDirRoot, '/various-suite'),
@@ -148,12 +145,12 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(testDirRoot, '/dashboards-suite'),
     }),
     withAuth({
-      name: 'loki',
-      testDir: path.join(testDirRoot, '/loki'),
+      name: 'notebooks',
+      testDir: path.join(testDirRoot, '/notebooks-suite'),
     }),
     withAuth({
-      name: 'cloud-plugins',
-      testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
+      name: 'diagnostics',
+      testDir: path.join(testDirRoot, '/diagnostics-suite'),
     }),
     withAuth({
       name: 'alerting',
@@ -187,14 +184,30 @@ export default defineConfig<PluginOptions>({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
       use: {
-        featureToggles: {
-          cujTracking: true,
+        openFeature: {
+          flags: {
+            cujTracking: true,
+          },
         },
       },
     }),
     withAuth({
       name: 'grafana-e2etest-panel',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-panel'),
+    }),
+    // Install/uninstall real catalog plugins; longer timeout since installs download the package.
+    withAuth({
+      name: 'plugin-catalog',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests'),
+      testIgnore: /useMTPlugins/,
+      timeout: 60_000,
+    }),
+    withAuth({
+      name: 'plugin-catalog-mt',
+      testDir: path.join(testDirRoot, '/plugin-catalog-suite/tests/useMTPlugins'),
+      timeout: 60_000,
+      // Runs only after plugin-catalog finishes, so the two never install/uninstall at the same time.
+      dependencies: ['plugin-catalog'],
     }),
   ],
 });

@@ -23,11 +23,15 @@ title: 'Preferences API'
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+This HTTP API is deprecated. Use the [Preferences HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/) instead. To learn how the legacy endpoints map to the new ones, refer to [Migrate from the legacy Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/preferences/#migrate-from-the-legacy-preferences-api).
+{{< /admonition >}}
+
 Keys:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
 - **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
-- **homeDashboardUID**: The `:uid` of a dashboard
+- **homeDashboardUID** - The `:uid` of a dashboard, or the reserved value `global-home`, which shows the instance default home (`home_page`, `default_home_dashboard_path`, or the Grafana home page) instead of the dashboard set at the next level. An empty string clears the preference so the next level applies. `GET` returns the stored value as-is, including `global-home`; the resolved home that Grafana computes from all levels never contains it.
 - **timezone** - Any valid IANA timezone string (e.g., `America/New_York`, `Europe/London`), `utc`, `browser`, or an empty string for the default.
 
 Omitting a key will cause the current value to be replaced with the
@@ -81,7 +85,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "",
-  "homeDashboardUID":"home",
+  "homeDashboardUID":"jcIIG-07z",
   "timezone":"utc"
 }
 ```
@@ -171,7 +175,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "",
-  "homeDashboardUID":"home",
+  "homeDashboardUID":"jcIIG-07z",
   "timezone":"utc"
 }
 ```

@@ -1,8 +1,11 @@
+import { Draggable } from '@hello-pangea/dnd';
+
 import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Alert, Button } from '@grafana/ui';
 
 import { TransformationOperationRow } from './TransformationOperationRow';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { type TransformationData, type TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
   data: TransformationData;
@@ -19,18 +22,38 @@ export const TransformationOperationRows = ({
 }: TransformationOperationRowsProps) => {
   return (
     <>
-      {configs.map((t, i) => {
-        const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
+      {configs.map((config, i) => {
+        const uiConfig = standardTransformersRegistry.getIfExists(config.transformation.id);
 
         if (!uiConfig) {
-          return null;
+          return (
+            <Draggable draggableId={`${config.id}`} index={i} key={`${config.id}`} isDragDisabled>
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.draggableProps}>
+                  <Alert
+                    severity="error"
+                    title={t(
+                      'dashboard.transformation-operation-rows.unknown-transformation-title',
+                      'Unknown transformation: {{transformationId}}',
+                      { transformationId: config.transformation.id }
+                    )}
+                    action={
+                      <Button variant="secondary" onClick={() => onRemove(i)}>
+                        {t('dashboard.transformation-operation-rows.remove-transformation', 'Remove')}
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
+            </Draggable>
+          );
         }
 
         return (
           <TransformationOperationRow
             index={i}
-            id={`${t.id}`}
-            key={`${t.id}`}
+            id={`${config.id}`}
+            key={`${config.id}`}
             data={data}
             configs={configs}
             uiConfig={uiConfig}

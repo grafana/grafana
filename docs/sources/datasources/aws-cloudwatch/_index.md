@@ -116,6 +116,29 @@ The CloudWatch plugin enables you to monitor and troubleshoot applications acros
 
 To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions. Refer to [Permissions reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#permissions-reference) for the cross-account observability actions.
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your CloudWatch data source, use the `gcx datasources cloudwatch` commands:
+
+```sh
+# Discover the regions, namespaces, and metrics available to the data source
+gcx datasources cloudwatch list-regions -d <DATASOURCE_UID>
+gcx datasources cloudwatch list-namespaces -d <DATASOURCE_UID> --region us-east-1
+gcx datasources cloudwatch list-metrics -d <DATASOURCE_UID> --region us-east-1 --namespace AWS/EC2
+
+# List the dimension keys for a metric
+gcx datasources cloudwatch list-dimensions -d <DATASOURCE_UID> --region us-east-1 --namespace AWS/EC2 --metric CPUUtilization
+
+# List AWS accounts available through cross-account monitoring
+gcx datasources cloudwatch list-accounts -d <DATASOURCE_UID> --region us-east-1
+
+# Run a structured metric query
+gcx datasources cloudwatch query -d <DATASOURCE_UID> --region us-east-1 --namespace AWS/EC2 --metric CPUUtilization \
+  --dimensions InstanceId=i-0123456789abcdef0 --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your CloudWatch data source. You can omit the `-d` flag when `datasources.cloudwatch` is configured in your `gcx` context. CloudWatch queries are structured rather than expression-based, so `--region`, `--namespace`, and `--metric` are required. The `list-accounts` command returns data only for data sources configured for cross-account monitoring.
+
 ## Related resources
 
 - [Amazon CloudWatch documentation](https://docs.aws.amazon.com/cloudwatch/)

@@ -24,7 +24,7 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create an image with a path on disk
 	image1 := models.Image{Path: "example.png"}
@@ -93,7 +93,7 @@ func TestIntegrationGetImages(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create an image with a path on disk
 	image1 := models.Image{Path: "example.png"}
@@ -173,7 +173,7 @@ func TestIntegrationDeleteExpiredImages(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	// create two images
 	image1 := models.Image{Path: "example.png"}

@@ -107,11 +107,49 @@ jobs:
 
       - name: Update alerting module
         if: steps.compare-commits.outputs.needs_update == 'true'
+        id: update-alerting
         env:
+          GH_TOKEN: ${{ github.token }}
           GOSUMDB: off
           PINNED_COMMIT: ${{ steps.latest-commit.outputs.to_commit }}
         run: |
+          ALERTING_GO_MOD="$(mktemp)"
+          trap 'rm -f "$ALERTING_GO_MOD"' EXIT
+          gh api "repos/grafana/alerting/contents/go.mod?ref=$PINNED_COMMIT" \
+            -H 'Accept: application/vnd.github.raw' > "$ALERTING_GO_MOD"
+          ALERTMANAGER="$(go mod edit -json "$ALERTING_GO_MOD" | jq -c '
+            [(.Replace[]? | select(.Old.Path == "github.com/prometheus/alertmanager") | .New),
+             (.Require[]? | select(.Path == "github.com/prometheus/alertmanager"))][0] |
+            if . then {Path, Version} else empty end')"
+          CURRENT_ALERTMANAGER="$(go list -m -json github.com/prometheus/alertmanager | jq -c \
+            'if .Replace then .Replace | {Path,Version} else {Path,Version} end')"
+          if [ -n "$ALERTMANAGER" ] && [ -z "$(jq -r '.Version // empty' <<< "$ALERTMANAGER")" ]; then
+            echo "Alerting's effective Alertmanager module is a local path: $(jq -r .Path <<< "$ALERTMANAGER")" >&2
+            exit 1
+          fi
+
           go get github.com/grafana/alerting@"$PINNED_COMMIT"
+
+          if [ -z "$ALERTMANAGER" ]; then
+            echo "Alerting has no effective Alertmanager module; skipping replace sync."
+          elif [ "$(jq -r .Path <<< "$ALERTMANAGER")" = "github.com/prometheus/alertmanager" ]; then
+            echo "::warning::Alerting no longer replaces Alertmanager; Grafana's replace lines need a human decision."
+          elif [ "$ALERTMANAGER" != "$CURRENT_ALERTMANAGER" ]; then
+            REPLACE_PATH="$(jq -r .Path <<< "$ALERTMANAGER")"
+            REPLACE_VERSION="$(jq -r .Version <<< "$ALERTMANAGER")"
+            while IFS= read -r -d '' GO_MOD; do
+              if go mod edit -json "$GO_MOD" | jq -e '
+                any(.Require[]?; .Path == "github.com/prometheus/alertmanager") or
+                any(.Replace[]?; .Old.Path == "github.com/prometheus/alertmanager")' > /dev/null; then
+                echo "Updating Alertmanager replace in $GO_MOD"
+                go mod edit -replace="github.com/prometheus/alertmanager=$REPLACE_PATH@$REPLACE_VERSION" "$GO_MOD"
+              fi
+            done < <(find . -name go.mod -type f \
+              -not -path './node_modules/*' -not -path './.git/*' \
+              -not -path './.claude/worktrees/*' -not -path '*/vendor/*' -print0)
+            echo "alertmanager_replace=Updates the Alertmanager replace to \`$REPLACE_PATH $REPLACE_VERSION\`." >> "$GITHUB_OUTPUT"
+          fi
+
           make update-workspace
 
       - name: Update snapshots
@@ -123,7 +161,7 @@ jobs:
       - name: Get GitHub App token
         if: steps.compare-commits.outputs.needs_update == 'true'
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: alerting-team
 
@@ -142,6 +180,7 @@ jobs:
             no-backport
           body: |
             Updates Grafana Alerting module to latest version.
+            ${{ steps.update-alerting.outputs.alertmanager_replace }}
 
             Compare changes: https://github.com/grafana/alerting/compare/${{ steps.current-commit.outputs.from_commit }}...${{ steps.latest-commit.outputs.to_commit }}
             <details>

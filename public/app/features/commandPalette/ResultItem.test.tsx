@@ -1,7 +1,8 @@
 import { ActionImpl } from 'kbar';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { ResultItem } from './ResultItem';
@@ -16,14 +17,21 @@ function createActionImpl(props: Record<string, unknown> = {}): ActionImpl {
 }
 
 describe('ResultItem', () => {
-  let originalProvisioning: boolean | undefined;
+  let originalProvisioning: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
+    setTestFlags({ 'grafana.cmdkDashboardTags': true });
+    originalProvisioning = config.provisioningEnabled;
+    const rect = document.createElement('div').getBoundingClientRect();
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { ...rect, width: Array.from(this.children).some((child) => child.tagName === 'UL') ? 400 : 40 };
+    });
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
+    act(() => setTestFlags({}));
+    config.provisioningEnabled = originalProvisioning;
+    jest.restoreAllMocks();
   });
 
   it('renders the action name', () => {
@@ -33,45 +41,71 @@ describe('ResultItem', () => {
   });
 
   it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('does not render the managed badge when managedBy is undefined', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl();
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
   it('renders the managed badge when managedBy is a non-Repo kind', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Terraform });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('renders the managed badge for plugin-managed resources', () => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Plugin });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
   it('does not render the managed badge when provisioning toggle is off', () => {
-    config.featureToggles.provisioning = false;
+    config.provisioningEnabled = false;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('does not render the managed badge when provisioning toggle is undefined', () => {
-    config.featureToggles.provisioning = undefined;
-    const action = createActionImpl({ managedBy: ManagerKind.Repo });
+  it('renders the dashboard tags of the action', () => {
+    const action = createActionImpl({ tags: ['prod', 'team-a'] });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+    const tagList = screen.getByRole('list', { name: 'Tags' });
+    expect(within(tagList).getByText('prod')).toBeInTheDocument();
+    expect(within(tagList).getByText('team-a')).toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'disabled', enabled: false },
+    { desc: 'not configured', enabled: undefined },
+  ])('hides tags but keeps the title, subtitle, and managed badge when the tag flag is $desc', ({ enabled }) => {
+    setTestFlags(enabled === undefined ? {} : { 'grafana.cmdkDashboardTags': enabled });
+    config.provisioningEnabled = true;
+    const action = createActionImpl({ subtitle: 'My folder', managedBy: ManagerKind.Repo, tags: ['prod', 'team-a'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('My folder')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'an empty tag array', tags: [] },
+    { desc: 'no tags property', tags: undefined },
+  ])('does not render a tag list for an action with $desc', ({ tags }) => {
+    const action = createActionImpl({ tags });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
   });
 
   it('appends an ellipsis to a parent action that has children but no command or link', () => {

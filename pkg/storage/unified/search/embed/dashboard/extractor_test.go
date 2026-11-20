@@ -18,6 +18,10 @@ func TestExtractor_Resource(t *testing.T) {
 	require.Equal(t, "dashboards", New().Resource())
 }
 
+func TestExtractor_Version(t *testing.T) {
+	require.Equal(t, 2, New().Version())
+}
+
 func TestExtractor_Classic(t *testing.T) {
 	// Classic v1 dashboard with two panels and one row marker. The shared
 	// parser doesn't associate flat-row panels with their row marker, so
@@ -83,9 +87,10 @@ func TestExtractor_Classic(t *testing.T) {
 	require.NoError(t, json.Unmarshal(items[0].Metadata, &md))
 	assert.Equal(t, "API Latency", md["dashboardTitle"])
 	assert.Equal(t, []any{float64(1)}, md["panelIds"])
-	assert.Equal(t, "Production", md["folderTitle"])
 	assert.Equal(t, "prom-1", md["datasourceUid"])
 	assert.Equal(t, "promql", md["language"])
+	_, hasFolderTitle := md["folderTitle"]
+	assert.False(t, hasFolderTitle, "metadata must not carry folderTitle; it's query-time-only display data")
 }
 
 func TestExtractor_CollapsedRow(t *testing.T) {
@@ -406,7 +411,6 @@ func TestExtractorV2Dash(t *testing.T) {
 	assert.Equal(t, []any{float64(1)}, md0["panelIds"])
 	assert.Equal(t, "grafanacloud-usage", md0["datasourceUid"])
 	assert.Equal(t, "promql", md0["language"])
-	assert.Nil(t, md0["folderTitle"])
 	assert.Nil(t, md0["rowName"])
 
 	// Panel 2: dashboard counts
@@ -458,6 +462,5 @@ func TestExtractorV1Dash(t *testing.T) {
 	assert.Equal(t, []any{float64(2)}, md["panelIds"])
 	assert.Equal(t, "grafanacloud-prom", md["datasourceUid"])
 	assert.Equal(t, "promql", md["language"])
-	assert.Nil(t, md["folderTitle"])
 	assert.Nil(t, md["rowName"])
 }

@@ -1,5 +1,4 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
-import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, type OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { coerce, gte, SemVer, valid } from 'semver';
@@ -15,6 +14,8 @@ import {
   dateMath,
   type DateTime,
   dateTime,
+  dateTimeAsMoment,
+  getFieldDisplayName,
   getSearchFilterScopedVar,
   type MetricFindValue,
   type QueryResultMetaStat,
@@ -71,6 +72,20 @@ function convertGlobToRegEx(text: string): string {
   } else {
     return text;
   }
+}
+
+function expandSeriesReferences(
+  target: string,
+  targetsByRefId: Map<string, string>,
+  seen: ReadonlySet<string>
+): string {
+  return target.replace(/#([A-Z])/g, (match: string, refId: string) => {
+    const referenced = targetsByRefId.get(refId);
+    if (referenced === undefined || seen.has(refId)) {
+      return match;
+    }
+    return expandSeriesReferences(referenced, targetsByRefId, new Set([...seen, refId]));
+  });
 }
 
 export class GraphiteDatasource
@@ -513,14 +528,25 @@ export class GraphiteDatasource
     return tags;
   }
 
+  // SQL expressions send these queries to the backend without calling `query()`, so `#A`
+  // references are resolved here too. The backend uses `targetFull` before `target`.
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
+      const targetsByRefId = new Map(
+        queries.flatMap((query) => (query.target ? [[query.refId, query.target] as const] : []))
+      );
       expandedQueries = queries.map((query) => {
+        const target = query.target ?? '';
+        const targetWithReferences = expandSeriesReferences(target, targetsByRefId, new Set([query.refId]));
+        // A partial expansion must not replace a saved `targetFull`.
+        const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
+        const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          target: this.templateSrv.replace(query.target ?? '', scopedVars),
+          target: this.templateSrv.replace(target, scopedVars),
+          ...(targetFull !== undefined && { targetFull: this.templateSrv.replace(targetFull, scopedVars) }),
         };
         return expandedQuery;
       });
@@ -552,6 +578,9 @@ export class GraphiteDatasource
 
             for (let i = 0; i < result.data.length; i++) {
               const target = result.data[i];
+              // backend mode builds frames with an empty name and carries the series name in
+              // the value field's displayNameFromDS instead, so fall back to the field display name
+              const title = target.name || getFieldDisplayName(target.fields[1], target);
 
               for (let y = 0; y < target.length; y++) {
                 const time = target.fields[0].values[y];
@@ -564,7 +593,7 @@ export class GraphiteDatasource
                 list.push({
                   annotation: target,
                   time,
-                  title: target.name,
+                  title,
                 });
               }
             }
@@ -653,9 +682,9 @@ export class GraphiteDatasource
           return date;
         }
 
-        return moment(parsedDate.toDate());
+        return dateTimeAsMoment(parsedDate.toDate());
       } else {
-        return moment(date.toDate());
+        return dateTimeAsMoment(date.toDate());
       }
     };
 

@@ -1,5 +1,8 @@
 package resource
 
+// Generated: edits are overwritten. To add a manifest that is compiled into a
+// distribution but lives outside apps/, see RegisterAppManifest.
+
 //go:generate sh -c "cd ../../../.. && bash pkg/storage/unified/resource/generate_manifests.sh"
 
 import (
@@ -27,32 +30,34 @@ import (
 	quotas "github.com/grafana/grafana/apps/quotas/pkg/apis"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis"
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis"
+	userstorage "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
 )
 
-func AppManifests() []app.Manifest {
+func generatedAppManifests() []*app.ManifestData {
 	// TODO: don't use hardcoded list of manifests when possible.
-	return []app.Manifest{
-		advisor.LocalManifest(),
-		alerting_notifications.LocalManifest(),
-		alerting_rules.LocalManifest(),
-		annotation.LocalManifest(),
-		collections.LocalManifest(),
-		correlations.LocalManifest(),
-		dashboard.LocalManifest(),
-		dashvalidator.LocalManifest(),
-		dashvalidator1.LocalManifest(),
-		example.LocalManifest(),
-		folder.LocalManifest(),
-		iam.LocalManifest(),
-		live.LocalManifest(),
-		logsdrilldown.LocalManifest(),
-		playlist.LocalManifest(),
-		plugins.LocalManifest(),
-		preferences.LocalManifest(),
-		provisioning.LocalManifest(),
-		quotas.LocalManifest(),
-		secret.LocalManifest(),
-		shorturl.LocalManifest(),
-		alerting_historian.LocalManifest(),
+	return []*app.ManifestData{
+		advisor.LocalManifest().ManifestData,
+		alerting_notifications.LocalManifest().ManifestData,
+		alerting_rules.LocalManifest().ManifestData,
+		annotation.LocalManifest().ManifestData,
+		collections.LocalManifest().ManifestData,
+		correlations.LocalManifest().ManifestData,
+		dashboard.LocalManifest().ManifestData,
+		dashvalidator.LocalManifest().ManifestData,
+		dashvalidator1.LocalManifest().ManifestData,
+		example.LocalManifest().ManifestData,
+		folder.LocalManifest().ManifestData,
+		iam.LocalManifest().ManifestData,
+		live.LocalManifest().ManifestData,
+		logsdrilldown.LocalManifest().ManifestData,
+		playlist.LocalManifest().ManifestData,
+		plugins.LocalManifest().ManifestData,
+		preferences.LocalManifest().ManifestData,
+		provisioning.LocalManifest().ManifestData,
+		quotas.LocalManifest().ManifestData,
+		secret.LocalManifest().ManifestData,
+		shorturl.LocalManifest().ManifestData,
+		userstorage.LocalManifest().ManifestData,
+		alerting_historian.LocalManifest().ManifestData,
 	}
 }

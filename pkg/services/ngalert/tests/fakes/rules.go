@@ -8,13 +8,13 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -130,13 +130,7 @@ func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	var result = make([]*models.AlertRule, 0, len(rules))
 
 	for _, rule := range rules {
-		add := true
-		for _, UID := range UIDs {
-			if rule.UID == UID {
-				add = false
-				break
-			}
-		}
+		add := !slices.Contains(UIDs, rule.UID)
 		if add {
 			result = append(result, rule)
 		}
@@ -168,6 +162,66 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 		}
 	}
 	return nil, models.ErrAlertRuleNotFound
+}
+
+func (f *RuleStore) GetRuleByID(_ context.Context, q models.GetAlertRuleByIDQuery) (*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, q)
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+	for _, rule := range f.Rules[q.OrgID] {
+		if rule.ID == q.ID {
+			return rule, nil
+		}
+	}
+	return nil, models.ErrAlertRuleNotFound
+}
+
+func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	if orgID != 0 {
+		return int64(len(f.Rules[orgID])), nil
+	}
+	var total int64
+	for _, rules := range f.Rules {
+		total += int64(len(rules))
+	}
+	return total, nil
+}
+
+func (f *RuleStore) CountByOrg(_ context.Context) (map[int64]int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	counts := make(map[int64]int64, len(f.Rules))
+	for orgID, rules := range f.Rules {
+		if len(rules) > 0 {
+			counts[orgID] = int64(len(rules))
+		}
+	}
+	return counts, nil
+}
+
+func (f *RuleStore) CountRuleGroups(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	query := GenericRecordedQuery{Name: "CountRuleGroups", Params: []any{orgID}}
+	f.RecordedOps = append(f.RecordedOps, query)
+	if err := f.Hook(query); err != nil {
+		return 0, err
+	}
+	groups := make(map[string]struct{})
+	for id, rules := range f.Rules {
+		if orgID != 0 && id != orgID {
+			continue
+		}
+		for _, rule := range rules {
+			groups[rule.RuleGroup] = struct{}{}
+		}
+	}
+	return int64(len(groups)), nil
 }
 
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
@@ -521,6 +575,28 @@ func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	return newFolder.ToFolderReference(), true, nil
 }
 
+func (f *RuleStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.UID == uid {
+			return folder.ToFolderReference(), false, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:        rand.Int63(), // nolint:staticcheck
+		UID:       uid,
+		Title:     title,
+		ParentUID: parentUID,
+		Fullpath:  "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder.ToFolderReference(), true, nil
+}
+
 func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -589,6 +665,15 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, _ *models.UserUID, q []m
 	return ids, nil
 }
 
+// ValidateAlertRuleForWrite accepts every rule. Use Hook to make it fail.
+func (f *RuleStore) ValidateAlertRuleForWrite(rule models.AlertRule) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "ValidateAlertRuleForWrite", Params: []any{rule}}
+	f.RecordedOps = append(f.RecordedOps, q)
+	return f.Hook(q)
+}
+
 func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context) error) error {
 	return fn(ctx)
 }
@@ -617,35 +702,6 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 		}
 	}
 	return nil
-}
-
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, orgID int64, namespaceUIDs []string) ([]models.AlertRuleKeyWithVersion, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "IncreaseVersionForAllRulesInNamespaces",
-		Params: []any{orgID, namespaceUIDs},
-	})
-
-	var result []models.AlertRuleKeyWithVersion
-
-	namespaceUIDsMap := make(map[string]struct{}, len(namespaceUIDs))
-	for _, namespaceUID := range namespaceUIDs {
-		namespaceUIDsMap[namespaceUID] = struct{}{}
-	}
-
-	for _, rule := range f.Rules[orgID] {
-		if _, ok := namespaceUIDsMap[rule.NamespaceUID]; ok && rule.OrgID == orgID {
-			rule.Version++
-			rule.Updated = time.Now()
-			result = append(result, models.AlertRuleKeyWithVersion{
-				Version:      rule.Version,
-				AlertRuleKey: rule.GetKey(),
-			})
-		}
-	}
-	return result, nil
 }
 
 func (f *RuleStore) UpdateFolderFullpathsForFolders(_ context.Context, orgID int64, folderUIDs []string) error {
@@ -785,4 +841,46 @@ func applyPluginOriginFilter(rules []*models.AlertRule, filter models.PluginOrig
 		}
 	}
 	return filteredList
+}
+
+func (f *RuleStore) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{orgID, ruleUID, data}}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return err
+	}
+
+	orgRules := f.Rules[orgID]
+	for _, rule := range orgRules {
+		if rule.UID == ruleUID {
+			rule.K8sStatus = data
+		}
+	}
+
+	return nil
+}
+
+func (f *RuleStore) CalculateChanges(ctx context.Context, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateChanges(ctx, f, groupKey, submittedRules)
+}
+
+func (f *RuleStore) CalculateRuleCreate(ctx context.Context, rule *models.AlertRule) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleCreate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleUpdate(ctx context.Context, rule *models.AlertRuleWithOptionals) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleUpdate(ctx, f, rule)
+}
+
+func (f *RuleStore) CalculateRuleDelete(ctx context.Context, ruleKey models.AlertRuleKey) (*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleDelete(ctx, f, ruleKey)
+}
+
+func (f *RuleStore) CalculateRuleGroupsDelete(ctx context.Context, orgID int64, query *models.ListAlertRulesQuery) ([]*ngrulesvc.GroupDelta, error) {
+	return ngrulesvc.CalculateRuleGroupsDelete(ctx, f, orgID, query)
 }

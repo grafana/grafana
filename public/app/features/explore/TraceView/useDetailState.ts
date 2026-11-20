@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 
 import { type DataFrame, type TraceLog } from '@grafana/data';
 
@@ -11,10 +11,12 @@ import { type TraceSpanReference } from './components/types/trace';
 export function useDetailState(frame: DataFrame) {
   const [detailStates, setDetailStates] = useState(new Map<string, DetailState>());
 
+  const [prevFrame, setPrevFrame] = useState(frame);
   // Clear detail state when new trace arrives
-  useEffect(() => {
+  if (frame !== prevFrame) {
+    setPrevFrame(frame);
     setDetailStates(new Map<string, DetailState>());
-  }, [frame, setDetailStates]);
+  }
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
@@ -28,6 +30,19 @@ export function useDetailState(frame: DataFrame) {
     },
     [detailStates]
   );
+
+  // Callers that navigate to a span (e.g. "Go to span") must end up with the detail open,
+  // so this opens rather than toggles and is a no-op when the detail is already open.
+  const openDetail = useCallback(function openDetail(spanID: string) {
+    setDetailStates((currentDetailStates) => {
+      if (currentDetailStates.has(spanID)) {
+        return currentDetailStates;
+      }
+      const newDetailStates = new Map(currentDetailStates);
+      newDetailStates.set(spanID, new DetailState());
+      return newDetailStates;
+    });
+  }, []);
 
   const detailLogItemToggle = useCallback(
     function detailLogItemToggle(spanID: string, log: TraceLog) {
@@ -60,6 +75,7 @@ export function useDetailState(frame: DataFrame) {
   return {
     detailStates,
     toggleDetail,
+    openDetail,
     detailLogItemToggle,
     detailLogsToggle: useCallback(
       (spanID: string) => makeDetailSubsectionToggle('logs', detailStates, setDetailStates)(spanID),

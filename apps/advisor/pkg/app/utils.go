@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -21,17 +22,17 @@ import (
 
 var retryAnnotationPollingInterval = 1 * time.Second
 
-func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkRegistry checkregistry.CheckService) (checks.Check, error) {
 	labels := obj.GetLabels()
 	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checkMap[objTypeLabel]
+	c, ok := checkRegistry.Check(objTypeLabel)
 	if !ok {
 		supportedTypes := ""
-		for k := range checkMap {
-			supportedTypes += k + ", "
+		for _, c := range checkRegistry.Checks() {
+			supportedTypes += c.ID() + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
 	}
@@ -101,12 +102,26 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	if err != nil {
 		return err
 	}
+	recordReportMetrics(check.ID(), steps, report)
 	// Set the status annotation to processed and annotate the steps ignored
 	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
 		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
 		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
 	})
 	return checks.SetAnnotations(ctx, client, obj, annotations)
+}
+
+// recordReportMetrics adds a processed check's report to the item and failure counters.
+// Every step that ran gets a failures series, so a step that stops reporting failures
+// shows up as 0 instead of disappearing.
+func recordReportMetrics(checkType string, steps []checks.Step, report *advisorv0alpha1.CheckReport) {
+	metrics.CheckItemsTotal.WithLabelValues(checkType).Add(float64(report.Count))
+	for _, step := range steps {
+		metrics.CheckFailuresTotal.WithLabelValues(checkType, step.ID()).Add(0)
+	}
+	for _, failure := range report.Failures {
+		metrics.CheckFailuresTotal.WithLabelValues(checkType, failure.StepID).Inc()
+	}
 }
 
 func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
@@ -124,6 +139,10 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return nil
 	} else {
 		log.Debug("Item to retry found", "check", obj.GetName(), "item", itemToRetry)
+	}
+	// Wait for the retry annotation to be persisted before processing the object
+	if err := waitForRetryAnnotation(ctx, log, client, obj, itemToRetry); err != nil {
+		return err
 	}
 	c, ok := obj.(*advisorv0alpha1.Check)
 	if !ok {
@@ -167,24 +186,36 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 			return fmt.Errorf("error running steps: %w", err)
 		}
 	}
+	// Other items of this check may have been retried concurrently, so merge into the
+	// latest stored report instead of the one from the admission request.
+	latestObj, err := client.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	latest, ok := latestObj.(*advisorv0alpha1.Check)
+	if !ok {
+		return fmt.Errorf("invalid object type")
+	}
 	// Pull this item's failures and replace them with the retry result
-	currentFailures := slices.DeleteFunc(slices.Clone(c.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
+	currentFailures := slices.DeleteFunc(slices.Clone(latest.Status.Report.Failures), func(f advisorv0alpha1.CheckReportFailure) bool {
 		return f.ItemID == itemToRetry
 	})
-	c.Status.Report.Failures = append(currentFailures, failures...)
-	// Wait for the retry annotation to be persisted before patching the object
-	err = waitForRetryAnnotation(ctx, log, client, obj, itemToRetry)
-	if err != nil {
-		return err
-	}
+	latest.Status.Report.Failures = append(currentFailures, failures...)
 	// Set the status
-	err = checks.SetStatus(ctx, client, obj, c.Status)
-	log.Debug("Status set", "check", obj.GetName(), "status.count", c.Status.Report.Count)
+	err = checks.SetStatus(ctx, client, obj, latest.Status)
+	log.Debug("Status set", "check", obj.GetName(), "status.count", latest.Status.Report.Count)
 	if err != nil {
 		return err
 	}
-	// Delete the retry annotation to mark the check as processed
-	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+	// Only delete the retry annotation if it was not overwritten by a newer retry
+	if checks.GetRetryAnnotation(latest) != itemToRetry {
+		log.Debug("Retry annotation belongs to another retry, keeping it", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", checks.GetRetryAnnotation(latest))
+		return nil
+	}
+	annotations := checks.DeleteAnnotations(ctx, latest, []string{checks.RetryAnnotation})
 	err = checks.SetAnnotations(ctx, client, obj, annotations)
 	log.Debug("Annotations set", "check", obj.GetName(), "annotations", annotations)
 
@@ -293,12 +324,22 @@ func waitForRetryAnnotation(ctx context.Context, log logging.Logger, client reso
 		return err
 	}
 	retries := 0
+	superseded := false
 	currentRetryAnnotation := checks.GetRetryAnnotation(currentObj)
 	for currentRetryAnnotation != itemToRetry {
+		if currentRetryAnnotation != "" {
+			superseded = true
+		}
 		log.Debug("Waiting for retry annotation to be persisted", "check", obj.GetName(), "item", itemToRetry, "currentRetryAnnotation", currentRetryAnnotation)
 		time.Sleep(retryAnnotationPollingInterval)
 		retries++
 		if retries > 5 {
+			// The single retry annotation is overwritten when several items of the same
+			// check are retried close together, so this retry may never see its own value.
+			if superseded {
+				log.Debug("Retry annotation superseded by another retry, proceeding", "check", obj.GetName(), "item", itemToRetry)
+				return nil
+			}
 			return fmt.Errorf("timeout waiting for retry annotation to be persisted")
 		}
 		currentObj, err = client.Get(ctx, resource.Identifier{

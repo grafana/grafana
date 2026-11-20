@@ -1,19 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { Draggable, type DraggableStateSnapshot } from '@hello-pangea/dnd';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useLocation } from 'react-router';
+import { type DraggableStateSnapshot } from '@hello-pangea/dnd';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService, config } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
+import { SectionEditActionsWrapper } from '../edit-actions-popover/SectionEditActions';
+import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type TabItem } from './TabItem';
@@ -26,7 +31,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;
@@ -39,7 +45,25 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const isClone = isRepeatCloneOrChildOf(model);
   const soloPanelContext = useSoloPanelContext();
 
-  const isDraggable = !isClone && isEditing;
+  const isDraggable = !isClone && canArrangeLayout(dashboardState);
+  const { Draggable } = useDragAndDrop(isDraggable);
+  const showLayoutIndicator = isEditing && isActive;
+  const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
+
+  const tabSuffix = useMemo(() => {
+    if (!showLayoutIndicator && !isConditionallyHidden) {
+      return undefined;
+    }
+
+    return function TabSuffix({ className }: { className?: string }) {
+      return (
+        <span className={cx(className, styles.tabSuffix)}>
+          {showLayoutIndicator && layoutMode && <LayoutModeIndicator layoutType={layoutMode} />}
+          {isConditionallyHidden && <IsHiddenSuffix />}
+        </span>
+      );
+    };
+  }, [showLayoutIndicator, isConditionallyHidden, layoutMode, styles.tabSuffix]);
 
   if (isConditionallyHidden && !isEditing && !isActive) {
     return null;
@@ -61,69 +85,83 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
-        <div
-          ref={(ref) => {
-            dragProvided.innerRef(ref);
-            model.containerRef.current = ref;
-          }}
-          className={cx(dragSnapshot.isDragging && styles.dragging)}
-          {...dragProvided.draggableProps}
-          {...dragProvided.dragHandleProps}
-          style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
-        >
-          <Tab
-            truncate
-            className={cx(
-              isConditionallyHidden && styles.hidden,
-              // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
-              isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
-              (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
-              (isSelected || isSourceSelected) && styles.selectedTab,
-              isDropTarget && 'dashboard-drop-target'
-            )}
-            active={isActive}
-            title={titleInterpolated}
-            suffix={isConditionallyHidden ? IsHiddenSuffix : undefined}
-            href={href}
-            aria-selected={isActive}
-            onChangeTab={(evt) => {
-              evt.preventDefault();
+        <SectionEditActionsWrapper kind="tab" item={model} disabled={dragSnapshot.isDragging}>
+          <div
+            ref={(ref) => {
+              dragProvided.innerRef(ref);
+              model.containerRef.current = ref;
+            }}
+            className={cx(dragSnapshot.isDragging && styles.dragging)}
+            {...dragProvided.draggableProps}
+            {...dragProvided.dragHandleProps}
+            style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
+          >
+            <Tab
+              truncate
+              className={cx(
+                isConditionallyHidden && styles.hidden,
+                // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
+                isSelectable &&
+                  !isSelected &&
+                  !isSourceSelected &&
+                  !isParentDropTarget &&
+                  'dashboard-selectable-element',
+                (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
+                (isSelected || isSourceSelected) && styles.selectedTab,
+                isDropTarget && 'dashboard-drop-target'
+              )}
+              active={isActive}
+              title={titleInterpolated}
+              suffix={tabSuffix}
+              href={href}
+              aria-selected={isActive}
+              onChangeTab={(evt) => {
+                evt.preventDefault();
 
-              const dashboard = getDashboardSceneFor(model);
-              dashboard.rememberScrollPos();
+                const dashboard = getDashboardSceneFor(model);
+                dashboard.rememberScrollPos();
 
-              // When switching tabs, React unmounts old content and mounts new content.
-              // This causes the browser to adjust scroll position if we're at the bottom of the page.
-              // We use MutationObserver to detect when React has committed the DOM changes,
-              // then restore scroll after the browser has completed its layout adjustments.
-              const observer = new MutationObserver(() => {
-                observer.disconnect();
-                requestAnimationFrame(() => {
-                  dashboard.restoreScrollPos();
+                // When switching tabs, React unmounts old content and mounts new content.
+                // This causes the browser to adjust scroll position if we're at the bottom of the page.
+                // We use MutationObserver to detect when React has committed the DOM changes,
+                // then restore scroll after the browser has completed its layout adjustments.
+                const observer = new MutationObserver(() => {
+                  observer.disconnect();
+                  requestAnimationFrame(() => {
+                    dashboard.restoreScrollPos();
+                  });
                 });
-              });
-              observer.observe(document.body, { childList: true, subtree: true });
+                observer.observe(document.body, { childList: true, subtree: true });
 
-              locationService.partial({ [urlKey]: mySlug });
-            }}
-            onPointerDown={(evt) => {
-              evt.stopPropagation();
-              pointerDistance.set(evt);
-            }}
-            onPointerUp={(evt) => {
-              evt.stopPropagation();
+                // An embedded dashboard isn't synced with the page URL, which belongs to the page around
+                // it: switch the tab here instead.
+                if (dashboard.state.meta.isEmbedded) {
+                  parentLayout.switchToTab(model);
+                  return;
+                }
+                locationService.partial({ [urlKey]: mySlug });
+              }}
+              onPointerDown={(evt) => {
+                evt.stopPropagation();
+                pointerDistance.set(evt);
+              }}
+              onPointerUp={(evt) => {
+                evt.stopPropagation();
 
-              if (!isSelectable || pointerDistance.check(evt)) {
-                return;
-              }
+                if (!isSelectable || pointerDistance.check(evt)) {
+                  return;
+                }
 
-              onSelect?.(evt);
-            }}
-            label={titleInterpolated}
-            data-tab-activation-key={key}
-            {...titleCollisionProps}
-          />
-        </div>
+                onSelect?.(evt);
+              }}
+              label={titleInterpolated}
+              data-tab-activation-key={key}
+              data-dashboard-element-key={key}
+              data-dashboard-element-type="tab"
+              {...titleCollisionProps}
+            />
+          </div>
+        </SectionEditActionsWrapper>
       )}
     </Draggable>
   );
@@ -131,11 +169,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
 function IsHiddenSuffix() {
   return (
-    <Box paddingLeft={1} display={'inline'}>
-      <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
-        <Icon name="eye-slash" />
-      </Tooltip>
-    </Box>
+    <Tooltip content={t('dashboard.conditional-rendering.overlay.tooltip', 'Element is hidden by show/hide rules.')}>
+      <Icon name="eye-slash" />
+    </Tooltip>
   );
 }
 
@@ -150,12 +186,6 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   const [_, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     tab.state.conditionalRendering
   );
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = useBooleanFlagValue(
-    'dashboardSectionVariables',
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
   const tabVariablesSet = tab.state.$variables;
 
   return (
@@ -163,7 +193,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
-      {sectionVariablesEnabled && tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
+      <SectionControlsRow variableSet={tabVariablesSet} data={tab.state.$data} />
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}
     </TabContent>
@@ -171,6 +201,15 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  tabSuffix: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+
+    '&& svg': {
+      margin: 0,
+    },
+  }),
   selectedTab: css({
     '&.dashboard-selected-element': {
       outlineOffset: '-2px',

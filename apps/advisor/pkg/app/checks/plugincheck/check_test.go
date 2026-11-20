@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -22,7 +22,6 @@ func TestRun(t *testing.T) {
 		plugins            []pluginstore.Plugin
 		pluginInfo         []repo.PluginInfo
 		pluginPreinstalled []string
-		pluginManaged      []string
 		pluginProvisioned  []provisionedplugins.Plugin
 		pluginErrors       []*plugins.Error
 		expectedFailures   []advisor.CheckReportFailure
@@ -47,10 +46,7 @@ func TestRun(t *testing.T) {
 					Item:     "Plugin 1",
 					ItemID:   "plugin1",
 					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin1",
-							Message: "View plugin",
-						},
+						checks.NewErrorLink("view-plugin", "/plugins/plugin1"),
 					},
 				},
 			},
@@ -70,10 +66,7 @@ func TestRun(t *testing.T) {
 					Item:     "Plugin 2",
 					ItemID:   "plugin2",
 					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin2?page=version-history",
-							Message: "Upgrade",
-						},
+						checks.NewErrorLink("upgrade", "/plugins/plugin2?page=version-history"),
 					},
 				},
 			},
@@ -98,17 +91,6 @@ func TestRun(t *testing.T) {
 			},
 			pluginPreinstalled: []string{"plugin3"},
 			expectedFailures:   []advisor.CheckReportFailure{},
-		},
-		{
-			name: "Managed plugin",
-			plugins: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "plugin4", Name: "Plugin 4", Info: plugins.Info{Version: "1.0.0"}}},
-			},
-			pluginInfo: []repo.PluginInfo{
-				{Status: "deprecated", Slug: "plugin4", Version: "1.1.0"}, // This should be ignored
-			},
-			pluginManaged:    []string{"plugin4"},
-			expectedFailures: []advisor.CheckReportFailure{},
 		},
 		{
 			name: "Provisioned plugin",
@@ -145,21 +127,21 @@ func TestRun(t *testing.T) {
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 6",
 					ItemID:   "plugin6",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin6", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin6")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 7",
 					ItemID:   "plugin7",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin7", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin7")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityLow,
 					StepID:   UnsignedStepID,
 					Item:     "Plugin 8",
 					ItemID:   "plugin8",
-					Links:    []advisor.CheckErrorLink{{Url: "/plugins/plugin8", Message: "View plugin"}},
+					Links:    []advisor.CheckErrorLink{checks.NewErrorLink("view-plugin", "/plugins/plugin8")},
 				},
 				{
 					Severity: advisor.CheckReportFailureSeverityHigh,
@@ -193,9 +175,8 @@ func TestRun(t *testing.T) {
 				pluginInfo: tt.pluginInfo,
 			}
 			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
-			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
-			updateChecker := pluginchecker.ProvideService(managedPlugins, provisionedPlugins, pluginPreinstall)
+			updateChecker := pluginchecker.ProvideService(provisionedPlugins, pluginPreinstall)
 			pluginErrorResolver := &mockPluginErrorResolver{pluginErrors: tt.pluginErrors}
 			check := New(pluginStore, pluginRepo, updateChecker, pluginErrorResolver, "12.0.0")
 
@@ -269,15 +250,6 @@ func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
 		}
 	}
 	return false
-}
-
-type mockManagedPlugins struct {
-	managedplugins.Manager
-	managed []string
-}
-
-func (m *mockManagedPlugins) ManagedPlugins(ctx context.Context) []string {
-	return m.managed
 }
 
 type mockProvisionedPlugins struct {

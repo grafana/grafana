@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { type Labels, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
@@ -17,6 +18,7 @@ interface InstanceTimelineSectionProps {
   historyRecords: LogRecord[];
   stateHistoryFetching: boolean;
   stateHistoryError: boolean;
+  stateHistoryAvailable: boolean;
   loadingBarRef: React.Ref<HTMLDivElement>;
 }
 
@@ -27,6 +29,7 @@ export function InstanceTimelineSection({
   historyRecords,
   stateHistoryFetching,
   stateHistoryError,
+  stateHistoryAvailable,
   loadingBarRef,
 }: InstanceTimelineSectionProps) {
   const [
@@ -76,7 +79,16 @@ export function InstanceTimelineSection({
       <Stack direction="column" gap={1}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Text variant="h5">{t('alerting.instance-details.instance-history-heading', 'History')}</Text>
-          <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
+          {/* Without state history the timeline only holds notifications, so there is nothing to filter */}
+          {stateHistoryAvailable && (
+            <RadioButtonGroup
+              options={filterOptions}
+              value={filter}
+              onChange={setFilter}
+              size="sm"
+              data-testid={selectors.pages.Alerting.Triage.historyFilterRadioGroup}
+            />
+          )}
         </Stack>
 
         {isLoading && (

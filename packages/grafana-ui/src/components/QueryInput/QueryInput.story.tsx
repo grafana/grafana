@@ -1,6 +1,7 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { useEffect, useId, useState } from 'react';
+import { type Meta, type StoryFn } from '@storybook/react';
+import { useId } from 'react';
 import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
 
 import { Field } from '../Forms/Field';
 import { Label } from '../Forms/Label';
@@ -27,21 +28,17 @@ const meta: Meta<typeof QueryInput> = {
 };
 
 export const Basic: StoryFn<typeof QueryInput> = (args) => {
-  const [value, setValue] = useState(args.value);
+  const [, updateArgs] = useArgs();
   const labelId = useId();
-
-  useEffect(() => {
-    setValue(args.value);
-  }, [args.value]);
 
   return (
     <Field label={<Label id={labelId}>Query</Label>}>
       <QueryInput
         {...args}
-        value={value}
+        value={args.value}
         aria-labelledby={labelId}
         onChange={(nextValue) => {
-          setValue(nextValue);
+          updateArgs({ value: nextValue });
           action('onChange')(nextValue);
         }}
         onRunQuery={action('onRunQuery')}

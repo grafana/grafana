@@ -221,6 +221,31 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, "cookie3", reqClone.Cookies()[2].Name)
 			})
 
+			t.Run("Should forward headers when calling QueryChunkedData", func(t *testing.T) {
+				err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+					Headers:       headers,
+				}, nopChunkedWriter{})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.QueryChunkedDataReq)
+				require.Len(t, cdt.QueryChunkedDataReq.Headers, 6)
+
+				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryChunkedDataCtx)
+				require.Len(t, middlewares, 1)
+				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+
+				reqClone := req.Clone(req.Context())
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 5)
+				require.Equal(t, "true", reqClone.Header.Get(ngalertmodels.FromAlertHeaderName))
+				require.Equal(t, "bearer token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, "id-token", reqClone.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
+				require.Equal(t, "uname", reqClone.Header.Get(proxyutil.UserHeaderName))
+				require.Len(t, reqClone.Cookies(), 3)
+			})
+
 			t.Run("Should forward headers when calling CallResource", func(t *testing.T) {
 				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,

@@ -1,6 +1,16 @@
 type LegacyAnnotation = {
   target?: string;
-  tags?: string;
+  tags?: string | string[];
+};
+
+// legacy annotations stored tags as a space-separated string, but Grafana's annotation model
+// uses string[] (AnnotationEvent.tags), so both shapes reach this migration
+const migrateLegacyTags = (tags: LegacyAnnotation['tags']): string[] => {
+  if (Array.isArray(tags)) {
+    return tags.filter(Boolean).map(String);
+  }
+
+  return (typeof tags === 'string' ? tags : '').split(' ').filter(Boolean);
 };
 
 // this becomes the target in the migrated annotations
@@ -17,7 +27,7 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   // return the tags annotation
   return {
     queryType: 'tags',
-    tags: (json.tags || '').split(' '),
+    tags: migrateLegacyTags(json.tags),
     fromAnnotations: true,
   };
 };

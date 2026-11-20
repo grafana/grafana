@@ -1,6 +1,8 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type FolderDocKey } from '../../../utils/folderDocConventions';
+
 type RepoType = RepositoryView['type'];
 
 export interface ReadmePanelViewedProperties extends EventProperty {
@@ -23,9 +25,22 @@ export interface ReadmeCreateClickedProperties extends EventProperty {
 export interface ReadmeLinkClickedProperties extends EventProperty {
   /** Host repository type for the folder whose rendered README contains the clicked link. */
   repositoryType: RepoType;
+  /**
+   * Where the click resolved: `in_app` when the link mapped to a synced resource and
+   * navigated to its Grafana page, `host` when it followed the host repository link.
+   * The key signal for how often README links resolve to in-app pages.
+   */
+  outcome: 'in_app' | 'host';
 }
 
 export interface ReadmeRetryClickedProperties extends EventProperty {
   /** Host repository type for the folder whose README load is being retried. */
   repositoryType: RepoType;
+}
+
+export interface ReadmeTabSelectedProperties extends EventProperty {
+  /** Host repository type for the folder whose doc tab was selected. */
+  repositoryType: RepoType;
+  /** Convention key of the opened doc (`readme`, `contributing`, `security`), or `other` for any other markdown file. */
+  doc: FolderDocKey | 'other';
 }

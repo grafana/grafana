@@ -37,9 +37,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     body: {
       height: '100%',
       width: '100%',
-      position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
+      margin: 0,
       paddingRight: '0 !important',
       '@media print': {
         overflow: 'visible',

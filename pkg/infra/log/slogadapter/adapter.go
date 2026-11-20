@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-var _ slog.Handler = &slogHandler{}
+var _ slog.Handler = (*slogHandler)(nil)
 
 type slogHandler struct {
 	log.Logger

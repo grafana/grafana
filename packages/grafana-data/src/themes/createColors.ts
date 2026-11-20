@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import * as z from 'zod/mini';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
@@ -10,9 +10,9 @@ const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
 type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
 
-const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
-  z
-    .object({
+const createThemeColorsBaseSchema = <TColor extends z.ZodMiniType>(color: TColor) =>
+  z.partial(
+    z.object({
       mode: ThemeColorsModeSchema,
 
       primary: color,
@@ -25,72 +25,72 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       warning: color,
 
       text: z.object({
-        primary: z.string().optional(),
-        secondary: z.string().optional(),
-        disabled: z.string().optional(),
-        link: z.string().optional(),
+        primary: z.optional(z.string()),
+        secondary: z.optional(z.string()),
+        disabled: z.optional(z.string()),
+        link: z.optional(z.string()),
         /** Used for auto white or dark text on colored backgrounds */
-        maxContrast: z.string().optional(),
+        maxContrast: z.optional(z.string()),
       }),
 
       background: z.object({
         /** Body background */
-        canvas: z.string().optional(),
+        canvas: z.optional(z.string()),
         /** Page container background */
-        page: z.string().optional(),
+        page: z.optional(z.string()),
         /** Primary content pane background (panels etc) */
-        primary: z.string().optional(),
+        primary: z.optional(z.string()),
         /** Cards and elements that need to stand out on the primary background */
-        secondary: z.string().optional(),
+        secondary: z.optional(z.string()),
         /**
          * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
          * themes it has a brighter shade to help give it contrast against the primary background.
          **/
-        elevated: z.string().optional(),
+        elevated: z.optional(z.string()),
       }),
 
       border: z.object({
         /** Use for decoration */
-        weak: z.string().optional(),
+        weak: z.optional(z.string()),
         /** Use for widget borders */
-        medium: z.string().optional(),
+        medium: z.optional(z.string()),
         /** Use for active/focused widget borders */
-        strong: z.string().optional(),
+        strong: z.optional(z.string()),
       }),
 
       gradients: z.object({
-        brandVertical: z.string().optional(),
-        brandHorizontal: z.string().optional(),
+        brandVertical: z.optional(z.string()),
+        brandHorizontal: z.optional(z.string()),
       }),
 
       action: z.object({
         /** Used for selected menu item / select option */
-        selected: z.string().optional(),
+        selected: z.optional(z.string()),
         /**
          * @alpha (Do not use from plugins)
          * Used for selected items when background only change is not enough (Currently only used for FilterPill)
          **/
-        selectedBorder: z.string().optional(),
+        selectedBorder: z.optional(z.string()),
         /** Used for hovered menu item / select option */
-        hover: z.string().optional(),
+        hover: z.optional(z.string()),
         /** Used for button/colored background hover opacity */
-        hoverOpacity: z.number().optional(),
+        hoverOpacity: z.optional(z.number()),
         /** Used focused menu item / select option */
-        focus: z.string().optional(),
+        focus: z.optional(z.string()),
         /** Used for disabled buttons and inputs */
-        disabledBackground: z.string().optional(),
+        disabledBackground: z.optional(z.string()),
         /** Disabled text */
-        disabledText: z.string().optional(),
+        disabledText: z.optional(z.string()),
         /** Disablerd opacity */
-        disabledOpacity: z.number().optional(),
+        disabledOpacity: z.optional(z.number()),
       }),
 
-      scrollbar: z.string().optional(),
+      scrollbar: z.optional(z.string()),
       hoverFactor: z.number(),
       contrastThreshold: z.number(),
       tonalOffset: z.number(),
     })
-    .partial();
+  );
 
 // Need to override the zod type to include the generic properly
 /** @internal */
@@ -130,9 +130,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -155,7 +155,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -233,9 +234,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
@@ -244,7 +245,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.weak,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -340,20 +342,49 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.main) {
       color.main = base[name].main;
     }
+    if (!color.mainEmphasis) {
+      color.mainEmphasis = emphasize(color.main, tonalOffset);
+    }
+    if (!color.contrastText) {
+      color.contrastText = getContrastText(color.main);
+    }
+
+    if (!color.background) {
+      color.background = color.main;
+    }
+    if (!color.backgroundEmphasis) {
+      color.backgroundEmphasis = emphasize(color.background, tonalOffset);
+    }
+
     if (!color.text) {
       color.text = color.main;
     }
+    if (!color.textEmphasis) {
+      color.textEmphasis = base.mode === 'light' ? darken(color.text, tonalOffset) : lighten(color.text, tonalOffset);
+    }
+
     if (!color.border) {
       color.border = color.text;
     }
+    if (!color.borderEmphasis) {
+      color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // Falls back to matching background/border so themes that don't define these render identically
+    // to before subtleBackground/subtleBorder existed.
+    if (!color.subtleBackground) {
+      color.subtleBackground = alpha(color.background, 0.15);
+    }
+    if (!color.subtleBorder) {
+      color.subtleBorder = alpha(color.border, 0.25);
+    }
+
+    // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
-    }
-    if (!color.contrastText) {
-      color.contrastText = getContrastText(color.main);
     }
     if (!color.borderTransparent) {
       color.borderTransparent = alpha(color.border, 0.25);

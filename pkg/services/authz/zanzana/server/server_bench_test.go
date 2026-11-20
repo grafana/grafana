@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -113,7 +115,7 @@ func generateFolderHierarchy(childrenPerFolder, depth int) ([]*openfgav1.TupleKe
 
 		// Each parent gets exactly childrenPerFolder children
 		for _, parentUID := range parentFolders {
-			for j := 0; j < childrenPerFolder; j++ {
+			for range childrenPerFolder {
 				folderUID := fmt.Sprintf("folder-%d", folderIdx)
 
 				data.folders = append(data.folders, folderUID)
@@ -253,10 +255,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	// Use relative depth range: 1/3 to 2/3 of max depth
 	// Use "view" relation which grants get through the optimized schema
 	minMidDepth := data.maxDepth / 3
-	maxMidDepth := 2 * data.maxDepth / 3
-	if maxMidDepth < minMidDepth {
-		maxMidDepth = minMidDepth
-	}
+	maxMidDepth := max(2*data.maxDepth/3, minMidDepth)
 	// Collect folders in the mid-depth range
 	var midDepthFolders []string
 	for d := minMidDepth; d <= maxMidDepth; d++ {
@@ -357,7 +356,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Generate test data
@@ -409,10 +408,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	// Write tuples in batches (OpenFGA limits to 100 per write)
 	batchSize := 100
 	for i := 0; i < len(allTuples); i += batchSize {
-		end := i + batchSize
-		if end > len(allTuples) {
-			end = len(allTuples)
-		}
+		end := min(i+batchSize, len(allTuples))
 		batch := allTuples[i:end]
 
 		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
@@ -457,7 +453,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector(), nil)
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -470,10 +466,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 
 	batchSize := 100
 	for i := 0; i < len(folderTuples); i += batchSize {
-		end := i + batchSize
-		if end > len(folderTuples) {
-			end = len(folderTuples)
-		}
+		end := min(i+batchSize, len(folderTuples))
 		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
 			StoreId:              storeInf.ID,
 			AuthorizationModelId: storeInf.ModelID,
@@ -949,6 +942,80 @@ func BenchmarkList(b *testing.B) {
 }
 
 // BenchmarkBatchCheck measures the performance of BatchCheck requests
+// This measures warm, in-process authorization sweeps, not network latency.
+// Concentrated mixed access uses two folders: one allowed and one denied.
+func BenchmarkBatchCheckExactCount(b *testing.B) {
+	srv, data := setupBenchmarkServer(b)
+	ctx := newContextWithNamespace()
+	allowedFolders := make([]string, 0)
+	deniedFolders := make([]string, 0)
+	for _, folder := range data.folders {
+		root := folder
+		for data.folderParents[root] != "" {
+			root = data.folderParents[root]
+		}
+		if root == data.foldersByDepth[0][0] {
+			allowedFolders = append(allowedFolders, folder)
+		} else {
+			deniedFolders = append(deniedFolders, folder)
+		}
+	}
+	require.NotEmpty(b, allowedFolders)
+	require.NotEmpty(b, deniedFolders)
+	for _, total := range []int{1000, 5000, 10000} {
+		for _, visible := range []int{0, 50, 100} {
+			for _, distributed := range []bool{false, true} {
+				b.Run(fmt.Sprintf("matches=%d/visible=%d/distributed=%t", total, visible, distributed), func(b *testing.B) {
+					items := make([]*authzv1.BatchCheckItem, total)
+					for i := range items {
+						folders := deniedFolders
+						if i%100 < visible {
+							folders = allowedFolders
+						}
+						folder := folders[0]
+						if distributed {
+							folder = folders[i%len(folders)]
+						}
+						items[i] = &authzv1.BatchCheckItem{
+							Verb: utils.VerbGet, Group: benchDashboardGroup, Resource: benchDashboardResource,
+							Name: fmt.Sprintf("exact-count-%d", i), Folder: folder, CorrelationId: fmt.Sprint(i),
+						}
+					}
+					requests := make([]*authzv1.BatchCheckRequest, 0)
+					for start := 0; start < total; start += authlib.MaxBatchCheckItems {
+						requests = append(requests, &authzv1.BatchCheckRequest{
+							Namespace: benchNamespace, Subject: "user:depth-0-access",
+							Checks: items[start:min(start+authlib.MaxBatchCheckItems, total)],
+						})
+					}
+					for _, req := range requests {
+						res, err := srv.BatchCheck(ctx, req)
+						require.NoError(b, err)
+						require.Len(b, res.Results, len(req.Checks))
+						for _, item := range req.Checks {
+							result := res.Results[item.CorrelationId]
+							require.NotNil(b, result)
+							require.Empty(b, result.GetError())
+							require.Equal(b, slices.Contains(allowedFolders, item.Folder), result.GetAllowed())
+						}
+					}
+					b.ReportAllocs()
+					b.ResetTimer()
+					for range b.N {
+						for _, req := range requests {
+							if _, err := srv.BatchCheck(ctx, req); err != nil {
+								b.Fatal(err)
+							}
+						}
+					}
+					b.StopTimer()
+					b.ReportMetric(float64(len(requests)), "auth-batches/op")
+				})
+			}
+		}
+	}
+}
+
 func BenchmarkBatchCheck(b *testing.B) {
 	srv, data := setupBenchmarkServer(b)
 	ctx := newContextWithNamespace()
@@ -1108,7 +1175,7 @@ func BenchmarkBatchCheck(b *testing.B) {
 		items := make([]*authzv1.BatchCheckItem, 0, batchCheckSize)
 
 		// Mix of accessible and inaccessible resources
-		for i := 0; i < batchCheckSize; i++ {
+		for i := range batchCheckSize {
 			folder := data.folders[i%len(data.folders)]
 			items = append(items, &authzv1.BatchCheckItem{
 				Verb:          utils.VerbGet,

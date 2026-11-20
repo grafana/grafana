@@ -29,6 +29,18 @@ func TestValidateSecureValue(t *testing.T) {
 			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
 		}
 
+		t.Run("name fits the permission identifier", func(t *testing.T) {
+			sv := validSecureValue.DeepCopy()
+			sv.Name = strings.Repeat("a", 40)
+			require.Empty(t, validator.Validate(sv, nil, admission.Create))
+			sv.Name += "a"
+			errs := validator.Validate(sv, nil, admission.Create)
+			require.Len(t, errs, 1)
+			require.Equal(t, "metadata.name", errs[0].Field)
+			require.Empty(t, validator.Validate(sv, sv.DeepCopy(), admission.Update))
+			require.Empty(t, validator.Validate(sv, sv.DeepCopy(), admission.Delete))
+		})
+
 		t.Run("the `description` must be present", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Description = ""
@@ -247,7 +259,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("`decrypters` cannot have more than 64 items", func(t *testing.T) {
 		decrypters := make([]string, 0, 64+1)
-		for i := 0; i < 64+1; i++ {
+		for i := range 64 + 1 {
 			decrypters = append(decrypters, fmt.Sprintf("app%d", i))
 		}
 

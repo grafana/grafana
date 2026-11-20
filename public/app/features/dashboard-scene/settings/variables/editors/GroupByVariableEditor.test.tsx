@@ -5,7 +5,7 @@ import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -43,8 +43,16 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
+  getDataSourceInstance: jest.fn(async () => ({
+    ...defaultDatasource,
+    variables: {
+      getType: () => VariableSupportType.Custom,
+      query: jest.fn(),
+      editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+    },
+    getGroupByKeys: mockGetGroupByKeys,
+  })),
 }));
-
 describe('GroupByVariableEditor', () => {
   beforeAll(() => {
     mockBoundingClientRect({

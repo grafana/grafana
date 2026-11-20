@@ -1,8 +1,10 @@
+import { HttpResponse } from 'msw';
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -10,9 +12,18 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder, mockRulerAlertingRule } from '../mocks';
-import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
+import {
+  grafanaRulerRule,
+  mockPreviewApiResponse,
+  ungroupedGrafanaRulerGroup,
+  ungroupedGrafanaRulerRule,
+} from '../mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
-import { setFolderResponse } from '../mocks/server/configure';
+import {
+  setFolderResponse,
+  setGrafanaRulerRuleGroupResolver,
+  setGrafanaRulerRuleResolver,
+} from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
 import { type RuleFormValues } from '../types/rule-form';
@@ -37,9 +48,9 @@ const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
-    folderContainer: byTestId('folder-picker'),
+    folderContainer: byTestId(selectors.components.AlertRules.folderPicker),
     namespace: byTestId('namespace-picker'),
-    group: byTestId('group-picker'),
+    group: byTestId(selectors.components.AlertRules.groupPicker),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
@@ -123,6 +134,27 @@ describe('CloneRuleEditor', function () {
         }).get()
       ).toBeInTheDocument();
       expect(ui.inputs.annotationValue(0).get()).toHaveTextContent(grafanaRulerRule.annotations![Annotation.summary]);
+    });
+  });
+
+  describe('Grafana-managed rules without an evaluation group', function () {
+    it('titles the page as a duplicate and does not carry the reserved group into the form', async function () {
+      setGrafanaRulerRuleResolver(() => HttpResponse.json(ungroupedGrafanaRulerRule));
+      setGrafanaRulerRuleGroupResolver(() => HttpResponse.json(ungroupedGrafanaRulerGroup));
+
+      render(
+        <ExistingRuleEditor
+          identifier={{ uid: ungroupedGrafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }}
+          clone={true}
+        />,
+        { wrapper: Wrapper }
+      );
+
+      await waitFor(() => {
+        expect(ui.inputs.name.get()).toHaveValue(`${ungroupedGrafanaRulerRule.grafana_alert.title} (copy)`);
+      });
+      expect(byRole('heading', { name: 'Duplicate alert rule' }).get()).toBeInTheDocument();
+      expect(ui.inputs.group.get()).not.toHaveTextContent(ungroupedGrafanaRulerRule.grafana_alert.rule_group);
     });
   });
 

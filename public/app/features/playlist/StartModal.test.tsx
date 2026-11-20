@@ -6,14 +6,18 @@ import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { StartModal } from './StartModal';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  locationService: {
-    ...jest.requireActual('@grafana/runtime').locationService,
-    push: jest.fn(),
-  },
-  reportInteraction: jest.fn(),
-}));
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    locationService: {
+      ...actual.locationService,
+      push: jest.fn(),
+      getHistory: () => actual.locationService,
+    },
+    reportInteraction: jest.fn(),
+  };
+});
 
 const mockPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',

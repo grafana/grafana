@@ -123,10 +123,6 @@ func TestRedirection(t *testing.T) {
 			name:   "datasource query",
 			url:    "/apis/datasource.grafana.app/v0alpha1/namespaces/default/query",
 			expect: "/apis/query.grafana.app/v0alpha1/namespaces/default/query",
-		}, {
-			name:   "datasource query (using connections)",
-			url:    "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/connections/xxx/query",
-			expect: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/xxx/query",
 		},
 	}
 
@@ -142,8 +138,8 @@ func TestRedirection(t *testing.T) {
 	}
 }
 
-var _ builder.APIGroupBuilder = &mockAPIGroupPostStartHookProvider{}
-var _ builder.APIGroupPostStartHookProvider = &mockAPIGroupPostStartHookProvider{}
+var _ builder.APIGroupBuilder = (*mockAPIGroupPostStartHookProvider)(nil)
+var _ builder.APIGroupPostStartHookProvider = (*mockAPIGroupPostStartHookProvider)(nil)
 
 type mockAPIGroupPostStartHookProvider struct {
 	hooks map[string]server.PostStartHookFunc

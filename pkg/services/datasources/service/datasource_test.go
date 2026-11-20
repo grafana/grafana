@@ -4,21 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -27,14 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -143,154 +139,6 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 		assert.Nil(t, ds)
 		assert.ErrorContains(t, err, "failed to set datasource permissions")
 	})
-
-	t.Run("if a plugin has an API version defined (EXPERIMENTAL)", func(t *testing.T) {
-		t.Run("should success to run admission hooks", func(t *testing.T) {
-			dsService := initDSService(t)
-			validateExecuted := false
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					validateExecuted = true
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					return &backend.MutationResponse{
-						Allowed:     true,
-						ObjectBytes: req.ObjectBytes,
-					}, nil
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v1",
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-			require.True(t, validateExecuted)
-		})
-
-		t.Run("should ignore if AdmissionHandler is not implemented for v0alpha1", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v0alpha1",
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-		})
-
-		t.Run("should fail at validation", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
-					if err != nil {
-						return nil, err
-					}
-					if settings.APIVersion != "v0alpha1" {
-						return &backend.ValidationResponse{
-							Allowed: false,
-							Result: &backend.StatusResult{
-								Status:  "Failure",
-								Message: fmt.Sprintf("expected apiVersion: v0alpha1, found: %s", settings.APIVersion),
-								Reason:  "badRequest",
-								Code:    http.StatusBadRequest,
-							},
-						}, nil
-					}
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v123", // invalid apiVersion
-			}
-			_, err := dsService.AddDataSource(context.Background(), cmd)
-			assert.ErrorContains(t, err, "expected apiVersion: v0alpha1, found: v123")
-		})
-
-		t.Run("should mutate a request", func(t *testing.T) {
-			dsService := initDSService(t)
-			dsService.pluginStore = &pluginstore.FakePluginStore{
-				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
-				}},
-			}
-			dsService.pluginClient = &pluginfakes.FakePluginClient{
-				ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-					return &backend.ValidationResponse{
-						Allowed: true,
-					}, nil
-				},
-				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-					settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
-					if err != nil {
-						return nil, err
-					}
-					settings.URL = "url-mutated"
-					pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
-					return &backend.MutationResponse{
-						Allowed:     true,
-						ObjectBytes: pb,
-					}, err
-				},
-			}
-			cmd := &datasources.AddDataSourceCommand{
-				OrgID:      1,
-				Type:       "test", // required to validate apiserver
-				Name:       "test",
-				APIVersion: "v0alpha1",
-			}
-			ds, err := dsService.AddDataSource(context.Background(), cmd)
-			require.NoError(t, err)
-			require.Equal(t, "url-mutated", ds.URL)
-		})
-	})
 }
 
 func TestService_getAvailableName(t *testing.T) {
@@ -375,11 +223,50 @@ func TestService_getAvailableName(t *testing.T) {
 func TestIntegrationService_UpdateDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	t.Run("basic auth username presence", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			body string
+			want string
+		}{
+			{name: "legacy omitted", body: `{}`, want: "original-user"},
+			{name: "legacy null", body: `{"basicAuthUser":null}`, want: "original-user"},
+			{name: "legacy explicit empty", body: `{"basicAuthUser":""}`},
+			{name: "legacy replacement", body: `{"basicAuthUser":"new-user"}`, want: "new-user"},
+			{name: "internal partial update", want: "original-user"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				svc := initDSService(t)
+				ds, err := svc.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+					OrgID: 1, Name: "test", Type: "test", BasicAuth: true, BasicAuthUser: "original-user",
+				})
+				require.NoError(t, err)
+				var cmd datasources.UpdateDataSourceCommand
+				if tc.body != "" {
+					require.NoError(t, json.Unmarshal([]byte(tc.body), &cmd))
+				}
+				cmd.UID, cmd.OrgID = ds.UID, ds.OrgID
+				cmd.Name, cmd.Type, cmd.BasicAuth = ds.Name, ds.Type, true
+				cmd.APIVersion = "v0alpha1"
+				usernameSet := cmd.BasicAuthUserSet
+				username := cmd.BasicAuthUser
+				_, err = svc.UpdateDataSource(context.Background(), &cmd)
+				require.NoError(t, err)
+				require.Equal(t, usernameSet, cmd.BasicAuthUserSet)
+				require.Equal(t, username, cmd.BasicAuthUser)
+				stored, err := svc.SQLStore.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{UID: ds.UID, OrgID: ds.OrgID})
+				require.NoError(t, err)
+				require.Equal(t, tc.want, stored.BasicAuthUser)
+				require.True(t, stored.BasicAuth)
+			})
+		}
+	})
+
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
 		dsService := initDSService(t)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}
@@ -560,57 +447,6 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("should run validation and mutation hooks", func(t *testing.T) {
-		dsService := initDSService(t)
-		dsService.pluginStore = &pluginstore.FakePluginStore{
-			PluginList: []pluginstore.Plugin{{
-				JSONData: plugins.JSONData{
-					ID:   "test",
-					Type: plugins.TypeDataSource,
-					Name: "test",
-				},
-			}},
-		}
-		validateExecuted := false
-		mutateExecuted := false
-		dsService.pluginClient = &pluginfakes.FakePluginClient{
-			ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-				validateExecuted = true
-				return &backend.ValidationResponse{
-					Allowed: true,
-				}, nil
-			},
-			MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-				mutateExecuted = true
-				return &backend.MutationResponse{
-					Allowed:     true,
-					ObjectBytes: req.ObjectBytes,
-				}, nil
-			},
-		}
-		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:      1,
-			Name:       "test-datasource",
-			APIVersion: "v0alpha1",
-			Type:       "test",
-		})
-		require.NoError(t, err)
-
-		cmd := &datasources.UpdateDataSourceCommand{
-			ID:         ds.ID,
-			OrgID:      ds.OrgID,
-			Name:       "test-datasource-updated",
-			APIVersion: "v0alpha1",
-			Type:       "test",
-		}
-
-		dsUpdated, err := dsService.UpdateDataSource(context.Background(), cmd)
-		require.NoError(t, err)
-		require.True(t, validateExecuted)
-		require.True(t, mutateExecuted)
-		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
-	})
-
 	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
 		dsService := initDSService(t)
 		dsService.features = featuremgmt.WithFeatures()
@@ -636,7 +472,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		// Verify that the datasource was created with the correct JsonData
 		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
 			OrgID: ds.OrgID,
-			ID:    ds.ID,
+			ID:    ds.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 		})
 		require.NoError(t, err)
 		require.NotNil(t, createdDS.JsonData)
@@ -692,7 +528,7 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		// Verify that the datasource was created with the correct JsonData
 		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
 			OrgID: ds.OrgID,
-			ID:    ds.ID,
+			ID:    ds.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 		})
 		require.NoError(t, err)
 		require.NotNil(t, createdDS.JsonData)
@@ -828,7 +664,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -836,11 +672,11 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		cmd := &datasources.DeleteDataSourceCommand{
-			UID:   uuid.New().String(),
+			UID:   uuid.NewV4().String(),
 			ID:    1,
 			OrgID: 1,
 		}
@@ -850,7 +686,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 	})
 
 	t.Run("should successfully delete a data source that exists", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -862,7 +698,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 		enableRBACManagedPermissions(t, cfg)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		// First add the datasource
@@ -893,6 +729,35 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 
 		permissionSvc.AssertExpectations(t)
 	})
+
+	t.Run("with a permissions deleter it replaces the SQL permission cleanup", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		permissionSvc := acmock.NewMockedPermissionsService()
+		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
+		deleter := &recordingPermissionsDeleter{}
+		features := featuremgmt.WithFeatures()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), permissionSvc, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, ProvideDataSourceRetriever(sqlStore, features), deleter)
+		require.NoError(t, err)
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{OrgID: 2, Name: "test", Type: "test", UID: "ds-uid"})
+		require.NoError(t, err)
+
+		err = dsService.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{UID: ds.UID, OrgID: 2})
+		require.NoError(t, err)
+
+		require.Equal(t, []deletedPermissions{{namespace: "org-2", name: "ds-uid"}}, deleter.calls)
+		permissionSvc.AssertNotCalled(t, "DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything)
+	})
+}
+
+type deletedPermissions struct{ namespace, name string }
+
+type recordingPermissionsDeleter struct{ calls []deletedPermissions }
+
+func (r *recordingPermissionsDeleter) DeletePermissions(_ context.Context, namespace, name string) error {
+	r.calls = append(r.calls, deletedPermissions{namespace: namespace, name: name})
+	return nil
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
@@ -1125,13 +990,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -1164,13 +1029,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1217,13 +1082,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuth", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1267,13 +1132,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson.Set("tlsAuthWithCACert", true)
 		sjson.Set("serverName", "server-name")
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1325,13 +1190,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsSkipVerify", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1362,13 +1227,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1433,13 +1298,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Host",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1514,13 +1379,13 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
@@ -1539,7 +1404,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1553,7 +1418,7 @@ func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 	}
 	features := featuremgmt.WithFeatures()
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, plgs, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, plgs, dsRetriever, nil)
 	require.NoError(t, err)
 
 	// Provision data sources using the privileged provisioning identity.
@@ -1657,7 +1522,7 @@ func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 func TestIntegrationService_getConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1677,16 +1542,17 @@ func TestIntegrationService_getConnections(t *testing.T) {
 	}
 	features := featuremgmt.WithFeatures()
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, plugins, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, plugins, dsRetriever, nil)
 	require.NoError(t, err)
 
 	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID: 1,
-		Name:  "AAA",
-		UID:   "aaa",
-		Type:  "graphite",
+		OrgID:     1,
+		Name:      "AAA",
+		UID:       "aaa",
+		Type:      "graphite",
+		IsDefault: true,
 	})
 	require.NoError(t, err)
 	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
@@ -1729,21 +1595,19 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"title": "AAA",
 					"name": "aaa",
 					"group": "graphite.datasource.grafana.app",
-					"version": "v0alpha1",
-					"plugin": "graphite"
+					"plugin": "graphite",
+					"labels": {"default": "true"}
 				},
 				{
 					"title": "BBB",
 					"name": "bbb",
 					"group": "another-datasource.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "another-datasource"
 				},
 				{
 					"title": "CCC",
 					"name": "ccc",
 					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "test"
 				}
 			]
@@ -1766,69 +1630,13 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"title": "BBB",
 					"name": "bbb",
 					"group": "another-datasource.datasource.grafana.app",
-					"version": "v0alpha1",
 					"plugin": "another-datasource"
 				}
 			]
 		}`, string(jj))
 	})
 
-	t.Run("Should find connection by plugin alone", func(t *testing.T) {
-		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Plugin:    "test",
-		})
-		require.NoError(t, err)
-
-		jj, _ := json.MarshalIndent(res, "", "  ")
-		require.JSONEq(t, `{
-			"kind": "DataSourceConnectionList",
-			"apiVersion": "datasource.grafana.app/v0alpha1",
-			"items": [
-				{
-					"title": "CCC",
-					"name": "ccc",
-					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
-					"plugin": "test"
-				}
-			]
-		}`, string(jj))
-	})
-
-	t.Run("Should query with uid and plugin", func(t *testing.T) {
-		res, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Name:      "ccc",
-			Plugin:    "grafana-testdata-datasource", // an alias
-		})
-		require.NoError(t, err)
-
-		jj, _ := json.MarshalIndent(res, "", "  ")
-		require.JSONEq(t, `{
-			"kind": "DataSourceConnectionList",
-			"apiVersion": "datasource.grafana.app/v0alpha1",
-			"items": [
-				{
-					"title": "CCC",
-					"name": "ccc",
-					"group": "test.datasource.grafana.app",
-					"version": "v0alpha1",
-					"plugin": "test"
-				}
-			]
-		}`, string(jj))
-	})
-
-	t.Run("Should return error when plugin is unknown", func(t *testing.T) {
-		_, err := dsService.ListConnections(ctx, v0alpha1.DataSourceConnectionQuery{
-			Namespace: "default",
-			Plugin:    "not-installed",
-		})
-		require.Error(t, err)
-	})
-
-	t.Run("Should filter connections by user permissions when querying by plugin", func(t *testing.T) {
+	t.Run("Should filter connections by user permissions when querying", func(t *testing.T) {
 		// Provisioning identity has wildcard read. Swap in a user that can only see "aaa".
 		restrictedCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			OrgID: 1,
@@ -1838,7 +1646,6 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		})
 		res, err := dsService.ListConnections(restrictedCtx, v0alpha1.DataSourceConnectionQuery{
 			Namespace: "default",
-			Plugin:    "graphite",
 		})
 		require.NoError(t, err)
 		require.Len(t, res.Items, 1)
@@ -1848,12 +1655,11 @@ func TestIntegrationService_getConnections(t *testing.T) {
 		emptyCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
-				1: {datasources.ActionRead: {datasources.ScopeProvider.GetResourceScopeUID("ccc")}},
+				1: {datasources.ActionRead: {datasources.ScopeProvider.GetResourceScopeUID("xyz")}},
 			},
 		})
 		res, err = dsService.ListConnections(emptyCtx, v0alpha1.DataSourceConnectionQuery{
 			Namespace: "default",
-			Plugin:    "graphite",
 		})
 		require.NoError(t, err)
 		require.Empty(t, res.Items)
@@ -1863,13 +1669,13 @@ func TestIntegrationService_getConnections(t *testing.T) {
 func TestIntegrationService_getProxySettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures()
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 
 	t.Run("Should default to disabled", func(t *testing.T) {
@@ -1963,13 +1769,13 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures()
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
@@ -1990,13 +1796,13 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -2020,13 +1826,13 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -2048,13 +1854,13 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures()
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil, dsRetriever)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 
 	dsService.cfg = setting.NewCfg()
@@ -2137,7 +1943,7 @@ func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 
 func initDSService(t *testing.T) *Service {
 	cfg := &setting.Cfg{}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -2153,19 +1959,7 @@ func initDSService(t *testing.T) *Service {
 				Name: "test",
 			},
 		}},
-	}, &pluginfakes.FakePluginClient{
-		ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-			return &backend.ValidationResponse{
-				Allowed: true,
-			}, nil
-		},
-		MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-			return &backend.MutationResponse{
-				Allowed:     true,
-				ObjectBytes: req.ObjectBytes,
-			}, nil
-		},
-	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+	}, dsRetriever, nil)
 	require.NoError(t, err)
 
 	return dsService
@@ -2246,4 +2040,4 @@ Lw7rNc3srAhrItPsFzqrWX6/cGuFoKYVS239l/sZzRppQPXcpb7xVvTp2whHcir0
 Wtnpl+TdAoGAGqKqo2KU3JoY3IuTDUk1dsNAm8jd9EWDh+s1x4aG4N79mwcss5GD
 FF8MbFPneK7xQd8L6HisKUDAUi2NOyynM81LAftPkvN6ZuUVeFDfCL4vCA0HUXLD
 +VrOhtUZkNNJlLMiVRJuQKUOGlg8PpObqYbstQAf/0/yFJMRHG82Tcg=
------END RSA PRIVATE KEY-----`
+-----END RSA PRIVATE KEY-----` // trufflehog:ignore

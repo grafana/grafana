@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import {
   Box,
@@ -23,12 +23,14 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { getRepositoryResourcesUrl } from '../utils/repository';
 import { isGitHubBased } from '../utils/repositoryTypes';
-import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
+import { RepositoryStatusAlert } from './RepositoryStatusAlert';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
@@ -42,7 +44,6 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
-  const showFolderMetadataCheck = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const status = repo.status;
   const { conditions, quota } = status ?? {};
@@ -77,14 +78,9 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: StatCell) => {
-          const info = getKindInfoByStat(original);
-          // Unknown kinds have no destination, so no action.
-          if (!info) {
-            return null;
-          }
           return (
             <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+              <LinkButton href={getRepositoryResourcesUrl(repoName, original.resource)} size="sm" variant="secondary">
                 <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
               </LinkButton>
             </Stack>
@@ -93,17 +89,22 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         size: 100,
       },
     ],
-    [repo]
+    [repoName]
   );
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
+        <RepositoryStatusAlert repository={repo} />
+        {hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
-            <Card noMargin className={styles.card}>
+            <Card
+              noMargin
+              className={styles.card}
+              data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
+            >
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -133,7 +134,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           {/* Webhook */}
           {status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card noMargin className={styles.card}>
+              <Card
+                noMargin
+                className={styles.card}
+                data-testid={selectors.pages.Provisioning.RepositoryOverview.webhookCard}
+              >
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>

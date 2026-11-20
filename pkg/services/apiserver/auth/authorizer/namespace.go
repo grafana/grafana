@@ -12,7 +12,8 @@ import (
 type namespaceAuthorizer struct {
 }
 
-func newNamespaceAuthorizer() *namespaceAuthorizer {
+// NewNamespaceAuthorizer restricts resource requests to the caller's namespace.
+func NewNamespaceAuthorizer() authorizer.Authorizer {
 	return &namespaceAuthorizer{}
 }
 
@@ -55,4 +56,14 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 	}
 
 	return authorizer.DecisionNoOpinion, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (auth namespaceAuthorizer) ConditionsAwareAuthorize(ctx context.Context, a authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(auth.Authorize(ctx, a))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (auth namespaceAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }

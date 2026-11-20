@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -10,15 +10,16 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { SearchStatus } from '@grafana/ui/internal';
 
 import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { VirtualizedList } from './VirtualizedList';
-import { getDataSourceCompareFn } from './utils';
+import { buildDataSourceComparator, buildDataSourcePickerLookups, buildDataSourceSearchMatcher } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -44,7 +45,8 @@ export interface DataSourceListProps {
   width?: number;
   keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
-  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+  searchTerm?: string;
+  nonSearchFilter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
@@ -52,6 +54,12 @@ export interface DataSourceListProps {
   favoriteDataSources: FavoriteDatasources;
   /** Ref to the scroll container element, used by the virtualizer */
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  /** DOM id of the listbox, used to build option ids for aria-activedescendant */
+  listboxId?: string;
+  /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
+  onActiveItemChange?: (id: string | undefined) => void;
+  /** Called once the list's rows are painted, with the count and whether a search term was already applied */
+  onRendered?: (listedCount: number, searched: boolean) => void;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -64,14 +72,47 @@ export function DataSourceList(props: DataSourceListProps) {
     enableKeyboardNavigation,
     onClickEmptyStateCTA,
     favoriteDataSources,
+    listboxId,
+    onActiveItemChange,
     scrollRef,
+    onRendered,
   } = props;
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
 
+  // Reports after the list's rows are on screen, which is the slow part with 10k+ data sources. The
+  // virtualizer only measures the scroll container and renders the visible rows after the first
+  // commit, so wait two frames: the second callback runs after those rows have been painted.
+  useEffect(() => {
+    if (!onRendered) {
+      return;
+    }
+    const listedCount = sortedDataSources.length;
+    const searched = Boolean(props.searchTerm);
+    let innerFrame = 0;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => onRendered(listedCount, searched));
+    });
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const searchStatusMessage =
+    sortedDataSources.length === 0
+      ? t('data-source-picker.list.no-data-source-message', 'No data sources found')
+      : t('data-source-picker.list.results-found', '', {
+          count: sortedDataSources.length,
+          defaultValue_one: '{{count}} data source found',
+          defaultValue_other: '{{count}} data sources found',
+        });
+
   return (
     <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
+      <SearchStatus message={searchStatusMessage} />
       {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
       {sortedDataSources.length > 0 && (
         <VirtualizedList
@@ -83,6 +124,8 @@ export function DataSourceList(props: DataSourceListProps) {
           onChange={onChange}
           pushRecentlyUsedDataSource={pushRecentlyUsedDataSource}
           scrollRef={scrollRef}
+          listboxId={listboxId}
+          onActiveItemChange={onActiveItemChange}
         />
       )}
     </div>
@@ -111,20 +154,29 @@ function useSortedDataSources(
     props.dataSources
   );
 
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const { searchTerm, nonSearchFilter } = props;
+  const favoriteUids = favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined;
 
-  return useMemo(
-    () =>
-      [...filteredDataSources].sort(
-        getDataSourceCompareFn(
-          current,
-          recentlyUsedDataSources,
-          getDataSourceVariableIDs(),
-          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-        )
-      ),
-    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
+  const lookups = buildDataSourcePickerLookups(
+    dataSources,
+    favoriteUids ?? [],
+    recentlyUsedDataSources,
+    getDataSourceVariableIDs()
   );
+  const matchesSearch = buildDataSourceSearchMatcher(lookups, searchTerm ?? '');
+
+  const results: DataSourceInstanceSettings[] = [];
+  for (const ds of dataSources) {
+    if (nonSearchFilter && !nonSearchFilter(ds)) {
+      continue;
+    }
+    if (!matchesSearch(ds)) {
+      continue;
+    }
+    results.push(ds);
+  }
+  results.sort(buildDataSourceComparator(current, lookups));
+  return results;
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {

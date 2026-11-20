@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
@@ -7,7 +7,7 @@ import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { getQueryRunnerFor } from '../../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/getQueryRunnerFor';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 
@@ -21,7 +21,7 @@ import { useQueryEditorUIToggles } from './hooks/useQueryEditorUIToggles';
 import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
-import { useSelectionState } from './hooks/useSelectionState';
+import { type CardSelectionOptions, useSelectionState } from './hooks/useSelectionState';
 import { useTransformations } from './hooks/useTransformations';
 import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
@@ -32,13 +32,9 @@ import { getEditorType, getTransformId } from './utils';
  */
 export function QueryEditorContextWrapper({
   dataPane,
-  onSwitchToClassic,
-  showVersionBanner,
   children,
 }: {
   dataPane: PanelDataPaneNext;
-  onSwitchToClassic?: () => void;
-  showVersionBanner?: boolean;
   children: ReactNode;
 }) {
   const theme = useTheme2();
@@ -99,7 +95,7 @@ export function QueryEditorContextWrapper({
   // Wrap each selection mutator to clear alert selection (cross-type exclusivity) and dismiss any
   // open inline delete confirmation because both are selection-scoped UI state.
   const onCardSelectionChange = useCallback(
-    (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
+    (queryRefId: string | null, transformationId: string | null, options?: CardSelectionOptions) => {
       setSelectedAlertId(null);
       setConfirmingDeleteActionKey(null);
       onCardSelectionChangeRaw(queryRefId, transformationId, options);
@@ -107,28 +103,12 @@ export function QueryEditorContextWrapper({
     [onCardSelectionChangeRaw]
   );
 
-  const stackedMode = useStackedModeOrchestration({
-    onCardSelectionChange,
-    selectedQueryRefIds,
-    selectedTransformationIds,
-    // Entering stacked mode clears cross-mode UI state (alert selection, multi-select).
-    onEnter: () => {
-      setSelectedAlertId(null);
-      setMultiSelectMode(false);
-    },
-  });
-  // Destructured for tight dep arrays in the selection handlers below — these property reads
-  // are referentially stable when their underlying state doesn't change.
-  const { enabled: isStackedMode, exit: exitStackedMode } = stackedMode;
-
+  // Bulk-selection entry points, driven by the sidebar card checkboxes (plain card clicks go
+  // through setSelectedQuery / setSelectedTransformation instead). Ticking a checkbox means the
+  // same thing whether or not the stacked view is showing, so there is no stacked-specific branch.
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
-      if (isStackedMode) {
-        // Stacked mode is single-select; the renderer scrolls to whatever becomes selected.
-        onCardSelectionChange(query.refId, null);
-        return;
-      }
       setConfirmingDeleteActionKey(null);
       if (modifiers?.multi || modifiers?.range) {
         if (!multiSelectMode) {
@@ -139,16 +119,12 @@ export function QueryEditorContextWrapper({
       }
       activateQueryRaw(query);
     },
-    [isStackedMode, onCardSelectionChange, multiSelectMode, activateQueryRaw, toggleQuerySelectionRaw]
+    [multiSelectMode, activateQueryRaw, toggleQuerySelectionRaw]
   );
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
-      if (isStackedMode) {
-        onCardSelectionChange(null, transformation.transformId);
-        return;
-      }
       setConfirmingDeleteActionKey(null);
       if (modifiers?.multi || modifiers?.range) {
         if (!multiSelectMode) {
@@ -159,18 +135,17 @@ export function QueryEditorContextWrapper({
       }
       activateTransformationRaw(transformation);
     },
-    [isStackedMode, onCardSelectionChange, multiSelectMode, activateTransformationRaw, toggleTransformationSelectionRaw]
+    [multiSelectMode, activateTransformationRaw, toggleTransformationSelectionRaw]
   );
 
   const resetSelectionState = useCallback(
     (alertId: string | null) => {
-      exitStackedMode();
       setSelectedAlertId(alertId);
       setMultiSelectMode(false);
       setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
-    [clearSelectionRaw, exitStackedMode]
+    [clearSelectionRaw]
   );
 
   const clearSelection = useCallback(() => resetSelectionState(null), [resetSelectionState]);
@@ -185,22 +160,13 @@ export function QueryEditorContextWrapper({
         if (!hasCards) {
           return;
         }
-        // Multi-select and stacked mode are mutually exclusive, so leaving stacked mode here
-        // keeps the two views from being active at once before seeding the bulk selection.
-        exitStackedMode();
         selectActiveInMultiSelectionRaw();
       } else {
         clearMultiSelectionRaw();
       }
       setMultiSelectMode(enabled);
     },
-    [
-      queryRunnerState?.queries,
-      transformations,
-      exitStackedMode,
-      clearMultiSelectionRaw,
-      selectActiveInMultiSelectionRaw,
-    ]
+    [queryRunnerState?.queries, transformations, clearMultiSelectionRaw, selectActiveInMultiSelectionRaw]
   );
 
   // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
@@ -209,7 +175,7 @@ export function QueryEditorContextWrapper({
   // remain visible after the picker resolves.
   const onFinalizeCardSelection = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
-      onCardSelectionChange(queryRefId, transformationId, { seedBulk: multiSelectMode });
+      onCardSelectionChange(queryRefId, transformationId, { bulk: multiSelectMode ? 'seed' : 'clear' });
       resetUIToggles();
     },
     [onCardSelectionChange, multiSelectMode, resetUIToggles]
@@ -354,6 +320,33 @@ export function QueryEditorContextWrapper({
 
   const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings, panel);
 
+  // A ref keeps activateStackedItem stable; the stack's IntersectionObserver re-subscribes when it changes.
+  const activeCardIdsRef = useRef({ queryRefId: activeQueryRefId, transformationId: activeTransformationId });
+  useLayoutEffect(() => {
+    activeCardIdsRef.current = { queryRefId: activeQueryRefId, transformationId: activeTransformationId };
+  });
+
+  // Scrolling the stack activates the card coming into view, which is navigation — so keep the
+  // bulk selection so checkboxes ticked in the sidebar survive scrolling the stack.
+  const activateStackedItem = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      // Help and debug views follow the active card, so close them rather than let them jump to the next one.
+      const { queryRefId: activeQuery, transformationId: activeTransformation } = activeCardIdsRef.current;
+      if (queryRefId !== activeQuery || transformationId !== activeTransformation) {
+        resetUIToggles();
+      }
+      onCardSelectionChange(queryRefId, transformationId, { bulk: 'keep' });
+    },
+    [onCardSelectionChange, resetUIToggles]
+  );
+
+  // Composed after useSelectedCard so `isAlertView` reads the resolved alert card, matching the
+  // condition QueryEditorContent uses to hand the content pane over to the alerts view.
+  const stackedMode = useStackedModeOrchestration({
+    activateItem: activateStackedItem,
+    isAlertView: selectedAlert !== null,
+  });
+
   const uiState = useMemo(
     () => ({
       selectedQuery,
@@ -399,7 +392,6 @@ export function QueryEditorContextWrapper({
       setPendingTransformation,
       finalizePendingTransformation,
       stackedMode,
-      showVersionBanner: Boolean(showVersionBanner),
       confirmingDeleteActionKey,
       setConfirmingDeleteActionKey,
     }),
@@ -438,14 +430,12 @@ export function QueryEditorContextWrapper({
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
-      showVersionBanner,
       confirmingDeleteActionKey,
     ]
   );
 
   const actions = useMemo(
     () => ({
-      onSwitchToClassic,
       updateQueries: dataPane.updateQueries,
       updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
         dataPane.updateSelectedQuery(updatedQuery, originalRefId);
@@ -463,10 +453,12 @@ export function QueryEditorContextWrapper({
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
+      startQueryPreview: dataPane.startQueryPreview,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
       onQueryOptionsChange: dataPane.onQueryOptionsChange,
+      onQueryEdited: dataPane.onQueryEdited,
       addTransformation: addTransformationAction,
       deleteTransformation: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -504,7 +496,6 @@ export function QueryEditorContextWrapper({
       addTransformationAction,
       dataPane,
       findTransformationIndex,
-      onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
       setMultiSelectModeState,

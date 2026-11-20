@@ -2,7 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '../../test-utils/mockDom';
+import { mockComboboxRect } from '@grafana/test-utils';
+
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -51,7 +52,7 @@ describe('MultiCombobox', () => {
     ];
     render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
     const input = screen.getByRole('combobox');
-    user.click(input);
+    await user.click(input);
     expect(await screen.findByText('A')).toBeInTheDocument();
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getByText('C')).toBeInTheDocument();
@@ -131,6 +132,64 @@ describe('MultiCombobox', () => {
       { label: 'C', value: third },
     ]);
     expect(onChange).toHaveBeenNthCalledWith(3, [{ label: 'C', value: third }]);
+  });
+
+  it('keeps checkboxes and selection behavior with custom option content', async () => {
+    const options: Array<ComboboxOption<string>> = [
+      { label: 'Alpha', value: 'a' },
+      { label: 'Beta', value: 'b' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = () => {
+      const [value, setValue] = React.useState<Array<ComboboxOption<string>>>([]);
+
+      return (
+        <MultiCombobox
+          options={options}
+          value={value}
+          onChange={(selectedOptions) => {
+            setValue(selectedOptions);
+            onChange(selectedOptions);
+          }}
+          renderOption={(option) => (
+            <span>
+              Custom <strong data-testid={`custom-multi-option-${option.value}`}>{option.label}</strong>
+            </span>
+          )}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox />);
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getByTestId('combobox-option-b-checkbox')).not.toBeChecked();
+    await user.click(await screen.findByTestId('custom-multi-option-b'));
+
+    expect(onChange).toHaveBeenCalledWith([options[1]]);
+    expect(screen.getByTestId('combobox-option-b-checkbox')).toBeChecked();
+  });
+
+  it('uses default content for the numeric select-all row', async () => {
+    const numericOptions: Array<ComboboxOption<number>> = [
+      { label: 'One', value: 1 },
+      { label: 'Two', value: 2 },
+    ];
+
+    render(
+      <MultiCombobox<number>
+        options={numericOptions}
+        value={[]}
+        onChange={jest.fn()}
+        enableAllOption
+        renderOption={(option) => <span>Number {option.value.toFixed(2)}</span>}
+      />
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Select all')).toBeVisible();
+    expect(screen.getByText('Number 1.00')).toBeVisible();
   });
 
   it('should allow for options to be deselected', async () => {
@@ -502,6 +561,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(DEBOUNCE_TIME_MS)); // Skip debounce
@@ -538,6 +598,7 @@ describe('MultiCombobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+      await screen.findByRole('listbox');
 
       await user.keyboard('a');
       act(() => jest.advanceTimersByTime(10));

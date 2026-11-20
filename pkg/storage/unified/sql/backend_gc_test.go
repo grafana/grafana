@@ -73,8 +73,43 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
+	})
+
+	t.Run("dry run reports candidates without deleting history", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+		t.Cleanup(db.CleanupTestDB)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		dryRunConfig := gcConfig
+		dryRunConfig.DryRun = true
+		storageBackend, sqlDB := newTestBackend(t, dryRunConfig)
+		b := storageBackend.(*backend)
+
+		rv1, err := test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = test.WriteEvent(ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED, test.WithNamespaceAndRV("namespace", rv1))
+		require.NoError(t, err)
+
+		historyRows := func() int {
+			var n int
+			row := sqlDB.QueryRowContext(ctx, "SELECT COUNT(*) FROM resource_history")
+			require.NoError(t, row.Scan(&n))
+			return n
+		}
+		require.Equal(t, 2, historyRows())
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		candidates, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), candidates)
+		require.Equal(t, 2, historyRows())
+
+		// The loop must not spin on candidates it never deletes.
+		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		require.Equal(t, int64(1), results["group/resource"])
+		require.Equal(t, 2, historyRows())
 	})
 
 	t.Run("will only garbage collect eligible resources before cutoff", func(t *testing.T) {
@@ -118,7 +153,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		historyResp, err = server.List(ctx, &resourcepb.ListRequest{
@@ -133,7 +167,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 
@@ -178,7 +211,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 0)
 
 		trashResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -193,7 +225,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 
@@ -232,7 +263,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
@@ -251,7 +281,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 
@@ -295,7 +324,6 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, historyResp.Error)
 		require.Len(t, historyResp.Items, 1)
 	})
 }
@@ -377,13 +405,12 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
 }
 
 func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.StorageBackend, sqldb.DB) {
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)

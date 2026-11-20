@@ -17,15 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	claims "github.com/grafana/authlib/types"
 	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -35,10 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -86,7 +81,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	publicDashboardEnabled := false
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
-	if hs.Cfg.PublicDashboardsEnabled {
+	if publicdashboards.Enabled(ctx, hs.Cfg) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboards.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
@@ -575,13 +570,15 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
 	slug := slugify.Slugify(title)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":    "success",
-		"slug":      slug,
-		"version":   dashMeta.GetGeneration(),
-		"id":        dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
-		"uid":       dashMeta.GetName(),
-		"url":       dashboards.GetDashboardFolderURL(false, dashMeta.GetName(), slug),
-		"folderUid": dashMeta.GetFolder(),
+		"status":  "success",
+		"slug":    slug,
+		"version": dashMeta.GetGeneration(),
+		"id":      dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":     dashMeta.GetName(),
+		"url":     dashboards.GetDashboardFolderURL(false, dashMeta.GetName(), slug),
+		// Root-parented dashboards are stamped with the canonical "general"
+		// sentinel; the legacy API contract expects an empty folderUid for root.
+		"folderUid": folder.ToLegacyFolderUID(dashMeta.GetFolder()),
 	})
 }
 
@@ -683,21 +680,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var userID int64
-	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
-		userID = id
-	}
-
 	homePage := hs.Cfg.HomePage
 
-	var preference *pref.Preference
-	var err error
-	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		preference, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
-	} else {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
-		preference, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-	}
+	preference, err := hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
@@ -719,7 +704,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		return response.Error(http.StatusNotFound, "No custom home dashboard configured", nil)
 	}
 
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
@@ -746,12 +731,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	// injected access shape so that frontend can use the same translator it
 	// already consumes (/dto format)
 	if isK8sDashboardResource(doc) {
-		// Getting-started panel injection still runs against the spec body so
-		// v0/v1 resources behave the same as classic home dashboards if the
-		// existing guards in addGettingStartedPanelToHomeDashboard allow it.
-		if spec, ok := doc.CheckGet("spec"); ok {
-			hs.addGettingStartedPanelToHomeDashboard(c, spec)
-		}
 		doc.Set("access", map[string]any{
 			"canSave":   false,
 			"canShare":  false,
@@ -767,8 +746,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	dash.Meta.CanEdit = c.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = doc
-
-	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return response.JSON(http.StatusOK, &dash)
 }
@@ -796,36 +773,6 @@ func isK8sDashboardResource(doc *simplejson.Json) bool {
 		return false
 	}
 	return true
-}
-
-func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {
-	ctx, span := tracer.Start(c.Req.Context(), "api.addGettingStartedPanelToHomeDashboard")
-	defer span.End()
-	c.Req = c.Req.WithContext(ctx)
-
-	// We only add this getting started panel for Admins,
-	// and if a custom default home dashboard hasn't been configured.
-	// Dismissal state is tracked client-side via UserStorage.
-	if !c.HasUserRole(org.RoleAdmin) ||
-		hs.Cfg.DefaultHomeDashboardPath != "" {
-		return
-	}
-
-	panels := dash.Get("panels").MustArray()
-
-	newpanel := simplejson.NewFromAny(map[string]any{
-		"type": "gettingstarted",
-		"id":   123123,
-		"gridPos": map[string]any{
-			"x": 0,
-			"y": 3,
-			"w": 24,
-			"h": 9,
-		},
-	})
-
-	panels = append(panels, newpanel)
-	dash.Set("panels", panels)
 }
 
 // swagger:route GET /dashboards/uid/{uid}/versions dashboards versions getDashboardVersionsByUID
@@ -866,7 +813,10 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 
 	resp, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to list dashboard versions", err)
 	}
 
 	loginMem := make(map[int64]string, len(resp.Versions))
@@ -961,7 +911,10 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusNotFound, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard version", err)
 	}
 
 	creator := anonString
@@ -1104,8 +1057,7 @@ func dashboardErrResponse(err error, fallbackMessage string) response.Response {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 	}
 
-	var statusErr *k8serrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr, ok := errors.AsType[*k8serrors.StatusError](err); ok {
 		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 

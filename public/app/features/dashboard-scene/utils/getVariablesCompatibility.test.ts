@@ -1,5 +1,7 @@
 import { CustomVariable, QueryVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -73,7 +75,7 @@ describe('getVariablesCompatibility', () => {
     });
   });
 
-  describe('edit pane selection', () => {
+  describe('sidebar selection', () => {
     it('scopes to the selected object ancestry', () => {
       const dashVar = makeQueryVar('dashVar');
       const sectionVar = makeQueryVar('sectionVar');
@@ -94,13 +96,47 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row1, row2] }),
       });
 
-      dashboard.state.editPane.selectObject(sectionVar);
+      dashboard.state.sidebar.selectObject(sectionVar);
 
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);
 
       expect(names).toContain('dashVar');
       expect(names).not.toContain('sectionVar');
+      expect(names).not.toContain('otherVar');
+    });
+
+    it('includes the section variable set for an annotation layer parented on that section', () => {
+      const dashVar = makeQueryVar('dashVar');
+      const sectionVar = makeQueryVar('sectionVar');
+      const otherSectionVar = makeQueryVar('otherVar');
+      const layer = new DashboardAnnotationsDataLayer({
+        name: 'deploys',
+        query: { name: 'deploys', enable: true, iconColor: 'red' },
+      });
+
+      const row1 = new RowItem({
+        title: 'Row 1',
+        $variables: new SceneVariableSet({ variables: [sectionVar] }),
+        $data: new DashboardDataLayerSet({ annotationLayers: [layer] }),
+      });
+
+      const row2 = new RowItem({
+        title: 'Row 2',
+        $variables: new SceneVariableSet({ variables: [otherSectionVar] }),
+      });
+
+      const dashboard = new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [dashVar] }),
+        body: new RowsLayoutManager({ rows: [row1, row2] }),
+      });
+
+      dashboard.state.sidebar.selectObject(layer);
+
+      const names = getVariablesCompatibility(dashboard).map((v) => v.name);
+
+      expect(names).toContain('sectionVar');
+      expect(names).toContain('dashVar');
       expect(names).not.toContain('otherVar');
     });
 
@@ -139,7 +175,7 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row] }),
       });
 
-      dashboard.state.editPane.selectObject(queryVar);
+      dashboard.state.sidebar.selectObject(queryVar);
 
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);

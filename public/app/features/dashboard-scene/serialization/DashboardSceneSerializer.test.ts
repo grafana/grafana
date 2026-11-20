@@ -1,11 +1,4 @@
-import { config } from '@grafana/runtime';
-import {
-  type AdHocFiltersVariable,
-  type GroupByVariable,
-  type MultiValueVariable,
-  sceneGraph,
-  SceneRefreshPicker,
-} from '@grafana/scenes';
+import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -19,14 +12,14 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
+import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';
@@ -75,6 +68,12 @@ describe('DashboardSceneSerializer', () => {
       expect(result.diffCount).toBe(0);
     });
 
+    it('reports a dashboard as new by its missing identity, not by its version', () => {
+      expect(setup({ uid: '', version: 0 }).getDashboardChanges().isNew).toBe(true);
+      // A previewed repo file carries version 0 but already has a uid: saving it updates the file
+      expect(setup({ version: 0 }).getDashboardChanges().isNew).toBe(false);
+    });
+
     it('Can detect time changed', () => {
       const dashboard = setup();
 
@@ -105,6 +104,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect cross-dashboard variables selection change', () => {
+      const dashboard = setup();
+      dashboard.onEnterEditMode();
+
+      const annotation = '{"global":"all","folder":"all"}';
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {
@@ -162,65 +185,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = transformSaveModelToScene({
-            dashboard: {
-              title: 'hello',
-              uid: 'my-uid',
-              schemaVersion: 30,
-              panels: [
-                {
-                  id: 1,
-                  title: 'Panel 1',
-                  type: 'text',
-                },
-              ],
-              version: 10,
-              templating: {
-                list: [
-                  {
-                    type: 'groupby',
-                    datasource: {
-                      type: 'ds',
-                      uid: 'ds-uid',
-                    },
-                    name: 'GroupBy',
-                    options: [
-                      {
-                        text: 'Host',
-                        value: 'host',
-                      },
-                      {
-                        text: 'Region',
-                        value: 'region',
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-            meta: {},
-          });
-          const initialSaveModel = transformSceneToSaveModel(dashboard);
-          dashboard.setInitialSaveModel(initialSaveModel);
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const adhocVar = {
             id: 'adhoc',
@@ -526,6 +490,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
+    it('Can detect cross-dashboard variables selection change', () => {
+      const dashboard = setupV2();
+      dashboard.onEnterEditMode();
+
+      const annotation = '{"global":"all","folder":"all"}';
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyUseCrossDashboardVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
+    });
+
     it('Can detect refresh changed', () => {
       const dashboard = setupV2();
 
@@ -581,56 +569,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
-        it('Can detect group by static options change', () => {
-          const dashboard = setupV2({
-            variables: [
-              {
-                kind: 'GroupByVariable',
-                group: 'ds',
-                datasource: {
-                  name: 'ds-uid',
-                },
-                spec: {
-                  current: {
-                    text: 'Host',
-                    value: 'host',
-                  },
-                  name: 'GroupBy',
-                  options: [
-                    {
-                      text: 'Host',
-                      value: 'host',
-                    },
-                    {
-                      text: 'Region',
-                      value: 'region',
-                    },
-                  ],
-                  multi: false,
-                  hide: 'dontHide',
-                  skipUrlSync: false,
-                },
-              },
-            ],
-          });
-
-          const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
-          variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-          const result = dashboard.getDashboardChanges(false, true);
-
-          expect(result.hasVariableValueChanges).toBe(false);
-          expect(result.hasChanges).toBe(true);
-          expect(result.diffCount).toBe(1);
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const dashboard = setupV2({
             variables: [
@@ -826,7 +764,6 @@ describe('DashboardSceneSerializer', () => {
                 transformations: [],
               },
             },
-            description: '',
             id: 1,
             links: [],
             title: 'Panel 1',
@@ -1454,6 +1391,11 @@ describe('DashboardSceneSerializer', () => {
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
+      serializer.metadata = {
+        name: 'source-uid',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+      };
       const saveModel = defaultDashboardV2Spec();
       const response = {
         id: 1,
@@ -1469,6 +1411,9 @@ describe('DashboardSceneSerializer', () => {
       expect(serializer.initialSaveModel).toEqual({
         ...saveModel,
       });
+      // Save As create must update metadata.name so follow-up saves don't PUT the source.
+      expect(serializer.metadata?.name).toBe('aa');
+      expect(serializer.metadata?.generation).toBe(2);
     });
 
     it('should allow retrieving snapshot url', () => {

@@ -83,8 +83,21 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
+type UserPermissionsClient interface {
+	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
+type UserPermissionsClientSetter interface {
+	SetUserPermissionsClient(client UserPermissionsClient)
+}
+
+type UserPermissionsEvaluator interface {
+	GetLocalUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
 type Options struct {
-	ReloadCache bool
+	ReloadCache      bool
+	SkipZanzanaCache bool
 }
 
 type SearchOptions struct {
@@ -435,12 +448,31 @@ func PermissionsForActions(actions []string, scope string) []Permission {
 }
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
-	return &user.SignedInUser{
-		OrgID:   orgID,
-		OrgRole: role,
-		Login:   "grafana_" + name,
-		Permissions: map[int64]map[string][]string{
-			orgID: GroupScopesByAction(permissions),
+	return &backgroundUser{
+		name: name,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   orgID,
+			OrgRole: role,
+			Login:   "grafana_" + name,
+			Permissions: map[int64]map[string][]string{
+				orgID: GroupScopesByAction(permissions),
+			},
 		},
 	}
+}
+
+type backgroundUser struct {
+	*user.SignedInUser
+	name string
+}
+
+// BackgroundUserName recognizes only requesters created by BackgroundUser.
+// A matching login or missing database ID does not establish an internal caller.
+func BackgroundUserName(requester identity.Requester) (string, bool) {
+	u, ok := requester.(*backgroundUser)
+	if !ok || u == nil || u.SignedInUser == nil {
+		return "", false
+	}
+
+	return u.name, true
 }

@@ -105,6 +105,35 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	return resp, err
 }
 
+func (m *LoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	// The chunked response is streamed through the writer rather than returned, so wrap
+	// it to observe per-refID errors reported via WriteError, mirroring how QueryData
+	// inspects and logs per-refID response errors.
+	cw := &errorRecordingChunkedWriter{ChunkedDataWriter: w}
+	return m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+		innerErr := m.BaseHandler.QueryChunkedData(ctx, req, cw.writer())
+
+		if innerErr == nil {
+			ctxLogger := m.logger.FromContext(ctx)
+			for _, re := range cw.refErrors() {
+				ctxLogger.Error("Partial data response error",
+					"refID", re.refID,
+					"status", int(re.status),
+					"error", re.err,
+					"statusSource", re.source.String(),
+					"target", m.pluginTarget(ctx, req.PluginContext),
+				)
+			}
+		}
+
+		return cw.requestStatus(innerErr), innerErr
+	})
+}
+
 func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)
@@ -189,49 +218,4 @@ func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStream
 	})
 
 	return err
-}
-
-func (m *LoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if req == nil {
-		return m.BaseHandler.ValidateAdmission(ctx, req)
-	}
-
-	var resp *backend.ValidationResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ValidateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *LoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if req == nil {
-		return m.BaseHandler.MutateAdmission(ctx, req)
-	}
-
-	var resp *backend.MutationResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.MutateAdmission(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
-}
-
-func (m *LoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if req == nil {
-		return m.BaseHandler.ConvertObjects(ctx, req)
-	}
-
-	var resp *backend.ConversionResponse
-	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		var innerErr error
-		resp, innerErr = m.BaseHandler.ConvertObjects(ctx, req)
-		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
-	})
-
-	return resp, err
 }

@@ -33,6 +33,10 @@ type Scheduler struct {
 	EvaluationMissed                    *prometheus.CounterVec
 	SimplifiedEditorRules               *prometheus.GaugeVec
 	PrometheusImportedRules             *prometheus.GaugeVec
+	PluginOriginRules                   *prometheus.GaugeVec
+	StaleMarkerFailures                 *prometheus.CounterVec
+	RecordingRuleTrackedSeries          prometheus.Gauge
+	RecordingRuleUntrackedSeries        prometheus.Counter
 }
 
 func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -128,9 +132,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_group_rules",
-				Help:      "The number of alert rules that are scheduled, by type and state.",
+				Help:      "The number of alert rules that are scheduled, by type, state and evaluation interval bucket (non-cumulative ranges, lower bound exclusive and upper bound inclusive).",
 			},
-			[]string{"org", "type", "state", "rule_group", "folder_uid"},
+			[]string{"org", "type", "state", "rule_group", "folder_uid", "interval_bucket"},
 		),
 		Groups: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -180,9 +184,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "schedule_rule_evaluations_missed_total",
-				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+				Help:      "The total number of rule evaluations missed, labelled by reason (e.g. a slow rule evaluation, or the state cache not yet being warmed).",
 			},
-			[]string{"org", "name"},
+			[]string{"org", "name", "reason"},
 		),
 		SimplifiedEditorRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -202,6 +206,36 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org", "state"},
 		),
+		PluginOriginRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "plugin_origin_rules",
+				Help:      "The number of alert rules created by a plugin, by origin.",
+			},
+			[]string{"org", "origin"},
+		),
+		StaleMarkerFailures: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "recording_rule_stale_marker_failures_total",
+				Help:      "The number of series in stale marker writes that failed, by reason. A write can be partly accepted, so this counts every series of a failed write. Failed markers are not retried.",
+			},
+			[]string{"reason"},
+		),
+		RecordingRuleTrackedSeries: promauto.With(r).NewGauge(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "recording_rule_tracked_series",
+			Help:      "The number of series remembered for stale markers.",
+		}),
+		RecordingRuleUntrackedSeries: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "recording_rule_untracked_series_total",
+			Help:      "The number of series, counted on each evaluation, that got no stale marker tracking because the series limit was reached.",
+		}),
 	}
 }
 
@@ -211,6 +245,7 @@ func (s *Scheduler) ResetRuleMetrics() {
 	s.Groups.Reset()
 	s.SimplifiedEditorRules.Reset()
 	s.PrometheusImportedRules.Reset()
+	s.PluginOriginRules.Reset()
 	s.SchedulableAlertRules.Set(0)
 	s.SchedulableAlertRulesHash.Set(0)
 }

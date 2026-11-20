@@ -2,6 +2,7 @@ package authz
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 )
 
 // WireSetBase contains the authz providers that are stable across OSS and
@@ -9,7 +10,11 @@ import (
 // WireSet) so they can rebind overridable providers such as the reconciler
 // CRD list.
 var WireSetBase = wire.NewSet(
-	ProvideAuthZClient,
+	legacypermissions.NewRoleCatalog,
+	ProvideAuthZClients,
+	ProvideAuthZAccessClient,
+	ProvideAuthZLegacyAccessClient,
+	ProvideAuthZUserPermissionsClient,
 	ProvideZanzanaClient,
 	ProvideEmbeddedZanzanaServer,
 	ProvideEmbeddedZanzanaService,

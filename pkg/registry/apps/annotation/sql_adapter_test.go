@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
+var testSpanRecorder = tracetest.NewSpanRecorder()
+
 func TestMain(m *testing.M) {
+	otel.SetTracerProvider(tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(testSpanRecorder)))
 	testsuite.Run(m)
 }
 
@@ -110,14 +116,14 @@ func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 
 	t.Run("Get sets Type to annotation", func(t *testing.T) {
 		_, _ = adapter.Get(ctx, "default", "a-1")
 		require.NotNil(t, repo.lastQuery)
 		assert.Equal(t, "annotation", repo.lastQuery.Type)
-		assert.Zero(t, repo.lastQuery.AlertID)
+		assert.Empty(t, repo.lastQuery.AlertUID)
 	})
 }
 
@@ -148,16 +154,18 @@ func TestSQLAdapter_Get(t *testing.T) {
 		assert.True(t, errors.Is(err, ErrNotFound))
 	})
 
-	t.Run("returns error for invalid name format", func(t *testing.T) {
-		_, err := adapter.Get(ctx, "default", "invalid")
-		require.Error(t, err)
+	t.Run("returns not found for names that are not legacy IDs", func(t *testing.T) {
+		for _, name := range []string{"invalid", "a-", "a-abc"} {
+			_, err := adapter.Get(ctx, "default", name)
+			assert.ErrorIs(t, err, ErrNotFound, name)
+		}
 	})
 }
 
 func TestSQLAdapter_ListPagination(t *testing.T) {
 	// create 5 test annotations
 	repo := newFakeRepo()
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		repo.addItem(&annotations.ItemDTO{
 			ID:   int64(i + 1),
 			Text: fmt.Sprintf("annotation %d", i+1),
@@ -256,10 +264,18 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 		assert.Empty(t, result3.Continue, "Expected no continuation token on last page")
 		assert.Equal(t, "a-5", result3.Items[0].Name)
 	})
+
+	t.Run("rejects bad continuation tokens as invalid input", func(t *testing.T) {
+		_, err := adapter.List(ctx, namespace, ListOptions{Limit: 2, Continue: "not-a-token"})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+
+		_, err = adapter.List(ctx, namespace, ListOptions{Limit: 3, Continue: encodeContinueToken(2, 2)})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
 }
 
 func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
-	sqlDB := db.InitTestDB(t)
+	sqlDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 

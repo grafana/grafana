@@ -4,15 +4,15 @@
  * List template variables for a scope (dashboard or row/tab section) in v2beta1 VariableKind format.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import { SceneVariableSet } from '@grafana/scenes';
 
-import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToSchemaV2Variables';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
-import { getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
+import { resolveVariableScope } from './variableScope';
 
 const listVariablesPayloadSchema = payloads.listVariables;
 
@@ -20,7 +20,7 @@ type ListVariablesPayload = z.infer<typeof listVariablesPayloadSchema>;
 
 export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
   name: 'LIST_VARIABLES',
-  description: payloads.listVariables.description ?? '',
+  description: z.globalRegistry.get(payloads.listVariables)?.description ?? '',
 
   payloadSchema: payloads.listVariables,
   permission: readOnly,
@@ -30,7 +30,7 @@ export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
     const { scene } = context;
 
     try {
-      const effectiveParentPath = getEffectiveVariableParentPath(payload.parentPath);
+      const effectiveParentPath = payload.parentPath ?? '/';
       const { scopeOwner } = resolveVariableScope(scene, effectiveParentPath);
 
       const varSet = scopeOwner.state.$variables;

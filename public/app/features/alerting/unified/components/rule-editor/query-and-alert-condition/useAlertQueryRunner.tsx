@@ -8,10 +8,12 @@ import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 export function useAlertQueryRunner() {
   const [queryPreviewData, setQueryPreviewData] = useState<Record<string, PanelData>>({});
 
-  const runner = useRef(new AlertingQueryRunner());
+  const runner = useRef<AlertingQueryRunner | null>(null);
 
   useEffect(() => {
-    const currentRunner = runner.current;
+    // StrictMode destroys the first runner on its simulated unmount, so each mount needs its own
+    const currentRunner = new AlertingQueryRunner();
+    runner.current = currentRunner;
 
     currentRunner.get().subscribe((data) => {
       setQueryPreviewData(data);
@@ -27,12 +29,13 @@ export function useAlertQueryRunner() {
   }, []);
 
   const cancelQueries = useCallback(() => {
-    runner.current.cancel();
+    runner.current?.cancel();
   }, []);
 
-  const runQueries = useCallback((queriesToPreview: AlertQuery[], condition: string) => {
-    runner.current.run(queriesToPreview, condition);
-  }, []);
+  const runQueries = useCallback(
+    (queriesToPreview: AlertQuery[], condition: string) => runner.current?.run(queriesToPreview, condition),
+    []
+  );
 
   const isPreviewLoading = useMemo(() => {
     return Object.values(queryPreviewData).some((d) => d.state === LoadingState.Loading);

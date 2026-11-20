@@ -6,6 +6,7 @@ import { Icon, ToolbarButton } from '@grafana/ui';
 
 import { itemStarred } from './analytics/main';
 import { useStarItem, useStarredItems } from './hooks';
+import { canUseStars } from './utils';
 
 const getStarTooltips = (title: string) => ({
   star: t('stars.mark-as-starred', 'Mark as favorite'),
@@ -19,10 +20,17 @@ type Props = {
   group: string;
   kind: string;
   id: string;
-  onStarChange?: (id: string, isStarred: boolean) => void;
 };
 
-export function StarToolbarButton({ title, group, kind, id, onStarChange }: Props) {
+/** Renders nothing for a user without a stars resource, such as an anonymous user, since starring would fail. */
+export function StarToolbarButton(props: Props) {
+  if (!canUseStars()) {
+    return null;
+  }
+  return <StarToggle {...props} />;
+}
+
+function StarToggle({ title, group, kind, id }: Props) {
   const tooltips = getStarTooltips(title);
 
   const handleItemStar = useStarItem(group, kind);
@@ -36,8 +44,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   }, [id, stars]);
 
   const handleStarToggle = async () => {
-    await handleItemStar({ id, title }, !isStarred);
-    onStarChange?.(id, !isStarred);
+    await handleItemStar(id, !isStarred);
     itemStarred({
       group,
       kind,

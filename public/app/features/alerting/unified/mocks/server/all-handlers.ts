@@ -10,10 +10,14 @@ import evalHandlers from 'app/features/alerting/unified/mocks/server/handlers/ev
 import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import grafanaRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import historianHandlers from 'app/features/alerting/unified/mocks/server/handlers/historian';
+import alertRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/alertRules.k8s';
+import configK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import inhibitionRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/inhibitionRules.k8s';
 import integrationTypeSchemasK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/integrationTypeSchemas.k8s';
 import receiverK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
+import recordingRulesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/recordingrules.k8s';
 import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/routingtrees.k8s';
+import ruleSequencesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/ruleSequences.k8s';
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import receiverTestK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8sReceiverTest';
@@ -38,6 +42,10 @@ export const alertingHandlers = [
   ...provisioningHandlers,
 
   // Kubernetes-style handlers
+  ...alertRulesK8sHandlers,
+  ...recordingRulesK8sHandlers,
+  ...ruleSequencesK8sHandlers,
+  ...configK8sHandlers,
   ...inhibitionRulesK8sHandlers,
   ...integrationTypeSchemasK8sHandlers,
   ...timeIntervalK8sHandlers,

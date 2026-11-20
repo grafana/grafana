@@ -24,8 +24,16 @@ export function mockBoundingClientRect(rect: Partial<DOMRect> = {}): void {
     configurable: true,
   });
 
-  // @tanstack/react-virtual >=3.11 reads offsetWidth/offsetHeight directly
-  // (not getBoundingClientRect) to size the scroll container and items.
+  // @tanstack/react-virtual and react-data-grid size their viewport from the client box, which JSDOM reports as 0.
+  // Each size is mocked on the prototype JSDOM defines it on, so it isn't shadowed by JSDOM's own getter.
+  Object.defineProperty(Element.prototype, 'clientWidth', {
+    get: () => merged.width,
+    configurable: true,
+  });
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    get: () => merged.height,
+    configurable: true,
+  });
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
     get: () => merged.width,
     configurable: true,

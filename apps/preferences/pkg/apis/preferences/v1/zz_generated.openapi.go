@@ -14,6 +14,8 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1.CustomRouteClient":        schema_pkg_apis_preferences_v1_CustomRouteClient(ref),
+		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1.MergedPreferencesRequest": schema_pkg_apis_preferences_v1_MergedPreferencesRequest(ref),
 		Preferences{}.OpenAPIModelName(): schema_pkg_apis_preferences_v1_Preferences(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1.PreferencesClient":    schema_pkg_apis_preferences_v1_PreferencesClient(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1.PreferencesJSONCodec": schema_pkg_apis_preferences_v1_PreferencesJSONCodec(ref),
@@ -21,6 +23,56 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		PreferencesNavbarPreference{}.OpenAPIModelName():                                           schema_pkg_apis_preferences_v1_PreferencesNavbarPreference(ref),
 		PreferencesQueryHistoryPreference{}.OpenAPIModelName():                                     schema_pkg_apis_preferences_v1_PreferencesQueryHistoryPreference(ref),
 		PreferencesSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_preferences_v1_PreferencesSpec(ref),
+	}
+}
+
+func schema_pkg_apis_preferences_v1_CustomRouteClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"CustomRouteClient": {
+						SchemaProps: spec.SchemaProps{},
+					},
+				},
+				Required: []string{"CustomRouteClient"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_preferences_v1_MergedPreferencesRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"Headers"},
+			},
+		},
 	}
 }
 
@@ -129,8 +181,7 @@ func schema_pkg_apis_preferences_v1_PreferencesList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Preferences{}.OpenAPIModelName()),
+										Ref: ref(Preferences{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -157,9 +208,8 @@ func schema_pkg_apis_preferences_v1_PreferencesNavbarPreference(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -206,7 +256,7 @@ func schema_pkg_apis_preferences_v1_PreferencesSpec(ref common.ReferenceCallback
 					},
 					"homeDashboardUID": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UID for the home dashboard",
+							Description: "UID for the home dashboard. The reserved value \"global-home\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

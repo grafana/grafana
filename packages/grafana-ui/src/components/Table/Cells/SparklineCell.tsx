@@ -78,6 +78,7 @@ export const SparklineCell = (props: TableCellProps) => {
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
+    thresholds: field.config.thresholds,
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,
@@ -116,6 +117,7 @@ export const SparklineCell = (props: TableCellProps) => {
           sparkline={sparkline}
           config={config}
           theme={tableStyles.theme}
+          showTooltip={cellOptions.showTooltip}
         />
       </div>
     </div>

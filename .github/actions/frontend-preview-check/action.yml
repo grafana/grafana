@@ -1,0 +1,92 @@
+name: Frontend preview check
+description: >-
+  Determines whether a pull request is eligible for a frontend preview deploy:
+  not from a fork. Also reports whether the PR changes backend code. Used by the
+  deploy-frontend-preview workflow.
+
+inputs:
+  pr-number:
+    description: Pull request number to inspect
+    required: true
+  token:
+    description: GitHub token used to read the pull request
+    required: true
+
+outputs:
+  should-deploy:
+    description: >-
+      'true' when the PR is eligible for a frontend preview deploy: not from
+      a fork, and not backend-only
+    value: ${{ steps.check.outputs.should-deploy }}
+  has-backend-changes:
+    description: >-
+      'true' when any changed file is backend code, which a frontend preview
+      does not reflect
+    value: ${{ steps.check.outputs.has-backend-changes }}
+  backend-only:
+    description: >-
+      'true' when every changed file is backend code, so a frontend preview
+      would have nothing to show
+    value: ${{ steps.check.outputs.backend-only }}
+  head-sha:
+    description: Head commit SHA of the pull request
+    value: ${{ steps.check.outputs.head-sha }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check pull request files
+      id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+
+        pr=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
+
+        head_sha=$(jq -r '.head.sha' <<< "$pr")
+        head_repo=$(jq -r '.head.repo.full_name // ""' <<< "$pr")
+
+        is_fork=true
+        if [ "$head_repo" = "$REPO" ]; then
+          is_fork=false
+        fi
+
+        files=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')
+
+        # A preview only swaps out the frontend assets served by an existing
+        # instance, so backend changes in the PR would not be reflected.
+        has_backend_changes=false
+        backend_only=true
+        if [ -z "$files" ]; then
+          backend_only=false
+        fi
+
+        while IFS= read -r file; do
+          case "$file" in
+            pkg/*)
+              echo "Backend change found: ${file}"
+              has_backend_changes=true
+              ;;
+            *)
+              backend_only=false
+              ;;
+          esac
+        done <<< "$files"
+
+        should_deploy=false
+        if [ "$is_fork" = "false" ] && [ "$backend_only" = "false" ]; then
+          should_deploy=true
+        fi
+
+        {
+          echo "should-deploy=${should_deploy}"
+          echo "has-backend-changes=${has_backend_changes}"
+          echo "backend-only=${backend_only}"
+          echo "head-sha=${head_sha}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (has-backend-changes=${has_backend_changes}, backend-only=${backend_only}, is-fork=${is_fork}), head-sha=${head_sha}"

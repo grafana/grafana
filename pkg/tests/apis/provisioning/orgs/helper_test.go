@@ -8,11 +8,12 @@ import (
 )
 
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
 	},
 	common.WithoutExportFeatureFlag,
+	// Enable GitHub connections so the connection usage-stats test can create them.
+	common.WithConnectionTypes([]string{"github"}),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v82/github"
@@ -94,6 +95,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
 			DeletedPaths: deletedPaths,
 			TotalChanges: totalChanges,
+			Sender:       event.GetSender().GetLogin(),
+			SenderID:     senderID(event.GetSender()),
 		}, nil
 	case *github.PullRequestEvent:
 		if event.GetRepo() == nil {
@@ -102,6 +105,14 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 		pr := event.GetPullRequest()
 		if pr == nil {
 			return repository.WebhookEvent{}, fmt.Errorf("expected PR in event")
+		}
+		var isFork *bool
+		var forkURL string
+		if headID, baseID := pr.GetHead().GetRepo().GetID(), pr.GetBase().GetRepo().GetID(); headID != 0 && baseID != 0 {
+			isFork = new(headID != baseID)
+			if *isFork {
+				forkURL = pr.GetHead().GetRepo().GetHTMLURL()
+			}
 		}
 		return repository.WebhookEvent{
 			Type:      repository.WebhookEventPullRequest,
@@ -112,6 +123,10 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			PRURL:     pr.GetHTMLURL(),
 			SourceRef: pr.GetHead().GetRef(),
 			Hash:      pr.GetHead().GetSHA(),
+			IsFork:    isFork,
+			ForkURL:   forkURL,
+			Sender:    event.GetSender().GetLogin(),
+			SenderID:  senderID(event.GetSender()),
 		}, nil
 	case *github.PingEvent:
 		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil
@@ -139,13 +154,17 @@ func (r *githubWebhookRepository) SubscribedEvents() []string {
 	return subscribedEvents
 }
 
-// CommentPullRequest adds a comment to a pull request.
-func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
+func (r *githubWebhookRepository) PullRequestClient() repository.PullRequestClient {
+	return r.Client()
 }
 
-func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
-	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
+// senderID formats the sender's numeric ID, or returns an empty string when
+// the payload carries no sender, so a missing identity is not recorded as "0".
+func senderID(sender *github.User) string {
+	if sender.GetID() == 0 {
+		return ""
+	}
+	return strconv.FormatInt(sender.GetID(), 10)
 }
 
 func normalizeGitHubAction(action string) repository.PullRequestAction {

@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
@@ -270,6 +273,27 @@ func TestIntegrationCRUD(t *testing.T) {
 
 			provenance := get.GetProvenanceStatus()
 			require.Equal(t, v0alpha1.ProvenanceStatusNone, provenance)
+		})
+
+		t.Run("update returns OK rather than Created", func(t *testing.T) {
+			update := created.DeepCopy()
+			update.Spec.Title += " updated"
+			body, err := json.Marshal(update)
+			require.NoError(t, err)
+			statusCode := 0
+			err = helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion).
+				Put().Namespace("default").Resource("recordingrules").Name(created.Name).
+				Body(body).Do(ctx).StatusCode(&statusCode).Error()
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, statusCode)
+		})
+
+		t.Run("create service validation returns BadRequest", func(t *testing.T) {
+			invalid := recordingRule.DeepCopy()
+			invalid.Name = "invalid.rule.uid"
+			_, err := adminClient.Create(ctx, invalid, v1.CreateOptions{})
+			require.True(t, apierrors.IsBadRequest(err), "%v", err)
+			require.ErrorContains(t, err, "cannot create rule with UID")
 		})
 
 		// Cleanup
@@ -700,6 +724,14 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
 		require.Error(t, err)
 		require.Nil(t, created)
+
+		t.Run("unless the write opts in with the annotation", func(t *testing.T) {
+			recordingRule.Annotations[v0alpha1.AllowGroupWritesAnnotationKey] = "true"
+			created, err := client.Create(ctx, recordingRule, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.Equal(t, "some-group", created.Labels[v0alpha1.GroupLabelKey])
+			require.Equal(t, "0", created.Labels[v0alpha1.GroupIndexLabelKey])
+		})
 	})
 }
 
@@ -1004,4 +1036,119 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			}
 		})
 	})
+}
+
+// TestIntegrationRecordingRuleStatusSubresource exercises the RecordingRule /status
+// subresource through the generated client the way the rule-status syncer does: a
+// full-object write with Subresource "status".
+func TestIntegrationRecordingRuleStatusSubresource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	client, err := v0alpha1.NewRecordingRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	common.CreateTestFolder(t, helper, "test-folder")
+
+	rule := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithUniqueTitle(),
+		ngmodels.RuleMuts.WithNamespaceUID("test-folder"),
+		ngmodels.RuleMuts.WithGroupName("test-group"),
+		ngmodels.RuleMuts.WithAllRecordingRules(),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).Generate()
+
+	ruleResource := &v0alpha1.RecordingRule{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace:   "default",
+			Annotations: map[string]string{"grafana.app/folder": "test-folder"},
+		},
+		Spec: v0alpha1.RecordingRuleSpec{
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
+			Expressions: v0alpha1.RecordingRuleExpressionMap{
+				"A": {
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					Model:         rule.Data[0].Model,
+					Source:        new(true),
+					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
+						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
+						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),
+					},
+				},
+			},
+			Trigger: v0alpha1.RecordingRuleIntervalTrigger{
+				Interval: v0alpha1.RecordingRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+			},
+		},
+	}
+
+	created, err := client.Create(ctx, ruleResource, resource.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{}) })
+
+	evalTime := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+
+	// writeStatus re-reads the current object (for its spec + resourceVersion), sets
+	// the status, and writes it back through the status subresource.
+	writeStatus := func(status v0alpha1.RecordingRuleStatus) *v0alpha1.RecordingRule {
+		obj, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		obj.Status = status
+		updated, err := client.Update(ctx, obj, resource.UpdateOptions{Subresource: "status"})
+		require.NoError(t, err)
+		return updated
+	}
+
+	// 1) Status round-trips, and the write leaves the spec untouched.
+	recording := v0alpha1.RecordingRuleStatus{
+		Health:             new(v0alpha1.RecordingRuleRecordingRuleHealthRecording),
+		LastEvaluationTime: &evalTime,
+		EvaluationDuration: new(0.1),
+	}
+	updated := writeStatus(recording)
+	require.Equal(t, v0alpha1.RecordingRuleRecordingRuleHealthRecording, *updated.Status.Health)
+	require.Equal(t, created.Spec.Title, updated.Spec.Title, "status write must not change the spec")
+
+	got, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, v0alpha1.RecordingRuleRecordingRuleHealthRecording, *got.Status.Health)
+	require.NotNil(t, got.Status.LastEvaluationTime)
+	require.True(t, got.Status.LastEvaluationTime.Equal(evalTime))
+	require.NotNil(t, got.Status.EvaluationDuration)
+	require.InDelta(t, 0.1, *got.Status.EvaluationDuration, 0.001)
+	require.Equal(t, created.Spec.Title, got.Spec.Title)
+
+	// 2) A second status write overwrites the stored status (error health + lastError).
+	errMsg := "boom"
+	errored := v0alpha1.RecordingRuleStatus{
+		Health:    new(v0alpha1.RecordingRuleRecordingRuleHealthError),
+		LastError: &errMsg,
+	}
+	writeStatus(errored)
+	got, err = client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, v0alpha1.RecordingRuleRecordingRuleHealthError, *got.Status.Health)
+	require.NotNil(t, got.Status.LastError)
+	require.Equal(t, "boom", *got.Status.LastError)
+
+	// 3) A spec update persists and does not clobber the status (the store omits
+	// k8s_status on spec writes).
+	specObj, err := client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	specObj.Spec.Title = created.Spec.Title + "-updated"
+	specUpdated, err := client.Update(ctx, specObj, resource.UpdateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, created.Spec.Title+"-updated", specUpdated.Spec.Title)
+
+	got, err = client.Get(ctx, created.GetStaticMetadata().Identifier())
+	require.NoError(t, err)
+	require.Equal(t, created.Spec.Title+"-updated", got.Spec.Title, "spec update should persist")
+	require.Equal(t, v0alpha1.RecordingRuleRecordingRuleHealthError, *got.Status.Health, "spec update must not clobber status")
+	require.NotNil(t, got.Status.LastError)
+	require.Equal(t, "boom", *got.Status.LastError)
 }

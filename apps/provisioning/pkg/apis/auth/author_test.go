@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func TestGetAuthorFromRequester(t *testing.T) {
+func TestGetUserSignature(t *testing.T) {
 	tests := []struct {
 		name      string
 		requester identity.Requester
@@ -49,12 +49,12 @@ func TestGetAuthorFromRequester(t *testing.T) {
 				ctx = identity.WithRequester(ctx, tt.requester)
 			}
 
-			author, ok := GetAuthorFromRequester(ctx)
+			sig, ok := GetUserSignature(ctx)
 			if tt.expected == nil {
 				assert.False(t, ok)
 			} else {
 				require.True(t, ok)
-				assert.Equal(t, *tt.expected, author)
+				assert.Equal(t, *tt.expected, sig)
 			}
 		})
 	}

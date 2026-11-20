@@ -10,11 +10,11 @@ import {
   API_VERSION,
   type Receiver as K8sReceiver,
   generatedAPI,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { receiverConfigToK8sIntegration, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type GrafanaManagedContactPoint, type Receiver } from 'app/plugins/datasource/alertmanager/types';
 

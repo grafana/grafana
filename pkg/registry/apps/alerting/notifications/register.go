@@ -16,13 +16,13 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/config"
@@ -39,7 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,6 +47,10 @@ import (
 // the legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go)
 // so both validation paths accept the same set.
 var syncableAMImplementations = []string{"mimir", "cortex"}
+
+// defaultAMImplementation is what an alertmanager datasource without an "implementation" setting
+// counts as. It must match the one in the legacy admin_config HTTP API for the same reason.
+const defaultAMImplementation = "mimir"
 
 var (
 	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
@@ -100,6 +104,9 @@ func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSou
 			return fmt.Errorf("datasource must be of type alertmanager")
 		}
 		impl := strings.ToLower(got.JsonData.Get("implementation").MustString(""))
+		if impl == "" {
+			impl = defaultAMImplementation
+		}
 		if !slices.Contains(syncableAMImplementations, impl) {
 			return fmt.Errorf("%q implementation is not supported for sync (must be one of: %s); use the convert API for manual config import",
 				impl, strings.Join(syncableAMImplementations, ", "))
@@ -161,7 +168,7 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			case receiver.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
-				return routingtree.Authorize(ctx, ac.NewRouteAccess[*legacy_storage.ManagedRoute](authz, routesPermissions, false), a)
+				return routingtree.Authorize(ctx, ac.NewRouteAccess[*v1.ManagedRoute](authz, routesPermissions, false), a)
 			case config.ResourceInfo.GroupResource().Resource:
 				return config.Authorize(ctx, authz, a)
 			}
@@ -214,7 +221,7 @@ func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 }
 
 // registerListConversions adds bidirectional v0alpha1 ↔ v1beta1 list conversion functions to
-// the scheme for all five notification resource types.
+// the scheme for every notification resource type.
 func registerListConversions(scheme *runtime.Scheme) error {
 	// Individual item types have identical memory layouts between v0alpha1 and v1beta1,
 	// so we reinterpret each item pointer directly — the same approach used by conversion-gen
@@ -226,6 +233,36 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		convertFn conversion.ConversionFunc
 	}
 	pairs := []convPair{
+		{
+			(*v0alpha1.ConfigList)(nil), (*v1beta1.ConfigList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				inList := in.(*v0alpha1.ConfigList)
+				outList := out.(*v1beta1.ConfigList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.Config, len(inList.Items))
+				itemGVK := v1beta1.ConfigKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103 nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
+				return nil
+			},
+		},
+		{
+			(*v1beta1.ConfigList)(nil), (*v0alpha1.ConfigList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				inList := in.(*v1beta1.ConfigList)
+				outList := out.(*v0alpha1.ConfigList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.Config, len(inList.Items))
+				itemGVK := v0alpha1.ConfigKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103 nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
+				return nil
+			},
+		},
 		{
 			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {

@@ -13,6 +13,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -54,9 +56,17 @@ func (ns *NotificationService) Send(ctx context.Context, msg *Message) (int, err
 	return ns.mailer.Send(ctx, messages...)
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Message, error) {
-	if !ns.Cfg.Smtp.Enabled {
+func (ns *NotificationService) buildEmailMessage(ctx context.Context, cmd *SendEmailCommand) (*Message, error) {
+	smtp, err := readLiveSmtpSettings(ctx, ns.cfgProvider, ns.Cfg.InstanceName)
+	if err != nil {
+		return nil, err
+	}
+	if !smtp.Enabled {
 		return nil, ErrSmtpNotEnabled
+	}
+	// The startup check in ProvideService does not cover remote changes.
+	if !util.IsEmail(smtp.FromAddress) {
+		return nil, errInvalidFromAddress
 	}
 
 	data := cmd.Data
@@ -67,7 +77,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 	setDefaultTemplateData(ns.Cfg, data, nil)
 
 	body := make(map[string]string)
-	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
+	for _, contentType := range smtp.ContentTypes {
 		fileExtension, err := getFileExtensionByContentType(contentType)
 		if err != nil {
 			return nil, err
@@ -110,12 +120,13 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 		}
 	}
 
-	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
+	addr := mail.Address{Name: smtp.FromName, Address: smtp.FromAddress}
 	return &Message{
 		To:               cmd.To,
 		SingleEmail:      cmd.SingleEmail,
 		From:             addr.String(),
 		Subject:          subject,
+		ContentTypes:     smtp.ContentTypes,
 		Body:             body,
 		EmbeddedFiles:    cmd.EmbeddedFiles,
 		EmbeddedContents: cmd.EmbeddedContents,

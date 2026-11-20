@@ -1,11 +1,11 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Stack, Text } from '@grafana/ui';
 
-import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
 import { type RuleFormValues } from '../../../types/rule-form';
-import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
+import { isRecordingRuleByType } from '../../../utils/rules';
 
 import { LabelsInRule } from './LabelsField';
 
@@ -20,7 +20,6 @@ export function LabelsFieldInFormV2({ onEditClick }: LabelsFieldInFormProps) {
   const type = watch('type');
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
-  const isGrafanaManaged = type ? isGrafanaManagedRuleByType(type) : false;
 
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
@@ -52,7 +51,6 @@ export function LabelsFieldInFormV2({ onEditClick }: LabelsFieldInFormProps) {
               {text}
             </Text>
           </Stack>
-          {isGrafanaManaged && <AIImproveLabelsButtonComponent />}
         </Stack>
         <Stack>
           {hasLabels ? (
@@ -73,7 +71,7 @@ export function LabelsFieldInFormV2({ onEditClick }: LabelsFieldInFormProps) {
                 variant="secondary"
                 onClick={onEditClick}
                 size="sm"
-                data-testid="add-labels-button"
+                data-testid={selectors.components.AlertRules.addLabelsButton}
               >
                 <Trans i18nKey="alerting.labels-field-in-form.add-labels">Add labels</Trans>
               </Button>

@@ -2,7 +2,13 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
 	"slices"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -12,16 +18,59 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
+	userutils "github.com/grafana/dskit/user"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type distributorTestProvider struct {
+	grpcserver.Provider
+	server *grpc.Server
+}
+
+func (p distributorTestProvider) GetServer() *grpc.Server { return p.server }
+
+func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
+	srv := grpc.NewServer()
+	_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
+		&setting.Cfg{}, nil, nil,
+		distributorTestProvider{server: srv})
+	require.NoError(t, err)
+
+	listener := bufconn.Listen(1024 * 1024)
+	t.Cleanup(srv.Stop)
+	go func() { _ = srv.Serve(listener) }()
+	conn, err := grpc.NewClient("passthrough:///bufnet",
+		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+		Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
+	})
+	want := NewBadRequestError("key namespace does not match request namespace")
+	require.Nil(t, resp)
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
+}
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 	t.Run("replication factor 1", func(t *testing.T) {
@@ -70,12 +119,96 @@ func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 	})
 }
 
+func TestDistributorCheckHealth(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name        string
+		desc        *ring.Desc
+		startRing   bool
+		wantHealthy bool
+		wantError   string
+	}{
+		{
+			name:        "ring service not started",
+			desc:        searchRingDescForTest(now, ring.ACTIVE),
+			wantHealthy: false,
+			wantError:   "ring is not running: state=New",
+		},
+		{
+			name:        "empty descriptor",
+			desc:        ring.NewDesc(),
+			startRing:   true,
+			wantHealthy: false,
+			wantError:   "search server ring has no instances",
+		},
+		{
+			name:        "active instances",
+			desc:        searchRingDescForTest(now, ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "joining instances",
+			desc:        searchRingDescForTest(now, ring.JOINING, ring.JOINING, ring.JOINING),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "stale active instances",
+			desc:        searchRingDescForTest(now.Add(-2*RingHeartbeatTimeout), ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testRing, _ := newSearchRingWithDescForTest(t, 1, tt.desc, tt.startRing)
+			ds := &distributorServer{ring: testRing}
+
+			assertHealth := func(c *assert.CollectT) {
+				healthy, err := ds.CheckHealth(t.Context())
+				assert.Equal(c, tt.wantHealthy, healthy)
+				if tt.wantError == "" {
+					assert.NoError(c, err)
+				} else {
+					assert.ErrorContains(c, err, tt.wantError)
+				}
+
+				response, responseErr := ds.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{})
+				assert.NoError(c, responseErr)
+				if tt.wantHealthy {
+					assert.Equal(c, resourcepb.HealthCheckResponse_SERVING, response.Status)
+				} else {
+					assert.Equal(c, resourcepb.HealthCheckResponse_NOT_SERVING, response.Status)
+				}
+			}
+
+			require.EventuallyWithT(t, assertHealth, time.Second, 10*time.Millisecond)
+		})
+	}
+}
+
+func newDistributorForwardingTestServer(t *testing.T, client ResourceClient) *distributorServer {
+	t.Helper()
+	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: client}, nil
+		}), nil, gokitlog.NewNopLogger())
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
 // token) when distributing to a search instance. Dropping it makes the downstream
 // authenticator reject the call with "missing required token".
 func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
-	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
-
 	var gotMD metadata.MD
 	mockClient := NewMockResourceClient(t)
 	mockClient.EXPECT().VectorSearch(mock.Anything, mock.Anything).RunAndReturn(
@@ -83,19 +216,7 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 			gotMD, _ = metadata.FromOutgoingContext(ctx)
 			return &resourcepb.VectorSearchResponse{}, nil
 		})
-
-	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
-		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
-			return &RingClient{Client: mockClient}, nil
-		}), nil, gokitlog.NewNopLogger())
-
-	ds := &distributorServer{
-		ring:           testRing,
-		searchRingRead: newSearchRingReadOp(false),
-		clientPool:     pool,
-		tracing:        noop.NewTracerProvider().Tracer("test"),
-	}
-
+	ds := newDistributorForwardingTestServer(t, mockClient)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
 	_, err := ds.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
 		Key:   &resourcepb.ResourceKey{Namespace: "stacks-11794"},
@@ -104,6 +225,324 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
+}
+
+func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		request *resourcepb.HybridSearchRequest
+	}{
+		{
+			name: "key selector",
+			request: &resourcepb.HybridSearchRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-11794",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+				Query: "monitoring",
+			},
+		},
+		{
+			name: "resources selector",
+			request: &resourcepb.HybridSearchRequest{
+				Namespace: "stacks-11794",
+				Resources: []*resourcepb.HybridSearchRequest_Resource{
+					{Group: "dashboard.grafana.app", Resource: "dashboards"},
+					{Group: "folder.grafana.app", Resource: "folders"},
+				},
+				Query: "monitoring",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
+			mockClient := NewMockResourceClient(t)
+			mockClient.EXPECT().HybridSearch(mock.Anything, test.request).RunAndReturn(
+				func(ctx context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+					namespace, err := userutils.ExtractOrgID(ctx)
+					require.NoError(t, err)
+					require.Equal(t, "stacks-11794", namespace)
+					md, _ := metadata.FromOutgoingContext(ctx)
+					require.Equal(t, []string{"the-token"}, md.Get("x-access-token"))
+					return want, nil
+				}).Once()
+			ds := newDistributorForwardingTestServer(t, mockClient)
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-access-token", "the-token"))
+			response, err := ds.HybridSearch(ctx, test.request)
+			require.NoError(t, err)
+			require.Same(t, want, response)
+		})
+	}
+}
+
+// failoverTestClient records which instances were called and returns the
+// error chosen by errFn for each call.
+type failoverTestClient struct {
+	ResourceClient
+	id    string
+	state *failoverTestState
+}
+
+type failoverTestState struct {
+	mu    sync.Mutex
+	calls []string
+	errFn func(call int, id string) error
+}
+
+func (s *failoverTestState) record(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	n := len(s.calls)
+	s.calls = append(s.calls, id)
+	if s.errFn == nil {
+		return nil
+	}
+	return s.errFn(n, id)
+}
+
+// errNilResponse makes the fake client return neither a response nor an error.
+var errNilResponse = errors.New("nil response")
+
+func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		return nil, err
+	}
+	return &resourcepb.ResourceSearchResponse{TotalHits: 1}, nil
+}
+
+func (c *failoverTestClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		if errors.Is(err, errNilResponse) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &resourcepb.RebuildIndexesResponse{RebuildCount: 1}, nil
+}
+
+func newFailoverTestDistributor(t *testing.T, replicationFactor int, state *failoverTestState) *distributorServer {
+	t.Helper()
+	states := make([]ring.InstanceState, max(3, replicationFactor))
+	for i := range states {
+		states[i] = ring.ACTIVE
+	}
+	testRing, _ := newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), states...), true)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: &failoverTestClient{id: inst.Id, state: state}}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
+func TestDistributorSearchFailover(t *testing.T) {
+	unavailable := status.Error(codes.Unavailable, "connection refused")
+	exhausted := status.Error(codes.ResourceExhausted, "too many requests")
+	invalid := status.Error(codes.InvalidArgument, "bad request")
+	notFound := status.Error(codes.NotFound, "not found")
+	detailedUnavailable := GRPCStatusError(NewServiceUnavailableError("index not ready"))
+	detailedExhausted := GRPCStatusError(NewTooManyRequestsError("queue full"))
+	detailedNotFound := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Namespace: "stacks-1", Name: "missing"}))
+	detailedInternal := GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "failed"})
+
+	tests := []struct {
+		name              string
+		replicationFactor int
+		// errors returned by each call, in call order
+		errs      []error
+		wantCalls int
+		// HTTP code of the final error, 0 for success
+		wantCode int32
+	}{
+		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1},
+		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2},
+		{name: "rate limited, not retried", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, unavailable}, wantCalls: 3},
+		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantCode: http.StatusBadRequest},
+		{name: "not found, not retried", replicationFactor: 2, errs: []error{notFound}, wantCalls: 1, wantCode: http.StatusNotFound},
+		{name: "first replica unavailable with details", replicationFactor: 2, errs: []error{detailedUnavailable}, wantCalls: 2},
+		{name: "rate limited with details, not retried", replicationFactor: 2, errs: []error{detailedExhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "not found with details, not retried", replicationFactor: 2, errs: []error{detailedNotFound}, wantCalls: 1, wantCode: http.StatusNotFound},
+		{name: "all attempts fail with details", replicationFactor: 2, errs: []error{detailedUnavailable, detailedUnavailable, detailedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "non-retryable error with details", replicationFactor: 2, errs: []error{detailedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
+		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3},
+		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4},
+		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantCode: http.StatusServiceUnavailable},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := &failoverTestState{errFn: func(n int, _ string) error {
+				if n < len(tt.errs) {
+					return tt.errs[n]
+				}
+				return nil
+			}}
+			ds := newFailoverTestDistributor(t, tt.replicationFactor, state)
+
+			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			})
+			require.Equal(t, tt.wantCode, AsErrorResult(err).GetCode())
+			if tt.wantCode == 0 {
+				require.Equal(t, int64(1), resp.TotalHits)
+			}
+
+			calls := state.calls
+			require.Len(t, calls, tt.wantCalls)
+			// Each replica is tried once before the first one is retried.
+			for i := range calls {
+				require.Equal(t, calls[i%tt.replicationFactor], calls[i])
+			}
+			require.Len(t, slices.Compact(slices.Sorted(slices.Values(calls))), min(len(calls), tt.replicationFactor))
+		})
+	}
+}
+
+func TestDistributorSearchRetriesClientPoolError(t *testing.T) {
+	state := &failoverTestState{}
+	ds := newFailoverTestDistributor(t, 2, state)
+	var failedID atomic.Value
+	ds.clientPool = ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+			if failedID.CompareAndSwap(nil, inst.Id) {
+				return nil, errors.New("dial failed")
+			}
+			return &RingClient{Client: &failoverTestClient{id: inst.Id, state: state}}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), resp.TotalHits)
+	require.Len(t, state.calls, 1)
+	require.NotEqual(t, failedID.Load(), state.calls[0], "fails over to the other replica")
+}
+
+func TestDistributorSearchPassesStatusThrough(t *testing.T) {
+	want := &resourcepb.ErrorResult{
+		Code:    http.StatusForbidden,
+		Reason:  "Forbidden",
+		Message: "not allowed",
+		Details: &resourcepb.ErrorDetails{Group: "dashboard.grafana.app", Kind: "dashboards", Name: "a"},
+	}
+	remote := GRPCStatusError(want)
+	state := &failoverTestState{errFn: func(int, string) error { return remote }}
+	ds := newFailoverTestDistributor(t, 2, state)
+
+	resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	require.Nil(t, resp)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, "not allowed", status.Convert(err).Message())
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
+	require.Len(t, state.calls, 1)
+}
+
+func TestDistributorSearchReportsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	state := &failoverTestState{errFn: func(int, string) error {
+		// The caller gives up while the first replica is failing.
+		cancel()
+		return status.Error(codes.Unavailable, "connection refused")
+	}}
+	ds := newFailoverTestDistributor(t, 2, state)
+
+	_, err := ds.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	require.Equal(t, codes.Canceled, status.Code(err))
+	require.Len(t, state.calls, 1)
+}
+
+func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
+	var failed bool
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-a" && !failed {
+			failed = true
+			return status.Error(codes.Unavailable, "connection refused")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.NoError(t, err)
+	require.True(t, resp.ContactedAllInstances)
+	require.Equal(t, int64(3), resp.RebuildCount)
+
+	slices.Sort(state.calls)
+	require.Equal(t, []string{"instance-a", "instance-a", "instance-b", "instance-c"}, state.calls)
+}
+
+func TestDistributorRebuildIndexesAggregatesStatusError(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-b" {
+			return status.Error(codes.InvalidArgument, "bad keys")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp, "partial results are not returned with the error")
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	res, ok := details[0].(*resourcepb.ErrorResult)
+	require.True(t, ok)
+	require.Equal(t, int32(http.StatusBadRequest), res.Code)
+	require.Contains(t, res.Message, "bad keys")
+}
+
+func TestDistributorRebuildIndexesCancellationDoesNotHideFailure(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		switch id {
+		case "instance-a":
+			return status.Error(codes.Canceled, "canceled")
+		case "instance-b":
+			return errors.New("storage failed")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp)
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.ErrorContains(t, err, "storage failed")
+}
+
+func TestDistributorRebuildIndexesNilResponse(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-b" {
+			return errNilResponse
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp)
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.ErrorContains(t, err, "instance-b")
+	require.Len(t, state.calls, 3, "a nil response is not retried")
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {
@@ -126,6 +565,11 @@ func searchReplicaSetIDs(testRing *ring.Ring, extendReplicaSet bool) ([]string, 
 
 func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceState ring.InstanceState) (*ring.Ring, kv.Client) {
 	t.Helper()
+	return newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE), true)
+}
+
+func newSearchRingWithDescForTest(t *testing.T, replicationFactor int, desc *ring.Desc, start bool) (*ring.Ring, kv.Client) {
+	t.Helper()
 
 	logger := gokitlog.NewNopLogger()
 	store, closer := consul.NewInMemoryClient(ring.GetCodec(), logger, prometheus.NewRegistry())
@@ -133,7 +577,7 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 		require.NoError(t, closer.Close())
 	})
 
-	updateSearchRingForTest(t, store, firstInstanceState)
+	setSearchRingForTest(t, store, desc)
 
 	testRing, err := ring.NewWithStoreClientAndStrategy(ring.Config{
 		HeartbeatTimeout:  time.Minute,
@@ -141,27 +585,37 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 	}, RingName, RingKey, store, ring.NewIgnoreUnhealthyInstancesReplicationStrategy(), prometheus.NewRegistry(), logger)
 	require.NoError(t, err)
 
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
-		defer cancel()
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
-	})
+	if start {
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
+			defer cancel()
+			require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
+		})
+	}
 
 	return testRing, store
 }
 
 func updateSearchRingForTest(t *testing.T, store kv.Client, firstInstanceState ring.InstanceState) {
 	t.Helper()
+	setSearchRingForTest(t, store, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE))
+}
 
-	desc := ring.NewDesc()
-	now := time.Now()
-	desc.AddIngester("instance-a", "instance-a", "", []uint32{100}, firstInstanceState, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-b", "instance-b", "", []uint32{200}, ring.ACTIVE, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-c", "instance-c", "", []uint32{300}, ring.ACTIVE, now, false, time.Time{}, nil)
+func setSearchRingForTest(t *testing.T, store kv.Client, desc *ring.Desc) {
+	t.Helper()
 
 	err := store.CAS(t.Context(), RingKey, func(interface{}) (interface{}, bool, error) {
 		return desc, false, nil
 	})
 	require.NoError(t, err)
+}
+
+func searchRingDescForTest(heartbeat time.Time, states ...ring.InstanceState) *ring.Desc {
+	desc := ring.NewDesc()
+	for i, state := range states {
+		id := fmt.Sprintf("instance-%c", 'a'+rune(i))
+		desc.AddIngester(id, id, "", []uint32{uint32((i + 1) * 100)}, state, heartbeat, false, time.Time{}, nil)
+	}
+	return desc
 }

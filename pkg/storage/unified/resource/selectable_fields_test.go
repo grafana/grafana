@@ -8,18 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAppManifestsCanFilterOutManifestsWithNoKinds(t *testing.T) {
-	all := AppManifests()
-	for _, m := range AppManifestsWithKinds(all) {
-		if m.ManifestData.AppName == "provisioning" {
-			t.Errorf("should not have a provisioning manifest as it has no kinds defined")
-		}
-	}
-}
-
 func TestSelectableFieldsForManifests(t *testing.T) {
 	// No selectable fields
-	m1 := app.NewEmbeddedManifest(app.ManifestData{
+	m1 := &app.ManifestData{
 		Group: "test1.grafana.app",
 		Versions: []app.ManifestVersion{
 			{
@@ -27,15 +18,15 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 					},
 				},
 			},
 		},
-	})
+	}
 
 	// One version with selectable fields.
-	m2 := app.NewEmbeddedManifest(app.ManifestData{
+	m2 := &app.ManifestData{
 		Group: "test2.grafana.app",
 		Versions: []app.ManifestVersion{
 			{
@@ -43,7 +34,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field1",
 							"spec.field2",
@@ -52,10 +43,10 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
 	// Multiple versions with repeated and new fields.
-	m3 := app.NewEmbeddedManifest(app.ManifestData{
+	m3 := &app.ManifestData{
 		Group: "test3.grafana.app",
 		Versions: []app.ManifestVersion{
 			{
@@ -63,7 +54,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 					},
 				},
 			},
@@ -72,7 +63,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field1",
 							"spec.field2",
@@ -85,7 +76,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field2", // duplicate
 							"spec.field3", // new field
@@ -98,7 +89,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field3", // duplicate
 							"spec.field4", // new
@@ -107,10 +98,10 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
 	// Multiple kinds in the same manifest.
-	m4 := app.NewEmbeddedManifest(app.ManifestData{
+	m4 := &app.ManifestData{
 		Group: "test4.grafana.app",
 		Versions: []app.ManifestVersion{
 			{
@@ -118,14 +109,14 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "KindA",
-						Plural: "KindAs",
+						Plural: "KindAs", Resource: "kindas",
 						SelectableFields: []string{
 							"spec.fieldA",
 						},
 					},
 					{
 						Kind:   "KindB",
-						Plural: "KindBs",
+						Plural: "KindBs", Resource: "kindbs",
 						SelectableFields: []string{
 							"spec.fieldB",
 						},
@@ -133,9 +124,9 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				},
 			},
 		},
-	})
+	}
 
-	fields := SelectableFieldsForManifests([]app.Manifest{m1, m2, m3, m4})
+	fields := SelectableFieldsForManifests(m1, m2, m3, m4)
 	expected := map[LowerGroupResource][]string{
 		// Nothing for test1.grafana.app, as there were no selectable fields.
 		NewLowerGroupResource("test2.grafana.app", "testkind"):  {"spec.field1", "spec.field2"},

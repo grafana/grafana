@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -185,8 +186,12 @@ func TestWrapper_Delete(t *testing.T) {
 		// Verify original user identity is used for authorization
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 
-		// Verify service identity is used to call the underlying store
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
+		// Verify service identity is used to call the underlying store, and that it still names the
+		// requester as the metadata identity so storage attributes the deletion to them.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			uid, ok := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesServiceIdentity()(ctx) && ok && uid == "user:u001"
+		}), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 
@@ -363,6 +368,97 @@ func TestWrapper_Update(t *testing.T) {
 	setup.mockStore.AssertExpectations(t)
 }
 
+func TestWrapper_UpdateAuthorizationUsesExecutionContext(t *testing.T) {
+	type contextKey string
+
+	const authorizationContextKey contextKey = "fake-authorization-context-key"
+
+	mockStore := rest.NewMockStorage(t)
+	mockAuth := &FakeAuthorizer{}
+	wrapper := New(mockStore, testResource, mockAuth)
+	requester := &identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser}
+	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(context.Background(), requester))
+	requestCtx = context.WithValue(requestCtx, authorizationContextKey, "fake-request-value")
+
+	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fake-object"}}
+	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
+	updateOpts := &metaV1.UpdateOptions{}
+
+	var authzInfo *authorizedUpdateInfo
+	mockStore.On(
+		"Update",
+		mock.MatchedBy(matchesServiceIdentity()),
+		"fake-object",
+		mock.MatchedBy(func(info *authorizedUpdateInfo) bool {
+			authzInfo = info
+			return true
+		}),
+		mock.Anything,
+		mock.Anything,
+		false,
+		updateOpts,
+	).Return(oldObj, true, nil)
+
+	_, _, err := wrapper.Update(requestCtx, "fake-object", objInfo, nil, nil, false, updateOpts)
+	require.NoError(t, err)
+	require.NotNil(t, authzInfo)
+	cancelRequest()
+
+	mockAuth.On(
+		"BeforeUpdate",
+		mock.MatchedBy(func(ctx context.Context) bool {
+			actualRequester, err := identity.GetRequester(ctx)
+			return ctx.Err() == nil &&
+				err == nil &&
+				actualRequester.GetUID() == "user:fake-user-uid" &&
+				ctx.Value(authorizationContextKey) == "fake-execution-value"
+		}),
+		oldObj,
+		oldObj,
+	).Return(nil)
+
+	executionCtx := context.WithValue(context.Background(), authorizationContextKey, "fake-execution-value")
+	_, err = authzInfo.UpdatedObject(executionCtx, oldObj)
+	require.NoError(t, err)
+
+	mockAuth.AssertExpectations(t)
+	mockStore.AssertExpectations(t)
+}
+
+func TestWrapper_UpdateFailsClosedWithoutOriginalIdentity(t *testing.T) {
+	testCases := map[string]context.Context{
+		"no auth values": context.Background(),
+		"AuthInfo without requester": types.WithAuthInfo(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser},
+		),
+	}
+
+	for name, ctx := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockStore := rest.NewMockStorage(t)
+			mockAuth := &FakeAuthorizer{}
+			wrapper := New(mockStore, testResource, mockAuth)
+
+			result, updated, err := wrapper.Update(
+				ctx,
+				"fake-object",
+				&fakeUpdatedObjectInfo{obj: &fakeObject{}},
+				nil,
+				nil,
+				false,
+				&metaV1.UpdateOptions{},
+			)
+
+			require.ErrorIs(t, err, ErrUnauthenticated)
+			assert.Nil(t, result)
+			assert.False(t, updated)
+			mockStore.AssertNumberOfCalls(t, "Update", 0)
+			mockAuth.AssertNumberOfCalls(t, "BeforeUpdate", 0)
+		})
+	}
+}
+
 func TestWrapper_PassthroughMethods(t *testing.T) {
 	setup := newTestSetup(t)
 
@@ -465,7 +561,11 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 
 		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything).Return(obj, nil)
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+		// The caller is already the user, so storage records them directly: no metadata override.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			_, overridden := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesOriginalUser()(ctx) && !overridden
+		}), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 
@@ -814,34 +914,38 @@ func TestWrapper_Watch(t *testing.T) {
 	})
 
 	t.Run("blocked consumer automatically shuts down the watch", func(t *testing.T) {
-		setup := newTestSetup(t)
-		setup.wrapper.watchSendTimeout = 10 * time.Millisecond
+		synctest.Test(t, func(t *testing.T) {
+			setup := newTestSetup(t)
+			setup.wrapper.watchSendTimeout = 10 * time.Millisecond
 
-		// Inner watcher has enough room to buffer the events without blocking.
-		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
-		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
-		setup.wrapper.inner = watcherStore
+			// Inner watcher has enough room to buffer the events without blocking.
+			inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
+			watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
+			setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
+			setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
+			w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+			require.NoError(t, err)
 
-		// Fill the inner channel buffer without ever reading from w.ResultChan().
-		// Wrapper watcher result channel will be blocked at DefaultChanSize.
-		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
-			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
-		}
+			// Fill the inner channel buffer without ever reading from w.ResultChan().
+			// Wrapper watcher result channel will be blocked at DefaultChanSize.
+			for i := int32(0); i < watch.DefaultChanSize*2; i++ {
+				inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+			}
 
-		// Wait for the send timeout to trigger. Use a generous overall timeout
-		// because the run goroutine must first process ~100 events through the
-		// filter before the result channel fills and the send timeout fires.
-		assert.Eventually(t, inner.IsStopped, 5*time.Second, 10*time.Millisecond,
-			"inner watcher should be stopped after send timeout")
-		for range w.ResultChan() {
-		}
-		_, open := <-w.ResultChan()
-		assert.False(t, open, "wrapper watcher should be stopped after send timeout")
+			// Fill the wrapper result buffer and block its next send before expiring the timeout.
+			synctest.Wait()
+
+			// Expire the blocked send and finish shutting down the inner watcher.
+			synctest.Sleep(setup.wrapper.watchSendTimeout)
+
+			assert.True(t, inner.IsStopped())
+			for range w.ResultChan() {
+			}
+			_, open := <-w.ResultChan()
+			assert.False(t, open, "wrapper watcher should be stopped after send timeout")
+		})
 	})
 
 	t.Run("ticker-driven flush does not terminate the watcher", func(t *testing.T) {

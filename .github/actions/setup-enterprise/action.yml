@@ -5,22 +5,56 @@ inputs:
   token:
     description: 'GitHub token for cloning grafana-enterprise (when provided, skips vault and token generation)'
     required: true
+  ref:
+    description: >-
+      grafana-enterprise ref to check out, for example a release tag. When empty, tries the PR head branch,
+      the PR base branch, the base branch without a trailing #vendor suffix, then main.
+    required: false
+    default: ''
+  path:
+    description: 'Where to clone grafana-enterprise'
+    required: false
+    default: '../grafana-enterprise'
+  grafana-path:
+    description: 'Grafana checkout that build.sh links grafana-enterprise into'
+    required: false
+    default: '.'
 
 runs:
   using: "composite"
   steps:
+    # build.sh runs go. Without the go.mod version installed, go downloads a
+    # toolchain into the read-only module cache, and the later setup-go cache
+    # restore fails when tar can't overwrite those files.
+    - name: Install Go
+      uses: actions/setup-go@v6.5.0
+      with:
+        go-version-file: go.mod
+        cache: false
+
     - name: Setup Enterprise
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
+        REF: ${{ inputs.ref }}
+        ENTERPRISE_PATH: ${{ inputs.path }}
+        GRAFANA_PATH: ${{ inputs.grafana-path }}
       run: |
         RETRIES="5"
-        grafana_root="$PWD"
+        grafana_root="$(cd "$GRAFANA_PATH" && pwd)"
+
+        # Authenticate with a one-off header, so the token is not stored in the clone's git config.
+        auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+        echo "::add-mask::$auth"
+        clone_args=()
+        if [ -n "$REF" ]; then
+          clone_args=(--depth 1 --branch "$REF")
+        fi
 
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
 
-          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+          if git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" clone "${clone_args[@]}" https://github.com/grafana/grafana-enterprise.git "$ENTERPRISE_PATH"; then
             echo "Clone succeeded on attempt $i"
             break
           fi
@@ -33,15 +67,21 @@ runs:
           sleep "$i"
         done
 
-        cd ../grafana-enterprise
+        cd "$ENTERPRISE_PATH"
 
+        # With an explicit ref the clone already checked it out.
         for i in $(seq 1 $RETRIES); do
+          if [ -n "$REF" ]; then
+            break
+          fi
           echo "Attempt $i to checkout..."
 
           if git checkout ${GITHUB_HEAD_REF}; then
             echo "checked out ${GITHUB_HEAD_REF}"
           elif git checkout ${GITHUB_BASE_REF}; then
             echo "checked out ${GITHUB_BASE_REF}"
+          elif [[ "$GITHUB_BASE_REF" == *'#vendor' ]] && git checkout "${GITHUB_BASE_REF%#vendor}"; then
+            echo "checked out ${GITHUB_BASE_REF%#vendor}"
           else
             git checkout main
           fi

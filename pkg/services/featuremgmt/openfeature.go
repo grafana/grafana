@@ -71,6 +71,11 @@ func createRemoteProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error)
 		}
 	}
 
+	userAgent := "grafana"
+	if cfg.StackID != "" {
+		userAgent = fmt.Sprintf("grafana ns/stacks-%s", cfg.StackID)
+	}
+
 	// Create HTTP client
 	httpcli, err := features.CreateHTTPClientForProvider(
 		cfg.OpenFeature.ProviderType,
@@ -78,6 +83,7 @@ func createRemoteProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error)
 		features.HTTPClientOptions{
 			InsecureSkipVerify: true,
 			CacheTTL:           cfg.OpenFeature.CacheTTL,
+			UserAgent:          userAgent,
 		},
 	)
 	if err != nil {

@@ -2,8 +2,11 @@ package process
 
 import (
 	"context"
+	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -146,14 +149,12 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		require.Equal(t, 1, bp.StartCount)
 
 		var wgKill sync.WaitGroup
-		wgKill.Add(1)
-		go func() {
+		wgKill.Go(func() {
 			bp.Kill() // manually kill process
 			for bp.Exited() {
 
 			}
-			wgKill.Done()
-		}()
+		})
 		wgKill.Wait()
 		require.True(t, !p.Exited())
 		require.Equal(t, 2, bp.StartCount)
@@ -164,6 +165,42 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		})
 	})
 }
+
+func TestProcessManager_KeepPluginAliveBacksOff(t *testing.T) {
+	bp := &failingBackendPlugin{FakeBackendPlugin: pluginfakes.NewFakeBackendPlugin(true)}
+	p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
+		plugin.Backend = true
+	})
+	m := ProvideService()
+	m.keepPluginAliveTickerDuration = time.Millisecond
+
+	done := make(chan struct{})
+	go func() {
+		_ = m.keepPluginAlive(p)
+		close(done)
+	}()
+	time.Sleep(300 * time.Millisecond)
+	require.NoError(t, p.Decommission())
+	<-done
+
+	// One attempt per tick would be about 300; doubling waits allow about 9.
+	starts := bp.starts.Load()
+	require.Greater(t, starts, int32(1), "a failed plugin is still retried")
+	require.Less(t, starts, int32(30), "a plugin whose start keeps failing is retried with backoff")
+}
+
+// failingBackendPlugin always fails to start and has no running process.
+type failingBackendPlugin struct {
+	*pluginfakes.FakeBackendPlugin
+	starts atomic.Int32
+}
+
+func (p *failingBackendPlugin) Start(context.Context) error {
+	p.starts.Add(1)
+	return errors.New("plugin protocol version not supported")
+}
+
+func (p *failingBackendPlugin) Exited() bool { return true }
 
 func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.Plugin)) *plugins.Plugin {
 	t.Helper()

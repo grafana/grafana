@@ -31,7 +31,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: da6b3f7224d74c43d89374af39fc048911ea110b # trufflehog:ignore
+  TRIAGE_REF: 14b053c379d54f666617273b7d4f63ade313c08e # trufflehog:ignore
 
 jobs:
   digest:
@@ -70,7 +70,7 @@ jobs:
 
       - name: Mint token for community-triage
         id: triage-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@580590a644e82e79bb2598bdaba0be245a14dda0  # create-github-app-token/v0.2.2
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-community-triage
 
@@ -88,9 +88,7 @@ jobs:
             .agents
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
-        with:
-          node-version: '22'
+        uses: ./.github/actions/setup-node
 
       - name: Get vault secrets
         id: vault-secrets
@@ -116,7 +114,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
+        run: node ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
 
       - name: Build analysis container
         if: steps.fetch-issues.outputs.has_issues == 'true'
@@ -152,12 +150,17 @@ jobs:
           sudo iptables -A OZ_EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
           # shellcheck disable=SC2086
           for ip in $WARP_IPS; do
-            sudo iptables -A OZ_EGRESS -d "$ip" -j ACCEPT
+            sudo iptables -A OZ_EGRESS -p tcp --dport 443 -d "$ip" -j ACCEPT
             echo "Allowed: $ip"
           done
           sudo iptables -A OZ_EGRESS -j REJECT --reject-with icmp-net-unreachable
 
           sudo iptables -I DOCKER-USER -j OZ_EGRESS
+
+          # The allowlist above is IPv4 only, so give the container no IPv6 path.
+          if sudo ip6tables -L DOCKER-USER >/dev/null 2>&1; then
+            sudo ip6tables -I DOCKER-USER -j DROP
+          fi
 
       - name: Run issue digest analysis in Docker
         id: digest-analysis
@@ -203,6 +206,7 @@ jobs:
           sudo iptables -D DOCKER-USER -j OZ_EGRESS 2>/dev/null || true
           sudo iptables -F OZ_EGRESS 2>/dev/null || true
           sudo iptables -X OZ_EGRESS 2>/dev/null || true
+          sudo ip6tables -D DOCKER-USER -j DROP 2>/dev/null || true
 
       - name: Run Issue Weekly Digest
         env:
@@ -224,4 +228,4 @@ jobs:
           echo "Analysis file: ${ANALYSIS_FILE:-none}"
           echo "::endgroup::"
 
-          node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts process
+          node ./community-triage/.github/workflows/scripts/issue-digest.mts process

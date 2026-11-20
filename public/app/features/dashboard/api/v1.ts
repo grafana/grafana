@@ -2,7 +2,7 @@ import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -19,7 +19,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -36,9 +35,8 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, fetchDeletedDashboard, isV2StoredVersion } from './utils';
+import { fetchDeletedDashboard, isV2StoredVersion, restoreDashboardResource } from './utils';
 
 export function getK8sV1DashboardApiConfig() {
   return {
@@ -207,7 +205,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       // dashboard at the root.
       if (folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(folderAnnotation);
+          const folder = await getCombinedFolder(folderAnnotation);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
@@ -250,17 +248,21 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     let lastPage: ResourceList<DashboardDataDTO> | undefined;
 
     do {
-      lastPage = await this.client.list({
-        labelSelector: 'grafana.app/get-history=true',
-        fieldSelector: `metadata.name=${uid}`,
-        limit: limit - items.length,
-        continue: continueToken,
-      });
+      lastPage = await this.listHistoryPage(uid, limit - items.length, continueToken);
       items.push(...lastPage.items);
       continueToken = lastPage.metadata.continue;
     } while (items.length < limit && continueToken);
 
     return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
+  }
+
+  private listHistoryPage(uid: string, limit: number, continueToken?: string) {
+    return this.client.list({
+      labelSelector: 'grafana.app/get-history=true',
+      fieldSelector: `metadata.name=${uid}`,
+      limit,
+      continue: continueToken,
+    });
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {
@@ -270,8 +272,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
 
     do {
       // using high limit to attempt finding the versions in one request
-      // if not found, pagination will kick in
-      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      // if not found, pagination will kick in. This reads single pages on purpose: the
+      // fill-to-limit loop in listDashboardHistory would keep fetching up to the limit
+      // even after the wanted versions were found.
+      const history = await this.listHistoryPage(uid, 1000, continueToken);
       for (const item of history.items) {
         if (versionsToFind.has(item.metadata.generation ?? 0)) {
           results.push(item);
@@ -307,10 +311,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     });
   }
 
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
-  }
-
   async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO> | undefined> {
     return fetchDeletedDashboard(this.client, name);
   }
@@ -320,6 +320,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
-    return this.client.create(buildRestorePayload(dashboard));
+    return restoreDashboardResource(this.client, dashboard);
   }
 }

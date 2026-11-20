@@ -11,6 +11,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	prefsv1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
@@ -33,8 +34,9 @@ var (
 )
 
 type APIBuilder struct {
-	authorizer  authorizer.Authorizer
-	legacyPrefs grafanarest.Storage
+	authorizer   authorizer.Authorizer
+	accessClient authlib.AccessClient
+	legacyPrefs  grafanarest.Storage
 
 	merger *merger // joins all preferences
 }
@@ -49,15 +51,16 @@ func RegisterAPIService(
 ) (*APIBuilder, error) {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		merger: newMerger(cfg),
+		merger:       newMerger(cfg),
+		accessClient: accessClient,
 		authorizer: &utils.AuthorizeFromName{
 			OKNames:      []string{"merged"},
 			AccessClient: accessClient, // can i edit a team
-			Resource: map[string][]utils.ResourceOwner{
+			Resource: map[string][]resource.Owner{
 				"preferences": {
-					utils.NamespaceResourceOwner,
-					utils.TeamResourceOwner,
-					utils.UserResourceOwner,
+					resource.NamespaceResourceOwner,
+					resource.TeamResourceOwner,
+					resource.UserResourceOwner,
 				},
 			},
 		},
@@ -119,18 +122,15 @@ func (b *APIBuilder) storageForVersion(
 ) (*preferencesStorage, error) {
 	storage := map[string]rest.Storage{}
 
-	var store grafanarest.Storage
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, prefs, opts.OptsGetter)
 	if err != nil {
 		return nil, err
 	}
-	if b.legacyPrefs != nil && opts.DualWriteBuilder != nil {
-		store, err = opts.DualWriteBuilder(prefs.GroupResource(), b.legacyPrefs, store)
-		if err != nil {
-			return nil, err
-		}
+	wrappedStorage := &preferencesStorage{
+		Storage:      store,
+		gvk:          prefs.GroupVersionKind(),
+		accessClient: b.accessClient,
 	}
-	wrappedStorage := &preferencesStorage{Storage: store, gvk: prefs.GroupVersionKind()}
 	storage[prefs.StoragePath()] = wrappedStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[prefs.GroupVersion().Version] = storage

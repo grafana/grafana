@@ -33,13 +33,23 @@ type SettingsLister interface {
 type mtSettingsStrategy struct {
 	settings SettingsLister
 	matches  func(provider string) bool
+	// serveReads gates matching on the storage mode having reached the read-flip
+	// (mode 3), fixed at construction. Below it the legacy strategy serves.
+	serveReads bool
 }
 
 func (s *mtSettingsStrategy) IsMatch(ctx context.Context, provider string) bool {
+	if !s.serveReads {
+		return false
+	}
 	enabled := openfeature.NewDefaultClient().Boolean(ctx,
 		featuremgmt.FlagGrafanaSsoSettingsToMTSettings, false, openfeature.TransactionContext(ctx))
 	return enabled && s.matches(provider)
 }
+
+// ServesMTSettings marks the adapter as MT-Settings-backed, selecting MT-wins
+// read precedence in the service once it serves a read.
+func (s *mtSettingsStrategy) ServesMTSettings() bool { return true }
 
 // GetProviderConfig loads the provider's settings from the MT-Settings
 // service: the rows of the auth.<provider> section, keyed like the ini keys
@@ -80,9 +90,10 @@ type MTSettingsOAuthStrategy struct {
 
 var _ ssosettings.FallbackStrategy = (*MTSettingsOAuthStrategy)(nil)
 
-func NewMTSettingsOAuthStrategy(settings SettingsLister) *MTSettingsOAuthStrategy {
+func NewMTSettingsOAuthStrategy(settings SettingsLister, serveReads bool) *MTSettingsOAuthStrategy {
 	return &MTSettingsOAuthStrategy{mtSettingsStrategy{
-		settings: settings,
+		settings:   settings,
+		serveReads: serveReads,
 		matches: func(provider string) bool {
 			return slices.Contains(ssosettings.AllOAuthProviders, provider)
 		},
@@ -100,9 +111,12 @@ var _ ssosettings.FallbackStrategy = (*MTSettingsLDAPStrategy)(nil)
 // on the legacy strategy even while the toggle is enabled. Matching with a
 // failing read would poison every provider — Service.List aborts on the
 // first fallback error and doReload stops reloading all providers.
-func NewMTSettingsLDAPStrategy(settings SettingsLister) *MTSettingsLDAPStrategy {
+func NewMTSettingsLDAPStrategy(settings SettingsLister, serveReads bool) *MTSettingsLDAPStrategy {
+	// TODO: serveReads is inert until LDAP matching is implemented; wire it into
+	// matches once the servers-config representation is decided.
 	return &MTSettingsLDAPStrategy{mtSettingsStrategy{
-		settings: settings,
+		settings:   settings,
+		serveReads: serveReads,
 		matches: func(_ string) bool {
 			return false
 		},
@@ -123,9 +137,10 @@ type MTSettingsSAMLStrategy struct {
 
 var _ ssosettings.FallbackStrategy = (*MTSettingsSAMLStrategy)(nil)
 
-func NewMTSettingsSAMLStrategy(settings SettingsLister) *MTSettingsSAMLStrategy {
+func NewMTSettingsSAMLStrategy(settings SettingsLister, serveReads bool) *MTSettingsSAMLStrategy {
 	return &MTSettingsSAMLStrategy{mtSettingsStrategy{
-		settings: settings,
+		settings:   settings,
+		serveReads: serveReads,
 		matches: func(provider string) bool {
 			return provider == social.SAMLProviderName
 		},

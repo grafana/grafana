@@ -13,6 +13,7 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -29,12 +30,13 @@ import (
 )
 
 type GRPCDecryptClient struct {
-	conn           *grpc.ClientConn
-	tracer         trace.Tracer
-	tokenExchanger authnlib.TokenExchanger
+	conn                       *grpc.ClientConn
+	tracer                     trace.Tracer
+	tokenExchanger             authnlib.TokenExchanger
+	tokenExchangerNamespaceAll bool
 }
 
-var _ decrypt.DecryptService = &GRPCDecryptClient{}
+var _ decrypt.DecryptService = (*GRPCDecryptClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -43,8 +45,14 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, clientLoadBalancingEnabled bool) (*GRPCDecryptClient, error) {
-	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, clientLoadBalancingEnabled)
+func NewGRPCDecryptClient(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	address string,
+	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
+) (*GRPCDecryptClient, error) {
+	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, clientLoadBalancingEnabled, tokenExchangerNamespaceAll)
 }
 
 func NewGRPCDecryptClientWithTLS(
@@ -53,6 +61,7 @@ func NewGRPCDecryptClientWithTLS(
 	address string,
 	tlsConfig TLSConfig,
 	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
 ) (*GRPCDecryptClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
@@ -65,6 +74,8 @@ func NewGRPCDecryptClientWithTLS(
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if clientLoadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available replicas.
@@ -90,9 +101,10 @@ func NewGRPCDecryptClientWithTLS(
 	}
 
 	return &GRPCDecryptClient{
-		conn:           conn,
-		tracer:         tracer,
-		tokenExchanger: tokenExchanger,
+		conn:                       conn,
+		tracer:                     tracer,
+		tokenExchanger:             tokenExchanger,
+		tokenExchangerNamespaceAll: tokenExchangerNamespaceAll,
 	}, nil
 }
 
@@ -140,9 +152,14 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return map[string]decrypt.DecryptResult{}, nil
 	}
 
+	tokenExchangerNamespace := namespace
+	if g.tokenExchangerNamespaceAll {
+		tokenExchangerNamespace = "*"
+	}
+
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithClientInterceptorTracer(g.tracer),
-		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	}
 

@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var _ accesscontrol.Service = new(FakeService)
-var _ accesscontrol.RoleRegistry = new(FakeService)
+var _ accesscontrol.Service = (*FakeService)(nil)
+var _ accesscontrol.RoleRegistry = (*FakeService)(nil)
 
 type FakeService struct {
 	accesscontrol.Service
@@ -61,7 +61,7 @@ func (f FakeService) DeleteExternalServiceRole(ctx context.Context, externalServ
 	return f.ExpectedErr
 }
 
-var _ accesscontrol.AccessControl = new(FakeAccessControl)
+var _ accesscontrol.AccessControl = (*FakeAccessControl)(nil)
 
 type FakeAccessControl struct {
 	ExpectedErr      error
@@ -132,7 +132,7 @@ func (f FakeStore) CleanupPluginRBAC(_ context.Context, _ []string) error {
 	return f.ExpectedErr
 }
 
-var _ accesscontrol.PermissionsService = new(FakePermissionsService)
+var _ accesscontrol.PermissionsService = (*FakePermissionsService)(nil)
 
 type FakePermissionsService struct {
 	ExpectedErr          error

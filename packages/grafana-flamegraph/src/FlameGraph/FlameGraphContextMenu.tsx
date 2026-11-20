@@ -1,7 +1,7 @@
 import { type DataFrame } from '@grafana/data';
 import { MenuItem, MenuGroup, ContextMenu, type IconName } from '@grafana/ui';
 
-import { type ClickedItemData, type PaneView, type SelectedView, type ViewMode } from '../types';
+import { type ClickedItemData, type PaneView, type ViewMode } from '../types';
 
 import { type CollapseConfig, type FlameGraphDataContainer } from './dataTransform';
 
@@ -9,10 +9,10 @@ export type GetExtraContextMenuButtonsFunction = (
   clickedItemData: ClickedItemData,
   data: DataFrame,
   state: {
-    selectedView?: SelectedView;
-    viewMode?: ViewMode;
-    paneView?: PaneView;
+    viewMode: ViewMode;
+    paneView: PaneView;
     isDiff: boolean;
+    isSandwich: boolean;
     search: string;
     collapseConfig?: CollapseConfig;
   }
@@ -39,10 +39,10 @@ type Props = {
   collapsing?: boolean;
   allGroupsCollapsed?: boolean;
   allGroupsExpanded?: boolean;
-  selectedView?: SelectedView;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
+  sandwichItem?: string;
 };
 
 const FlameGraphContextMenu = ({
@@ -60,18 +60,20 @@ const FlameGraphContextMenu = ({
   collapsing,
   allGroupsExpanded,
   allGroupsCollapsed,
-  selectedView,
   viewMode,
   paneView,
   search,
+  sandwichItem,
 }: Props) => {
   function renderItems() {
     const extraButtons =
       getExtraContextMenuButtons?.(itemData, data.data, {
-        selectedView,
         viewMode,
         paneView,
         isDiff: data.isDiffFlamegraph(),
+        // Match the predicate FlameGraph uses to render sandwich mode so an empty
+        // label does not report sandwich mode while the graph stays in normal view.
+        isSandwich: Boolean(sandwichItem),
         search,
         collapseConfig,
       }) || [];

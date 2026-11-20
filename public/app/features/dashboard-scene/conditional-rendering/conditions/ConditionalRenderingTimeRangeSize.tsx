@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 
 import { rangeUtil, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,7 +7,7 @@ import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject
 import { type ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Field, Select } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { edit } from '../../actions/utils/edit';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -104,9 +104,7 @@ export class ConditionalRenderingTimeRangeSize extends SceneObjectBase<Condition
 
 function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProps<ConditionalRenderingTimeRangeSize>) {
   const { value } = model.useState();
-  const [isValid, setIsValid] = useState(model.validateIntervalRegex.test(value));
-
-  useEffect(() => setIsValid(model.validateIntervalRegex.test(value)), [model, value]);
+  const isValid = useMemo(() => model.validateIntervalRegex.test(value), [model, value]);
 
   const staticOptions = useMemo<Array<SelectableValue<string>>>(
     () => [
@@ -220,7 +218,8 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
 
   const handleChange = useCallback(
     (newValue: string | undefined) => {
-      dashboardEditActions.edit({
+      edit({
+        meta: { actionId: 'conditional-rendering.changeRule', scope: 'time-range-size' },
         description: t('dashboard.edit-actions.edit-time-range-rule', 'Change time range rule'),
         source: model,
         perform: () => model.changeValue(newValue ?? ''),

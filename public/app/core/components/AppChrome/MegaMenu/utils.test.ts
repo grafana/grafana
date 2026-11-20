@@ -7,13 +7,13 @@ import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import {
   getEnrichedHelpItem,
   getActiveItem,
-  findByUrl,
   getPinnedEntries,
   moveItem,
   reorderSections,
   orderTopLevelSections,
   isHideable,
   removeHiddenItems,
+  removeEmptySavedSections,
   hideItem,
   revealItem,
   enrichWithInteractionTracking,
@@ -239,28 +239,6 @@ describe('getActiveItem', () => {
       id: 'not-home',
     };
     expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
-  });
-});
-
-describe('findByUrl', () => {
-  it('returns the correct item at the top level', () => {
-    expect(findByUrl(mockNavTree, '/item')).toEqual({
-      text: 'Item',
-      url: '/item',
-      id: 'item',
-    });
-  });
-
-  it('returns the correct child item', () => {
-    expect(findByUrl(mockNavTree, '/child')).toEqual({
-      text: 'Child',
-      url: '/child',
-      id: 'child',
-    });
-  });
-
-  it('returns null if no item found', () => {
-    expect(findByUrl(mockNavTree, '/no-item')).toBeNull();
   });
 });
 
@@ -492,5 +470,37 @@ describe('hiding helpers', () => {
       const result = revealItem(['cfg'], tree, 'cfg/access/users');
       expect(new Set(result)).toEqual(new Set(['cfg/settings', 'cfg/access/teams']));
     });
+  });
+});
+
+describe('removeEmptySavedSections', () => {
+  const items: NavModelItem[] = [
+    { text: 'Home', id: 'home', url: '/' },
+    { text: 'Starred', id: 'starred', url: '/dashboards?starred', children: [] },
+    { text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' },
+  ];
+  const ids = (result: NavModelItem[]) => result.map((item) => item.id);
+
+  it('drops empty Starred and Bookmarks sections once loaded', () => {
+    expect(ids(removeEmptySavedSections(items, { starredPending: false, bookmarksPending: false }))).toEqual(['home']);
+  });
+
+  it('keeps pending sections so their loading/error state shows', () => {
+    expect(ids(removeEmptySavedSections(items, { starredPending: true, bookmarksPending: true }))).toEqual([
+      'home',
+      'starred',
+      'bookmarks',
+    ]);
+  });
+
+  it('keeps sections that have children', () => {
+    const withChildren = items.map((item) =>
+      item.id === 'home' ? item : { ...item, children: [{ text: 'Child', url: '/child' }] }
+    );
+    expect(ids(removeEmptySavedSections(withChildren, { starredPending: false, bookmarksPending: false }))).toEqual([
+      'home',
+      'starred',
+      'bookmarks',
+    ]);
   });
 });

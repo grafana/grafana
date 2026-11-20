@@ -5,7 +5,6 @@ import { t } from '@grafana/i18n';
 import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
-import { AddCardButton } from './AddCardButton';
 import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
@@ -13,6 +12,7 @@ import { CollapsableSection } from './CollapsableSection';
 import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
 import { SectionEmptyState } from './SectionEmptyState';
+import { QueriesHeaderAddButton, TransformationsHeaderAddButton } from './SectionHeaderAddButton';
 
 export function QueriesAndTransformationsView() {
   const { queries } = useQueryRunnerContext();
@@ -45,7 +45,7 @@ export function QueriesAndTransformationsView() {
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
-        headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
+        headerAction={<QueriesHeaderAddButton onAddQuery={expandQueries} onAddTransformation={expandTransformations} />}
       >
         {queries.length > 0 && (
           <DraggableList
@@ -67,7 +67,7 @@ export function QueriesAndTransformationsView() {
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
-        headerAction={<AddCardButton variant="transformation" alwaysVisible onAdd={expandTransformations} />}
+        headerAction={<TransformationsHeaderAddButton onAdd={expandTransformations} />}
       >
         {transformations.length > 0 && (
           <DraggableList

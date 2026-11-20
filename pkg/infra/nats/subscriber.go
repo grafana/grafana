@@ -2,7 +2,6 @@ package nats
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,15 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const subscriberName = "nats-subscriber"
+const SubscriberServiceName = "nats-subscriber"
 
 // MessageHandler receives a message delivered to a subscribed subject. It
 // mirrors Publish's (subject, data) shape so callers never touch nats.go types.
 type MessageHandler func(subject string, data []byte)
 
-// Subscription is a handle to an active subscription. Unsubscribe stops delivery
-// and releases the server-side interest.
+// Subscription is a handle to a subscription that may still be pending.
 type Subscription interface {
+	// WaitReady must succeed before relying on delivery for a snapshot-to-live
+	// handoff. The context must have a deadline.
+	WaitReady(ctx context.Context) error
+	// Unsubscribe stops delivery and releases the server-side interest.
 	Unsubscribe() error
 }
 
@@ -32,6 +34,9 @@ type Subscriber interface {
 	// running subscriber receives its own copy; pass WithQueueGroup to
 	// load-balance delivery across a group instead.
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
+	// Started is closed once the subscriber can subscribe; Subscribe fails
+	// until then. Callers built before the service starts wait on it.
+	Started() <-chan struct{}
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.
@@ -68,14 +73,8 @@ type SubscriberService struct {
 
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
-	// A slow consumer means the broker dropped messages the client could not drain in time.
-	conn.onAsyncError = func(err error) {
-		if errors.Is(err, natsclient.ErrSlowConsumer) {
-			m.slowConsumers.Inc()
-		}
-	}
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(SubscriberServiceName)
 	return s
 }
 
@@ -102,11 +101,6 @@ func (s *SubscriberService) Run(ctx context.Context) error {
 	return s.AwaitTerminated(ctx)
 }
 
-func (s *SubscriberService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-
 // stopping drains the connection, which auto-unsubscribes any active
 // subscriptions and flushes in-flight handler deliveries.
 func (s *SubscriberService) stopping(_ error) error {
@@ -123,6 +117,11 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handl
 	for _, opt := range opts {
 		opt(&cfg)
 	}
+	var remove func()
+	if cfg.onReconnect != nil {
+		// Register before SUB so a reconnect during subscription setup cannot be lost.
+		remove = s.onReconnect(cfg.onReconnect)
+	}
 	sub, err := s.subscribe(ctx, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
 		if cfg.queue != "" {
 			return nc.QueueSubscribe(subject, cfg.queue, cb)
@@ -130,12 +129,15 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handl
 		return nc.Subscribe(subject, cb)
 	}, handler)
 	if err != nil {
+		if remove != nil {
+			remove()
+		}
 		return nil, err
 	}
-	if cfg.onReconnect != nil {
+	if remove != nil {
 		// Fire the callback on every reconnect, and stop firing it once this
 		// subscription is unsubscribed.
-		sub = &reconnectingSubscription{Subscription: sub, remove: s.onReconnect(cfg.onReconnect)}
+		sub = &reconnectingSubscription{Subscription: sub, remove: remove}
 	}
 	return sub, nil
 }
@@ -168,7 +170,27 @@ func (s *SubscriberService) subscribe(ctx context.Context, subject string, sub f
 	natsSub, err := sub(nc, cb)
 	if err != nil {
 		s.metrics.subscribeErrors.Inc()
+		if isConnStateErr(err) {
+			return nil, fmt.Errorf("subscribe to %q: nats connection not established (status=%s, last_err=%v): %w", subject, nc.Status(), nc.LastError(), err)
+		}
 		return nil, fmt.Errorf("subscribe to %q: %w", subject, err)
 	}
-	return natsSub, nil
+	if !nc.IsConnected() {
+		s.log.Warn("subscribed while the nats connection is not established; delivery starts once it connects",
+			"subject", subject,
+			"status", nc.Status(),
+			"last_err", nc.LastError())
+	}
+	return &readySubscription{Subscription: natsSub, conn: nc}, nil
+}
+
+type readySubscription struct {
+	*natsclient.Subscription
+	conn *natsclient.Conn
+}
+
+// WaitReady lets snapshot-to-live consumers wait until the server has processed
+// SUB. Ordinary subscribers can still queue subscriptions while disconnected.
+func (s *readySubscription) WaitReady(ctx context.Context) error {
+	return s.conn.FlushWithContext(ctx)
 }

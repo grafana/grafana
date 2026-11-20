@@ -7,16 +7,21 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
+import { STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
+import { StPodPendingEllipsis } from './StPodPendingEllipsis';
+import { StPodPendingTooltip } from './StPodPendingTooltip';
 import { getDragHandleStyles } from './styles';
-import { hasChildMatch } from './utils';
+import { hasChildMatch, hiddenKey } from './utils';
 
 interface Props {
   link: NavModelItem;
@@ -88,10 +93,11 @@ export function MegaMenuItem({
   const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
+  const isStPodLoading = useIsStPodLoading(link.url ?? '');
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
-  // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
+  // Starred leaf rows (id `starred/<kind>/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
-  const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
+  const isStarredLeaf = Boolean(link.id?.startsWith(STARRED_ID_PREFIX));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
     defaultExpanded ?? Boolean(hasActiveChild)
@@ -110,7 +116,8 @@ export function MegaMenuItem({
     draggableProvided?.innerRef(node);
   };
 
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const dragStyles = useStyles2(getDragHandleStyles);
 
   // expand parent sections if child is active
@@ -134,9 +141,9 @@ export function MegaMenuItem({
   }
 
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
-  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
-  // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
-  // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
+  // as two identical links to screen readers. Only the two StarredKind icons are mapped; anything
+  // else stays untitled (and thus aria-hidden), so a future kind never gets a wrong label.
+  // Level-0 section icons must stay aria-hidden or they double-announce the label.
   let starredLeafIconTitle: string | undefined;
   if (isStarredLeaf) {
     if (link.icon === 'folder') {
@@ -150,7 +157,12 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, { [styles.activeIcon]: isActive || hasActiveChild })}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
@@ -166,14 +178,19 @@ export function MegaMenuItem({
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
   // every item shows it (gating lives in MegaMenuItemText). With it on, any nav item is pinnable
-  // except Home and the dynamic starred sub-items (`starred/<uid>`) — including top-level sections,
+  // except Home and the dynamic starred sub-items (`starred/<kind>/<uid>`) — including top-level sections,
   // parents and leaves alike. (Bookmarks is already dropped from the tree when customising.)
-  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
+  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(STARRED_ID_PREFIX);
   const showPin = !canCustomise || isPinnableItem;
 
   return (
-    <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
-      <div className={styles.menuItem}>
+    <li
+      ref={setItemRef}
+      className={styles.listItem}
+      data-nav-id={hiddenKey(link)}
+      {...draggableProvided?.draggableProps}
+    >
+      <StPodPendingTooltip className={styles.menuItem} itemName={link.text} show={isStPodLoading && !isActive}>
         {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
             the content columns line up between top-level sections and their children. */}
         {editMode && (
@@ -226,9 +243,10 @@ export function MegaMenuItem({
               })}
             >
               {(level === 0 || isStarredLeaf) && iconElement}
-              <Text truncate element="p">
+              <Text truncate element="p" weight={visualRefreshEnabled && isActive ? 'medium' : undefined}>
                 {link.text}
               </Text>
+              <StPodPendingEllipsis url={link.url} itemName={link.text} />
               {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
               {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
@@ -247,6 +265,7 @@ export function MegaMenuItem({
                     })
               }
               aria-expanded={Boolean(sectionExpanded)}
+              data-testid={selectors.components.NavMenu.sectionToggleButton(link.url)}
               className={styles.collapseButton}
               onClick={() => setSectionExpanded(!sectionExpanded)}
               name={getIconName(Boolean(sectionExpanded))}
@@ -255,7 +274,7 @@ export function MegaMenuItem({
             />
           )}
         </div>
-      </div>
+      </StPodPendingTooltip>
       {childrenVisible && (
         <ul className={styles.children}>
           {linkHasChildren(link) ? (
@@ -311,9 +330,12 @@ export function MegaMenuItem({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+  }),
+  activeIcon: css({
+    color: theme.components.navmenu.activeItemText,
   }),
   img: css({
     height: theme.spacing(2),

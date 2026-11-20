@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -20,12 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -70,6 +72,12 @@ const (
 	// promoteHeader if specified, will promote the merge imported configuration into Grafana and save. This is a one-off operation
 	promoteHeader = "X-Grafana-Alerting-Promote"
 
+	// execErrStateHeader is the header that sets the error state of all imported alert rules.
+	// If it is not set, the rules get the converter default.
+	execErrStateHeader = "X-Grafana-Alerting-Exec-Err-State"
+
+	// importSourceHeader names the Grafana screen that made the request. Unknown values count as "other".
+	importSourceHeader = "X-Grafana-Alerting-Import-Source"
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
@@ -140,6 +148,18 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
+	rulerSync        externalRulerSyncChecker
+	requests         *prometheus.CounterVec
+}
+
+// externalRulerSyncChecker reports whether external Mimir ruler sync is
+// configured for an org and whether a folder is part of the sync's managed
+// subtree. The convert API uses it to reject manual imports that target the
+// sync-managed folder (the sync worker owns those rules), while allowing imports
+// into unrelated folders. Satisfied by *rulesync.ExternalRulerSyncer.
+type externalRulerSyncChecker interface {
+	IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
+	IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error)
 }
 
 type Alertmanager interface {
@@ -159,6 +179,8 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
+	rulerSync externalRulerSyncChecker,
+	requests *prometheus.CounterVec,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -169,7 +191,56 @@ func NewConvertPrometheusSrv(
 		featureToggles:   featureToggles,
 		am:               am,
 		importsAuthz:     importsAuthz,
+		rulerSync:        rulerSync,
+		requests:         requests,
 	}
+}
+
+const (
+	operationPostRules           = "post_rules"
+	operationDeleteRules         = "delete_rules"
+	operationPostAlertmanager    = "post_alertmanager"
+	operationPromoteAlertmanager = "promote_alertmanager"
+	operationDeleteAlertmanager  = "delete_alertmanager"
+
+	importSourceWizard         = "wizard"
+	importSourceImportSettings = "import_settings"
+	importSourceOther          = "other"
+
+	resultAccepted = "accepted"
+	resultFailed   = "failed"
+)
+
+// importSource keeps the metric label bounded: the header is client-supplied.
+func importSource(c *contextmodel.ReqContext) string {
+	switch v := strings.TrimSpace(c.Req.Header.Get(importSourceHeader)); v {
+	case importSourceWizard, importSourceImportSettings:
+		return v
+	default:
+		return importSourceOther
+	}
+}
+
+func (srv *ConvertPrometheusSrv) requestLogger(c *contextmodel.ReqContext) log.Logger {
+	return srv.logger.FromContext(c.Req.Context()).New("source", importSource(c))
+}
+
+// recordRequest counts one finished import call. Alertmanager dry runs are skipped since they change nothing.
+// Requests rejected before the handler, such as by authorization, are not counted.
+func (srv *ConvertPrometheusSrv) recordRequest(c *contextmodel.ReqContext, operation string, resp response.Response) response.Response {
+	if srv.requests == nil {
+		return resp
+	}
+	// An invalid dry-run header is rejected with a 400 by the handler, so it counts as a failed import here.
+	if dryRun, _ := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader); dryRun && operation == operationPostAlertmanager {
+		return resp
+	}
+	result := resultAccepted
+	if resp.Status() >= http.StatusBadRequest {
+		result = resultFailed
+	}
+	srv.requests.WithLabelValues(operation, importSource(c), result).Inc()
+	return resp
 }
 
 // RouteConvertPrometheusGetRules returns all Grafana-managed alert rules in all namespaces (folders)
@@ -218,24 +289,35 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 // RouteConvertPrometheusDeleteNamespace deletes all rule groups that were imported from a Prometheus-compatible source
 // within a specified namespace.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationDeleteRules, srv.deleteNamespace(c, namespaceTitle))
+}
+
+func (srv *ConvertPrometheusSrv) deleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
+	logger := srv.requestLogger(c)
 
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	if resp := srv.rejectManagedFolderChange(c, logger, workingFolderUID); resp != nil {
+		return resp
+	}
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
 	namespace, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
+	if resp := srv.rejectManagedFolderChange(c, logger, namespace.UID); resp != nil {
+		return resp
+	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{namespace.UID},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -249,25 +331,36 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 // RouteConvertPrometheusDeleteRuleGroup deletes a specific rule group if it was imported from a Prometheus-compatible source.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationDeleteRules, srv.deleteRuleGroup(c, namespaceTitle, group))
+}
+
+func (srv *ConvertPrometheusSrv) deleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
+	logger := srv.requestLogger(c)
 
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	if resp := srv.rejectManagedFolderChange(c, logger, workingFolderUID); resp != nil {
+		return resp
+	}
 
 	logger.Debug("Looking up folder by title", "folder_title", namespaceTitle)
 	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
+	if resp := srv.rejectManagedFolderChange(c, logger, folder.UID); resp != nil {
+		return resp
+	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{folder.UID},
 		RuleGroups:                  []string{group},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -359,6 +452,31 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRuleGroup(c *contextmo
 	return convertPrometheusResponse(c, http.StatusOK, promGroup)
 }
 
+// rejectManagedFolderChange returns a 409 response when external ruler sync is
+// configured for the org and folderUID is inside the sync-managed folder
+// subtree, so manual convert-API mutations (imports and deletes) can't collide
+// with the rules the sync worker owns. Returns nil when the operation may
+// proceed (sync disabled, or folder not managed by the sync worker).
+func (srv *ConvertPrometheusSrv) rejectManagedFolderChange(c *contextmodel.ReqContext, logger log.Logger, folderUID string) response.Response {
+	syncConfigured, err := srv.rulerSync.IsConfiguredForOrg(c.Req.Context(), c.GetOrgID())
+	if err != nil {
+		logger.Error("Failed to check external ruler sync configuration", "error", err)
+		return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
+	}
+	if !syncConfigured {
+		return nil
+	}
+	managed, err := srv.rulerSync.IsManagedFolder(c.Req.Context(), c.GetOrgID(), folderUID)
+	if err != nil {
+		logger.Error("Failed to check external ruler sync managed folder", "error", err)
+		return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
+	}
+	if managed {
+		return response.Error(http.StatusConflict, fmt.Sprintf("rule changes are disabled for folder %q while external ruler sync is configured for it", folderUID), nil)
+	}
+	return nil
+}
+
 // RouteConvertPrometheusPostRuleGroup converts a Prometheus rule group into a Grafana rule group
 // and creates or updates it within the specified namespace (folder).
 //
@@ -369,11 +487,22 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationPostRules, srv.postRuleGroups(c, promNamespaces))
+}
+
+func (srv *ConvertPrometheusSrv) postRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
+	logger := srv.requestLogger(c)
 
 	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
+
+	// Refuse manual changes that target the sync-managed folder subtree when
+	// external ruler sync is configured: the sync worker owns those rules.
+	// Changes to unrelated folders are still allowed.
+	if resp := srv.rejectManagedFolderChange(c, logger, workingFolderUID); resp != nil {
+		return resp
+	}
 
 	pauseRecordingRules, err := parseBooleanHeader(c.Req.Header.Get(recordingRulesPausedHeader), recordingRulesPausedHeader)
 	if err != nil {
@@ -409,13 +538,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		}
 	}
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 
-	// If the provenance is not ConvertedPrometheus, we don't keep the original rule definition.
+	// If the manager is not ConvertedPrometheus, we don't keep the original rule definition.
 	// This is because the rules can be modified through the UI, which may break compatibility
 	// with the Prometheus format. We only preserve the original rule definition
 	// to ensure we can return them in this API in Prometheus format.
-	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
+	keepOriginalRuleDefinition := manager.Kind == utils.ManagerKindClassicConvertedPrometheus //nolint:staticcheck
 
 	notificationSettings, err := parseNotificationSettingsHeader(c)
 	if err != nil {
@@ -434,6 +563,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		logger.Error("Failed to parse version message header", "error", err)
 		return errorToResponse(err)
 	}
+
+	execErrState, err := parseExecErrStateHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse exec err state header", "error", err)
+		return errorToResponse(err)
+	}
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -444,30 +579,38 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 			return errResp
 		}
 
+		// The namespace title can resolve into the sync-managed subtree even when the
+		// working folder isn't managed (e.g. the sync root's own title at the root
+		// level), so re-check the resolved folder.
+		if resp := srv.rejectManagedFolderChange(c, logger, namespace.UID); resp != nil {
+			return resp
+		}
+
 		for _, rg := range rgs {
-			// If we're importing recording rules, we can only import them if the feature is enabled,
-			// and the feature flag that enables configuring target datasources per-rule is also enabled.
-			if promGroupHasRecordingRules(rg) {
-				if !srv.cfg.RecordingRules.Enabled {
+			logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(rg.Rules), "folder_uid", namespace.UID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
+			grafanaGroup, err := prom.ConvertRuleGroup(
+				srv.cfg,
+				ds,
+				tds,
+				c.GetOrgID(),
+				namespace.UID,
+				rg,
+				prom.Options{
+					PauseRecordingRules:        pauseRecordingRules,
+					PauseAlertRules:            pauseAlertRules,
+					KeepOriginalRuleDefinition: keepOriginalRuleDefinition,
+					NotificationSettings:       notificationSettings,
+					ExtraLabels:                extraLabels,
+					ExecErrState:               execErrState,
+				},
+			)
+			if err != nil {
+				// The group has recording rules but the recording rules feature is
+				// disabled: surface the existing public HTTP error/message.
+				if errors.Is(err, prom.ErrRecordingRulesNotEnabled) {
 					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
 					return errorToResponse(errRecordingRulesNotEnabled)
 				}
-			}
-
-			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
-				c,
-				ds,
-				tds,
-				namespace.UID,
-				rg,
-				pauseRecordingRules,
-				pauseAlertRules,
-				keepOriginalRuleDefinition,
-				notificationSettings,
-				extraLabels,
-				logger,
-			)
-			if err != nil {
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
 			}
@@ -477,7 +620,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, manager, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
@@ -526,82 +669,17 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	return ns, nil
 }
 
-func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
-	c *contextmodel.ReqContext,
-	ds *datasources.DataSource,
-	tds *datasources.DataSource,
-	namespaceUID string,
-	promGroup apimodels.PrometheusRuleGroup,
-	pauseRecordingRules bool,
-	pauseAlertRules bool,
-	keepOriginalRuleDefinition bool,
-	notificationSettings *models.NotificationSettings,
-	extraLabels map[string]string,
-	logger log.Logger,
-) (*models.AlertRuleGroup, error) {
-	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
-
-	rules := make([]prom.PrometheusRule, len(promGroup.Rules))
-	for i, r := range promGroup.Rules {
-		rules[i] = prom.PrometheusRule{
-			Alert:         r.Alert,
-			Expr:          r.Expr,
-			For:           r.For,
-			KeepFiringFor: r.KeepFiringFor,
-			Labels:        r.Labels,
-			Annotations:   r.Annotations,
-			Record:        r.Record,
-		}
-	}
-	group := prom.PrometheusRuleGroup{
-		Name:        promGroup.Name,
-		Interval:    promGroup.Interval,
-		Rules:       rules,
-		QueryOffset: promGroup.QueryOffset,
-		Limit:       promGroup.Limit,
-		Labels:      promGroup.Labels,
-	}
-
-	converter, err := prom.NewConverter(
-		prom.Config{
-			DatasourceUID:        ds.UID,
-			DatasourceType:       ds.Type,
-			TargetDatasourceUID:  tds.UID,
-			TargetDatasourceType: tds.Type,
-			DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
-			RecordingRules: prom.RulesConfig{
-				IsPaused: pauseRecordingRules,
-			},
-			AlertRules: prom.RulesConfig{
-				IsPaused: pauseAlertRules,
-			},
-			KeepOriginalRuleDefinition: new(keepOriginalRuleDefinition),
-			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
-			NotificationSettings:       notificationSettings,
-			ExtraLabels:                extraLabels,
-		},
-	)
-	if err != nil {
-		logger.Error("Failed to create Prometheus converter", "datasource_uid", ds.UID, "datasource_type", ds.Type, "error", err)
-		return nil, err
-	}
-
-	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.GetOrgID(), namespaceUID, group)
-	if err != nil {
-		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
-		return nil, err
-	}
-
-	return grafanaGroup, nil
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	return srv.recordRequest(c, operationPostAlertmanager, srv.postAlertmanagerConfig(c, amCfg))
 }
 
-func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+func (srv *ConvertPrometheusSrv) postAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 	ctx := c.Req.Context()
 
 	// Refuse manual imports when external Alertmanager sync is configured for
@@ -641,7 +719,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		TemplateFiles:      amCfg.TemplateFiles,
 		AlertmanagerConfig: amCfg.AlertmanagerConfig,
 	}
-	err = ec.Validate()
+	err = ec.ValidateStrict()
 	if err != nil {
 		logger.Error("Invalid alertmanager configuration", "error", err)
 		return errorToResponse(err)
@@ -744,12 +822,16 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return srv.recordRequest(c, operationDeleteAlertmanager, srv.deleteAlertmanagerConfig(c))
+}
+
+func (srv *ConvertPrometheusSrv) deleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 
 	identifier, err := parseConfigIdentifierHeader(c)
 	if err != nil {
@@ -768,12 +850,16 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPromoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
+	return srv.recordRequest(c, operationPromoteAlertmanager, srv.promoteAlertmanagerConfig(c, identifier))
+}
+
+func (srv *ConvertPrometheusSrv) promoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 
 	stats, err := srv.am.PromoteExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, identifier)
 	if err != nil {
@@ -806,7 +892,14 @@ func grafanaNamespacesToPrometheus(groups []models.AlertRuleGroupWithFolderFullp
 		// we need to use only the last folder in the full path.
 		// For example, if the current working folder is "general" and the full path is "grafana/some folder/general/production",
 		// we should use the "production" folder.
-		folder := filepath.Base(group.FolderFullpath)
+
+		// SplitFullpath (not filepath.Base) is used because the full path escapes separators
+		// within titles and is OS-independent, whereas filepath.Base treats "\" as a separator
+		// on Windows and would not unescape titles that contain a slash.
+		folder := group.FolderFullpath
+		if titles := folderimpl.SplitFullpath(group.FolderFullpath); len(titles) > 0 {
+			folder = titles[len(titles)-1]
+		}
 
 		promGroup, err := grafanaRuleGroupToPrometheus(group.Title, group.Rules)
 		if err != nil {
@@ -855,10 +948,10 @@ func successfulResponse() response.Response {
 // if present. Otherwise, it returns the UID of the root folder.
 func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	folderUID := strings.TrimSpace(c.Req.Header.Get(folderUIDHeader))
-	if folderUID != "" {
-		return folderUID
+	if folder.IsRootFolderUID(folderUID) {
+		return folder.LegacyRootFolderUID // nolint:staticcheck // ""
 	}
-	return folder.LegacyRootFolderUID //nolint:staticcheck
+	return folderUID
 }
 
 func namespaceErrorResponse(err error) response.Response {
@@ -869,23 +962,14 @@ func namespaceErrorResponse(err error) response.Response {
 	return toNamespaceErrorResponse(err)
 }
 
-func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
-	for _, rule := range promGroup.Rules {
-		if rule.Record != "" {
-			return true
-		}
-	}
-	return false
-}
-
-// getProvenance determines the provenance value to use for rules created via the Prometheus conversion API.
-// If the X-Disable-Provenance header is present in the request, returns ProvenanceNone,
-// otherwise returns ProvenanceConvertedPrometheus.
-func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
+// getManagerProperties determines the ManagerProperties to use for rules created via the Prometheus conversion API.
+// If the X-Disable-Provenance header is present in the request, returns empty (unmanaged),
+// otherwise returns ManagerKindClassicConvertedPrometheus.
+func getManagerProperties(ctx *contextmodel.ReqContext) utils.ManagerProperties {
 	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
-		return models.ProvenanceNone
+		return utils.ManagerProperties{}
 	}
-	return models.ProvenanceConvertedPrometheus
+	return utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
 }
 
 func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) (*models.NotificationSettings, error) {
@@ -954,6 +1038,20 @@ func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
 	return str, nil
 }
 
+// parseExecErrStateHeader returns the error state from the header, or an empty
+// state if the header is not set. Values are matched exactly, as in models.ErrStateFromString.
+func parseExecErrStateHeader(c *contextmodel.ReqContext) (models.ExecutionErrorState, error) {
+	value := strings.TrimSpace(c.Req.Header.Get(execErrStateHeader))
+	if value == "" {
+		return "", nil
+	}
+	state, err := models.ErrStateFromString(value)
+	if err != nil {
+		return "", errInvalidHeaderValue(execErrStateHeader, errors.New("must be one of: OK, Alerting, Error, KeepLast"))
+	}
+	return state, nil
+}
+
 func readConfigIdentifierHeader(c *contextmodel.ReqContext) string {
 	if id := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader)); id != "" {
 		return id
@@ -978,7 +1076,7 @@ func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body interface{}) *response.NormalResponse {
 	acceptHeader := c.Req.Header.Get("Accept")
 
-	for _, accept := range strings.Split(acceptHeader, ",") {
+	for accept := range strings.SplitSeq(acceptHeader, ",") {
 		mediaType, _, err := mime.ParseMediaType(accept)
 		if err != nil {
 			continue

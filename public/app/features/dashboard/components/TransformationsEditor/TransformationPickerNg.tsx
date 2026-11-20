@@ -1,22 +1,21 @@
 import { css } from '@emotion/css';
 import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback, useId } from 'react';
 
-import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Drawer, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Drawer, EmptyState, FilterPill, Grid, InlineLabel, Input, Stack, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { SqlExpressionsBanner } from './SqlExpressions/SqlExpressionsBanner';
 import { TransformationCard } from './TransformationCard';
-import { type FilterCategory } from './TransformationsEditor';
-
-const VIEW_ALL_VALUE = 'viewAll';
+import { TransformationSearchStatus } from './TransformationSearchStatus';
+import { type FilterCategory, VIEW_ALL_VALUE } from './types';
 
 interface TransformationPickerNgProps {
-  onTransformationAdd: (selectedItem: SelectableValue<string>) => void;
+  onTransformationAdd: (selectedItem: { value: string }) => void;
   onSearchChange: FormEventHandler<HTMLInputElement>;
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onClose?: () => void;
@@ -111,19 +110,28 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           })}
         </Stack>
 
-        <TransformationsGrid
-          showIllustrations={showIllustrations}
-          transformations={xforms}
-          data={data}
-          onClick={(id) => {
-            reportInteraction('grafana_panel_transformations_clicked', {
-              context: 'transformations_drawer',
-              type: id,
-              action: 'add',
-            });
-            onTransformationAdd({ value: id });
-          }}
-        />
+        <TransformationSearchStatus count={xforms.length} />
+
+        {xforms.length === 0 ? (
+          <EmptyState
+            variant="not-found"
+            message={t('dashboard.transformation-picker-ng.no-transformations-found', 'No transformations found')}
+          />
+        ) : (
+          <TransformationsGrid
+            showIllustrations={showIllustrations}
+            transformations={xforms}
+            data={data}
+            onClick={(id) => {
+              reportInteraction('grafana_panel_transformations_clicked', {
+                context: 'transformations_drawer',
+                type: id,
+                action: 'add',
+              });
+              onTransformationAdd({ value: id });
+            }}
+          />
+        )}
       </Stack>
     </Drawer>
   );
@@ -162,13 +170,19 @@ interface TransformationsGridProps {
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   return (
-    <Grid columns={3} gap={1}>
+    <Grid
+      columns={3}
+      gap={1}
+      role="list"
+      aria-label={t('dashboard.transformation-picker-ng.transformations-list', 'Transformations')}
+    >
       {transformations.map((transform) => (
         <TransformationCard
           data={data}
           fullWidth
           key={transform.id}
           onClick={onClick}
+          role="listitem"
           showIllustrations={showIllustrations}
           transform={transform}
         />

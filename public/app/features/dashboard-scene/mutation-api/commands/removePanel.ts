@@ -4,10 +4,11 @@
  * Remove one or more panels from the dashboard by element name.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -18,7 +19,7 @@ export type RemovePanelPayload = z.infer<typeof removePanelPayloadSchema>;
 
 export const removePanelCommand: MutationCommand<RemovePanelPayload> = {
   name: 'REMOVE_PANEL',
-  description: payloads.removePanel.description ?? '',
+  description: z.globalRegistry.get(payloads.removePanel)?.description ?? '',
 
   payloadSchema: payloads.removePanel,
   permission: requiresEdit,

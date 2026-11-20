@@ -1,0 +1,624 @@
+import { type FieldOverrideContext } from '../../types/fieldOverrides';
+import { type InterpolateFunction } from '../../types/panel';
+import { ThresholdsMode } from '../../types/thresholds';
+import { MappingType, SpecialValueMatch, type ValueMapping } from '../../types/valueMapping';
+
+import {
+  booleanOverrideProcessor,
+  getVarMappingKind,
+  hasVarMappingVariableReference,
+  identityOverrideProcessor,
+  interpolateVarMapping,
+  isInVarMappingRange,
+  isVarMappingExpressionInput,
+  numberOverrideProcessor,
+  resolveVarMapping,
+  resolveVarMappingBoolean,
+  resolveVarMappingOption,
+  resolveVarMappingString,
+  resolveVarMappingText,
+  selectOverrideProcessor,
+  stringOverrideProcessor,
+  thresholdsOverrideProcessor,
+  valueMappingsOverrideProcessor,
+} from './processors';
+
+/**
+ * Emulates the function-format calling convention shared by sceneGraph.interpolate and
+ * templateSrv.replace: the custom format function receives the raw variable value,
+ * which is an array for multi-value variables. Unknown variables are left as-is.
+ */
+function makeReplaceVariables(vars: Record<string, unknown>): InterpolateFunction {
+  return (value, _scopedVars, format) => {
+    return value.replace(/\$\{(\w+)\}|\$(\w+)|\[\[(\w+)\]\]/g, (match, braced, plain, legacy) => {
+      const name = braced ?? plain ?? legacy;
+      if (!(name in vars)) {
+        return match;
+      }
+      const raw = vars[name];
+      if (typeof format === 'function') {
+        return format(raw);
+      }
+      return String(raw);
+    });
+  };
+}
+
+function makeContext(vars?: Record<string, unknown>): FieldOverrideContext {
+  return {
+    data: [],
+    replaceVariables: vars ? makeReplaceVariables(vars) : undefined,
+  };
+}
+
+describe('thresholdsOverrideProcessor', () => {
+  const baseStep = { value: -Infinity, color: 'green' };
+
+  it('returns configs without valueExpr untouched (same reference)', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 80, color: 'red' }],
+    };
+
+    expect(thresholdsOverrideProcessor(value, makeContext({}))).toBe(value);
+  });
+
+  it('passes through null/undefined values', () => {
+    expect(thresholdsOverrideProcessor(null, makeContext({}))).toBeNull();
+    expect(thresholdsOverrideProcessor(undefined, makeContext({}))).toBeUndefined();
+  });
+
+  it('resolves valueExpr steps and re-sorts ascending, keeping the base step first', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 80, color: 'red' }, { value: 20, valueExpr: '$low', color: 'yellow' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ low: '10' }));
+
+    expect(result.steps).toEqual([baseStep, { value: 10, color: 'yellow' }, { value: 80, color: 'red' }]);
+  });
+
+  it('resolves ${var} syntax and numbers passed as raw values', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 1, valueExpr: '${t}', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ t: 50 }));
+
+    expect(result.steps).toEqual([baseStep, { value: 50, color: 'red' }]);
+  });
+
+  it('falls back to the numeric value for unknown variables', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 70, valueExpr: '$nope', color: 'red' }, { value: 50, color: 'yellow' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({}));
+
+    expect(result.steps).toEqual([baseStep, { value: 50, color: 'yellow' }, { value: 70, color: 'red' }]);
+  });
+
+  it('falls back to the numeric value for non-numeric variable values', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$word', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ word: 'hello' }));
+
+    expect(result.steps).toEqual([baseStep, { value: 30, color: 'red' }]);
+  });
+
+  it('falls back to the numeric value when the expression resolves to an empty string', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$empty', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ empty: '  ' }));
+
+    expect(result.steps).toEqual([baseStep, { value: 30, color: 'red' }]);
+  });
+
+  it('parses strictly: values like "80ms" fall back instead of parsing as 80', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$latency', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ latency: '80ms' }));
+
+    expect(result.steps).toEqual([baseStep, { value: 30, color: 'red' }]);
+  });
+
+  it('falls back for a number outside the settings range, and floors integer settings', () => {
+    expect(resolveVarMapping('$t', makeContext({ t: '150' }), { min: 0, max: 100 })).toBeUndefined();
+    expect(resolveVarMapping('$t', makeContext({ t: '100' }), { min: 0, max: 100 })).toBe(100);
+    expect(resolveVarMapping('$t', makeContext({ t: '2.7' }), { integer: true })).toBe(2);
+  });
+
+  it('accepts numeric values with surrounding whitespace', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$padded', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ padded: ' 42 ' }));
+
+    expect(result.steps).toEqual([baseStep, { value: 42, color: 'red' }]);
+  });
+
+  it('falls back to the numeric value for multi-value variables with more than one selected value', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 50, color: 'yellow' }, { value: 90, valueExpr: '$multi', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ multi: ['25', '75'] }));
+
+    expect(result.steps).toEqual([baseStep, { value: 50, color: 'yellow' }, { value: 90, color: 'red' }]);
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 90, valueExpr: '$multi', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ multi: ['42'] }));
+
+    expect(result.steps).toEqual([baseStep, { value: 42, color: 'red' }]);
+  });
+
+  it('falls back to the numeric value when replaceVariables is missing', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$t', color: 'red' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext());
+
+    expect(result.steps).toEqual([baseStep, { value: 30, color: 'red' }]);
+  });
+
+  it('keeps the base step first even when expressions resolve below other steps', () => {
+    const value = {
+      mode: ThresholdsMode.Percentage,
+      steps: [baseStep, { value: 95, valueExpr: '$high', color: 'red' }, { value: 50, color: 'yellow' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ high: 90 }));
+
+    expect(result.mode).toBe(ThresholdsMode.Percentage);
+    expect(result.steps).toEqual([baseStep, { value: 50, color: 'yellow' }, { value: 90, color: 'red' }]);
+  });
+
+  it('ignores and strips a valueExpr on the base step', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, valueExpr: '$t', color: 'green' },
+        { value: 30, valueExpr: '$t', color: 'red' },
+      ],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ t: '50' }));
+
+    expect(result.steps).toEqual([
+      { value: -Infinity, color: 'green' },
+      { value: 50, color: 'red' },
+    ]);
+  });
+
+  it('strips valueExpr from every output step, including fallbacks', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 30, valueExpr: '$nope', color: 'red' }, { value: 60, valueExpr: '$t', color: 'blue' }],
+    };
+
+    const result = thresholdsOverrideProcessor(value, makeContext({ t: '50' }));
+
+    for (const step of result.steps) {
+      expect(step).not.toHaveProperty('valueExpr');
+    }
+  });
+
+  it('does not mutate the raw config', () => {
+    const value = {
+      mode: ThresholdsMode.Absolute,
+      steps: [baseStep, { value: 90, valueExpr: '$t', color: 'red' }, { value: 30, color: 'yellow' }],
+    };
+    const stepsCopy = value.steps.map((s) => ({ ...s }));
+
+    thresholdsOverrideProcessor(value, makeContext({ t: '5' }));
+
+    expect(value.steps).toEqual(stepsCopy);
+  });
+});
+
+describe('resolveVarMapping', () => {
+  it('resolves a single-value variable to a number', () => {
+    expect(resolveVarMapping('$t', makeContext({ t: '50' }))).toBe(50);
+  });
+
+  it('resolves ${var} syntax and numbers passed as raw values', () => {
+    expect(resolveVarMapping('${t}', makeContext({ t: 50 }))).toBe(50);
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['42'] }))).toBe(42);
+  });
+
+  it('falls back (returns undefined) for a multi-value variable with more than one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['25', '75'] }))).toBeUndefined();
+  });
+
+  it('falls back for a null or undefined variable value', () => {
+    expect(resolveVarMapping('$v', makeContext({ v: null }))).toBeUndefined();
+    expect(resolveVarMapping('$v', makeContext({ v: [undefined] }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable', () => {
+    expect(resolveVarMapping('$nope', makeContext({}))).toBeUndefined();
+  });
+
+  it('parses strictly: values like "80ms" fall back instead of parsing as 80', () => {
+    expect(resolveVarMapping('$latency', makeContext({ latency: '80ms' }))).toBeUndefined();
+  });
+
+  it('falls back when the expression resolves to an empty string', () => {
+    expect(resolveVarMapping('$empty', makeContext({ empty: '  ' }))).toBeUndefined();
+  });
+
+  it('accepts numeric values with surrounding whitespace', () => {
+    expect(resolveVarMapping('$padded', makeContext({ padded: ' 42 ' }))).toBe(42);
+  });
+
+  it('falls back when context.replaceVariables is missing', () => {
+    expect(resolveVarMapping('$t', makeContext())).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingString', () => {
+  it('resolves a single-value variable to its trimmed text', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ' percent ' }))).toBe('percent');
+  });
+
+  it('resolves text around the variable', () => {
+    expect(resolveVarMappingString('suffix:${unit}/s', makeContext({ unit: 'req' }))).toBe('suffix:req/s');
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ['bytes'] }))).toBe('bytes');
+  });
+
+  it('falls back for a multi-value variable with more than one selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: ['bytes', 'percent'] }))).toBeUndefined();
+  });
+
+  it('falls back for a multi-value variable with no selected value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: [] }))).toBeUndefined();
+  });
+
+  it('falls back for a null or undefined variable value', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: null }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: undefined }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: [null] }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable, alone or next to a known one', () => {
+    expect(resolveVarMappingString('$nope', makeContext({}))).toBeUndefined();
+    expect(resolveVarMappingString('${unit}$nope', makeContext({ unit: 'bytes' }))).toBeUndefined();
+  });
+
+  it('falls back when the result is empty', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '  ' }))).toBeUndefined();
+  });
+
+  it('keeps a resolved custom unit that contains a $ outside variable syntax', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'prefix:$' }))).toBe('prefix:$');
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'suffix: $' }))).toBe('suffix: $');
+  });
+
+  it('falls back when a resolved custom unit has a $ followed by a word character', () => {
+    // indistinguishable from a variable the interpolator didn't find
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'suffix:$k' }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: 'prefix:$5' }))).toBeUndefined();
+  });
+
+  it('falls back when the resolved value is itself variable syntax', () => {
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '$bad' }))).toBeUndefined();
+    expect(resolveVarMappingString('$unit', makeContext({ unit: '[[bad]]' }))).toBeUndefined();
+  });
+
+  it('falls back when context.replaceVariables is missing', () => {
+    expect(resolveVarMappingString('$unit', makeContext())).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingOption', () => {
+  const drawStyles = [
+    { value: 'line', label: 'Lines' },
+    { value: 'bars', label: 'Bars' },
+    { value: 'points', label: 'Points' },
+  ];
+
+  it('matches an option value case-insensitively and ignores surrounding whitespace', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'bars' }), drawStyles)).toBe('bars');
+    expect(resolveVarMappingOption('$style', makeContext({ style: ' BARS ' }), drawStyles)).toBe('bars');
+  });
+
+  it('returns the typed value of a numeric option', () => {
+    const alignments = [
+      { value: -1, label: 'Before' },
+      { value: 0, label: 'Center' },
+      { value: 1, label: 'After' },
+    ];
+
+    expect(resolveVarMappingOption('$align', makeContext({ align: '-1' }), alignments)).toBe(-1);
+  });
+
+  it('returns the typed value of a boolean option and never matches an option without a value', () => {
+    const grid = [
+      { value: undefined, label: 'Auto' },
+      { value: true, label: 'On' },
+      { value: false, label: 'Off' },
+    ];
+
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'TRUE' }), grid)).toBe(true);
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'false' }), grid)).toBe(false);
+    expect(resolveVarMappingOption('$grid', makeContext({ grid: 'undefined' }), grid)).toBeUndefined();
+  });
+
+  it('does not match option labels', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'Lines' }), drawStyles)).toBeUndefined();
+  });
+
+  it('falls back when nothing matches, the result is empty or the variable is unknown', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: 'foo' }), drawStyles)).toBeUndefined();
+    expect(resolveVarMappingOption('$style', makeContext({ style: ' ' }), drawStyles)).toBeUndefined();
+    expect(resolveVarMappingOption('$style', makeContext({}), drawStyles)).toBeUndefined();
+  });
+
+  it('accepts one selected value of a multi-value variable and falls back for more', () => {
+    expect(resolveVarMappingOption('$style', makeContext({ style: ['points'] }), drawStyles)).toBe('points');
+    expect(resolveVarMappingOption('$style', makeContext({ style: ['line', 'bars'] }), drawStyles)).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingBoolean', () => {
+  it.each([
+    ['true', true],
+    ['1', true],
+    ['on', true],
+    ['yes', true],
+    [' Yes ', true],
+    ['TRUE', true],
+    ['false', false],
+    ['0', false],
+    ['off', false],
+    ['no', false],
+    ['OFF', false],
+  ])('resolves %p to %p', (text, expected) => {
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: text }))).toBe(expected);
+  });
+
+  it.each(['', 'maybe', '2', 'truthy', '$b'])('falls back for %p', (text) => {
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: text }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable or more than one selected value', () => {
+    expect(resolveVarMappingBoolean('$b', makeContext({}))).toBeUndefined();
+    expect(resolveVarMappingBoolean('$b', makeContext({ b: ['true', 'false'] }))).toBeUndefined();
+  });
+});
+
+describe('getVarMappingKind', () => {
+  it('resolves numeric properties to numbers', () => {
+    expect(getVarMappingKind({ id: 'min', process: numberOverrideProcessor })).toBe('number');
+    expect(getVarMappingKind({ id: 'custom.lineWidth', process: numberOverrideProcessor })).toBe('number');
+  });
+
+  it('resolves only the standard unit to a string', () => {
+    expect(getVarMappingKind({ id: 'unit', process: stringOverrideProcessor })).toBe('string');
+    expect(getVarMappingKind({ id: 'noValue', process: stringOverrideProcessor })).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.unit', process: stringOverrideProcessor })).toBeUndefined();
+  });
+
+  it('resolves selects and radios with static options to an option', () => {
+    const settings = { options: [{ value: 'line', label: 'Lines' }] };
+
+    expect(getVarMappingKind({ id: 'custom.drawStyle', process: selectOverrideProcessor, settings })).toBe('option');
+  });
+
+  it('gives no kind to a select without static options', () => {
+    const getOptions = () => Promise.resolve([{ value: 'a', label: 'A' }]);
+
+    expect(
+      getVarMappingKind({ id: 'custom.async', process: selectOverrideProcessor, settings: { options: [], getOptions } })
+    ).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.none', process: selectOverrideProcessor })).toBeUndefined();
+  });
+
+  it('resolves boolean switches to a boolean', () => {
+    expect(getVarMappingKind({ id: 'custom.axisBorderShow', process: booleanOverrideProcessor })).toBe('boolean');
+  });
+
+  it('gives no kind to custom editors, including multi-selects', () => {
+    const settings = { options: [{ value: 'a', label: 'A' }] };
+
+    expect(getVarMappingKind({ id: 'custom.stacking', process: identityOverrideProcessor, settings })).toBeUndefined();
+    expect(getVarMappingKind({ id: 'custom.multi', process: (v: unknown) => v, settings })).toBeUndefined();
+  });
+});
+
+describe('isVarMappingExpressionInput', () => {
+  it('treats any string from a number editor as an expression', () => {
+    expect(isVarMappingExpressionInput('number', '$min')).toBe(true);
+    expect(isVarMappingExpressionInput('number', 5)).toBe(false);
+  });
+
+  it('treats a unit as an expression only when it contains variable syntax', () => {
+    expect(isVarMappingExpressionInput('string', '$unit')).toBe(true);
+    expect(isVarMappingExpressionInput('string', 'suffix:${unit}')).toBe(true);
+    expect(isVarMappingExpressionInput('string', 'bytes')).toBe(false);
+    expect(isVarMappingExpressionInput('string', 'prefix:$')).toBe(false);
+    expect(isVarMappingExpressionInput('string', '')).toBe(false);
+  });
+
+  it('treats an option value as an expression only when it contains variable syntax', () => {
+    expect(isVarMappingExpressionInput('option', '${style}')).toBe(true);
+    expect(isVarMappingExpressionInput('option', 'bars')).toBe(false);
+    expect(isVarMappingExpressionInput('option', -1)).toBe(false);
+  });
+
+  it('treats any string for a boolean as an expression', () => {
+    expect(isVarMappingExpressionInput('boolean', '$b')).toBe(true);
+    expect(isVarMappingExpressionInput('boolean', 'true')).toBe(true);
+    expect(isVarMappingExpressionInput('boolean', true)).toBe(false);
+  });
+});
+
+describe('interpolateVarMapping', () => {
+  it('returns the trimmed text, or undefined for more than one selected value', () => {
+    expect(interpolateVarMapping('$style', makeContext({ style: ' bars ' }))).toBe('bars');
+    expect(interpolateVarMapping('$style', makeContext({ style: ['bars', 'line'] }))).toBeUndefined();
+    expect(interpolateVarMapping('$nope', makeContext({}))).toBe('$nope');
+    expect(interpolateVarMapping('$style', makeContext())).toBeUndefined();
+  });
+});
+
+describe('resolveVarMappingText', () => {
+  const options = [
+    { value: 'line', label: 'Lines' },
+    { value: -1, label: 'Before' },
+  ];
+
+  it('resolves text with the same rules as the expression resolvers', () => {
+    expect(resolveVarMappingText('number', ' 42 ')).toBe(42);
+    expect(resolveVarMappingText('number', '80ms')).toBeUndefined();
+    expect(resolveVarMappingText('option', 'LINE', { options })).toBe('line');
+    expect(resolveVarMappingText('option', '-1', { options })).toBe(-1);
+    expect(resolveVarMappingText('option', 'bars', { options })).toBeUndefined();
+    expect(resolveVarMappingText('boolean', 'On')).toBe(true);
+    expect(resolveVarMappingText('boolean', 'no')).toBe(false);
+    expect(resolveVarMappingText('boolean', 'enabled')).toBeUndefined();
+  });
+
+  it('keeps numbers to the settings range and floors them for integer settings', () => {
+    expect(resolveVarMappingText('number', '10', { min: 0, max: 10 })).toBe(10);
+    expect(resolveVarMappingText('number', '11', { min: 0, max: 10 })).toBeUndefined();
+    expect(resolveVarMappingText('number', '-1', { min: 0 })).toBeUndefined();
+    expect(resolveVarMappingText('number', '2.7', { integer: true })).toBe(2);
+  });
+});
+
+describe('hasVarMappingVariableReference', () => {
+  it('finds $var, ${var} and [[var]] references, but not a lone or literal $', () => {
+    expect(hasVarMappingVariableReference('$b')).toBe(true);
+    expect(hasVarMappingVariableReference('${b}')).toBe(true);
+    expect(hasVarMappingVariableReference('[[b]]')).toBe(true);
+    expect(hasVarMappingVariableReference('$')).toBe(false);
+    expect(hasVarMappingVariableReference('prefix:$')).toBe(false);
+  });
+});
+
+describe('isInVarMappingRange', () => {
+  it('checks the min and max that are set', () => {
+    expect(isInVarMappingRange(10, { min: 0, max: 10 })).toBe(true);
+    expect(isInVarMappingRange(11, { min: 0, max: 10 })).toBe(false);
+    expect(isInVarMappingRange(-1, { min: 0 })).toBe(false);
+    expect(isInVarMappingRange(-1, undefined)).toBe(true);
+  });
+});
+
+describe('valueMappingsOverrideProcessor', () => {
+  const mappings: ValueMapping[] = [
+    {
+      type: MappingType.ValueToText,
+      options: { '1': { text: 'Env $env', index: 0 }, '2': { text: 'Down', index: 1 } },
+    },
+    { type: MappingType.RangeToText, options: { from: 0, to: 10, result: { text: '${env} low', index: 2 } } },
+    { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$env', index: 3 } } },
+    { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 4 } } },
+  ];
+
+  it('interpolates variables in the display texts and leaves the rest of the mapping as is', () => {
+    const result = valueMappingsOverrideProcessor(mappings, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      {
+        type: MappingType.ValueToText,
+        options: { '1': { text: 'Env prod', index: 0 }, '2': { text: 'Down', index: 1 } },
+      },
+      { type: MappingType.RangeToText, options: { from: 0, to: 10, result: { text: 'prod low', index: 2 } } },
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: 'prod', index: 3 } } },
+      {
+        type: MappingType.SpecialValue,
+        options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 4 } },
+      },
+    ]);
+    expect(mappings[0].options).toEqual({ '1': { text: 'Env $env', index: 0 }, '2': { text: 'Down', index: 1 } });
+  });
+
+  it('keeps a $ that does not name a variable as typed', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: '$env costs $5, $nope', index: 0 } } },
+    ];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      { type: MappingType.RegexToText, options: { pattern: '.*', result: { text: 'prod costs $5, $nope', index: 0 } } },
+    ]);
+  });
+
+  it('interpolates the [[var]] syntax too', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Env [[env]]', index: 0 } } },
+    ];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([{ type: MappingType.ValueToText, options: { '1': { text: 'Env prod', index: 0 } } }]);
+  });
+
+  it('leaves a display text that is not a string as is', () => {
+    // Hand-edited JSON can hold a number where the text goes
+    const value = [
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: '$env', index: 1 } } },
+    ] as unknown as ValueMapping[];
+
+    const result = valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true });
+
+    expect(result).toEqual([
+      { type: MappingType.ValueToText, options: { '1': { text: 5, index: 0 }, '2': { text: 'prod', index: 1 } } },
+    ]);
+  });
+
+  it('asks for the variable text, so a custom variable shows its label', () => {
+    const replaceVariables = jest.fn((value: string) => value);
+    valueMappingsOverrideProcessor(mappings, { data: [], replaceVariables }, { interpolateText: true });
+
+    expect(replaceVariables).toHaveBeenCalledWith('Env $env', undefined, 'text');
+  });
+
+  it('returns the mappings as they are when no display text has a $', () => {
+    const value: ValueMapping[] = [
+      { type: MappingType.ValueToText, options: { '1': { text: 'Up', index: 0 } } },
+      {
+        type: MappingType.SpecialValue,
+        options: { match: SpecialValueMatch.Null, result: { color: 'red', index: 1 } },
+      },
+    ];
+
+    expect(valueMappingsOverrideProcessor(value, makeContext({ env: 'prod' }), { interpolateText: true })).toBe(value);
+  });
+
+  it('leaves the display texts as typed without interpolateText', () => {
+    expect(valueMappingsOverrideProcessor(mappings, makeContext({ env: 'prod' }), {})).toBe(mappings);
+  });
+});

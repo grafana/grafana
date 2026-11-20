@@ -5,10 +5,10 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
-import { initPluginMetas, refetchPluginMetas } from './plugins';
+import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
 let panels: PanelPluginMetas = {};
@@ -40,36 +40,64 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
+export function setPanelPluginMetasFromBootData(input: PanelPluginMetas): void {
+  setPanelsAndAliases(input);
+}
+
 function setPanelsAndAliases(input: PanelPluginMetas) {
+  // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
+  // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
+  if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
+    input = { ...input, text: { ...input.text, skipDataQuery: false, skipDefaultQuery: true } };
+  }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
 }
 
-function setMetas(metas: PluginMetasResponse) {
-  if (!metas.items.length) {
-    // something failed while trying to fetch plugin meta
-    // fallback to config.panels from bootdata
+export async function setPanelPluginMetasFromResponse(metas: PluginMetasResponse | null): Promise<void> {
+  if (
+    !metas?.items.length &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
+  ) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.panel });
+    logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: await getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.panel,
+      requestUrl: await getPluginMetasUrl(),
+    });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getPanelPluginMapper();
   setPanelsAndAliases(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
+}
+
+function seedFromBootData(): boolean {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return false;
+  }
+
+  // eslint-disable-next-line @grafana/no-config-panels
+  setPanelsAndAliases(config.panels);
+  return true;
 }
 
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    // eslint-disable-next-line @grafana/no-config-panels
-    setPanelsAndAliases(config.panels);
+  if (seedFromBootData()) {
     logPluginMetaDebug('PluginMeta: initializing panel plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
-  setMetas(metas);
-  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
+  await setPanelPluginMetasFromResponse(metas);
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -101,14 +129,33 @@ export async function getPanelPluginMetasMap(): Promise<PanelPluginMetas> {
  * Get a map of panel plugins keyed by plugin id.
  * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the panel plugins have been initialized.
  * In other cases, getPanelPluginMetasMap() should be used instead to ensure the panel plugins have been initialized before accessing them.
- * @throws Error if the panel plugins have not been initialized yet
- * @returns a map of panel plugins keyed by plugin id
+ * @returns a map of panel plugins keyed by plugin id, empty if they have not been initialized yet
  */
 export function getPanelPluginMetasMapSync(): PanelPluginMetas {
-  if (!initialized() && process.env.NODE_ENV === 'development') {
-    throw new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!');
+  if (!initialized() && !seedFromBootData()) {
+    logPluginMetaError(
+      'PluginMeta: getPanelPluginMetasMapSync() was called before the panel plugins map was initialized',
+      new Error('Panel plugin metas not initialized')
+    );
   }
+
   return structuredClone(panels);
+}
+
+/**
+ * Synchronous counterpart to getPanelPluginMeta for code paths that initialize panel metadata before constructing panels.
+ * Returns null and reports an error when metadata has not been initialized.
+ */
+export function getPanelPluginMetaSync(pluginId: string): PanelPluginMeta | null {
+  if (!initialized() && !seedFromBootData()) {
+    logPluginMetaError(
+      'PluginMeta: getPanelPluginMetaSync() was called before the panel plugins map was initialized',
+      new Error('Panel plugin metas not initialized')
+    );
+  }
+
+  const panel = panels[pluginId] ?? panelsByAliasIDs[pluginId];
+  return panel ? structuredClone(panel) : null;
 }
 
 export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
@@ -175,5 +222,5 @@ export async function refetchPanelPluginMetas(): Promise<void> {
   }
 
   const metas = await refetchPluginMetas();
-  setMetas(metas);
+  await setPanelPluginMetasFromResponse(metas);
 }

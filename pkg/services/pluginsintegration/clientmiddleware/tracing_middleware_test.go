@@ -44,6 +44,15 @@ func TestTracingMiddleware(t *testing.T) {
 			expSpanName: "PluginClient.queryData",
 		},
 		{
+			name: "QueryChunkedData",
+			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
+				return cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{
+					PluginContext: pluginCtx,
+				}, nopChunkedWriter{})
+			},
+			expSpanName: "PluginClient.queryChunkedData",
+		},
+		{
 			name: "CallResource",
 			run: func(pluginCtx backend.PluginContext, cdt *handlertest.HandlerMiddlewareTest) error {
 				return cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{
@@ -389,21 +398,6 @@ func (m *alwaysErrorFuncMiddleware) PublishStream(ctx context.Context, req *back
 
 func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.f()
-}
-
-// ValidateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	return nil, m.f()
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	return nil, m.f()
-}
-
-// ConvertObject implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return nil, m.f()
 }
 
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.

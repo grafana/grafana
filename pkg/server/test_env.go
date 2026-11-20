@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,6 +41,7 @@ func ProvideTestEnv(
 	githubConnectionFactory githubconnection.GithubFactory,
 	decryptService decrypt.DecryptService,
 	quotaGetter quotas.QuotaGetter,
+	natsConfig *infranats.Config,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		TestingT:                testingT,
@@ -58,6 +60,7 @@ func ProvideTestEnv(
 		GithubConnectionFactory: githubConnectionFactory,
 		DecryptService:          decryptService,
 		QuotaGetter:             quotaGetter,
+		NATSConfig:              natsConfig,
 	}, nil
 }
 
@@ -82,4 +85,6 @@ type TestEnv struct {
 	GithubConnectionFactory githubconnection.GithubFactory
 	DecryptService          decrypt.DecryptService
 	QuotaGetter             quotas.QuotaGetter
+	// NATSConfig lets a test dial its own client to the embedded NATS server.
+	NATSConfig *infranats.Config
 }

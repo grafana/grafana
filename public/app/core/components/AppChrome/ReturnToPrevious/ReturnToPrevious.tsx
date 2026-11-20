@@ -13,10 +13,12 @@ import { DismissableButton } from './DismissableButton';
 export interface ReturnToPreviousProps {
   title: string;
   href: string;
+  /** How much of the window's bottom edge something else takes, such as the Assistant docked there; it stays above. */
+  bottomInset?: number;
 }
 
-export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
-  const styles = useStyles2(getStyles);
+export const ReturnToPrevious = ({ href, title, bottomInset = 0 }: ReturnToPreviousProps) => {
+  const styles = useStyles2(getStyles, bottomInset);
   const { chrome } = useGrafana();
 
   const handleOnClick = useCallback(() => {
@@ -38,7 +40,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, bottomInset: number) => ({
   returnToPrevious: css({
     label: 'return-to-previous',
     display: 'flex',
@@ -47,8 +49,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translateX(-50%)',
     zIndex: theme.zIndex.tooltip,
     position: 'fixed',
-    bottom: theme.spacing.x4,
-    boxShadow: theme.shadows.z3,
+    bottom: bottomInset > 0 ? `calc(${theme.spacing.x4} + ${bottomInset}px)` : theme.spacing.x4,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });
 

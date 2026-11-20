@@ -30,7 +30,7 @@ export const OverrideCategoryTitle = ({
 
   return (
     <div>
-      <Stack justifyContent="space-between">
+      <Stack justifyContent="space-between" alignItems="center">
         <div>{overrideName}</div>
         <Button
           variant="secondary"

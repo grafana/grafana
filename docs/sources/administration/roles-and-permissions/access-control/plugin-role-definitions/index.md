@@ -67,10 +67,11 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 | **Kubernetes Monitoring**        | Read all                                | Read all                                                    | Admin access                                  |
 | **Labels**                       | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
 | **Machine Learning**             | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
-| **OnCall**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
 | **Private Data Connect**         | —                                       | —                                                           | Full access                                   |
+| **Session Replay**               | View session recordings                 | View session recordings                                     | View session recordings                       |
 | **SLO**                          | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
 | **Synthetic Monitoring**         | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
+| **Workflows**                    | Read workflows                          | Create, edit, delete workflows                              | Create, edit, delete workflows                |
 
 {{< admonition type="note" >}}
 The permissions above are automatically granted based on the user's organization role. You can assign additional plugin-specific roles (listed below) to grant more granular access.
@@ -359,6 +360,14 @@ Plugin ID: `grafana-pdc-app`
 | `plugins:grafana-pdc-app:private-networks-read`  | Read Private Networks |
 | `plugins:grafana-pdc-app:private-networks-write` | Edit Private Networks |
 
+## Session Replay plugin
+
+Plugin ID: `grafana-sessionreplay-app`
+
+| Plugin role                                           | Description                                       |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-sessionreplay-app:recordings-viewer` | View session recordings in Frontend Observability |
+
 ## SLO plugin
 
 Plugin ID: `grafana-slo-app`
@@ -394,6 +403,17 @@ Plugin ID: `grafana-synthetic-monitoring-app`
 | `plugins:grafana-synthetic-monitoring-app:thresholds-reader`    | Read thresholds                 |
 | `plugins:grafana-synthetic-monitoring-app:thresholds-writer`    | Read and edit thresholds        |
 | `plugins:grafana-synthetic-monitoring-app:access-tokens-writer` | Create and delete access tokens |
+
+## Workflows plugin
+
+{{< docs/public-preview product="Grafana Workflows" >}}
+
+Plugin ID: `grafana-workflows-app`
+
+| Plugin role                                      | Description                            |
+| ------------------------------------------------ | -------------------------------------- |
+| `plugins:grafana-workflows-app:workflows-reader` | Read workflow definitions              |
+| `plugins:grafana-workflows-app:workflows-writer` | Create and manage workflow definitions |
 
 ## Role assignment
 

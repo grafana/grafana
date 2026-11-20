@@ -22,6 +22,7 @@ import (
 const (
 	TestKVGet            = "get operations"
 	TestKVSave           = "save operations"
+	TestKVAllSections    = "all sections"
 	TestKVDelete         = "delete operations"
 	TestKVKeys           = "keys listing"
 	TestKVKeysWithLimits = "keys with limits and ranges"
@@ -73,6 +74,7 @@ func RunKVTest(t *testing.T, kv kvpkg.KV, opts *KVTestOptions) {
 	}{
 		{TestKVGet, runTestKVGet},
 		{TestKVSave, runTestKVSave},
+		{TestKVAllSections, runTestKVAllSections},
 		{TestKVDelete, runTestKVDelete},
 		{TestKVKeys, runTestKVKeys},
 		{TestKVKeysWithLimits, runTestKVKeysWithLimits},
@@ -227,10 +229,10 @@ func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		binaryKey := namespacedKey(nsPrefix, "binary-key")
 
 		binaryData := []byte{0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD}
-		saveKVHelper(t, kv, ctx, testSection, binaryKey, bytes.NewReader(binaryData))
+		saveKVHelper(t, kv, ctx, kvpkg.SearchSnapshotDataSection, binaryKey, bytes.NewReader(binaryData))
 
 		// Verify binary data
-		reader, err := kv.Get(ctx, testSection, binaryKey)
+		reader, err := kv.Get(ctx, kvpkg.SearchSnapshotDataSection, binaryKey)
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
@@ -255,6 +257,60 @@ func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		assert.Error(t, err)
 		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
+}
+
+// runTestKVAllSections ensures adding an official section checks persistence
+// support in every implementation that runs the shared suite.
+func runTestKVAllSections(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	nsPrefix += "-all-sections"
+
+	for _, section := range kvpkg.AllSections {
+		t.Run(section, func(t *testing.T) {
+			ctx := t.Context()
+			key := namespacedKey(nsPrefix, "key")
+			// Most SQL sections use text columns, so their fixtures must be valid text.
+			value := []byte(`{"value":"all-sections-test"}`)
+			switch section {
+			case kvpkg.SearchSnapshotDataSection, kvpkg.SearchSnapshotManifestSection:
+				// Search snapshots use binary columns and must preserve arbitrary bytes.
+				value = []byte{0x00, 0xff, 'a', 'b', 'c'}
+			case kvpkg.BlobDataSection:
+				// SQL decodes the resource identity and content type into separate columns.
+				// PostgreSQL requires the blob UID to be a valid UUID.
+				key = (kvpkg.BlobKey{Group: "group", Resource: "resource", Namespace: nsPrefix, Name: "name", UID: "00000000-0000-4000-8000-000000000001"}).String()
+				value = append(kvpkg.EncodeBlobValueHeader("application/octet-stream"), 0x00, 0xff, 'a', 'b', 'c')
+			case kvpkg.LastImportTimeSection:
+				// SQL stores the timestamp from the key and ignores the value.
+				key = kvpkg.LastImportTimeKey(nsPrefix, "group", "resource", time.Unix(1700000000, 0))
+			}
+
+			w, err := kv.Save(ctx, section, key)
+			require.NoError(t, err)
+			n, err := w.Write(value)
+			require.NoError(t, err)
+			require.Equal(t, len(value), n)
+			require.NoError(t, w.Close())
+
+			// SQL has no Get path for last import time; listing below verifies persistence.
+			if section != kvpkg.LastImportTimeSection {
+				r, err := kv.Get(ctx, section, key)
+				require.NoError(t, err)
+				got, err := io.ReadAll(r)
+				closeErr := r.Close()
+				require.NoError(t, err)
+				require.NoError(t, closeErr)
+				require.Equal(t, value, got)
+			}
+
+			var keys []string
+			for k, err := range kv.Keys(ctx, section, kvpkg.ListOptions{}) {
+				require.NoError(t, err)
+				keys = append(keys, k)
+			}
+			require.Contains(t, keys, key)
+			require.NoError(t, kv.Delete(ctx, section, key))
+		})
+	}
 }
 
 func runTestKVDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {
@@ -674,13 +730,15 @@ func runTestKVUnixTimestamp(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	t.Run("unix timestamp returns reasonable value", func(t *testing.T) {
+	t.Run("unix timestamp returns milliseconds close to now", func(t *testing.T) {
+		before := time.Now().UnixMilli()
 		timestamp, err := kv.UnixTimestamp(ctx)
 		require.NoError(t, err)
+		after := time.Now().UnixMilli()
 
-		now := time.Now().Unix()
-		// Allow for some time difference (up to 5 seconds)
-		assert.InDelta(t, now, timestamp, 5)
+		// Allow for the store's clock to differ from the test's (up to 5 seconds).
+		assert.GreaterOrEqual(t, timestamp, before-5000)
+		assert.LessOrEqual(t, timestamp, after+5000)
 	})
 
 	t.Run("unix timestamp is consistent", func(t *testing.T) {
@@ -690,8 +748,8 @@ func runTestKVUnixTimestamp(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		timestamp2, err := kv.UnixTimestamp(ctx)
 		require.NoError(t, err)
 
-		// Should be very close (within 1 second)
-		require.InDelta(t, timestamp1, timestamp2, 1)
+		require.GreaterOrEqual(t, timestamp2, timestamp1)
+		require.Less(t, timestamp2-timestamp1, int64(1000))
 	})
 }
 
@@ -744,6 +802,27 @@ func runTestKVBatchGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		for _, r := range results {
 			assert.Equal(t, testData[r.key], r.value, "key = %s", r.key)
 		}
+	})
+
+	t.Run("batch get retains request order beyond ten keys", func(t *testing.T) {
+		// The SQL backend rebuilds the request order from an index column. Three
+		// keys cannot tell a numeric ordering from a lexicographic one, so use
+		// enough that 10 would sort before 2 if the index were compared as text.
+		const numKeys = 20
+		names := make([]string, numKeys)
+		for i := range numKeys {
+			names[i] = fmt.Sprintf("ordered-key-%d", i)
+			saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, names[i]), strings.NewReader(fmt.Sprintf("value-%d", i)))
+		}
+
+		keys := namespacedKeys(nsPrefix, names)
+		actualKeys := make([]string, 0, numKeys)
+		for item, err := range kv.BatchGet(ctx, testSection, keys) {
+			require.NoError(t, err)
+			require.NoError(t, item.Value.Close())
+			actualKeys = append(actualKeys, item.Key)
+		}
+		assert.Equal(t, keys, actualKeys, "BatchGet must return keys in request order")
 	})
 
 	t.Run("batch get with empty section", func(t *testing.T) {

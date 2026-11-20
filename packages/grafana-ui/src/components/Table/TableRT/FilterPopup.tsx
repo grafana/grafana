@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -42,7 +42,7 @@ export const FilterPopup = ({
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
 
   const onCancel = useCallback(() => onClose(), [onClose]);
 
@@ -71,7 +71,7 @@ export const FilterPopup = ({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div ref={ref} className={cx(styles.filterContainer)} onClick={stopPropagation}>
+      <div ref={setContainerElement} className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <Stack direction="column" gap={3}>
           <Stack direction="column" gap={0.5}>
             <Stack justifyContent="space-between" alignItems="center">
@@ -88,9 +88,9 @@ export const FilterPopup = ({
               />
             </Stack>
             <div className={cx(styles.listDivider)} />
-            {ref.current && (
+            {containerElement && (
               <FilterList
-                referenceElement={ref.current}
+                referenceElement={containerElement}
                 onChange={setValues}
                 values={values}
                 options={options}
@@ -136,7 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),
   listDivider: css({

@@ -1,5 +1,11 @@
+/* eslint-disable @grafana/no-direct-local-storage-access */
 type StoreValue = string | number | boolean | null;
 type StoreSubscriber = () => void;
+
+export interface StoreSetOptions {
+  /** Throw when storage is available but the write fails, e.g. QuotaExceededError. Defaults to false. */
+  throwOnFailure?: boolean;
+}
 
 /**
  * @deprecated Import singleton instance 'store' from '@grafana/data' instead
@@ -9,11 +15,57 @@ export class Store {
 
   constructor() {
     // Changes from other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key) {
-        this.notifySubscribers(e.key);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key) {
+          this.notifySubscribers(e.key);
+        }
+      });
+    }
+  }
+
+  // Used instead of localStorage when it is unavailable in a browser (sandboxed/opaque-origin iframes
+  // where the getter or operations throw SecurityError), so values persist for the page lifetime.
+  private memoryValues = new Map<string, string>();
+
+  // Without a window (e.g. server-side rendering) the store is shared across requests, so writes are
+  // dropped instead of kept in memory where one request could read another's values.
+  private get memory(): Map<string, string> | undefined {
+    return typeof window === 'undefined' ? undefined : this.memoryValues;
+  }
+
+  private get storage(): Storage | undefined {
+    try {
+      return typeof window === 'undefined' ? undefined : window.localStorage;
+    } catch {
+      return undefined;
+    }
+  }
+
+  // Returns `any` like the localStorage index signature it replaces, to keep existing callers compiling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private read(key: string): any {
+    const storage = this.storage;
+    if (storage) {
+      try {
+        return storage[key];
+      } catch {
+        // fall through to the in-memory fallback
       }
-    });
+    }
+    return this.memory?.get(key);
+  }
+
+  // Warn only once so a full or broken storage doesn't flood the console on every write
+  private warnedWriteFailure = false;
+
+  private warnWriteFailure(action: 'write' | 'delete', key: string, error: unknown) {
+    if (!this.warnedWriteFailure) {
+      this.warnedWriteFailure = true;
+      console.warn(
+        `Could not ${action} localStorage key: ${key}. Further write failures will not be logged. [${error}]`
+      );
+    }
   }
 
   private notifySubscribers(key: string) {
@@ -41,19 +93,47 @@ export class Store {
   }
 
   get(key: string) {
-    return window.localStorage[key];
+    return this.read(key);
   }
 
-  set(key: string, value: StoreValue) {
-    window.localStorage[key] = value;
+  /**
+   * Best-effort write: by default, failures such as QuotaExceededError are logged once and the value is dropped.
+   * Pass `throwOnFailure` when the caller needs to react to a failed write, e.g. by pruning and retrying.
+   */
+  set(key: string, value: StoreValue, options?: StoreSetOptions) {
+    try {
+      this.write(key, value);
+    } catch (error) {
+      if (options?.throwOnFailure) {
+        throw error;
+      }
+      this.warnWriteFailure('write', key, error);
+      return;
+    }
     this.notifySubscribers(key);
+  }
+
+  private write(key: string, value: StoreValue) {
+    const storage = this.storage;
+    try {
+      if (!storage) {
+        this.memory?.set(key, String(value));
+      } else {
+        storage[key] = value;
+      }
+    } catch (error) {
+      if (!isUnavailableError(error)) {
+        throw error;
+      }
+      this.memory?.set(key, String(value));
+    }
   }
 
   getBool(key: string, def: boolean): boolean {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return window.localStorage[key] === 'true';
+    return this.read(key) === 'true';
   }
 
   getObject<T = unknown>(key: string): T | undefined;
@@ -61,7 +141,7 @@ export class Store {
   getObject<T = unknown>(key: string, def?: T) {
     let ret = def;
     if (this.exists(key)) {
-      const json = window.localStorage[key];
+      const json = this.read(key);
       try {
         ret = JSON.parse(json);
       } catch (error) {
@@ -80,7 +160,7 @@ export class Store {
       throw new Error(`Could not stringify object: ${key}. [${error}]`);
     }
     try {
-      this.set(key, json);
+      this.set(key, json, { throwOnFailure: true });
     } catch (error) {
       // Likely hitting storage quota
       const errorToThrow = new Error(`Could not save item in localStorage: ${key}. [${error}]`);
@@ -93,13 +173,67 @@ export class Store {
   }
 
   exists(key: string) {
-    return window.localStorage[key] !== void 0;
+    return this.read(key) !== void 0;
   }
 
   delete(key: string) {
-    window.localStorage.removeItem(key);
+    this.memory?.delete(key);
+    try {
+      this.storage?.removeItem(key);
+    } catch (error) {
+      if (!isUnavailableError(error)) {
+        this.warnWriteFailure('delete', key, error);
+      }
+    }
     this.notifySubscribers(key);
   }
+
+  all(prefix?: string): Record<string, string> {
+    const storage = this.storage;
+    if (storage) {
+      try {
+        return collect(
+          prefix,
+          storage.length,
+          (i) => storage.key(i),
+          (k) => storage.getItem(k)
+        );
+      } catch {
+        // fall through to the in-memory fallback
+      }
+    }
+    const memory = this.memory;
+    const keys = memory ? [...memory.keys()] : [];
+    return collect(
+      prefix,
+      keys.length,
+      (i) => keys[i],
+      (k) => memory?.get(k) ?? null
+    );
+  }
+}
+
+function isUnavailableError(error: unknown) {
+  return error instanceof DOMException && error.name === 'SecurityError';
+}
+
+function collect(
+  prefix: string | undefined,
+  length: number,
+  keyAt: (index: number) => string | null,
+  getItem: (key: string) => string | null
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (let i = 0; i < length; i++) {
+    const rawKey = keyAt(i);
+    if (rawKey && rawKey.startsWith(prefix ?? '')) {
+      const value = getItem(rawKey);
+      if (value !== null) {
+        result[rawKey.slice(prefix?.length ?? 0)] = value;
+      }
+    }
+  }
+  return result;
 }
 
 export const store = new Store();

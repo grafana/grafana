@@ -13,9 +13,6 @@ import (
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
 	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
-	// ErrVersionLockedObjectNotFound is returned when an object is not
-	// found using the current hash.
-	ErrVersionLockedObjectNotFound = fmt.Errorf("could not find object using provided id and hash")
 	// ConfigRecordsLimit defines the limit of how many alertmanager configuration versions
 	// should be stored in the database for each organization including the current one.
 	// Has to be > 0
@@ -121,7 +118,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 				return err
 			}
 			if !ok {
-				return ErrVersionLockedObjectNotFound
+				return models.ErrVersionLockedObjectNotFound.Errorf("could not find object using provided id and hash")
 			}
 			return nil
 		}
@@ -140,7 +137,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			return err
 		}
 		if rows == 0 {
-			return ErrVersionLockedObjectNotFound
+			return models.ErrVersionLockedObjectNotFound.Errorf("could not find object using provided id and hash")
 		}
 
 		historicConfig := models.HistoricConfigFromAlertConfig(config)

@@ -12,10 +12,9 @@ import { useGetResourceRepositoryView } from '../../hooks/useGetResourceReposito
 import { type StatusInfo } from '../../types';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
-import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 
 interface FixFolderMetadataDrawerProps {
   repositoryName: string;
@@ -113,7 +112,6 @@ function FixFolderMetadataForm({
     path: '',
     comment: '',
     repo: repositoryName,
-    workflow: getDefaultWorkflow(repository),
     title: '',
   };
 
@@ -123,15 +121,11 @@ function FixFolderMetadataForm({
   const handleSubmitForm = async ({ ref }: BaseProvisionedFormData) => {
     onSubmitError(undefined);
     try {
-      // The Grafana-saved-by trailer rides through JobSpec.Message to the
-      // resulting git commit.
       const result = await createJob({
         name: repositoryName,
         jobSpec: {
           action: 'fixFolderMetadata',
-          message: withSavedByTrailer(
-            t('provisioning.fix-folder-metadata-drawer.default-commit-message', 'Fix folder metadata')
-          ),
+          message: t('provisioning.fix-folder-metadata-drawer.default-commit-message', 'Fix folder metadata'),
           fixFolderMetadata: { ref },
         },
       }).unwrap();
@@ -163,13 +157,13 @@ function FixFolderMetadataForm({
           />
 
           <Stack gap={2}>
-            <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
-            </Button>
             <Button type="submit" disabled={createJobState.isLoading || isJobActive}>
               {createJobState.isLoading
                 ? t('provisioning.fix-folder-metadata-drawer.submitting', 'Fixing...')
                 : t('provisioning.fix-folder-metadata-drawer.submit', 'Fix folder IDs')}
+            </Button>
+            <Button variant="secondary" fill="outline" onClick={onDismiss}>
+              <Trans i18nKey="provisioning.fix-folder-metadata-drawer.cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>

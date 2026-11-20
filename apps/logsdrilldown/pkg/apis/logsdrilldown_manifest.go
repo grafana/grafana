@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1alpha1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1alpha1"
 	v1beta1 "github.com/grafana/grafana/apps/logsdrilldown/pkg/apis/logsdrilldown/v1beta1"
@@ -48,6 +46,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldown",
 					Plural:     "LogsDrilldowns",
+					Resource:   "logsdrilldowns",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownv1alpha1,
@@ -56,15 +55,11 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaults",
 					Plural:     "LogsDrilldownDefaults",
+					Resource:   "logsdrilldowndefaults",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultsv1alpha1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 
@@ -75,6 +70,7 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaultColumns",
 					Plural:     "LogsDrilldownDefaultColumns",
+					Resource:   "logsdrilldowndefaultcolumns",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultColumnsv1beta1,
@@ -83,15 +79,11 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "LogsDrilldownDefaultLabels",
 					Plural:     "LogsDrilldownDefaultLabels",
+					Resource:   "logsdrilldowndefaultlabels",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaLogsDrilldownDefaultLabelsv1beta1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

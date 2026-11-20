@@ -11,12 +11,13 @@ import { type AnnotationTooltipProps } from './AnnotationTooltip';
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
 import { getAnnotationTooltip } from './getAnnotationTooltip';
+import { type AnnotationId } from './types';
 
 const retFalse = () => false;
 
 export interface AnnotationClusterTooltipProps extends Omit<AnnotationTooltipProps, 'onEdit'> {
   // clustered tooltips need to know which annotation is being edited
-  onEdit: (annotationId: number) => void;
+  onEdit: (annotationId: AnnotationId) => void;
 }
 
 export const AnnotationTooltipCluster = ({
@@ -45,7 +46,6 @@ export const AnnotationTooltipCluster = ({
         timeZone,
         canEditAnnotations,
         canDeleteAnnotations,
-        // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
         onAnnotationDelete
       );
 
@@ -85,7 +85,6 @@ export const AnnotationTooltipCluster = ({
     timeZone,
     canEditAnnotations,
     canDeleteAnnotations,
-    // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
     onAnnotationDelete
   );
 
@@ -138,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     userSelect: 'text',
     overflow: 'hidden',
   }),

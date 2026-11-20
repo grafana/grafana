@@ -1,4 +1,5 @@
 import { cx, css } from '@emotion/css';
+import { type CSSObject } from '@emotion/serialize';
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
@@ -133,28 +134,43 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={`${iconSize ? iconSize : 'lg'}`} />;
+    return <Icon name={icon} size={`${iconSize ? iconSize : 'md'}`} />;
   }
 
   return icon;
 }
 
+// Variant hover styles must not apply to disabled buttons, so a disabled button looks the same hovered or not.
+// :where() keeps the specificity of a plain :hover, so :active and consumer overrides still win over it.
+const enabledHover = '&:hover:where(:not(:disabled))';
+
+function hoverOnlyWhenEnabled(styles: CSSObject): CSSObject {
+  // Rebuilt in order so the hover rule stays before :active in the generated CSS
+  return Object.fromEntries(
+    Object.entries(styles).map(([selector, value]) => [selector === '&:hover' ? enabledHover : selector, value])
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+  const primaryVariant = hoverOnlyWhenEnabled(getPropertiesForVariant(theme, 'primary', 'solid'));
+  const destructiveVariant = hoverOnlyWhenEnabled(getPropertiesForVariant(theme, 'destructive', 'solid'));
+  const background = theme.flags.visualDesignRefresh ? theme.colors.secondary.background : theme.colors.secondary.main;
+  const backgroundHover = theme.flags.visualDesignRefresh
+    ? theme.colors.secondary.backgroundEmphasis
+    : theme.colors.secondary.shade;
 
   const defaultOld = css({
     color: theme.colors.text.primary,
-    background: theme.colors.secondary.main,
+    background,
 
-    '&:hover, &:focus': {
+    [enabledHover]: {
       color: theme.colors.text.primary,
-      background: theme.colors.secondary.shade,
-      border: `1px solid ${theme.colors.border.medium}`,
+      background: backgroundHover,
+      border: `1px solid ${theme.colors.secondary.border}`,
     },
 
     '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
     },
   });
 
@@ -169,7 +185,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
-      border: `1px solid ${theme.colors.secondary.border}`,
+      border: `1px solid ${theme.colors.secondary.subtleBorder}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
@@ -193,12 +209,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         opacity: theme.colors.action.disabledOpacity,
         background: theme.colors.action.disabledBackground,
         boxShadow: 'none',
-
-        '&:hover': {
-          color: theme.colors.text.disabled,
-          background: theme.colors.action.disabledBackground,
-          boxShadow: 'none',
-        },
       },
     }),
     default: css({
@@ -206,13 +216,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'transparent',
       border: `1px solid transparent`,
 
-      '&:hover': {
+      [enabledHover]: {
         color: theme.colors.text.primary,
         background: theme.colors.action.hover,
       },
 
       '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
       },
     }),
     canvas: defaultOld,

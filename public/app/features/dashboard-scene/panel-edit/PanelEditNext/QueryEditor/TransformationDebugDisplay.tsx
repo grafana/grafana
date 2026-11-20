@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
+import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
+import { framesForTopic } from './hooks/useTransformedFrames';
 
 export function TransformationDebugDisplay() {
   const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
@@ -15,14 +17,22 @@ export function TransformationDebugDisplay() {
 
   const styles = useStyles2(getStyles);
 
-  const seriesData = useMemo(() => data?.series ?? [], [data?.series]);
-
   const { input, output } = useTransformationDebugData({
     selectedTransformation,
     transformations,
-    data: seriesData,
+    data: framesForTopic(data, selectedTransformation),
     isActive: transformToggles.showDebug,
   });
+  const getInputJson = useCallback(() => getPrettyJSON(input), [input]);
+  const getOutputJson = useCallback(() => getPrettyJSON(output), [output]);
+  const copyInputDataLabel = t(
+    'query-editor-next.transformation-debug.copy-input-data',
+    'Copy input data to clipboard'
+  );
+  const copyOutputDataLabel = t(
+    'query-editor-next.transformation-debug.copy-output-data',
+    'Copy output data to clipboard'
+  );
 
   if (!transformToggles.showDebug || !selectedTransformation) {
     return null;
@@ -38,6 +48,14 @@ export function TransformationDebugDisplay() {
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
             <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+            <ClipboardButton
+              aria-label={copyInputDataLabel}
+              icon="copy"
+              size="sm"
+              fill="text"
+              getText={getInputJson}
+              tooltip={copyInputDataLabel}
+            />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={input} />
@@ -49,6 +67,14 @@ export function TransformationDebugDisplay() {
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
             <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+            <ClipboardButton
+              aria-label={copyOutputDataLabel}
+              icon="copy"
+              size="sm"
+              fill="text"
+              getText={getOutputJson}
+              tooltip={copyOutputDataLabel}
+            />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={output} />
@@ -72,9 +98,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.primary.text,
     }),
     debugTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
-      fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
       color: theme.colors.text.primary,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       flexGrow: 0,

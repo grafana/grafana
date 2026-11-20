@@ -26,6 +26,10 @@ connection: {
 					// GitHub App installation ID
 					installationID: int
 				}
+				#GitHubEnterpriseOAuthConnectionConfig: {
+					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+					serverUrl: string
+				}
 				#GitHubEnterpriseConnectionConfig: {
 					// App-level information
 					// GitHub App ID
@@ -38,12 +42,20 @@ connection: {
 					// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 					serverUrl: string
 				}
-				#BitbucketConnectionConfig: {
-					// The app clientID
-					clientID: string
+				#GitOAuthConnectionConfig: {
+					// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
+					authURL: string
+					// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
+					tokenURL: string
+					// The OAuth scopes to request, granting git read and write access.
+					scopes?: [...string]
 				}
-				#GitlabConnectionConfig: {
-					// The app clientID
+				#BitbucketConnectionConfig: {
+					// The workspace the OAuth consumer belongs to
+					workspace: string
+				}
+				#ConnectionOAuthConfig: {
+					// The OAuth app clientID
 					clientID: string
 				}
 				#ConnectionWebhookConfig: {
@@ -63,7 +75,7 @@ connection: {
 				}
 				spec: {
 					// The connection provider type
-					type: "github" | "githubEnterprise" | "bitbucket" | "gitlab"
+					type: "github" | "githubEnterprise" | "githubOAuth" | "githubEnterpriseOAuth" | "bitbucketOAuth" | "gitlabOAuth" | "gitOAuth"
 					// The connection URL.
 					url: *"" | string
 					// GitHub connection configuration.
@@ -72,12 +84,17 @@ connection: {
 					// GitHub Enterprise Server connection configuration.
 					// Only applicable when provider is "githubEnterprise".
 					githubEnterprise?: #GitHubEnterpriseConnectionConfig
+					// GitHub Enterprise Server OAuth app connection configuration.
+					// Only applicable when provider is "githubEnterpriseOAuth".
+					githubEnterpriseOAuth?: #GitHubEnterpriseOAuthConnectionConfig
 					// Bitbucket connection configuration
-					// Only applicable when provider is "bitbucket"
+					// Only applicable when provider is "bitbucketOAuth"
 					bitbucket?: #BitbucketConnectionConfig
-					// Gitlab connection configuration
-					// Only applicable when provider is "gitlab"
-					gitlab?: #GitlabConnectionConfig
+					// Generic git OAuth app connection configuration
+					// Only applicable when provider is "gitOAuth"
+					gitOAuth?: #GitOAuthConnectionConfig
+					// OAuth app configuration shared by all OAuth app providers
+					oauth?: #ConnectionOAuthConfig
 					// Webhook configuration for this connection
 					webhook?: #ConnectionWebhookConfig
 				}

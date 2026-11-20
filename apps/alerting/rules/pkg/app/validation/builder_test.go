@@ -12,7 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	manifestdata "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 )
 
@@ -111,9 +111,8 @@ func TestBuilder_NoApplicableSkipsCast(t *testing.T) {
 
 func TestOpenAPISpec(t *testing.T) {
 	md := *manifestdata.LocalManifest().ManifestData
-	gk := schema.GroupKind{Group: md.Group, Kind: "AlertRule"}
 
-	step, err := OpenAPISpec[*v1.AlertRule](md, gk)
+	step, err := OpenAPISpec[*v1.AlertRule](md, v1.AlertRuleKind().GroupVersionKind())
 	require.NoError(t, err)
 
 	good := newAlertRule("r1")
@@ -129,7 +128,7 @@ func TestOpenAPISpec(t *testing.T) {
 
 func TestOpenAPISpec_NilSchemaNoop(t *testing.T) {
 	// A kind not present in the manifest yields a no-op step (no schema declared).
-	step, err := OpenAPISpec[*v1.AlertRule](*manifestdata.LocalManifest().ManifestData, schema.GroupKind{Group: "x", Kind: "DoesNotExist"})
+	step, err := OpenAPISpec[*v1.AlertRule](*manifestdata.LocalManifest().ManifestData, schema.GroupVersionKind{Group: "x", Version: v1.APIVersion, Kind: "DoesNotExist"})
 	require.NoError(t, err)
 	require.NoError(t, step(context.Background(), Request[*v1.AlertRule]{Action: resource.AdmissionActionCreate, Object: newAlertRule("r1")}))
 }

@@ -14,6 +14,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
+import { type QueryPreview } from './coauthoring/queryPreview';
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
 export interface PendingExpression {
@@ -122,14 +123,12 @@ export interface QueryEditorUIState {
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
   stackedMode: StackedEditorState;
-  showVersionBanner: boolean;
   /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
   confirmingDeleteActionKey: string | null;
   setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {
-  onSwitchToClassic?: () => void;
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
@@ -137,8 +136,11 @@ export interface QueryEditorActions {
   duplicateQuery: (refId: string) => void;
   toggleQueryHide: (refId: string) => void;
   runQueries: () => void;
+  startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
+  /** The data source's query editor changed a query. */
+  onQueryEdited: () => void;
   addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;
   deleteTransformation: (transformId: string) => void;
   toggleTransformationDisabled: (transformId: string) => void;

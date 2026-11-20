@@ -1,7 +1,9 @@
+import { act } from '@testing-library/react';
 import { render, screen } from 'test/test-utils';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type CatalogPlugin } from '../types';
 
@@ -95,8 +97,11 @@ describe('PluginDetailsPage', () => {
     mockUseGetSingle.mockReturnValue(plugin);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks();
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('should show loader on initial load when no plugin is available yet', () => {
@@ -163,7 +168,7 @@ describe('PluginDetailsPage', () => {
   });
 
   it('should show "Datasource connections" tab when plugin is type of datasource', () => {
-    config.featureToggles.datasourceConnectionsTab = true;
+    setTestFlags({ [FlagKeys.DatasourceConnectionsTab]: true });
     mockUseGetSingle.mockReturnValue({ ...plugin, type: PluginType.datasource });
     mockUsePluginConfig.mockReturnValue({ value: {}, loading: false });
     render(<PluginDetailsPage pluginId={plugin.id} />);

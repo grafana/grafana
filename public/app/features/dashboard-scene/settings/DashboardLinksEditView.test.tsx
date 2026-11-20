@@ -1,15 +1,29 @@
-import { render as RTLRender } from '@testing-library/react';
+import { cleanup, render as RTLRender, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { render as renderWithProviders, waitFor } from 'test/test-utils';
 
-import { SceneTimeRange, behaviors } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import {
+  locationService,
+  LocationServiceProvider,
+  setChromeHeaderHeightHook,
+  setPluginLinksHook,
+} from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { SceneTimeRange, SceneVariableSet, UrlSyncContextProvider, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { DashboardLinksEditViewRenderer } from './DashboardLinksEditViewRenderer';
+import { createDashboardEditViewFor } from './createDashboardEditViewFor';
 import { NEW_LINK } from './links/utils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -24,6 +38,14 @@ function render(component: React.ReactNode) {
 }
 
 describe('DashboardLinksEditView', () => {
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   describe('Url state', () => {
     let settings: DashboardLinksEditView;
 
@@ -229,39 +251,54 @@ describe('DashboardLinksEditView', () => {
       settings = result.settings;
     });
 
-    it('should render with no errors', () => {
-      expect(() => render(<settings.Component model={settings} />)).not.toThrow();
-    });
-
-    it('should render the empty state when no links', () => {
-      dashboard.setState({ links: [] });
-      const { getByText } = render(<settings.Component model={settings} />);
-
-      expect(getByText('Add dashboard link')).toBeInTheDocument();
-    });
-
-    it('should render the empty state when no links', () => {
-      dashboard.setState({ links: [] });
-      const { getByText } = render(<settings.Component model={settings} />);
-
-      expect(getByText('Add dashboard link')).toBeInTheDocument();
-    });
-
-    it('should render the list of link when there are links', () => {
+    it('preserves URL-selected link state before loading the settings renderers', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
           { ...NEW_LINK, title: 'link-2' },
         ],
       });
-      const { getByText } = render(<settings.Component model={settings} />);
+      settings.urlSync!.updateFromUrl({ editIndex: '1' });
 
-      expect(getByText('link-1')).toBeInTheDocument();
+      expect(settings.state.editIndex).toBe(1);
+      expect(settings.urlSync!.getUrlState()).toEqual({ editIndex: '1' });
+      expect(require.cache[require.resolve('./SettingsRenderers')]).toBeUndefined();
+
+      const { findByDisplayValue } = render(<settings.Component model={settings} />);
+
+      expect(await findByDisplayValue('link-2')).toBeInTheDocument();
+      expect(dashboard.state.editview).toBe(settings);
+    });
+
+    it('should render the empty state when no links', async () => {
+      dashboard.setState({ links: [] });
+      const { findByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('Add dashboard link')).toBeInTheDocument();
+    });
+
+    it('should render the empty state when no links', async () => {
+      dashboard.setState({ links: [] });
+      const { findByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('Add dashboard link')).toBeInTheDocument();
+    });
+
+    it('should render the list of link when there are links', async () => {
+      dashboard.setState({
+        links: [
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
+        ],
+      });
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(getByText('link-2')).toBeInTheDocument();
       expect(getByText('New link')).toBeInTheDocument();
     });
 
-    it('should render the list of link when the editing link does not exist', () => {
+    it('should render the list of link when the editing link does not exist', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
@@ -269,14 +306,14 @@ describe('DashboardLinksEditView', () => {
         ],
       });
       settings.setState({ editIndex: 2 });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('link-1')).toBeInTheDocument();
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(getByText('link-2')).toBeInTheDocument();
       expect(getByText('New link')).toBeInTheDocument();
     });
 
-    it('should render the link form when the editing link does exist', () => {
+    it('should render the link form when the editing link does exist', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
@@ -284,38 +321,120 @@ describe('DashboardLinksEditView', () => {
         ],
       });
       settings.setState({ editIndex: 1 });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('Edit link')).toBeInTheDocument();
+      expect(await findByText('Edit link')).toBeInTheDocument();
       expect(getByText('Back to list')).toBeInTheDocument();
     });
 
-    it('should not show Provisioned by data source section when no links have origin', () => {
+    it('should not show Provisioned by data source section when no links have origin', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
           { ...NEW_LINK, title: 'link-2' },
         ],
       });
-      const { queryByText } = render(<settings.Component model={settings} />);
+      const { findByText, queryByText } = render(<settings.Component model={settings} />);
 
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
-    it('should show Provisioned by data source section when links have origin', () => {
+    it('should show Provisioned by data source section when links have origin', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'ds-link', origin: { type: 'datasource', group: 'test' } },
           { ...NEW_LINK, title: 'user-link' },
         ],
       });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
       expect(getByText('user-link')).toBeInTheDocument();
     });
   });
 });
+
+describe('<DashboardScene /> with dashboardSettingsRedesign enabled', () => {
+  beforeEach(() => {
+    setTestFlags({
+      [FlagKeys.DashboardNewLayouts]: true,
+      [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it.each([
+    { tab: 'links', category: 'Links' },
+    { tab: 'annotations', category: 'Annotations' },
+    { tab: 'variables', category: 'Variables' },
+  ])(
+    'when Take me there is clicked in $category settings with the sidebar closed, the sidebar shows the expanded $category category',
+    async ({ tab, category }) => {
+      const { dashboard } = buildRedirectTestScene(tab);
+      locationService.push(`/d/dash-1/hello?editview=${tab}`);
+      const { actions, findByTestId } = renderDashboardSettings(dashboard);
+
+      await actions.goToSidebar();
+
+      const sidebar = await findByTestId(selectors.components.Sidebar.container);
+      expect(await within(sidebar).findByRole('button', { name: `Collapse ${category} category` })).toBeVisible();
+      expect(locationService.getSearchObject().showCategory).toBe(`dashboard-${tab}`);
+      expect(dashboard.state.editview).toBeUndefined();
+      expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(dashboard.state.sidebar.getSelectedObject()).toBe(dashboard);
+    }
+  );
+});
+
+function buildRedirectTestScene(tab: string) {
+  const settings = createDashboardEditViewFor(tab);
+  const dashboard = new DashboardScene({
+    $variables: new SceneVariableSet({ variables: [] }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+    isEditing: true,
+    mode: 'edit',
+    title: 'hello',
+    uid: 'dash-1',
+    meta: { canEdit: true },
+    editview: settings,
+    links: [{ ...NEW_LINK, title: 'link-1' }],
+  });
+
+  return { dashboard, settings };
+}
+
+function renderDashboardSettings(dashboard: DashboardScene) {
+  const user = userEvent.setup();
+  setChromeHeaderHeightHook(() => 40);
+  setPluginLinksHook(() => ({ links: [], isLoading: false }));
+  const renderResult = render(
+    <LocationServiceProvider service={locationService}>
+      <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+        <dashboard.Component model={dashboard} />
+      </UrlSyncContextProvider>
+    </LocationServiceProvider>
+  );
+  const elements = {
+    goToSidebarButton: () => renderResult.findByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...renderResult,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(await elements.goToSidebarButton());
+      },
+    },
+  };
+}
 
 async function buildTestScene() {
   const settings = new DashboardLinksEditView({});
@@ -340,3 +459,53 @@ async function buildTestScene() {
 
   return { dashboard, settings };
 }
+
+function renderSidebarRedirect() {
+  const view = new DashboardLinksEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+  });
+  const user = userEvent.setup();
+  const result = renderWithProviders(<DashboardLinksEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('DashboardLinksEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at links', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-links',
+      highlightCategory: 'dashboard-links',
+    });
+  });
+});

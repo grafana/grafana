@@ -2,7 +2,10 @@
 
 This guide documents conventions for Playwright e2e tests under
 `e2e-playwright/alerting-suite/`. Follow it when adding or modifying specs in this
-directory.
+directory. For general spec-authoring principles (assert real behavior, avoiding AI-slop
+tests, anti-flake rules) that apply to any Grafana frontend test, also invoke the
+`frontend-testing-strategy` skill with the Skill tool — this guide covers what's specific to
+this suite on top of that.
 
 ## Test isolation and parallelism
 
@@ -106,7 +109,7 @@ which adds the `authenticate` setup project as a dependency and points the test 
 a saved storage state file.
 
 **Gotcha:** Playwright applies CLI file filters to dependency projects too. So
-`yarn e2e:pw --project=alerting e2e-playwright/alerting-suite/foo.spec.ts` will
+`pnpm e2e:pw --project=alerting e2e-playwright/alerting-suite/foo.spec.ts` will
 also filter the `authenticate` project's `auth.setup.js`, find no matches, and
 skip generating the storage state — every API call then 403s.
 
@@ -114,13 +117,13 @@ Workarounds:
 
 1. Run the setup project explicitly first:
    ```sh
-   yarn e2e:pw --project=authenticate
-   yarn e2e:pw --project=alerting --reporter=line e2e-playwright/alerting-suite/foo.spec.ts
+   pnpm e2e:pw --project=authenticate
+   pnpm e2e:pw --project=alerting --reporter=line e2e-playwright/alerting-suite/foo.spec.ts
    ```
 2. Use `--grep` instead of a file path — title filters don't break dependency
    projects:
    ```sh
-   yarn e2e:pw --project=alerting --reporter=line --grep "your test title"
+   pnpm e2e:pw --project=alerting --reporter=line --grep "your test title"
    ```
 
 ## SQLite / dev-env caveats

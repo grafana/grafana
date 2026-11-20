@@ -3,7 +3,8 @@ import { useLocation } from 'react-use';
 
 import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, TextLink, Stack, useStyles2 } from '@grafana/ui';
+import { useNow } from 'app/core/hooks/useNow';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -16,7 +17,7 @@ import {
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/constants';
 import { type AlertInstanceTotalState, type CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
@@ -34,6 +35,18 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
   return Object.values(totals)
     .filter((total) => total !== undefined)
     .reduce((total, currentTotal) => total + currentTotal, 0);
+}
+
+function ActiveFor({ since }: { since: Date }) {
+  const now = useNow();
+  return (
+    <Trans
+      i18nKey="alertlist.ungrouped-mode-view.active-for"
+      values={{ duration: intervalToAbbreviatedDurationString({ start: since, end: now }) }}
+    >
+      for <span>{'{{duration}}'}</span>
+    </Trans>
+  );
 }
 
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
@@ -89,18 +102,16 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                       </div>
                       <Spacer />
                       {href && (
-                        <a
+                        <TextLink
                           href={href}
-                          target="__blank"
-                          className={styles.link}
-                          rel="noopener"
+                          external={true}
+                          inline={false}
                           aria-label={t('alertlist.ungrouped-mode-view.aria-label-view-alert-rule', 'View alert rule')}
                         >
                           <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>
                             <Trans i18nKey="alertlist.ungrouped-mode-view.view-alert-rule">View alert rule</Trans>
                           </span>
-                          <Icon name={'external-link-alt'} size="sm" />
-                        </a>
+                        </TextLink>
                       )}
                     </Stack>
                     <div className={styles.alertDuration}>
@@ -108,14 +119,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {alertStateToReadable(alertingRule.state)}
                       </span>{' '}
                       {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
-                        <Trans
-                          i18nKey="alertlist.ungrouped-mode-view.active-for"
-                          values={{
-                            duration: intervalToAbbreviatedDurationString({ start: firstActiveAt, end: Date.now() }),
-                          }}
-                        >
-                          for <span>{'{{duration}}'}</span>
-                        </Trans>
+                        <ActiveFor since={firstActiveAt} />
                       )}
                     </div>
                   </div>

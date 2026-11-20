@@ -14,6 +14,7 @@ export const addTagTypes = [
   'dashboards',
   'snapshots',
   'dashboard_public',
+  'dashboard_variables',
   'datasources',
   'correlations',
   'health',
@@ -366,7 +367,6 @@ const injectedRtkApi = api
             to: queryArg.to,
             userId: queryArg.userId,
             userUID: queryArg.userUid,
-            alertId: queryArg.alertId,
             alertUID: queryArg.alertUid,
             dashboardId: queryArg.dashboardId,
             dashboardUID: queryArg.dashboardUid,
@@ -704,6 +704,40 @@ const injectedRtkApi = api
           body: queryArg.publicDashboardDto,
         }),
         invalidatesTags: ['dashboards', 'dashboard_public'],
+      }),
+      promoteSharedVariableCluster: build.mutation<
+        PromoteSharedVariableClusterApiResponse,
+        PromoteSharedVariableClusterApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboards/variables/promote`,
+          method: 'POST',
+          body: queryArg.sharedVariablePromoteRequest,
+        }),
+        invalidatesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      getSharedVariableClusters: build.query<GetSharedVariableClustersApiResponse, GetSharedVariableClustersApiArg>({
+        query: () => ({ url: `/dashboards/variables/shared-clusters` }),
+        providesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      getSharedVariableClusterOccurrences: build.query<
+        GetSharedVariableClusterOccurrencesApiResponse,
+        GetSharedVariableClusterOccurrencesApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboards/variables/shared-clusters/occurrences`,
+          params: {
+            id: queryArg.id,
+          },
+        }),
+        providesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      rescanSharedVariableClusters: build.mutation<
+        RescanSharedVariableClustersApiResponse,
+        RescanSharedVariableClustersApiArg
+      >({
+        query: () => ({ url: `/dashboards/variables/shared-clusters/rescan`, method: 'POST' }),
+        invalidatesTags: ['dashboard_variables', 'enterprise'],
       }),
       getDataSources: build.query<GetDataSourcesApiResponse, GetDataSourcesApiArg>({
         query: () => ({ url: `/datasources` }),
@@ -1560,14 +1594,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/user/revoke-auth-token`, method: 'POST', body: queryArg.revokeAuthTokenCmd }),
         invalidatesTags: ['signed_in_user'],
       }),
-      unstarDashboardByUid: build.mutation<UnstarDashboardByUidApiResponse, UnstarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'DELETE' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
-      starDashboardByUid: build.mutation<StarDashboardByUidApiResponse, StarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'POST' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
       getSignedInUserTeamList: build.query<GetSignedInUserTeamListApiResponse, GetSignedInUserTeamListApiArg>({
         query: () => ({ url: `/user/teams` }),
         providesTags: ['signed_in_user'],
@@ -1749,7 +1775,7 @@ export type SetRoleAssignmentsApiArg = {
   roleUid: string;
   setRoleAssignmentsCommand: SetRoleAssignmentsCommand;
 };
-export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ Status;
+export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ AccessControlStatus;
 export type GetAccessControlStatusApiArg = void;
 export type ListTeamsRolesApiResponse = /** status 200 (empty) */ {
   [key: string]: RoleDto[];
@@ -1954,9 +1980,6 @@ export type GetAnnotationsApiArg = {
   userId?: number;
   /** Limit response to annotations created by a specific user, identified by UID. */
   userUid?: string;
-  /** Find annotations for a specified alert rule by its ID.
-    deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead. */
-  alertId?: number;
   /** Find annotations for a specified alert rule by its UID. */
   alertUid?: string;
   /** Find annotations that are scoped to a specific dashboard */
@@ -1969,7 +1992,10 @@ export type GetAnnotationsApiArg = {
   limit?: number;
   /** Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags. */
   tags?: string[];
-  /** Return alerts or user created annotations */
+  /** Return alerts or user created annotations
+    Description:
+    - `alert`
+    - `annotation` */
   type?: 'alert' | 'annotation';
   /** Match any or all tags */
   matchAny?: boolean;
@@ -2216,6 +2242,22 @@ export type UpdatePublicDashboardApiArg = {
   uid: string;
   publicDashboardDto: PublicDashboardDto;
 };
+export type PromoteSharedVariableClusterApiResponse = /** status 200 (empty) */ PromoteResultIsThePromoteApiResponse;
+export type PromoteSharedVariableClusterApiArg = {
+  sharedVariablePromoteRequest: SharedVariablePromoteRequest;
+};
+export type GetSharedVariableClustersApiResponse =
+  /** status 200 (empty) */ SharedVariableClustersIsTheOrgsLatestScanResult;
+export type GetSharedVariableClustersApiArg = void;
+export type GetSharedVariableClusterOccurrencesApiResponse =
+  /** status 200 (empty) */ SharedVariableOccurrencesListsTheDashboardsInOneCluster;
+export type GetSharedVariableClusterOccurrencesApiArg = {
+  /** The cluster's id, from `GET /dashboards/variables/shared-clusters`. */
+  id: string;
+};
+export type RescanSharedVariableClustersApiResponse =
+  /** status 202 (empty) */ SharedVariableRescanResultAcknowledgesAScanRequest;
+export type RescanSharedVariableClustersApiArg = void;
 export type GetDataSourcesApiResponse = /** status 200 (empty) */ DataSourceList;
 export type GetDataSourcesApiArg = void;
 export type AddDataSourceApiResponse = /** status 200 (empty) */ {
@@ -2328,29 +2370,33 @@ export type CallDatasourceResourceWithUidApiArg = {
   datasourceProxyRoute: string;
   uid: string;
 };
-export type GetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type GetDataSourceCacheConfigApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type GetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
-export type SetDataSourceCacheConfigApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type SetDataSourceCacheConfigApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type SetDataSourceCacheConfigApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
   cacheConfigSetter: CacheConfigSetter;
 };
-export type CleanDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type CleanDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type CleanDataSourceCacheApiArg = {
   dataSourceUid: string;
 };
-export type DisableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type DisableDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type DisableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
-export type EnableDataSourceCacheApiResponse = /** status 200 CacheConfigResponse */ CacheConfigResponse;
+export type EnableDataSourceCacheApiResponse = /** status 200 OK */ CacheConfigResponse;
 export type EnableDataSourceCacheApiArg = {
   dataSourceUid: string;
+  /** Optional datasource type used to disambiguate datasource UID lookups. */
   dataSourceType?: string;
 };
 export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
@@ -2365,16 +2411,21 @@ export type UpdateFolderPermissionsApiArg = {
   folderUid: string;
   updateDashboardAclCommand: UpdateDashboardAclCommand;
 };
-export type GetHealthApiResponse = /** status 200 healthResponse */ HealthResponse;
+export type GetHealthApiResponse = /** status 200 OK */ HealthResponse;
 export type GetHealthApiArg = void;
 export type GetLibraryElementsApiResponse =
   /** status 200 (empty) */ LibraryElementSearchResponseIsAResponseStructForLibraryElementSearchResult;
 export type GetLibraryElementsApiArg = {
   /** Part of the name or description searched for. */
   searchString?: string;
-  /** Kind of element to search for. */
+  /** Kind of element to search for.
+    Description:
+    - 1 - library panels */
   kind?: 1;
-  /** Sort order of elements. */
+  /** Sort order of elements.
+    Description:
+    - alpha-asc: ascending
+    - alpha-desc: descending */
   sortDirection?: 'alpha-asc' | 'alpha-desc';
   /** A comma separated list of types to filter the elements by */
   typeFilter?: string;
@@ -2421,7 +2472,7 @@ export type GetLibraryElementConnectionsApiResponse =
 export type GetLibraryElementConnectionsApiArg = {
   libraryElementUid: string;
 };
-export type GetStatusApiResponse = unknown;
+export type GetStatusApiResponse = /** status 200 (empty) */ boolean;
 export type GetStatusApiArg = void;
 export type RefreshLicenseStatsApiResponse = /** status 200 (empty) */ ActiveUserStats;
 export type RefreshLicenseStatsApiArg = void;
@@ -2435,7 +2486,7 @@ export type PostLicenseTokenApiResponse = /** status 200 (empty) */ Token;
 export type PostLicenseTokenApiArg = {
   deleteTokenCommand: DeleteTokenCommand;
 };
-export type PostRenewLicenseTokenApiResponse = unknown;
+export type PostRenewLicenseTokenApiResponse = /** status 200 (empty) */ boolean;
 export type PostRenewLicenseTokenApiArg = {
   body: object;
 };
@@ -2723,7 +2774,10 @@ export type SearchApiArg = {
   query?: string;
   /** List of tags to search for */
   tag?: string[];
-  /** Type to search for, dash-folder or dash-db */
+  /** Type to search for, dash-folder or dash-db
+    Description:
+    - `dash-folder` - Search for folder
+    - `dash-db` - Seatch for dashboard */
   type?: 'dash-folder' | 'dash-db';
   /** List of dashboard id’s to search for
     This is deprecated: users should use the `dashboardUIDs` query parameter instead */
@@ -2732,7 +2786,9 @@ export type SearchApiArg = {
   dashboardUiDs?: string[];
   /** List of folder id’s to search in for dashboards
     If it's `0` then it will query for the top level folders
-    This is deprecated: users should use the `folderUIDs` query parameter instead */
+    This is deprecated: users should use the `folderUIDs` query parameter instead
+    
+    Deprecated: use FolderUIDs instead */
   folderIds?: number[];
   /** List of folder UID’s to search in for dashboards
     If it's an empty string then it will query for the top level folders */
@@ -2840,7 +2896,7 @@ export type DeleteDashboardSnapshotApiResponse =
 export type DeleteDashboardSnapshotApiArg = {
   key: string;
 };
-export type GetDashboardSnapshotApiResponse = unknown;
+export type GetDashboardSnapshotApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type GetDashboardSnapshotApiArg = {
   key: string;
 };
@@ -2972,16 +3028,6 @@ export type RevokeUserAuthTokenApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RevokeUserAuthTokenApiArg = {
   revokeAuthTokenCmd: RevokeAuthTokenCmd;
-};
-export type UnstarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UnstarDashboardByUidApiArg = {
-  dashboardUid: string;
-};
-export type StarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type StarDashboardByUidApiArg = {
-  dashboardUid: string;
 };
 export type GetSignedInUserTeamListApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetSignedInUserTeamListApiArg = void;
@@ -3201,7 +3247,9 @@ export type SetRoleAssignmentsCommand = {
   teams?: number[];
   users?: number[];
 };
-export type Status = number;
+export type AccessControlStatus = {
+  enabled?: boolean;
+};
 export type RolesSearchQuery = {
   includeHidden?: boolean;
   orgId?: number;
@@ -3364,8 +3412,10 @@ export type RevokeAuthTokenCmd = {
 };
 export type Json = object;
 export type Annotation = {
+  /** Deprecated. Use alertUID instead. */
   alertId?: number;
   alertName?: string;
+  alertUID?: string;
   avatarUrl?: string;
   created?: number;
   /** Deprecated: Use DashboardUID and OrgID instead */
@@ -3743,6 +3793,88 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type DashboardPromoteResultIsTheOutcomeForOneDashboardUpdate = {
+  dashboardUID?: string;
+  error?: string;
+  /** SkipReason is the scanner's reason for a dashboard this tool cannot write. */
+  skipReason?: string;
+  status?: string;
+};
+export type ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder = string;
+export type PromoteResultIsThePromoteApiResponse = {
+  clusterId?: string;
+  folderUID?: string;
+  /** Remaining counts the cluster's dashboards in the snapshot still to strip after this
+    batch; ones this tool cannot write, or that the Variable's scope does not cover, are
+    not counted. */
+  remaining?: number;
+  results?: DashboardPromoteResultIsTheOutcomeForOneDashboardUpdate[];
+  scope?: ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder;
+  variableAction?: string;
+  variableName?: string;
+};
+export type SharedVariablePromoteRequest = {
+  /** ClusterID is the cluster to promote, from the org's latest snapshot. */
+  clusterId?: string;
+  /** DashboardUIDs limits which dashboards are updated, at most MaxPromoteBatch (200). Empty means
+    the whole cluster, which is allowed only when it fits in one batch. */
+  dashboardUIDs?: string[];
+  /** FolderUID is the folder for a folder Scope override. */
+  folderUID?: string;
+  scope?: ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder;
+};
+export type SharedVariableCluster = {
+  conflictReason?: string;
+  count?: number;
+  fingerprint?: string;
+  folderUID?: string;
+  id?: string;
+  kind?: string;
+  name?: string;
+  nameConflict?: boolean;
+  /** NoWritableDashboards means promote would change nothing: every dashboard is locked. */
+  noWritableDashboards?: boolean;
+  /** Promoted means the Variable exists and only local copies remain to strip. */
+  promoted?: boolean;
+  scope?: string;
+  spec?: any;
+};
+export type SharedVariableClustersIsTheOrgsLatestScanResult = {
+  clusters?: SharedVariableCluster[];
+  dashboards?: number;
+  error?: string;
+  progress?: number;
+  /** ScannedAt is when the clusters were computed; dashboards may have changed since. */
+  scannedAt?: string;
+  startedAt?: string;
+  /** Status is "scanning", "ready" or "failed". While scanning, clusters are the previous result. */
+  status?: string;
+  /** TotalClusters counts every qualifying cluster; Truncated is set when clusters holds
+    only the largest of them. */
+  totalClusters?: number;
+  truncated?: boolean;
+};
+export type OccurrenceIsOneDashboardThatContainsAMatchingLocalVariable = {
+  dashboardUID?: string;
+  folderUID?: string;
+  /** MarkedReadOnly is a dashboard whose own Editable setting is off. That is not a lock:
+    anyone who can edit the dashboard can still save it, so promote still writes it. But it
+    often means the dashboard is maintained as code elsewhere, whose next push would bring
+    the local copy back, so the UI calls it out. */
+  markedReadOnly?: boolean;
+  skipReason?: string;
+  storedVersion?: string;
+  title?: string;
+  writable?: boolean;
+};
+export type SharedVariableOccurrencesListsTheDashboardsInOneCluster = {
+  id?: string;
+  occurrences?: OccurrenceIsOneDashboardThatContainsAMatchingLocalVariable[];
+};
+export type SharedVariableRescanResultAcknowledgesAScanRequest = {
+  /** Status is always "scanning". */
+  status?: string;
 };
 export type DsAccess = string;
 export type DataSourceListItemDto = {
@@ -4150,6 +4282,7 @@ export type FrameIsAColumnarDataStructureWhereEachColumnIsAField = {
   RefID?: string;
 };
 export type FramesIsASliceOfFramePointers = FrameIsAColumnarDataStructureWhereEachColumnIsAField[];
+export type Status = number;
 export type DataResponseContainsTheResultsFromADataQuery = {
   /** Error is a property to be set if the corresponding DataQuery has an error. */
   Error?: string;
@@ -4175,9 +4308,9 @@ export type MetricRequest = {
   /** To End time in epoch timestamps in milliseconds or relative using Grafana time units. */
   to: string;
 };
-export type PermissionType = number;
+export type DashboardaccessPermissionType = number;
 export type DashboardAclUpdateItem = {
-  permission?: PermissionType;
+  permission?: DashboardaccessPermissionType;
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   teamId?: number;
   userId?: number;
@@ -4214,7 +4347,7 @@ export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   id?: number;
   kind?: number;
   meta?: LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto;
-  model?: object;
+  model?: any;
   name?: string;
   orgId?: number;
   schemaVersion?: number;
@@ -4243,7 +4376,7 @@ export type CreateLibraryElementCommand = {
   folderUid?: string;
   /** Kind of element to create, Use 1 for library panels or 2 for c.
     Description:
-    1 - library panels */
+    - 1 - library panels */
   kind?: 1;
   /** The JSON model for the library element. */
   model?: object;
@@ -4263,10 +4396,10 @@ export type PatchLibraryElementCommand = {
   folderUid?: string;
   /** Kind of element to create, Use 1 for library panels or 2 for c.
     Description:
-    1 - library panels */
+    - 1 - library panels */
   kind?: 1;
   /** The JSON model for the library element. */
-  model?: object;
+  model?: any;
   /** Name of the library element. */
   name?: string;
   uid?: string;
@@ -4580,7 +4713,7 @@ export type ReportTimeRange = {
 };
 export type ReportDashboard = {
   dashboard?: ReportDashboardId;
-  reportVariables?: object;
+  reportVariables?: any;
   timeRange?: ReportTimeRange;
 };
 export type Type = string;
@@ -4648,8 +4781,10 @@ export type CreateOrUpdateReport = {
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
   emails?: string;
-  /** Send the report to the emails specified in the report. Required if emails is not present. */
+  /** Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
   id?: string;
+  /** UID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
+  uid?: string;
   /** Send the report to the emails specified in the report. Required if emails is not present. */
   useEmailsFromReport?: boolean;
 };
@@ -4789,22 +4924,27 @@ export type Extension = {
   Id?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: number[];
 };
-export type AttributeTypeAndValue = {
+export type AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124 = {
   Type?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: any;
 };
 export type Name = {
+  CommonName?: string;
   Country?: string[];
   /** ExtraNames contains attributes to be copied, raw, into any marshaled
     distinguished names. Values override any attributes with the same OID.
     The ExtraNames field is not populated when parsing, see Names. */
-  ExtraNames?: AttributeTypeAndValue[];
+  ExtraNames?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
   Locality?: string[];
   /** Names contains all parsed attributes. When parsing distinguished names,
     this can be used to extract non-standard attributes that are not parsed
     by this package. When marshaling to RDNSequences, the Names field is
     ignored, see ExtraNames. */
-  Names?: AttributeTypeAndValue[];
+  Names?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
+  Organization?: string[];
+  OrganizationalUnit?: string[];
+  PostalCode?: string[];
+  Province?: string[];
   SerialNumber?: string;
   StreetAddress?: string[];
 };
@@ -4906,6 +5046,7 @@ export type ACertificateRepresentsAnX509Certificate = {
     maximum path length of zero. Otherwise, that combination is
     interpreted as MaxPathLen not being set. */
   MaxPathLenZero?: boolean;
+  NotAfter?: string;
   NotBefore?: string;
   /** RFC 5280, 4.2.2.1 (Authority Information Access) */
   OCSPServer?: string[];
@@ -4934,6 +5075,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   PublicKeyAlgorithm?: PublicKeyAlgorithm;
   Raw?: number[];
   RawIssuer?: number[];
+  RawSignatureAlgorithm?: number[];
   RawSubject?: number[];
   RawSubjectPublicKeyInfo?: number[];
   RawTBSCertificate?: number[];
@@ -4959,7 +5101,7 @@ export type ACertificateRepresentsAnX509Certificate = {
     interpreted as an actual maximum path length of zero. Otherwise, that
     combination is interpreted as InhibitAnyPolicy not being set. */
   RequireExplicitPolicyZero?: boolean;
-  SerialNumber?: string;
+  SerialNumber?: number;
   Signature?: number[];
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
@@ -4989,13 +5131,13 @@ export type JsonWebKey = {
   CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
-    ed25519.PublicKey
-    ed25519.PrivateKey
-    ecdsa.PublicKey
-    ecdsa.PrivateKey
-    rsa.PublicKey
-    rsa.PrivateKey
-    []byte (a symmetric key)
+    - ed25519.PublicKey
+    - ed25519.PrivateKey
+    - *ecdsa.PublicKey
+    - *ecdsa.PrivateKey
+    - *rsa.PublicKey
+    - *rsa.PrivateKey
+    - []byte (a symmetric key)
     
     When marshaling this JSONWebKey into JSON, the "kty" header parameter
     will be automatically set based on the type of this field. */
@@ -5016,8 +5158,7 @@ export type CreateDashboardSnapshotCommand = {
   /** APIVersion defines the versioned schema of this representation of an object.
     Servers should convert recognized schemas to the latest internal value, and
     may reject unrecognized values.
-    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-    +optional */
+    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   dashboard: Unstructured;
   /** Unique key used to delete the snapshot. It is different from the `key` so that only the creator can delete the snapshot. Required if `external` is `true`. */
@@ -5033,8 +5174,7 @@ export type CreateDashboardSnapshotCommand = {
     Servers may infer this from the endpoint the client submits requests to.
     Cannot be updated.
     In CamelCase.
-    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-    +optional */
+    More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Snapshot name */
   name?: string;
@@ -5043,6 +5183,7 @@ export type CreateTeamCommand = {
   email?: string;
   name: string;
 };
+export type TeamPermissionType = number;
 export type TeamDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -5056,7 +5197,7 @@ export type TeamDto = {
   memberCount: number;
   name: string;
   orgId: number;
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
   uid: string;
 };
 export type SearchTeamQueryResult = {
@@ -5094,7 +5235,7 @@ export type TeamMemberDto = {
   login?: string;
   name?: string;
   orgId?: number;
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
   teamId?: number;
   teamUID?: string;
   uid?: string;
@@ -5109,7 +5250,7 @@ export type SetTeamMembershipsCommand = {
   members?: string[];
 };
 export type UpdateTeamMemberCommand = {
-  permission?: PermissionType;
+  permission?: TeamPermissionType;
 };
 export type PreferencesNavbarPreference = {
   bookmarkUrls?: string[];
@@ -5119,7 +5260,10 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** UID for the home dashboard */
+  /** UID for the home dashboard. The reserved value "global-home" is not a
+    dashboard UID: it selects the instance default home (home_page, the
+    configured home dashboard file, or the built-in home page) instead of
+    falling through to lower-precedence preferences. */
   homeDashboardUID?: string;
   /** Explicit home URL (NOTE: this can only be modified in the system settings) */
   homeURL?: string;
@@ -5141,7 +5285,8 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type UpdatePrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
+  /** The numerical :id of a favorited dashboard
+    Deprecated: Use HomeDashboardUID instead */
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
@@ -5479,6 +5624,12 @@ export const {
   useCreatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
+  usePromoteSharedVariableClusterMutation,
+  useGetSharedVariableClustersQuery,
+  useLazyGetSharedVariableClustersQuery,
+  useGetSharedVariableClusterOccurrencesQuery,
+  useLazyGetSharedVariableClusterOccurrencesQuery,
+  useRescanSharedVariableClustersMutation,
   useGetDataSourcesQuery,
   useLazyGetDataSourcesQuery,
   useAddDataSourceMutation,
@@ -5679,8 +5830,6 @@ export const {
   useGetUserQuotasQuery,
   useLazyGetUserQuotasQuery,
   useRevokeUserAuthTokenMutation,
-  useUnstarDashboardByUidMutation,
-  useStarDashboardByUidMutation,
   useGetSignedInUserTeamListQuery,
   useLazyGetSignedInUserTeamListQuery,
   useUserSetUsingOrgMutation,

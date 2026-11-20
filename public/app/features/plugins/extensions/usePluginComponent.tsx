@@ -4,10 +4,11 @@ import { usePluginContext } from '@grafana/data';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
 import * as errors from './errors';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { useExposedComponentRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { getExposedComponentPluginDependencies, isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { getExposedComponentPluginDependencies, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
 
 // Returns a component exposed by a plugin.
@@ -16,6 +17,28 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
   const registryItem = useExposedComponentRegistrySlice<Props>(id);
   const pluginContext = usePluginContext();
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(id, getExposedComponentPluginDependencies);
+
+  // A fresh caller context must not create a new React component type and discard
+  // the exposed component's local state. Only its registry entry owns that identity.
+  const extension = useMemo(() => {
+    if (!registryItem) {
+      return null;
+    }
+    const componentLog = log.child({
+      title: registryItem.title,
+      description: registryItem.description ?? '',
+      pluginId: registryItem.pluginId,
+    });
+    return {
+      log: componentLog,
+      component: wrapWithPluginContext({
+        pluginId: registryItem.pluginId,
+        extensionTitle: registryItem.title,
+        Component: registryItem.component,
+        log: componentLog,
+      }),
+    };
+  }, [registryItem]);
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
@@ -28,21 +51,15 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       };
     }
 
-    if (!registryItem) {
+    if (!extension) {
       return {
         isLoading: false,
         component: null,
       };
     }
 
-    const componentLog = log.child({
-      title: registryItem.title,
-      description: registryItem.description ?? '',
-      pluginId: registryItem.pluginId,
-    });
-
     if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
-      componentLog.error(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
+      extension.log.error(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
       return {
         isLoading: false,
         component: null,
@@ -51,12 +68,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
 
     return {
       isLoading: false,
-      component: wrapWithPluginContext({
-        pluginId: registryItem.pluginId,
-        extensionTitle: registryItem.title,
-        Component: registryItem.component,
-        log: componentLog,
-      }),
+      component: extension.component,
     };
-  }, [id, pluginContext, registryItem, isLoadingAppPlugins]);
+  }, [id, pluginContext, extension, isLoadingAppPlugins]);
 }

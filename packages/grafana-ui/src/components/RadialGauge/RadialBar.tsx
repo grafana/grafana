@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -15,6 +13,7 @@ export interface RadialBarProps {
   gradient?: GradientStop[];
   roundedBars?: boolean;
   endpointMarker?: 'point' | 'glow';
+  markerAtStart?: boolean;
   shape: RadialShape;
   startAngle: number;
   startValueAngle: number;
@@ -29,6 +28,7 @@ export function RadialBar({
   gradient,
   roundedBars,
   endpointMarker,
+  markerAtStart,
   shape,
   startAngle,
   startValueAngle,
@@ -38,10 +38,7 @@ export function RadialBar({
 }: RadialBarProps) {
   const theme = useTheme2();
   const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
-  const trackColor = useMemo(
-    () => colorManipulator.onBackground(theme.colors.action.hover, theme.colors.background.primary).toHexString(),
-    [theme]
-  );
+  const trackColor = colorManipulator.emphasize(theme.components.panel.background, 0.07);
 
   return (
     <>
@@ -75,6 +72,7 @@ export function RadialBar({
         barEndcaps={shape === 'circle' && roundedBars}
         dimensions={dimensions}
         endpointMarker={roundedBars ? endpointMarker : undefined}
+        markerAtStart={markerAtStart}
         endpointMarkerGlowFilter={endpointMarkerGlowFilter}
         fieldDisplay={fieldDisplay}
         glowFilter={glowFilter}

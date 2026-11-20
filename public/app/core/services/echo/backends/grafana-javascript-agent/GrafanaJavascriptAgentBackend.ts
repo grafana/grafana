@@ -47,7 +47,7 @@ export class GrafanaJavascriptAgentBackend
     ];
 
     if (options.tracingInstrumentalizationEnabled) {
-      instrumentations.push(new TracingInstrumentation());
+      instrumentations.push(new TracingInstrumentation({ mode: 'routing', fallback: true }));
     }
 
     const ignoreUrls = [...TRACKING_URLS, ...options.ignoreUrls];
@@ -101,6 +101,7 @@ export class GrafanaJavascriptAgentBackend
         'Failed sending payload to the receiver',
       ],
       ignoreUrls,
+      trackResources: options.trackResources,
       sessionTracking: {
         persistent: true,
         // Faro rotates sessions on expiration/inactivity without navigation; re-anchor the
@@ -151,7 +152,6 @@ export class GrafanaJavascriptAgentBackend
           collectFonts: false,
           inlineImages: false,
           inlineStylesheet: false,
-          recordCanvas: false,
           recordCrossOriginIframes: false,
         })
       );

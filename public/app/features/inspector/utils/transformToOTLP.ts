@@ -2,7 +2,9 @@
 // from core and moved to an external repo, but the core trace download utility still needs to support
 // converting DataFrames to OTLP format for existing traces tagged with traceFormat: 'otlp'.
 import { type SpanStatus } from '@opentelemetry/api';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+// Type-only: importing the value pulls the exporter's whole runtime (~54 modules) into the
+// initial bundle just for the SpanKind numbers, which are inlined in getOTLPSpanKind instead.
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
 import {
   type MutableDataFrame,
@@ -19,15 +21,17 @@ export function transformToOTLP(data: MutableDataFrame): {
     batches: [],
   };
 
-  // Lookup object to see which batch contains spans for which services
-  let services: { [key: string]: number } = {};
+  // Lookup object to see which batch contains spans for which resource
+  let resources: { [key: string]: number } = {};
 
   for (let i = 0; i < data.length; i++) {
     const span = data.get(i);
 
-    // Group spans based on service
-    if (services[span.serviceName] === undefined) {
-      services[span.serviceName] = result.batches.length;
+    // Group spans based on resource: spans of one service can come from several resources,
+    // e.g. replicas of the same deployment, which differ only in their service tags.
+    const resourceKey = getResourceKey(span);
+    if (resources[resourceKey] === undefined) {
+      resources[resourceKey] = result.batches.length;
       result.batches.push({
         resource: {
           attributes: [],
@@ -41,7 +45,7 @@ export function transformToOTLP(data: MutableDataFrame): {
       });
     }
 
-    let batchIndex = services[span.serviceName];
+    let batchIndex = resources[resourceKey];
 
     // Populate resource attributes from service tags
     if (result.batches[batchIndex].resource!.attributes.length === 0) {
@@ -80,11 +84,36 @@ export function transformToOTLP(data: MutableDataFrame): {
   return result;
 }
 
-function getOTLPSpanKind(kind: string): collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind | undefined {
+function getResourceKey(span: TraceSpanRow): string {
+  const tags = (span.serviceTags ?? [])
+    .map((tag) => [tag.key, tag.value])
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return JSON.stringify([span.serviceName, tags]);
+}
+
+type OTLPSpanKind = collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind;
+
+/**
+ * OTLP `Span.SpanKind` wire values, mirrored from the exporter's enum so the import above can
+ * stay type-only.
+ *
+ * A type-only import cannot reach the enum's member names, so the compiler cannot check this
+ * mirrors the real thing. `transformToOTLP.test.ts` asserts it against the enum instead —
+ * the test may import the value because tests are not part of the app bundle.
+ */
+export const SpanKind = {
+  SPAN_KIND_UNSPECIFIED: 0,
+  SPAN_KIND_INTERNAL: 1,
+  SPAN_KIND_SERVER: 2,
+  SPAN_KIND_CLIENT: 3,
+  SPAN_KIND_PRODUCER: 4,
+  SPAN_KIND_CONSUMER: 5,
+};
+
+function getOTLPSpanKind(kind: string): OTLPSpanKind | undefined {
   if (!kind) {
     return undefined;
   }
-  const { SpanKind } = collectorTypes.opentelemetryProto.trace.v1.Span;
   switch (kind) {
     case 'server':
       return SpanKind.SPAN_KIND_SERVER;

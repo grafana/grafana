@@ -47,6 +47,11 @@ func (m *ContextualLoggerMiddleware) QueryData(ctx context.Context, req *backend
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *ContextualLoggerMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	ctx = instrumentContext(ctx, req.PluginContext)
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *ContextualLoggerMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctx = instrumentContext(ctx, req.PluginContext)
 	return m.BaseHandler.CallResource(ctx, req, sender)
@@ -75,22 +80,4 @@ func (m *ContextualLoggerMiddleware) PublishStream(ctx context.Context, req *bac
 func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	ctx = instrumentContext(ctx, req.PluginContext)
 	return m.BaseHandler.RunStream(ctx, req, sender)
-}
-
-// ValidateAdmission implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	ctx = instrumentContext(ctx, req.PluginContext)
-	return m.BaseHandler.ValidateAdmission(ctx, req)
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	ctx = instrumentContext(ctx, req.PluginContext)
-	return m.BaseHandler.MutateAdmission(ctx, req)
-}
-
-// ConvertObject implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	ctx = instrumentContext(ctx, req.PluginContext)
-	return m.BaseHandler.ConvertObjects(ctx, req)
 }

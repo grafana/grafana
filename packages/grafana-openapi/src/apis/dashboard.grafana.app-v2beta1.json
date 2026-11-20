@@ -29,6 +29,590 @@
         }
       }
     },
+    "/dashboardpreferences": {
+      "get": {
+        "tags": ["DashboardPreferences"],
+        "description": "list objects of kind DashboardPreferences",
+        "operationId": "listDashboardPreferences",
+        "parameters": [
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "labelSelector",
+            "in": "query",
+            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "resourceVersion",
+            "in": "query",
+            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "timeoutSeconds",
+            "in": "query",
+            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferencesList"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferencesList"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferencesList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "post": {
+        "tags": ["DashboardPreferences"],
+        "description": "create DashboardPreferences",
+        "operationId": "createDashboardPreferences",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardPreferences"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardPreferences"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "parameters": [
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/dashboardpreferences/merged": {
+      "get": {
+        "tags": ["DashboardPreferences"],
+        "description": "Get the preferences a new dashboard in a folder starts from: each field from the highest tier that sets or resets it, and the tier it came from.",
+        "operationId": "getMergedDashboardPreferences",
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "description": "UID of the folder the dashboard is created in. Omit it, or use general, for the top level.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeUser",
+            "in": "query",
+            "description": "Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The merged preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferencesMerged"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboardpreferences/{name}": {
+      "get": {
+        "tags": ["DashboardPreferences"],
+        "description": "read the specified DashboardPreferences",
+        "operationId": "getDashboardPreferences",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "put": {
+        "tags": ["DashboardPreferences"],
+        "description": "replace the specified DashboardPreferences",
+        "operationId": "replaceDashboardPreferences",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardPreferences"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardPreferences"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "delete": {
+        "tags": ["DashboardPreferences"],
+        "description": "delete DashboardPreferences",
+        "operationId": "deleteDashboardPreferences",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "gracePeriodSeconds",
+            "in": "query",
+            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+            "schema": {
+              "type": "integer",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
+            "in": "query",
+            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "orphanDependents",
+            "in": "query",
+            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "propagationPolicy",
+            "in": "query",
+            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "patch": {
+        "tags": ["DashboardPreferences"],
+        "description": "partially update the specified DashboardPreferences",
+        "operationId": "updateDashboardPreferences",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldManager",
+            "in": "query",
+            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "fieldValidation",
+            "in": "query",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
+            "schema": {
+              "type": "boolean",
+              "uniqueItems": true
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/apply-patch+yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            },
+            "application/strategic-merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPreferences"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "dashboard.grafana.app",
+          "version": "v2beta1",
+          "kind": "DashboardPreferences"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DashboardPreferences",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/dashboards": {
       "get": {
         "tags": ["Dashboard"],
@@ -241,6 +825,117 @@
           }
         }
       ]
+    },
+    "/dashboards/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Dashboard resources in a namespace.",
+        "operationId": "listDashboardSearchV2beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboards/search/hybrid": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Hybrid lexical and semantic search for Dashboard resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
+        "operationId": "listDashboardHybridSearchV2beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A HybridSearchQuery describing what to match and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HybridSearchQuery"
+              },
+              "example": {
+                "kind": "HybridSearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "query": "production",
+                "limit": 10,
+                "skipRerank": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A HybridSearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HybridSearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboards/trash": {
+      "post": {
+        "tags": ["Search"],
+        "description": "List deleted Dashboard resources in a namespace.",
+        "operationId": "listDashboardTrashV2beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A TrashQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashQuery"
+              },
+              "example": {
+                "kind": "TrashQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A TrashResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashResults"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/dashboards/{name}": {
       "get": {
@@ -982,6 +1677,43 @@
         }
       ]
     },
+    "/notebooks/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Notebook resources in a namespace.",
+        "operationId": "listNotebookSearchV2beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notebooks/{name}": {
       "get": {
         "tags": ["Notebook"],
@@ -1685,6 +2417,43 @@
         }
       ]
     },
+    "/variables/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search Variable resources in a namespace.",
+        "operationId": "listVariableSearchV2beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/variables/{name}": {
       "get": {
         "tags": ["Variable"],
@@ -2171,12 +2940,7 @@
           "variables": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardActionVariable"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardActionVariable"
             }
           }
         }
@@ -2232,15 +2996,13 @@
           "valueLabels": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -2264,8 +3026,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -2290,23 +3051,13 @@
           "baseFilters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "defaultKeys": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardMetricFindValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardMetricFindValue"
             }
           },
           "description": {
@@ -2319,12 +3070,7 @@
           "filters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "hide": {
@@ -2378,8 +3124,7 @@
             "type": "array",
             "items": {
               "type": "number",
-              "format": "double",
-              "default": 0
+              "format": "double"
             }
           }
         }
@@ -2435,12 +3180,7 @@
             "description": "Mappings define how to convert data frame fields to annotation event fields.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
             }
           },
           "name": {
@@ -2535,12 +3275,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
             }
           },
           "maxColumnCount": {
@@ -2872,12 +3607,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -2947,8 +3677,7 @@
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "targetBlank": {
@@ -3017,8 +3746,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -3058,6 +3786,10 @@
           "options": {
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
+          },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
           },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
@@ -3157,12 +3889,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3225,8 +3952,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3240,8 +3966,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3283,12 +4008,7 @@
             "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAction"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAction"
             }
           },
           "color": {
@@ -3379,6 +4099,13 @@
             "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
             "type": "string"
           },
+          "varMappings": {
+            "description": "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "writeable": {
             "description": "True if data source can write a value to the path. Auth/authz are supported separately",
             "type": "boolean"
@@ -3403,12 +4130,7 @@
             "description": "Overrides are the options applied to specific fields overriding the defaults.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardV2beta1FieldConfigSourceOverrides"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardV2beta1FieldConfigSourceOverrides"
             }
           }
         }
@@ -3528,12 +4250,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
             }
           }
         }
@@ -3557,8 +4274,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -3608,12 +4324,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3641,8 +4352,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3656,8 +4366,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -3740,12 +4449,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -3836,12 +4540,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              ]
+              "$ref": "#/components/schemas/Dashboard"
             }
           },
           "kind": {
@@ -3924,6 +4623,7 @@
         }
       },
       "DashboardPanelKindOrLibraryPanelKind": {
+        "description": "Supported dashboard elements |* more element types in the future",
         "type": "object",
         "properties": {
           "LibraryPanelKind": {
@@ -3976,7 +4676,7 @@
       },
       "DashboardPanelSpec": {
         "type": "object",
-        "required": ["id", "title", "description", "links", "data", "vizConfig"],
+        "required": ["id", "title", "links", "data", "vizConfig"],
         "properties": {
           "data": {
             "default": {},
@@ -3987,8 +4687,8 @@
             ]
           },
           "description": {
-            "type": "string",
-            "default": ""
+            "description": "Shown in a info icon tooltip next to panel title",
+            "type": "string"
           },
           "id": {
             "type": "number",
@@ -3998,13 +4698,12 @@
           "links": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDataLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDataLink"
             }
+          },
+          "subtitle": {
+            "description": "Shown in a sub header below the title.",
+            "type": "string"
           },
           "title": {
             "type": "string",
@@ -4018,6 +4717,405 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/DashboardVizConfigKind"
+              }
+            ]
+          }
+        }
+      },
+      "DashboardPreferences": {
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "description": "Spec is the spec of the DashboardPreferences",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardPreferencesSpec"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardPreferences",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "DashboardPreferencesDashboardDefaults": {
+        "type": "object",
+        "properties": {
+          "autoGrid": {
+            "description": "Applies only when the merged layout is AutoGridLayout.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardPreferencesV2beta1DashboardDefaultsAutoGrid"
+              }
+            ]
+          },
+          "autoRefresh": {
+            "description": "An empty string turns auto refresh off.",
+            "type": "string"
+          },
+          "autoRefreshIntervals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cursorSync": {
+            "description": "Same values as the dashboard's cursorSync.",
+            "type": "string"
+          },
+          "fiscalYearStartMonth": {
+            "description": "0 is January.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "hideTimepicker": {
+            "type": "boolean"
+          },
+          "layout": {
+            "type": "string"
+          },
+          "nowDelay": {
+            "type": "string"
+          },
+          "preload": {
+            "type": "boolean"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1DashboardDefaultsTimeRange"
+          }
+        }
+      },
+      "DashboardPreferencesList": {
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPreferences"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardPreferencesList",
+            "version": "v2beta1"
+          }
+        ]
+      },
+      "DashboardPreferencesMerged": {
+        "description": "DashboardPreferencesMerged is what a new dashboard in a folder starts from. It is computed on request and never stored.",
+        "type": "object",
+        "required": ["spec", "sources"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "sources": {
+            "description": "Where each field came from, keyed by its path as in spec.reset, such as \"dashboard.autoGrid.columnWidth\". A field with no entry uses Grafana's built-in default.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DashboardPreferencesMergedSource"
+            }
+          },
+          "spec": {
+            "description": "Only the fields some tier set. A field that is absent uses Grafana's built-in default.",
+            "default": {},
+            "$ref": "#/components/schemas/DashboardPreferencesMergedSpec"
+          }
+        }
+      },
+      "DashboardPreferencesMergedSource": {
+        "type": "object",
+        "required": ["tier"],
+        "properties": {
+          "name": {
+            "description": "The tier object's name. Left out for a parent folder the caller can't read.",
+            "type": "string"
+          },
+          "reset": {
+            "description": "The tier reset the field to Grafana's built-in default, so it is absent from spec.",
+            "type": "boolean"
+          },
+          "tier": {
+            "description": "Possible enum values:\n - `\"folder\"`\n - `\"org\"`\n - `\"user\"`",
+            "type": "string",
+            "default": "",
+            "enum": ["folder", "org", "user"]
+          }
+        }
+      },
+      "DashboardPreferencesMergedSpec": {
+        "description": "The stored spec without reset: a merged spec is resolved, so nothing in it is reset.",
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/DashboardPreferencesDashboardDefaults"
+          },
+          "panels": {
+            "$ref": "#/components/schemas/DashboardPreferencesPanelDefaults"
+          }
+        }
+      },
+      "DashboardPreferencesPanelDefaults": {
+        "description": "Names and values follow Grafana's shared visualization options. Each value is written only into new built-in panels whose plugin has that option.",
+        "type": "object",
+        "properties": {
+          "axis": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsAxis"
+          },
+          "field": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsField"
+          },
+          "frame": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsFrame"
+          },
+          "graph": {
+            "description": "Time series, trend and candlestick only.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsGraph"
+              }
+            ]
+          },
+          "legend": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsLegend"
+          },
+          "tooltip": {
+            "$ref": "#/components/schemas/DashboardPreferencesV2beta1PanelDefaultsTooltip"
+          }
+        }
+      },
+      "DashboardPreferencesSpec": {
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/DashboardPreferencesDashboardDefaults"
+          },
+          "panels": {
+            "$ref": "#/components/schemas/DashboardPreferencesPanelDefaults"
+          },
+          "reset": {
+            "description": "Fields that use Grafana's built-in default at this tier instead of inheriting from the next tier. A built-in default can't always be written as a value: decimals defaults to auto, and panel defaults differ by plugin. A field must not be both set and reset in one tier, or listed twice.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1DashboardDefaultsAutoGrid": {
+        "type": "object",
+        "properties": {
+          "columnWidth": {
+            "description": "Pixels; used when columnWidthMode is custom.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "columnWidthMode": {
+            "type": "string"
+          },
+          "fillScreen": {
+            "type": "boolean"
+          },
+          "maxColumnCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rowHeight": {
+            "description": "Pixels; used when rowHeightMode is custom.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "rowHeightMode": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1DashboardDefaultsTimeRange": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "default": ""
+          },
+          "to": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsAxis": {
+        "type": "object",
+        "properties": {
+          "axisBorderShow": {
+            "type": "boolean"
+          },
+          "axisCenteredZero": {
+            "type": "boolean"
+          },
+          "axisGridShow": {
+            "type": "boolean"
+          },
+          "axisPlacement": {
+            "type": "string"
+          },
+          "scale": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsField": {
+        "type": "object",
+        "properties": {
+          "decimals": {
+            "description": "Number of decimal places, 0 to 15.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsFrame": {
+        "type": "object",
+        "properties": {
+          "transparent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsGraph": {
+        "type": "object",
+        "properties": {
+          "fillOpacity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "gradientMode": {
+            "type": "string"
+          },
+          "lineInterpolation": {
+            "type": "string"
+          },
+          "lineWidth": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pointSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "showPoints": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsLegend": {
+        "type": "object",
+        "properties": {
+          "displayMode": {
+            "type": "string"
+          },
+          "placement": {
+            "type": "string"
+          },
+          "showLegend": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DashboardPreferencesV2beta1PanelDefaultsTooltip": {
+        "type": "object",
+        "properties": {
+          "hideZeros": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPrompt": {
+        "description": "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPromptSource"
+            }
+          },
+          "text": {
+            "description": "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+            "type": "string"
+          }
+        }
+      },
+      "DashboardPromptSource": {
+        "description": "A panel that a prompt is answered from.",
+        "type": "object",
+        "required": ["element"],
+        "properties": {
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardElementReference"
               }
             ]
           }
@@ -4048,12 +5146,7 @@
           "queries": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardPanelQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardPanelQueryKind"
             }
           },
           "queryOptions": {
@@ -4067,12 +5160,7 @@
           "transformations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTransformationKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTransformationKind"
             }
           }
         }
@@ -4104,6 +5192,9 @@
             "type": "string"
           },
           "timeShift": {
+            "type": "string"
+          },
+          "timeTo": {
             "type": "string"
           }
         }
@@ -4220,12 +5311,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "origin": {
@@ -4264,12 +5350,7 @@
           "staticOptions": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "staticOptionsOrder": {
@@ -4392,6 +5473,12 @@
         "type": "object",
         "required": ["layout"],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
+            }
+          },
           "collapse": {
             "type": "boolean"
           },
@@ -4406,6 +5493,13 @@
           },
           "layout": {
             "$ref": "#/components/schemas/DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/DashboardRowRepeatOptions"
@@ -4428,12 +5522,7 @@
           "rows": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
             }
           }
         }
@@ -4456,12 +5545,7 @@
           "annotations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
             }
           },
           "cursorSync": {
@@ -4490,12 +5574,7 @@
             "description": "Links with references to other dashboards or external websites.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDashboardLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDashboardLink"
             }
           },
           "liveNow": {
@@ -4507,6 +5586,13 @@
             "type": "boolean",
             "default": false
           },
+          "prompts": {
+            "description": "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
+          },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
             "type": "integer",
@@ -4516,8 +5602,7 @@
             "description": "Tags associated with dashboard.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "timeSettings": {
@@ -4580,8 +5665,7 @@
           "ArrayOfString": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "String": {
@@ -4697,12 +5781,7 @@
           "tabs": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
             }
           }
         }
@@ -4729,11 +5808,24 @@
         "type": "object",
         "required": ["layout"],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
+            }
+          },
           "conditionalRendering": {
             "$ref": "#/components/schemas/DashboardConditionalRenderingGroupKind"
           },
           "layout": {
             "$ref": "#/components/schemas/DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardPrompt"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/DashboardTabRepeatOptions"
@@ -4820,6 +5912,10 @@
             "description": "Value null means -Infinity",
             "type": "number",
             "format": "double"
+          },
+          "valueExpr": {
+            "description": "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+            "type": "string"
           }
         }
       },
@@ -4834,12 +5930,7 @@
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardThreshold"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardThreshold"
             }
           }
         }
@@ -4876,8 +5967,7 @@
             "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fiscalYearStartMonth": {
@@ -4904,12 +5994,7 @@
             "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTimeRangeOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTimeRangeOption"
             }
           },
           "timezone": {
@@ -4989,12 +6074,7 @@
           "properties": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDynamicConfigValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDynamicConfigValue"
             }
           }
         }
@@ -5081,12 +6161,7 @@
             "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardValueMappingResult"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardValueMappingResult"
             }
           },
           "type": {
@@ -5144,8 +6219,7 @@
             "description": "Additional properties for multi-props variables",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "selected": {
@@ -5341,12 +6415,7 @@
           "variables": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookActionVariable"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookActionVariable"
             }
           }
         }
@@ -5370,7 +6439,7 @@
         }
       },
       "NotebookCellKind": {
-        "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+        "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse V2PanelKind.",
         "type": "object",
         "required": ["kind", "spec"],
         "properties": {
@@ -5388,7 +6457,8 @@
           }
         }
       },
-      "NotebookCellKindOrPanelKindOrLibraryPanelKind": {
+      "NotebookCellKindOrV2PanelKindOrLibraryPanelKind": {
+        "description": "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
         "type": "object",
         "properties": {
           "CellKind": {
@@ -5397,8 +6467,8 @@
           "LibraryPanelKind": {
             "$ref": "#/components/schemas/NotebookLibraryPanelKind"
           },
-          "PanelKind": {
-            "$ref": "#/components/schemas/NotebookPanelKind"
+          "V2PanelKind": {
+            "$ref": "#/components/schemas/NotebookV2PanelKind"
           }
         }
       },
@@ -5444,8 +6514,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "int64",
-              "default": 0
+              "format": "int64"
             }
           },
           "language": {
@@ -5494,8 +6563,7 @@
           "labels": {
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "spec": {
@@ -5507,38 +6575,6 @@
           "version": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "NotebookDataTransformerConfig": {
-        "description": "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
-        "type": "object",
-        "required": ["id", "options"],
-        "properties": {
-          "disabled": {
-            "description": "Disabled transformations are skipped",
-            "type": "boolean"
-          },
-          "filter": {
-            "description": "Optional frame matcher. When missing it will be applied to all results",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookMatcherConfig"
-              }
-            ]
-          },
-          "id": {
-            "description": "Unique identifier of transformer",
-            "type": "string",
-            "default": ""
-          },
-          "options": {
-            "description": "Options to be passed to the transformer Valid options depend on the transformer id",
-            "type": "object"
-          },
-          "topic": {
-            "description": "Where to pull DataFrames from as input to transformation",
-            "type": "string"
           }
         }
       },
@@ -5581,8 +6617,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5596,8 +6631,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5639,12 +6673,7 @@
             "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookAction"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookAction"
             }
           },
           "color": {
@@ -5735,6 +6764,13 @@
             "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
             "type": "string"
           },
+          "varMappings": {
+            "description": "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "writeable": {
             "description": "True if data source can write a value to the path. Auth/authz are supported separately",
             "type": "boolean"
@@ -5759,12 +6795,7 @@
             "description": "Overrides are the options applied to specific fields overriding the defaults.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookV2beta1FieldConfigSourceOverrides"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookV2beta1FieldConfigSourceOverrides"
             }
           }
         }
@@ -5785,8 +6816,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5800,8 +6830,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -5882,12 +6911,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Notebook"
-                }
-              ]
+              "$ref": "#/components/schemas/Notebook"
             }
           },
           "kind": {
@@ -5930,6 +6954,7 @@
         }
       },
       "NotebookMarkdownCellContentKindOrCodeCellContentKind": {
+        "description": "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another <Name>CellContentKind member.",
         "type": "object",
         "properties": {
           "CodeCellContentKind": {
@@ -5989,7 +7014,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6003,6 +7028,10 @@
                 "$ref": "#/components/schemas/NotebookElementReference"
               }
             ]
+          },
+          "id": {
+            "description": "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
+            "type": "string"
           },
           "source": {
             "type": "string",
@@ -6035,31 +7064,8 @@
           "cells": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookNotebookLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookNotebookLayoutItemKind"
             }
-          }
-        }
-      },
-      "NotebookPanelKind": {
-        "type": "object",
-        "required": ["kind", "spec"],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookPanelSpec"
-              }
-            ]
           }
         }
       },
@@ -6103,109 +7109,6 @@
           }
         }
       },
-      "NotebookPanelSpec": {
-        "type": "object",
-        "required": ["id", "title", "description", "links", "data", "vizConfig"],
-        "properties": {
-          "data": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookQueryGroupKind"
-              }
-            ]
-          },
-          "description": {
-            "type": "string",
-            "default": ""
-          },
-          "id": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "links": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookDataLink"
-                }
-              ]
-            }
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "transparent": {
-            "type": "boolean"
-          },
-          "vizConfig": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookVizConfigKind"
-              }
-            ]
-          }
-        }
-      },
-      "NotebookQueryGroupKind": {
-        "type": "object",
-        "required": ["kind", "spec"],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookQueryGroupSpec"
-              }
-            ]
-          }
-        }
-      },
-      "NotebookQueryGroupSpec": {
-        "type": "object",
-        "required": ["queries", "transformations", "queryOptions"],
-        "properties": {
-          "queries": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookPanelQueryKind"
-                }
-              ]
-            }
-          },
-          "queryOptions": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotebookQueryOptionsSpec"
-              }
-            ]
-          },
-          "transformations": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookTransformationKind"
-                }
-              ]
-            }
-          }
-        }
-      },
       "NotebookQueryOptionsSpec": {
         "type": "object",
         "properties": {
@@ -6233,6 +7136,9 @@
             "type": "string"
           },
           "timeShift": {
+            "type": "string"
+          },
+          "timeTo": {
             "type": "string"
           }
         }
@@ -6285,9 +7191,10 @@
             "type": "string"
           },
           "elements": {
+            "description": "The key is the element ID. It identifies the cell: comments and other references anchor to it",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/NotebookCellKindOrPanelKindOrLibraryPanelKind"
+              "$ref": "#/components/schemas/NotebookCellKindOrV2PanelKindOrLibraryPanelKind"
             }
           },
           "layout": {
@@ -6301,8 +7208,7 @@
           "tags": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "timeSettings": {
@@ -6350,6 +7256,10 @@
             "description": "Value null means -Infinity",
             "type": "number",
             "format": "double"
+          },
+          "valueExpr": {
+            "description": "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+            "type": "string"
           }
         }
       },
@@ -6364,12 +7274,7 @@
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookThreshold"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookThreshold"
             }
           }
         }
@@ -6406,8 +7311,7 @@
             "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fiscalYearStartMonth": {
@@ -6434,12 +7338,7 @@
             "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookTimeRangeOption"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookTimeRangeOption"
             }
           },
           "timezone": {
@@ -6457,12 +7356,12 @@
           }
         }
       },
-      "NotebookTransformationKind": {
+      "NotebookV2PanelKind": {
+        "description": "The notebook's own panel chain. It is a copy of the dashboard one down to the transformation, which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has to be forked rather than shared because PanelKind reaches TransformationKind through QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.",
         "type": "object",
         "required": ["kind", "spec"],
         "properties": {
           "kind": {
-            "description": "The kind of a TransformationKind is the transformation ID",
             "type": "string",
             "default": ""
           },
@@ -6470,9 +7369,156 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/NotebookDataTransformerConfig"
+                "$ref": "#/components/schemas/NotebookV2PanelSpec"
               }
             ]
+          }
+        }
+      },
+      "NotebookV2PanelSpec": {
+        "type": "object",
+        "required": ["id", "title", "links", "data", "vizConfig"],
+        "properties": {
+          "data": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2QueryGroupKind"
+              }
+            ]
+          },
+          "description": {
+            "description": "Shown in a info icon tooltip next to panel title",
+            "type": "string"
+          },
+          "id": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotebookDataLink"
+            }
+          },
+          "subtitle": {
+            "description": "Shown in a sub header below the title.",
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "transparent": {
+            "type": "boolean"
+          },
+          "vizConfig": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookVizConfigKind"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookV2QueryGroupKind": {
+        "type": "object",
+        "required": ["kind", "spec"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2QueryGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookV2QueryGroupSpec": {
+        "type": "object",
+        "required": ["queries", "transformations", "queryOptions"],
+        "properties": {
+          "queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotebookPanelQueryKind"
+            }
+          },
+          "queryOptions": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookQueryOptionsSpec"
+              }
+            ]
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotebookV2TransformationKind"
+            }
+          }
+        }
+      },
+      "NotebookV2TransformationKind": {
+        "description": "Dashboard v2 shape: the transformation ID moved from `kind` to `group`.",
+        "type": "object",
+        "required": ["kind", "group", "spec"],
+        "properties": {
+          "group": {
+            "description": "The group is the transformation ID",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookV2TransformationSpec"
+              }
+            ]
+          }
+        }
+      },
+      "NotebookV2TransformationSpec": {
+        "description": "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
+        "type": "object",
+        "required": ["options"],
+        "properties": {
+          "disabled": {
+            "description": "Disabled transformations are skipped",
+            "type": "boolean"
+          },
+          "filter": {
+            "description": "Optional frame matcher. When missing it will be applied to all results",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotebookMatcherConfig"
+              }
+            ]
+          },
+          "options": {
+            "description": "Options to be passed to the transformer Valid options depend on the transformer id",
+            "type": "object"
+          },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
+          },
+          "topic": {
+            "description": "Where to pull DataFrames from as input to transformation",
+            "type": "string"
           }
         }
       },
@@ -6511,12 +7557,7 @@
           "properties": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookDynamicConfigValue"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookDynamicConfigValue"
             }
           }
         }
@@ -6595,12 +7636,7 @@
             "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/NotebookValueMappingResult"
-                }
-              ]
+              "$ref": "#/components/schemas/NotebookValueMappingResult"
             }
           },
           "type": {
@@ -6745,12 +7781,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Variable"
-                }
-              ]
+              "$ref": "#/components/schemas/Variable"
             }
           },
           "kind": {
@@ -6803,6 +7834,585 @@
           },
           "TextVariableKind": {
             "$ref": "#/components/schemas/DashboardTextVariableKind"
+          }
+        }
+      },
+      "Unstructured": {
+        "type": "object",
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
+      },
+      "ExistsPredicate": {
+        "description": "ExistsPredicate is a future field-existence predicate. Modelled for schema stability; always rejected in v1.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "FacetTerm": {
+        "description": "FacetTerm is a single facet term and its count.",
+        "type": "object",
+        "required": ["value", "count"],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "FilterPredicate": {
+        "description": "FilterPredicate is an exact / set-based predicate against a single field. Values are strings whatever the field's declared type, so a boolean field takes \"true\" or \"false\" and a numeric field takes the number written out.\n\nNumbers are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a filter can both match a neighbour and miss the value asked for.",
+        "type": "object",
+        "required": ["field", "operator", "values"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "operator": {
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "HybridSearchChunk": {
+        "description": "HybridSearchChunk is matching text from an embedded resource or subresource.",
+        "type": "object",
+        "required": ["subresource", "content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "subresource": {
+            "description": "Subresource identifies a chunk, for example panel/5. Empty means the whole resource, or a synthesized chunk for a lexical-only hit.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchFilter": {
+        "description": "HybridSearchFilter matches any of Values against Field (IN semantics). Unlike lexical search filters, no other operators are supported.",
+        "type": "object",
+        "required": ["field", "values"],
+        "properties": {
+          "field": {
+            "description": "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "HybridSearchManagedBy": {
+        "description": "HybridSearchManagedBy identifies the manager of a returned resource.",
+        "type": "object",
+        "required": ["kind", "id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchQuery": {
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "filters": {
+            "description": "Filters are ANDed together. Each field may appear once, with at most 1000 values across all filters. Embedding fields supply text only and do not make additional fields available for filtering.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchFilter"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "minRelevance": {
+            "description": "MinRelevance is lowest, low, medium, high or highest. Empty keeps every result. Filtering is best-effort: no results are dropped when reranking is unavailable or fails. It cannot be combined with SkipRerank.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes.",
+            "type": "string",
+            "default": ""
+          },
+          "resources": {
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "semanticQuery": {
+            "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
+            "type": "string"
+          },
+          "skipRerank": {
+            "description": "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
+            "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResource": {
+        "description": "HybridSearchResource identifies a resource type for global hybrid search.",
+        "type": "object",
+        "required": ["group", "resource"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchResultItem": {
+        "description": "HybridSearchResultItem is one matching resource, with its matching chunks.",
+        "type": "object",
+        "required": ["resource", "score", "title", "folder", "chunks"],
+        "properties": {
+          "chunks": {
+            "description": "Chunks contains matching text, best first. A lexical-only hit has a synthesized chunk containing the resource's title.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchChunk"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "folder": {
+            "description": "Folder is the containing folder's UID. Empty and \"general\" denote the root folder.",
+            "type": "string",
+            "default": ""
+          },
+          "folderTitle": {
+            "description": "FolderTitle is best-effort display data and can be absent.",
+            "type": "string"
+          },
+          "managedBy": {
+            "description": "ManagedBy is absent for unmanaged resources or when lookup fails.",
+            "$ref": "#/components/schemas/HybridSearchManagedBy"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances.",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchResults": {
+        "description": "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResultItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        }
+      },
+      "RangePredicate": {
+        "description": "RangePredicate compares a numeric field against one or two bounds. At least one bound is required, gt cannot be combined with gte, and lt cannot be combined with lte. Boolean and string fields are rejected: only numbers have the order a range asks about. On an integer field a bound must be whole.\n\nBounds are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a bound can both admit a neighbour and exclude the value asked for.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "gt": {
+            "type": "number",
+            "format": "double"
+          },
+          "gte": {
+            "type": "number",
+            "format": "double"
+          },
+          "lt": {
+            "type": "number",
+            "format": "double"
+          },
+          "lte": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "ResourceRef": {
+        "description": "ResourceRef is the full identity of a returned item. Namespace is implicit from the URL and omitted.",
+        "type": "object",
+        "required": ["group", "resource", "kind", "name"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "ResultItem": {
+        "description": "ResultItem is one search or trash hit. The item shape is identical on both endpoints; only which fields the Fields map can carry differs.",
+        "type": "object",
+        "required": ["resource"],
+        "properties": {
+          "fields": {
+            "description": "Fields holds the JSON values for the requested (or default) fields. Array-typed fields are returned as JSON arrays. Absent fields are omitted.",
+            "$ref": "#/components/schemas/Unstructured"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is present only when a text query was evaluated. A pointer so a real score of 0 is still distinguishable from \"no text query\" (absent).",
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ResultsMetadata": {
+        "description": "ResultsMetadata carries the pagination token and the total hit count.",
+        "type": "object",
+        "required": ["totalHits", "totalHitsRelation"],
+        "properties": {
+          "continue": {
+            "type": "string"
+          },
+          "totalHits": {
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "totalHitsRelation": {
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "SearchQuery": {
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "description": "Continue is an opaque pagination token from a previous page.",
+            "type": "string"
+          },
+          "facetLimit": {
+            "description": "FacetLimit caps the number of terms returned per facet. It applies to every entry in Facets. Zero uses the server default; values above the server cap are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "labelSelector": {
+            "description": "LabelSelector filters on metadata.labels, ANDed with Where.",
+            "$ref": "#/components/schemas/LabelSelector"
+          },
+          "limit": {
+            "description": "Limit is the page size. Zero uses the default; values above the maximum are clamped.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
+      "SearchResults": {
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "description": "Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FacetTerm"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/ResultsMetadata"
+          }
+        }
+      },
+      "SortField": {
+        "description": "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string and numeric fields that declare the sort capability.",
+        "type": "object",
+        "required": ["field"],
+        "properties": {
+          "direction": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TextPredicate": {
+        "description": "TextPredicate is a free-text predicate against one or more text-capable fields. When Fields is empty it defaults to the kind's searchTextFields (currently [\"title\"]).",
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "boost": {
+            "description": "Boost is a future per-leaf score multiplier. Setting it is rejected in v1.",
+            "type": "number",
+            "format": "double"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "TrashQuery": {
+        "description": "TrashQuery is the request body for POST .../{resource}/trash. It is a deliberately smaller subset of SearchQuery: trash documents index only the standard fields, so there is no labelSelector and no faceting. Field references are restricted to the fixed trash field set.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
+      "TrashResults": {
+        "description": "TrashResults is the response body for POST .../{resource}/trash. It has the same item shape as SearchResults but never carries facets.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/ResultsMetadata"
+          }
+        }
+      },
+      "WhereNode": {
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "type": "object",
+        "properties": {
+          "and": {
+            "description": "Combinators.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WhereNode"
+            }
+          },
+          "exists": {
+            "$ref": "#/components/schemas/ExistsPredicate"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/FilterPredicate"
+          },
+          "not": {
+            "$ref": "#/components/schemas/WhereNode"
+          },
+          "or": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WhereNode"
+            }
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/RegexPredicate"
+          },
+          "text": {
+            "description": "Leaves.",
+            "$ref": "#/components/schemas/TextPredicate"
           }
         }
       },
@@ -6955,6 +8565,53 @@
       "FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
+      },
+      "LabelSelector": {
+        "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+        "type": "object",
+        "properties": {
+          "matchExpressions": {
+            "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelSelectorRequirement"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "matchLabels": {
+            "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "x-kubernetes-map-type": "atomic"
+      },
+      "LabelSelectorRequirement": {
+        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "type": "object",
+        "required": ["key", "operator"],
+        "properties": {
+          "key": {
+            "description": "key is the label key that the selector applies to.",
+            "type": "string",
+            "default": ""
+          },
+          "operator": {
+            "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
       },
       "ListMeta": {
         "description": "ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}.",

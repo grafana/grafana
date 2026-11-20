@@ -1,9 +1,12 @@
 package teamapi
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -14,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type TeamAPI struct {
@@ -30,7 +35,10 @@ type TeamAPI struct {
 	ds                   dashboards.DashboardService
 	logger               log.Logger
 	features             featuremgmt.FeatureToggles
+	iamFeatures          iamapi.Features
+	openFeatureClient    *openfeature.Client
 	teamClientFactory    teamClientFactory
+	folderSearcher       resourcepb.ResourceIndexClient
 }
 
 func ProvideTeamAPI(
@@ -46,7 +54,9 @@ func ProvideTeamAPI(
 	preferenceK8sHandler *prefapi.K8sHandler,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
+	resourceClient resource.ResourceClient,
 	clientConfigProvider apiserver.DirectRestConfigProvider,
+	iamFeatures iamapi.Features,
 ) *TeamAPI {
 	tapi := &TeamAPI{
 		teamService:            teamService,
@@ -60,11 +70,18 @@ func ProvideTeamAPI(
 		ds:                     ds,
 		logger:                 log.New("team-api"),
 		features:               features,
+		iamFeatures:            iamFeatures,
+		openFeatureClient:      openfeature.NewDefaultClient(),
 		teamClientFactory:      &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
+		folderSearcher:         resourceClient,
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)
 	return tapi
+}
+
+func (tapi *TeamAPI) usersAPIEnabled() bool {
+	return tapi.iamFeatures.UsersAPI
 }
 
 func (tapi *TeamAPI) registerRoutes(router routing.RouteRegister, ac accesscontrol.AccessControl) {

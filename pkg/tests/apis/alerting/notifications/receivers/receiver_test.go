@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/alerting/notify/notifytest"
-	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/grafana-app-sdk/resource"
 
@@ -27,18 +26,14 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -77,11 +72,29 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
 		receiver := newResource.Copy().(*v1beta1.Receiver)
-		receiver.Name = "new-receiver"
+		receiver.Name = "New-Receiver" // contains an uppercase letter, not a valid DNS subdomain
 		_, err := client.Create(ctx, receiver, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should honor a client-supplied object name as the UID", func(t *testing.T) {
+		receiver := newResource.Copy().(*v1beta1.Receiver)
+		receiver.Name = "my-custom-receiver-uid"
+		receiver.Spec.Title = "Receiver-With-Custom-UID"
+		actual, err := client.Create(ctx, receiver, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "my-custom-receiver-uid", actual.Name)
+
+		t.Run("create should fail if the UID is already taken", func(t *testing.T) {
+			other := receiver.Copy().(*v1beta1.Receiver)
+			other.Spec.Title = "A-Different-Title"
+			_, err := client.Create(ctx, other, resource.CreateOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
+
+		require.NoError(t, client.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 	})
 
 	var resourceID resource.Identifier
@@ -100,7 +113,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+	t.Run("update should preserve UID when name in the specification changes", func(t *testing.T) {
 		existing, err := client.Get(ctx, resourceID)
 		require.NoError(t, err)
 
@@ -110,7 +123,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Renaming a receiver should preserve its UID (resource name), but it changed")
 		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
@@ -801,7 +814,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	// Add more references to the receiver in other routes.
@@ -809,7 +822,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	route1.Routes = nil
 	route2 := route1
 	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
-	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	parentRoute.Routes = []*v1store.RouteDB{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1258,9 +1271,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -1271,7 +1282,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1306,6 +1317,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)
+			require.Equalf(t, receiver.Name, actual.Name, "renaming a receiver should preserve its UID (resource name)")
 
 			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
 			require.Equal(t, http.StatusAccepted, status)
@@ -1379,6 +1391,16 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
+
+	var creatableTypes []schema.IntegrationType
+	for _, key := range slices.Sorted(maps.Keys(notifytest.AllKnownV1ConfigsForTesting)) {
+		typeSchema, ok := notify.GetSchemaVersionForIntegration(key, schema.V1)
+		require.True(t, ok)
+		if typeSchema.CanCreate {
+			creatableTypes = append(creatableTypes, key)
+		}
+	}
+
 	var defaultReceiver *v1beta1.Receiver
 	t.Run("should list the default receiver", func(t *testing.T) {
 		items, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -1401,23 +1423,44 @@ func TestIntegrationCRUD(t *testing.T) {
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
 		newDefault := defaultReceiver.Copy().(*v1beta1.Receiver)
-		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, schema.TelegramType))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, resource.UpdateOptions{})
 		require.NoError(t, err)
 
 		expected := newDefault.Copy().(*v1beta1.Receiver)
-		lineIntegration := expected.Spec.Integrations[0]
-		lineIntegration.SecureFields = map[string]bool{
-			"token": true,
+		integration := expected.Spec.Integrations[0]
+		integration.SecureFields = map[string]bool{
+			"bottoken": true,
 		}
-		delete(lineIntegration.Settings, "token")
-		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[0].Type) // this type is in the schema but not in backend
-		lineIntegration.Type = "LINE"
-		lineIntegration.Uid = updatedReceiver.Spec.Integrations[0].Uid
-		expected.Spec.Integrations[0] = lineIntegration
+		delete(integration.Settings, "bottoken")
+		integration.Uid = updatedReceiver.Spec.Integrations[0].Uid
+		expected.Spec.Integrations[0] = integration
 
 		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
+	})
+
+	t.Run("should reject creating a non-creatable integration", func(t *testing.T) {
+		_, err := adminClient.Create(ctx, &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title:        "non-creatable-integration",
+				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, schema.LineType)},
+			},
+		}, resource.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %v", err)
+		require.ErrorContains(t, err, `integration of type "LINE" cannot be created with schema version "v1"`)
+	})
+
+	t.Run("should reject adding a non-creatable integration to an existing receiver", func(t *testing.T) {
+		require.NotNil(t, defaultReceiver)
+		existing, err := adminClient.Get(ctx, defaultReceiver.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		existing.Spec.Integrations = append(existing.Spec.Integrations, createIntegration(t, schema.LineType))
+
+		_, err = adminClient.Update(ctx, existing, resource.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %v", err)
+		require.ErrorContains(t, err, `integration of type "LINE" cannot be created or changed to schema version "v1"`)
 	})
 
 	t.Run("should fail to create receiver with the existing name", func(t *testing.T) {
@@ -1440,12 +1483,9 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	var receiver *v1beta1.Receiver
-	t.Run("should correctly persist all known integrations", func(t *testing.T) {
-		integrations := make([]v1beta1.ReceiverIntegration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
-		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
-		keys := slices.Collect(keysIter)
-		slices.Sort(keys)
-		for _, key := range keys {
+	t.Run("should correctly persist all creatable integrations", func(t *testing.T) {
+		integrations := make([]v1beta1.ReceiverIntegration, 0, len(creatableTypes))
+		for _, key := range creatableTypes {
 			integrations = append(integrations, createIntegration(t, key))
 		}
 		var err error
@@ -1483,6 +1523,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	t.Run("should be able read what it is created", func(t *testing.T) {
+		require.NotNil(t, receiver)
 		get, err := adminClient.Get(ctx, receiver.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, receiver, get)
@@ -1514,10 +1555,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	t.Run("should fail to persist receiver with invalid config", func(t *testing.T) {
-		keysIter := maps.Keys(notifytest.AllKnownV1ConfigsForTesting)
-		keys := slices.Collect(keysIter)
-		slices.Sort(keys)
-		for _, key := range keys {
+		for _, key := range creatableTypes {
 			t.Run(string(key), func(t *testing.T) {
 				integration := createIntegration(t, key)
 				// Make the integration invalid, so it fails to create. This is usually done by sending empty settings.
@@ -1580,9 +1618,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
 		UID: *recv2.Spec.Integrations[0].Uid,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
@@ -1595,7 +1631,6 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.Len(t, receivers.Items, 3) // Includes default.
 
 	t.Run("should filter by receiver name", func(t *testing.T) {
-		t.Skip("disabled until app installer supports it") // TODO revisit when custom field selectors are supported
 		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{
 			FieldSelectors: []string{
 				"spec.title=" + recv1.Spec.Title,
@@ -1642,7 +1677,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, user apis.User) {
+func persistInitialConfig(t *testing.T, amConfig v1store.AMConfigDB, user apis.User) {
 	ctx := context.Background()
 
 	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())

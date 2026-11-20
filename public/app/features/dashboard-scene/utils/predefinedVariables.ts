@@ -1,9 +1,12 @@
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type ControlSourceRef, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { getVariableKind, getVariableSpecName } from 'app/features/variables-management/utils';
+
+import { predefinedVariablesCache } from './cache';
 
 /**
  * Predefined variables are org-wide (global) and folder-scoped Variable resources
@@ -64,26 +67,20 @@ const LIST_PAGE_SIZE = 500;
  */
 const PREDEFINED_VARIABLES_CACHE_TTL = 30_000;
 
-const cache = new Map<string, { ts: number; variables: VariableKind[] }>();
-
-export function clearPredefinedVariablesCache() {
-  cache.clear();
-}
-
 /**
  * Fetches the predefined (global + folder-scoped) variables applicable to a dashboard,
  * tagged with their origin and with folder-over-global name precedence applied.
  *
- * Fails open: any fetch error resolves to an empty list so the dashboard still loads
- * with its local variables only.
+ * Returns `null` on fetch failure so callers can choose fail-open (initial load) vs
+ * keep-current (refresh). An empty array means a successful fetch with no variables.
  */
-export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[]> {
-  if (!config.featureToggles.globalDashboardVariables) {
+export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[] | null> {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
     return [];
   }
 
   const cacheKey = folderUid ?? '';
-  const cached = cache.get(cacheKey);
+  const cached = predefinedVariablesCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < PREDEFINED_VARIABLES_CACHE_TTL) {
     return cached.variables;
   }
@@ -95,11 +92,11 @@ export async function fetchPredefinedVariables(folderUid?: string): Promise<Vari
     ]);
 
     const variables = mergePredefinedVariables(globalVariables, folderVariables, folderUid);
-    cache.set(cacheKey, { ts: Date.now(), variables });
+    predefinedVariablesCache.set(cacheKey, { ts: Date.now(), variables });
     return variables;
   } catch (err) {
     console.warn('Failed to load predefined dashboard variables', err);
-    return [];
+    return null;
   }
 }
 

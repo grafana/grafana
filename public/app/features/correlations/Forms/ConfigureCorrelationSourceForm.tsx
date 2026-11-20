@@ -3,9 +3,9 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useDataSourceInstanceSettings } from '@grafana/runtime';
 import { Card, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
 
@@ -15,6 +15,13 @@ import { type FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    background: theme.colors.background.secondary,
+
+    '&:hover': {
+      background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+    },
+  }),
   label: css({
     maxWidth: theme.spacing(80),
   }),
@@ -65,25 +72,23 @@ export const ConfigureCorrelationSourceForm = () => {
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
-  const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
+  const { settings: targetDataSource } = useDataSourceInstanceSettings(getValues('targetUID'));
 
-  const formText = getFormText(currentType, dataSourceName);
+  const formText = getFormText(currentType, targetDataSource?.name);
 
-  function VariableList() {
-    return (
-      <>
-        {variables.map((name, i) => (
-          <span className={styles.variable} key={i}>
-            {name}
-            {i < variables.length - 1
-              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                ', '
-              : ''}
-          </span>
-        ))}
-      </>
-    );
-  }
+  const variableList = (
+    <>
+      {variables.map((name, i) => (
+        <span className={styles.variable} key={i}>
+          {name}
+          {i < variables.length - 1
+            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              ', '
+            : ''}
+        </span>
+      ))}
+    </>
+  );
 
   return (
     <>
@@ -148,11 +153,11 @@ export const ConfigureCorrelationSourceForm = () => {
             />
           </Field>
           {variables.length > 0 && (
-            <Card noMargin>
+            <Card noMargin className={styles.card}>
               <Card.Heading>{formText.heading}</Card.Heading>
               <Card.Description>
                 {formText.descriptionPre}
-                <VariableList />
+                {variableList}
                 <br />
                 <Trans i18nKey="correlations.source-form.description">
                   A data point needs to provide values to all variables as fields or as transformations output to make

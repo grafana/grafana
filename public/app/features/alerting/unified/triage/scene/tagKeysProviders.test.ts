@@ -1,23 +1,28 @@
-import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceApi, type MetricFindValue, getDefaultTimeRange } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { AdHocFiltersVariable, EmbeddedScene, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
-import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
+import { DATASOURCE_UID } from '../constants';
+
+import {
+  fetchTagValues,
+  getAdHocTagKeysProvider,
+  getAdHocTagValuesProvider,
+  getGroupByTagKeysProvider,
+} from './tagKeysProviders';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
+  getDataSourceInstance: jest.fn(),
   // AdHocFiltersVariable constructor calls getTemplateSrv().getAdhocFilters to patch it.
   // Without this stub it logs "Failed to patch getAdhocFilters".
   getTemplateSrv: () => ({ getAdhocFilters: jest.fn().mockReturnValue([]) }),
 }));
 
-const getDataSourceSrvMock = jest.mocked(getDataSourceSrv);
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 
-function mockGetDataSourceSrv(dsOverrides: Partial<DataSourceApi> = {}) {
-  getDataSourceSrvMock.mockReturnValue({
-    get: async () => dsOverrides as DataSourceApi,
-  } as ReturnType<typeof getDataSourceSrv>);
+function mockGetDataSourceInstance(dsOverrides: Partial<DataSourceApi> = {}) {
+  getDataSourceInstanceMock.mockResolvedValue(dsOverrides as DataSourceApi);
 }
 
 function activateWithScene(variable: AdHocFiltersVariable) {
@@ -32,7 +37,7 @@ function activateWithScene(variable: AdHocFiltersVariable) {
 describe('tagKeysProviders', () => {
   describe('getGroupByTagKeysProvider', () => {
     it('should show promoted labels first and remaining sorted under All', async () => {
-      mockGetDataSourceSrv({
+      mockGetDataSourceInstance({
         getTagKeys: jest.fn().mockResolvedValue([
           { text: 'cluster_name', value: 'cluster_name' },
           { text: 'exported_namespace', value: 'exported_namespace' },
@@ -59,7 +64,7 @@ describe('tagKeysProviders', () => {
     });
 
     it('should return only promoted labels when DS returns no extra keys', async () => {
-      mockGetDataSourceSrv({
+      mockGetDataSourceInstance({
         getTagKeys: jest.fn().mockResolvedValue([] satisfies MetricFindValue[]),
       });
 
@@ -78,7 +83,7 @@ describe('tagKeysProviders', () => {
 
   describe('getAdHocTagKeysProvider', () => {
     it('should show promoted labels first under Common, then remaining sorted under All', async () => {
-      mockGetDataSourceSrv({
+      mockGetDataSourceInstance({
         getTagKeys: jest.fn().mockResolvedValue([
           { text: 'alertstate', value: 'alertstate' },
           { text: 'alertname', value: 'alertname' },
@@ -123,10 +128,24 @@ describe('tagKeysProviders', () => {
     });
   });
 
+  describe('fetchTagValues', () => {
+    it('queries the datasource getTagValues with the key and no filters', async () => {
+      const getTagValues = jest.fn().mockResolvedValue([{ text: 'platform-monitoring' }] satisfies MetricFindValue[]);
+      mockGetDataSourceInstance({ getTagValues });
+
+      const timeRange = getDefaultTimeRange();
+      const result = await fetchTagValues(timeRange, 'team');
+
+      expect(result).toEqual([{ text: 'platform-monitoring' }]);
+      expect(getDataSourceInstanceMock).toHaveBeenCalledWith({ uid: DATASOURCE_UID });
+      expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'team', filters: [], timeRange }));
+    });
+  });
+
   describe('getAdHocTagValuesProvider', () => {
     it('should return values from datasource', async () => {
       const tagValues: MetricFindValue[] = [{ text: 'firing' }, { text: 'pending' }];
-      mockGetDataSourceSrv({
+      mockGetDataSourceInstance({
         getTagValues: jest.fn().mockResolvedValue(tagValues),
       });
 
@@ -156,7 +175,7 @@ describe('tagKeysProviders', () => {
         return [];
       });
 
-      mockGetDataSourceSrv({ getTagValues });
+      mockGetDataSourceInstance({ getTagValues });
 
       const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
       activateWithScene(variable);
@@ -192,7 +211,7 @@ describe('tagKeysProviders', () => {
         return [];
       });
 
-      mockGetDataSourceSrv({ getTagValues });
+      mockGetDataSourceInstance({ getTagValues });
 
       const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
       activateWithScene(variable);
@@ -234,7 +253,7 @@ describe('tagKeysProviders', () => {
         return [];
       });
 
-      mockGetDataSourceSrv({ getTagValues });
+      mockGetDataSourceInstance({ getTagValues });
 
       const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
       activateWithScene(variable);
@@ -268,7 +287,7 @@ describe('tagKeysProviders', () => {
         return [];
       });
 
-      mockGetDataSourceSrv({ getTagValues });
+      mockGetDataSourceInstance({ getTagValues });
 
       const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
       activateWithScene(variable);
@@ -289,7 +308,7 @@ describe('tagKeysProviders', () => {
 
   describe('edge cases', () => {
     it('should return promoted labels only when DS lacks getTagKeys', async () => {
-      mockGetDataSourceSrv({});
+      mockGetDataSourceInstance({});
 
       const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"testing"
 	"time"
 
@@ -28,11 +29,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -197,10 +198,7 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	// Iterate backwards to get the latest applied configs.
 	var configs []*models.HistoricAlertConfiguration
 	start := len(configsByOrg) - 1
-	end := start - limit
-	if end < 0 {
-		end = 0
-	}
+	end := max(start-limit, 0)
 
 	for i := start; i >= end; i-- {
 		if configsByOrg[i].LastApplied > 0 {
@@ -244,11 +242,19 @@ func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 
 type NoValidation struct{}
 
+func (n NoValidation) Config() *v1.AMConfigV1 {
+	return nil
+}
+
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
 type RejectingValidation struct{}
+
+func (n RejectingValidation) Config() *v1.AMConfigV1 {
+	return nil
+}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
 	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
@@ -650,15 +656,13 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		nil,
 		false,
 		// Sync deps are nil — tests do not enable the sync feature flag.
-		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
+		NewExternalAMSyncer(nil, nil, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 		moaOpts...,
 	)
 	require.NoError(t, err)
 
 	if options.alertmanagers != nil {
-		for orgID, am := range options.alertmanagers {
-			moa.alertmanagers[orgID] = am
-		}
+		maps.Copy(moa.alertmanagers, options.alertmanagers)
 	}
 
 	if !options.skipLoad {

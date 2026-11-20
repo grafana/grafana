@@ -32,11 +32,11 @@ export async function generateDashboardImage({
   scale = config.rendererDefaultImageScale || 2,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
   try {
-    // Check if renderer plugin is available
+    // Check if the image renderer service is available
     if (!config.rendererAvailable) {
       return {
         blob: new Blob(),
-        error: 'Image renderer plugin not installed',
+        error: 'Image renderer service not configured',
       };
     }
 

@@ -5,7 +5,7 @@ import { type CSSProperties } from 'react';
 import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig, type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';

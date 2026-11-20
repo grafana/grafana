@@ -5,7 +5,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
@@ -15,6 +15,7 @@ import { useMigrationData } from './useMigrationData';
 setupProvisioningMswServer();
 
 const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
+const LIBRARY_PANELS_ROUTE = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels';
 
 // Kinds are derived from the registry. With no availableResources only the
 // always-on base (dashboards) is migratable; declaring the playlist kind brings
@@ -135,6 +136,39 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'a')?.path).toEqual(['b']);
   });
 
+  it('returns resource-less ancestors as containers, outside the selectable rows', async () => {
+    // Only `frank` holds dashboards. `users` above it is returned as a container
+    // so the tree can nest it, but it must not become a selectable row.
+    mockSearch([folder('users'), folder('frank', 'users'), dashboard('d1', 'frank')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.map((f) => f.uid)).toEqual(['frank']);
+    expect(result.current.data[0].parentUid).toBe('users');
+    expect(result.current.containers).toEqual([
+      expect.objectContaining({ uid: 'users', parentUid: undefined, resourceCount: 0, directResources: [] }),
+    ]);
+  });
+
+  it('does not duplicate an ancestor that is already a row', async () => {
+    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers).toEqual([]);
+  });
+
+  it('terminates when building containers over a cyclic parent reference', async () => {
+    mockSearch([folder('a', 'b'), folder('b', 'a'), dashboard('d1', 'a')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.containers.map((f) => f.uid)).toEqual(['b']);
+  });
+
   it('rolls root-level dashboards into a synthetic General row and excludes managed ones', async () => {
     mockSearch([
       folder('a'),
@@ -150,6 +184,27 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'general')?.resourceCount).toBe(2);
     // Folder `a` keeps only the unmanaged a1 (m1 is dropped).
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
+  });
+
+  it('excludes app-generated (SLO app) dashboards and folders from the selectable set', async () => {
+    mockSearch([
+      folder('a'),
+      folder('grafana_slo_app-slofolder'),
+      dashboard('a1', 'a'),
+      dashboard('grafana_slo_app-slodash', 'a'), // app-generated dashboard in a normal folder
+      dashboard('grafana_slo_app-slodash2', 'grafana_slo_app-slofolder'), // app-generated dash in the SLO folder
+    ]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The SLO folder never surfaces as a selectable row.
+    expect(result.current.data.find((f) => f.uid === 'grafana_slo_app-slofolder')).toBeUndefined();
+    // Folder `a` keeps only the unmanaged, non-app-generated dashboard.
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['a1']);
+    // No app-generated resource appears in any row.
+    const allUids = result.current.data.flatMap((f) => f.directResources.map((d) => d.uid));
+    expect(allUids.some((uid) => uid.startsWith('grafana_slo_app-'))).toBe(false);
   });
 
   it('sets isError when the search request fails', async () => {
@@ -223,6 +278,38 @@ describe('useMigrationData (non-folder kinds)', () => {
     expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
   });
 
+  // A data source is listed through the group its plugin serves, and the row has to keep that
+  // group: the collection the registry entry names is not a group a job can address.
+  it('keeps the serving group on each member of a collection kind', async () => {
+    mockSearch([]);
+    server.use(
+      http.get('/apis', () =>
+        HttpResponse.json({
+          items: ['prometheus', 'loki'].map((plugin) => ({
+            metadata: { name: `${plugin}.datasource.grafana.app` },
+            versions: [{ version: 'v0alpha1', resources: [{ resource: 'datasources', responseKind: {} }] }],
+          })),
+        })
+      ),
+      http.get('/apis/:group/v0alpha1/namespaces/:namespace/datasources', ({ params }) =>
+        HttpResponse.json({
+          items: [{ metadata: { name: `${String(params.group).split('.')[0]}-uid` }, spec: {} }],
+        })
+      )
+    );
+
+    const available: SupportedResource[] = [{ group: 'datasource.grafana.app', kind: 'DataSource' }];
+    const { result } = renderHook(() => useMigrationData(getMigratableKinds(available), available), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const [row] = result.current.data;
+    expect(row.title).toBe('Data sources');
+    expect(row.directResources).toEqual([
+      expect.objectContaining({ uid: 'prometheus-uid', group: 'prometheus.datasource.grafana.app' }),
+      expect.objectContaining({ uid: 'loki-uid', group: 'loki.datasource.grafana.app' }),
+    ]);
+  });
+
   it('skips the folder listing entirely when no kind is folder-scoped', async () => {
     // Playlists are the only kind here and aren't folder-scoped, so the hook
     // never lists folders. A search failure must not matter — nothing depends
@@ -259,15 +346,33 @@ describe('useMigrationData (non-folder kinds)', () => {
     // Library panels are gated out of the migrate flow by default, but the kind
     // still knows how to list itself through its apiserver collection. A response
     // without an items array yields an empty list rather than throwing.
-    server.use(
-      http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels', () =>
-        HttpResponse.json({ metadata: {} })
-      )
-    );
+    server.use(http.get(LIBRARY_PANELS_ROUTE, () => HttpResponse.json({ metadata: {} })));
 
     // Library panels list via getBackendSrv and ignore dispatch.
     const result = await resourceKindInfos.librarypanel.list();
     expect(result).toEqual([]);
+  });
+
+  it('nests library panels under the folder they are in', async () => {
+    mockSearch([folder('a')]);
+    server.use(
+      http.get(LIBRARY_PANELS_ROUTE, () =>
+        HttpResponse.json({
+          items: [
+            { metadata: { name: 'lp1', annotations: { [AnnoKeyFolder]: 'a' } }, spec: { title: 'In a' } },
+            { metadata: { name: 'lp2' }, spec: { title: 'At the root' } },
+          ],
+          metadata: {},
+        })
+      )
+    );
+    const kinds = getMigratableKinds([{ group: 'dashboard.grafana.app', kind: 'LibraryPanel' }]);
+
+    const { result } = renderHook(() => useMigrationData(kinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((r) => r.uid)).toEqual(['lp1']);
+    expect(result.current.data.find((f) => f.uid === 'general')?.directResources.map((r) => r.uid)).toEqual(['lp2']);
   });
 
   it('enumerates folder-scoped and non-folder kinds together', async () => {

@@ -1,141 +1,77 @@
-import { useMemo } from 'react';
-
 import { t, Trans } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { Badge, LinkButton } from '@grafana/ui';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT, incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
+import { LinkButton, Tooltip } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { incidentsCardClicked } from '../analytics/main';
+import { TimeAgoCell } from '../TimeAgoCell';
+import { ctaClicked } from '../analytics/main';
 
-import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
-import { HOME_CARD_MAX_ITEMS } from './constants';
-import { severityLevelColor } from './severity';
+import { AllClearGrot, SummaryCard } from './SummaryCard';
+import { type FilterScope } from './filterSelection';
+import { type IncidentsData } from './useIncidents';
 
-export function IncidentsCard() {
-  const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
-
-  // Hide the card whenever the Incident/IRM plugin isn't available — including while the
-  // settings probe is in flight, so the card never flashes in before disappearing.
-  if (loading || !installed) {
-    return null;
+/** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
+function emptyMessage(filterScope: FilterScope): string {
+  if (filterScope.kind === 'label') {
+    // Value only: the dropdown headers show field names, and the selection only holds the slug.
+    // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
+    return t('home.incidents-card.empty-selected-team', 'All quiet! No active incidents for {{team}}.', {
+      team: filterScope.label.value,
+      interpolation: { escapeValue: false },
+    });
   }
-
-  // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
-  // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.
-  const canAccess = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents')) : false;
-  // canDeclare gates on the plugin's /incidents/declare write include; the button itself deep-links to
-  // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
-  const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
-
-  return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} canDeclare={canDeclare} />;
+  return t('home.incidents-card.empty', 'All quiet! No active incidents.');
 }
 
-type IncidentsCardInnerProps = {
-  pluginId: string;
-  canAccess: boolean;
-  canDeclare: boolean;
-};
-
-/**
- * Inner component avoids calling hooks conditionally —
- * the availability gate lives in the parent wrapper.
- */
-function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
-  const {
-    data: incidents = [],
-    isLoading,
-    error,
-    refetch,
-  } = incidentsApi.useGetActiveIncidentsQuery({ pluginId }, { refetchOnMountOrArgChange: true });
-  const incidentCount = incidents?.length ?? 0;
-  // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
-  // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
-  // error (401/403/5xx/network) is genuine and surfaced to the user.
-  const loadError = !!error && !(isFetchError(error) && error.status === 404);
-
-  // Most recent incidents first; capped client-side.
-  const displayed = useMemo(
-    () =>
-      [...incidents]
-        .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
-        .slice(0, HOME_CARD_MAX_ITEMS),
-    [incidents]
-  );
+/** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
+export function IncidentsCard({ data }: { data: IncidentsData }) {
+  const { pluginId, canAccess, canDeclare, displayed, filterScope, loading, error, refetch } = data;
 
   return (
     <SummaryCard
-      title={t('home.incidents-card.title', 'Active incidents')}
-      count={incidentCount}
-      countLimit={ACTIVE_INCIDENTS_QUERY_LIMIT}
-      loading={isLoading}
+      loading={loading}
       error={
-        loadError
+        error
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
-      emptyMessage={t('home.incidents-card.empty', 'No active incidents.')}
+      emptyMessage={emptyMessage(filterScope)}
+      emptyImage={<AllClearGrot />}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
-        <>
-          <Badge text={incident.severityLabel} color={severityLevelColor(canonicalSeverity(incident.severityLabel))} />
-          <SummaryCardTitle
-            href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
-            onClick={() =>
-              incidentsCardClicked({
-                action: 'incident_detail',
-                placement: 'list',
-                severity: canonicalSeverity(incident.severityLabel),
-              })
-            }
-          >
-            {incident.title}
-          </SummaryCardTitle>
-          <SummaryCardAge date={new Date(incident.createdTime)} />
-        </>
+        <ListRow
+          prefix={
+            // Same severity treatment as the firing-alerts rows so the two tabs share one visual language
+            <Tooltip content={incident.severityLabel}>
+              <span>
+                <SeverityBars level={canonicalSeverity(incident.severityLabel)} />
+                <span className="sr-only">{incident.severityLabel}</span>
+              </span>
+            </Tooltip>
+          }
+          title={incident.title}
+          trailing={<TimeAgoCell date={new Date(incident.createdTime)} />}
+          href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
+          onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
+        />
       )}
       emptyAction={
         canDeclare ? (
           <LinkButton
             variant="primary"
+            size="sm"
             icon="fire"
             href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-            onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'empty_state' })}
+            onClick={() =>
+              ctaClicked({ surface: 'incidents_card', action: 'declare_incident', placement: 'empty_state' })
+            }
           >
             <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
           </LinkButton>
         ) : undefined
-      }
-      footer={
-        <>
-          {incidentCount > 0 && canDeclare && (
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              fill="text"
-              icon="fire"
-              href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-              onClick={() => incidentsCardClicked({ action: 'declare_incident', placement: 'footer' })}
-            >
-              <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-            </LinkButton>
-          )}
-          {canAccess && (
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              fill="text"
-              href={createBridgeURL(pluginId, '/incidents')}
-              onClick={() => incidentsCardClicked({ action: 'view_all_incidents', placement: 'footer' })}
-            >
-              <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-            </LinkButton>
-          )}
-        </>
       }
     />
   );

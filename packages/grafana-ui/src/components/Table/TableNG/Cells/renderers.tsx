@@ -1,4 +1,3 @@
-import { clsx } from 'clsx';
 import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
 import { type Field, FieldType, type GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
@@ -18,6 +17,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
 import { ImageCell, getStyles as getImageStyles } from './ImageCell';
+import { JsonCell } from './JsonCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
@@ -29,19 +29,19 @@ const wrapComponentInMemo = <P extends object>(fn: React.FunctionComponent<P>, n
 };
 
 export const AutoCellRenderer = wrapComponentInMemo(
-  (props: TableCellRendererProps) => <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} />,
+  (props: TableCellRendererProps) => (
+    <AutoCell
+      value={props.value}
+      field={props.field}
+      rowIdx={props.rowIdx}
+      tableRefreshEnabled={props.tableRefreshEnabled}
+    />
+  ),
   'AutoCellRenderer'
 );
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
-}
-
-function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
-  return (theme, options) => {
-    const styles = fn(theme, options);
-    return clsx(styles, getAutoCellStyles(theme, options));
-  };
 }
 
 interface CellRegistryEntry {
@@ -64,8 +64,8 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.JSONView]: {
-    renderer: AutoCellRenderer,
-    getStyles: mixinAutoCellStyles(getJsonCellStyles),
+    renderer: wrapComponentInMemo(JsonCell, 'JsonCellRenderer'),
+    getStyles: getJsonCellStyles,
   },
   [TableCellDisplayMode.Actions]: {
     renderer: wrapComponentInMemo(
@@ -222,6 +222,10 @@ export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
       return TableCellDisplayMode.Sparkline;
     }
+  }
+  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
+  if (field.type === FieldType.other) {
+    return TableCellDisplayMode.JSONView;
   }
   return TableCellDisplayMode.Auto;
 }

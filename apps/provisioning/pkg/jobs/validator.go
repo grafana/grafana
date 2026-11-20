@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -18,12 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoAuthor and AnnoAuthorEmail carry the display name and email of the user
-// that triggered the job. They are set by the server at creation time and are
-// immutable.
 const (
-	AnnoAuthor      = "provisioning.grafana.app/author"
-	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
+	AnnoAuthor       = "provisioning.grafana.app/author"
+	AnnoAuthorEmail  = "provisioning.grafana.app/authorEmail"
+	AnnoAuthorID     = "provisioning.grafana.app/authorId"
+	AnnoAuthorOrigin = "provisioning.grafana.app/authorOrigin"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -189,22 +190,39 @@ func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRe
 			continue
 		}
 
-		// A non-empty group must match the group registered for that kind.
-		var kindOK, groupOK bool
+		// A member declared on its own and disabled stays excluded, even though the collection
+		// covering it is active.
+		excluded := r.Group != "" && declaredDisabled(supportedResources, r.Group, r.Kind)
+
+		// A non-empty group must match the group registered for that kind. Every declaration of
+		// the kind is scanned: one collection among them decides whether a group is required,
+		// whatever else declares it.
+		var kindOK, groupOK, servedByCollection bool
 		for _, s := range supported {
 			if s.Kind != r.Kind {
 				continue
 			}
 			kindOK = true
-			if r.Group == "" || r.Group == s.Group {
-				groupOK = true
-				break
+			if resources.IsCollection(s.Group) {
+				servedByCollection = true
 			}
+			if !excluded && r.Group != "" && resources.CoversGroup(s.Group, r.Group) {
+				groupOK = true
+			}
+		}
+		// An omitted group is resolved from the kind alone, which a collection cannot do: its
+		// members each serve their own, and reading through the wrong one finds nothing.
+		groupRequired := r.Group == "" && servedByCollection
+		if r.Group == "" && !servedByCollection {
+			groupOK = kindOK
 		}
 		switch {
 		case !kindOK:
 			list = append(list, field.Invalid(path.Child("kind"), r.Kind,
 				fmt.Sprintf("kind is not supported for export; supported kinds: %s", strings.Join(supportedKinds(supported), ", "))))
+		case groupRequired && !groupOK:
+			list = append(list, field.Required(path.Child("group"),
+				fmt.Sprintf("group is required for kind %s: it is served by several groups", r.Kind)))
 		case !groupOK:
 			list = append(list, field.Invalid(path.Child("group"), r.Group,
 				fmt.Sprintf("group %q is not supported for kind %s", r.Group, r.Kind)))
@@ -230,6 +248,17 @@ func activeExportResources(supportedResources []provisioning.SupportedResource) 
 		}}
 	}
 	return active
+}
+
+// declaredDisabled reports whether a group and kind are declared as disabled. Only a served group
+// can match, so a disabled collection is never what answers here.
+func declaredDisabled(supportedResources []provisioning.SupportedResource, group, kind string) bool {
+	for _, r := range supportedResources {
+		if r.Disabled && r.Group == group && r.Kind == kind {
+			return true
+		}
+	}
+	return false
 }
 
 // supportedKinds returns the kinds in supported, for use in error messages.
@@ -410,32 +439,55 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
 	name := job.Annotations[AnnoAuthor]
 	email := job.Annotations[AnnoAuthorEmail]
+	id := job.Annotations[AnnoAuthorID]
+	origin := job.Annotations[AnnoAuthorOrigin]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+		if requester, err := identity.GetRequester(ctx); err == nil && requester.IsIdentityType(types.TypeUser) {
+			if name == "" && email == "" && id == "" && origin == "" {
+				return nil
+			}
+			if name != requester.GetName() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+			}
+			if email != requester.GetEmail() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+			}
+			if id != requester.GetUID() {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
+			}
+			if origin != "Grafana" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must be Grafana for user-created jobs", AnnoAuthorOrigin))
+			}
 			return nil
 		}
-		id, err := identity.GetRequester(ctx)
-		if err != nil {
-			return apierrors.NewBadRequest("job author annotations must match the requesting user")
+		if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+			if email != "" {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set by the provisioning service", AnnoAuthorEmail))
+			}
+			return nil
 		}
-		if name != "" && name != id.GetName() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		if name != "" || email != "" || id != "" {
+			return apierrors.NewBadRequest("job author annotations may only be set by a user or the provisioning service")
 		}
-		if email != "" && email != id.GetEmail() {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+		if origin != "" {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s may not be set when no user or provisioning service is involved", AnnoAuthorOrigin))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
 			return nil
 		}
-		if old.Annotations[AnnoAuthor] != name {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
-		}
-		if old.Annotations[AnnoAuthorEmail] != email {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
+		for anno, value := range map[string]string{
+			AnnoAuthor:       name,
+			AnnoAuthorEmail:  email,
+			AnnoAuthorID:     id,
+			AnnoAuthorOrigin: origin,
+		} {
+			if old.Annotations[anno] != value {
+				return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", anno))
+			}
 		}
 	case admission.Delete, admission.Connect:
 	}

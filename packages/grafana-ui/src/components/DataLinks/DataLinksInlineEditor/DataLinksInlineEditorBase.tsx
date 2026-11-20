@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
@@ -35,14 +36,16 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   children,
   'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const [itemsSafe, setItemsSafe] = useState<T[]>([]);
-
-  useEffect(() => {
+  const [itemsSafe, setItemsSafe] = useState<T[]>(items ?? []);
+  const [prevItems, setPrevItems] = useState(items);
+  if (prevItems !== items) {
+    setPrevItems(items);
     setItemsSafe(items ?? []);
-  }, [items]);
+  }
 
   const styles = useStyles2(getDataLinksInlineEditorStyles);
   const isEditing = editIndex !== null;

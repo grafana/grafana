@@ -1,11 +1,33 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { findItem } from 'app/features/browse-dashboards/state/utils';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { ancestorsOf } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { type RepoWorkflows } from '../types';
 
 import { isItemManagedByRepository } from './managedResource';
+
+export function getRepositoryResourcesUrl(name: string, resource: string): string {
+  return `${CORE_KINDS.repository.getRoute(name)}?tab=resources&resource=${resource}`;
+}
+
+export function getRepositoryOverviewUrl(name: string): string {
+  return `${CORE_KINDS.repository.getRoute(name)}/?tab=overview`;
+}
+
+export function getRepositoryEditUrl(name: string): string {
+  return `${CORE_KINDS.repository.getRoute(name)}/edit`;
+}
+
+export function getFileStatusUrl(repositoryName: string, path: string, ref?: string): string {
+  const url = `${CORE_KINDS.repository.getRoute(repositoryName)}/file/${path}`;
+  return ref === undefined ? url : `${url}?${new URLSearchParams({ ref }).toString()}`;
+}
+
+export function getFileHistoryUrl(repositoryName: string, path: string): string {
+  return `${CORE_KINDS.repository.getRoute(repositoryName)}/history/${path}`;
+}
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)
@@ -34,19 +56,10 @@ export function getItemRepositoryUid(
     return item.uid;
   }
 
-  // Traverse up the tree to find the root provisioned folder
-  let currentItem = item;
-  while (currentItem.parentUID) {
-    const parent = findItem(rootItems, childrenByParentUID, currentItem.parentUID);
-    if (!parent) {
-      break;
+  for (const ancestor of ancestorsOf(item, rootItems, childrenByParentUID)) {
+    if (isItemManagedByRepository(ancestor) && !ancestor.parentUID) {
+      return ancestor.uid;
     }
-
-    if (isItemManagedByRepository(parent) && !parent.parentUID) {
-      return currentItem.parentUID;
-    }
-
-    currentItem = parent;
   }
 
   return 'non_provisioned';

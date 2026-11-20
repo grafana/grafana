@@ -11,4 +11,4 @@
 
 /* eslint-disable no-barrel-files/no-barrel-files */
 
-export { ALL_COMMANDS } from './commands/registry';
+export { DASHBOARD_COMMANDS } from './commands/registry';

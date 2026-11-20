@@ -1,15 +1,20 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { type TimeSeries, type TableData } from '../types/data';
+import { LoadingState, type TimeSeries, type TableData } from '../types/data';
 import { FieldType, type DataFrameDTO } from '../types/dataFrame';
+import { type PanelData } from '../types/panel';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
+import * as guessFieldTypeModule from './guessFieldType';
 import {
   isDataFrame,
   isTableData,
   reverseDataFrame,
   sortDataFrame,
+  sortDataFrameByFields,
   toDataFrame,
   toLegacyResponseData,
+  getProcessedDataFrames,
+  preProcessPanelData,
 } from './processDataFrame';
 
 describe('toDataFrame', () => {
@@ -368,7 +373,7 @@ describe('sorted DataFrame by nanos', () => {
         {
           name: 'first',
           type: FieldType.time,
-          values: [dateTime(50), dateTime(50), dateTime(100)],
+          values: [dateTime(50).valueOf(), dateTime(50).valueOf(), dateTime(100).valueOf()],
           nanos: [1, 0, 100],
         },
         { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
@@ -377,7 +382,7 @@ describe('sorted DataFrame by nanos', () => {
 
     const sorted = sortDataFrame(frame, 0);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values).toEqual([dateTime(50), dateTime(50), dateTime(100)]);
+    expect(sorted.fields[0].values).toEqual([dateTime(50).valueOf(), dateTime(50).valueOf(), dateTime(100).valueOf()]);
     expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
   });
 
@@ -400,6 +405,58 @@ describe('sorted DataFrame by nanos', () => {
   });
 });
 
+describe('sortDataFrameByFields', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'group', type: FieldType.string, values: ['b', 'a', 'b', 'a'] },
+      { name: 'time', type: FieldType.time, values: [1, 1, 2, 1], nanos: [0, 5, 0, 2] },
+      { name: 'name', type: FieldType.string, values: ['w', 'x', 'y', 'z'] },
+    ],
+  });
+
+  it('breaks ties on the first field with the next one, including nanos', () => {
+    const sorted = sortDataFrameByFields(frame, [{ index: 0 }, { index: 1, desc: true }]);
+    expect(sorted.fields[0].values).toEqual(['a', 'a', 'b', 'b']);
+    expect(sorted.fields[1].values).toEqual([1, 1, 2, 1]);
+    expect(sorted.fields[1].nanos).toEqual([5, 2, 0, 0]);
+    expect(sorted.fields[2].values).toEqual(['x', 'z', 'y', 'w']);
+  });
+
+  it('ignores indexes that do not exist in the frame', () => {
+    const sorted = sortDataFrameByFields(frame, [{ index: 0 }, { index: 7 }, { index: 2, desc: true }]);
+    expect(sorted.fields[2].values).toEqual(['z', 'x', 'y', 'w']);
+  });
+
+  it('returns the same frame when no field matches', () => {
+    expect(sortDataFrameByFields(frame, [{ index: -1 }])).toBe(frame);
+  });
+
+  describe('field types with no comparer', () => {
+    const withOther = toDataFrame({
+      fields: [
+        { name: 'json', type: FieldType.other, values: [{ a: 1 }, { a: 2 }, { a: 3 }] },
+        { name: 'other', type: FieldType.other, values: [{ b: 1 }, { b: 2 }, { b: 3 }] },
+        { name: 'score', type: FieldType.number, values: [30, 10, 20] },
+      ],
+    });
+
+    it('does not let them swallow the fields after them', () => {
+      const sorted = sortDataFrameByFields(withOther, [{ index: 0 }, { index: 2 }]);
+      expect(sorted.fields[2].values).toEqual([10, 20, 30]);
+    });
+
+    it('still reverses row order on their own, as sortDataFrame has always done', () => {
+      expect(sortDataFrameByFields(withOther, [{ index: 0, desc: true }]).fields[2].values).toEqual([20, 10, 30]);
+      expect(sortDataFrameByFields(withOther, [{ index: 0 }]).fields[2].values).toEqual([30, 10, 20]);
+    });
+
+    it('falls back to the first one when nothing else can be compared', () => {
+      const sorted = sortDataFrameByFields(withOther, [{ index: 0, desc: true }, { index: 1 }]);
+      expect(sorted.fields[2].values).toEqual([20, 10, 30]);
+    });
+  });
+});
+
 describe('reverse DataFrame', () => {
   const frame = toDataFrame({
     fields: [
@@ -414,5 +471,125 @@ describe('reverse DataFrame', () => {
     expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
     expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
     expect(rev.fields[1].nanos).toBeUndefined();
+  });
+});
+
+describe('getProcessedDataFrames', () => {
+  it('returns empty array when results is undefined', () => {
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+  });
+
+  it('returns empty array when results is not an array', () => {
+    expect(getProcessedDataFrames({} as unknown as unknown[])).toEqual([]);
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(getProcessedDataFrames([])).toEqual([]);
+  });
+
+  it('calls guessFieldTypes once per frame to infer field types', () => {
+    const spy = jest.spyOn(guessFieldTypeModule, 'guessFieldTypes');
+    const frames = [
+      { fields: [{ name: 'value', values: [1, 2] }] },
+      { fields: [{ name: 'label', values: ['a', 'b'] }] },
+    ] as unknown as DataFrameDTO[];
+    getProcessedDataFrames(frames);
+    expect(spy).toHaveBeenCalledTimes(frames.length);
+    spy.mockRestore();
+  });
+
+  it('infers untyped fields via guessFieldTypes (time from timestamps, number from numeric values)', () => {
+    const raw = {
+      fields: [
+        { name: 'time', values: [1000, 2000] },
+        { name: 'value', values: [1, 2] },
+      ],
+    } as unknown as DataFrameDTO;
+    const [frame] = getProcessedDataFrames([raw]);
+    expect(frame.fields[0].type).toBe(FieldType.time);
+    expect(frame.fields[1].type).toBe(FieldType.number);
+  });
+
+  it('clears cached field state on processed frames', () => {
+    const raw = {
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    };
+    const result = getProcessedDataFrames([raw]);
+    expect(result[0].fields[0].state).toBeNull();
+  });
+
+  it('processes multiple frames', () => {
+    const frames = [
+      { fields: [{ name: 'a', type: FieldType.number, values: [1] }] },
+      { fields: [{ name: 'b', type: FieldType.string, values: ['x'] }] },
+    ];
+    const result = getProcessedDataFrames(frames);
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('preProcessPanelData', () => {
+  const baseData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1000, 2000] }],
+      }),
+    ],
+    timeRange: { from: dateTime(0), to: dateTime(1000), raw: { from: dateTime(0), to: dateTime(1000) } },
+  };
+
+  it('clears field state on each series frame, proving getProcessedDataFrame ran', () => {
+    const frameWithState = toDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1], state: { calcs: { sum: 1 } } }],
+    });
+    const data = { ...baseData, series: [frameWithState] };
+    const result = preProcessPanelData(data);
+    expect(result.series[0].fields[0].state).toBeNull();
+  });
+
+  it('reuses the previous series while loading with no data, to avoid a no-data flicker', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const lastResult = {
+      ...baseData,
+      state: LoadingState.Done,
+    };
+    const result = preProcessPanelData(loadingData, lastResult);
+    expect(result.state).toBe(LoadingState.Loading);
+    // the previous (non-empty) series is carried over rather than the incoming empty one
+    expect(result.series).toBe(lastResult.series);
+    expect(result.series).toHaveLength(1);
+  });
+
+  it('keeps its own empty series while loading when there is no previous result to fall back to', () => {
+    const loadingData = {
+      state: LoadingState.Loading,
+      series: [],
+      timeRange: baseData.timeRange,
+    };
+    const result = preProcessPanelData(loadingData, undefined);
+    expect(result.state).toBe(LoadingState.Loading);
+    // with no lastResult, there is nothing to carry over, so the empty series is preserved
+    expect(result.series).toBe(loadingData.series);
+    expect(result.series).toHaveLength(0);
+  });
+
+  it('includes timings in processed result', () => {
+    const result = preProcessPanelData(baseData);
+    expect(result.timings).toBeDefined();
+    expect(result.timings!.dataProcessingTime).toBeGreaterThanOrEqual(0);
+  });
+
+  it('processes annotations when present', () => {
+    const dataWithAnnotations = {
+      ...baseData,
+      annotations: [{ fields: [{ name: 'time', type: FieldType.time, values: [500] }] }],
+    };
+    const result = preProcessPanelData(dataWithAnnotations as unknown as PanelData);
+    expect(result.annotations).toHaveLength(1);
   });
 });

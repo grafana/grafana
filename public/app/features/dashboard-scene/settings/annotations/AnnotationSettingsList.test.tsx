@@ -3,11 +3,10 @@ import userEvent from '@testing-library/user-event';
 
 import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
-
-import { MoveDirection } from '../AnnotationsEditView';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 
 import { AnnotationSettingsList, BUTTON_TITLE } from './AnnotationSettingsList';
+import { MoveDirection } from './MoveDirection';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -16,9 +15,7 @@ const defaultDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: () => ({ ...defaultDatasource }),
-  }),
+  getDataSourceInstanceSettings: jest.fn(async () => ({ ...defaultDatasource })),
 }));
 
 describe('AnnotationSettingsEdit', () => {

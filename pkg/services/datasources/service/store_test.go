@@ -52,7 +52,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("AddDataSource", func(t *testing.T) {
 		t.Run("Can add datasource", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgID:      10,
@@ -80,13 +80,13 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("generates uid if not specified", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			require.NotEmpty(t, ds.UID)
 		})
 
 		t.Run("fails to insert ds with same uid", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			cmd1 := defaultAddDatasourceCommand
 			cmd2 := defaultAddDatasourceCommand
@@ -100,7 +100,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("fails to create a datasource with an invalid uid", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{
 				db:     db,
 				logger: log.NewNopLogger(),
@@ -121,7 +121,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			{name: "client-provided uid", uid: "client-uid"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
-				db := db.InitTestDB(t)
+				db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				ss := SqlStore{db: db}
 				var gotUID string
 				cmd := defaultAddDatasourceCommand
@@ -145,7 +145,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		}
 
 		t.Run("uses uid generated after collision retry", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "taken-uid"
@@ -182,7 +182,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("runs on update before persist", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			ds := initDatasource(db)
 
@@ -207,8 +207,64 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
+		t.Run("persists basic auth username changes", func(t *testing.T) {
+			for _, tc := range []struct {
+				name        string
+				withVersion bool
+			}{
+				{name: "with version", withVersion: true},
+				{name: "without version"},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					ss := SqlStore{db: db.NewTestStore(t)}
+					add := defaultAddDatasourceCommand
+					add.BasicAuth = true
+					add.BasicAuthUser = "original-user"
+					ds, err := ss.AddDataSource(context.Background(), &add)
+					require.NoError(t, err)
+
+					for i, step := range []struct {
+						username string
+						set      bool
+						want     string
+					}{
+						{want: "original-user"},
+						{set: true},
+						{username: "restored-user", want: "restored-user"},
+						{want: "restored-user"},
+						{set: true},
+					} {
+						cmd := defaultUpdateDatasourceCommand
+						// Change another field so MySQL does not treat username-preservation steps as no-op updates.
+						cmd.URL += "/" + strconv.Itoa(i)
+						cmd.ID = ds.ID
+						cmd.UID = ds.UID
+						cmd.BasicAuth = true
+						cmd.BasicAuthUser = step.username
+						cmd.BasicAuthUserSet = step.set
+						if tc.withVersion {
+							cmd.Version = ds.Version
+						}
+
+						updated, err := ss.UpdateDataSource(context.Background(), &cmd)
+						require.NoError(t, err)
+						if step.set || step.username != "" {
+							require.Equal(t, step.want, updated.BasicAuthUser)
+						}
+
+						ds, err = ss.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+							UID: ds.UID, OrgID: ds.OrgID,
+						})
+						require.NoError(t, err)
+						require.Equal(t, step.want, ds.BasicAuthUser)
+						require.True(t, ds.BasicAuth)
+					}
+				})
+			}
+		})
+
 		t.Run("updates datasource with version", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
@@ -221,7 +277,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 			require.NotEmpty(t, ds.UID)
@@ -231,14 +287,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10} //nolint:staticcheck // Exercise legacy field compatibility.
 			dataSource, err := ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
 		})
 
 		t.Run("prevents update if version changed", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -262,7 +318,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("updates ds without version specified", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -280,7 +336,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("updates ds without higher version", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -299,7 +355,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("fails to update a datasource with an invalid uid", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{
 				db:     db,
@@ -317,7 +373,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("DeleteDataSource", func(t *testing.T) {
 		t.Run("can delete datasource with ID", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -332,7 +388,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("can delete datasource with UID", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
@@ -347,7 +403,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Can not delete datasource with wrong orgID", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ds := initDatasource(db)
 			ss := SqlStore{
 				db:     db,
@@ -367,7 +423,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("fires an event when the datasource is deleted", func(t *testing.T) {
-		db := db.InitTestDB(t)
+		db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ds := initDatasource(db)
 		ss := SqlStore{db: db}
 
@@ -393,7 +449,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
-		db := db.InitTestDB(t)
+		db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ss := SqlStore{
 			db:     db,
 			logger: log.NewNopLogger(),
@@ -415,7 +471,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
-		db := db.InitTestDB(t)
+		db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		ds := initDatasource(db)
 		ss := SqlStore{db: db}
 		query := datasources.GetDataSourcesQuery{OrgID: 10}
@@ -431,7 +487,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSources", func(t *testing.T) {
 		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
@@ -455,10 +511,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
@@ -479,10 +535,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
@@ -505,7 +561,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSourceInGroup", func(t *testing.T) {
 		t.Run("Only returns datasource of specified type", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db, logger: log.NewNopLogger()}
 
 			ds, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -542,7 +598,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSourcesByType", func(t *testing.T) {
 		t.Run("Only returns datasources of specified type", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -576,7 +632,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Returns an error if no type specified", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 
 			query := datasources.GetDataSourcesByTypeQuery{}
@@ -587,7 +643,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Returns datasources based on alias", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -610,7 +666,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("Get prunable data sources", func(t *testing.T) {
-			db := db.InitTestDB(t)
+			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 
 			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{

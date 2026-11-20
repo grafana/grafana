@@ -11,13 +11,16 @@ import { Counter } from './Counter';
 import { type TabProps } from './Tab';
 
 export const VerticalTab = forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, counter, className, suffix: Suffix, onChangeTab, href, ...otherProps }, ref) => {
+  (
+    { label, active, icon, counter, counterCappedAt, className, suffix: Suffix, onChangeTab, href, ...otherProps },
+    ref
+  ) => {
     const tabsStyles = useStyles2(getTabStyles);
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
         {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
+        {typeof counter === 'number' && <Counter value={counter} cappedAt={counterCappedAt} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );

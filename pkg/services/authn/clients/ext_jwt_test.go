@@ -5,8 +5,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -212,7 +214,7 @@ var (
 	pk, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 )
 
-var _ authnlib.Verifier[authnlib.IDTokenClaims] = &mockIDVerifier{}
+var _ authnlib.Verifier[authnlib.IDTokenClaims] = (*mockIDVerifier)(nil)
 
 type mockIDVerifier struct {
 	Claims idTokenClaims
@@ -223,7 +225,7 @@ func (m *mockIDVerifier) Verify(ctx context.Context, token string) (*idTokenClai
 	return &m.Claims, m.Error
 }
 
-var _ authnlib.Verifier[authnlib.AccessTokenClaims] = &mockVerifier{}
+var _ authnlib.Verifier[authnlib.AccessTokenClaims] = (*mockVerifier)(nil)
 
 type mockVerifier struct {
 	Claims accessTokenClaims
@@ -248,9 +250,11 @@ func TestExtendedJWT_Test(t *testing.T) {
 			cfg: &setting.Cfg{
 				ExtJWTAuth: setting.ExtJWTSettings{
 					Enabled: false,
+					// A real signer, so the client does not trust local plugin tokens either.
+					JWKSUrl: "https://auth.example.com/jwks",
 				},
 			},
-			authHeaderFunc: func() string { return "eyJ" },
+			authHeaderFunc: func() string { return generateToken(t, validAccessTokenClaims, pk, jose.ES256) },
 			want:           false,
 		},
 		{
@@ -825,7 +829,7 @@ func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
 			},
 		}
 
-		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token")
+		id, err := env.s.authenticateAsUserViaOBO(token, "signed-token", env.s.cfg.DefaultOrgID())
 		assert.ErrorIs(t, err, errExtJWTInvalidSubject)
 		assert.Nil(t, id)
 	})
@@ -1029,6 +1033,75 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 
 type testEnv struct {
 	s *ExtendedJWT
+}
+
+func TestExtendedJWTConfiguredSignerGroupAudience(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	otherKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{{Key: &key.PublicKey, KeyID: "default", Algorithm: string(jose.ES256), Use: "sig"}}}))
+	}))
+	t.Cleanup(server.Close)
+	cfg := setting.NewCfg()
+	cfg.ExtJWTAuth.JWKSUrl = server.URL
+	cfg.ExtJWTAuth.Audiences = []string{"custom-grafana"}
+	client := ProvideExtendedJWT(cfg, tracing.InitializeTracerForTest())
+
+	for _, audience := range []string{"custom-grafana", "iam.grafana.app", "example-app", "example-aisdk-app", "github-datasource"} {
+		for _, target := range []string{"/apis/iam.grafana.app/v0alpha1/whoami", "/apis/folder.grafana.app/v1/folders", "/apis", "/api/user", "/apis/example-app/v1", "/apis/example-aisdk-app/v1", "/apis/github-datasource/v1", "/apis/example-aisdk-app%2fv1", "/apis/example-aisdk-app/../github-datasource/v1", "/apis/iam.grafana.app/../folder.grafana.app/v1"} {
+			t.Run(audience+target, func(t *testing.T) {
+				payload := accessTokenClaims{
+					Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{audience}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
+					Rest:   authnlib.AccessTokenClaims{Namespace: "default"},
+				}
+				req := httptest.NewRequest(http.MethodGet, target, nil)
+				req.Header.Set(ExtJWTAuthenticationHeaderName, generateToken(t, payload, key, jose.ES256))
+				identity, err := client.Authenticate(t.Context(), &authn.Request{HTTPRequest: req})
+				if audience == "custom-grafana" ||
+					audience == "iam.grafana.app" && target == "/apis/iam.grafana.app/v0alpha1/whoami" ||
+					audience == "example-app" && target == "/apis/example-app/v1" ||
+					audience == "example-aisdk-app" && target == "/apis/example-aisdk-app/v1" ||
+					audience == "github-datasource" && target == "/apis/github-datasource/v1" {
+					require.NoError(t, err)
+					require.Equal(t, "policy-1", identity.ID)
+				} else {
+					require.ErrorIs(t, err, authnlib.ErrInvalidAudience)
+					require.Nil(t, identity)
+				}
+			})
+		}
+	}
+
+	for _, name := range []string{"expired", "not yet valid", "invalid signature", "ID token", "invalid namespace"} {
+		t.Run(name, func(t *testing.T) {
+			payload := accessTokenClaims{
+				Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{"iam.grafana.app"}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
+				Rest:   authnlib.AccessTokenClaims{Namespace: "default"},
+			}
+			signingKey := key
+			switch name {
+			case "expired":
+				payload.Expiry = jwt.NewNumericDate(time.Now().Add(-time.Hour))
+			case "not yet valid":
+				payload.NotBefore = jwt.NewNumericDate(time.Now().Add(time.Hour))
+			case "invalid signature":
+				signingKey = otherKey
+			case "invalid namespace":
+				payload.Rest.Namespace = "org-2"
+			}
+			token := generateToken(t, payload, signingKey, jose.ES256)
+			if name == "ID token" {
+				token = generateIDToken(t, idTokenClaims{Claims: payload.Claims}, key, jose.ES256)
+			}
+			req := httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/whoami", nil)
+			req.Header.Set(ExtJWTAuthenticationHeaderName, token)
+			identity, err := client.Authenticate(t.Context(), &authn.Request{HTTPRequest: req})
+			require.Error(t, err)
+			require.Nil(t, identity)
+		})
+	}
 }
 
 func generateToken(t *testing.T, payload accessTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {

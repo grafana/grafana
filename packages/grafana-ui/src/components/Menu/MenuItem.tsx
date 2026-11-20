@@ -65,6 +65,8 @@ export interface MenuItemProps<T = unknown> {
   iconColor?: string;
   /* Optional component that will be shown together with other options. Does not get passed any props. */
   component?: React.ComponentType;
+  /** Custom data attributes (for example `data-analytics-id`), rendered on the menu item element */
+  [key: `data-${string}`]: string | undefined;
 }
 
 /** @internal */
@@ -90,6 +92,7 @@ export const MenuItem = React.memo(
       shortcut,
       testId,
       iconColor,
+      ...rest
     } = props;
     const styles = useStyles2(getStyles);
     // Ignore iconColor when destructive or disabled — those states own the colors.
@@ -112,6 +115,9 @@ export const MenuItem = React.memo(
       setIsSubMenuOpen(false);
       setIsActive(false);
     }, [disabled]);
+
+    // Menu items are often built by spreading item objects, so only forward data attributes to the DOM.
+    const dataAttributes = Object.fromEntries(Object.entries(rest).filter(([key]) => key.startsWith('data-')));
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
@@ -202,9 +208,10 @@ export const MenuItem = React.memo(
         // position correctly (e.g. "X of Y") and the menu has proper ARIA semantics.
         // Callers can override via the role prop.
         role={role ?? 'menuitem'}
+        data-testid={testId}
+        {...dataAttributes}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
-        data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         // Announce to screen readers that this item opens a submenu, and whether it is
@@ -259,6 +266,7 @@ export const MenuItem = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
 
   return {
@@ -266,7 +274,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',
-      color: theme.colors.text.secondary,
+      color: visualRefreshEnabled ? theme.colors.text.primary : theme.colors.text.secondary,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'stretch',
@@ -281,15 +289,17 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover, &:focus-visible': {
         background: theme.colors.action.hover,
-        color: theme.colors.text.primary,
+        color: visualRefreshEnabled ? theme.colors.text.maxContrast : theme.colors.text.primary,
         textDecoration: 'none',
       },
 
       '&:focus-visible': getFocusStyles(theme),
     }),
-    label: css({
-      color: theme.colors.text.primary,
-    }),
+    label: css(
+      !visualRefreshEnabled && {
+        color: theme.colors.text.primary,
+      }
+    ),
     active: css({
       background: theme.colors.action.hover,
       // needed to show active items in forced colors mode
@@ -297,22 +307,34 @@ const getStyles = (theme: GrafanaTheme2) => {
         outline: '1px solid transparent',
       },
     }),
-    destructive: css({
-      color: theme.colors.error.text,
-
-      svg: {
+    destructive: css(
+      {
         color: theme.colors.error.text,
-      },
-
-      '&:hover, &:focus, &:focus-visible': {
-        background: theme.colors.error.main,
-        color: theme.colors.error.contrastText,
 
         svg: {
+          color: theme.colors.error.text,
+        },
+
+        '&:hover, &:focus, &:focus-visible': {
+          background: theme.colors.error.main,
           color: theme.colors.error.contrastText,
+
+          svg: {
+            color: theme.colors.error.contrastText,
+          },
         },
       },
-    }),
+      visualRefreshEnabled && {
+        '&:hover, &:focus, &:focus-visible': {
+          background: theme.colors.error.background,
+          color: theme.colors.error.contrastText,
+
+          svg: {
+            color: theme.colors.error.contrastText,
+          },
+        },
+      }
+    ),
     disabled: css({
       color: theme.colors.action.disabledText,
       label: 'menu-item-disabled',

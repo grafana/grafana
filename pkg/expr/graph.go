@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -96,8 +97,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		// dependency-error path — no separate transitive propagation needed.
 		if disabledErr := node.DisabledErr(); disabledErr != nil {
 			if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
-				var sqlErr *sql.ErrorWithCategory
-				if errors.As(disabledErr, &sqlErr) {
+				if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](disabledErr); ok {
 					s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
 				}
 			}
@@ -118,8 +118,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 						// although the SQL expression won't be executed,
 						// we track a dependency error on the metric.
 						eType := e.Category()
-						var errWithType *sql.ErrorWithCategory
-						if errors.As(res.Error, &errWithType) {
+						if errWithType, ok := errors.AsType[*sql.ErrorWithCategory](res.Error); ok {
 							// If it is already SQL error with type (e.g. limit exceeded, input conversion, capture the type as that)
 							eType = errWithType.Category()
 						}
@@ -154,7 +153,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			return vars, makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String())
 		}
 
-		res, err := execNode.Execute(c, now, vars, s)
+		res, err := executeNode(c, execNode, now, vars, s)
 		if err != nil {
 			res.Error = err
 		}
@@ -163,6 +162,18 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		span.End()
 	}
 	return vars, nil
+}
+
+// executeNode isolates panics so unrelated nodes can still execute.
+func executeNode(ctx context.Context, node ExecutableNode, now time.Time, vars mathexp.Vars, s *Service) (res mathexp.Results, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			logger.FromContext(ctx).Error("Panic while executing node", "refId", node.RefID(), "error", p, "stack", log.Stack(1))
+			res = mathexp.Results{}
+			err = makePanicError(node.RefID())
+		}
+	}()
+	return node.Execute(ctx, now, vars, s)
 }
 
 // GetDatasourceTypes returns an unique list of data source types used in the query. Machine learning node is encoded as `ml_<type>`, e.g. ml_outlier
@@ -221,8 +232,7 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 	}
 
 	instrumentSQLError := func(err error, span trace.Span) {
-		var sqlErr *sql.ErrorWithCategory
-		if errors.As(err, &sqlErr) {
+		if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](err); ok {
 			// The SQL expression (and the entire pipeline) will not be executed, so we
 			// track the attempt to execute here.
 			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()

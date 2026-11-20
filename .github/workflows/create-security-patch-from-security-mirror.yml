@@ -17,6 +17,10 @@ on:
       - "main"
       - "v*.*.*"
       - "release-*.*.*"
+      # Vendor-targeting patches: authors PR against "<branch>#vendor" (published by
+      # security-patch-actions alongside "<branch>#patched") to modify a vendored dependency
+      # directly. "#" is not a path separator, so this also matches "release-*.*.*#vendor" etc.
+      - "*#vendor"
 
 concurrency:
   group: create-patch-${{ github.ref }}
@@ -90,7 +94,7 @@ jobs:
       - name: Get GitHub App token
         if: ${{ steps.labels.outputs.vul_id != '' }}
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-releases-oss
 
@@ -151,6 +155,12 @@ jobs:
                 + `The PR in \`grafana-security-patches\` will appear/update on branch \`patch/${VUL_ID}\` `
                 + `(a link will be posted here once it's created).`,
             ].join('\n');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER), per_page: 100,
+            });
+            for (const c of comments.filter(c => c.user.login === 'github-actions[bot]' && c.body.startsWith('🔐 **Security patch dispatched**'))) {
+              await github.graphql('mutation($id: ID!) { minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) { clientMutationId } }', {id: c.node_id});
+            }
             await github.rest.issues.createComment({
               owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER), body,
             });

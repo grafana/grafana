@@ -1,32 +1,22 @@
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type IconName, type ThemeVizHue } from '@grafana/data';
 
-import { type SolutionSparklineData } from './SolutionSparkline';
+/** Named shade of a theme visualization hue, e.g. `green` or `dark-green`. */
+export type VizColorName = ThemeVizHue['shades'][number]['name'];
 
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
   title: string;
   icon: IconName;
-  color: string | ((theme: GrafanaTheme2) => string);
+  /** Resolved with `theme.visualization.getColorByName` where rendered so theme switches apply. */
+  color: VizColorName;
   context: string; // short "why you are seeing this" line under the title
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
+  /** CTA intent for analytics; defaults to enabling a disabled app. */
+  cta?: 'enable' | 'setup' | 'learn_more';
 }
 
-export interface ExistingItem {
-  title: string;
-  icon: IconName;
-  subtitle?: string;
-  stats?: { primary: string; secondary: string };
-  statsLoading?: boolean;
-  sparkline?: SolutionSparklineData;
-  sparklineLoading?: boolean;
-  alert?: {
-    primary: string;
-    details?: string[];
-    action: string;
-    href: string;
-  };
-  action: string;
-  href: string;
+export function isExternal(href: string): boolean {
+  return /^https?:\/\//.test(href);
 }

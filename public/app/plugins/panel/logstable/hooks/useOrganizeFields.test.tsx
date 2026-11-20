@@ -10,12 +10,14 @@ import {
 } from '@grafana/data';
 // Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { setTemplateSrv } from '@grafana/runtime';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
 
 import { useExtractFields } from './useExtractFields';
@@ -50,6 +52,7 @@ describe('useOrganizeFields', () => {
       // already initialized in this Jest worker
     }
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
+    setTemplateSrv(initTemplateSrv('key', []));
   });
 
   let extractedFrame: DataFrame;
@@ -296,6 +299,63 @@ describe('useOrganizeFields', () => {
           expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
         }
       });
+    });
+  });
+
+  describe('time column header tooltip', () => {
+    test('sets headerTooltip on the time field when provided', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+          timeColumnHeaderTooltip: 'Only sorts the results on display',
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+      });
+
+      const timeField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_TIMESTAMP_NAME
+      );
+      const bodyField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_BODY_NAME
+      );
+      expect(timeField?.config.custom?.headerTooltip).toBe('Only sorts the results on display');
+      expect(bodyField?.config.custom?.headerTooltip).toBeUndefined();
+    });
+
+    test('does not set headerTooltip on the time field when omitted', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+      });
+
+      const timeField = organizedFields.current.organizedFrame?.fields.find(
+        (field) => field.name === LOGS_DATAPLANE_TIMESTAMP_NAME
+      );
+      expect(timeField?.config.custom?.headerTooltip).toBeUndefined();
     });
   });
 });

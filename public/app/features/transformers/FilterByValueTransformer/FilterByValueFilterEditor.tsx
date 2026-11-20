@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 
-import { type Field, type SelectableValue, valueMatchers } from '@grafana/data';
+import { type Field, type SelectableValue, ValueMatcherID, valueMatchers } from '@grafana/data';
 import { type FilterByValueFilter } from '@grafana/data/internal';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
 
@@ -12,6 +13,7 @@ interface Props {
   onChange: (filter: FilterByValueFilter) => void;
   filter: FilterByValueFilter;
   fieldsInfo: DataFrameFieldsInfo;
+  index: number;
 }
 
 export interface DataFrameFieldsInfo {
@@ -20,13 +22,22 @@ export interface DataFrameFieldsInfo {
 }
 
 export const FilterByValueFilterEditor = (props: Props) => {
-  const { onDelete, onChange, filter, fieldsInfo } = props;
+  const { onDelete, onChange, filter, fieldsInfo, index } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
+  const readOnlyMatcher =
+    filter.config.id === ValueMatcherID.inSet ? valueMatchers.get(ValueMatcherID.inSet) : undefined;
   const matcherOptions = field ? getMatcherOptions(field) : [];
+  if (readOnlyMatcher) {
+    matcherOptions.unshift({
+      value: readOnlyMatcher.id,
+      label: readOnlyMatcher.getOptionsDisplayText?.(filter.config.options ?? readOnlyMatcher.getDefaultOptions(field)),
+      isDisabled: true,
+    });
+  }
   const matcherId = getSelectedMatcherId(filter, matcherOptions);
-  const editor = valueMatchersUI.getIfExists(matcherId);
+  const editor = matcherId ? valueMatchersUI.getIfExists(matcherId) : undefined;
 
   const onChangeField = useCallback(
     (selectable?: SelectableValue<string>) => {
@@ -36,6 +47,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
       onChange({
         ...filter,
         fieldName: selectable.value,
+        field: undefined,
       });
     },
     [onChange, filter]
@@ -71,7 +83,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
     [onChange, filter]
   );
 
-  if (!field || !editor || !editor.component) {
+  if (!field || (!readOnlyMatcher && !editor?.component)) {
     return null;
   }
 
@@ -84,6 +96,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
+          data-testid={selectors.components.Transforms.FilterByValue.fieldSelect(String(index))}
         />
       </InlineField>
       <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
@@ -93,11 +106,14 @@ export const FilterByValueFilterEditor = (props: Props) => {
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
+          data-testid={selectors.components.Transforms.FilterByValue.matchSelect(String(index))}
         />
       </InlineField>
-      <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
-        <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
-      </InlineField>
+      {!readOnlyMatcher && editor?.component && (
+        <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
+          <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
+        </InlineField>
+      )}
       <Box marginBottom={0.5}>
         <Button
           aria-label={t('transformers.filter-by-value-filter-editor.aria-label-remove-filter', 'Remove filter')}

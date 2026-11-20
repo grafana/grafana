@@ -1,5 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Stack, Text, TextLink } from '@grafana/ui';
 
@@ -20,8 +18,6 @@ interface GitSyncLimitationsAlertProps {
  * limitations and the advice to enable the announcement banner.
  */
 export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertProps) {
-  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
-
   return (
     <Alert
       title={t('provisioning.wizard.alert-title', 'Important: Review Git Sync limitations before proceeding')}
@@ -48,14 +44,6 @@ export function GitSyncLimitationsAlert({ syncTarget }: GitSyncLimitationsAlertP
               Alerts and library panels are not supported in provisioned folders.
             </Trans>
           </li>
-          {!provisioningFolderMetadataEnabled && (
-            <li>
-              <Trans i18nKey="provisioning.wizard.alert-point-permissions">
-                Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles
-                are preserved with their standard access levels.
-              </Trans>
-            </li>
-          )}
           <li>
             <Trans i18nKey="provisioning.wizard.alert-point-3">
               The duration of this process depends on the number of resources involved.

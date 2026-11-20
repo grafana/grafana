@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -105,6 +104,8 @@ type K8sTestHelper struct {
 	orgSvc  org.Service
 	teamSvc team.Service
 	userSvc user.Service
+
+	reuseExistingUsers bool
 }
 
 type K8sTestHelperOpts struct {
@@ -115,6 +116,11 @@ type K8sTestHelperOpts struct {
 	// CustomHTTPClient replaces the shared HTTP client for this helper only.
 	// When nil, the shared default client is used.
 	CustomHTTPClient *http.Client
+	// ReuseExistingUsers looks up the default test users by login instead of failing when
+	// they already exist, so a new process can start against a database provisioned by
+	// another process. Service accounts and teams are not created in this mode, because
+	// their tokens cannot be recovered from the database.
+	ReuseExistingUsers bool
 }
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
@@ -193,23 +199,25 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 		t:               t,
 		Namespacer:      request.GetNamespaceMapper(nil),
 		httpClient:      httpClient,
+
+		reuseExistingUsers: opts.ReuseExistingUsers,
 	}
 
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(c.env.SQLStore), cfgProvider)
-	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(c.env.SQLStore), c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.NewLegacyService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(legacysql.NewDatabaseProvider(c.env.SQLStore), tracing.NewNoopTracerService(), nil)
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
 	userSvc, err := userimpl.NewLegacyService(
-		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
+		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -262,6 +270,34 @@ func (c *K8sTestHelper) loadAPIGroups() {
 	}
 }
 
+// WaitForCoreApp waits until the router serves group from a core app. Until
+// its first reconcile completes, the router leaves every request to the
+// embedded API server, which would make a routed run test the legacy builder.
+func (c *K8sTestHelper) WaitForCoreApp(group string) {
+	c.t.Helper()
+	require.EventuallyWithT(c.t, func(t *assert.CollectT) {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Admin,
+			Path: "/apis/discovery/v1alpha2/status",
+		}, &struct {
+			Ready  bool `json:"ready"`
+			Groups []struct {
+				Group  string `json:"group"`
+				Source string `json:"source"`
+			} `json:"groups"`
+		}{})
+		if !assert.Equal(t, http.StatusOK, rsp.Response.StatusCode, "router status: %s", rsp.Body) {
+			return
+		}
+		assert.True(t, rsp.Result.Ready, "router is not ready")
+		served := false
+		for _, g := range rsp.Result.Groups {
+			served = served || (g.Group == group && g.Source == "core")
+		}
+		assert.True(t, served, "router does not serve %s from a core app", group)
+	}, 30*time.Second, 100*time.Millisecond)
+}
+
 func (c *K8sTestHelper) GetEnv() server.TestEnv {
 	return c.env
 }
@@ -276,6 +312,10 @@ func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) 
 
 func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
 	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
+}
+
+func (c *K8sTestHelper) SetQuotaError(err error) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetError(err)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -820,6 +860,9 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		None:   c.CreateUser("none", orgName, org.RoleNone, nil),
 	}
 	users.OrgID = users.Admin.Identity.GetOrgID()
+	if c.reuseExistingUsers {
+		return users
+	}
 
 	// Create service accounts
 	users.AdminServiceAccount = c.CreateServiceAccount(users.Admin, "admin-sa", users.OrgID, org.RoleAdmin)
@@ -880,19 +923,32 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
 	}
 
-	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
-		DefaultOrgRole: string(basicRole),
-		Password:       user.Password(name),
-		Login:          login,
-		OrgID:          orgId,
-		IsAdmin:        isGrafanaAdmin,
-		Name:           name,
-		Email:          fmt.Sprintf("%s@example.com", login),
-	})
-	require.NoError(c.t, err)
+	var u *user.User
+	var err error
+	if c.reuseExistingUsers {
+		u, err = c.userSvc.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: login})
+		if goerrors.Is(err, user.ErrUserNotFound) {
+			u = nil
+		} else {
+			require.NoError(c.t, err)
+		}
+	}
+	created := u == nil
+	if created {
+		u, err = c.userSvc.Create(context.Background(), &user.CreateUserCommand{
+			DefaultOrgRole: string(basicRole),
+			Password:       user.Password(name),
+			Login:          login,
+			OrgID:          orgId,
+			IsAdmin:        isGrafanaAdmin,
+			Name:           name,
+			Email:          fmt.Sprintf("%s@example.com", login),
+		})
+		require.NoError(c.t, err)
+	}
 
 	// for tests to work we need to add grafana admins to every org
-	if isGrafanaAdmin {
+	if isGrafanaAdmin && created {
 		orgs, err := c.orgSvc.Search(context.Background(), &org.SearchOrgsQuery{})
 		require.NoError(c.t, err)
 		for _, o := range orgs {
@@ -968,26 +1024,31 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 }
 
 func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permission team.PermissionType) {
-	teampermissionSvc, err := ossaccesscontrol.ProvideTeamPermissions(
-		c.env.Cfg,
-		c.env.FeatureToggles,
-		c.env.Server.HTTPServer.RouteRegister,
-		c.env.SQLStore,
-		c.env.Server.HTTPServer.AccessControl,
-		c.env.Server.HTTPServer.License,
-		c.env.Server.HTTPServer.AlertNG.AccesscontrolService,
-		c.teamSvc,
-		c.userSvc,
-		resourcepermissions.NewActionSetService(),
-		apiserver.ProvideDirectRestConfigProvider(),
-	)
-	require.NoError(c.t, err)
+	c.t.Helper()
 
 	id, err := user.Identity.GetInternalID()
 	require.NoError(c.t, err)
 
-	teamIDString := strconv.FormatInt(teamID, 10)
-	_, err = teampermissionSvc.SetUserPermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, teamIDString, permission.String())
+	actions := ossaccesscontrol.TeamMemberActions
+	if permission == team.PermissionTypeAdmin {
+		actions = ossaccesscontrol.TeamAdminActions
+	}
+
+	dbHelper, err := legacysql.NewDatabaseProvider(c.env.SQLStore)(context.Background())
+	require.NoError(c.t, err)
+
+	// The helper's seeded teams exist only in legacy SQL, so add membership through
+	// the legacy store instead of the redirect-aware TeamPermissionsService.
+	store := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, c.env.FeatureToggles)
+	_, err = store.SetUserResourcePermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Permission:        permission.String(),
+		Resource:          "teams",
+		ResourceID:        strconv.FormatInt(teamID, 10),
+		ResourceAttribute: "id",
+	}, func(session *db.Session, orgID int64, u accesscontrol.User, _, _ string) error {
+		return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, u.ID, orgID, teamID, false, permission)
+	})
 	require.NoError(c.t, err)
 }
 

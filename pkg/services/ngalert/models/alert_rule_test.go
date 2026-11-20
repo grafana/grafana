@@ -314,7 +314,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				var existing *AlertRuleWithOptionals
-				for i := 0; i < 10; i++ {
+				for range 10 {
 					rule := gen.Generate()
 					existing = &AlertRuleWithOptionals{AlertRule: rule}
 					cloned := *existing
@@ -496,7 +496,7 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.Updated, diff[0].Right.Interface())
 			difCnt++
 		}
-		if rule1.UpdatedBy != rule2.UpdatedBy {
+		if !reflect.DeepEqual(rule1.UpdatedBy, rule2.UpdatedBy) {
 			diff := diffs.GetDiffsForField("UpdatedBy")
 			assert.Len(t, diff, 1)
 			difCnt++
@@ -529,12 +529,12 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.NamespaceUID, diff[0].Right.String())
 			difCnt++
 		}
-		if rule1.DashboardUID != rule2.DashboardUID {
+		if !reflect.DeepEqual(rule1.DashboardUID, rule2.DashboardUID) {
 			diff := diffs.GetDiffsForField("DashboardUID")
 			assert.Len(t, diff, 1)
 			difCnt++
 		}
-		if rule1.PanelID != rule2.PanelID {
+		if !reflect.DeepEqual(rule1.PanelID, rule2.PanelID) {
 			diff := diffs.GetDiffsForField("PanelID")
 			assert.Len(t, diff, 1)
 			difCnt++
@@ -958,7 +958,7 @@ func TestDiff(t *testing.T) {
 
 func TestSortByGroupIndex(t *testing.T) {
 	ensureNotSorted := func(t *testing.T, rules []*AlertRule, less func(i, j int) bool) {
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			rand.Shuffle(len(rules), func(i, j int) {
 				rules[i], rules[j] = rules[j], rules[i]
 			})
@@ -1052,7 +1052,7 @@ func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 
 func TestAlertRuleCopy(t *testing.T) {
 	t.Run("should return a copy of the rule", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			rule := RuleGen.GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
@@ -1067,7 +1067,7 @@ func TestAlertRuleCopy(t *testing.T) {
 		require.NotSame(t, rule.Metadata.PrometheusStyleRule, copied.Metadata.PrometheusStyleRule)
 	})
 	t.Run("should return an exact copy of recording rule", func(t *testing.T) {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			rule := RuleGen.With(RuleGen.WithAllRecordingRules()).GenerateRef()
 			copied := rule.Copy()
 			require.Empty(t, rule.Diff(copied))
@@ -1082,18 +1082,19 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"IsPaused":       {},
 		"Record":         {},
 		"FolderFullpath": {},
+		"K8sStatus":      {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		rule := RuleGen.Generate()
 		v := reflect.ValueOf(rule)
 
@@ -1125,18 +1126,19 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"For":                         {},
 		"NotificationSettings":        {},
 		"FolderFullpath":              {},
+		"K8sStatus":                   {},
 	}
 
-	tpe := reflect.TypeOf(AlertRule{})
+	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		rule := RuleGen.With(RuleGen.WithAllRecordingRules()).Generate()
 		v := reflect.ValueOf(rule)
 

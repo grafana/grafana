@@ -35,6 +35,10 @@ func ProvideResourceDB(cfg *setting.Cfg, grafanaDB infraDB.DB) (db.DBProvider, e
 	}
 }
 
+func ProvideModuleServerKV(cfg *setting.Cfg) (kv.KV, error) {
+	return nil, nil
+}
+
 func ProvideKV(cfg *setting.Cfg, eDB db.DBProvider) (kv.KV, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))

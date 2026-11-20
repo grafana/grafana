@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -11,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -87,12 +90,49 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		return last
 	}
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	grafanaOpts := testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // start the datasource api servers
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,             // register the datasource api groups
+			featuremgmt.FlagDatasourcesApiServerEnableProxyEndpoint,
 		},
+	}
+	grafanaDir, cfgPath := testinfra.CreateGrafDir(t, grafanaOpts)
+
+	pluginDir := filepath.Join(grafanaDir, "plugins", datasources.DS_PROMETHEUS)
+	require.NoError(t, os.MkdirAll(pluginDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(`{
+		"type": "datasource",
+		"name": "Prometheus",
+		"id": "prometheus",
+		"routes": [
+			{
+				"method": "GET",
+				"path": "/query",
+				"reqAction": "datasources:query"
+			},
+			{
+				"method": "GET",
+				"path": "/rules",
+				"reqRole": "Viewer",
+				"reqAction": "alert.rules.external:read"
+			},
+			{
+				"method": "DELETE",
+				"path": "/rules",
+				"reqRole": "Editor",
+				"reqAction": "alert.rules.external:write"
+			}
+		],
+		"info": {
+			"version": "1.0.0"
+		}
+	}`), 0o600))
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		Dir:     grafanaDir,
+		DirPath: cfgPath,
 	})
 
 	ds := helper.CreateDS(&datasources.AddDataSourceCommand{
@@ -136,8 +176,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		return "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/" + dsUID + "/proxy/" + sub
 	}
 
-	// A viewer with the query permission may reach the proxy, but the Prometheus
-	// admin (rules) routes require the Editor role.
+	// A viewer with the query permission may reach the proxy, but cannot write alert rules.
 	routeViewer := helper.CreateUser("proxy-route-viewer", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           []string{datasources.ActionQuery},
@@ -146,6 +185,27 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 			ResourceAttribute: "uid",
 		},
 	})
+	alertReader := func(name, scopeUID string) apis.User {
+		permissions := []resourcepermissions.SetResourcePermissionCommand{{
+			Actions:           []string{datasources.ActionQuery},
+			Resource:          datasources.ScopeRoot,
+			ResourceID:        uid,
+			ResourceAttribute: "uid",
+		}}
+		if scopeUID == uid {
+			permissions[0].Actions = append(permissions[0].Actions, accesscontrol.ActionAlertingRuleExternalRead)
+		} else {
+			permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
+				Actions:           []string{accesscontrol.ActionAlertingRuleExternalRead},
+				Resource:          datasources.ScopeRoot,
+				ResourceID:        scopeUID,
+				ResourceAttribute: "uid",
+			})
+		}
+		return helper.CreateUser(name, apis.Org1, org.RoleNone, permissions)
+	}
+	scopedAlertReader := alertReader("proxy-alert-reader", uid)
+	otherAlertReader := alertReader("proxy-other-alert-reader", "another-datasource")
 
 	transports := []struct {
 		name string
@@ -206,15 +266,35 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		})
 
 		t.Run(transport.name+" enforces plugin route RBAC", func(t *testing.T) {
-			// DELETE /rules requires Editor -> denied for the viewer.
 			status, _ := doProxy(routeViewer, http.MethodDelete, transport.path(uid, "rules"), nil)
 			require.Equal(t, http.StatusForbidden, status)
 			require.Nil(t, upstreamGot(), "RBAC-denied request must not reach the upstream")
 
-			// GET /rules only requires Viewer -> allowed.
-			status, body := doProxy(routeViewer, http.MethodGet, transport.path(uid, "rules"), nil)
+			// Both proxy endpoints evaluate the same explicit route permissions.
+			for _, request := range []struct {
+				user   apis.User
+				method string
+				path   string
+			}{
+				{routeViewer, http.MethodGet, "query"},
+				{routeViewer, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodGet, "rules"},
+				{helper.Org1.Admin, http.MethodDelete, "rules"},
+			} {
+				status, body := doProxy(request.user, request.method, transport.path(uid, request.path), nil)
+				require.Equal(t, http.StatusOK, status, "body: %s", body)
+				require.NotNil(t, upstreamGot())
+			}
+		})
+
+		t.Run(transport.name+" scopes alert permissions to the datasource", func(t *testing.T) {
+			status, body := doProxy(scopedAlertReader, http.MethodGet, transport.path(uid, "rules"), nil)
 			require.Equal(t, http.StatusOK, status, "body: %s", body)
 			require.NotNil(t, upstreamGot())
+
+			status, body = doProxy(otherAlertReader, http.MethodGet, transport.path(uid, "rules"), nil)
+			require.Equal(t, http.StatusForbidden, status, "body: %s", body)
+			require.Nil(t, upstreamGot(), "a grant on another datasource must not reach the upstream")
 		})
 
 		t.Run(transport.name+" returns 404 for an unknown datasource", func(t *testing.T) {

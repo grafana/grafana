@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,7 +17,7 @@ import (
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 )
 
 // Validator is the interface for repository validation.
@@ -28,15 +30,28 @@ type Validator interface {
 type RepositoryValidator struct {
 	allowImageRendering bool
 	repoFactory         Factory
+	urlValidator        *URLValidator
 }
+
+type ValidatorOption func(*RepositoryValidator)
 
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
-	return &RepositoryValidator{
+func NewValidator(allowImageRendering bool, repoFactory Factory, opts ...ValidatorOption) Validator {
+	v := &RepositoryValidator{
 		allowImageRendering: allowImageRendering,
 		repoFactory:         repoFactory,
+	}
+	for _, opt := range opts {
+		opt(v)
+	}
+	return v
+}
+
+func WithURLValidator(urlValidator *URLValidator) ValidatorOption {
+	return func(v *RepositoryValidator) {
+		v.urlValidator = urlValidator
 	}
 }
 
@@ -87,6 +102,7 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	list = append(list, validateWorkflowOptions(cfg)...)
+	list = append(list, validateCommitOptions(cfg)...)
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
@@ -101,7 +117,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	// Validating the presence of finalizers in resources not marked for deletion.
-	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+	// DeletionTimestamp.IsZero() is nil-safe (pointer receiver) and true exactly
+	// when the resource is not being deleted.
+	if cfg.DeletionTimestamp.IsZero() {
 		if len(cfg.Finalizers) == 0 {
 			list = append(list,
 				field.Invalid(
@@ -141,8 +159,42 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
 		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
 	}
+	list = append(list, v.validatePrivateEndpoint(ctx, cfg)...)
 
 	return list
+}
+
+func (v *RepositoryValidator) validatePrivateEndpoint(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
+	rawURL := cfg.URL()
+	if rawURL == "" {
+		return nil
+	}
+
+	if !hasURLHost(rawURL) {
+		return nil
+	}
+
+	// No validator is configured, the URL is not validated.
+	if util.IsInterfaceNil(v.urlValidator) {
+		return nil
+	}
+
+	if err := v.urlValidator.ValidateURL(ctx, rawURL); err != nil {
+		return field.ErrorList{
+			field.Invalid(
+				field.NewPath("spec", string(cfg.Spec.Type), "url"),
+				rawURL,
+				"repository URL host must resolve to a public or allowed address",
+			),
+		}
+	}
+
+	return nil
+}
+
+func hasURLHost(rawURL string) bool {
+	parsed, err := url.Parse(rawURL)
+	return err == nil && parsed.Hostname() != ""
 }
 
 // validateWorkflowOptions rejects branch, commit and pull request options on repository
@@ -175,6 +227,44 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 		}
 	default:
 		// Hosting providers (github, githubEnterprise, bitbucket, gitlab) support all options.
+	}
+
+	return list
+}
+
+// validateCommitOptions keeps the two ways of setting a commit identity apart: the
+// signer identity only applies to signed commits, and the author override only
+// applies when commits are not signed.
+func validateCommitOptions(cfg *provisioning.Repository) field.ErrorList {
+	commit := cfg.Spec.Commit
+	if commit == nil {
+		return nil
+	}
+
+	path := field.NewPath("spec", "commit")
+	var list field.ErrorList
+
+	if commit.SigningMethod == "" {
+		const detail = "signer identity requires a signing method; use authorName/authorEmail to set the commit author without signing"
+		if commit.SignerName != "" {
+			list = append(list, field.Invalid(path.Child("signerName"), commit.SignerName, detail))
+		}
+		if commit.SignerEmail != "" {
+			list = append(list, field.Invalid(path.Child("signerEmail"), commit.SignerEmail, detail))
+		}
+		if commit.SignerIsAuthor {
+			list = append(list, field.Invalid(path.Child("signerIsAuthor"), commit.SignerIsAuthor, detail))
+		}
+
+		return list
+	}
+
+	const detail = "author override is not allowed when commit signing is enabled; use signerName/signerEmail with signerIsAuthor instead"
+	if commit.AuthorName != "" {
+		list = append(list, field.Invalid(path.Child("authorName"), commit.AuthorName, detail))
+	}
+	if commit.AuthorEmail != "" {
+		list = append(list, field.Invalid(path.Child("authorEmail"), commit.AuthorEmail, detail))
 	}
 
 	return list
@@ -266,6 +356,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
@@ -335,15 +429,39 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run validators
-	for _, validator := range v.validators {
-		list = append(list, validator.Validate(ctx, r)...)
-		if len(list) > 0 {
-			return invalidRepositoryError(a.GetName(), list)
+	// Switching the sync off introduces no content to authorize, and a repository whose path
+	// or URL has stopped being permitted must still be able to turn its own sync off.
+	if !isSyncDisableOnly(a, r) {
+		for _, validator := range v.validators {
+			list = append(list, validator.Validate(ctx, r)...)
+			if len(list) > 0 {
+				return invalidRepositoryError(a.GetName(), list)
+			}
 		}
 	}
 
 	return nil
+}
+
+// isSyncDisableOnly reports whether this update only turns off a running sync. Finalizers and
+// secure values count as changes too: both carry rules the validators enforce.
+func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
+	if a.GetOperation() != admission.Update {
+		return false
+	}
+	old, ok := a.GetOldObject().(*provisioning.Repository)
+	if !ok || !old.Spec.Sync.Enabled || r.Spec.Sync.Enabled {
+		return false
+	}
+
+	// The interval is excluded because the mutator clamps it to min_sync_interval before this
+	// runs, so raising that setting would make every disable look like a second change.
+	want := old.DeepCopy()
+	want.Spec.Sync.Enabled = false
+	want.Spec.Sync.IntervalSeconds = r.Spec.Sync.IntervalSeconds
+	return apiequality.Semantic.DeepEqual(&r.Spec, &want.Spec) &&
+		apiequality.Semantic.DeepEqual(&r.Secure, &want.Secure) &&
+		slices.Equal(r.Finalizers, want.Finalizers)
 }
 
 func invalidRepositoryError(name string, list field.ErrorList) error {

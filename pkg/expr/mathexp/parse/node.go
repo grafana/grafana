@@ -9,6 +9,7 @@ package parse
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // A Node is an element in the parse tree. The interface is trivial.
@@ -137,28 +138,30 @@ func (f *FuncNode) append(arg Node) {
 
 // String returns the string representation of the FuncNode so it fulfills the Node interface.
 func (f *FuncNode) String() string {
-	s := f.Name + "("
+	var s strings.Builder
+	s.WriteString(f.Name + "(")
 	for i, arg := range f.Args {
 		if i > 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += arg.String()
+		s.WriteString(arg.String())
 	}
-	s += ")"
-	return s
+	s.WriteString(")")
+	return s.String()
 }
 
 // StringAST returns the string representation of abstract syntax tree of the FuncNode so it fulfills the Node interface.
 func (f *FuncNode) StringAST() string {
-	s := f.Name + "("
+	var s strings.Builder
+	s.WriteString(f.Name + "(")
 	for i, arg := range f.Args {
 		if i > 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += arg.StringAST()
+		s.WriteString(arg.StringAST())
 	}
-	s += ")"
-	return s
+	s.WriteString(")")
+	return s.String()
 }
 
 // Check performs parse time checking on the FuncNode so it fulfills the Node interface.
@@ -338,6 +341,13 @@ type UnaryNode struct {
 	Arg      Node
 	Operator item
 	OpStr    string
+
+	// retType/retComputed cache the result of Return(), since Return() walks
+	// the full chain of nested unary nodes and Check() calls it once per
+	// nesting level. Without caching, a chain of n unary nodes costs O(n^2)
+	// to check.
+	retType     ReturnType
+	retComputed bool
 }
 
 func newUnary(operator item, arg Node) *UnaryNode {
@@ -366,7 +376,11 @@ func (u *UnaryNode) Check(t *Tree) error {
 
 // Return returns the result type of the UnaryNode so it fulfills the Node interface.
 func (u *UnaryNode) Return() ReturnType {
-	return u.Arg.Return()
+	if !u.retComputed {
+		u.retType = u.Arg.Return()
+		u.retComputed = true
+	}
+	return u.retType
 }
 
 // Walk invokes f on n and sub-nodes of n.

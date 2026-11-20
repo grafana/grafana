@@ -1,47 +1,56 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type FieldPathValues, useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
-import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
+import { getAlertQueriesStatus, useAlertQueryDataSources } from '../../hooks/alertQueriesStatus';
 import { type PreviewRuleRequest, type PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
+const fields = ['type', 'dataSourceName', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<
+  keyof RuleFormValues
+>;
+type PreviewRuleValues = FieldPathValues<RuleFormValues, typeof fields>;
 
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const [preview, onPreview] = usePreview();
   const { watch } = useFormContext<RuleFormValues>();
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
+  const { dataSourcesByUid, isLoading: isDsLoading } = useAlertQueryDataSources(queries);
+  const { allDataSourcesAvailable } = getAlertQueriesStatus(queries, dataSourcesByUid);
 
   if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }
 
-  const isPreviewAvailable = Boolean(condition) && allDataSourcesAvailable;
+  const isPreviewAvailable = Boolean(condition) && !isDsLoading && allDataSourcesAvailable;
 
   return (
     <div className={styles.container}>
       <Stack>
-        {allDataSourcesAvailable && (
-          <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
+        {(isDsLoading || allDataSourcesAvailable) && (
+          <Button
+            disabled={!isPreviewAvailable}
+            type="button"
+            variant="primary"
+            icon={isDsLoading ? 'spinner' : undefined}
+            onClick={onPreview}
+          >
             <Trans i18nKey="alerting.preview-rule.preview-alerts">Preview alerts</Trans>
           </Button>
         )}
-        {!allDataSourcesAvailable && (
+        {!isDsLoading && !allDataSourcesAvailable && (
           <Alert
             title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
             severity="warning"
@@ -79,22 +88,28 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   return [preview, onPreview];
 }
 
-function createPreviewRequest(values: any[]): PreviewRuleRequest {
+function createPreviewRequest(values: PreviewRuleValues): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-  if (!dsSettings) {
-    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
-  }
 
   switch (type) {
-    case RuleFormType.cloudAlerting:
+    case RuleFormType.cloudAlerting: {
+      // The cloud data source picker writes the selected data source uid into the first query.
+      const dataSourceUid = queries[0]?.datasourceUid;
+      if (!dataSourceUid) {
+        throw new Error(`Cannot find data source settings for ${dataSourceName}`);
+      }
+
       return {
-        dataSourceUid: dsSettings.uid,
-        dataSourceName,
+        dataSourceUid,
         expr: expression,
       };
+    }
 
     case RuleFormType.grafana:
+      if (!condition) {
+        throw new Error('Cannot preview a Grafana-managed rule without a condition');
+      }
+
       return {
         grafana_condition: {
           condition,

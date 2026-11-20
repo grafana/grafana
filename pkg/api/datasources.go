@@ -171,7 +171,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &datasources.DeleteDataSourceCommand{ID: id, OrgID: c.GetOrgID(), Name: ds.Name}
+	cmd := &datasources.DeleteDataSourceCommand{ID: id, UID: ds.UID, OrgID: c.GetOrgID(), Name: ds.Name}
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
@@ -556,7 +556,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 	}
 
 	query := datasources.GetDataSourceQuery{
-		ID:    cmd.ID,
+		ID:    cmd.ID, //nolint:staticcheck // Preserve legacy field compatibility.
 		OrgID: c.GetOrgID(),
 	}
 
@@ -582,7 +582,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 func (hs *HTTPServer) getRawDataSourceById(ctx context.Context, id int64, orgID int64) (*datasources.DataSource, error) {
 	query := datasources.GetDataSourceQuery{
-		ID:    id,
+		ID:    id, //nolint:staticcheck // Preserve legacy field compatibility.
 		OrgID: orgID,
 	}
 

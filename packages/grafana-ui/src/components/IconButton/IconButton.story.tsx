@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type IconSize, type IconName } from '../../types/icon';
@@ -15,6 +15,7 @@ import mdx from './IconButton.mdx';
 
 interface ScenarioProps {
   background: 'canvas' | 'primary' | 'secondary';
+  tooltip: BasePropsWithTooltip['tooltip'];
 }
 
 const defaultExcludes = ['ariaLabel', 'aria-label'];
@@ -107,41 +108,41 @@ ExamplesSizes.parameters = {
   },
 };
 
-export const ExamplesBackground = (args: BasePropsWithTooltip) => {
-  const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
-    const theme = useTheme2();
-    const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
-
-    return (
-      <div
-        className={css({
-          padding: '30px',
-          background: theme.colors.background[background],
-        })}
-      >
-        <Stack direction="column" gap={2}>
-          <div>{background}</div>
-          <div
-            className={css({
-              display: 'flex',
-              gap: theme.spacing(2),
-            })}
-          >
-            {variants.map((variant) => {
-              return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip={args.tooltip} />;
-            })}
-            <IconButton name="times" size="xl" tooltip={args.tooltip} disabled />
-          </div>
-        </Stack>
-      </div>
-    );
-  };
+const RenderBackgroundScenario = ({ background, tooltip }: ScenarioProps) => {
+  const theme = useTheme2();
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
   return (
+    <div
+      className={css({
+        padding: '30px',
+        background: theme.colors.background[background],
+      })}
+    >
+      <Stack direction="column" gap={2}>
+        <div>{background}</div>
+        <div
+          className={css({
+            display: 'flex',
+            gap: theme.spacing(2),
+          })}
+        >
+          {variants.map((variant) => {
+            return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip={tooltip} />;
+          })}
+          <IconButton name="times" size="xl" tooltip={tooltip} disabled />
+        </div>
+      </Stack>
+    </div>
+  );
+};
+
+export const ExamplesBackground = (args: BasePropsWithTooltip) => {
+  return (
     <div>
-      <RenderBackgroundScenario background="canvas" />
-      <RenderBackgroundScenario background="primary" />
-      <RenderBackgroundScenario background="secondary" />
+      <RenderBackgroundScenario background="canvas" tooltip={args.tooltip} />
+      <RenderBackgroundScenario background="primary" tooltip={args.tooltip} />
+      <RenderBackgroundScenario background="secondary" tooltip={args.tooltip} />
     </div>
   );
 };

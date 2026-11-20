@@ -1,31 +1,34 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import {
-  useGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-} from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
+import { config, reportInteraction } from '@grafana/runtime';
+import {
+  useFlagGrafanaNavigationAdminSubNav,
+  useFlagGrafanaNavigationInfoArchRefresh,
+} from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useNavTree } from 'app/core/navtree/useNavTree';
+import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useStarredSearch } from 'app/features/stars/hooks';
+import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
-  findByUrl,
+  foldAdministration,
   getActiveItem,
   getPinnedEntries,
+  HIDDEN_NAV_ITEMS,
   hiddenKey,
   hideItem,
   isHideable,
@@ -33,25 +36,19 @@ import {
   NON_MENU_NAV_IDS,
   orderTopLevelSections,
   type PinnedEntry,
+  removeEmptySavedSections,
   removeHiddenItems,
   reorderSections,
   revealItem,
 } from './utils';
 
 export const usePinnedItems = () => {
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
   const k8sPreferences = useListPreferencesQuery(
-    contextSrv.user.isSignedIn && newPrefsEnabled
-      ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` }
-      : skipToken
-  );
-  // TODO remove the legacy query once newPrefsEnabled is fully rolled out
-  const legacyPreferences = useGetUserPreferencesQuery(
-    contextSrv.user.isSignedIn && !newPrefsEnabled ? undefined : skipToken
+    contextSrv.user.isSignedIn ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` } : skipToken
   );
 
-  const preferences = newPrefsEnabled ? k8sPreferences.data?.items[0]?.spec : legacyPreferences.data;
-  const isLoading = newPrefsEnabled ? k8sPreferences.isLoading : legacyPreferences.isLoading;
+  const preferences = k8sPreferences.data?.items[0]?.spec;
+  const isLoading = k8sPreferences.isLoading;
   const pinnedItems = useMemo(() => preferences?.navbar?.bookmarkUrls || [], [preferences]);
 
   return { pinnedItems, isLoading };
@@ -112,8 +109,6 @@ const usePinning = ({
 } => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const [patchPreferences] = usePatchUserPreferencesMutation();
   const [patchPreferencesK8s] = useUpdatePreferencesMutation();
   const { pinnedItems, isLoading } = usePinnedItems();
 
@@ -130,14 +125,12 @@ const usePinning = ({
         onSuccess?.();
         return true;
       };
-      return newPrefsEnabled
-        ? patchPreferencesK8s({
-            name: `user-${contextSrv.user.uid}`,
-            patch: { spec: { navbar: { bookmarkUrls } } },
-          }).then(onResult)
-        : patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
+      return patchPreferencesK8s({
+        name: `user-${contextSrv.user.uid}`,
+        patch: { spec: { navbar: { bookmarkUrls } } },
+      }).then(onResult);
     },
-    [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
+    [patchPreferencesK8s, notifyApp]
   );
 
   // Local copy of the pinned urls so pin/unpin updates the menu immediately (the patch mutation
@@ -147,9 +140,9 @@ const usePinning = ({
   const pinnedItemsKey = pinnedItems.join('\n');
   const [pinnedUrls, setPinnedUrls] = useState<string[]>(pinnedItems);
   const [draftPinnedUrls, setDraftPinnedUrls] = useState<string[]>(pinnedItems);
-  const lastSyncedPinnedUrls = useRef(pinnedItemsKey);
-  if (lastSyncedPinnedUrls.current !== pinnedItemsKey) {
-    lastSyncedPinnedUrls.current = pinnedItemsKey;
+  const [lastSyncedPinnedUrls, setLastSyncedPinnedUrls] = useState(pinnedItemsKey);
+  if (lastSyncedPinnedUrls !== pinnedItemsKey) {
+    setLastSyncedPinnedUrls(pinnedItemsKey);
     setPinnedUrls(pinnedItems);
     // Don't clobber staged edits while editing — the draft is synced from applied state on enter/cancel.
     if (!editMode) {
@@ -197,7 +190,7 @@ const usePinning = ({
   // Reorder the pinned entries (staged; persisted on save). Each entry is one pinned url, so this is
   // a plain move within the stored url list.
   const onReorderPinned = useCallback((fromIndex: number, toIndex: number) => {
-    reportInteraction('grafana_nav_pinned_reordered');
+    reportInteraction('grafana_nav_pinned_reordered', { ...getNavExperimentPayload() });
     setDraftPinnedUrls((current) => moveItem(current, fromIndex, toIndex));
   }, []);
 
@@ -244,6 +237,11 @@ const useHiddenSections = ({
   const onToggleHidden = useCallback(
     (item: NavModelItem, effectivelyHidden: boolean) => {
       const key = hiddenKey(item);
+      // effectivelyHidden means the item is currently hidden, so this toggle reveals it; otherwise it hides it.
+      reportInteraction(effectivelyHidden ? 'grafana_nav_item_shown' : 'grafana_nav_item_hidden', {
+        path: item.url ?? item.id,
+        ...getNavExperimentPayload(),
+      });
       setDraftHiddenIds((current) =>
         effectivelyHidden ? revealItem(current, baseItems, key) : hideItem(current, baseItems, key)
       );
@@ -278,7 +276,7 @@ const useSectionOrdering = ({
 
   const onReorderSection = useCallback(
     (fromIndex: number, toIndex: number) => {
-      reportInteraction('grafana_nav_section_reordered');
+      reportInteraction('grafana_nav_section_reordered', { ...getNavExperimentPayload() });
       setDraftSectionOrder((current) => reorderSections(baseItems, current, fromIndex, toIndex));
     },
     [baseItems]
@@ -299,13 +297,15 @@ const useSectionOrdering = ({
  * and the derived nav structures, keeping `MegaMenu` a thin renderer.
  */
 export const useNavCustomization = () => {
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const docked = state.megaMenuDocked;
 
   const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const navigationInfoArchRefresh = useFlagGrafanaNavigationInfoArchRefresh();
+  const navigationAdminSubNav = useFlagGrafanaNavigationAdminSubNav();
   const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
 
   // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
@@ -320,14 +320,26 @@ export const useNavCustomization = () => {
     reportNavExperimentViewOnce(variant);
   }, [variant]);
 
+  // Searched again on each open so a rename or delete from another tab shows; the tree reads the same rows
+  const { loading: starredItemsLoading, error: starredItemsError } = useStarredSearch({
+    refetchOnMountOrArgChange: true,
+  });
+
   const [editMode, setEditMode] = useState(false);
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
   const [isSaving, setIsSaving] = useState(false);
 
-  // Base tree without the items the mega menu never lists directly. When customisation is on, the
-  // dedicated Bookmarks section is also dropped — pinned items are re-presented in the pinned box.
-  const baseItems = navTree.filter(
-    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
+  // Apply hard-coded exclusions before resolving pins or edit-mode items so neither can reveal them.
+  // When customisation is on, drop Bookmarks too — pinned items are re-presented in the pinned box.
+  const hiddenNavItems = new Set(
+    [...NON_MENU_NAV_IDS, ...(navigationInfoArchRefresh ? HIDDEN_NAV_ITEMS : [])].map((key) =>
+      // If the key starts with a slash, it means it is a URL so we add the subUrl to it
+      key.startsWith('/') ? `${config.appSubUrl}${key}` : key
+    )
+  );
+  const unfoldedItems = removeHiddenItems(navTree, hiddenNavItems);
+  const baseItems = (navigationAdminSubNav ? foldAdministration(unfoldedItems) : unfoldedItems).filter(
+    (item) => !(canCustomise && item.id === 'bookmarks')
   );
 
   const {
@@ -368,7 +380,7 @@ export const useNavCustomization = () => {
 
   // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items
   // here; the main nav below is never pruned. Leaf items are enriched so clicks are tracked.
-  const pinnedEntries: PinnedEntry[] = (canCustomise ? getPinnedEntries(baseItems, effectivePinnedUrls) : []).map(
+  const pinnedEntries: PinnedEntry[] = (canCustomise ? getPinnedEntries(unfoldedItems, effectivePinnedUrls) : []).map(
     (entry) =>
       entry.section
         ? { url: entry.url, section: enrichWithInteractionTracking(entry.section, docked) }
@@ -385,14 +397,14 @@ export const useNavCustomization = () => {
   // shown (greyed) while editing so they can be toggled back. Children are untouched by pinning.
   const orderedTop = canCustomise ? orderTopLevelSections(baseItems, effectiveSectionOrder) : baseItems;
   const visibleTop = canCustomise && !editMode ? removeHiddenItems(orderedTop, new Set(appliedHiddenIds)) : orderedTop;
-  const navItems = visibleTop.map((item) => enrichWithInteractionTracking(item, docked));
+  const enrichedNavItems = visibleTop.map((item) => enrichWithInteractionTracking(item, docked));
 
   if (!canCustomise) {
-    const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
+    const bookmarksItem = enrichedNavItems.find((item) => item.id === 'bookmarks');
     if (bookmarksItem) {
       // Add children to the legacy bookmarks section
       bookmarksItem.children = pinnedItems.reduce<NavModelItem[]>((acc, url) => {
-        const item = findByUrl(navItems, url);
+        const item = findNavByUrl(enrichedNavItems, (itemUrl) => itemUrl === url);
         if (!item) {
           return acc;
         }
@@ -406,6 +418,14 @@ export const useNavCustomization = () => {
       }, []);
     }
   }
+
+  // Starred and Bookmarks are backend-emitted containers; only show them once they have content.
+  const navItems = navigationInfoArchRefresh
+    ? removeEmptySavedSections(enrichedNavItems, {
+        starredPending: starredItemsLoading || starredItemsError,
+        bookmarksPending: pinningLoading,
+      })
+    : enrichedNavItems;
 
   // Resolve the active item from the rendered nav first (the canonical copy), falling back to the
   // pinned box. Reference equality then highlights whichever rendered row is the match.
@@ -446,6 +466,7 @@ export const useNavCustomization = () => {
     reportInteraction('grafana_nav_customise_saved', {
       hiddenCount: draftHiddenIds.length,
       pinnedCount: draftPinnedUrls.length,
+      ...getNavExperimentPayload(),
     });
     setEditMode(false);
   }, [commitPinning, commitHiding, commitOrdering, draftHiddenIds, draftPinnedUrls]);
@@ -455,7 +476,7 @@ export const useNavCustomization = () => {
 
   // Stage the reset (cleared on save, discarded on cancel) rather than persisting immediately.
   const onResetToDefault = useCallback(() => {
-    reportInteraction('grafana_nav_customise_reset');
+    reportInteraction('grafana_nav_customise_reset', { ...getNavExperimentPayload() });
     resetPinning();
     resetHiding();
     resetOrdering();
@@ -465,6 +486,8 @@ export const useNavCustomization = () => {
     canCustomise,
     isLoading,
     navItems,
+    starredItemsLoading,
+    starredItemsError,
     pinnedEntries,
     activeItem,
     isPinned,

@@ -1,7 +1,9 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import type uPlot from 'uplot';
+
+import { createTheme, FieldType, MutableDataFrame, ReducerID } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { getStackingGroups, preparePlotData2 } from './utils';
+import { findMidPointYPosition, getDisplayValuesForCalcs, getStackingGroups, preparePlotData2 } from './utils';
 
 describe('preparePlotData2', () => {
   const df = new MutableDataFrame({
@@ -1316,5 +1318,157 @@ describe('auto stacking groups', () => {
         },
       ]
     `);
+  });
+
+  describe('with previous groups', () => {
+    // posCount of 20 sampled values are positive, the rest negative
+    const makeFrame = (posCount: number, transform?: GraphTransform) =>
+      new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: Array.from({ length: 20 }, (_, i) => i) },
+          {
+            name: 'a',
+            values: Array.from({ length: 20 }, (_, i) => (i < posCount ? 1 : -1)),
+            config: { custom: { transform, stacking: { mode: StackingMode.Normal } } },
+          },
+        ],
+      });
+
+    it('keeps a negative direction while the sign split stays within the flip margin', () => {
+      const df = makeFrame(11);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: 1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: -1 }])).toEqual([{ series: [1], dir: -1 }]);
+    });
+
+    it('keeps a positive direction while the sign split stays within the flip margin', () => {
+      const df = makeFrame(9);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: -1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: 1 }]);
+    });
+
+    it('flips the direction once the sign split clearly reverses', () => {
+      expect(getStackingGroups(makeFrame(14), [{ series: [1], dir: -1 }])).toEqual([{ series: [1], dir: 1 }]);
+      expect(getStackingGroups(makeFrame(6), [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: -1 }]);
+    });
+
+    it('applies the flip margin after the negative-Y transform', () => {
+      const df = makeFrame(11, GraphTransform.NegativeY);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: -1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: 1 }]);
+    });
+  });
+});
+
+describe('findMidPointYPosition', () => {
+  function makeUPlot(
+    seriesData: Array<Array<number | null | undefined>>,
+    valToPosImpl?: (val: number) => number
+  ): uPlot {
+    const valToPos = jest.fn((val: number) => (valToPosImpl ? valToPosImpl(val) : val));
+    return {
+      data: [seriesData[0], ...seriesData.slice(1)],
+      series: seriesData.map((_, i) => ({ scale: i === 0 ? 'x' : 'y' })),
+      bbox: { height: 200 },
+      valToPos,
+    } as unknown as uPlot;
+  }
+
+  it('returns undefined when all values at idx are null', () => {
+    const u = makeUPlot([
+      [0, 1, 2],
+      [null, null, null],
+    ]);
+    const result = findMidPointYPosition(u, 0);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns midpoint between min and max series values', () => {
+    const u = makeUPlot(
+      [
+        [0, 1, 2],
+        [10, 20, 30],
+        [40, 50, 60],
+      ],
+      (val) => val
+    );
+    const result = findMidPointYPosition(u, 0);
+    expect(result).toBe((10 + 40) / 2);
+  });
+
+  it('snaps to single value when only one series has data at idx', () => {
+    const u = makeUPlot(
+      [
+        [0, 1, 2],
+        [null, null, null],
+        [null, 50, null],
+      ],
+      (val) => val
+    );
+    const result = findMidPointYPosition(u, 1);
+    expect(result).toBe(50);
+  });
+
+  it('clamps to bottom of canvas when y is negative', () => {
+    const u = makeUPlot([[0], [-999]], () => -10);
+    u.bbox.height = 200;
+    const result = findMidPointYPosition(u, 0);
+    expect(result).toBe(200 / devicePixelRatio);
+  });
+});
+
+describe('getDisplayValuesForCalcs', () => {
+  const theme = createTheme();
+
+  it('returns empty array when calcs is empty', () => {
+    const field = new MutableDataFrame({
+      fields: [{ name: 'v', type: FieldType.number, values: [1, 2, 3] }],
+    }).fields[0];
+    expect(getDisplayValuesForCalcs([], field, theme)).toEqual([]);
+  });
+
+  it('returns display values for standard reducers', () => {
+    const field = new MutableDataFrame({
+      fields: [{ name: 'v', type: FieldType.number, values: [1, 2, 3] }],
+    }).fields[0];
+    field.display = (v) => ({ text: String(v), numeric: Number(v) });
+    const results = getDisplayValuesForCalcs([ReducerID.mean], field, theme);
+    expect(results).toHaveLength(1);
+    expect(results[0].text).toBe('2');
+    expect(results[0].title).toBeDefined();
+  });
+
+  it('computes the percentage difference and formats it with a percent suffix for diffperc', () => {
+    const field = new MutableDataFrame({
+      fields: [{ name: 'v', type: FieldType.number, values: [10, 20] }],
+    }).fields[0];
+    const results = getDisplayValuesForCalcs([ReducerID.diffperc], field, theme);
+    expect(results).toHaveLength(1);
+    // 10 -> 20 is a +100% change, rendered as "100 %"
+    expect(results[0].numeric).toBe(100);
+    expect(results[0].text).toBe('100');
+    expect(results[0].suffix).toContain('%');
+  });
+
+  it('uses count unit formatter for count reducer', () => {
+    const field = new MutableDataFrame({
+      fields: [{ name: 'v', type: FieldType.number, values: [1, 2, 3, 4] }],
+    }).fields[0];
+    const results = getDisplayValuesForCalcs([ReducerID.count], field, theme);
+    expect(results).toHaveLength(1);
+    expect(results[0].numeric).toBe(4);
+  });
+
+  it('returns one entry per calc with correct reducer title', () => {
+    const field = new MutableDataFrame({
+      fields: [{ name: 'v', type: FieldType.number, values: [1, 2, 3] }],
+    }).fields[0];
+    field.display = (v) => ({ text: String(v), numeric: Number(v) });
+    const results = getDisplayValuesForCalcs([ReducerID.min, ReducerID.max], field, theme);
+    expect(results).toHaveLength(2);
+    expect(results[0].title).toContain('Min');
+    expect(results[1].title).toContain('Max');
   });
 });

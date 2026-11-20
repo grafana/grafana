@@ -26,8 +26,9 @@ import (
 	"go/printer"
 	"go/token"
 	"go/types"
-	"io/ioutil"
+	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,12 +53,15 @@ type GenerateResult struct {
 	Errs []error
 }
 
-// Commit writes the generated file to disk.
+// Commit writes the generated file to disk if its contents have changed.
 func (gen GenerateResult) Commit() error {
 	if len(gen.Content) == 0 {
 		return nil
 	}
-	return ioutil.WriteFile(gen.OutputPath, gen.Content, 0666)
+	if current, err := os.ReadFile(gen.OutputPath); err == nil && bytes.Equal(current, gen.Content) {
+		return nil
+	}
+	return os.WriteFile(gen.OutputPath, gen.Content, 0666)
 }
 
 // GenerateOptions holds options for Generate.
@@ -85,10 +89,26 @@ func Generate(ctx context.Context, wd string, env []string, patterns []string, o
 	if opts == nil {
 		opts = &GenerateOptions{}
 	}
-	pkgs, errs := load(ctx, wd, env, opts.Tags, patterns)
+	pkgs, errs := load(ctx, wd, env, opts.Tags, patterns, packages.LoadSyntax)
+	if len(errs) == 0 {
+		generated := generatePackages(pkgs, opts)
+		if !slices.ContainsFunc(generated, func(result GenerateResult) bool { return len(result.Errs) > 0 }) {
+			return generated, nil
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, []error{err}
+	}
+	// Cached types omit variable initializers needed to resolve provider aliases.
+	// Reload source on failure to preserve these aliases and full diagnostics.
+	pkgs, errs = load(ctx, wd, env, opts.Tags, patterns, packages.LoadAllSyntax)
 	if len(errs) > 0 {
 		return nil, errs
 	}
+	return generatePackages(pkgs, opts), nil
+}
+
+func generatePackages(pkgs []*packages.Package, opts *GenerateOptions) []GenerateResult {
 	generated := make([]GenerateResult, len(pkgs))
 	for i, pkg := range pkgs {
 		generated[i].PkgPath = pkg.PkgPath
@@ -119,7 +139,7 @@ func Generate(ctx context.Context, wd string, env []string, patterns []string, o
 		}
 		generated[i].Content = goSrc
 	}
-	return generated, nil
+	return generated
 }
 
 func detectOutputDir(paths []string) (string, error) {
@@ -663,8 +683,8 @@ func injectPass(name string, sig *types.Signature, calls []call, set *ProviderSe
 	}
 	if injectSig.cleanup {
 		ig.p(", func() {\n")
-		for i := len(ig.cleanupNames) - 1; i >= 0; i-- {
-			ig.p("\t\t%s()\n", ig.cleanupNames[i])
+		for _, v := range slices.Backward(ig.cleanupNames) {
+			ig.p("\t\t%s()\n", v)
 		}
 		ig.p("\t}")
 	}

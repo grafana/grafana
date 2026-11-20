@@ -37,7 +37,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagLogsTablePanelNG } from '@grafana/runtime/internal';
+import { useFlagGrafanaLogsInfiniteScrollTop, useFlagLogsTablePanelNG } from '@grafana/runtime/internal';
 import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
@@ -55,8 +55,6 @@ import { LogList, type LogListOptions } from 'app/features/logs/components/panel
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
 import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo, isMissingTimeField } from 'app/features/logs/utils';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
-import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type Options } from 'app/plugins/panel/logstable/options/types';
 import { type BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
@@ -65,6 +63,9 @@ import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
+import { type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
+import { isLokiQuery } from '../../loki-helpers/queryUtils';
+import { LokiQueryDirection } from '../../loki-helpers/types';
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -130,7 +131,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  loadMoreLogs?(range: AbsoluteTimeRange): void;
+  loadMoreLogs?(range: InfiniteScrollTimeRange): void;
   onPinLineCallback?: () => void;
 }
 
@@ -160,6 +161,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     logsVolumeData,
     loadLogsVolumeData,
     loading = false,
+    loadingState,
     onClickFilterLabel,
     onClickFilterOutLabel,
     timeZone,
@@ -223,6 +225,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
   const enableNewLogsTable = useFlagLogsTablePanelNG();
+  const infiniteScrollTopEnabled = useFlagGrafanaLogsInfiniteScrollTop();
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -775,11 +778,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const panelData: PanelData = {
-    state: loading ? LoadingState.Loading : LoadingState.Done,
-    series: props.logsFrames ?? [],
-    timeRange: props.range,
-  };
+  const panelData: PanelData = useMemo(
+    () => ({
+      state: loading ? LoadingState.Loading : LoadingState.Done,
+      series: props.logsFrames ?? [],
+      timeRange: props.range,
+      request: getState().explore.panes[exploreId]?.queryResponse.request,
+    }),
+    [exploreId, loading, props.logsFrames, props.range]
+  );
 
   return (
     <>
@@ -888,6 +895,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               height={tableHeight}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickFilterString={props.onClickFilterString}
+              onClickFilterOutString={props.onClickFilterOutString}
               onOptionsChange={onTableOptionsChange}
               onChangeTimeRange={onChangeTime}
             />
@@ -938,8 +947,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
+                  infiniteScrollTop={infiniteScrollTopEnabled}
                   isLabelFilterActive={props.isFilterLabelActive}
-                  loading={loading}
+                  loadingState={loadingState}
                   loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}

@@ -22,6 +22,7 @@ type Service struct {
 	logger          log.Logger
 	resourceHandler backend.CallResourceHandler
 	HTTPClient      *http.Client
+	caps            caps
 }
 
 const (
@@ -35,6 +36,7 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
 		logger: logger,
+		caps:   loadCaps(),
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())

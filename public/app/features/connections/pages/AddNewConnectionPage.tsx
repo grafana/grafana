@@ -16,6 +16,7 @@ const getStyles = () => ({
     overflow: 'hidden',
     '[class*="page-inner"]': {
       minHeight: 0,
+      paddingBottom: 0,
     },
     '[class*="page-content"]': {
       minHeight: 0,

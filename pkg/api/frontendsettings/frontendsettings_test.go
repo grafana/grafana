@@ -1,21 +1,26 @@
 package frontendsettings
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func newTestReqContext() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
 		SignedInUser: &user.SignedInUser{},
 	}
 }
@@ -48,6 +53,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		cfg.AppURL = "https://grafana.example.com/"
 		cfg.AppSubURL = "/grafana"
 		cfg.Anonymous.Enabled = true
+		cfg.PluginImportTelemetryPackages = []string{"custom-router", "custom-history"}
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
@@ -58,6 +64,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com/", settings.AppUrl)
 		assert.Equal(t, "/grafana", settings.AppSubUrl)
 		assert.True(t, settings.AnonymousEnabled)
+		assert.Equal(t, []string{"custom-router", "custom-history"}, settings.PluginImportTelemetryPackages)
 	})
 
 	t.Run("enables trusted types policy when CSP template requires it", func(t *testing.T) {
@@ -86,6 +93,44 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
 	})
 
+	t.Run("sends the prometheus target data source whenever it is set", func(t *testing.T) {
+		for _, tc := range []struct {
+			backend string
+			uid     string
+			want    string
+		}{
+			{backend: "prometheus", uid: "prom-uid", want: "prom-uid"},
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			{backend: "loki", uid: "prom-uid", want: "prom-uid"},
+			{backend: "loki", uid: "", want: ""},
+		} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.StateHistory.Enabled = true
+			cfg.UnifiedAlerting.StateHistory.Backend = tc.backend
+			cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = tc.uid
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			require.NotNil(t, settings.UnifiedAlerting.StateHistory)
+			assert.Equal(t, tc.want, settings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID, tc.backend)
+		}
+	})
+
+	t.Run("reports whether unified alerting notification history is enabled", func(t *testing.T) {
+		for _, enabled := range []bool{true, false} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.NotificationHistory.Enabled = enabled
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			assert.Equal(t, enabled, settings.UnifiedAlerting.NotificationHistoryEnabled)
+		}
+	})
+
 	t.Run("populates plugins CDN base URL when the CDN is enabled", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}
@@ -108,5 +153,49 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, pluginsCDN)
 		require.NoError(t, err)
 		assert.Empty(t, settings.PluginsCDNBaseURL)
+	})
+
+	t.Run("carries the operator nav overrides from both INI sections", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		sections, err := cfg.Raw.NewSection("navigation.app_sections")
+		require.NoError(t, err)
+		_, err = sections.NewKey("grafana-collector-app", "connections 1")
+		require.NoError(t, err)
+		_, err = sections.NewKey("grafana-asserts-app", "observability")
+		require.NoError(t, err)
+
+		pages, err := cfg.Raw.NewSection("navigation.app_standalone_pages")
+		require.NoError(t, err)
+		_, err = pages.NewKey("/a/grafana-pdc-app", "nonexistent")
+		require.NoError(t, err)
+		_, err = pages.NewKey("/connections/infrastructure", "connections notanumber")
+		require.NoError(t, err)
+
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+		require.NoError(t, err)
+
+		assert.Equal(t, map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+			"grafana-collector-app": {SectionID: "connections", SortWeight: 1},
+			// no weight given, so it keeps whatever the frontend's built-in config has
+			"grafana-asserts-app": {SectionID: "observability"},
+		}, settings.Navigation.AppSections)
+
+		assert.Equal(t, map[string]dtos.FrontendSettingsNavigationPlacementDTO{
+			// a section that does not exist is how an operator hides a page
+			"/a/grafana-pdc-app": {SectionID: "nonexistent"},
+			// an unparseable weight is ignored rather than failing the whole setting
+			"/connections/infrastructure": {SectionID: "connections"},
+		}, settings.Navigation.AppStandalonePages)
+	})
+
+	t.Run("leaves the nav overrides empty when no sections are configured", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+		require.NoError(t, err)
+		assert.Empty(t, settings.Navigation.AppSections)
+		assert.Empty(t, settings.Navigation.AppStandalonePages)
 	})
 }

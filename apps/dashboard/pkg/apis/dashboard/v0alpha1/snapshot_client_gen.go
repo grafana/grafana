@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type SnapshotClient struct {
@@ -73,6 +74,24 @@ func (c *SnapshotClient) Update(ctx context.Context, obj *Snapshot, opts resourc
 
 func (c *SnapshotClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Snapshot, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
+}
+
+func (c *SnapshotClient) UpdateBlobs(ctx context.Context, identifier resource.Identifier, newBlobs SnapshotBlobs, opts resource.UpdateOptions) (*Snapshot, error) {
+	return c.client.Update(ctx, &Snapshot{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       SnapshotKind().Kind(),
+			APIVersion: GroupVersion.Identifier(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
+		},
+		Blobs: newBlobs,
+	}, resource.UpdateOptions{
+		Subresource:     "blobs",
+		ResourceVersion: opts.ResourceVersion,
+	})
 }
 
 func (c *SnapshotClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

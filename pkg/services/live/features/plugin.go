@@ -8,12 +8,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/apps/live/pkg/model"
+	"github.com/grafana/grafana/apps/live/pkg/orgchannel"
+	"github.com/grafana/grafana/apps/live/pkg/runstream"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/live/model"
-	"github.com/grafana/grafana/pkg/services/live/orgchannel"
-	"github.com/grafana/grafana/pkg/services/live/runstream"
 )
 
 //go:generate mockery --name=PluginContextGetter --structname=MockPluginContextGetter --inpackage --filename=plugin_mock.go --with-expecter

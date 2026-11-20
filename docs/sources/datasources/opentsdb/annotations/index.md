@@ -13,7 +13,7 @@ labels:
 menuTitle: Annotations
 title: OpenTSDB annotations
 weight: 450
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB annotations
@@ -41,7 +41,8 @@ Grafana displays the `description` field from each annotation as the annotation 
 
 To add OpenTSDB annotations to a dashboard:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Annotation query**.
 1. Enter a name for the annotation query.
@@ -57,7 +58,7 @@ To add OpenTSDB annotations to a dashboard:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Annotation query fields
 
@@ -87,7 +88,7 @@ This query retrieves annotations attached to the `deploy.myapp` metric, showing 
 
 ### Monitor infrastructure-wide events
 
-Capture system-wide events such as network changes or datacenter maintenance:
+Capture system-wide events such as network changes or data center maintenance:
 
 | Field                   | Value                   |
 | ----------------------- | ----------------------- |
@@ -111,11 +112,11 @@ Mark incident start and resolution times:
 
 Track when configuration changes are applied:
 
-| Field                   | Value           |
-| ----------------------- | --------------- |
-| Name                    | Config Changes  |
-| OpenTSDB metrics query  | `events.config` |
-| Show Global Annotations | disabled        |
+| Field                   | Value                 |
+| ----------------------- | --------------------- |
+| Name                    | Configuration changes |
+| OpenTSDB metrics query  | `events.config`       |
+| Show Global Annotations | disabled              |
 
 ### Correlate multiple event types
 

@@ -15,6 +15,7 @@ import {
   type DataSourceInput,
   type ImportFormDataV2,
 } from '../../types';
+import { constantFormKey } from '../utils/inputs';
 import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
 import { validateTitle, validateUid } from '../utils/validation';
 
@@ -94,6 +95,7 @@ export const ImportDashboardFormV2 = ({
             <FolderPicker
               {...field}
               id="dashboard-import-folder"
+              permission="create"
               onChange={(uid, title) => {
                 onChange(uid, title);
                 if (uid) {
@@ -193,10 +195,11 @@ export const ImportDashboardFormV2 = ({
 
       {inputs.constants &&
         inputs.constants.map((input: DashboardInput) => {
-          const constantKey = `constant-${input.name}`;
+          const constantKey = constantFormKey(input.path, input.name);
           return (
             <Field
               label={input.label}
+              description={input.scopeLabel}
               key={constantKey}
               invalid={!!errors[constantKey]}
               error={errors[constantKey] ? `${input.label} needs a value` : undefined}

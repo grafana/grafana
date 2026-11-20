@@ -1,4 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -8,12 +10,30 @@ import {
   type PanelData,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import { DatasourceErrorAlert } from './DatasourceErrorAlert';
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from './QueryEditorContext';
+import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
+import {
+  type InternalQueryEditorCoauthoringPropsV1,
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
+} from './coauthoring/internalCoauthoringContract';
+import { reportQueryCoauthoringDecision } from './coauthoring/queryCoauthoringDecision';
+import { type QueryPreview } from './coauthoring/queryPreview';
+import { supportsQueryCoauthoring } from './coauthoring/supportsQueryCoauthoring';
+import { useQueryProposalTransaction } from './coauthoring/useQueryProposalTransaction';
 
 interface QueryDatasourceData {
   datasource?: DataSourceApi;
@@ -21,6 +41,7 @@ interface QueryDatasourceData {
 }
 
 interface QueryEditorPanelProps {
+  panel: VizPanel;
   query: DataQuery | null;
   queryDsData: QueryDatasourceData | null;
   queryDsLoading: boolean;
@@ -29,9 +50,13 @@ interface QueryEditorPanelProps {
   updateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
   runQueries: () => void;
+  startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
+  /** Called when the data source's query editor changes the query. AI proposals and renames don't call it. */
+  onQueryEdited?: () => void;
 }
 
 export function QueryEditorPanel({
+  panel,
   query,
   queryDsData,
   queryDsLoading,
@@ -40,20 +65,95 @@ export function QueryEditorPanel({
   updateQuery,
   addQuery,
   runQueries,
+  startQueryPreview,
+  onQueryEdited,
 }: QueryEditorPanelProps) {
+  const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
+  const providerStatus = useOpenFeatureClientStatus();
+  const coauthoringEnabled = coauthoringFlag.value;
+  const coauthoringSupported = supportsQueryCoauthoring(queryDsData?.dsSettings);
+  const canOfferCoauthoring = Boolean(
+    query && !queryDsLoading && queryDsData?.datasource?.components?.QueryEditor && coauthoringSupported
+  );
+  const { value, variant, errorCode } = coauthoringFlag;
+  useEffect(() => {
+    if (providerStatus === ProviderStatus.READY && canOfferCoauthoring) {
+      reportQueryCoauthoringDecision(panel, { value, variant, errorCode });
+    }
+  }, [panel, providerStatus, canOfferCoauthoring, value, variant, errorCode]);
+  const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
+  const [coauthoringAdapter, setCoauthoringAdapter] = useState<QueryEditorCoauthoringAdapterV1>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
   }, [data, queryRefId]);
+  const coauthoringRegistration = useMemo<QueryEditorCoauthoringRegistrationV1>(
+    () => ({
+      register: (adapter) => {
+        setCoauthoringAdapter(adapter);
+        return () => setCoauthoringAdapter((current) => (current === adapter ? undefined : current));
+      },
+    }),
+    []
+  );
+  const proposalTransaction = useQueryProposalTransaction({
+    query,
+    queries,
+    queryKey: coauthoringIdentity,
+    adapter: coauthoringAdapter,
+    updateQuery,
+    runQueries,
+    startQueryPreview,
+  });
 
-  // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
-  const handleChange = useCallback(
+  const { onChange: onTransactionChange, editorQuery } = proposalTransaction;
+  // Read through a ref so onChange stays stable: an editor that keeps its first onChange still compares
+  // with the current query.
+  const currentQueryRef = useRef(editorQuery ?? query);
+  useLayoutEffect(() => {
+    currentQueryRef.current = editorQuery ?? query;
+  });
+  const onEditorChange = useCallback(
     (updatedQuery: DataQuery) => {
-      updateQuery(updatedQuery, updatedQuery.refId);
+      // An editor echoing the query it was given (including an AI proposal on preview) isn't an edit.
+      if (!isEqual(updatedQuery, currentQueryRef.current)) {
+        onQueryEdited?.();
+      }
+      onTransactionChange(updatedQuery);
     },
-    [updateQuery]
+    [onQueryEdited, onTransactionChange]
+  );
+
+  const coauthoringHost = useMemo(
+    () => ({
+      datasourceType: coauthoringDatasourceType,
+      previewPhase: proposalTransaction.previewPhase,
+      previewData: proposalTransaction.previewData,
+      readPreviewData: proposalTransaction.readPreviewData,
+      timeRange: filteredData?.timeRange
+        ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
+        : undefined,
+      preview: proposalTransaction.preview,
+      peek: proposalTransaction.peek,
+      stopPeek: proposalTransaction.stopPeek,
+      accept: proposalTransaction.accept,
+      revert: proposalTransaction.revert,
+    }),
+    [
+      coauthoringDatasourceType,
+      filteredData?.timeRange,
+      proposalTransaction.accept,
+      proposalTransaction.preview,
+      proposalTransaction.peek,
+      proposalTransaction.stopPeek,
+      proposalTransaction.previewPhase,
+      proposalTransaction.previewData,
+      proposalTransaction.readPreviewData,
+      proposalTransaction.revert,
+    ]
   );
 
   if (!query) {
@@ -97,23 +197,33 @@ export function QueryEditorPanel({
   }
 
   const { datasource, dsSettings } = queryDsData;
-
+  const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
+    unstable_queryEditorCoauthoringV1: coauthoringEnabled && coauthoringSupported ? coauthoringRegistration : undefined,
+  };
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
           <QueryEditorComponent
-            key={query.refId}
+            key={coauthoringIdentity}
+            {...internalCoauthoringProps}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
-            onChange={handleChange}
-            onRunQuery={runQueries}
-            queries={queries}
-            query={query}
+            onChange={onEditorChange}
+            onRunQuery={proposalTransaction.run}
+            queries={proposalTransaction.editorQueries}
+            query={proposalTransaction.editorQuery ?? query}
             range={filteredData?.timeRange}
           />
+          {coauthoringAdapter && (
+            <QueryCoauthoringSurface
+              adapter={coauthoringAdapter}
+              host={coauthoringHost}
+              onBaseline={proposalTransaction.synchronizeBaseline}
+            />
+          )}
         </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
@@ -122,20 +232,27 @@ export function QueryEditorPanel({
 }
 
 export function QueryEditorRenderer() {
+  const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
-  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview, onQueryEdited } = useActionsContext();
 
   return (
-    <QueryEditorPanel
-      query={selectedQuery}
-      queryDsData={selectedQueryDsData}
-      queryDsLoading={selectedQueryDsLoading}
-      queries={queries}
-      data={data}
-      updateQuery={updateSelectedQuery}
-      addQuery={addQuery}
-      runQueries={runQueries}
-    />
+    <>
+      <DatasourceErrorAlert />
+      <QueryEditorPanel
+        panel={panel}
+        query={selectedQuery}
+        queryDsData={selectedQueryDsData}
+        queryDsLoading={selectedQueryDsLoading}
+        queries={queries}
+        data={data}
+        updateQuery={updateSelectedQuery}
+        addQuery={addQuery}
+        runQueries={runQueries}
+        startQueryPreview={startQueryPreview}
+        onQueryEdited={onQueryEdited}
+      />
+    </>
   );
 }

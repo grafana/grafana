@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
@@ -19,7 +19,7 @@ func validateGroupLabels(r, oldRule *model.RecordingRule, action resource.Admiss
 	if oldRule != nil {
 		oldLabels = oldRule.Labels
 	}
-	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action, util.GroupWritesRequested(r.Annotations))
 }
 
 func validateFolderAndSequenceMembership(ctx context.Context, r *model.RecordingRule, oldRule *model.RecordingRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
@@ -74,6 +74,12 @@ func validateMetric(r *model.RecordingRule) error {
 
 func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.RecordingRule] {
 	return func(ctx context.Context, req validation.Request[*model.RecordingRule]) error {
+		if cfg.AllowDeletingSequenceMembers != nil {
+			allowed, err := cfg.AllowDeletingSequenceMembers(ctx)
+			if err != nil || allowed {
+				return err
+			}
+		}
 		oldRule := req.OldObject
 		if cfg.MembershipResolver != nil {
 			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
@@ -106,8 +112,15 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Reco
 			return err
 		}
 
-		if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
-			return fmt.Errorf("recording rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
+		// The name can't change, so an existing rule is not re-checked against rules added later.
+		if req.Action == resource.AdmissionActionCreate {
+			if err := util.ValidateRuleName(r.Name); err != nil {
+				return err
+			}
+		}
+
+		if err := util.ValidateTitle("recording rule", r.Spec.Title); err != nil {
+			return err
 		}
 
 		if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {

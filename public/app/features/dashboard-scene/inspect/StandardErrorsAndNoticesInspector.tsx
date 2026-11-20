@@ -6,26 +6,32 @@ import {
   type DataQueryError,
   type GrafanaTheme2,
   type QueryResultMetaNotice,
+  type PanelStatusItem,
   renderMarkdown,
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { groupPanelStatusItems } from '@grafana/ui/internal';
+import { PanelStatusActions } from '@grafana/ui/unstable';
 
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
   errors?: DataQueryError[];
+  statusItems?: readonly PanelStatusItem[];
 }
 
 type Severity = QueryResultMetaNotice['severity'];
 
-interface InspectableEntry {
+export interface InspectableEntry {
   severity: Severity;
-  title: string;
+  title?: string;
   content: string;
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
   isCode?: boolean;
+  statusItem?: PanelStatusItem;
+  members?: PanelStatusItem[];
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -54,13 +60,13 @@ function formatError(error: DataQueryError): string {
   }
 }
 
-function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | undefined): InspectableEntry[] {
+export function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | undefined): InspectableEntry[] {
   const entries: InspectableEntry[] = [];
 
   for (const error of errors ?? []) {
     entries.push({
       severity: 'error',
-      title: error.message ?? error.data?.message ?? SEVERITY_LABELS.error(),
+      title: error.message ?? error.data?.message,
       content: formatError(error),
       isCode: true,
     });
@@ -88,14 +94,33 @@ function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | 
   return entries.sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 }
 
-export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErrorsAndNoticesInspectorProps) {
+export function StandardErrorsAndNoticesInspector({
+  data,
+  errors,
+  statusItems,
+}: StandardErrorsAndNoticesInspectorProps) {
   const styles = useStyles2(getStyles);
-  const entries = buildEntries(data, errors);
+  const entries: InspectableEntry[] = statusItems
+    ? groupPanelStatusItems(statusItems).map((members) => {
+        const statusItem = members[0];
+        return {
+          severity: statusItem.severity,
+          title: statusItem.text,
+          content: statusItem.detail ?? statusItem.text,
+          isCode: statusItem.origin === 'query',
+          link: statusItem.link,
+          statusItem,
+          members,
+        };
+      })
+    : buildEntries(data, errors);
 
   if (entries.length === 0) {
     return (
       <div className={styles.empty}>
-        {t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
+        {statusItems
+          ? t('dashboard-scene.errors-and-notices-inspector.no-panel-issues', 'No errors or notices for this panel.')
+          : t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
       </div>
     );
   }
@@ -103,7 +128,7 @@ export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErro
   return (
     <Stack direction="column" gap={1}>
       {entries.map((entry, index) => (
-        <EntryCard key={`${entry.severity}-${index}`} entry={entry} />
+        <EntryCard key={entry.statusItem?.id ?? `${entry.severity}-${index}`} entry={entry} />
       ))}
     </Stack>
   );
@@ -121,7 +146,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
           className={styles.toggle}
           onClick={() => setIsOpen((open) => !open)}
           aria-expanded={isOpen}
-          aria-label={entry.title}
+          aria-label={entry.title ?? SEVERITY_LABELS[entry.severity]()}
         >
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} className={styles.chevron} />
           <Icon name={getSeverityIcon(entry.severity)} className={styles[entry.severity]} />
@@ -135,7 +160,10 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
       {isOpen && (
         <div className={styles.body}>
           {entry.isCode ? (
-            <pre className={styles.code}>{entry.content}</pre>
+            <>
+              {entry.title && <div className={styles.message}>{entry.title}</div>}
+              <pre className={styles.code}>{entry.content}</pre>
+            </>
           ) : (
             // renderMarkdown sanitizes its output, so this is safe to set as HTML.
             <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: renderMarkdown(entry.content) }} />
@@ -145,6 +173,17 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
               {t('dashboard-scene.errors-and-notices-inspector.learn-more', 'Learn more')}
             </TextLink>
           )}
+          {entry.members?.map((member) => (
+            <div key={member.id}>
+              {entry.members!.length > 1 && member.refId && (
+                <span>
+                  {member.datasourceUid ? `${member.datasourceUid}: ` : ''}
+                  {member.refId}
+                </span>
+              )}
+              <PanelStatusActions statusItem={member} />
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -196,6 +235,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   body: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1.5, 1.5, 1.5, 4.5),
+  }),
+  message: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    wordBreak: 'break-word',
+    marginBottom: theme.spacing(1),
   }),
   code: css({
     margin: 0,

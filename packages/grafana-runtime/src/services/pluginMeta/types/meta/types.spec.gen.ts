@@ -1,7 +1,9 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-// JSON configuration schema for Grafana plugins
-// Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
+/**
+ * JSON configuration schema for Grafana plugins
+ * Converted from: https://github.com/grafana/grafana/blob/main/docs/sources/developers/plugins/plugin.schema.json
+ */
 export interface JSONData {
 	// Unique name of the plugin
 	id: string;
@@ -35,6 +37,8 @@ export interface JSONData {
 	// +listType=atomic
 	routes?: Route[];
 	skipDataQuery?: boolean;
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: boolean;
 	state?: "alpha" | "beta" | "stable" | "deprecated";
 	streaming?: boolean;
 	suggestions?: boolean;
@@ -241,6 +245,10 @@ export const defaultRole = (): Role => ({
 });
 
 export interface Extensions {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	skills?: Record<string, {
+		path: string;
+	}>;
 	// +listType=atomic
 	addedComponents?: {
 		// +listType=set

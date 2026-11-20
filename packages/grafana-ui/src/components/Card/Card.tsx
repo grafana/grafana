@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
+import { RadioButtonDot } from '../Forms/RadioButtonList/RadioButtonDot';
 
 import { CardContainer, type CardContainerProps, getCardContainerStyles } from './CardContainer';
 
@@ -120,7 +121,12 @@ interface ChildProps {
 }
 
 /** Main heading for the card */
-const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & { 'aria-label'?: string }) => {
+const Heading = ({
+  children,
+  className,
+  'aria-label': ariaLabel,
+  'data-testid': testId,
+}: ChildProps & { 'aria-label'?: string; 'data-testid'?: string }) => {
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
@@ -131,28 +137,44 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   };
   const optionLabel = t('grafana-ui.card.option', 'option');
   const headingId = useId();
+  const radioId = useId();
   const hasHeadingContent = React.Children.count(children) > 0;
 
   return (
     <div data-testid={selectors.components.Card.heading} className={cx(styles.heading, className)}>
       {href ? (
-        <a id={headingId} href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
+        <a
+          id={headingId}
+          href={href}
+          className={styles.linkHack}
+          aria-label={ariaLabel}
+          data-testid={testId}
+          onClick={onClick}
+        >
           {children}
         </a>
       ) : onClick ? (
-        <button id={headingId} onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
+        <button
+          id={headingId}
+          onClick={onClick}
+          className={styles.linkHack}
+          aria-label={ariaLabel}
+          data-testid={testId}
+          type="button"
+        >
           {children}
         </button>
       ) : (
-        <span id={headingId}>{children}</span>
+        <span id={headingId} data-testid={testId}>
+          {children}
+        </span>
       )}
-      {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
       {isSelected !== undefined && (
-        <input
+        <RadioButtonDot
           {...(hasHeadingContent ? { 'aria-labelledby': headingId } : { 'aria-label': optionLabel })}
-          type="radio"
+          id={radioId}
+          name={radioId}
           checked={isSelected}
-          readOnly
         />
       )}
     </div>
@@ -174,8 +196,8 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
     lineHeight: theme.typography.body.lineHeight,
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
-    '& input[readonly]': {
-      cursor: 'inherit',
+    '& input': {
+      pointerEvents: 'none',
     },
   }),
   linkHack: css({

@@ -5,7 +5,7 @@
 import { produce } from 'immer';
 import { omit } from 'lodash';
 
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { arrayUtils } from '@grafana/data';
 import { ROUTES_META_SYMBOL, type Route, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -168,6 +168,12 @@ export function cleanKubernetesRouteIDs(routingTree: RoutingTree): RoutingTree {
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
+}
+
+// counts every route nested under this one, so callers can warn before removing a route with children
+export function countChildRoutes(route: RouteWithID): number {
+  const children = route.routes ?? [];
+  return children.reduce((total, child) => total + 1 + countChildRoutes(child), 0);
 }
 
 /**

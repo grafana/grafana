@@ -248,8 +248,8 @@ describe('PieChartPanel', () => {
 
         await act(async () => {
           trigger.focus();
-          await user.keyboard('{Enter}');
         });
+        await user.keyboard('{Enter}');
 
         expect(screen.getByText('Open dashboard')).toBeInTheDocument();
         expect(screen.getByText('Open runbook')).toBeInTheDocument();
@@ -273,8 +273,8 @@ describe('PieChartPanel', () => {
         expect(screen.queryByText('Open dashboard')).not.toBeInTheDocument();
         await act(async () => {
           trigger.focus();
-          await user.keyboard(' ');
         });
+        await user.keyboard(' ');
 
         expect(screen.getByText('Open dashboard')).toBeInTheDocument();
         expect(screen.getByText('Open runbook')).toBeInTheDocument();
@@ -327,6 +327,35 @@ describe('PieChartPanel', () => {
         const slices = screen.queryAllByTestId('data testid Pie Chart Slice');
         expect(slices.length).toBe(3);
       });
+    });
+  });
+
+  describe('slice sort', () => {
+    const renderSliceNames = (sort: SortOrder, showLegend: boolean) => {
+      const unsortedSeries = makeSeries([
+        { name: 'Firefox', value: 40 },
+        { name: 'Chrome', value: 60 },
+        { name: 'Safari', value: 20 },
+      ]);
+      setup({
+        options: buildOptions({ sort, displayLabels: [PieChartLabels.Name], legend: buildLegend({ showLegend }) }),
+        data: { series: unsortedSeries },
+      });
+      return screen
+        .getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel)
+        .map((label) => label.textContent);
+    };
+
+    it.each([true, false])('sorts slices in descending order when showLegend is %s', (showLegend) => {
+      expect(renderSliceNames(SortOrder.Descending, showLegend)).toEqual(['Chrome', 'Firefox', 'Safari']);
+    });
+
+    it.each([true, false])('sorts slices in ascending order when showLegend is %s', (showLegend) => {
+      expect(renderSliceNames(SortOrder.Ascending, showLegend)).toEqual(['Safari', 'Firefox', 'Chrome']);
+    });
+
+    it('keeps the data order when sort is none and the legend is hidden', () => {
+      expect(renderSliceNames(SortOrder.None, false)).toEqual(['Firefox', 'Chrome', 'Safari']);
     });
   });
 
@@ -446,6 +475,16 @@ describe('PieChartPanel', () => {
       });
 
       // Slices still render, but the legend region is not.
+      expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
+
+    it('does not render the legend when displayMode is hidden, even if showLegend is true', () => {
+      setup({
+        options: buildOptions({ legend: buildLegend({ showLegend: true, displayMode: LegendDisplayMode.Hidden }) }),
+        data: { series: defaultSliceSeries },
+      });
+
       expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
       expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
     });

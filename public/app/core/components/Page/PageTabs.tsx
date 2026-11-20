@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, Tab, toIconName } from '@grafana/ui';
 
 export interface Props {
@@ -23,7 +23,7 @@ export function PageTabs({ navItem }: Props) {
                 key={`${child.url}-${index}`}
                 icon={icon}
                 counter={child.tabCounter}
-                href={child.url}
+                href={child.url ? locationUtil.assureBaseUrl(child.url) : undefined}
                 suffix={child.tabSuffix}
                 onChangeTab={child.onClick}
               />

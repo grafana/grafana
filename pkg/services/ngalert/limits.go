@@ -4,15 +4,12 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type RuleUsageReader interface {
-	Count(ctx context.Context, orgID int64) (int64, error)
-}
-
-func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) error {
+func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules rulestore.RuleCounter) error {
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return err
@@ -25,7 +22,7 @@ func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) e
 	})
 }
 
-func UsageReporter(rules RuleUsageReader) quota.UsageReporterFunc {
+func UsageReporter(rules rulestore.RuleCounter) quota.UsageReporterFunc {
 	return func(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 		u := &quota.Map{}
 
@@ -34,25 +31,33 @@ func UsageReporter(rules RuleUsageReader) quota.UsageReporterFunc {
 			orgID = scopeParams.OrgID
 		}
 
-		if orgUsage, err := rules.Count(ctx, orgID); err != nil {
+		counts, err := rules.CountByOrg(ctx)
+		if err != nil {
 			return u, err
-		} else {
-			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-			if err != nil {
-				return u, err
-			}
-			u.Set(tag, orgUsage)
 		}
 
-		if globalUsage, err := rules.Count(ctx, 0); err != nil {
-			return u, err
-		} else {
-			tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-			if err != nil {
-				return u, err
-			}
-			u.Set(tag, globalUsage)
+		var globalUsage int64
+		for _, c := range counts {
+			globalUsage += c
 		}
+
+		// Without an org in scope, the org usage matches the previous behavior of counting all rules.
+		orgUsage := globalUsage
+		if orgID != 0 {
+			orgUsage = counts[orgID]
+		}
+
+		orgTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(orgTag, orgUsage)
+
+		globalTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(globalTag, globalUsage)
 
 		return u, nil
 	}

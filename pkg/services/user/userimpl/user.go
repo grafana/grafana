@@ -11,12 +11,12 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -38,14 +40,40 @@ type Service struct {
 
 var _ user.Service = (*Service)(nil)
 
-func ProvideService(db db.DB,
+func ProvideService(sql legacysql.LegacyDatabaseProvider,
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(db, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
+	return ProvideServiceWithWatch(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, configProvider, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy user
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+// It keeps its signature because code outside this repository constructs the
+// service directly.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider,
+	orgService org.Service,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	return ProvideServiceWithPreferencesCleanup(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, configProvider, legacyWatch, nil)
+}
+
+// ProvideServiceWithPreferencesCleanup is ProvideServiceWithWatch that also deletes a deleted user's DashboardPreferences user tier.
+func ProvideServiceWithPreferencesCleanup(sql legacysql.LegacyDatabaseProvider,
+	orgService org.Service,
+	cfg *setting.Cfg,
+	teamService team.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher, preferences dashboardpreferences.UserCleaner) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch, preferences)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +167,7 @@ func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery)
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.Update(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.Update(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.Update(ctx, cmd)
@@ -183,7 +211,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return result, nil
 		}
-		if !isNotFoundError(err) {
+		if !isNotFoundError(err) || s.isFallbackDisabled(ctx) {
 			span.RecordError(err)
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return nil, err
@@ -267,13 +295,25 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
 }
 
+func (s *Service) isFallbackDisabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirectNoFallback, false, openfeature.TransactionContext(ctx))
+}
+
 // shouldFallbackToLegacy determines whether to fall back to the legacy service
 // for a given request. The k8s redirect path builds its rest.Config from the
 // request context's *contextmodel.ReqContext so that the K8s apiserver sees
 // the original end-user identity; non-HTTP callers (authn sign-in sync,
 // grafana-cli) run as a service identity with no ReqContext on the context
-// and must keep working via the legacy path.
+// and must keep working via the legacy path, unless fallback has been
+// explicitly disabled.
 func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	if s.isFallbackDisabled(ctx) {
+		return false
+	}
 	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
 }
 

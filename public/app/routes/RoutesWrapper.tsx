@@ -1,4 +1,5 @@
 import { type ComponentType, type ReactNode, type JSX } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
@@ -7,6 +8,7 @@ import { ModalRoot, Stack } from '@grafana/ui';
 
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppChromeExtensionPoint } from '../core/components/AppChrome/AppChromeExtensionPoint';
+import { SectionSidePanel } from '../core/components/AppChrome/SectionNav/SectionSidePanel';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
@@ -35,6 +37,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
                   <AppNotificationList />
                   <Stack gap={0} grow={1} direction="column">
                     <AppChromeExtensionPoint />
+                    <SectionSidePanel />
                     {props.pageBanners.map((Banner, index) => (
                       <Banner key={index.toString()} />
                     ))}

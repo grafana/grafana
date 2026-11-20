@@ -18,14 +18,6 @@ const harCaptureHeader = "X-Grafana-HAR-Capture"
 
 // NewHTTPCaptureMiddleware creates a backend.HandlerMiddleware that captures HTTP traffic
 // for QueryData calls when a harcapture.Buffer is present in the context.
-//
-// For core (in-process) plugins: injects a capturing RoundTripper as contextual middleware
-// so the existing ContextualMiddleware in the HTTP client chain picks it up.
-//
-// For external gRPC plugins: sets X-Grafana-HAR-Capture on the request headers. NOTE: this is
-// currently inert — the SDK-side middleware that reads this header and emits __har__ response frames
-// is not released yet, so out-of-process plugin traffic is NOT captured until Grafana is bumped to
-// an SDK version that includes it. The header is set now only for forward compatibility.
 func NewHTTPCaptureMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HTTPCaptureMiddleware{BaseHandler: backend.NewBaseHandler(next)}
@@ -48,8 +40,32 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 	}
 	req.Headers[harCaptureHeader] = "true"
 
-	// Inject capturing RoundTripper for core (in-process) plugins.
-	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMiddleware(buf))
+
+	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *HTTPCaptureMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	buf := harcapture.FromContext(ctx)
+	if buf == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	// Signal external gRPC plugins via request header.
+	if req.Headers == nil {
+		req.Headers = map[string]string{}
+	}
+	req.Headers[harCaptureHeader] = "true"
+
+	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMiddleware(buf))
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
+// captureMiddleware returns an HTTP client middleware that records every outgoing
+// request/response into buf, for core (in-process) plugins.
+func captureMiddleware(buf *harcapture.Buffer) sdkhttpclient.Middleware {
+	return sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return sdkhttpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 			// Buffer the request body before it is consumed by the transport.
 			var bodyBytes []byte
@@ -79,7 +95,4 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 			return resp, err
 		})
 	})
-	ctx = sdkhttpclient.WithContextualMiddleware(ctx, captureMW)
-
-	return m.BaseHandler.QueryData(ctx, req)
 }

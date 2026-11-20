@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	queryService "github.com/grafana/grafana/pkg/services/query"
 )
@@ -44,9 +46,14 @@ var expectedHeaders = map[string]string{
 	strings.ToLower(queryService.HeaderPanelPluginId):  queryService.HeaderPanelPluginId,
 	strings.ToLower(queryService.HeaderDashboardTitle): queryService.HeaderDashboardTitle,
 	strings.ToLower(queryService.HeaderPanelTitle):     queryService.HeaderPanelTitle,
+	strings.ToLower(queryService.HeaderCallerID):       queryService.HeaderCallerID,
+	strings.ToLower("User-Agent"):                      "User-Agent",
 	strings.ToLower("X-Real-IP"):                       "X-Real-IP",
 	strings.ToLower("X-Forwarded-For"):                 "X-Forwarded-For",
 	strings.ToLower("Cookie"):                          "Cookie",
+
+	strings.ToLower(authn.OAuthPassthroughAccessTokenHeader): authn.OAuthPassthroughAccessTokenHeader,
+	strings.ToLower(authn.OAuthPassthroughIDTokenHeader):     authn.OAuthPassthroughIDTokenHeader,
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {

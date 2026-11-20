@@ -3,9 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { getDefaultTimeRange, LoadingState, type PanelData, store } from '@grafana/data';
 
 import { PanelModel } from '../../../state/PanelModel';
-import { DisplayMode } from '../types';
-
-export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
+import { DisplayMode, PANEL_EDITOR_UI_STATE_STORAGE_KEY } from '../types';
 
 const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,
@@ -25,7 +23,7 @@ interface PanelEditorUIState {
   mode: DisplayMode;
 }
 
-export interface PanelEditorState {
+interface PanelEditorState {
   /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
    * we need to store these using functions instead */
   getSourcePanel: () => PanelModel;
@@ -39,7 +37,7 @@ export interface PanelEditorState {
   tableViewEnabled: boolean;
 }
 
-export const initialState = (): PanelEditorState => {
+const initialState = (): PanelEditorState => {
   const storedUiState = store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE);
 
   let migratedState = { ...storedUiState };
@@ -115,12 +113,7 @@ const pluginsSlice = createSlice({
   },
 });
 
-export const {
-  updateEditorInitState,
-
-  closeEditor,
-  toggleVizPicker,
-} = pluginsSlice.actions;
+export const { toggleVizPicker } = pluginsSlice.actions;
 
 const panelEditorReducer = pluginsSlice.reducer;
 

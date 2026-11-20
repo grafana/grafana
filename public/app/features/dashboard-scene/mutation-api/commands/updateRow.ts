@@ -4,7 +4,7 @@
  * Update a row's metadata (title, collapse, hideHeader, fillScreen) by path.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -16,7 +16,6 @@ import {
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
-import { isSectionVariablesFeatureEnabled } from './variableScope';
 
 const updateRowPayloadSchema = payloads.updateRow;
 
@@ -24,7 +23,7 @@ export type UpdateRowPayload = z.infer<typeof updateRowPayloadSchema>;
 
 export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
   name: 'UPDATE_ROW',
-  description: payloads.updateRow.description ?? '',
+  description: z.globalRegistry.get(payloads.updateRow)?.description ?? '',
 
   payloadSchema: payloads.updateRow,
   permission: requiresNewDashboardLayouts,
@@ -77,7 +76,7 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         row.setState({ conditionalRendering: group });
       }
 
-      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
+      if (spec.variables !== undefined) {
         row.setState({ $variables: deserializeSectionVariables(spec.variables) });
       }
 

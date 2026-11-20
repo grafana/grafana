@@ -2,10 +2,11 @@ import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstanceList, isFetchError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { DeprecatedInternalId } from '../apiserver/types';
 
@@ -30,7 +31,9 @@ export interface K8sMetadata {
 
 export interface DatasourceInstanceK8sSpec {
   access: string;
-  jsonData: DataSourceJsonData;
+  // Omitted by the apiserver when empty (`json:"jsonData,omitzero"`), so it is not
+  // guaranteed to be present on responses.
+  jsonData?: DataSourceJsonData;
   title: string;
   url: string;
   user: string;
@@ -55,12 +58,14 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
-const getDataSourceK8sGroup = (uid: string): string => {
-  for (const [key, ds] of Object.entries(config.datasources)) {
-    if (key.startsWith('--')) {
+const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
+  const instances = await getDataSourceInstanceList({ all: true });
+  for (const ds of instances) {
+    // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
+    if (ds.name.startsWith('--')) {
       continue;
     }
-    if (config.datasources[key].uid === uid) {
+    if (ds.uid === uid) {
       return ds.type + '.datasource.grafana.app';
     }
   }
@@ -78,7 +83,6 @@ const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     url: dsSettings.url ? dsSettings.url : '',
     basicAuth: dsSettings.basicAuth ? dsSettings.basicAuth : false,
     basicAuthUser: dsSettings.basicAuthUser ? dsSettings.basicAuthUser : '',
-    isDefault: dsSettings.isDefault,
     user: dsSettings.user ? dsSettings.user : '',
     database: dsSettings.database ? dsSettings.database : '',
   };
@@ -86,6 +90,9 @@ const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     spec: k8sSpec,
     apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
   };
+  if (dsSettings.isDefault) {
+    dsK8sSettings.metadata = { labels: { default: 'true' } };
+  }
   return dsK8sSettings;
 };
 
@@ -101,14 +108,16 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
+  if (dsSettings.isDefault) {
+    k8sMetadata.labels['default'] = 'true';
+  }
   let k8sSpec: DatasourceInstanceK8sSpec = {
     access: dsSettings.access,
-    jsonData: dsSettings.jsonData,
+    jsonData: dsSettings.jsonData ?? {},
     title: dsSettings.name,
     url: dsSettings.url,
     basicAuth: dsSettings.basicAuth,
     basicAuthUser: dsSettings.basicAuthUser,
-    isDefault: dsSettings.isDefault,
     readOnly: dsSettings.readOnly,
     user: dsSettings.user ? dsSettings.user : '',
     database: dsSettings.database ? dsSettings.database : '',
@@ -157,8 +166,10 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     database: dsK8sSettings.spec.database,
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
-    isDefault: dsK8sSettings.spec.isDefault ? true : false,
-    jsonData: dsK8sSettings.spec.jsonData,
+    isDefault: dsK8sSettings.spec.isDefault === true || dsK8sSettings.metadata.labels?.default === 'true',
+    // DataSourceSettings.jsonData is non-optional and consumers (e.g. the
+    // grafana/datasources/config extension point) dereference it without guarding.
+    jsonData: dsK8sSettings.spec.jsonData ?? {},
     secureJsonFields: {},
     readOnly: dsK8sSettings.spec.readOnly ? dsK8sSettings.spec.readOnly : false,
     withCredentials: false,
@@ -187,39 +198,34 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
+// The server message alone (e.g. "the server could not find the requested resource") doesn't say
+// which request failed, so the error is rethrown with that context.
+const fetchK8sResource = async <T>(url: string, failureMessage: string): Promise<T> => {
+  try {
+    const response = await lastValueFrom(getBackendSrv().fetch<T>({ method: 'GET', url, showErrorAlert: false }));
+    return response.data;
+  } catch (err) {
+    const reason = isFetchError(err) ? err.data?.message || err.statusText : getMessageFromError(err);
+    throw new Error(reason ? `${failureMessage}: ${reason}` : failureMessage);
+  }
+};
+
 const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
-  let k8sGroup = getDataSourceK8sGroup(k8sName);
+  let k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  const response = await lastValueFrom(
-    getBackendSrv().fetch<DataSourceSettingsK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`,
-      showErrorAlert: false,
-    })
+  const url = `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`;
+  const resource = await fetchK8sResource<DataSourceSettingsK8s>(url, `Could not load data source "${k8sName}"`);
+  const dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(resource);
+  const access = await fetchK8sResource<DatasourceAccessK8s>(
+    `${url}/access`,
+    `Could not load access information for data source "${k8sName}"`
   );
-  if (!response.ok) {
-    throw Error(`Could not find data source by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`);
-  }
-
-  let dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(response.data);
-  const accessResponse = await lastValueFrom(
-    getBackendSrv().fetch<DatasourceAccessK8s>({
-      method: 'GET',
-      url: `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}/access`,
-      showErrorAlert: false,
-    })
-  );
-  if (!accessResponse.ok) {
-    throw Error(
-      `Could not find data source access information by group-version-name: "${k8sGroup}" "${k8sVersion}" "${k8sName}"`
-    );
-  }
-  dsSettings.accessControl = accessResponse.data.Permissions;
+  dsSettings.accessControl = access.Permissions;
   return dsSettings;
 };
 
@@ -330,11 +336,15 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
     .then((response) => response.datasource);
 };
 
-export const deleteDataSource = (uid: string) => {
+export const deleteDataSource = async (uid: string) => {
   let deleteUrl = `/api/datasources/uid/${uid}`;
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let namespace = config.namespace;
-    let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
+    let k8sGroup = await getDataSourceK8sGroup(uid);
+    if (k8sGroup === '') {
+      throw Error(`Could not find data source group with uid: "${uid}"`);
+    }
+    let apiVersion = `${k8sGroup}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
   }
   return getBackendSrv().delete(deleteUrl);

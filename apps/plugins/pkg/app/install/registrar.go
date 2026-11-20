@@ -2,6 +2,8 @@ package install
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"maps"
 	"strings"
 	"sync"
@@ -18,6 +20,9 @@ import (
 
 const (
 	PluginInstallSourceAnnotation = "plugins.grafana.app/install-source"
+	// PluginStoreSyncServiceIdentity identifies writes made by install sync.
+	PluginStoreSyncServiceIdentity = "plugins.installsync"
+	StackStateServiceIdentity      = "stack-state-service"
 	// AppliedDependenciesAnnotation records the dependency plugin IDs that the
 	// plugin storage hooks have applied for a plugin. The hooks stamp it
 	// authoritatively from plugin metadata on create/update.
@@ -31,13 +36,18 @@ const (
 	DependencyPluginVersion = "latest"
 )
 
+// ErrSyncDidNotConverge indicates that storage hooks kept changing plugin
+// records through every reconciliation pass.
+var ErrSyncDidNotConverge = errors.New("plugin install sync did not converge")
+
 type Source = string
 
 const (
-	SourceUnknown          Source = "unknown"
-	SourcePluginStore      Source = "plugin-store"
-	SourceChildPlugin      Source = "child-plugin"
-	SourceDependencyPlugin Source = "dependency-plugin"
+	SourceUnknown           Source = "unknown"
+	SourcePluginStore       Source = "plugin-store"
+	SourceChildPlugin       Source = "child-plugin"
+	SourceDependencyPlugin  Source = "dependency-plugin"
+	SourceStackStateService Source = "stack-state-service"
 )
 
 // Registrar is an interface for registering plugin installations.
@@ -179,6 +189,15 @@ func hasDependencyParents(plugin *pluginsv0alpha1.Plugin) bool {
 	return len(parseCSVAnnotation(plugin.Annotations, DependencyParentsAnnotation)) > 0
 }
 
+// ownedByOtherSource reports whether a record belongs to a source other than
+// source. A missing or empty source belongs to no one. Dependency records are
+// the exception: installing the plugin directly promotes them to the
+// installing source.
+func ownedByOtherSource(record *pluginsv0alpha1.Plugin, source Source) bool {
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source && existingSource != SourceDependencyPlugin
+}
+
 type InstallRegistrar struct {
 	clientGenerator resource.ClientGenerator
 	client          *pluginsv0alpha1.PluginClient
@@ -209,8 +228,16 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 	return r.client, r.clientErr
 }
 
-// Register creates or updates a plugin install in the registry.
+// Register creates or updates a plugin install in the registry. Records owned
+// by another source are left unchanged.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
+	_, err := r.register(ctx, namespace, install)
+	return err
+}
+
+// register reports whether it wrote. A concurrent conflict counts as a write
+// because the caller's view of the namespace is stale.
+func (r *InstallRegistrar) register(ctx context.Context, namespace string, install *PluginInstall) (bool, error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
@@ -222,7 +249,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	if err != nil {
 		logger.Error("Failed to get plugin client", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		return false, err
 	}
 	identifier := resource.Identifier{
 		Namespace: namespace,
@@ -232,23 +259,32 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
+		return false, err
 	}
 
 	if existing != nil {
+		if ownedByOtherSource(existing, install.Source) {
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
+			return false, nil
+		}
 		if install.ShouldUpdate(existing) {
 			_, err = client.Update(ctx, install.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
+				if errorsK8s.IsConflict(err) {
+					// another writer changed the record, report a write so the caller re-reads
+					metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
+					return true, nil
+				}
 				logger.Error("Failed to update plugin", "error", err)
-				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-				return err
+				metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
+				return false, err
 			}
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-			return nil
+			return true, nil
 		}
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-		return nil
+		return false, nil
 	}
 
 	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
@@ -256,18 +292,156 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		if errorsK8s.IsAlreadyExists(err) {
 			// Another replica created it concurrently — desired state is achieved
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
-			return nil
+			return true, nil
 		}
 		logger.Error("Failed to create plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		metrics.RegistrationOperationsTotal.WithLabelValues("register", outcomeForError(err)).Inc()
+		return false, err
 	}
 	metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-	return nil
+	return true, nil
+}
+
+// outcomeForError classifies transient API failures separately from generic
+// errors so fleet-wide rate limiting and unavailability remain distinguishable.
+func outcomeForError(err error) string {
+	if errorsK8s.IsTooManyRequests(err) {
+		return "rate_limited"
+	}
+	if errorsK8s.IsServiceUnavailable(err) || errorsK8s.IsServerTimeout(err) || errorsK8s.IsTimeout(err) {
+		return "unavailable"
+	}
+	return "error"
+}
+
+// maxSyncNamespacePasses bounds SyncNamespace's passes. A namespace still
+// writing after this many passes is oscillating rather than settling.
+const maxSyncNamespacePasses = 5
+
+// SyncNamespace reconciles the namespace's plugin installs from the given
+// source to match desired. Records not in desired are unregistered unless their
+// ID is in retain or they were created at or after since. A zero since keeps
+// every record. In-sync records are skipped without a read, and because writes
+// fire storage hooks that can rewrite sibling records, passes repeat against a
+// fresh list until one writes nothing.
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string, since time.Time) error {
+	client, err := r.GetClient()
+	if err != nil {
+		return err
+	}
+
+	desiredIDs := make(map[string]struct{}, len(desired))
+	for i := range desired {
+		desiredIDs[desired[i].ID] = struct{}{}
+	}
+	retainIDs := make(map[string]struct{}, len(retain))
+	for _, id := range retain {
+		retainIDs[id] = struct{}{}
+	}
+
+	var written []string
+	for pass := range maxSyncNamespacePasses {
+		existing, err := client.ListAll(ctx, namespace, resource.ListOptions{})
+		if err != nil {
+			metrics.RegistrationOperationsTotal.WithLabelValues("list", outcomeForError(err)).Inc()
+			return err
+		}
+		metrics.RegistrationOperationsTotal.WithLabelValues("list", "success").Inc()
+
+		written = written[:0]
+
+		// unregister plugins that are not installed
+		for i := range existing.Items {
+			record := &existing.Items[i]
+			if record.Spec.Id == "" {
+				continue
+			}
+			if _, ok := desiredIDs[record.Spec.Id]; ok {
+				continue
+			}
+			if _, ok := retainIDs[record.Spec.Id]; ok {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping retained plugin install", "requestNamespace", namespace, "pluginId", record.Spec.Id)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
+				}
+				continue
+			}
+			if r.unregisterIsNoOp(record, source) {
+				if pass == 0 {
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped").Inc()
+				}
+				continue
+			}
+			if !record.CreationTimestamp.Time.Before(since) {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping plugin install created after the startup cutoff", "requestNamespace", namespace, "pluginId", record.Spec.Id, "createdAt", record.CreationTimestamp.Time, "since", since)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent").Inc()
+				}
+				continue
+			}
+			r.logger.WithContext(ctx).Info("Unregistering plugin install that is not in the plugin store",
+				"requestNamespace", namespace, "pluginId", record.Spec.Id,
+				"createdAt", record.CreationTimestamp.Time, "age", time.Since(record.CreationTimestamp.Time).Round(time.Second),
+				"cutoff", since, "storePlugins", len(desired), "storeFingerprint", storeFingerprint(desired))
+			changed, err := r.unregister(ctx, namespace, record.Spec.Id, source)
+			if err != nil {
+				return err
+			}
+			if changed {
+				written = append(written, record.Spec.Id)
+			}
+		}
+
+		existingByName := make(map[string]*pluginsv0alpha1.Plugin, len(existing.Items))
+		for i := range existing.Items {
+			existingByName[existing.Items[i].Name] = &existing.Items[i]
+		}
+
+		// register plugins that are installed
+		for i := range desired {
+			d := &desired[i]
+			if cached := existingByName[d.ID]; cached != nil && (ownedByOtherSource(cached, d.Source) || !d.ShouldUpdate(cached)) {
+				if pass == 0 {
+					metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped").Inc()
+				}
+				continue
+			}
+			changed, err := r.register(ctx, namespace, d)
+			if err != nil {
+				return err
+			}
+			if changed {
+				written = append(written, d.ID)
+			}
+		}
+
+		if len(written) == 0 {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w after %d passes, still writing: %v", ErrSyncDidNotConverge, maxSyncNamespacePasses, written)
+}
+
+// unregisterIsNoOp reports whether the listed record proves Unregister would
+// change nothing: it is the record Unregister would read by id, and it
+// belongs to a different source.
+func (r *InstallRegistrar) unregisterIsNoOp(record *pluginsv0alpha1.Plugin, source Source) bool {
+	if record.Name != record.Spec.Id {
+		return false
+	}
+	existingSource := record.Annotations[PluginInstallSourceAnnotation]
+	return existingSource != "" && existingSource != source
 }
 
 // Unregister removes a plugin install from the registry.
 func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
+	_, err := r.unregister(ctx, namespace, name, source)
+	return err
+}
+
+// unregister reports whether it wrote.
+func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, name string, source Source) (bool, error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("unregister").Observe(time.Since(start).Seconds())
@@ -279,7 +453,7 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	if err != nil {
 		logger.Error("Failed to get plugin client", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		return false, err
 	}
 	identifier := resource.Identifier{
 		Namespace: namespace,
@@ -288,18 +462,20 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	existing, err := client.Get(ctx, identifier)
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
+		return false, err
 	}
 	// if the plugin doesn't exist, nothing to unregister
 	if existing == nil {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return false, nil
 	}
-	// if the source is different, do not unregister
-	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
+	// if another source owns the record, do not unregister. A missing or empty
+	// source belongs to no one. unregisterIsNoOp relies on this check running
+	// before the dependency-parents demote below.
+	if existingSource := existing.Annotations[PluginInstallSourceAnnotation]; existingSource != "" && existingSource != source {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return false, nil
 	}
 	// if other plugins still depend on this plugin, keep the record and hand
 	// ownership back to the dependency machinery instead of deleting it, so it
@@ -312,23 +488,30 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 		}
 		if !demoted.ShouldUpdate(existing) {
 			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-			return nil
+			return false, nil
 		}
 		_, err = client.Update(ctx, demoted.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 		if err != nil {
+			if errorsK8s.IsConflict(err) {
+				// another writer changed the record, report a write so the caller re-reads
+				metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "conflict").Inc()
+				return true, nil
+			}
 			logger.Error("Failed to demote plugin to dependency install", "error", err)
-			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-			return err
+			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
+			return false, err
 		}
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return true, nil
 	}
 	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
 	if err != nil {
 		logger.Error("Failed to delete plugin", "error", err)
-		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
+		return false, err
 	}
+	createdAt := existing.CreationTimestamp.Time
+	logger.Info("Unregistered plugin install", "createdAt", createdAt, "age", time.Since(createdAt).Round(time.Second))
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-	return err
+	return true, nil
 }

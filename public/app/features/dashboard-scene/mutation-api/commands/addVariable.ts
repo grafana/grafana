@@ -4,7 +4,7 @@
  * Add a template variable to the dashboard using v2beta1 VariableKind format.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -12,7 +12,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { buildVariableChangePath, getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
+import { buildVariableChangePath, resolveVariableScope } from './variableScope';
 import { getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const addVariablePayloadSchema = payloads.addVariable;
@@ -21,7 +21,7 @@ export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
 
 export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   name: 'ADD_VARIABLE',
-  description: payloads.addVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.addVariable)?.description ?? '',
 
   payloadSchema: payloads.addVariable,
   permission: requiresEdit,
@@ -34,7 +34,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     try {
       const { variable: variableKind, position, parentPath } = payload;
       const name = variableKind.spec.name;
-      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
+      const effectiveParentPath = parentPath ?? '/';
 
       const { scopeOwner, layoutPathPrefix } = resolveVariableScope(scene, effectiveParentPath);
 

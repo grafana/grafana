@@ -79,13 +79,19 @@ type pluginContextProvider interface {
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
+	return NewServiceWithMetrics(cfg, pluginClient, pCtxProvider, features, metrics.NewSSEMetrics(registerer), tracer, builder)
+}
+
+// NewServiceWithMetrics returns a Service that records to m, so callers that build a Service per request can share one registered set of metrics.
+func NewServiceWithMetrics(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles, m *metrics.ExprMetrics, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
 		pCtxProvider:  pCtxProvider,
 		features:      features,
 		tracer:        tracer,
-		metrics:       metrics.NewSSEMetrics(registerer),
+		metrics:       m,
 		pluginsClient: pluginClient,
 		converter: &ResultConverter{
 			Features: features,
@@ -115,8 +121,7 @@ func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline
 		if nodeErr := node.DisabledErr(); nodeErr != nil {
 			// Record SQL metrics before returning, matching the behavior of
 			// the non-degraded path where instrumentSQLError fires on failure.
-			var sqlErr *sql.ErrorWithCategory
-			if errors.As(nodeErr, &sqlErr) {
+			if sqlErr, ok := errors.AsType[*sql.ErrorWithCategory](nodeErr); ok {
 				s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
 			}
 			return nil, nodeErr

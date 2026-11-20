@@ -21,11 +21,14 @@ type Snapshot struct {
 
 	// Spec is the spec of the Snapshot
 	Spec SnapshotSpec `json:"spec" yaml:"spec"`
+
+	Blobs SnapshotBlobs `json:"blobs" yaml:"blobs"`
 }
 
 func NewSnapshot() *Snapshot {
 	return &Snapshot{
-		Spec: *NewSnapshotSpec(),
+		Spec:  *NewSnapshotSpec(),
+		Blobs: *NewSnapshotBlobs(),
 	}
 }
 
@@ -43,11 +46,15 @@ func (o *Snapshot) SetSpec(spec any) error {
 }
 
 func (o *Snapshot) GetSubresources() map[string]any {
-	return map[string]any{}
+	return map[string]any{
+		"blobs": o.Blobs,
+	}
 }
 
 func (o *Snapshot) GetSubresource(name string) (any, bool) {
 	switch name {
+	case "blobs":
+		return o.Blobs, true
 	default:
 		return nil, false
 	}
@@ -55,6 +62,13 @@ func (o *Snapshot) GetSubresource(name string) (any, bool) {
 
 func (o *Snapshot) SetSubresource(name string, value any) error {
 	switch name {
+	case "blobs":
+		cast, ok := value.(SnapshotBlobs)
+		if !ok {
+			return fmt.Errorf("cannot set blobs type %#v, not of type SnapshotBlobs", value)
+		}
+		o.Blobs = cast
+		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
@@ -226,6 +240,7 @@ func (o *Snapshot) DeepCopyInto(dst *Snapshot) {
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Blobs.DeepCopyInto(&dst.Blobs)
 }
 
 func (Snapshot) OpenAPIModelName() string {
@@ -303,5 +318,17 @@ func (s *SnapshotSpec) DeepCopy() *SnapshotSpec {
 
 // DeepCopyInto deep copies Spec into another Spec object
 func (s *SnapshotSpec) DeepCopyInto(dst *SnapshotSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of SnapshotBlobs
+func (s *SnapshotBlobs) DeepCopy() *SnapshotBlobs {
+	cpy := &SnapshotBlobs{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies SnapshotBlobs into another SnapshotBlobs object
+func (s *SnapshotBlobs) DeepCopyInto(dst *SnapshotBlobs) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -19,9 +19,16 @@ import { setPluginLinksHook } from '@grafana/runtime';
 
 // SpanDetailLinkButtons resolves data source settings via an async hook; return a
 // synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
+// useAttributePluginPromoGetter uses useAppPluginMetas (async); stub it so SpanDetail
+// doesn't schedule an un-acted state update when rendered via SpanDetailRow.
+jest.mock('./SpanDetail/pluginPromo/attributePluginPromos', () => ({
+  ...jest.requireActual('./SpanDetail/pluginPromo/attributePluginPromos'),
+  useAttributePluginPromoGetter: jest.fn(() => () => undefined),
 }));
 
 import DetailState from './SpanDetail/DetailState';

@@ -48,6 +48,25 @@ DashboardSpec: {
 
 	// Configured template variables.
 	variables: [...VariableKind] | *[]
+
+	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
+	prompts?: [...Prompt]
+}
+
+// A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
+Prompt: {
+	// The prompt that is run. Viewers see it on the dashboard unless it has a title.
+	text: string
+	// A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.
+	title?: string
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
+	sources?: [...PromptSource]
+}
+
+// A panel that a prompt is answered from.
+PromptSource: {
+	// The panel, by its name in dashboard.spec.elements.
+	element: ElementReference
 }
 
 // Supported dashboard elements
@@ -153,6 +172,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 DataTransformerConfig: {
 	// Unique identifier of transformer
 	id: string
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -263,6 +284,11 @@ FieldConfig: {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	nullValueMode?: NullValueMode
+
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	varMappings?: {[string]: string}
 }
 
 // How null values should be handled
@@ -289,7 +315,9 @@ MatcherConfig: {
 Threshold: {
 	// Value null means -Infinity
 	value: number | null
-	color: string
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string
+	color:      string
 }
 
 ThresholdsMode: "absolute" | "percentage"
@@ -505,6 +533,7 @@ AnnotationQueryKind: {
 
 QueryOptionsSpec: {
 	timeFrom?:         string
+	timeTo?:           string
 	maxDataPoints?:    int
 	timeShift?:        string
 	queryCachingTTL?:  int
@@ -658,6 +687,9 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
+	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
+	prompts?: [...Prompt]
 }
 
 AutoGridLayoutKind: {
@@ -706,12 +738,18 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
+	// Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.
+	prompts?: [...Prompt]
 }
 
 PanelSpec: {
-	id:          number
-	title:       string
-	description: string
+	id:    number
+	title: string
+	// Shown in a info icon tooltip next to panel title
+	description?: string
+	// Shown in a sub header below the title.
+	subtitle?: string
 	links: [...DataLink]
 	data:         QueryGroupKind
 	vizConfig:    VizConfigKind

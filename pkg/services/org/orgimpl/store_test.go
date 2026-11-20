@@ -2,24 +2,33 @@ package orgimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences/dashboardpreferencestest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -27,20 +36,159 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+var registerOrgSQLMockXormDriverOnce sync.Once
+
+type orgSQLMockXormDriver struct{}
+
+func (orgSQLMockXormDriver) Parse(string, string) (*core.Uri, error) {
+	return &core.Uri{DbType: core.SQLITE}, nil
+}
+
+type sqlmockOrgDB struct {
+	dbtest.FakeDB
+	engine *xorm.Engine
+}
+
+func (d *sqlmockOrgDB) WithDbSession(_ context.Context, callback sqlstore.DBTransactionFunc) error {
+	return d.withSession(callback)
+}
+
+func (d *sqlmockOrgDB) WithTransactionalDbSession(_ context.Context, callback sqlstore.DBTransactionFunc) error {
+	return d.withSession(callback)
+}
+
+func (d *sqlmockOrgDB) withSession(callback sqlstore.DBTransactionFunc) error {
+	sess := &sqlstore.DBSession{Session: d.engine.NewSession()}
+	defer sess.Close()
+	return callback(sess)
+}
+
+func (d *sqlmockOrgDB) GetDBType() core.DbType {
+	return core.SQLITE
+}
+
+func (d *sqlmockOrgDB) GetDialect() migrator.Dialect {
+	return migrator.NewSQLite3Dialect()
+}
+
+func (d *sqlmockOrgDB) Quote(value string) string {
+	return d.engine.Quote(value)
+}
+
+func TestStoreUsesProviderTables(t *testing.T) {
+	registerOrgSQLMockXormDriverOnce.Do(func() {
+		if core.QueryDriver("sqlmock") == nil {
+			core.RegisterDriver("sqlmock", orgSQLMockXormDriver{})
+		}
+	})
+
+	dsn := "orgimpl-store"
+	mockDB, mock, err := sqlmock.NewWithDSN(dsn)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = mockDB.Close() })
+
+	engine, err := xorm.NewEngine("sqlmock", dsn)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+
+	legacyDB := &sqlmockOrgDB{engine: engine}
+	type contextKey struct{}
+	ctx := context.WithValue(context.Background(), contextKey{}, "provider context")
+	calls := 0
+	tables := make([]string, 0, 2)
+	provider := func(gotCtx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		require.Equal(t, "provider context", gotCtx.Value(contextKey{}))
+		calls++
+		return &legacysql.LegacyDatabaseHelper{
+			DB: legacyDB,
+			Table: func(name string) string {
+				tables = append(tables, name)
+				return "test_schema." + name
+			},
+		}, nil
+	}
+	store := &sqlStore{sql: provider, log: log.NewNopLogger()}
+
+	mock.ExpectQuery(regexp.QuoteMeta("FROM `test_schema`.`org`")).
+		WithArgs(int64(42)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(42)))
+	_, err = store.Get(ctx, 42)
+	require.NoError(t, err)
+
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."org_user"
+WHERE "user_id" = ?`)).
+		WithArgs(int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, store.DeleteUserFromAll(ctx, 42))
+
+	require.Equal(t, 2, calls)
+	require.Equal(t, []string{"org", "org_user"}, tables)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestIntegrationOrgDeleteRenderers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type deleteRecord struct {
+		OrgID  int64  `xorm:"org_id"`
+		Marker string `xorm:"marker"`
+	}
+
+	dbStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	store := &sqlStore{sql: legacysql.NewDatabaseProvider(dbStore), log: log.NewNopLogger()}
+	err := dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		if _, err := sess.Exec("DROP TABLE IF EXISTS org_delete_renderer_test"); err != nil {
+			return err
+		}
+		_, err := sess.Exec("CREATE TABLE org_delete_renderer_test (org_id INTEGER, marker TEXT)")
+		return err
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("DROP TABLE IF EXISTS org_delete_renderer_test")
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	created := &org.Org{Name: "delete-renderer-test", Created: time.Now(), Updated: time.Now()}
+	_, err = store.Insert(context.Background(), created)
+	require.NoError(t, err)
+
+	deletionService := &DeletionService{store: store}
+	deletionService.RegisterDelete(func(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64) (orgdelete.Query, error) {
+		return orgdelete.Query{
+			SQL:  "INSERT INTO " + quoteTable(dbHelper, "org_delete_renderer_test") + " (org_id, marker) VALUES (?, ?)",
+			Args: []any{orgID, "rendered"},
+		}, nil
+	})
+
+	require.NoError(t, store.Delete(context.Background(), &org.DeleteOrgCommand{ID: created.ID}))
+
+	var records []deleteRecord
+	err = dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		return sess.Table("org_delete_renderer_test").Find(&records)
+	})
+	require.NoError(t, err)
+	require.Equal(t, []deleteRecord{{OrgID: created.ID, Marker: "rendered"}}, records)
+}
+
 func TestIntegrationOrgDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgStore := sqlStore{
-		db:      ss,
-		dialect: ss.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(ss),
+		log: log.NewNopLogger(),
 	}
 
 	t.Run("org not found", func(t *testing.T) {
@@ -158,7 +306,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		for i := 1; i < 4; i++ {
 			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Orga #", i)}
 			_, err := orgStore.CreateWithMember(context.Background(), cmd)
@@ -207,10 +355,9 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing Account DB Access", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		orgStore = sqlStore{
-			db:      ss,
-			dialect: ss.GetDialect(),
+			sql: legacysql.NewDatabaseProvider(ss),
 		}
 		ids := []int64{}
 
@@ -258,11 +405,10 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
-		db:      ss,
-		dialect: ss.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(ss),
+		log: log.NewNopLogger(),
 	}
 
 	t.Run("org user inserted", func(t *testing.T) {
@@ -335,7 +481,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 	t.Run("GetOrgUsers and UpdateOrgUsers", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -489,7 +635,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("SearchOrgUsersByEmails", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		ac1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"})
@@ -505,7 +651,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		store := sqlStore{db: ss, dialect: ss.GetDialect(), log: log.NewNopLogger()}
+		store := sqlStore{sql: legacysql.NewDatabaseProvider(ss), log: log.NewNopLogger()}
 
 		t.Run("returns matched members", func(t *testing.T) {
 			result, err := store.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
@@ -548,10 +694,9 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 		t.Run("excludes hidden users when ExcludeHiddenUsers is set", func(t *testing.T) {
 			storeWithHidden := sqlStore{
-				db:      ss,
-				dialect: ss.GetDialect(),
-				log:     log.NewNopLogger(),
-				cfg:     &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
+				sql: legacysql.NewDatabaseProvider(ss),
+				log: log.NewNopLogger(),
+				cfg: &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
 			}
 			result, err := storeWithHidden.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
 				OrgID:              ac1.OrgID,
@@ -599,10 +744,9 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 		t.Run("returns hidden users when ExcludeHiddenUsers is false", func(t *testing.T) {
 			storeWithHidden := sqlStore{
-				db:      ss,
-				dialect: ss.GetDialect(),
-				log:     log.NewNopLogger(),
-				cfg:     &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
+				sql: legacysql.NewDatabaseProvider(ss),
+				log: log.NewNopLogger(),
+				cfg: &setting.Cfg{HiddenUsers: map[string]struct{}{ac2.Login: {}}},
 			}
 			result, err := storeWithHidden.SearchOrgUsersByEmails(context.Background(), &org.SearchOrgUsersByEmailsQuery{
 				OrgID:  ac1.OrgID,
@@ -614,7 +758,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		cfg.AutoAssignOrg = true
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = "Viewer"
@@ -672,7 +816,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	defer func() {
 		cfg.AutoAssignOrg, cfg.AutoAssignOrgId, cfg.AutoAssignOrgRole = false, 0, ""
 	}()
@@ -680,9 +824,8 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	cfg.AutoAssignOrgId = 1
 	cfg.AutoAssignOrgRole = "Viewer"
 	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(store),
+		log: log.NewNopLogger(),
 	}
 	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
@@ -742,11 +885,10 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(store),
+		log: log.NewNopLogger(),
 	}
 	cfg.IsEnterprise = true
 	defer func() {
@@ -860,11 +1002,10 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	userimpl.MockTimeNow(constNow)
 	defer userimpl.ResetTimeNow()
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(store),
+		log: log.NewNopLogger(),
 	}
 	_, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
@@ -920,12 +1061,11 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		log:     log.NewNopLogger(),
-		cfg:     cfg,
+		sql: legacysql.NewDatabaseProvider(store),
+		log: log.NewNopLogger(),
+		cfg: cfg,
 	}
 
 	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
@@ -1099,11 +1239,10 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
-		db:      store,
-		dialect: store.GetDialect(),
-		log:     log.NewNopLogger(),
+		sql: legacysql.NewDatabaseProvider(store),
+		log: log.NewNopLogger(),
 	}
 
 	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
@@ -1235,16 +1374,222 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	assert.NotNil(t, usr)
 }
 
+func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("removed from one of two orgs", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
+	})
+
+	t.Run("removed from an org they aren't in", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.Calls)
+	})
+
+	t.Run("an orphan is deleted with its preferences", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgB.ID)
+		cmd := &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID, ShouldDeleteOrphanedUser: true}
+
+		err := f.store.RemoveOrgUser(t.Context(), cmd)
+
+		require.NoError(t, err)
+		require.True(t, cmd.UserWasDeleted)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
+	})
+
+	t.Run("the last admin can't leave", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: f.bAdmin.ID, OrgID: f.orgB.ID})
+
+		require.ErrorIs(t, err, org.ErrLastOrgAdmin)
+		require.Empty(t, f.cleaner.Calls)
+	})
+
+	t.Run("a cleanup failure doesn't fail the removal", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, errors.New("boom"))
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
+		orgs, err := f.orgSvc.GetUserOrgList(t.Context(), &org.GetUserOrgListQuery{UserID: viewer.ID})
+		require.NoError(t, err)
+		require.Len(t, orgs, 1)
+		require.Equal(t, f.orgA.ID, orgs[0].OrgID)
+	})
+
+	t.Run("Cloud: still in another org of the stack", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		f.cfg.StackID = "123"
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.Calls)
+	})
+
+	t.Run("a removal that rolls back after the user has left sends nothing", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+		rolledBack := errors.New("rolled back")
+		f.store.sql = legacysql.NewDatabaseProvider(&rollbackAfterCallbackDB{DB: f.db, err: rolledBack})
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.ErrorIs(t, err, rolledBack)
+		require.Empty(t, f.cleaner.Calls)
+		orgs, err := f.orgSvc.GetUserOrgList(t.Context(), &org.GetUserOrgListQuery{UserID: viewer.ID})
+		require.NoError(t, err)
+		require.Len(t, orgs, 2, "the removal should have rolled back")
+	})
+
+	t.Run("a retry that finds the user already gone sends nothing", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+		f.store.sql = legacysql.NewDatabaseProvider(&retryOnceDB{DB: f.db, beforeRetry: func(ctx context.Context) error {
+			return f.db.WithDbSession(ctx, func(sess *db.Session) error {
+				_, err := sess.Exec("DELETE FROM org_user WHERE org_id = ? AND user_id = ?", f.orgB.ID, viewer.ID)
+				return err
+			})
+		}})
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.Calls)
+	})
+}
+
+// rollbackAfterCallbackDB rolls back every transaction with err once its callback has succeeded.
+type rollbackAfterCallbackDB struct {
+	db.DB
+	err error
+}
+
+func (d *rollbackAfterCallbackDB) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	return d.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if err := callback(sess); err != nil {
+			return err
+		}
+		return d.err
+	})
+}
+
+// retryOnceDB runs every transaction's callback twice, as a SQLite retry does: the first run is rolled
+// back, and beforeRetry changes the database before the second.
+type retryOnceDB struct {
+	db.DB
+	beforeRetry func(context.Context) error
+}
+
+func (d *retryOnceDB) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	errRetry := errors.New("retry")
+	err := d.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if err := callback(sess); err != nil {
+			return err
+		}
+		return errRetry
+	})
+	if !errors.Is(err, errRetry) {
+		return fmt.Errorf("the first run must succeed and be rolled back, got %w", err)
+	}
+	if err := d.beforeRetry(ctx); err != nil {
+		return err
+	}
+	return d.DB.WithTransactionalDbSession(ctx, callback)
+}
+
+// preferencesCleanupFixture holds org A and org B, each created with its own admin.
+type preferencesCleanupFixture struct {
+	cfg        *setting.Cfg
+	db         db.DB
+	store      *sqlStore
+	cleaner    *dashboardpreferencestest.FakeUserCleaner
+	orgSvc     org.Service
+	usrSvc     user.Service
+	orgA, orgB *org.Org
+	bAdmin     *user.User
+}
+
+func newPreferencesCleanupFixture(t *testing.T, cleanerErr error) *preferencesCleanupFixture {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+	testDB := db.NewTestStore(t, sqlstore.WithCfg(cfg))
+	orgSvc, usrSvc := createOrgAndUserSvc(t, testDB, cfg)
+	cleaner := &dashboardpreferencestest.FakeUserCleaner{ExpectedError: cleanerErr}
+	f := &preferencesCleanupFixture{
+		cfg: cfg,
+		db:  testDB,
+		store: &sqlStore{
+			sql:         legacysql.NewDatabaseProvider(testDB),
+			log:         log.NewNopLogger(),
+			cfg:         cfg,
+			preferences: cleaner,
+		},
+		cleaner: cleaner,
+		orgSvc:  orgSvc,
+		usrSvc:  usrSvc,
+	}
+
+	aAdmin := f.createUser(t, "a-admin")
+	var err error
+	f.orgA, err = orgSvc.CreateWithMember(t.Context(), &org.CreateOrgCommand{Name: "org A", UserID: aAdmin.ID})
+	require.NoError(t, err)
+	f.bAdmin = f.createUser(t, "b-admin")
+	f.orgB, err = orgSvc.CreateWithMember(t.Context(), &org.CreateOrgCommand{Name: "org B", UserID: f.bAdmin.ID})
+	require.NoError(t, err)
+	return f
+}
+
+func (f *preferencesCleanupFixture) createUser(t *testing.T, login string) *user.User {
+	t.Helper()
+	usr, err := f.usrSvc.Create(t.Context(), &user.CreateUserCommand{Login: login, SkipOrgSetup: true})
+	require.NoError(t, err)
+	require.NotEmpty(t, usr.UID)
+	return usr
+}
+
+// createViewer creates a user who is a Viewer in each of orgIDs.
+func (f *preferencesCleanupFixture) createViewer(t *testing.T, orgIDs ...int64) *user.User {
+	t.Helper()
+	viewer := f.createUser(t, "viewer")
+	for _, orgID := range orgIDs {
+		err := f.store.AddOrgUser(t.Context(), &org.AddOrgUserCommand{Role: org.RoleViewer, OrgID: orgID, UserID: viewer.ID})
+		require.NoError(t, err)
+	}
+	return viewer
+}
+
+func (f *preferencesCleanupFixture) ns(orgID int64) string {
+	return request.GetNamespaceMapper(f.cfg)(orgID)
+}
+
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := ProvideService(store, cfg, quotaService)
+	orgService, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(store), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

@@ -6,5 +6,5 @@ type Props = Omit<ComponentProps<typeof Box>, 'backgroundColor' | 'borderRadius'
 
 /** Canvas-colored card container used for homepage sections. */
 export function HomeSection(props: Props) {
-  return <Box backgroundColor="canvas" borderRadius="default" padding={4} {...props} />;
+  return <Box backgroundColor="canvas" borderRadius="default" padding={2.5} {...props} />;
 }

@@ -23,10 +23,12 @@ import (
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 )
 
 const (
@@ -58,20 +60,30 @@ var (
 // NewTokensREST creates the /tokens subresource handler on ServiceAccount.
 //   - saGetter: the registered storage for ServiceAccount (DualWriter or UniStore).
 //   - legacyStore: reads/writes tokens in the legacy api_key table.
-func NewTokensREST(saGetter rest.Getter, legacyStore legacy.LegacyIdentityStore, tracer trace.Tracer) *TokensREST {
+func NewTokensREST(
+	saGetter rest.Getter,
+	legacyStore legacy.LegacyIdentityStore,
+	tracer trace.Tracer,
+	cfgProvider configprovider.ConfigProvider,
+	settingService settingsvc.Service,
+) *TokensREST {
 	return &TokensREST{
-		saGetter:    saGetter,
-		legacyStore: legacyStore,
-		logger:      log.New("grafana-apiserver.serviceaccounttokens.api"),
-		tracer:      tracer,
+		saGetter:       saGetter,
+		legacyStore:    legacyStore,
+		logger:         log.New("grafana-apiserver.serviceaccounttokens.api"),
+		tracer:         tracer,
+		cfgProvider:    cfgProvider,
+		settingService: settingService,
 	}
 }
 
 type TokensREST struct {
-	logger      log.Logger
-	tracer      trace.Tracer
-	saGetter    rest.Getter                // reads ServiceAccount from DualWriter / UniStore
-	legacyStore legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
+	logger         log.Logger
+	tracer         trace.Tracer
+	saGetter       rest.Getter                // reads ServiceAccount from DualWriter / UniStore
+	legacyStore    legacy.LegacyIdentityStore // reads/writes tokens in legacy api_key
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
 }
 
 func (s *TokensREST) New() runtime.Object {
@@ -248,10 +260,24 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 		return
 	}
 
+	expirationSettings, err := s.resolveExpirationSettings(ctx)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "failed to load token expiration settings")
+		ctxLogger.Error("failed to load service account token expiration settings", "error", err, "serviceAccount", saName)
+		responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to load token expiration settings: %w", err)))
+		return
+	}
+	now := time.Now()
+	if err := validateExpiration(req.ExpiresInSeconds, expirationSettings, now); err != nil {
+		responder.Error(apierrors.NewBadRequest(err.Error()))
+		return
+	}
+
 	// 0 means "never expires" — only compute an absolute timestamp when positive.
 	var expires int64
 	if req.ExpiresInSeconds > 0 {
-		expires = time.Now().Unix() + req.ExpiresInSeconds
+		expires = now.Unix() + req.ExpiresInSeconds
 	}
 
 	// Generate the token ONCE — the same hash goes to both stores.

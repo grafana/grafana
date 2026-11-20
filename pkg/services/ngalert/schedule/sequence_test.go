@@ -1,11 +1,17 @@
 package schedule
 
 import (
+	"context"
+	"fmt"
+	"slices"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 type fakeSequenceRule struct {
@@ -323,5 +329,54 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	t.Run("empty items returns false", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		require.False(t, sch.shouldEvaluateSequentially(nil))
+	})
+}
+
+func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
+	ruleStore := newFakeRulesStore()
+	gen := models.RuleGen
+	for group := range 2 {
+		for index := range 2 {
+			ruleStore.PutRule(context.Background(), gen.With(
+				gen.WithOrgID(1),
+				gen.WithNamespaceUID("ns"),
+				gen.WithGroupName(fmt.Sprintf("imported-%d", group)),
+				gen.WithGroupIndex(index+1),
+				gen.WithInterval(time.Second),
+				gen.WithPrometheusOriginalRuleDefinition("x"),
+			).GenerateRef())
+		}
+	}
+
+	synctest.Test(t, func(t *testing.T) {
+		sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
+		sch.jitterEvaluations = JitterByGroup
+
+		offsets := make(chan time.Duration, 4)
+		begin := time.Now()
+		sch.evalAppliedFunc = func(models.AlertRuleKey, time.Time) {
+			offsets <- time.Since(begin)
+		}
+
+		ctx, cancel := context.WithCancel(t.Context())
+		dispatcherGroup, ctx := errgroup.WithContext(ctx)
+		t.Cleanup(func() {
+			cancel()
+			require.NoError(t, dispatcherGroup.Wait())
+		})
+
+		scheduled, _, _ := sch.processTick(ctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
+		require.Len(t, scheduled, 4)
+
+		time.Sleep(sch.baseInterval)
+		synctest.Wait()
+		require.Len(t, offsets, 4)
+
+		actual := make([]time.Duration, 0, 4)
+		for range 4 {
+			actual = append(actual, <-offsets)
+		}
+		slices.Sort(actual)
+		require.Equal(t, []time.Duration{0, 0, 500 * time.Millisecond, 500 * time.Millisecond}, actual)
 	})
 }

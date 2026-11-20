@@ -3,10 +3,11 @@ import { type DraggableProvided } from '@hello-pangea/dnd';
 
 import { type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getDragHandleStyles } from './styles';
-import { type PinnedLine } from './utils';
+import { hiddenKey, type PinnedLine } from './utils';
 
 interface Props {
   /** The single breadcrumb line to render. Whole-section pins (Starred) go through MegaMenuItem. */
@@ -35,7 +36,8 @@ export function MegaMenuPinnedItem({
   draggableProvided,
   disabled,
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const dragStyles = useStyles2(getDragHandleStyles);
   const { item, ancestors, icon } = line;
   const label = item.text;
@@ -51,7 +53,12 @@ export function MegaMenuPinnedItem({
   const LinkComponent = item.url && !item.target && item.url.startsWith('/') ? Link : 'a';
 
   return (
-    <li ref={draggableProvided?.innerRef} className={styles.entry} {...draggableProvided?.draggableProps}>
+    <li
+      ref={draggableProvided?.innerRef}
+      className={styles.entry}
+      data-nav-id={hiddenKey(item)}
+      {...draggableProvided?.draggableProps}
+    >
       <div className={styles.row}>
         {draggableProvided && (
           // Every pinned row is draggable, so the handle owns the reserved column outright.
@@ -96,7 +103,10 @@ export function MegaMenuPinnedItem({
                 onClick={onUnpin}
                 aria-pressed
                 disabled={disabled}
-                tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
+                tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', {
+                  itemName: label,
+                  interpolation: { escapeValue: false },
+                })}
               />
             </span>
             <span className={styles.trailingSpacer} />
@@ -107,7 +117,7 @@ export function MegaMenuPinnedItem({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   entry: css({
     listStyleType: 'none',
   }),
@@ -139,6 +149,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   leafIcon: css({
     flexShrink: 0,
     width: theme.spacing(3),
+    color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   // Fixed slot that centres the unpin control, matching the Starred section's control slot width.
   unpinSlot: css({

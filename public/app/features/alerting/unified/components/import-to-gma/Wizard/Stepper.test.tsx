@@ -1,61 +1,23 @@
 import { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { type ImportMethod, StepKey } from './types';
+import { StepKey } from './types';
 
-/**
- * Seeds the new first "Import method" step as completed so the existing stepper
- * mechanics tests (which exercise the later steps) can navigate past it.
- */
-function MethodStepSeeder() {
-  const { setStepCompleted, setVisitedStep } = useStepperState();
-  useEffect(() => {
-    setVisitedStep(StepKey.Method);
-    setStepCompleted(StepKey.Method, true);
-  }, [setStepCompleted, setVisitedStep]);
-  return null;
-}
-
-function FormWrapper({ children, method = 'stage' }: { children: React.ReactNode; method?: ImportMethod }) {
-  const formAPI = useForm<{ importMethod: ImportMethod }>({ defaultValues: { importMethod: method } });
-  return <FormProvider {...formAPI}>{children}</FormProvider>;
-}
-
-const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey, method?: ImportMethod) => {
-  return render(
-    <FormWrapper method={method}>
-      <StepperStateProvider initialStep={initialStep}>
-        <MethodStepSeeder />
-        {ui}
-      </StepperStateProvider>
-    </FormWrapper>
-  );
+const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
+  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
 };
 
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render the full import rail with the new method step first', () => {
+  it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
 
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
-    expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
-    expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
+    expect(screen.getByText(/notification configuration/i)).toBeInTheDocument();
+    expect(screen.getByText(/^rules$/i)).toBeInTheDocument();
     expect(screen.getByText(/review & import/i)).toBeInTheDocument();
-  });
-
-  it('collapses to a two-step rail for the autosync method', () => {
-    renderWithProvider(<Stepper />, StepKey.Method, 'autosync');
-
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
-    expect(screen.getByText(/review & enable/i)).toBeInTheDocument();
-    // The import-only steps are not rendered at all for autosync.
-    expect(screen.queryByText(/notification resources/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/alert rules/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/review & import/i)).not.toBeInTheDocument();
   });
 
   it('should highlight the active step', () => {
@@ -73,7 +35,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const notificationsStep = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsStep = screen.getByRole('button', { name: /notification configuration/i });
     expect(notificationsStep).toBeInTheDocument();
     expect(notificationsStep).toBeEnabled();
   });
@@ -91,7 +53,7 @@ describe('Stepper', () => {
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
     // Check icon should be visible for completed step (Icon component renders SVG with aria-hidden)
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -111,7 +73,7 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -130,7 +92,7 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Rules);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     const indicator = notificationsButton.querySelector('span');
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -158,7 +120,7 @@ describe('Stepper', () => {
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
 
     // Click on the first step (going backward)
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
     await user.click(notificationsButton);
 
     // Active step should now be Notifications - verify via context
@@ -168,7 +130,7 @@ describe('Stepper', () => {
   it('should block navigation to future steps when previous steps are not completed', () => {
     renderWithProvider(<Stepper />, StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeDisabled();
   });
 
@@ -191,7 +153,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeEnabled();
 
     await user.click(rulesButton);
@@ -218,7 +180,7 @@ describe('Stepper', () => {
 
     expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Notifications);
 
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
     expect(rulesButton).toBeEnabled();
 
     await user.click(rulesButton);
@@ -237,8 +199,8 @@ describe('Stepper', () => {
 
     renderWithProvider(<TestComponent />, StepKey.Notifications);
 
-    const notificationsButton = screen.getByRole('button', { name: /notification resources/i });
-    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    const notificationsButton = screen.getByRole('button', { name: /notification configuration/i });
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
 
     await user.click(rulesButton);
 
@@ -246,5 +208,34 @@ describe('Stepper', () => {
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(indicator).not.toHaveTextContent('1');
+  });
+
+  it('keeps Rules gated by completion/skip like any other step, with no force-skip special-case', async () => {
+    // Regression for the auto-sync force-skip bug: Rules used to be permanently disabled,
+    // struck through, and unreachable from the rail whenever Auto-sync was selected. Stepper no
+    // longer knows about Auto-sync at all, so this exercises Rules through the same gating as
+    // any other step.
+    const TestComponent = () => {
+      const { activeStep, setStepCompleted, setVisitedStep } = useStepperState();
+      useEffect(() => {
+        setVisitedStep(StepKey.Notifications);
+        setStepCompleted(StepKey.Notifications, true);
+      }, [setStepCompleted, setVisitedStep]);
+      return (
+        <div>
+          <div data-testid="active-step">{activeStep}</div>
+          <Stepper />
+        </div>
+      );
+    };
+
+    renderWithProvider(<TestComponent />, StepKey.Notifications);
+
+    const rulesButton = screen.getByRole('button', { name: /rules/i });
+    expect(rulesButton).toBeEnabled();
+    expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+
+    await user.click(rulesButton);
+    expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
   });
 });

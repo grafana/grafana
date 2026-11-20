@@ -165,6 +165,13 @@ type PullRequestJobOptions struct {
 
 	// URL to the originator (eg, PR URL)
 	URL string `json:"url,omitempty"`
+
+	// Whether the pull request's head repository differs from its base repository.
+	// Omitted when repository identities were unavailable, including older jobs.
+	IsFork *bool `json:"isFork,omitempty"`
+
+	// URL of the head repository for a pull request from a fork, when available.
+	ForkURL string `json:"forkURL,omitempty"`
 }
 
 func (PullRequestJobOptions) OpenAPIModelName() string {
@@ -356,6 +363,12 @@ type JobStatus struct {
 	// Optional value 0-100 that can be set while running
 	Progress float64 `json:"progress,omitempty"`
 
+	// ProgressUpdates is the number of times the job's status has been written
+	// while it was processed. It is carried over to the historic job so the total
+	// number of progress updates a job went through remains observable after
+	// completion.
+	ProgressUpdates int64 `json:"progressUpdates,omitempty"`
+
 	// Summary of processed actions
 	Summary []*JobResourceSummary `json:"summary,omitempty"`
 
@@ -380,6 +393,8 @@ func (in JobStatus) ToSyncStatus(jobId string) SyncStatus {
 		s.Message = in.Errors
 	} else if len(in.Warnings) > 0 {
 		s.Message = in.Warnings
+	} else if in.State == JobStateError && in.Message != "" {
+		s.Message = []string{in.Message}
 	}
 
 	return s
@@ -399,6 +414,11 @@ type JobResourceSummary struct {
 
 	// No action required (useful for sync)
 	Noop int64 `json:"noop,omitempty"`
+
+	// TotalChanges is the action-aware count of resources changed for this group/kind,
+	// set by the progress recorder as results are recorded. Used for the job-duration
+	// histogram's resources_changed bucket.
+	TotalChanges int64 `json:"totalChanges,omitempty"`
 
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info

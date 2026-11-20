@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
@@ -30,7 +30,6 @@ import {
   type ColorScheme,
   type ColorSchemeDiff,
   type PaneView,
-  type SelectedView,
   type ViewMode,
   type TextAlign,
 } from '../types';
@@ -62,16 +61,11 @@ type Props = {
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 
-  // Legacy props
-  selectedView?: SelectedView;
-
-  // New UI props (when enableNewUI is true, renders toolbar with controls)
-  enableNewUI?: boolean;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
-  onTextAlignChange?: (align: TextAlign) => void;
-  onColorSchemeChange?: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  isDiffMode?: boolean;
+  viewMode: ViewMode;
+  paneView: PaneView;
+  onTextAlignChange: (align: TextAlign) => void;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 
 const FlameGraph = ({
@@ -95,45 +89,29 @@ const FlameGraph = ({
   search,
   collapsedMap,
   setCollapsedMap,
-  selectedView,
-  enableNewUI,
   viewMode,
   paneView,
   onTextAlignChange,
   onColorSchemeChange,
   isDiffMode,
 }: Props) => {
-  const isNewUI = enableNewUI === true;
-  const newStyles = useStyles2(getStylesNew);
-  const legacyStyles = getStylesLegacy();
+  const styles = useStyles2(getStyles);
 
-  const [levels, setLevels] = useState<LevelItem[][]>();
-  const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
-  const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
-  const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
-  const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
+  const { levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks } = useMemo(() => {
+    let levels = data.getLevels();
+    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+    let totalViewTicks = totalProfileTicks;
+    let levelsCallers: LevelItem[][] | undefined = undefined;
 
-  useEffect(() => {
-    if (data) {
-      let levels = data.getLevels();
-      let totalProfileTicks = levels.length ? levels[0][0].value : 0;
-      let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
-      let totalViewTicks = totalProfileTicks;
-      let levelsCallers = undefined;
-
-      if (sandwichItem) {
-        const [callers, callees] = data.getSandwichLevels(sandwichItem);
-        levels = callees;
-        levelsCallers = callers;
-        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-        totalViewTicks = callees[0]?.[0]?.value ?? 0;
-      }
-      setLevels(levels);
-      setLevelsCallers(levelsCallers);
-      setTotalProfileTicks(totalProfileTicks);
-      setTotalProfileTicksRight(totalProfileTicksRight);
-      setTotalViewTicks(totalViewTicks);
+    if (sandwichItem) {
+      const [callers, callees] = data.getSandwichLevels(sandwichItem);
+      levels = callees;
+      levelsCallers = callers;
+      // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+      totalViewTicks = callees[0]?.[0]?.value ?? 0;
     }
+    return { levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks };
   }, [data, sandwichItem]);
 
   if (!levels) {
@@ -151,6 +129,7 @@ const FlameGraph = ({
     focusedItemData,
     textAlign,
     onSandwich,
+    sandwichItem,
     colorScheme,
     totalProfileTicks,
     totalProfileTicksRight,
@@ -161,22 +140,18 @@ const FlameGraph = ({
     getExtraContextMenuButtons,
     collapsing,
     search,
-    selectedView,
     viewMode,
     paneView,
   };
   let canvas = null;
 
-  // Both style objects share sandwich/canvas styles, pick the right one based on mode.
-  const canvasStyles = isNewUI ? newStyles : legacyStyles;
-
   if (levelsCallers?.length) {
     canvas = (
       <>
-        <div className={canvasStyles.sandwichCanvasWrapper}>
-          <div className={canvasStyles.sandwichMarker}>
+        <div className={styles.sandwichCanvasWrapper}>
+          <div className={styles.sandwichMarker}>
             Callers
-            <Icon className={canvasStyles.sandwichMarkerIcon} name={'arrow-down'} />
+            <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
           </div>
           <FlameGraphCanvas
             {...commonCanvasProps}
@@ -188,9 +163,9 @@ const FlameGraph = ({
           />
         </div>
 
-        <div className={canvasStyles.sandwichCanvasWrapper}>
-          <div className={cx(canvasStyles.sandwichMarker, canvasStyles.sandwichMarkerCalees)}>
-            <Icon className={canvasStyles.sandwichMarkerIcon} name={'arrow-up'} />
+        <div className={styles.sandwichCanvasWrapper}>
+          <div className={cx(styles.sandwichMarker, styles.sandwichMarkerCalees)}>
+            <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
             Callees
           </div>
           <FlameGraphCanvas
@@ -209,106 +184,58 @@ const FlameGraph = ({
     );
   }
 
-  if (isNewUI) {
-    return (
-      <div className={newStyles.graph}>
-        <div className={newStyles.toolbar}>
-          <FlameGraphMetadata
-            data={data}
-            focusedItem={focusedItemData}
-            sandwichedLabel={sandwichItem}
-            totalTicks={totalViewTicks}
-            onFocusPillClick={onFocusPillClick}
-            onSandwichPillClick={onSandwichPillClick}
-          />
-          <div className={newStyles.controls}>
-            {onColorSchemeChange && (
-              <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode ?? false} />
-            )}
-            <ButtonGroup className={newStyles.buttonSpacing}>
-              <Button
-                variant={'secondary'}
-                fill={'outline'}
-                size={'sm'}
-                tooltip={'Expand all groups'}
-                onClick={() => {
-                  setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
-                }}
-                aria-label={'Expand all groups'}
-                icon={'angle-double-down'}
-              />
-              <Button
-                variant={'secondary'}
-                fill={'outline'}
-                size={'sm'}
-                tooltip={'Collapse all groups'}
-                onClick={() => {
-                  setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
-                }}
-                aria-label={'Collapse all groups'}
-                icon={'angle-double-up'}
-              />
-            </ButtonGroup>
-            {onTextAlignChange && (
-              <RadioButtonGroup<TextAlign>
-                size="sm"
-                options={alignOptions}
-                value={textAlign}
-                onChange={onTextAlignChange}
-              />
-            )}
-          </div>
-        </div>
-        {canvas}
-      </div>
-    );
-  }
-
   return (
-    <div className={legacyStyles.graph}>
-      <FlameGraphMetadata
-        data={data}
-        focusedItem={focusedItemData}
-        sandwichedLabel={sandwichItem}
-        totalTicks={totalViewTicks}
-        onFocusPillClick={onFocusPillClick}
-        onSandwichPillClick={onSandwichPillClick}
-      />
+    <div className={styles.graph}>
+      <div className={styles.toolbar}>
+        <FlameGraphMetadata
+          data={data}
+          focusedItem={focusedItemData}
+          sandwichedLabel={sandwichItem}
+          totalTicks={totalViewTicks}
+          totalProfileTicks={totalProfileTicks}
+          onFocusPillClick={onFocusPillClick}
+          onSandwichPillClick={onSandwichPillClick}
+        />
+        <div className={styles.controls}>
+          <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+          <ButtonGroup className={styles.buttonSpacing}>
+            <Button
+              variant={'secondary'}
+              fill={'outline'}
+              size={'sm'}
+              tooltip={'Expand all groups'}
+              onClick={() => {
+                setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
+              }}
+              aria-label={'Expand all groups'}
+              icon={'angle-double-down'}
+            />
+            <Button
+              variant={'secondary'}
+              fill={'outline'}
+              size={'sm'}
+              tooltip={'Collapse all groups'}
+              onClick={() => {
+                setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
+              }}
+              aria-label={'Collapse all groups'}
+              icon={'angle-double-up'}
+            />
+          </ButtonGroup>
+          <RadioButtonGroup<TextAlign>
+            size="sm"
+            options={alignOptions}
+            value={textAlign}
+            onChange={onTextAlignChange}
+          />
+        </div>
+      </div>
       {canvas}
     </div>
   );
 };
 
-const getStylesLegacy = () => ({
-  graph: css({
-    label: 'graph',
-    overflow: 'auto',
-    flexGrow: 1,
-    flexBasis: '50%',
-  }),
-  sandwichCanvasWrapper: css({
-    label: 'sandwichCanvasWrapper',
-    display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL}px`,
-  }),
-  sandwichMarker: css({
-    label: 'sandwichMarker',
-    writingMode: 'vertical-lr',
-    transform: 'rotate(180deg)',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-  }),
-  sandwichMarkerCalees: css({
-    label: 'sandwichMarkerCalees',
-    textAlign: 'right',
-  }),
-  sandwichMarkerIcon: css({
-    label: 'sandwichMarkerIcon',
-    verticalAlign: 'baseline',
-  }),
-});
-
-const getStylesNew = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',

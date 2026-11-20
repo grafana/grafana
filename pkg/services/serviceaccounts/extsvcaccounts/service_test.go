@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -50,12 +51,14 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}
 	logger := log.New("extsvcaccounts.test")
+	acSvc, initErr := acimpl.ProvideOSSService(
+		cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
+		localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
+		permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil)
+	require.NoError(t, initErr)
 	env.S = &ExtSvcAccountsService{
-		enabled: true,
-		acSvc: acimpl.ProvideOSSService(
-			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
-			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
-			permreg.ProvidePermissionRegistry(), nil),
+		enabled:      true,
+		acSvc:        acSvc,
 		defaultOrgID: autoAssignOrgID,
 		logger:       logger,
 		metrics:      newMetrics(nil),

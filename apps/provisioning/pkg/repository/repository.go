@@ -37,6 +37,20 @@ var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "ref not found",
 }}
 
+// CompareRefNotFoundError identifies which CompareFiles operand could not be resolved.
+type CompareRefNotFoundError struct {
+	Ref string
+	Err error
+}
+
+func (e *CompareRefNotFoundError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *CompareRefNotFoundError) Unwrap() error {
+	return e.Err
+}
+
 var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
 	Code:    http.StatusConflict,
@@ -58,6 +72,18 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Code:    http.StatusForbidden,
 	Reason:  metav1.StatusReasonForbidden,
 	Message: "permission denied",
+}}
+
+// WritePermissionDeniedDetail is the TestResults.Errors[].Detail reported when a repository
+// is reachable (auth and connectivity succeeded) but the configured credentials lack write
+// access. Unlike a generic 403, this specific case shouldn't be treated as unreachable.
+const WritePermissionDeniedDetail = "write permission denied"
+
+var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusTooManyRequests,
+	Reason:  metav1.StatusReasonTooManyRequests,
+	Message: "too many requests",
 }}
 
 // ErrServerUnavailable indicates that the remote server is unavailable or returned a 5xx error.
@@ -123,7 +149,9 @@ type Reader interface {
 	// Read all file names from the tree.
 	// This data will be parsed and validated before it is shown.
 	//
-	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
+	// Excludes dot-prefixed files and directories, including their descendants,
+	// relative to the configured root. Retains .keep files in visible directories
+	// as folder markers.
 	// TODO: Test scale: do we want to stream entries instead somehow?
 	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
 }
@@ -227,6 +255,10 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
+	// CompareFiles applies the same hidden-path policy as Reader.ReadTree.
+	// Renames into ignored paths are deletions of the old path; renames out of
+	// ignored paths are creations at the new path. Renames between ignored paths
+	// are omitted.
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 
@@ -237,6 +269,25 @@ type BranchHandler interface {
 	SetBranch(branch string)
 }
 
+// RepoIDHandler is a repository whose backend repo ID may need to be
+// resolved lazily (e.g. for repos written before the ID was pinned at
+// admission time) and backfilled into the spec once resolved. Each
+// provider decides for itself, based on its own spec fields, whether
+// its ID is already pinned and whether a resolved value should be persisted.
+type RepoIDHandler interface {
+	// ResolvedRepoID returns the backend repo ID this repository was built with.
+	ResolvedRepoID() string
+
+	// ShouldUpdateRepoID reports whether ResolvedRepoID should be backfilled into the spec.
+	ShouldUpdateRepoID() bool
+}
+
+//go:generate mockery --name PullRequestClient --structname MockPullRequestClient --inpackage --filename pull_request_client_mock.go --with-expecter
+type PullRequestClient interface {
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	MergeBase(ctx context.Context, base, head string) (string, error)
+}
+
 // PullRequestRepo is implemented by repositories that can be evaluated and
 // commented on as part of a pull request preview job.
 //
@@ -244,7 +295,6 @@ type BranchHandler interface {
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
-	MergeBase(ctx context.Context, headRef string) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
+	PullRequestClient() PullRequestClient
 }

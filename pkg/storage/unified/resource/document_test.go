@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,90 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestSearchableDocumentFieldsPreservesDefinitions(t *testing.T) {
+	definitions := []SearchFieldDefinition{
+		{
+			Name: "members", Path: "spec.members[*]", Type: SearchFieldTypeString, Array: true,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Members", EmitZeroIfAbsent: true,
+		},
+		{Name: "enabled", Type: SearchFieldTypeBoolean},
+		{Name: "count", Type: SearchFieldTypeInt64},
+		{Name: "ratio", Type: SearchFieldTypeDouble},
+		{Name: "timestamp", Type: SearchFieldTypeDate},
+	}
+	fields, err := NewSearchableDocumentFields(definitions)
+	require.NoError(t, err)
+	require.Equal(t, []string{"members", "enabled", "count", "ratio", "timestamp"}, fields.Fields())
+	for _, def := range definitions {
+		require.Equal(t, def, *fields.Field(def.Name))
+		require.Same(t, fields.Field(def.Name), fields.Field(SEARCH_FIELD_PREFIX+def.Name))
+	}
+	require.Nil(t, fields.Field("missing"))
+	require.Nil(t, fields.Field(SEARCH_FIELD_PREFIX+"missing"))
+
+	_, err = NewSearchableDocumentFields(append(definitions, definitions[0]))
+	require.EqualError(t, err, "duplicate name")
+}
+
+func TestSearchableFieldsFromProvider(t *testing.T) {
+	fields, err := SearchableFieldsFromProvider(nil, "example.test", "widgets")
+	require.NoError(t, err)
+	require.Nil(t, fields)
+
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	definitions := []SearchFieldDefinition{{Name: "count", Path: "spec.count", Type: SearchFieldTypeInt64}}
+	provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{gvr: definitions}, nil)
+	fields, err = SearchableFieldsFromProvider(provider, gvr.Group, gvr.Resource)
+	require.NoError(t, err)
+	require.Equal(t, definitions[0], *fields.Field("count"))
+}
+
+func TestStandardSearchFieldsPreservesResponseNames(t *testing.T) {
+	fields := StandardSearchFields()
+	require.ElementsMatch(t, []string{
+		SEARCH_FIELD_ID, SEARCH_FIELD_GROUP_RESOURCE, SEARCH_FIELD_NAMESPACE, SEARCH_FIELD_NAME,
+		SEARCH_FIELD_TITLE, SEARCH_FIELD_DESCRIPTION, SEARCH_FIELD_TAGS, SEARCH_FIELD_FOLDER,
+		SEARCH_FIELD_RV, SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED, SEARCH_FIELD_CREATED_BY,
+		SEARCH_FIELD_UPDATED_BY, SEARCH_FIELD_EXPLAIN, SEARCH_FIELD_SCORE, SEARCH_FIELD_LEGACY_ID,
+		SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+		SEARCH_FIELD_SOURCE_TIME, SEARCH_FIELD_SOURCE_PATH, SEARCH_FIELD_SOURCE_CHECKSUM,
+		SEARCH_FIELD_OWNER_REFERENCES, SEARCH_FIELD_DELETED_BY, SEARCH_FIELD_DELETION_TIME, SEARCH_FIELD_DELETED_RV,
+	}, fields.Fields())
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_RV).Type)
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_CREATED).Type)
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_DELETION_TIME).Type)
+	require.Equal(t, SearchFieldTypeString, fields.Field(SEARCH_FIELD_DELETED_RV).Type)
+	require.True(t, fields.Field(SEARCH_FIELD_TAGS).Array)
+	require.True(t, fields.Field(SEARCH_FIELD_OWNER_REFERENCES).Array)
+	require.Nil(t, fields.Field(SEARCH_FIELD_MANAGED_BY), "facet-only values are not stored response fields")
+	for _, name := range []string{SEARCH_FIELD_IS_DELETED, SEARCH_FIELD_IS_PROVISIONED, SEARCH_FIELD_RV_STRING, SEARCH_FIELD_DELETED_RV_SORT} {
+		require.Nil(t, fields.Field(name), "internal fields stay out of public field resolution")
+	}
+}
+
+func TestIndexableDocumentUsesFixedWidthDeletedResourceVersionForSorting(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		want  string
+	}{
+		{value: "2", want: "0000000000000000002"},
+		{value: "10", want: "0000000000000000010"},
+		{value: "1856241819843796993", want: "1856241819843796993"},
+	} {
+		doc := (&IndexableDocument{DeletedRV: &tc.value}).UpdateCopyFields()
+		require.NotNil(t, doc.DeletedRVSort)
+		require.Equal(t, tc.want, *doc.DeletedRVSort)
+		require.Equal(t, tc.value, *doc.DeletedRV)
+	}
+
+	t.Run("invalid values are not indexed as sort keys", func(t *testing.T) {
+		value := "not-a-resource-version"
+		doc := (&IndexableDocument{DeletedRV: &value}).UpdateCopyFields()
+		require.Nil(t, doc.DeletedRVSort)
+	})
+}
 
 func TestStandardDocumentBuilder(t *testing.T) {
 	ctx := context.Background()
@@ -37,13 +122,17 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
+		"groupResource": "playlists.grafana.app/playlists",
 		"name": "test1",
 		"rv": 10,
+		"_rv": "10",
 		"title": "Test Playlist from Unified Storage",
 		"title_ngram": "Test Playlist from Unified Storage",
 		"title_phrase": "test playlist from unified storage",
+		"description": "description for the test playlist",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
+		"updated": 1719828672000,
 		"updatedBy": "user:XYZ",
 		"manager": {
 			"kind": "repo",
@@ -308,4 +397,147 @@ func TestStandardDocumentBuilder_ReloadThroughRegistry(t *testing.T) {
 	require.NotContains(t, doc.Fields, "a")
 	require.Contains(t, doc.SelectableFields, "spec.y")
 	require.NotContains(t, doc.SelectableFields, "spec.x")
+}
+
+// Tags and description come from the spec via the standard builder, so a kind gets
+// them without registering its own document builder. Before this, doc.Tags and
+// doc.Description were only ever set by the dashboard builder, and every other kind
+// indexed without them — both fields were declared and mapped, but never populated.
+func TestStandardDocumentBuilder_SpecFields(t *testing.T) {
+	ctx := context.Background()
+	builder := StandardDocumentBuilder(nil)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "notebooks",
+		Name:      "nb1",
+	}
+
+	build := func(t *testing.T, spec string) *IndexableDocument {
+		t.Helper()
+		body := []byte(`{
+			"apiVersion": "dashboard.grafana.app/v2beta1",
+			"kind": "Notebook",
+			"metadata": {"name": "nb1"},
+			"spec": ` + spec + `
+		}`)
+		doc, err := builder.BuildDocument(ctx, key, 1, body)
+		require.NoError(t, err)
+		return doc
+	}
+
+	t.Run("reads spec.tags", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident", "checkout"]}`)
+		assert.Equal(t, []string{"incident", "checkout"}, doc.Tags)
+	})
+
+	t.Run("leaves tags unset when there are none", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "No tags"}`).Tags, "absent")
+		assert.Nil(t, build(t, `{"title": "Empty", "tags": []}`).Tags, "empty list")
+	})
+
+	// One malformed entry should not cost the resource its place in the index, nor
+	// the tags around it.
+	t.Run("skips entries that are not usable strings", func(t *testing.T) {
+		doc := build(t, `{"title": "Mixed", "tags": ["good", 42, null, "", "also-good"]}`)
+		assert.Equal(t, []string{"good", "also-good"}, doc.Tags)
+	})
+
+	t.Run("ignores a tags value that is not a list", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "Wrong shape", "tags": "incident"}`).Tags)
+	})
+
+	t.Run("reads spec.description", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "description": "Why checkout got slow"}`)
+		assert.Equal(t, "Why checkout got slow", doc.Description)
+	})
+
+	t.Run("leaves description empty when there is none", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "No description"}`).Description, "absent")
+		assert.Empty(t, build(t, `{"title": "Blank", "description": ""}`).Description, "empty string")
+	})
+
+	t.Run("ignores a description that is not a string", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "Wrong shape", "description": {"nested": true}}`).Description)
+	})
+
+	// The two are read from the same spec lookup, so a kind declaring both gets both.
+	t.Run("reads tags and description together", func(t *testing.T) {
+		doc := build(t, `{"title": "Both", "tags": ["incident"], "description": "Has both"}`)
+		assert.Equal(t, []string{"incident"}, doc.Tags)
+		assert.Equal(t, "Has both", doc.Description)
+	})
+
+	// The spec lookup must not displace what the constructor already resolves.
+	t.Run("still populates the standard fields", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident"], "description": "d"}`)
+		assert.Equal(t, "Checkout latency", doc.Title)
+		assert.Equal(t, "nb1", doc.Name)
+	})
+}
+
+// created and updated are declared retrieve-capable for every kind, so a list page
+// can render them straight out of a search response. They are only as good as what
+// the builder indexes.
+func TestStandardDocumentBuilder_Timestamps(t *testing.T) {
+	ctx := context.Background()
+	builder := StandardDocumentBuilder(nil)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "notebooks",
+		Name:      "nb1",
+	}
+
+	build := func(t *testing.T, metadata string) *IndexableDocument {
+		t.Helper()
+		body := []byte(`{
+			"apiVersion": "dashboard.grafana.app/v2beta1",
+			"kind": "Notebook",
+			"metadata": ` + metadata + `,
+			"spec": {"title": "Checkout latency"}
+		}`)
+		doc, err := builder.BuildDocument(ctx, key, 1, body)
+		require.NoError(t, err)
+		return doc
+	}
+
+	t.Run("reads the creation timestamp", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Created)
+	})
+
+	t.Run("leaves created at zero without a creation timestamp", func(t *testing.T) {
+		assert.Zero(t, build(t, `{"name": "nb1"}`).Created)
+	})
+
+	t.Run("reads the updated timestamp", func(t *testing.T) {
+		doc := build(t, `{
+			"name": "nb1",
+			"creationTimestamp": "2026-07-02T14:00:00Z",
+			"annotations": {"grafana.app/updatedTimestamp": "2026-07-03T09:30:00Z"}
+		}`)
+		assert.Equal(t, time.Date(2026, 7, 3, 9, 30, 0, 0, time.UTC).UnixMilli(), doc.Updated)
+	})
+
+	// An object never written since creation carries no annotation. It counts as
+	// updated when created, so it sorts and filters by update time like any other.
+	t.Run("uses the creation timestamp without the annotation", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Updated)
+	})
+
+	t.Run("leaves updated at zero without either timestamp", func(t *testing.T) {
+		assert.Zero(t, build(t, `{"name": "nb1"}`).Updated)
+	})
+
+	// An unparseable annotation must not land in the index as a bogus time, and must
+	// not cost the resource its document either.
+	t.Run("uses the creation timestamp when the annotation is malformed", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z", "annotations": {"grafana.app/updatedTimestamp": "yesterday"}}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Updated)
+		assert.Equal(t, "Checkout latency", doc.Title, "the rest of the document should still be built")
+	})
 }

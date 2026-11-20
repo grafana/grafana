@@ -16,7 +16,7 @@ labels:
 menuTitle: Query editor
 title: Zipkin query editor
 weight: 200
-review_date: 2026-04-08
+review_date: 2026-08-11
 ---
 
 # Zipkin query editor

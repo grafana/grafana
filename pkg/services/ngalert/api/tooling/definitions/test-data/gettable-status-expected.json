@@ -161,151 +161,19 @@
     ],
     "receivers": [
       {
-        "name": "team-X-mails",
-        "email_configs": [
-          {
-            "send_resolved": false,
-            "to": "team-X+alerts@example.org, team-Y+alerts@example.org",
-            "from": "alertmanager@example.org",
-            "hello": "localhost",
-            "smarthost": "localhost:25",
-            "headers": {
-              "From": "alertmanager@example.org",
-              "Subject": "{{ template \"email.default.subject\" . }}",
-              "To": "team-X+alerts@example.org, team-Y+alerts@example.org"
-            },
-            "html": "{{ template \"email.default.html\" . }}",
-            "require_tls": true,
-            "tls_config": {
-              "insecure_skip_verify": false
-            }
-          }
-        ]
+        "name": "team-X-mails"
       },
       {
-        "name": "team-X-pager",
-        "email_configs": [
-          {
-            "send_resolved": false,
-            "to": "team-X+alerts-critical@example.org",
-            "from": "alertmanager@example.org",
-            "hello": "localhost",
-            "smarthost": "localhost:25",
-            "headers": {
-              "From": "alertmanager@example.org",
-              "Subject": "{{ template \"email.default.subject\" . }}",
-              "To": "team-X+alerts-critical@example.org"
-            },
-            "html": "{{ template \"email.default.html\" . }}",
-            "require_tls": true,
-            "tls_config": {
-              "insecure_skip_verify": false
-            }
-          }
-        ],
-        "pagerduty_configs": [
-          {
-            "send_resolved": true,
-            "http_config": {
-              "tls_config": {
-                "insecure_skip_verify": false
-              },
-              "follow_redirects": true,
-              "enable_http2": true,
-              "proxy_url": null
-            },
-            "routing_key": "<secret>",
-            "url": "https://events.pagerduty.com/v2/enqueue",
-            "client": "{{ template \"pagerduty.default.client\" . }}",
-            "client_url": "{{ template \"pagerduty.default.clientURL\" . }}",
-            "description": "{{ template \"pagerduty.default.description\" .}}",
-            "details": {
-              "firing": "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
-              "num_firing": "{{ .Alerts.Firing | len }}",
-              "num_resolved": "{{ .Alerts.Resolved | len }}",
-              "resolved": "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
-            },
-            "source": "{{ template \"pagerduty.default.client\" . }}"
-          }
-        ]
+        "name": "team-X-pager"
       },
       {
-        "name": "team-Y-mails",
-        "email_configs": [
-          {
-            "send_resolved": false,
-            "to": "team-Y+alerts@example.org",
-            "from": "alertmanager@example.org",
-            "hello": "localhost",
-            "smarthost": "localhost:25",
-            "headers": {
-              "From": "alertmanager@example.org",
-              "Subject": "{{ template \"email.default.subject\" . }}",
-              "To": "team-Y+alerts@example.org"
-            },
-            "html": "{{ template \"email.default.html\" . }}",
-            "require_tls": true,
-            "tls_config": {
-              "insecure_skip_verify": false
-            }
-          }
-        ]
+        "name": "team-Y-mails"
       },
       {
-        "name": "team-Y-pager",
-        "pagerduty_configs": [
-          {
-            "send_resolved": true,
-            "http_config": {
-              "tls_config": {
-                "insecure_skip_verify": false
-              },
-              "follow_redirects": true,
-              "enable_http2": true,
-              "proxy_url": null
-            },
-            "routing_key": "<secret>",
-            "url": "https://events.pagerduty.com/v2/enqueue",
-            "client": "{{ template \"pagerduty.default.client\" . }}",
-            "client_url": "{{ template \"pagerduty.default.clientURL\" . }}",
-            "description": "{{ template \"pagerduty.default.description\" .}}",
-            "details": {
-              "firing": "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
-              "num_firing": "{{ .Alerts.Firing | len }}",
-              "num_resolved": "{{ .Alerts.Resolved | len }}",
-              "resolved": "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
-            },
-            "source": "{{ template \"pagerduty.default.client\" . }}"
-          }
-        ]
+        "name": "team-Y-pager"
       },
       {
-        "name": "team-DB-pager",
-        "pagerduty_configs": [
-          {
-            "send_resolved": true,
-            "http_config": {
-              "tls_config": {
-                "insecure_skip_verify": false
-              },
-              "follow_redirects": true,
-              "enable_http2": true,
-              "proxy_url": null
-            },
-            "routing_key": "<secret>",
-            "url": "https://events.pagerduty.com/v2/enqueue",
-            "client": "{{ template \"pagerduty.default.client\" . }}",
-            "client_url": "{{ template \"pagerduty.default.clientURL\" . }}",
-            "description": "{{ template \"pagerduty.default.description\" .}}",
-            "details": {
-              "firing": "{{ template \"pagerduty.default.instances\" .Alerts.Firing }}",
-              "num_firing": "{{ .Alerts.Firing | len }}",
-              "num_resolved": "{{ .Alerts.Resolved | len }}",
-              "resolved": "{{ template \"pagerduty.default.instances\" .Alerts.Resolved }}"
-            },
-            "source": "{{ template \"pagerduty.default.client\" . }}"
-          }
-        ]
+        "name": "team-DB-pager"
       }
     ]
   },

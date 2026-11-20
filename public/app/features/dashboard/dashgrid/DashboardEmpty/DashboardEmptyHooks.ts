@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
+import { openPanelEditor } from 'app/features/dashboard-scene/panel-edit/openPanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -33,21 +33,22 @@ export const useRepositoryStatus = ({ dashboard }: Props) => {
 interface HookProps extends Props {
   isReadOnlyRepo: boolean;
   isProvisioned: boolean;
+  isMobileEditDeprecated: boolean;
 }
 
-export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: HookProps) => {
+export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo, isMobileEditDeprecated }: HookProps) => {
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return useMemo(() => {
-    if (!canCreate || isReadOnlyRepo) {
+    if (!canCreate || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
-    return () => {
+    return async () => {
       if (dashboard instanceof DashboardScene) {
-        const panel = dashboard.onCreateNewPanel();
-        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+        const panel = await dashboard.onCreateNewPanel();
+        openPanelEditor(dashboard, panel, true);
         locationService.partial({ firstPanel: true });
       } else {
         const id = onCreateNewPanel(dashboard, initialDatasource);
@@ -57,12 +58,18 @@ export const useOnAddVisualization = ({ dashboard, canCreate, isReadOnlyRepo }: 
 
       DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
     };
-  }, [canCreate, isReadOnlyRepo, dashboard, dispatch, initialDatasource]);
+  }, [canCreate, isReadOnlyRepo, isMobileEditDeprecated, dashboard, dispatch, initialDatasource]);
 };
 
-export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
+export const useOnAddLibraryPanel = ({
+  dashboard,
+  canCreate,
+  isReadOnlyRepo,
+  isProvisioned,
+  isMobileEditDeprecated,
+}: HookProps) => {
   return useMemo(() => {
-    if (!canCreate || isProvisioned || isReadOnlyRepo) {
+    if (!canCreate || isProvisioned || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
@@ -74,12 +81,17 @@ export const useOnAddLibraryPanel = ({ dashboard, canCreate, isReadOnlyRepo, isP
         onAddLibraryPanelImpl(dashboard);
       }
     };
-  }, [canCreate, isProvisioned, isReadOnlyRepo, dashboard]);
+  }, [canCreate, isProvisioned, isReadOnlyRepo, isMobileEditDeprecated, dashboard]);
 };
 
-export const useOnImportDashboard = ({ canCreate, isReadOnlyRepo, isProvisioned }: HookProps) => {
+export const useOnImportDashboard = ({
+  canCreate,
+  isReadOnlyRepo,
+  isProvisioned,
+  isMobileEditDeprecated,
+}: HookProps) => {
   return useMemo(() => {
-    if (!canCreate || isProvisioned || isReadOnlyRepo) {
+    if (!canCreate || isProvisioned || isReadOnlyRepo || isMobileEditDeprecated) {
       return undefined;
     }
 
@@ -87,5 +99,5 @@ export const useOnImportDashboard = ({ canCreate, isReadOnlyRepo, isProvisioned 
       DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_dashboard' });
       onImportDashboardImpl();
     };
-  }, [canCreate, isReadOnlyRepo, isProvisioned]);
+  }, [canCreate, isReadOnlyRepo, isProvisioned, isMobileEditDeprecated]);
 };

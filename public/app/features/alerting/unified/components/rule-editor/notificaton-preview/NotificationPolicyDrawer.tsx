@@ -1,10 +1,10 @@
 import { Fragment, useMemo, useState } from 'react';
 
-import { AlertLabel, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
+import { AlertLabel, isDefaultRoutingTreeName } from '@grafana/alerting';
+import { type PreviewJourneyStep } from '@grafana/alerting/unstable';
 import { Trans } from '@grafana/i18n';
 import { Button, Divider, Drawer, Stack, Text, TextLink } from '@grafana/ui';
 
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 
 import { ConnectionLine } from './ConnectionLine';
@@ -12,7 +12,7 @@ import { JourneyPolicyCard } from './JourneyPolicyCard';
 import { MatchDetails } from './MatchDetails';
 
 export type JourneyEntry = {
-  journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  journey: PreviewJourneyStep[];
   policyName?: string;
 };
 
@@ -23,13 +23,13 @@ type NotificationPolicyContentProps = {
 
 /** Renders the journeys list without any Drawer wrapper — embed in any container. */
 export function NotificationPolicyContent({ journeys, labels }: NotificationPolicyContentProps) {
-  // The default tree's metadata.name is ROOT_ROUTE_NAME ("user-defined"); treat that as no name
+  // The default tree may be named "user-defined" or "default"; treat either as no name
   // so downstream rendering shows "Default policy" rather than the internal identifier.
   const normalizedJourneys = useMemo(
     () =>
       journeys.map(({ journey, policyName }) => ({
         journey,
-        policyName: policyName !== ROOT_ROUTE_NAME ? policyName : undefined,
+        policyName: isDefaultRoutingTreeName(policyName) ? undefined : policyName,
       })),
     [journeys]
   );
@@ -100,15 +100,15 @@ export function NotificationPolicyContent({ journeys, labels }: NotificationPoli
 
 type NotificationPolicyDrawerProps = {
   policyName?: string;
-  journey: RouteMatchResult<RouteWithID>['matchingJourney'];
+  journey: PreviewJourneyStep[];
   labels: Array<[string, string]>;
 };
 
 export function NotificationPolicyDrawer({ policyName, journey, labels }: NotificationPolicyDrawerProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // ROOT_ROUTE_NAME is the internal name of the default tree — don't surface it in the title.
-  const normalizedPolicyName = policyName !== ROOT_ROUTE_NAME ? policyName : undefined;
+  // The default tree may be named "user-defined" or "default" — don't surface either in the title.
+  const normalizedPolicyName = isDefaultRoutingTreeName(policyName) ? undefined : policyName;
 
   return (
     <>

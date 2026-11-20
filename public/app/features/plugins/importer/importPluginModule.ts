@@ -1,13 +1,11 @@
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { getResolvedLanguage } from '@grafana/i18n/internal';
-import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 
 import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
 import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
-import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
 import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoaderRegistry';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
@@ -50,21 +48,24 @@ export async function importPluginModule({
   const modulePath = resolveModulePath(path);
 
   // inject integrity hash into SystemJS import map
-  if (config.featureToggles.pluginsSriChecks) {
-    const resolvedModule = System.resolve(modulePath);
-    const integrityMap = System.getImportMap().integrity;
+  const resolvedModule = System.resolve(modulePath);
+  const integrityMap = System.getImportMap().integrity;
 
-    if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
-      SystemJS.addImportMap({
-        integrity: {
-          [resolvedModule]: moduleHash,
-        },
-      });
-    }
+  if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
+    SystemJS.addImportMap({
+      integrity: {
+        [resolvedModule]: moduleHash,
+      },
+    });
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
+    // Loaded on demand: the near-membrane runtime behind this is large and most installs
+    // never sandbox a plugin, so it should not be in the initial bundle.
+    const { importPluginModuleInSandbox } = await import(
+      /* webpackChunkName: "pluginSandbox" */ '../sandbox/sandboxPluginLoader'
+    );
     return importPluginModuleInSandbox({ pluginId });
   }
 
@@ -81,7 +82,6 @@ export async function importPluginModule({
       pluginVersion: version ?? '',
       expectedHash: moduleHash ?? '',
       loadingStrategy: loadingStrategy.toString(),
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       originalErrorMessage: e.originalErr?.message || '',
       originalErrorStack: e.originalErr?.stack || '',
       systemJSOriginalErr: e.originalErr?.message || '',

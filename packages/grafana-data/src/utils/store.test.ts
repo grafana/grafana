@@ -14,6 +14,15 @@ describe('Store', () => {
               delete target[key];
             };
           }
+          if (prop === 'length') {
+            return Object.keys(target).length;
+          }
+          if (prop === 'key') {
+            return (index: number) => Object.keys(target)[index] ?? null;
+          }
+          if (prop === 'getItem') {
+            return (key: string) => target[key] ?? null;
+          }
           return target[prop as string];
         },
         set(target, prop, value) {
@@ -26,6 +35,7 @@ describe('Store', () => {
         },
       }),
       writable: true,
+      configurable: true,
     });
     store = new Store();
   });
@@ -80,6 +90,76 @@ describe('Store', () => {
       expect(window.localStorage[testKey]).toBe(undefined);
     });
   });
+
+  describe('all', () => {
+    it('returns all keys', () => {
+      store.set('service:user:key1', 'value1');
+      store.set('service:user:key2', 'value2');
+      store.set('other:user:key3', 'value3');
+
+      const result = store.all();
+
+      expect(result).toEqual({
+        'service:user:key1': 'value1',
+        'service:user:key2': 'value2',
+        'other:user:key3': 'value3',
+      });
+    });
+
+    it('returns all keys matching the given prefix', () => {
+      store.set('service:user:key1', 'value1');
+      store.set('service:user:key2', 'value2');
+      store.set('other:user:key3', 'value3');
+
+      const result = store.all('service:user:');
+
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns empty object when no keys match the prefix', () => {
+      store.set('other:user:key1', 'value1');
+
+      const result = store.all('service:user:');
+
+      expect(result).toEqual({});
+    });
+  });
+});
+
+describe('Store without window (SSR)', () => {
+  const originalWindow = window;
+
+  beforeEach(() => {
+    // @ts-expect-error -- simulate a server environment where window is not defined
+    delete global.window;
+  });
+
+  afterEach(() => {
+    global.window = originalWindow;
+  });
+
+  it('does not throw when constructed or used', () => {
+    expect(() => {
+      const ssrStore = new Store();
+      ssrStore.subscribe('key', jest.fn());
+      ssrStore.set('key', 'value');
+      ssrStore.setObject('key', { a: 1 });
+      ssrStore.get('key');
+      ssrStore.getBool('key', true);
+      ssrStore.getObject('key', { a: 1 });
+      ssrStore.exists('key');
+      ssrStore.delete('key');
+    }).not.toThrow();
+  });
+
+  it('does not keep values in memory, so values never leak between server requests', () => {
+    const ssrStore = new Store();
+    ssrStore.set('key', 'value');
+
+    expect(ssrStore.get('key')).toBeUndefined();
+    expect(ssrStore.exists('key')).toBe(false);
+    expect(ssrStore.all()).toEqual({});
+  });
 });
 
 /* tests moved here from public/app/core/specs/store.test.ts */
@@ -123,5 +203,133 @@ describe('store', () => {
     store.set('key6', '123');
     store.delete('key6');
     expect(store.exists('key6')).toBe(false);
+  });
+});
+
+describe('Store when localStorage is unavailable', () => {
+  let originalDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+  });
+
+  afterEach(() => {
+    if (originalDescriptor) {
+      Object.defineProperty(window, 'localStorage', originalDescriptor);
+    }
+  });
+
+  function storageThrowing(name: string) {
+    const throwing = () => {
+      throw new DOMException('denied', name);
+    };
+    return new Proxy({} as Storage, { get: throwing, set: throwing });
+  }
+
+  function expectInMemoryFallback(getStore: () => Store) {
+    it('reads return defaults before anything is written', () => {
+      const store = getStore();
+      expect(store.get('key')).toBeUndefined();
+      expect(store.exists('key')).toBe(false);
+      expect(store.getBool('key', true)).toBe(true);
+      expect(store.getObject('key', { a: 1 })).toEqual({ a: 1 });
+      expect(store.all()).toEqual({});
+    });
+
+    it('keeps written values in memory so subscribers read the new value', () => {
+      const store = getStore();
+      const seen: unknown[] = [];
+      store.subscribe('flag', () => seen.push(store.getBool('flag', false)));
+
+      store.set('flag', true);
+      expect(seen).toEqual([true]);
+
+      expect(store.setObject('obj', { a: 1 })).toBe(true);
+      expect(store.getObject('obj')).toEqual({ a: 1 });
+      expect(store.all()).toEqual({ flag: 'true', obj: '{"a":1}' });
+    });
+
+    it('delete removes the in-memory value and notifies', () => {
+      const store = getStore();
+      const subscriber = jest.fn();
+      store.set('key', 'value');
+      store.subscribe('key', subscriber);
+
+      expect(() => store.delete('key')).not.toThrow();
+      expect(store.exists('key')).toBe(false);
+      expect(subscriber).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  describe('getter throws (sandboxed iframe without allow-same-origin)', () => {
+    let store: Store;
+
+    beforeEach(() => {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        get() {
+          throw new DOMException("Failed to read the 'localStorage' property from 'Window'", 'SecurityError');
+        },
+      });
+      store = new Store();
+    });
+
+    expectInMemoryFallback(() => store);
+  });
+
+  describe('storage operations throw SecurityError', () => {
+    let store: Store;
+
+    beforeEach(() => {
+      Object.defineProperty(window, 'localStorage', { configurable: true, value: storageThrowing('SecurityError') });
+      store = new Store();
+    });
+
+    expectInMemoryFallback(() => store);
+  });
+
+  describe('writes fail for other reasons', () => {
+    it('delete warns with a delete message', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: storageThrowing('QuotaExceededError'),
+      });
+
+      new Store().delete('key');
+
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^Could not delete localStorage key: key\./));
+      warn.mockRestore();
+    });
+
+    let store: Store;
+
+    beforeEach(() => {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: storageThrowing('QuotaExceededError'),
+      });
+      store = new Store();
+    });
+
+    it('set drops the value and warns only once', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      expect(() => store.set('key', 'value')).not.toThrow();
+      expect(() => store.set('other', 'value')).not.toThrow();
+      expect(() => store.delete('key')).not.toThrow();
+      expect(warn).toHaveBeenCalledTimes(1);
+
+      warn.mockRestore();
+    });
+
+    it('set with throwOnFailure and setObject throw so callers can react, e.g. by pruning', () => {
+      expect(() => store.set('key', 'value', { throwOnFailure: true })).toThrow(
+        expect.objectContaining({ name: 'QuotaExceededError' })
+      );
+      expect(() => store.setObject('key', { a: 1 })).toThrow(
+        expect.objectContaining({ name: 'QuotaExceededError', message: expect.stringMatching(/Could not save item/) })
+      );
+    });
   });
 });

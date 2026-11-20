@@ -4,17 +4,11 @@
  * Remove a template variable from the dashboard by name.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  getEffectiveVariableParentPath,
-  isSectionVariablesFeatureEnabled,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;
@@ -23,7 +17,7 @@ export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 
 export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   name: 'REMOVE_VARIABLE',
-  description: payloads.removeVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.removeVariable)?.description ?? '',
 
   payloadSchema: payloads.removeVariable,
   permission: requiresEdit,
@@ -32,17 +26,13 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     const { name, parentPath } = payload;
-    const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
-    const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
+    const effectiveParentPath = parentPath ?? '/';
     enterEditModeIfNeeded(scene);
 
     try {
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          if (!sectionVariablesEnabled) {
-            throw new Error(`Variable '${name}' not found`);
-          }
           const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);

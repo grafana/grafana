@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useId } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -37,6 +38,10 @@ export const ColorValueEditor = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const generatedId = useId();
+  const swatchId = id ?? generatedId;
+  const a11yNameId = `${swatchId}-a11y-name`;
+  const placeholder = settings?.placeholder ?? 'Select color';
 
   return (
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={settings?.enableNamedColors !== false}>
@@ -46,8 +51,9 @@ export const ColorValueEditor = ({
             <div className={styles.colorPicker}>
               <ColorSwatch
                 ref={ref}
-                id={id}
+                id={swatchId}
                 aria-describedby={ariaDescribedBy}
+                aria-labelledby={details ? a11yNameId : undefined}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
@@ -56,18 +62,23 @@ export const ColorValueEditor = ({
             {details && (
               <>
                 {value ? (
-                  // TODO: fix keyboard a11y
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <span className={styles.colorText} onClick={showColorPicker}>
-                    {value}
+                  <span className={styles.colorText}>
+                    <label htmlFor={swatchId}>{value}</label>
                   </span>
                 ) : (
-                  // TODO: fix keyboard a11y
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <span className={styles.placeholderText} onClick={showColorPicker}>
-                    {settings?.placeholder ?? 'Select color'}
+                  <span className={styles.placeholderText}>
+                    <label htmlFor={swatchId}>{placeholder}</label>
                   </span>
                 )}
+                <span className="sr-only" id={a11yNameId}>
+                  {value
+                    ? t('options-ui.color.swatch-aria-label', 'Pick a color, current selection {{color}}', {
+                        color: value,
+                      })
+                    : t('options-ui.color.swatch-placeholder-aria-label', 'Pick a color, {{placeholder}}', {
+                        placeholder,
+                      })}
+                </span>
                 {settings?.isClearable && value && (
                   <IconButton
                     name="times"
@@ -83,6 +94,18 @@ export const ColorValueEditor = ({
     </ColorPicker>
   );
 };
+
+const nameArea = {
+  flexGrow: 2,
+  alignSelf: 'stretch',
+  display: 'flex',
+  '& label': {
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+} as const;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -105,11 +128,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     colorPicker: css({
       padding: `0 ${theme.spacing(1)}`,
     }),
-    colorText: css({
-      flexGrow: 2,
-    }),
+    colorText: css(nameArea),
     placeholderText: css({
-      flexGrow: 2,
+      ...nameArea,
       color: theme.colors.text.secondary,
     }),
   };

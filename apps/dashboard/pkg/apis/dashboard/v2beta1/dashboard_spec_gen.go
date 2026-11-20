@@ -180,9 +180,12 @@ func (DashboardPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type DashboardPanelSpec struct {
-	Id          float64                 `json:"id"`
-	Title       string                  `json:"title"`
-	Description string                  `json:"description"`
+	Id    float64 `json:"id"`
+	Title string  `json:"title"`
+	// Shown in a info icon tooltip next to panel title
+	Description *string `json:"description,omitempty"`
+	// Shown in a sub header below the title.
+	Subtitle    *string                 `json:"subtitle,omitempty"`
 	Links       []DashboardDataLink     `json:"links"`
 	Data        DashboardQueryGroupKind `json:"data"`
 	VizConfig   DashboardVizConfigKind  `json:"vizConfig"`
@@ -325,6 +328,8 @@ func (DashboardTransformationKind) OpenAPIModelName() string {
 type DashboardDataTransformerConfig struct {
 	// Unique identifier of transformer
 	Id string `json:"id"`
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
@@ -404,6 +409,7 @@ func (DashboardDataTopic) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardQueryOptionsSpec struct {
 	TimeFrom         *string `json:"timeFrom,omitempty"`
+	TimeTo           *string `json:"timeTo,omitempty"`
 	MaxDataPoints    *int64  `json:"maxDataPoints,omitempty"`
 	TimeShift        *string `json:"timeShift,omitempty"`
 	QueryCachingTTL  *int64  `json:"queryCachingTTL,omitempty"`
@@ -551,6 +557,10 @@ type DashboardFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
@@ -755,7 +765,9 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 type DashboardThreshold struct {
 	// Value null means -Infinity
 	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
+	Color     string  `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
@@ -1268,6 +1280,9 @@ type DashboardRowsLayoutRowSpec struct {
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
+	Prompts []DashboardPrompt `json:"prompts,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1606,6 +1621,9 @@ type DashboardTabsLayoutTabSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
+	// Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.
+	Prompts []DashboardPrompt `json:"prompts,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -1830,6 +1848,7 @@ func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardVariableSort"
 }
 
+// Source information for controls (e.g. variables or links)
 // +k8s:openapi-gen=true
 type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
 
@@ -2384,6 +2403,46 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSwitchVariableSpec"
 }
 
+// A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
+// +k8s:openapi-gen=true
+type DashboardPrompt struct {
+	// The prompt that is run. Viewers see it on the dashboard unless it has a title.
+	Text string `json:"text"`
+	// A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.
+	Title *string `json:"title,omitempty"`
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
+	Sources []DashboardPromptSource `json:"sources,omitempty"`
+}
+
+// NewDashboardPrompt creates a new DashboardPrompt object.
+func NewDashboardPrompt() *DashboardPrompt {
+	return &DashboardPrompt{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPrompt.
+func (DashboardPrompt) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPrompt"
+}
+
+// A panel that a prompt is answered from.
+// +k8s:openapi-gen=true
+type DashboardPromptSource struct {
+	// The panel, by its name in dashboard.spec.elements.
+	Element DashboardElementReference `json:"element"`
+}
+
+// NewDashboardPromptSource creates a new DashboardPromptSource object.
+func NewDashboardPromptSource() *DashboardPromptSource {
+	return &DashboardPromptSource{
+		Element: *NewDashboardElementReference(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardPromptSource.
+func (DashboardPromptSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPromptSource"
+}
+
 // Links with references to other dashboards or external resources
 // +k8s:openapi-gen=true
 type DashboardDashboardLink struct {
@@ -2554,6 +2613,8 @@ type DashboardSpec struct {
 	Title string `json:"title"`
 	// Configured template variables.
 	Variables []DashboardVariableKind `json:"variables"`
+	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
+	Prompts []DashboardPrompt `json:"prompts,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.
@@ -2845,6 +2906,8 @@ func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

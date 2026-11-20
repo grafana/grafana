@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useEffect, useId, useState } from 'react';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useMeasure, useToggle } from 'react-use';
 
 import { type GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -8,8 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { DelayRender } from '../../utils/DelayRender';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -17,12 +17,15 @@ import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
-import { HoverWidget } from './HoverWidget';
+import { HoverWidget, HoverWidgetDragHandle } from './HoverWidget';
+import { usePanelChromeHeaderControls } from './PanelChromeHeaderControlsContext';
+import { usePanelContext } from './PanelContext';
 import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
 import { type PanelStatusItem } from './types';
+import { usePanelStatusSnapshot } from './usePanelNotices';
 
 /**
  * @internal
@@ -56,7 +59,9 @@ interface BaseProps {
    */
   statusItems?: PanelStatusItem[];
   /**
-   * Handle opening error details view (like inspect / error tab)
+   * Fired when the user clicks the status message/popover, alongside PanelContext's
+   * `onOpenInspector` which actually opens the error details view. Use for host-side side
+   * effects (e.g. telemetry).
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
@@ -88,6 +93,16 @@ interface BaseProps {
    * Can contain text, pills, links, buttons, or any other React elements.
    */
   subHeaderContent?: ReactNode;
+  /**
+   * Minimum height (px) for the panel container. Used by content-fit layouts so
+   * the chrome still fills a floor when its content is shorter.
+   */
+  minHeight?: number;
+  /**
+   * Maximum height (px) for the panel container. With no `height`, children receive
+   * the inner height this cap leaves, so content-fit panels can size to it.
+   */
+  maxHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -128,6 +143,29 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * True once `isLoading` has stayed true for `delay` ms. Kept in PanelChrome rather than the header content,
+ * so the wait is not restarted when the external hover slot remounts the header.
+ */
+function useIsLoadingFor(isLoading: boolean, delay: number) {
+  const [hasElapsed, setHasElapsed] = useState(false);
+
+  // Reset during render, not in an effect cleanup, so unmounting doesn't set state
+  if (!isLoading && hasElapsed) {
+    setHasElapsed(false);
+  }
+
+  useEffect(() => {
+    if (!isLoading) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setHasElapsed(true), delay);
+    return () => window.clearTimeout(timeout);
+  }, [isLoading, delay]);
+
+  return isLoading && hasElapsed;
+}
+
+/**
  * Component used for rendering content wrapped in the same style as grafana panels.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
@@ -158,7 +196,7 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
-  collapsed,
+  collapsed: collapsedProp,
   onToggleCollapse,
   onFocus,
   onMouseMove,
@@ -167,7 +205,15 @@ export function PanelChrome({
   showMenuAlways = false,
   subHeaderContent,
   subtitle,
+  minHeight,
+  maxHeight,
 }: PanelChromeProps) {
+  const { notices, activateNotices, forceVisibleHeader } = usePanelContext();
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const statusSnapshot = usePanelStatusSnapshot(notices);
+  const hasStatus = Boolean(
+    statusSnapshot.items.length || (!statusSnapshot.hostInitialized && (statusMessage || statusItems?.length))
+  );
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
@@ -176,8 +222,15 @@ export function PanelChrome({
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
+  const headerControls = usePanelChromeHeaderControls();
+  const showCancelQuery = useIsLoadingFor(loadingState === LoadingState.Loading && Boolean(onCancelQuery), 2000);
 
-  const hasHeader = !hoverHeader;
+  const showHoverHeader = hoverHeader && !forceVisibleHeader?.();
+
+  const hasExternalControls = Boolean(headerControls?.external);
+  const isInHoverSlot = hasExternalControls && showHoverHeader;
+
+  const hasHeader = !showHoverHeader;
 
   const [isOpen, toggleOpen] = useToggle(true);
 
@@ -187,9 +240,7 @@ export function PanelChrome({
   const onHeaderLeave = React.useCallback(() => setSelectableHighlight(false), []);
 
   // if collapsed is not defined, then component is uncontrolled and state is managed internally
-  if (collapsed === undefined) {
-    collapsed = !isOpen;
-  }
+  const collapsed = collapsedProp ?? !isOpen;
 
   const descriptionTitleItem = description && (
     <PanelDescription description={description} className={dragClassCancel} />
@@ -211,7 +262,7 @@ export function PanelChrome({
     theme,
     headerHeight,
     collapsed,
-    height,
+    height ?? maxHeight,
     width
   );
 
@@ -220,7 +271,7 @@ export function PanelChrome({
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight, maxHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -290,9 +341,10 @@ export function PanelChrome({
         <div className={styles.title}>
           <Text
             element="h2"
-            variant="h6"
+            variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
+            weight="medium"
             id={panelTitleId}
           >
             {title}
@@ -303,7 +355,7 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6">
+          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'} weight="medium">
             <button
               type="button"
               className={styles.clearButtonStyles}
@@ -323,7 +375,7 @@ export function PanelChrome({
                   !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
                 }
               />
-              <Text variant="h6" truncate id={panelTitleId}>
+              <Text variant={visualRefreshEnabled ? 'base' : 'h6'} truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>
@@ -332,7 +384,10 @@ export function PanelChrome({
       )}
 
       {(titleItems || descriptionTitleItem) && (
-        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+        <div
+          className={cx(styles.titleItems, isInHoverSlot && styles.hoverSlotTitleItems, dragClassCancel)}
+          data-testid="title-items-container"
+        >
           {descriptionTitleItem}
           {titleItems}
         </div>
@@ -351,20 +406,18 @@ export function PanelChrome({
           </TitleItem>
         </Tooltip>
       )}
-      {loadingState === LoadingState.Loading && onCancelQuery && (
-        <DelayRender delay={2000}>
-          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
-            <TitleItem
-              className={cx(dragClassCancel, styles.pointer)}
-              data-testid="panel-cancel-query"
-              onClick={onCancelQuery}
-            >
-              <Icon name="sync-slash" size="md" />
-            </TitleItem>
-          </Tooltip>
-        </DelayRender>
+      {showCancelQuery && (
+        <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
+          <TitleItem
+            className={cx(dragClassCancel, styles.pointer)}
+            data-testid="panel-cancel-query"
+            onClick={onCancelQuery}
+          >
+            <Icon name="sync-slash" size="md" />
+          </TitleItem>
+        </Tooltip>
       )}
-      {!hoverHeader && <div className={styles.flexGrow} />}
+      {!showHoverHeader && <div className={styles.flexGrow} />}
       {actions && itemsRenderer(actions, (item) => item)}
     </>
   );
@@ -372,6 +425,13 @@ export function PanelChrome({
   // Ignores streaming and loading (cancel query) states for simplicity
   // If you need to cancel streaming / loading panels set a title
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
+  const hoverSlotDragClass = headerControls?.hideDragHandle ? undefined : dragClass;
+  // Without the menu keeping it mounted, the hover slot has to render for the streaming and cancel-query icons alone.
+  const hasStatusIcon =
+    loadingState === LoadingState.Streaming || (loadingState === LoadingState.Loading && Boolean(onCancelQuery));
+  const dragHandleSlot = headerControls?.dragHandleSlot;
+  const hoverWidgetDragClass = dragHandleSlot === undefined ? hoverSlotDragClass : undefined;
+  const hasHoverSlotContent = title || description || titleItems || hoverWidgetDragClass || actions || hasStatusIcon;
 
   return (
     <div className={styles.container}>
@@ -401,9 +461,32 @@ export function PanelChrome({
           ) : null}
         </div>
 
-        {hoverHeader && (
+        {showHoverHeader && (
           <>
-            {hasHeaderContent && (
+            {hasExternalControls &&
+              headerControls?.hoverSlot &&
+              hasHoverSlotContent &&
+              createPortal(
+                <HoverWidget
+                  inline
+                  title={typeof title === 'string' ? title : undefined}
+                  dragClass={hoverWidgetDragClass}
+                  onDragStart={onDragStart}
+                >
+                  {headerContent}
+                </HoverWidget>,
+                headerControls.hoverSlot
+              )}
+
+            {hasExternalControls &&
+              dragHandleSlot &&
+              hoverSlotDragClass &&
+              createPortal(
+                <HoverWidgetDragHandle inline dragClass={hoverSlotDragClass} onDragStart={onDragStart} />,
+                dragHandleSlot
+              )}
+
+            {!hasExternalControls && hasHeaderContent && (
               <HoverWidget
                 menu={menu}
                 title={typeof title === 'string' ? title : undefined}
@@ -416,7 +499,7 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+            {hasStatus && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
@@ -440,7 +523,7 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+              {hasStatus && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}
@@ -453,7 +536,7 @@ export function PanelChrome({
 
               {headerContent}
 
-              {menu && (
+              {menu && !hasExternalControls && (
                 <PanelMenu
                   menu={menu}
                   title={typeof title === 'string' ? title : undefined}
@@ -477,9 +560,7 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone, {
-              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
-            })}
+            className={cx(styles.content, height === undefined && styles.containNone)}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -575,12 +656,24 @@ const getStyles = (theme: GrafanaTheme2) => {
         opacity: '0',
         visibility: 'hidden',
       },
+      'div.show-on-hover': {
+        display: 'none',
+      },
+
+      'div.show-on-hover:has([aria-expanded="true"])': {
+        display: 'flex',
+        opacity: '1',
+        visibility: 'visible',
+      },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
           visibility: 'visible',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
 
@@ -591,6 +684,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
+        },
+        'div.show-on-hover': {
+          display: 'flex',
         },
       },
     }),
@@ -603,15 +699,23 @@ const getStyles = (theme: GrafanaTheme2) => {
         border: `1px solid ${borderColor}`,
       },
     }),
-    contentTransparent: css({
-      backgroundColor: 'transparent',
-      border: '1px solid transparent',
-    }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
-      top: 0,
-      width: '100%',
+      // inset by the panel border width, so the bar sits on the panel's padding box
+      // rather than on top of the border itself
+      top: 1,
+      left: 1,
+      right: 1,
+      // the clip box has to be at least as tall as the corner radius. On a 1px-tall box the
+      // corner-overlap rule scales the radii down to 1px and nothing is rounded
+      // see https://drafts.csswg.org/css-backgrounds/#corner-overlap
+      height: theme.shape.radius.lg,
+      overflow: 'hidden',
+      borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      // the container is taller than the bar it clips, so let hover and clicks through to the header
+      pointerEvents: 'none',
       // this is to force the loading bar container to create a new stacking context
       // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
       // see https://github.com/grafana/grafana/issues/88104
@@ -696,6 +800,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       height: '100%',
       alignItems: 'center',
+    }),
+    hoverSlotTitleItems: css({
+      display: 'contents',
     }),
     clearButtonStyles: css({
       alignItems: 'center',

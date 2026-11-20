@@ -1,9 +1,10 @@
 import { useId, useState } from 'react';
 
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type QueryVariable, type VariableValueOption } from '@grafana/scenes';
-import { Field, Stack, Switch } from '@grafana/ui';
+import { Field, FieldSet, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableMultiPropStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableMultiPropStaticOptionsForm';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
@@ -20,7 +21,7 @@ interface QueryVariableStaticOptionsProps {
   onStaticOptionsOrderChange: (staticOptionsOrder: StaticOptionsOrderType) => void;
 }
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: Array<SelectableValue<StaticOptionsOrderType>> = [
   { label: 'Before query values', value: 'before' },
   { label: 'After query values', value: 'after' },
   { label: 'Sorted with query values', value: 'sorted' },
@@ -34,7 +35,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
   const useStaticOptionsId = useId();
 
   return (
-    <>
+    <FieldSet>
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.query-variable-editor-form.static-options-legend">Static options</Trans>
       </VariableLegend>
@@ -96,6 +97,6 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
           />
         )}
       </Stack>
-    </>
+    </FieldSet>
   );
 }

@@ -2,21 +2,28 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { chain } from 'lodash';
 import { type ReactElement, useMemo, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
 import { type Labels, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { alertInstanceKey, rulerRuleType } from '../../utils/rules';
+import { getRulesSourceName } from '../../utils/rulesSource';
 import { PopupCard } from '../HoverCard';
 import { MetaText } from '../MetaText';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { NAMED_ROOT_LABEL_NAME, resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 import { NotificationPolicySidebar } from '../rule-editor/notificaton-preview/NotificationPolicySidebar';
 import { useAlertmanagerNotificationRoutingPreview } from '../rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview';
 import { ContactPointLink } from '../rule-viewer/ContactPointLink';
+
+/** True when both names refer to the same routing tree, treating every default-tree alias as equal. */
+export function routingTreeNamesMatch(a: string | undefined, b: string | undefined): boolean {
+  return a === b || (isDefaultRoutingTreeName(a) && isDefaultRoutingTreeName(b));
+}
 
 // Returns a copy of `labels` with the routing label either added/updated or removed.
 // We use this to make sure the alert instance has the correct current policy before matching,
@@ -77,10 +84,10 @@ export const AlertInstanceNotificationAction = ({
   }, [ruleDefinition, ruleGroup]);
 
   const receiver = grafanaRule?.grafana_alert.notification_settings?.receiver;
-  // Mirror the form's selectedPolicy initialization: prefer notification_settings.policy, fall
-  // back to the __grafana_managed_route__ label for rules saved before alertingPolicyRoutingSettings.
-  const routingPolicyName =
-    grafanaRule?.grafana_alert.notification_settings?.policy ?? grafanaRule?.labels?.[NAMED_ROOT_LABEL_NAME];
+  const routingPolicyName = resolveNamedPolicyName(
+    grafanaRule?.grafana_alert.notification_settings,
+    grafanaRule?.labels
+  );
 
   // The alert instance's stored labels reflect its last evaluation, so __grafana_managed_route__
   // may be stale (or missing) after the rule's tree assignment changes. Override it with the
@@ -125,9 +132,10 @@ export const AlertInstanceNotificationAction = ({
     })) ?? [];
 
   // Guard against stale match results from useAsync's brief transition window: the result's
-  // tree name must match the current routing policy. The default tree is keyed by ROOT_ROUTE_NAME.
+  // tree name must match the current routing policy. The default tree may be named `user-defined`
+  // or `default`, so compare via routingTreeNamesMatch rather than strict equality.
   const expectedTreeName = routingPolicyName ?? ROOT_ROUTE_NAME;
-  const isFresh = matched !== undefined && journeys[0]?.policyName === expectedTreeName;
+  const isFresh = matched !== undefined && routingTreeNamesMatch(journeys.at(0)?.policyName, expectedTreeName);
 
   // When all journeys resolve to the same single receiver, surface it next to the button.
   const policyReceivers = isFresh

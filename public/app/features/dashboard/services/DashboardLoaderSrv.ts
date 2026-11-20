@@ -1,16 +1,12 @@
-import $ from 'jquery';
-import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-
 import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/app_events';
 import { ResponseTransformers } from '../api/ResponseTransformers';
@@ -20,12 +16,30 @@ import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/type
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
+type ScriptedDashboardExecution = { data: DashboardDataDTO };
+
+export const SCRIPTED_DASHBOARDS_DEPRECATION_URL =
+  'https://grafana.com/whats-new/2026-08-12-scripted-dashboards-will-be-removed-in-grafana-14/';
+export const SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID = 'scripted-dashboards-disabled';
+
+// Scripted dashboards are arbitrary user code, so nothing has validated what they return.
+// Accept any object and let the rest of the loading pipeline deal with the details.
+function isDashboardData(value: unknown): value is DashboardDataDTO {
+  return typeof value === 'object' && value !== null;
+}
+
+interface LoadDashboardOptions {
+  /** Alert when the dashboard isn't found. Default true; off when the caller reports it itself. */
+  alertNotFound?: boolean;
+}
+
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 }
 
@@ -34,19 +48,30 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 
   abstract loadSnapshot(slug: string): Promise<T>;
 
-  protected loadScriptedDashboard(file: string) {
+  protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DisableScriptedDashboards, true)) {
+      return Promise.reject({
+        status: 410,
+        messageId: SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID,
+        message:
+          'Scripted dashboards are deprecated and have been disabled. They will be removed in Grafana 14. ' +
+          'To temporarily restore them, set the "disableScriptedDashboards" feature toggle to false.',
+      });
+    }
+
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
       .get(url, undefined, undefined, { validatePath: true })
       .then(this.executeScript.bind(this))
       .then(
-        (result: any) => {
+        (result) => {
           return {
             meta: {
               fromScript: true,
@@ -68,7 +93,15 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       );
   }
 
-  private executeScript(result: any) {
+  private async executeScript(result: string): Promise<ScriptedDashboardExecution> {
+    // Async-load dependencies used only in scripted dashboards to avoid them being in the main bundle, if not needed
+    const [{ default: jQuery }, { default: moment }, { default: lodash }, { default: kbn }] = await Promise.all([
+      import('jquery'),
+      import('moment'),
+      import('lodash'),
+      import('app/core/utils/kbn'),
+    ]);
+
     const services = {
       dashboardSrv: getDashboardSrv(),
       datasourceSrv: getDatasourceSrv(),
@@ -86,26 +119,35 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       'services',
       result
     );
-    const scriptResult = scriptFunc(
+    const scriptResult: unknown = scriptFunc(
       locationService.getSearchObject(),
       kbn,
       dateMath,
-      _,
+      lodash,
       moment,
       window,
       document,
-      $,
-      $,
+      jQuery,
+      jQuery,
       services
     );
 
     // Handle async dashboard scripts
-    if (isFunction(scriptResult)) {
-      return new Promise((resolve) => {
-        scriptResult((dashboard: any) => {
+    if (typeof scriptResult === 'function') {
+      return new Promise((resolve, reject) => {
+        scriptResult((dashboard: unknown) => {
+          if (!isDashboardData(dashboard)) {
+            reject(new Error('Scripted dashboard did not return a dashboard'));
+            return;
+          }
+
           resolve({ data: dashboard });
         });
       });
+    }
+
+    if (!isDashboardData(scriptResult)) {
+      throw new Error('Scripted dashboard did not return a dashboard');
     }
 
     return { data: scriptResult };
@@ -117,7 +159,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
@@ -145,7 +188,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }
@@ -184,7 +227,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const stateManager = getDashboardScenePageStateManager('v2');
     let promise;
@@ -210,7 +254,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }
@@ -222,12 +266,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    // Return the chained promise: a detached `.then()` would reject unhandled when the load fails.
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record dashboard impression: ', e);
+      }
       return result;
     });
-
-    return promise;
   }
 
   loadSnapshot(slug: string): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
@@ -235,13 +282,15 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
       .getSnapshot(slug)
       .then((r) => ResponseTransformers.ensureV2Response(r));
 
-    promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
-      impressionSrv.addDashboardImpression(result.metadata.name);
+    return promise.then((result: DashboardWithAccessInfo<DashboardV2Spec>) => {
+      try {
+        impressionSrv.addDashboardImpression(result.metadata.name);
+      } catch (e) {
+        console.warn('Failed to record snapshot impression: ', e);
+      }
 
       return result;
     });
-
-    return promise;
   }
 }
 

@@ -7,6 +7,8 @@
   },
   "name": "aaa",
   "rv": 1234,
+  "_rv": "1234",
+  "groupResource": "reporting.grafana.app/reports",
   "title": "Test AAA",
   "title_ngram": "Test AAA",
   "title_phrase": "test aaa",
@@ -14,5 +16,6 @@
     "grafana.app/deprecatedInternalID": "123"
   },
   "created": 1706690655000,
-  "createdBy": "user:abc"
+  "createdBy": "user:abc",
+  "updated": 1706690655000
 }

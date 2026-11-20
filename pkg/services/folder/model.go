@@ -22,7 +22,16 @@ var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 var ErrFolderNotEmpty = errutil.BadRequest("folder.not-empty", errutil.WithPublicMessage("Folder cannot be deleted: folder is not empty"))
+var ErrCountFailed = errutil.Internal("folder.count-failed").MustTemplate(
+	"count failed for {{.Private.resources}}: {{.Error}}",
+	errutil.WithPublic("count failed: could not count {{.Public.resources}}"),
+)
+var ErrDeleteCountFailed = errutil.Internal("folder.delete-count-failed").MustTemplate(
+	"folder delete count failed for {{.Private.resources}}: {{.Error}}",
+	errutil.WithPublic("Folder cannot be deleted: could not count {{.Public.resources}}"),
+)
 var ErrFolderCannotBeMovedToK6 = errutil.BadRequest("folder.cannot-be-moved-to-k6", errutil.WithPublicMessage("Folders cannot be moved into the k6 project"))
+var ErrFolderCannotBeCreatedInK6 = errutil.BadRequest("folder.cannot-be-created-in-k6", errutil.WithPublicMessage("Folders cannot be created inside the k6 project"))
 
 // ErrCyclicReference indicates corrupt storage state, not user input.
 var ErrCyclicReference = errutil.Internal("folder.cyclic-reference", errutil.WithPublicMessage("Cyclic folder references found"))
@@ -267,6 +276,12 @@ type GetFoldersQuery struct {
 	WithFullpath     bool
 	WithFullpathUIDs bool
 	BatchSize        uint64
+
+	// MetadataOnly serves folders from the search index instead of reading each
+	// full stored object. Only UID, ID, OrgID, ParentUID, Title, ManagedBy and
+	// the full paths are populated. For callers that only need the folder
+	// tree/titles and want to avoid the linear full-object fetch on large orgs.
+	MetadataOnly bool
 
 	// Pagination options
 	Limit int64

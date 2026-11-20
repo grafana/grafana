@@ -39,44 +39,49 @@ Audit logs are JSON objects representing user actions like:
 
 Audit logs contain the following fields. The fields followed by **\*** are always available, the others depend on the type of action logged.
 
-| Field name              | Type    | Description                                                                                                                                                                                                              |
-| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `timestamp`\*           | string  | The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format.                                                                 |
-| `user`\*                | object  | Information about the user that made the request. Either one of the `UserID` or `ApiKeyID` fields contains content if `isAnonymous=false`.                                                                               |
-| `user.userId`           | number  | ID of the Grafana user that made the request.                                                                                                                                                                            |
-| `user.orgId`\*          | number  | Current organization of the user that made the request.                                                                                                                                                                  |
-| `user.orgRole`          | string  | Current role of the user that made the request.                                                                                                                                                                          |
-| `user.name`             | string  | Name of the Grafana user that made the request.                                                                                                                                                                          |
-| `user.authTokenId`      | number  | ID of the user authentication token.                                                                                                                                                                                     |
-| `user.apiKeyId`         | number  | ID of the Grafana API key used to make the request.                                                                                                                                                                      |
-| `user.isAnonymous`\*    | boolean | If an anonymous user made the request, `true`. Otherwise, `false`.                                                                                                                                                       |
-| `action`\*              | string  | The request action. For example, `create`, `update`, or `manage-permissions`.                                                                                                                                            |
-| `request`\*             | object  | Information about the HTTP request.                                                                                                                                                                                      |
-| `request.params`        | object  | Request’s path parameters.                                                                                                                                                                                               |
-| `request.query`         | object  | Request’s query parameters.                                                                                                                                                                                              |
-| `request.body`          | string  | Request’s body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                       |
-| `result`\*              | object  | Information about the HTTP response.                                                                                                                                                                                     |
-| `result.statusType`     | string  | If the request action was successful, `success`. Otherwise, `failure`.                                                                                                                                                   |
-| `result.statusCode`     | number  | HTTP status of the request.                                                                                                                                                                                              |
-| `result.failureMessage` | string  | HTTP error message.                                                                                                                                                                                                      |
-| `result.body`           | string  | Response body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                        |
-| `resources`             | array   | Information about the resources that the request action affected. This field can be null for non-resource actions such as `login` or `logout`.                                                                           |
-| `resources[x].id`\*     | number  | ID of the resource.                                                                                                                                                                                                      |
-| `resources[x].type`\*   | string  | The type of the resource that was logged: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, or `version`. |
-| `requestUri`\*          | string  | Request URI.                                                                                                                                                                                                             |
-| `ipAddress`\*           | string  | IP address that the request was made from.                                                                                                                                                                               |
-| `userAgent`\*           | string  | Agent through which the request was made.                                                                                                                                                                                |
-| `grafanaVersion`\*      | string  | Current version of Grafana when this log is created.                                                                                                                                                                     |
-| `additionalData`        | object  | Additional information that can be provided about the request.                                                                                                                                                           |
+| Field name                     | Type    | Description                                                                                                                                                                                                              |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `timestamp`\*                  | string  | The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format.                                                                 |
+| `user`\*                       | object  | Information about the user that made the request. Either one of the `UserID` or `ApiKeyID` fields contains content if `isAnonymous=false`.                                                                               |
+| `user.userId`                  | number  | ID of the Grafana user that made the request.                                                                                                                                                                            |
+| `user.orgId`\*                 | number  | Current organization of the user that made the request.                                                                                                                                                                  |
+| `user.orgRole`                 | string  | Current role of the user that made the request.                                                                                                                                                                          |
+| `user.name`                    | string  | Name of the Grafana user that made the request.                                                                                                                                                                          |
+| `user.authTokenId`             | number  | ID of the user authentication token.                                                                                                                                                                                     |
+| `user.apiKeyId`                | number  | ID of the Grafana API key used to make the request.                                                                                                                                                                      |
+| `user.serviceAccountTokenId`   | number  | ID of the service account token used to make the request.                                                                                                                                                                |
+| `user.serviceAccountTokenName` | string  | Name of the service account token used to make the request.                                                                                                                                                              |
+| `user.isAnonymous`\*           | boolean | If an anonymous user made the request, `true`. Otherwise, `false`.                                                                                                                                                       |
+| `action`\*                     | string  | The request action. For example, `create`, `update`, or `manage-permissions`.                                                                                                                                            |
+| `request`\*                    | object  | Information about the HTTP request.                                                                                                                                                                                      |
+| `request.params`               | object  | Request’s path parameters.                                                                                                                                                                                               |
+| `request.query`                | object  | Request’s query parameters.                                                                                                                                                                                              |
+| `request.body`                 | string  | Request’s body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                       |
+| `result`\*                     | object  | Information about the HTTP response.                                                                                                                                                                                     |
+| `result.statusType`            | string  | If the request action was successful, `success`. Otherwise, `failure`.                                                                                                                                                   |
+| `result.statusCode`            | number  | HTTP status of the request.                                                                                                                                                                                              |
+| `result.failureMessage`        | string  | HTTP error message.                                                                                                                                                                                                      |
+| `result.body`                  | string  | Response body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                        |
+| `resources`                    | array   | Information about the resources that the request action affected. This field can be null for non-resource actions such as `login` or `logout`.                                                                           |
+| `resources[x].id`              | number  | ID of the resource, when available.                                                                                                                                                                                      |
+| `resources[x].type`\*          | string  | The type of the resource that was logged: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, or `version`. |
+| `resources[x].uid`             | string  | UID of the resource, when available.                                                                                                                                                                                     |
+| `resources[x].name`            | string  | Name of the resource, when available. Grafana currently populates this field for `user` resources.                                                                                                                       |
+| `requestUri`\*                 | string  | Request URI.                                                                                                                                                                                                             |
+| `ipAddress`\*                  | string  | IP address that the request was made from.                                                                                                                                                                               |
+| `userAgent`\*                  | string  | Agent through which the request was made.                                                                                                                                                                                |
+| `grafanaVersion`\*             | string  | Current version of Grafana when this log is created.                                                                                                                                                                     |
+| `additionalData`               | object  | Additional information that can be provided about the request.                                                                                                                                                           |
 
 The `additionalData` field can contain the following information:
-| Field name | Action | Description |
-| ---------- | ------ | ----------- |
-| `loginUsername` | `login` | Login used in the Grafana authentication form. |
-| `extUserInfo` | `login` | User information provided by the external system that was used to log in. |
-| `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
-| `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring. |
-| `billing_role` | `billing-information` | The billing role associated with the billing information being sent. |
+
+| Field name          | Action                | Description                                                                      |
+| ------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `loginUsername`     | `login`               | Login used in the Grafana authentication form.                                   |
+| `extUserInfo`       | `login`               | User information provided by the external system that was used to log in.        |
+| `authTokenCount`    | `login`               | Number of active authentication tokens for the user that logged in.              |
+| `terminationReason` | `logout`              | The reason why the user logged out, such as a manual logout or a token expiring. |
+| `billing_role`      | `billing-information` | The billing role associated with the billing information being sent.             |
 
 ### Identify recorded actions
 
@@ -369,6 +374,8 @@ By default, dashboard content doesn't appear in audit logs because it can signif
 
 Data source query request and response bodies are also excluded by default. Enabling `log_datasource_query_request_body` or `log_datasource_query_response_body` significantly increases log volume and may expose sensitive data such as query parameters, credentials, or personally identifiable information.
 
+Before Grafana serves `DELETE /api/admin/users/{id}`, it tries to capture the user's display name, or login when the display name is empty, so the audit log can retain it after a successful deletion. The `snapshot_timeout` option sets a cooperative context deadline for this lookup. The user store must honor context cancellation, so the setting isn't a strict upper bound on request latency. If the lookup fails or observes an expired deadline, Grafana continues to process the request. If the deletion succeeds, the audit log omits `resources[x].name`.
+
 ```ini
 [auditing]
 # Enable the auditing feature
@@ -389,6 +396,10 @@ log_all_status_codes = false
 # Maximum response body (in bytes) to be audited; 500KiB by default.
 # May help reducing the memory footprint caused by auditing.
 max_response_size_bytes = 512000
+# Timeout for resolving resource names before Grafana serves a request that
+# may delete resources. Uses duration format, for example, 500ms or 2s.
+# The default is 500ms.
+snapshot_timeout = 500ms
 ```
 
 Each exporter has its own configuration fields.

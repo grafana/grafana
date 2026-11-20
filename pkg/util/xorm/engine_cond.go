@@ -133,9 +133,9 @@ func (engine *Engine) buildConds(table *core.Table, bean any,
 					continue
 				}
 				val = engine.formatColTime(col, t)
-			} else if _, ok := reflect.New(fieldType).Interface().(core.Conversion); ok {
+			} else if _, ok := reflect.TypeAssert[core.Conversion](reflect.New(fieldType)); ok {
 				continue
-			} else if valNul, ok := fieldValue.Interface().(driver.Valuer); ok {
+			} else if valNul, ok := reflect.TypeAssert[driver.Valuer](fieldValue); ok {
 				val, _ = valNul.Value()
 				if val == nil {
 					continue

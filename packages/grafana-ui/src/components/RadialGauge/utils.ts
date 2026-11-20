@@ -59,16 +59,25 @@ export function getValueAngleForValue(
   neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  const value = fieldDisplay.display.numeric;
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+  // getFieldConfigMinMax can invert bounds when min === max < 0; order before clamping.
+  const low = Math.min(min, max);
+  const high = Math.max(min, max);
+
+  // Clamp arc geometry to [low, high]. Center text still uses the real value;
+  // without this, overflow with a neutral point can produce invalid SVG arcs (#130075).
+  const value = Math.min(Math.max(fieldDisplay.display.numeric, low), high);
 
   const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
   let endValueAngle = valueAngle;
 
   let startValueAngle = 0;
+  // The colored bar always runs clockwise. When the value is left of neutral, that
+  // clockwise end is the neutral point and the value is the start of the arc (#122846).
+  let markerAtStart = false;
   if (typeof neutral === 'number') {
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
-    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const clampedNeutral = Math.min(Math.max(neutral, low), high);
     const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
     if (neutralAngle <= valueAngle) {
       startValueAngle = neutralAngle;
@@ -76,12 +85,13 @@ export function getValueAngleForValue(
     } else {
       startValueAngle = valueAngle;
       endValueAngle = neutralAngle - valueAngle;
+      markerAtStart = true;
     }
   }
 
   const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
 
-  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle, markerAtStart };
 }
 
 /**
