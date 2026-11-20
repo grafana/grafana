@@ -1010,9 +1010,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
 	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
 	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
@@ -1027,7 +1031,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1812,9 +1816,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	supportedResourceProvider, err := provisioning3.ProvideSupportedResourceProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
 	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, supportedResourceProvider, registerer)
 	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
@@ -1829,7 +1837,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(ctx, cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, grafanaRouter, supportedResourceProvider)
 	if err != nil {
 		return nil, err
 	}

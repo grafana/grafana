@@ -35,7 +35,7 @@ var (
 
 func TestResourceClients_SupportedResources(t *testing.T) {
 	t.Run("falls back to the static base set when none is configured", func(t *testing.T) {
-		clients, err := NewClientFactory(nil, nil).Clients(t.Context(), "default")
+		clients, err := NewClientFactory(nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 		require.NoError(t, err)
 
 		assert.Equal(t, SupportedProvisioningResources, clients.SupportedResources())
@@ -57,13 +57,13 @@ func TestMultiClientFactory_AnyGroup(t *testing.T) {
 	widget := schema.GroupVersionKind{Group: "example.ext.grafana.app", Version: "v1", Kind: "Widget"}
 	providers := map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig}
 
-	clients, err := NewClientFactoryForMultipleAPIServers(providers, nil).Clients(t.Context(), "default")
+	clients, err := NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 	require.NoError(t, err)
 	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "no clients provider for group example.ext.grafana.app")
 
 	providers[AnyGroup] = apiserver.WithoutRestConfig
-	clients, err = NewClientFactoryForMultipleAPIServers(providers, nil).Clients(t.Context(), "default")
+	clients, err = NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 	require.NoError(t, err)
 	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "rest config will not be available")
