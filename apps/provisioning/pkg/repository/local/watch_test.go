@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,4 +82,21 @@ func TestWatch_TempFiles(t *testing.T) {
 		"sub2/ddd.txt", // first time because we added it
 		"sub2/ddd.txt", // second time because we removed it
 	}, received)
+}
+
+func TestWatch_ClosesWatcher(t *testing.T) {
+	tmpdir := t.TempDir()
+
+	watcher, err := NewFileWatcher(tmpdir, func(name string) bool {
+		return filepath.Ext(name) == ".txt"
+	})
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	watcher.Watch(ctx, make(chan string))
+
+	w, ok := watcher.(*fileWatcher)
+	require.True(t, ok, "explicit cast")
+	require.ErrorIs(t, w.watcher.Add(tmpdir), fsnotify.ErrClosed)
 }
