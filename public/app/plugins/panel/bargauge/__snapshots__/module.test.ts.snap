@@ -14,6 +14,8 @@ exports[`bargauge module registers the expected bar gauge options 1`] = `
   "legend.overflow",
   "legend.limit",
   "legend.calcs",
+  "legend.sortBy",
+  "legend.sortDesc",
   "text.titleSize",
   "text.valueSize",
   "displayMode",

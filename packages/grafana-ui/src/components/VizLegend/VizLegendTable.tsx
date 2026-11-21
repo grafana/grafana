@@ -11,10 +11,8 @@ import { Icon } from '../Icon/Icon';
 import { useLimit } from '../List/hooks';
 
 import { LegendTableItem } from './VizLegendTableItem';
-import { type VizLegendItem, type VizLegendTableProps } from './types';
-
-const nameSortKey = 'Name';
-const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
+import { type VizLegendTableProps } from './types';
+import { LEGEND_SORT_BY_NAME, sortLegendItems } from './utils';
 
 /**
  * @internal
@@ -38,7 +36,7 @@ export const VizLegendTable = <T extends unknown>({
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
-    [nameSortKey]: '',
+    [LEGEND_SORT_BY_NAME]: '',
   };
 
   for (const item of items) {
@@ -49,36 +47,14 @@ export const VizLegendTable = <T extends unknown>({
     }
   }
 
-  if (sortKey != null) {
-    let itemVals = new Map<VizLegendItem<T>, number>();
-
-    items.forEach((item) => {
-      if (sortKey !== nameSortKey && item.getDisplayValues) {
-        const stat = item.getDisplayValues().find((stat) => stat.title === sortKey);
-        const val = stat == null || Number.isNaN(stat.numeric) ? -Infinity : stat.numeric;
-        itemVals.set(item, val);
-      }
-    });
-
-    let sortMult = sortDesc ? -1 : 1;
-
-    if (sortKey === nameSortKey) {
-      items.sort((a, b) => {
-        return sortMult * naturalCompare(a.label, b.label);
-      });
-    } else {
-      items.sort((a, b) => {
-        const aVal = itemVals.get(a) ?? 0;
-        const bVal = itemVals.get(b) ?? 0;
-
-        return sortMult * (aVal - bVal);
-      });
-    }
-  }
+  const sortedItems = useMemo(() => sortLegendItems(items, sortKey, sortDesc), [items, sortKey, sortDesc]);
 
   const [curLimit, setLimit] = useLimit(limit);
 
-  const limitedItems = useMemo(() => (curLimit > 0 ? items.slice(0, curLimit) : items), [items, curLimit]);
+  const limitedItems = useMemo(
+    () => (curLimit > 0 ? sortedItems.slice(0, curLimit) : sortedItems),
+    [sortedItems, curLimit]
+  );
 
   const hasMixedAxes = useMemo(() => {
     const firstYAxis = items[0]?.yAxis ?? 1;
