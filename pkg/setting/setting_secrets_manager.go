@@ -84,7 +84,10 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerMaxBatchSize = uint16(secretsMgmt.Key("gc_worker_batch_size").MustUint(16))
 	cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups = uint16(secretsMgmt.Key("gc_worker_max_concurrency").MustUint(16))
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
-	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
+	// Each SQLite query attempt can spend 7.5 seconds in the busy handler, plus retry backoff.
+	queryAttempts := max(1, cfg.Raw.Section("database").Key("query_retries").MustInt())
+	cleanupTimeout := time.Duration(queryAttempts)*8*time.Second + 5*time.Second
+	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(cleanupTimeout)
 	cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue = int(secretsMgmt.Key("gc_worker_max_attempts_per_secure_value").MustUint(10))
 
 	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)

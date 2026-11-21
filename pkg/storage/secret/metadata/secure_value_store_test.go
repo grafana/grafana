@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -19,9 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
@@ -50,7 +53,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	db := database.ProvideDatabase(testDB, tracer)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), db, tracer, nil)
+	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), db, tracer, nil, setting.NewCfg())
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
@@ -333,7 +336,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			leasedSv, err = sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(ctx, 1)
 			require.NoError(t, err)
 		}}
-		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil, setting.NewCfg())
 		require.NoError(t, err)
 
 		// The UPDATE must recheck the lease and leave the other request's claim intact.
@@ -359,7 +362,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		db := &beforeExecDatabase{Database: sut.Database, beforeExec: func(ctx context.Context) {
 			require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, sv.Status.Version, 0))
 		}}
-		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil, setting.NewCfg())
 		require.NoError(t, err)
 
 		// The UPDATE must reject the now-active candidate, keeping it out of GC.
@@ -373,6 +376,78 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.UID, activeValue.UID)
 	})
+}
+
+func TestLeaseInactiveSecureValuesRetriesBusy(t *testing.T) {
+	sut := testutils.Setup(t)
+	want := leasedUIDs(createInactiveSecureValues(t, sut, 1))
+	db := &busyLeaseDatabase{Database: sut.Database, failures: 2}
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("database").Key("query_retries").SetValue("3")
+	storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil, cfg)
+	require.NoError(t, err)
+
+	values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+	require.NoError(t, err)
+	require.Equal(t, want, leasedUIDs(values))
+	require.Equal(t, 3, db.attempts)
+}
+
+func TestLeaseInactiveSecureValuesBusyRetryLimit(t *testing.T) {
+	for _, attempts := range []int{0, 1, 3} {
+		t.Run(fmt.Sprintf("query_retries=%d", attempts), func(t *testing.T) {
+			sut := testutils.Setup(t)
+			createInactiveSecureValues(t, sut, 1)
+			db := &busyLeaseDatabase{Database: sut.Database, failures: 10}
+			cfg := setting.NewCfg()
+			cfg.Raw.Section("database").Key("query_retries").SetValue(fmt.Sprint(attempts))
+			storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil, cfg)
+			require.NoError(t, err)
+
+			values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+			require.ErrorIs(t, err, sqlite.ErrTestBusy)
+			require.Empty(t, values)
+			require.Equal(t, max(1, attempts), db.attempts)
+		})
+	}
+}
+
+func TestLeaseInactiveSecureValuesCancelsBusyRetry(t *testing.T) {
+	sut := testutils.Setup(t)
+	createInactiveSecureValues(t, sut, 1)
+	db := &busyLeaseDatabase{Database: sut.Database, failures: 10}
+	cfg := setting.NewCfg()
+	cfg.Raw.Section("database").Key("query_retries").SetValue("10")
+	storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil, cfg)
+	require.NoError(t, err)
+
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		done := make(chan error, 1)
+		go func() {
+			_, err := storage.LeaseInactiveSecureValues(ctx, 1)
+			done <- err
+		}()
+		synctest.Wait()
+		cancel()
+		require.ErrorIs(t, <-done, context.Canceled)
+		require.Equal(t, 1, db.attempts)
+	})
+}
+
+type busyLeaseDatabase struct {
+	contracts.Database
+	failures int
+	attempts int
+}
+
+func (db *busyLeaseDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	db.attempts++
+	if db.attempts <= db.failures {
+		return nil, sqlite.ErrTestBusy
+	}
+	return db.Database.ExecContext(ctx, query, args...)
 }
 
 // Lease acquisition calls QueryContext to select candidates, then ExecContext to claim them.

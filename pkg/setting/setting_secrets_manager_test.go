@@ -2,12 +2,28 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestReadSecretsManagerSettings(t *testing.T) {
+	t.Run("cleanup timeout accommodates SQLite query retries", func(t *testing.T) {
+		for _, tc := range []struct {
+			config string
+			want   time.Duration
+		}{
+			{config: "", want: 13 * time.Second},
+			{config: "[database]\nquery_retries = 10", want: 85 * time.Second},
+			{config: "[database]\nquery_retries = 10\n[secrets_manager]\ngc_worker_per_request_timeout = 2m", want: 2 * time.Minute},
+		} {
+			cfg, err := NewCfgFromBytes([]byte(tc.config))
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout)
+		}
+	})
+
 	t.Run("should parse basic encryption provider", func(t *testing.T) {
 		iniContent := `
 [secrets_manager]

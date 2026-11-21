@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	stdsql "database/sql"
 	"fmt"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -29,23 +31,26 @@ func ProvideSecureValueMetadataStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
+	cfg *setting.Cfg,
 ) (contracts.SecureValueMetadataStorage, error) {
 	return &secureValueMetadataStorage{
-		clock:   clock,
-		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
-		metrics: metrics.NewStorageMetrics(reg),
-		tracer:  tracer,
+		clock:        clock,
+		db:           db,
+		dialect:      sqltemplate.DialectForDriver(db.DriverName()),
+		metrics:      metrics.NewStorageMetrics(reg),
+		tracer:       tracer,
+		queryRetries: cfg.Raw.Section("database").Key("query_retries").MustInt(),
 	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	clock   contracts.Clock
-	db      contracts.Database
-	dialect sqltemplate.Dialect
-	metrics *metrics.StorageMetrics
-	tracer  trace.Tracer
+	clock        contracts.Clock
+	db           contracts.Database
+	dialect      sqltemplate.Dialect
+	metrics      *metrics.StorageMetrics
+	tracer       trace.Tracer
+	queryRetries int
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
@@ -709,8 +714,12 @@ func (s *secureValueMetadataStorage) leaseCandidates(ctx context.Context, leaseT
 		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactive.Name(), err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
-	if err != nil {
+	var res stdsql.Result
+	if err := secretdatabase.RetryOnTransientTransactionErrorWithRetries(ctx, s.queryRetries, func() error {
+		var err error
+		res, err = s.db.ExecContext(ctx, q, req.GetArgs()...)
+		return err
+	}); err != nil {
 		return 0, fmt.Errorf("leasing inactive secure values: %w", err)
 	}
 

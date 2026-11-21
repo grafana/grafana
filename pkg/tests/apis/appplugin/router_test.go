@@ -155,7 +155,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	t.Cleanup(helper.Shutdown)
 	// Unified storage validates ownership of secure references before saving the parent.
 	tracer := noop.NewTracerProvider().Tracer("router-test")
-	secretStore, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), database.ProvideDatabase(helper.GetEnv().SQLStore, tracer), tracer, nil)
+	secretStore, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), database.ProvideDatabase(helper.GetEnv().SQLStore, tracer), tracer, nil, helper.GetEnv().Cfg)
 	require.NoError(t, err)
 	secureValue, err := secretStore.Create(t.Context(), "system", &secretv1beta1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
