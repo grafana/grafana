@@ -633,25 +633,31 @@ describe('rendering after the conversion', () => {
     expect(render(content, fleet())).toBe('[94.2% <b>Healthy</b> 1 KiB][n/a No report 5 B][0.0% down 0 B]');
   });
 
-  it('renders randomly generated templates the same after converting them', () => {
+  it('renders randomly generated templates the same after converting them, on any data the conversion allows', () => {
     const next = createRandom(138488);
     const generate = createTemplateGenerator(next);
+    const datasets = [fleet, frames, shadowed, displayField];
     let converted = 0;
 
     for (let index = 0; index < 150; index++) {
       const content = generate();
 
       for (const renderMode of [RenderMode.Once, RenderMode.PerRow]) {
-        for (const series of [fleet, frames, shadowed]) {
-          const migration = migrate(content, { renderMode, hasFmtField: hasFmtFieldIn(series()) });
+        for (const hasFmtField of [false, true]) {
+          const migration = migrate(content, { renderMode, hasFmtField });
           converted += migration.changes.length;
 
-          expect({ content, renderMode, output: render(migration.content, series(), renderMode) }).toEqual({
-            content,
-            renderMode,
-            output: render(content, series(), renderMode),
-          });
-          expect(migrate(migration.content, { renderMode, hasFmtField: hasFmtFieldIn(series()) }).changes).toEqual([]);
+          if (migration.changes.length === 0) {
+            continue;
+          }
+          for (const series of datasets.filter((dataset) => hasFmtField || !hasFmtFieldIn(dataset()))) {
+            expect({ content, renderMode, output: render(migration.content, series(), renderMode) }).toEqual({
+              content,
+              renderMode,
+              output: render(content, series(), renderMode),
+            });
+          }
+          expect(migrate(migration.content, { renderMode, hasFmtField }).changes).toEqual([]);
         }
       }
     }
@@ -679,6 +685,7 @@ function createTemplateGenerator(next: () => number): () => string {
 
   const value = () =>
     pick([
+      params.length ? `@${pick(params)}.fmt.${field()}` : `@root.fmt.${field()}`,
       `fmt.${field()}`,
       `this.fmt.${field()}`,
       `../fmt.${field()}`,
@@ -696,7 +703,8 @@ function createTemplateGenerator(next: () => number): () => string {
     ]);
 
   const list = () => pick(['data', 'frames', 'this', 'fmt', '../data', '@root.data', '(split service "e")', 'meta']);
-  const object = () => pick(['this', 'data.[0]', 'fmt', 'meta', '(lookup data 0)', '..', param()]);
+  const object = () =>
+    pick(['this', 'data.[0]', 'fmt', 'meta', '(lookup data 0)', '..', '(display)', '(display row=..)', param()]);
 
   const statement = (depth: number): string => {
     switch (depth > 3 ? Math.floor(next() * 3) : Math.floor(next() * 12)) {
@@ -713,15 +721,19 @@ function createTemplateGenerator(next: () => number): () => string {
       case 5:
         return `{{#each ${list()}}}${body(depth + 1)}{{/each}}`;
       case 6: {
-        params.push(`row${depth}`);
-        const result = `{{#each ${list()} as |row${depth} index${depth}|}}${body(depth + 1)}{{/each}}`;
+        const name = pick([`row${depth}`, 'display', 'root', 'index']);
+        params.push(name);
+        const result = `{{#each ${list()} as |${name} index${depth}|}}${body(depth + 1)}{{/each}}`;
         params.pop();
         return result;
       }
       case 7:
         return `{{#with ${object()}}}${body(depth + 1)}{{else}}${body(depth + 1)}{{/with}}`;
       case 8:
-        return `{{#display "${pick(['cpu', 'status'])}"}}${body(depth + 1)}{{/display}}`;
+        return pick([
+          `{{#display "${pick(['cpu', 'status'])}"}}${body(depth + 1)}{{/display}}`,
+          `{{#display row=this}}${body(depth + 1)}{{/display}}`,
+        ]);
       case 9:
         return `{{lookup ${pick(['fmt', 'this', 'data.[0]'])} "${pick(['fmt', 'cpu'])}"}}`;
       case 10:
