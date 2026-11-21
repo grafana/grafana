@@ -79,6 +79,9 @@ type LibraryPanelSpec struct {
 	// The datasource queries
 	// +listType=atomic
 	Targets []data.DataQuery `json:"targets,omitempty"`
+
+	// Panel settings without a dedicated spec field. An empty object clears these settings.
+	AdditionalProperties *common.Unstructured `json:"additionalProperties,omitempty"`
 }
 
 func (LibraryPanelSpec) OpenAPIModelName() string {
