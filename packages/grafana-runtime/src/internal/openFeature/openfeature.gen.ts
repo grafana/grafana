@@ -28,6 +28,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page. */
   AlertingRuleQualityFix: "alerting.ruleQualityFix",
+  /** Enable bulk fixes for alert rule quality issues on the alert quality page. */
+  AlertingRuleQualityFixAll: "alerting.ruleQualityFixAll",
   /** Enable assistant reviews on the alert quality page. */
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
@@ -501,6 +503,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingRuleQualityFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQualityFix", false, options).value;
+};
+
+/**
+ * Enable bulk fixes for alert rule quality issues on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleQualityFixAll`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleQualityFixAll = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleQualityFixAll", false, options).value;
 };
 
 /**
