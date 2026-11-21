@@ -23,7 +23,9 @@ var (
 	ResendDelay = 30 * time.Second
 )
 
-type takeImageFn func(reason string) *ngModels.Image
+// takeImageFn takes an image of the rule's panel with the given dashboard
+// variables, or returns nil.
+type takeImageFn func(reason string, variables url.Values) *ngModels.Image
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -393,16 +395,18 @@ func (st *Manager) ProcessEvalResults(
 		attribute.Int("results", len(results))))
 	defer span.End()
 
-	// lazy evaluation of takeImage only once and only if it is requested.
+	// lazy evaluation of takeImage, at most once per set of dashboard variables
+	// and only if it is requested. Rules without dashboard variables take at
+	// most one image per evaluation.
 	var fn takeImageFn
 	{
-		var image *ngModels.Image
-		var imageTaken bool
-		fn = func(reason string) *ngModels.Image {
-			if imageTaken {
+		images := map[string]*ngModels.Image{}
+		fn = func(reason string, variables url.Values) *ngModels.Image {
+			key := variables.Encode()
+			if image, taken := images[key]; taken {
 				return image
 			}
-			imageTaken = true
+			images[key] = nil
 			previous := st.cache.getLastScreenshotAttempt(alertRule.GetKey())
 			if !previous.readyForRetry(st.clock) {
 				logger.Info("Skip taking image because last attempt was not successful")
@@ -410,18 +414,18 @@ func (st *Manager) ProcessEvalResults(
 				// during the cooldown doesn't get a capture attempt of its own.
 				return nil
 			}
-			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
-			img, err := takeImage(ctx, st.images, alertRule)
+			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "variables", key, "reason", reason)
+			img, err := takeImage(ctx, st.images, alertRule, variables)
 			st.cache.setLastScreenshotAttempt(alertRule.GetKey(), newScreenshotAttempt(previous, err, st.clock))
 			if err != nil {
 				logger.Warn("Failed to take an image",
 					"dashboard", alertRule.GetDashboardUID(),
-					"panel", alertRule.GetPanelID(), "reason", reason,
+					"panel", alertRule.GetPanelID(), "variables", key, "reason", reason,
 					"error", err)
 				return nil
 			}
-			image = img
-			return image
+			images[key] = img
+			return img
 		}
 	}
 
@@ -611,7 +615,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				s.Image = takeImageFn("stale state") // Potentially nil
+				s.Image = takeImageFn("stale state", dashboardVariables(s.Annotations, logger)) // Potentially nil
 			}
 
 			staleStates[s.CacheID] = struct{}{}

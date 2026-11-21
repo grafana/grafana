@@ -32,6 +32,14 @@ This feature is not supported in Mimir or Loki, or when Grafana is configured to
 
 When an alert is fired or resolved, Grafana takes a screenshot of the panel associated with the alert. This is determined via the Dashboard UID and Panel ID annotations of the rule. Grafana cannot take a screenshot for alerts that are not associated with a panel.
 
+By default, the screenshot uses the dashboard's default variable values, and every alert of a rule shares it. To render the panel for each alert's own series, set the `__dashboardVariables__` annotation to a URL query string of dashboard variables, using [template variables](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/) for the alert's labels. Escape each value with `urlquery`, so that characters such as `&`, `+` and `%` in label values are kept. For example:
+
+```
+var-cluster={{ $labels.cluster | urlquery }}&var-service={{ $labels.service | urlquery }}
+```
+
+Grafana then takes one screenshot per distinct set of variables in an evaluation and adds those variables to the panel's URL. Only `var-<name>` parameters are used; other parameters, and parameters that cannot be parsed, are ignored.
+
 Grafana takes at most two screenshots for each alert: once when the alert fires and again when the alert is resolved. Screenshots are not re-taken over the lifetime of the alert. Instead, you should open the panel in Grafana to follow the data in real time. In addition, depending on how alerts are grouped in your notification policies, Grafana might send a notification with many screenshots of the same panel. This happens because Grafana does not know how your alerts are grouped at the time a screenshot is taken, and so acts conservatively by taking a screenshot for every alert.
 
 After a screenshot has been taken, Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; upload the screenshot to its internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.

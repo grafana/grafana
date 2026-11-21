@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"sort"
 	"testing"
 	"time"
@@ -5584,6 +5585,68 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.expectedCalledTimes, tc.imageService.Called)
+		})
+	}
+}
+
+func TestProcessEvalResults_ScreenshotDashboardVariables(t *testing.T) {
+	gen := ngmodels.RuleGen
+	newRule := func(variables string) ngmodels.AlertRule {
+		return gen.With(
+			gen.WithDashboardAndPanel(new(util.GenerateShortUID()), new(rand.Int63())),
+			gen.WithLabels(nil),
+			gen.WithFor(0),
+			gen.WithAnnotations(data.Labels{ngmodels.DashboardVariablesAnnotation: variables}),
+		).Generate()
+	}
+	alerting := func(instance string) eval.Result {
+		return eval.Result{
+			State:       eval.Alerting,
+			Instance:    data.Labels{"instance_label": instance},
+			EvaluatedAt: time.Now(),
+		}
+	}
+
+	testCases := []struct {
+		desc              string
+		variables         string
+		expectedVariables []url.Values
+	}{
+		{
+			desc:      "one image per distinct set of variables",
+			variables: "var-instance={{ $labels.instance_label | urlquery }}",
+			expectedVariables: []url.Values{
+				{"var-instance": {"test-1"}},
+				{"var-instance": {"test 2&b"}},
+			},
+		},
+		{
+			desc:              "one image when the variables are the same",
+			variables:         "var-env=prod",
+			expectedVariables: []url.Values{{"var-env": {"prod"}}},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			rule := newRule(tc.variables)
+			images := newSuccessfulCountingImageService()
+			cfg := ManagerCfg{
+				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				InstanceStore: &FakeInstanceStore{},
+				Images:        images,
+				Clock:         clock.NewMock(),
+				Historian:     &FakeHistorian{},
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           &logtest.Fake{},
+			}
+			mgr := NewManager(cfg, NewNoopPersister())
+
+			// "test 2&b" is escaped by urlquery and parsed back unchanged.
+			results := eval.Results{alerting("test-1"), alerting("test 2&b"), alerting("test-1")}
+			mgr.ProcessEvalResults(context.Background(), time.Now(), &rule, results, nil, nil)
+
+			assert.ElementsMatch(t, tc.expectedVariables, images.Variables)
 		})
 	}
 }
