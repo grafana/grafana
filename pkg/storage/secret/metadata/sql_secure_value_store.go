@@ -709,14 +709,20 @@ func (s *secureValueMetadataStorage) leaseCandidates(ctx context.Context, leaseT
 		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactive.Name(), err)
 	}
 
-	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
-	if err != nil {
-		return 0, fmt.Errorf("leasing inactive secure values: %w", err)
-	}
-
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("getting rows affected: %w", err)
+	// The UPDATE runs outside SQLStore's retrying session, so a busy SQLite
+	// database would otherwise fail the whole cleanup pass until the next tick.
+	var affected int64
+	if err := secretdatabase.RetryOnTransientTransactionError(ctx, func() error {
+		res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("leasing inactive secure values: %w", err)
+		}
+		if affected, err = res.RowsAffected(); err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return 0, err
 	}
 
 	return affected, nil
