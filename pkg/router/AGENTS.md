@@ -554,3 +554,44 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
 - `specs/2026-10-23-router-review-plan.md`: open work.
+
+## Plugin Live ingress
+
+The standalone router can serve the three plugin v2 Stream RPCs. Its Live
+listener is disabled until `[router.live] listen_address` and a space-separated
+`plugin_groups` mapping (for example `example-live-app=liveexample.ext.grafana.app`)
+are set. Configure the router server certificate with `[grpc_server] use_tls`,
+`cert_file`, `cert_key` and a dedicated `client_ca_file`. Only that CA may issue
+stack workload credentials, each with exactly one DNS SAN of the form
+`stack-<decimal stack ID>`. This design trusts each single-tenant Grafana to
+authenticate users within its own stack and supports org 1. Certificate
+expiry cancels its streams.
+
+The listener closes each connection gracefully after `max_connection_age`
+(default `5m`), then allows `max_connection_age_grace` (default `30s`) before
+closing streams that are still open. These match the operator. New calls,
+including publishes, move to a fresh connection, and Grafana reopens closed
+streams. Keep the age well below the stack certificate lifetime, so connections
+rarely reach the hard expiry deadline.
+
+The router looks up the installed group, holds its handler until the call
+finishes, and cancels streams on retirement. A managed plugin from
+`plugins_url` with verified backend TLS and a client certificate can receive
+these requests. Supply `tls_client_cert_file` and `tls_client_key_file` under
+`[router.backend_grpc]`. The operator verifies the router's workload identity.
+Both clients reload their configured certificate and key at the next handshake.
+An existing transport expires with the leaf it presented. Rotate each key pair
+together before expiry. The trusted CA bundle still needs an explicit rollout.
+
+Configure the router client certificate before enabling the operator-wide
+`live_router_dns_name` gate. Verify health and resource calls for each plugin
+on that operator before and after enabling the gate. Roll back the app Live
+destination and `serve_live` independently of this gate. To withdraw the router
+credential, first restore the previous trusted operator path and check all v2
+consumers. A publish has no application-level retry.
+
+The calling Grafana opts in under `[live.plugin_router]` using `plugin_ids`
+(space-separated), `address`, `ca_file`, `cert_file` and `key_file`.
+`server_name` optionally overrides the TLS verification name. Resource calls,
+health checks and data-source streams retain their existing routing. The
+browser keeps its existing Grafana Live WebSocket and channel addresses.

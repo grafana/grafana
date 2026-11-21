@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginclient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -47,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
+	"github.com/grafana/grafana/pkg/services/live/pluginrouter"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -404,6 +406,10 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
 	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
+	g.pluginRouter, err = pluginrouter.New(cfg)
+	if err != nil {
+		return nil, err
+	}
 	g.registerUsageMetrics()
 
 	return g, nil
@@ -497,6 +503,7 @@ type GrafanaLive struct {
 	Cfg                   *setting.Cfg
 	Features              featuremgmt.FeatureToggles
 	DataSourceCache       datasources.CacheService
+	pluginRouter          *pluginrouter.Client
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 
@@ -555,6 +562,7 @@ func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (bac
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
+	defer g.pluginRouter.Close()
 	eGroup, eCtx := errgroup.WithContext(ctx)
 
 	eGroup.Go(func() error {
@@ -1046,9 +1054,19 @@ func (g *GrafanaLive) handleWatchScope() (model.ChannelHandlerFactory, error) {
 }
 
 func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
-	streamHandler, err := g.getStreamPlugin(ctx, namespace)
-	if err != nil {
-		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+	streamHandler, routed := g.pluginRouter.Handler(namespace)
+	if routed {
+		p, ok := g.pluginStore.Plugin(ctx, namespace)
+		if !ok || !p.IsApp() || !p.Backend || !p.Streaming {
+			return nil, fmt.Errorf("app plugin %s does not support streaming", namespace)
+		}
+		streamHandler = pluginclient.RouteStream(namespace, g.pluginClient, streamHandler)
+	} else {
+		var err error
+		streamHandler, err = g.getStreamPlugin(ctx, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+		}
 	}
 	return features.NewPluginRunner(
 		namespace,

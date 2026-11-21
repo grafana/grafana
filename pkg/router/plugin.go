@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	pluginv2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -440,12 +442,13 @@ type PluginBackend struct {
 	// metricsID, when set, is the plugin_id the backend's requests are
 	// recorded under instead of pluginID, in metrics and spans. A core_url
 	// entry without a plugin ID uses its API group, as its connection does.
-	metricsID string
-	info      plugins.Info
-	group     metav1.APIGroup
-	manifest  *app.ManifestData
-	client    PluginClientProvider
-	deps      PluginDependencies
+	metricsID  string
+	info       plugins.Info
+	group      metav1.APIGroup
+	manifest   *app.ManifestData
+	client     PluginClientProvider
+	routedLive bool
+	deps       PluginDependencies
 
 	// settings is set for the backend that serves the plugin's settings API
 	// under its plugin ID. Its manifest, the settings manifest, is only
@@ -504,12 +507,20 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			release()
 		}
 	}()
-	handler, err := b.load(ctx)
+	clientV2, clientV3, err := b.client(ctx, b.pluginID)
+	if err != nil {
+		return nil, err
+	}
+	handler, err := b.load(ctx, clientV2, clientV3)
 	if err != nil {
 		return nil, err
 	}
 	loaded = true
-	return &tracedPluginHandler{Handler: handler, pluginID: b.metricsPluginID(), group: b.group.Name, release: release}, nil
+	var stream pluginv2.StreamClient
+	if v2, ok := clientV2.(*backendgrpcplugin.ClientV2); ok && b.routedLive {
+		stream = v2.StreamClient
+	}
+	return &tracedPluginHandler{live: stream, Handler: handler, pluginID: b.metricsPluginID(), group: b.group.Name, release: release}, nil
 }
 
 // metricsPluginID is the plugin_id the backend's requests are recorded under.
@@ -517,11 +528,7 @@ func (b *PluginBackend) metricsPluginID() string {
 	return cmp.Or(b.metricsID, b.pluginID)
 }
 
-func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) {
-	clientV2, clientV3, err := b.client(ctx, b.pluginID)
-	if err != nil {
-		return nil, err
-	}
+func (b *PluginBackend) load(ctx context.Context, clientV2 plugins.Client, clientV3 appclientv3.Client) (*pluginroute.Handler, error) {
 	cfg := b.deps.Cfg
 	if cfg == nil {
 		cfg = setting.NewCfg()

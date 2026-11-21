@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	v2 "github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -13,9 +14,12 @@ type tracedPluginHandler struct {
 	*pluginroute.Handler
 	pluginID string
 	group    string
+	live     v2.StreamClient
 	// release frees what Load acquired for this handler; nil for none.
 	release func()
 }
+
+func (h *tracedPluginHandler) PluginLiveClient() (string, v2.StreamClient) { return h.pluginID, h.live }
 
 // Destroy releases the plugin's API server, then what Load acquired for it.
 func (h *tracedPluginHandler) Destroy() {

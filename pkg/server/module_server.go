@@ -346,6 +346,13 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err := routerSvc.RegisterTargetRoutes(s.httpServerRouter, s.healthNotifier); err != nil {
 		return nil, err
 	}
+	live, err := r.LiveService(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+	if live != nil {
+		return newCompositeService(routerSvc, live)
+	}
 	return routerSvc, nil
 }
 

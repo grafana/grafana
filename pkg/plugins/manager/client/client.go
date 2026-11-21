@@ -222,7 +222,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		return nil, errNilRequest
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	plugin, exists := s.streamHandler(ctx, req.PluginContext)
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered
 	}
@@ -235,7 +235,7 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 		return nil, errNilRequest
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	plugin, exists := s.streamHandler(ctx, req.PluginContext)
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered
 	}
@@ -252,7 +252,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return errNilSender
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	plugin, exists := s.streamHandler(ctx, req.PluginContext)
 	if !exists {
 		return plugins.ErrPluginNotRegistered
 	}
