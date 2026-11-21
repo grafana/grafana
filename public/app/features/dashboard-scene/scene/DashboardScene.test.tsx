@@ -2484,9 +2484,32 @@ describe('DashboardScene', () => {
       });
     });
 
+    it('Should use the repeat source panel ID for public dashboard requests', () => {
+      const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'public-token';
+
+      try {
+        const cloneQueryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
+        const sourcePanel = findVizPanelByKey(scene, 'panel-2')!;
+        const nonRepeatPanel = findVizPanelByKey(scene, 'panel-1')!;
+
+        expect(scene.enrichDataRequest(cloneQueryRunner).panelId).toEqual(2);
+        expect(scene.enrichDataRequest(sourcePanel).panelId).toEqual(2);
+        expect(scene.enrichDataRequest(nonRepeatPanel).panelId).toEqual(1);
+      } finally {
+        config.publicDashboardAccessToken = originalPublicDashboardAccessToken;
+      }
+    });
+
     it('Should hash the key of the cloned panels and set it as panelId', () => {
-      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
-      expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
+      const originalPublicDashboardAccessToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = undefined;
+      try {
+        const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
+        expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
+      } finally {
+        config.publicDashboardAccessToken = originalPublicDashboardAccessToken;
+      }
     });
   });
 
