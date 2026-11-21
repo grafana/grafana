@@ -238,6 +238,19 @@ describe('formatted string parsing', () => {
     expect(parsed.isValid()).toBe(true);
     expect(parsed.toISOString()).toBe('2020-08-20T10:30:20.000Z');
   });
+
+  it('applies a meridiem to 24-hour tokens like moment', () => {
+    expect(moment.utc('2024-01-05 01:45 PM', 'YYYY-MM-DD HH:mm A').toISOString()).toBe('2024-01-05T13:45:00.000Z');
+    expect(moment.utc('2024-01-05 12:05 am', 'YYYY-MM-DD H:mm a').toISOString()).toBe('2024-01-05T00:05:00.000Z');
+    expect(moment.utc('01/05/2024 09:30:00 AM', 'MM/DD/YYYY HH:mm:ss A').toISOString()).toBe(
+      '2024-01-05T09:30:00.000Z'
+    );
+    expect(moment.utc('2024-01-05 12:30 PM', 'YYYY-MM-DD kk:mm A').toISOString()).toBe('2024-01-05T12:30:00.000Z');
+  });
+
+  it('keeps 24-hour tokens when the meridiem letter is escaped', () => {
+    expect(moment.utc('2024-01-05 13:45 A', 'YYYY-MM-DD HH:mm [A]').toISOString()).toBe('2024-01-05T13:45:00.000Z');
+  });
 });
 
 describe('relative time', () => {
