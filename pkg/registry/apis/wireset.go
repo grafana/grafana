@@ -48,6 +48,9 @@ var WireSetExts = wire.NewSet(
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,
+
+	secret.ProvideNoopExtension,
+	secret.RegisterAPIService,
 )
 
 var provisioningExtras = wire.NewSet(
