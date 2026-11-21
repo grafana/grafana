@@ -11,6 +11,7 @@ import {
   generateUUID,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -59,7 +60,7 @@ class DashboardWatcher {
 
   watch(uid: string) {
     const live = getGrafanaLiveSrv();
-    if (!live) {
+    if (!live || getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsDisableLiveSaveNotices, false)) {
       return;
     }
 
