@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -392,8 +393,10 @@ func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace 
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(maxConcurrentKindReads)
 	for i, supported := range kinds {
+		// A disabled kind comes from the configured set, which carries no storage group.
+		storage := cmp.Or(supported.Collection, storingCollection(o.configured, supported.GroupKind))
 		g.Go(func() (err error) {
-			results[i], err = countKind(gctx, clients, supported)
+			results[i], err = countKind(gctx, clients, supported, storage)
 			return err
 		})
 	}
@@ -409,8 +412,9 @@ func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace 
 	return ext, nil
 }
 
-// countKind counts the objects of one kind through its API group.
-func countKind(ctx context.Context, clients ResourceClients, supported SupportedResource) (externalStats, error) {
+// countKind counts the objects of one kind through its API group. storage is the collection group
+// the index files the kind under, empty when it is its own.
+func countKind(ctx context.Context, clients ResourceClients, supported SupportedResource, storage string) (externalStats, error) {
 	client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
 	if err != nil {
 		return externalStats{}, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
@@ -440,7 +444,12 @@ func countKind(ctx context.Context, clients ResourceClients, supported Supported
 		return externalStats{}, fmt.Errorf("count %s: %w", gvr, err)
 	}
 
+	// The index reports a collection member under the collection's group: a row it holds there
+	// for this resource is the same objects, and counting it as well counts them twice.
 	counted := externalStats{covered: sets.New(gvr.GroupResource())}
+	if storage != "" {
+		counted.covered.Insert(schema.GroupResource{Group: storage, Resource: gvr.Resource})
+	}
 	if total > 0 {
 		counted.instance = []*resourcepb.ResourceStatsResponse_Stats{{
 			Group: gvr.Group, Resource: gvr.Resource, Count: total,

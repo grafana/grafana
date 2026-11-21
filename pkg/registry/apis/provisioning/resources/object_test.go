@@ -618,3 +618,73 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 		}, got.Managed)
 	})
 }
+
+// The index files a collection member under the collection's group rather than the group that
+// serves it, so dropping only the served group's rows counted the member's objects twice.
+func TestResourceListerFromSearch_CountsAnExternallyStoredCollectionMemberOnce(t *testing.T) {
+	const (
+		repository = "repo"
+		collection = "datasource.grafana.app"
+		member     = "grafana-testdata-datasource." + collection
+	)
+	memberGVR := schema.GroupVersionResource{Group: member, Version: "v0alpha1", Resource: "datasources"}
+	memberGVK := schema.GroupVersionKind{Group: member, Version: "v0alpha1", Kind: "DataSource"}
+	external := sets.New(CapabilityExternalStorage)
+
+	scheme := runtime.NewScheme()
+	listGVK := memberGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(memberGVK, &unstructured.Unstructured{})
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{memberGVR: listGVK.Kind},
+		managedDataSource(t, memberGVK, "ds-1", repository, "ds-1.json"),
+	)
+
+	newLister := func(t *testing.T) (*ResourceListerFromSearch, *resource.MockResourceClient) {
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: memberGVK.GroupKind(), Capabilities: external, Collection: collection},
+		})
+		clients.EXPECT().ForKind(mock.Anything, memberGVK.GroupKind().WithVersion("")).
+			Return(dyn.Resource(memberGVR).Namespace("default"), memberGVR, nil)
+		factory := NewMockClientFactory(t)
+		factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		store := resource.NewMockResourceClient(t)
+		return NewResourceLister(store, factory, []SupportedResource{
+			{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}, Capabilities: external},
+		}), store
+	}
+	staleCount := &resourcepb.CountManagedObjectsResponse{
+		Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+			{Kind: string(utils.ManagerKindRepo), Id: repository, Group: collection, Resource: "datasources", Count: 5},
+		},
+	}
+	memberCount := []provisioning.ResourceCount{{Group: member, Resource: "datasources", Count: 1}}
+
+	t.Run("repository stats", func(t *testing.T) {
+		lister, store := newLister(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(staleCount, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, memberCount, got)
+	})
+
+	t.Run("namespace stats", func(t *testing.T) {
+		lister, store := newLister(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(staleCount, nil).Once()
+		store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: collection, Resource: "datasources", Count: 7}},
+		}, nil).Once()
+
+		got, err := lister.Stats(context.Background(), "default")
+		require.NoError(t, err)
+		require.Equal(t, memberCount, got.Instance)
+		require.Empty(t, got.Unmanaged)
+		require.Equal(t, []provisioning.ManagerStats{
+			{Kind: utils.ManagerKindRepo, Identity: repository, Stats: memberCount},
+		}, got.Managed)
+	})
+}
