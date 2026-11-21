@@ -43,7 +43,16 @@ interface HelperOptions {
 }
 
 // Called as helpers even without arguments.
-const KNOWN_HELPERS = new Set(['helperMissing', 'blockHelperMissing', 'each', 'if', 'unless', 'with', 'log', 'lookup']);
+export const KNOWN_HELPERS: ReadonlySet<string> = new Set([
+  'helperMissing',
+  'blockHelperMissing',
+  'each',
+  'if',
+  'unless',
+  'with',
+  'log',
+  'lookup',
+]);
 
 // Hooks, not callable by name.
 const HOOKS = new Set(['helperMissing', 'blockHelperMissing']);
@@ -482,7 +491,7 @@ export function isScoped(path: hbs.AST.PathExpression): boolean {
   return /^\.|this\b/.test(path.original);
 }
 
-function isSimpleId(path: hbs.AST.PathExpression): boolean {
+export function isSimpleId(path: hbs.AST.PathExpression): boolean {
   return path.parts.length === 1 && !isScoped(path) && !path.depth;
 }
 

@@ -173,11 +173,10 @@ describe('FmtMigrationNotice', () => {
   });
 
   it('does not apply a conversion when the template renders differently for the current query results', async () => {
-    let renders = 0;
-    const { onConvert, user } = setup({
-      content: '{{#each data}}{{fmt.cpu}}{{/each}}',
-      replaceVariables: (value) => `${value}${renders++}`,
-    });
+    const frames = withDisplay([toDataFrame({ fields: [{ name: 'cpu', type: FieldType.number, values: [0.5] }] })]);
+    let calls = 0;
+    frames[0].fields[0].display = () => ({ text: ++calls === 2 ? 'changed' : 'same', numeric: 0.5 });
+    const { onConvert, user } = setup({ content: '{{fmt.cpu}}', renderMode: RenderMode.PerRow, frames });
 
     await user.click(screen.getByRole('button', { name: 'Convert to display' }));
 
@@ -189,6 +188,38 @@ describe('FmtMigrationNotice', () => {
     ).toBeVisible();
     expect(within(dialog).getByRole('button', { name: 'Convert' })).toBeDisabled();
     expect(onConvert).not.toHaveBeenCalled();
+  });
+
+  it('does not apply a conversion when the template renders differently every time, which it cannot check', async () => {
+    let renders = 0;
+    const { onConvert, user } = setup({
+      content: '{{#each data}}{{fmt.cpu}}{{/each}}',
+      replaceVariables: (value) => `${value}${renders++}`,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Convert to display' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Convert fmt to display' });
+    expect(
+      within(dialog).getByText(
+        'The template renders differently every time, for example with the current time, so the conversion cannot be checked and is not applied'
+      )
+    ).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Convert' })).toBeDisabled();
+    expect(onConvert).not.toHaveBeenCalled();
+  });
+
+  it('applies a conversion when only the time of day moved on between renders', async () => {
+    let renders = 0;
+    const { onConvert, user } = setup({
+      content: '{{#each data}}{{fmt.cpu}}{{/each}}',
+      replaceVariables: (value) => `${value}${renders++ === 0 ? 'before' : 'after'}`,
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Convert to display' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Convert' }));
+
+    expect(onConvert).toHaveBeenCalledWith('{{#each data}}{{display "cpu"}}{{/each}}');
   });
 
   it('checks every frame for a field displayed as fmt, including those the panel does not show', async () => {

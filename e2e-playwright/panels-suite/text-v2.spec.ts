@@ -556,6 +556,25 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await request.delete(`/api/dashboards/uid/${uid}`);
     });
 
+    test('warns on the dashboard that the panel reads fmt, and leaves it to the editor notice in panel edit', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({ uid });
+      const header = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Formatted values'));
+
+      await header.getByTestId(selectors.components.Panels.Panel.status('warning')).click();
+      await expect(page.getByTestId('toggletip-content')).toContainText(
+        'This panel reads fmt, which is deprecated. Edit the panel to convert it to the display helper.'
+      );
+      await page.keyboard.press('Escape');
+
+      await dashboardPage.gotoPanelEditPage('1');
+      await expect(page.getByRole('status', { name: 'fmt is deprecated' })).toBeVisible();
+      await expect(page.getByTestId(selectors.components.Panels.Panel.status('warning'))).toHaveCount(0);
+    });
+
     test('converts fmt reads to the display helper, renders the same, and keeps them after a save', async ({
       gotoDashboardPage,
       request,

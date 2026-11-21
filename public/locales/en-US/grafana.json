@@ -17731,6 +17731,7 @@
       "reason-row": "It may not read a row of the query results here, as inside an inline partial or a block on a field value. Pass the row with row=, as in {{example}}.",
       "reason-shadowed": "A field is displayed as fmt, so this reads that field. display reads formatted values whatever the fields are called.",
       "renders-differently": "The converted template renders differently for the current query results, so it is not applied",
+      "renders-unsteadily": "The template renders differently every time, for example with the current time, so the conversion cannot be checked and is not applied",
       "review": "Convert to display",
       "review-title": "Convert fmt to display",
       "show-reads": "Show where it is used",
@@ -17740,6 +17741,9 @@
       "unchanged": "Unchanged expressions",
       "unconverted_one": "{{count}} expression stays as it is",
       "unconverted_other": "{{count}} expressions stay as they are"
+    },
+    "fmt-notice": {
+      "text": "This panel reads fmt, which is deprecated. Edit the panel to convert it to the display helper."
     },
     "frame-picker": {
       "label": "Query"

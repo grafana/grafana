@@ -174,6 +174,7 @@ Templates that use it still render, but use the `display` helper instead.
 {{< /admonition >}}
 
 When a template uses `fmt`, the panel editor shows a notice with the number of expressions it can convert.
+On a dashboard that you can save, the panel also shows a warning in its header while the template uses `fmt`.
 To convert the template, complete the following steps:
 
 1. In the notice, click **Convert to display**.
@@ -181,12 +182,12 @@ To convert the template, complete the following steps:
    The editor only applies them if the visualization renders the same for the current query results.
 1. Click **Convert**, and then save the dashboard.
 
-The editor converts formatted values in text and in helper arguments, such as `(eq fmt.cpu "")`.
-It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{display "cpu" row=data.[0]}}`.
+The editor converts formatted values in text and in helper arguments, such as `(eq fmt.cpu "")`, and lookups by a literal name, such as `{{lookup fmt "cpu"}}`.
+It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{display "cpu" row=data.[0]}}`, and reads inside an inline partial when every call to the partial passes a row.
 It leaves the expressions that it can't convert without changing the result, and shows the line of each one with how to change it:
 
-- **`fmt` read as a whole**: For example, `{{#each fmt}}` or `{{lookup fmt "cpu"}}`. Read each field with `display` instead.
-- **Inline partials and blocks on field values**: The context there might not be a row of the query results. Pass the row in the `row` argument.
+- **`fmt` read as a whole**: For example, `{{#each fmt}}`, or `{{lookup fmt name}}` where the name comes from a value. Read each field with `display` instead.
+- **Inline partials and blocks on field values**: The context there might not be a row of the query results, for example when a call to a partial passes hash arguments. Pass the row in the `row` argument.
 - **A field named `fmt`**: The field hides the namespace, so `fmt.cpu` reads the field instead of a formatted value.
 
 ## Style content with theme colors

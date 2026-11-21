@@ -28,6 +28,7 @@ interface Review {
   original: string;
   migration: FmtMigration;
   rendersSame: boolean;
+  steady: boolean;
 }
 
 export function FmtMigrationNotice({
@@ -71,12 +72,21 @@ export function FmtMigrationNotice({
     const original = getDraft();
     const migration = migrateFmt(original, { mode, renderMode, fieldNames });
     const variants = frames.length > 1 ? frames.map((frame) => [frame]) : [frames];
+    let rendersSame = true;
+    let steady = true;
 
-    setReview({
-      original,
-      migration,
-      rendersSame: variants.every((series) => render(original, series) === render(migration.content, series)),
-    });
+    for (const series of variants) {
+      const before = render(original, series);
+      const after = render(migration.content, series);
+      const again = render(original, series);
+
+      if (after !== before && after !== again) {
+        rendersSame = false;
+        steady = steady && before === again;
+      }
+    }
+
+    setReview({ original, migration, rendersSame, steady });
   };
 
   const apply = () => {
@@ -147,10 +157,17 @@ export function FmtMigrationNotice({
                   <Alert
                     severity="error"
                     bottomSpacing={0}
-                    title={t(
-                      'textng.fmt-migration.renders-differently',
-                      'The converted template renders differently for the current query results, so it is not applied'
-                    )}
+                    title={
+                      review.steady
+                        ? t(
+                            'textng.fmt-migration.renders-differently',
+                            'The converted template renders differently for the current query results, so it is not applied'
+                          )
+                        : t(
+                            'textng.fmt-migration.renders-unsteadily',
+                            'The template renders differently every time, for example with the current time, so the conversion cannot be checked and is not applied'
+                          )
+                    }
                   />
                 )}
                 <ul className={styles.list} aria-label={t('textng.fmt-migration.changes', 'Changes')}>

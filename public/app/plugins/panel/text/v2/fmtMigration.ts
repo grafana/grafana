@@ -3,7 +3,7 @@ import Handlebars from 'handlebars';
 import { RenderMode, type TextMode } from '../panelcfg.gen';
 
 import { compileProgram } from './handlebars';
-import { isScoped } from './handlebarsInterpreter';
+import { isScoped, isSimpleId, KNOWN_HELPERS } from './handlebarsInterpreter';
 import { escapeCommentedTemplates, interpretsHandlebars } from './renderContent';
 
 export type FmtReadReason = 'namespace' | 'expression' | 'row' | 'shadowed' | 'name';
@@ -50,7 +50,6 @@ const SCALAR = 64;
 const NOTHING = 128;
 const UNKNOWN = 256;
 
-const BLOCK_HELPERS = new Set(['each', 'with', 'if', 'unless']);
 const DATA_SCALARS = new Set(['index', 'key', 'first', 'last']);
 const KEYWORDS = new Set(['true', 'false', 'null', 'undefined', 'this']);
 const IDENTIFIER = /^[A-Za-z_$][\w$-]*$/;
@@ -84,7 +83,19 @@ interface Edit extends Replacement {
 
 type Position = 'statement' | 'param' | 'callee';
 
+interface Read {
+  index: number;
+  base: number;
+  stopsAtFalsy: boolean;
+}
+
+interface Range {
+  from: number;
+  to: number;
+}
+
 const ROOT_PARTIAL_SCOPE: Scope = { context: NOTHING, depths: [], params: [] };
+const MAX_PASSES = 8;
 
 export function findFmtReads(content: string, options: FmtMigrationOptions): FmtReads {
   const analysis = analyzeContent(content, options);
@@ -160,12 +171,47 @@ function parseTemplate(source: string): hbs.AST.Program | undefined {
 }
 
 function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, source: string) {
+  const partials = collectInlinePartials(program);
+  const contexts = new Map<string, number>();
+  const contextOf = (name: string | undefined) =>
+    name === undefined || partials.dynamic || (partials.counts.get(name) ?? 0) > 1
+      ? UNKNOWN
+      : (contexts.get(name) ?? 0);
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    const result = analyzePass(program, root, shadowed, source, contextOf);
+    let grown = false;
+
+    for (const [name, context] of result.calls) {
+      const known = contexts.get(name) ?? 0;
+      if (partials.counts.has(name) && (known | context) !== known) {
+        contexts.set(name, known | context);
+        grown = true;
+      }
+    }
+
+    if (!grown) {
+      return result;
+    }
+  }
+
+  return analyzePass(program, root, shadowed, source, () => UNKNOWN);
+}
+
+function analyzePass(
+  program: hbs.AST.Program,
+  root: number,
+  shadowed: boolean,
+  source: string,
+  partialContext: (name: string | undefined) => number
+) {
   const edits: Edit[] = [];
   const unconverted: FmtRead[] = [];
   const replacements = new Map<object, Replacement>();
+  const calls = new Map<string, number>();
   const lineStarts = getLineStarts(source);
   const offsetOf = ({ line, column }: hbs.AST.Position) => (lineStarts[line - 1] ?? source.length) + column;
-  const rangeOf = (node: hbs.AST.Node) => ({ from: offsetOf(node.loc.start), to: offsetOf(node.loc.end) });
+  const rangeOf = (node: hbs.AST.Node): Range => ({ from: offsetOf(node.loc.start), to: offsetOf(node.loc.end) });
 
   const findParam = (scope: Scope, name: string) => {
     for (const params of scope.params) {
@@ -177,27 +223,33 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     return undefined;
   };
 
-  const isParam = (scope: Scope, path: hbs.AST.PathExpression) =>
-    path.depth === 0 && !isScoped(path) && path.parts.length > 0 && findParam(scope, path.parts[0]) !== undefined;
+  function resolveHelper(path: hbs.AST.PathExpression, scope: Scope, hasArgs: boolean): string | undefined {
+    const [name] = path.parts;
+    const simple = isSimpleId(path);
 
-  const isSimple = (path: hbs.AST.PathExpression) =>
-    !path.data && path.depth === 0 && path.parts.length === 1 && !isScoped(path);
+    if (name === undefined || (simple && findParam(scope, name) !== undefined)) {
+      return undefined;
+    }
+    if (KNOWN_HELPERS.has(name) && (hasArgs || simple)) {
+      return name;
+    }
+    return simple ? name : undefined;
+  }
 
   function getReason(
-    path: hbs.AST.PathExpression,
-    index: number,
-    base: number,
-    position: Position,
+    read: Read,
     name: string,
-    row: ReturnType<typeof getRowArgument>
+    row: ReturnType<typeof getRowArgument>,
+    position: Position,
+    chained: boolean
   ): FmtReadReason | undefined {
-    if (index + 2 < path.parts.length || position === 'callee') {
+    if (chained || position === 'callee') {
       return 'expression';
     }
-    if (base & UNKNOWN || (path.data && base & SCALAR)) {
+    if (read.base & UNKNOWN || (read.stopsAtFalsy && read.base & SCALAR)) {
       return 'row';
     }
-    if (base & ROW && shadowed) {
+    if (read.base & ROW && shadowed) {
       return 'shadowed';
     }
     if (!isWritableName(name) || name === '__proto__' || (row && row.text === undefined)) {
@@ -207,25 +259,54 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
   }
 
   function record(
+    range: Range,
+    node: object,
     path: hbs.AST.PathExpression,
-    index: number,
-    base: number,
+    read: Read,
+    name: string | undefined,
     position: Position,
-    statement?: hbs.AST.MustacheStatement
+    chained: boolean
   ) {
-    const name = path.parts[index + 1];
-    const row = getRowArgument(path, index);
-    const reason = name === undefined ? 'namespace' : getReason(path, index, base, position, name, row);
+    const row = getRowArgument(path, read.index);
+    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained);
 
     if (name === undefined || reason) {
-      unconverted.push({ ...rangeOf(path), reason: reason ?? 'namespace' });
+      unconverted.push({ ...range, reason: reason ?? 'namespace' });
       return;
     }
 
     const call = `${HELPER} ${quote(name)}${row ? ` row=${row.text}` : ''}`;
     const replacement: Replacement = { name, row: row?.row };
-    edits.push({ ...rangeOf(path), ...replacement, text: position === 'statement' ? call : `(${call})` });
-    replacements.set(statement ?? path, replacement);
+    edits.push({ ...range, ...replacement, text: position === 'statement' ? call : `(${call})` });
+    replacements.set(node, replacement);
+  }
+
+  function walk(path: hbs.AST.PathExpression, scope: Scope): { value: number; read?: Read } {
+    const { parts, depth, data } = path;
+    const [first] = parts;
+    const param = !depth && !isScoped(path) && first !== undefined ? findParam(scope, first) : undefined;
+    let value: number;
+    let start = 1;
+    let stopsAtFalsy = false;
+
+    if (param !== undefined) {
+      value = param;
+    } else if (first !== undefined && data) {
+      value = first === 'root' ? root | (depth ? NOTHING : 0) : DATA_SCALARS.has(first) ? SCALAR | NOTHING : UNKNOWN;
+      stopsAtFalsy = true;
+    } else {
+      value = depth ? unionOf(scope.depths.slice(depth)) : scope.context;
+      start = 0;
+    }
+
+    for (let index = start; index < parts.length; index++) {
+      if (parts[index] === NAMESPACE) {
+        return { value: UNKNOWN, read: { index, base: value, stopsAtFalsy } };
+      }
+      value = propertyKind(value, parts[index], shadowed);
+    }
+
+    return { value };
   }
 
   function resolve(
@@ -234,26 +315,11 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     position: Position,
     statement?: hbs.AST.MustacheStatement
   ): number {
-    const { parts, depth, data } = path;
-    let value: number;
-    let start = 1;
+    const { value, read } = walk(path, scope);
 
-    if (data) {
-      value =
-        parts[0] === 'root' ? root | (depth ? NOTHING : 0) : DATA_SCALARS.has(parts[0]) ? SCALAR | NOTHING : UNKNOWN;
-    } else if (isParam(scope, path)) {
-      value = findParam(scope, parts[0]) ?? UNKNOWN;
-    } else {
-      value = depth ? unionOf(scope.depths.slice(depth)) : scope.context;
-      start = 0;
-    }
-
-    for (let index = start; index < parts.length; index++) {
-      if (parts[index] === NAMESPACE) {
-        record(path, index, value, position, statement);
-        return UNKNOWN;
-      }
-      value = propertyKind(value, parts[index], shadowed);
+    if (read) {
+      const name = path.parts[read.index + 1];
+      record(rangeOf(path), statement ?? path, path, read, name, position, read.index + 2 < path.parts.length);
     }
 
     return value;
@@ -278,14 +344,38 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     return values;
   }
 
+  function lookup(node: hbs.AST.SubExpression | hbs.AST.MustacheStatement, scope: Scope): boolean {
+    const [object, key, ...rest] = node.params;
+
+    if (!object || !key || rest.length > 0 || node.hash || !isPath(object) || !isLiteralKey(key)) {
+      return false;
+    }
+
+    const { read } = walk(object, scope);
+
+    if (!read || read.index !== object.parts.length - 1) {
+      return false;
+    }
+
+    const statement = isMustache(node);
+    const range = statement ? { from: offsetOf(node.path.loc.start), to: offsetOf(key.loc.end) } : rangeOf(node);
+    record(range, node, object, read, String(key.value), statement ? 'statement' : 'param', false);
+    return true;
+  }
+
   function call(node: hbs.AST.SubExpression | hbs.AST.MustacheStatement, scope: Scope): number {
     const path = isPath(node.path) ? node.path : undefined;
+    const helper = path ? resolveHelper(path, scope, true) : undefined;
+
+    if (helper === 'lookup' && lookup(node, scope)) {
+      return SCALAR | NOTHING;
+    }
+
     if (path) {
       resolve(path, scope, 'callee');
     }
 
     const values = args(node, scope);
-    const helper = path && !isParam(scope, path) ? path.parts[0] : undefined;
 
     if (helper === 'lookup') {
       const [, key] = node.params;
@@ -296,11 +386,11 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       return propertyKind(values[0] ?? NOTHING, name, shadowed);
     }
 
-    if (path && isSimple(path) && (helper === 'split' || helper === 'variable')) {
+    if (helper === 'split' || helper === 'variable') {
       return OBJECT;
     }
 
-    return path && isSimple(path) && helper === HELPER ? SCALAR | NOTHING : UNKNOWN;
+    return helper === HELPER ? SCALAR | NOTHING : UNKNOWN;
   }
 
   function mustache(node: hbs.AST.MustacheStatement, scope: Scope) {
@@ -315,22 +405,13 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
 
   function block(node: hbs.AST.BlockStatement, scope: Scope) {
     const path = isPath(node.path) ? node.path : undefined;
+    const helper = path ? resolveHelper(path, scope, node.params.length > 0 || Boolean(node.hash)) : undefined;
     if (path) {
       resolve(path, scope, 'callee');
     }
 
     const values = args(node, scope);
     const [value = NOTHING] = values;
-    const first = path && !isParam(scope, path) ? path.parts[0] : undefined;
-    const simple = path !== undefined && isSimple(path);
-    const hasArgs = node.params.length > 0 || Boolean(node.hash);
-
-    let helper: string | undefined;
-    if (first !== undefined && BLOCK_HELPERS.has(first) && (hasArgs || simple)) {
-      helper = first;
-    } else if (simple && hasArgs && first === HELPER) {
-      helper = HELPER;
-    }
 
     if (helper === 'each') {
       const item = itemKind(value);
@@ -339,7 +420,7 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       enter(node.program, scope, value, true, [value]);
     } else if (helper === 'if' || helper === 'unless') {
       enter(node.program, scope, scope.context, false, []);
-    } else if (helper === HELPER) {
+    } else if (helper === HELPER && values.length > 0) {
       const display = values.length === 1 ? OBJECT : SCALAR;
       enter(node.program, scope, display, true, [display]);
     } else {
@@ -374,14 +455,20 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       } else if (isBlock(node)) {
         block(node, scope);
       } else if (isInlinePartial(node)) {
+        const context = partialContext(getInlinePartialName(node));
         const partial: Scope = {
-          context: UNKNOWN,
-          depths: [UNKNOWN, ...definition.depths],
+          context,
+          depths: [context, ...definition.depths],
           params: [undefined, ...definition.params],
         };
         body(node.program, partial, partial);
       } else if (isPartial(node)) {
-        args(node, scope);
+        const values = args(node, scope);
+        const name = getPartialName(node);
+        if (name !== undefined) {
+          const context = node.hash ? UNKNOWN : node.params.length > 0 ? values[0] : scope.context;
+          calls.set(name, (calls.get(name) ?? 0) | context);
+        }
       }
     }
   }
@@ -391,7 +478,49 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
   edits.sort((a, b) => a.from - b.from);
   unconverted.sort((a, b) => a.from - b.from);
 
-  return { edits, unconverted, replacements };
+  return { edits, unconverted, replacements, calls };
+}
+
+function collectInlinePartials(program: hbs.AST.Program) {
+  const counts = new Map<string, number>();
+  let dynamic = false;
+
+  const visit = (node: hbs.AST.Program | undefined) => {
+    for (const statement of node?.body ?? []) {
+      if (isInlinePartial(statement)) {
+        const name = getInlinePartialName(statement);
+        if (name === undefined) {
+          dynamic = true;
+        } else {
+          counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+        visit(statement.program);
+      } else if (isBlock(statement)) {
+        visit(statement.program);
+        visit(statement.inverse);
+      }
+    }
+  };
+
+  visit(program);
+
+  return { counts, dynamic };
+}
+
+function getInlinePartialName(node: hbs.AST.DecoratorBlock): string | undefined {
+  const [param] = node.params;
+
+  if (!param || param.type === 'UndefinedLiteral') {
+    return 'undefined';
+  }
+  if (param.type === 'NullLiteral') {
+    return 'null';
+  }
+  return isLiteral(param) ? String(param.value) : undefined;
+}
+
+function getPartialName(node: hbs.AST.PartialStatement): string | undefined {
+  return 'original' in node.name ? String(node.name.original) : undefined;
 }
 
 function getRowArgument(path: hbs.AST.PathExpression, index: number): { text?: string; row: Row } | undefined {
@@ -625,6 +754,10 @@ function isSubExpression(node: hbs.AST.Node): node is hbs.AST.SubExpression {
 
 function isLiteralKey(node: hbs.AST.Node): node is hbs.AST.StringLiteral | hbs.AST.NumberLiteral {
   return node.type === 'StringLiteral' || node.type === 'NumberLiteral';
+}
+
+function isLiteral(node: hbs.AST.Node): node is hbs.AST.StringLiteral | hbs.AST.NumberLiteral | hbs.AST.BooleanLiteral {
+  return isLiteralKey(node) || node.type === 'BooleanLiteral';
 }
 
 function isMustache(node: hbs.AST.Node): node is hbs.AST.MustacheStatement {
