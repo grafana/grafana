@@ -7,6 +7,7 @@ import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handler
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TrashStateManager } from 'app/features/browse-dashboards/api/useRecentlyDeletedStateManager';
+import { registerDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import {
   RECENTLY_DELETED_SORT_VALUES,
@@ -211,6 +212,86 @@ describe('SearchStateManager', () => {
       stm.onQueryChange('debugging');
 
       await waitFor(() => expect(stm.state.result?.totalRows).toEqual(10));
+    });
+  });
+
+  describe('onDraftsOnlyChange', () => {
+    const registerDraftMode = () =>
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels: async () => ({}),
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+      locationService.partial({ draftsOnly: null });
+    });
+
+    it('asks for drafts only while the drafts filter is on', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.onDraftsOnlyChange(true);
+      expect(stm.getSearchQuery().lifecycle).toBe('draft');
+
+      stm.onDraftsOnlyChange(false);
+      expect(stm.getSearchQuery().lifecycle).toBeUndefined();
+    });
+
+    it('keeps the drafts filter in the URL while it is on', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.onDraftsOnlyChange(true);
+      expect(locationService.getSearchObject().draftsOnly).toBe(true);
+
+      stm.onDraftsOnlyChange(false);
+      expect(locationService.getSearchObject()).not.toHaveProperty('draftsOnly');
+    });
+
+    it('restores the drafts filter from the URL', () => {
+      registerDraftMode();
+      locationService.partial({ draftsOnly: true });
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.initStateFromUrl();
+
+      expect(stm.getSearchQuery().lifecycle).toBe('draft');
+      expect(stm.doSearch).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores the drafts filter in the URL when draft mode is off', () => {
+      locationService.partial({ draftsOnly: true, query: 'cpu' });
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.initStateFromUrl();
+
+      expect(stm.getSearchQuery().query).toBe('cpu');
+      expect(stm.getSearchQuery().lifecycle).toBeUndefined();
+      locationService.partial({ query: null });
+    });
+
+    it('turns off a drafts filter that is no longer in the URL', () => {
+      const stm = createSearchStateManager();
+      stm.setState({ draftsOnly: true });
+
+      stm.initStateFromUrl();
+
+      expect(stm.state.draftsOnly).toBe(false);
+    });
+
+    it('turns the drafts filter off when search and filters are cleared', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+      stm.onDraftsOnlyChange(true);
+
+      stm.onClearSearchAndFilters();
+
+      expect(stm.state.draftsOnly).toBe(false);
     });
   });
 

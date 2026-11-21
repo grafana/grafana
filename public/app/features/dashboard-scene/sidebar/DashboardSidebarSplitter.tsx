@@ -25,6 +25,7 @@ import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
+import { DraftDashboardBadge } from '../scene/new-toolbar/actions/DraftDashboardBadge';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { getPlanningGround } from '../scene/planningGround';
@@ -230,6 +231,7 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
         {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
+        {hasUid && <DraftDashboardBadge dashboard={dashboard} />}
         {renderDynamicNavActions()}
       </>
     );

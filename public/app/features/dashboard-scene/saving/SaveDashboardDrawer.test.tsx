@@ -15,6 +15,8 @@ import {
   AnnoKeyUseCrossDashboardVariables,
   ManagerKind,
   type MetaStatus,
+  LabelKeyLifecycle,
+  LifecycleDraft,
 } from 'app/features/apiserver/types';
 import {
   type DashboardRepositoryView,
@@ -35,6 +37,7 @@ import { createDeferred } from '../utils/test-utils';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import * as createDetectChangesWorker from './createDetectChangesWorker';
+import { registerDraftDashboardExtension } from './enterprise-components/DraftDashboardExtension';
 import {
   registerSaveAsTemplateForm,
   type SaveAsTemplateFormProps,
@@ -761,6 +764,85 @@ describe('SaveDashboardDrawer', () => {
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Draft dashboards', () => {
+    const draftMeta = { k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } } };
+
+    const registerDraftMode = (enabled: boolean) =>
+      registerDraftDashboardExtension({
+        isEnabled: () => enabled,
+        getCreateLabels: async () => ({}),
+        DraftBadge: () => null,
+        SaveAndPublishButton: ({ disabled, onClick }) => (
+          <button type="button" disabled={disabled} onClick={onClick}>
+            Save and publish
+          </button>
+        ),
+      });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+    });
+
+    it('saves a draft published and clears its draft label', async () => {
+      registerDraftMode(true);
+      const { dashboard, openAndRender } = setup({ meta: draftMeta });
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+      mockSaveDashboard();
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Save and publish' }));
+
+      await waitFor(() => expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1));
+      expect(saveDashboardMutationMock.mock.calls[0][0].publish).toBe(true);
+      expect(dashboard.isDraft()).toBe(false);
+    });
+
+    it('keeps a draft a draft when it is saved with Save', async () => {
+      registerDraftMode(true);
+      const { dashboard, openAndRender } = setup({ meta: draftMeta });
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+      mockSaveDashboard();
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      await waitFor(() => expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1));
+      expect(saveDashboardMutationMock.mock.calls[0][0].publish).toBe(false);
+      expect(dashboard.isDraft()).toBe(true);
+    });
+
+    it('does not offer Save and publish for a published dashboard', async () => {
+      registerDraftMode(true);
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+
+      expect(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Save and publish' })).not.toBeInTheDocument();
+    });
+
+    it('creates a copy published with Save and publish when draft mode is on', async () => {
+      registerDraftMode(true);
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+      mockSaveDashboard();
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Save and publish' }));
+
+      await waitFor(() => expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1));
+      expect(saveDashboardMutationMock.mock.calls[0][0].publish).toBe(true);
+    });
+
+    it('does not offer Save and publish for a copy when draft mode is off', async () => {
+      registerDraftMode(false);
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Save and publish' })).not.toBeInTheDocument();
     });
   });
 

@@ -1,13 +1,16 @@
+import { omit } from 'lodash';
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
+import { LabelKeyLifecycle } from 'app/features/apiserver/types';
 import { type SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { getDraftDashboardExtension } from './enterprise-components/DraftDashboardExtension';
 import { getSaveDashboardErrorInfo } from './saveErrors';
 import { type DashboardChangeInfo, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
@@ -37,7 +40,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     },
   });
 
-  const onSave = async (overwrite: boolean) => {
+  const onSave = async (overwrite: boolean, publish = false) => {
     // Re-merge annotations at save time so denylist edits after the form mounted still persist.
     const latestK8s = dashboard.serializer.getK8SMetadata();
     const result = await onSaveDashboard(dashboard, {
@@ -53,8 +56,13 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       },
       rawDashboardJSON: changedSaveModel,
       overwrite,
+      publish,
     });
     if (result.status === 'success') {
+      if (publish) {
+        // The save response carries no labels, so update the open dashboard to match what was stored
+        dashboard.setK8sLabels(omit(dashboard.state.meta.k8s?.labels ?? {}, LabelKeyLifecycle));
+      }
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
     }
@@ -69,6 +77,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const saveButton = (overwrite: boolean) => (
     <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
+
+  const SaveAndPublishButton = dashboard.isDraft() ? getDraftDashboardExtension()?.SaveAndPublishButton : undefined;
 
   const isMessageTooLongError = (message?: string) => {
     return message && message.length > 500;
@@ -148,6 +158,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">
           {saveButton(false)}
+          {SaveAndPublishButton && (
+            <SaveAndPublishButton disabled={!hasChanges || state.loading} onClick={() => onSave(false, true)} />
+          )}
           {cancelButton}
           {!hasChanges && (
             <div>

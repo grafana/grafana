@@ -9,8 +9,11 @@ import {
   AnnoKeyMessage,
   AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
+  LabelKeyLifecycle,
+  LifecycleDraft,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { registerDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type DashboardWithAccessInfo } from './types';
@@ -457,6 +460,98 @@ describe('v1 dashboard API', () => {
       const requestBody = callArgs[1];
       expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
       expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
+    });
+  });
+
+  describe('draft dashboard create labels', () => {
+    const getCreateLabels = jest.fn().mockResolvedValue({ [LabelKeyLifecycle]: LifecycleDraft });
+
+    beforeEach(() => {
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels,
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+    });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+    });
+
+    it('adds the extension labels when creating a dashboard', async () => {
+      const api = new K8sDashboardAPI();
+      await api.saveDashboard({
+        dashboard: { title: 'New dashboard', schemaVersion: 0 },
+        k8s: {},
+      });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
+    });
+
+    it('does not add the extension labels when creating a dashboard published', async () => {
+      const api = new K8sDashboardAPI();
+      await api.saveDashboard({ dashboard: { title: 'New dashboard', schemaVersion: 0 }, k8s: {}, publish: true });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
+    });
+
+    it('removes the draft label when saving a draft published', async () => {
+      const api = new K8sDashboardAPI();
+      await api.saveDashboard({
+        dashboard: { title: 'Existing dashboard', uid: 'adh59cn', schemaVersion: 0 },
+        k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } },
+        publish: true,
+      });
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut.mock.calls[0][1].metadata.labels).toEqual({});
+    });
+
+    it('leaves the caller labels untouched when saving published fails', async () => {
+      mockPut.mockRejectedValueOnce(new Error('save failed'));
+      const labels = { [LabelKeyLifecycle]: LifecycleDraft };
+      const api = new K8sDashboardAPI();
+
+      await expect(
+        api.saveDashboard({
+          dashboard: { title: 'Existing dashboard', uid: 'adh59cn', schemaVersion: 0 },
+          k8s: { labels },
+          publish: true,
+        })
+      ).rejects.toThrow('save failed');
+
+      expect(labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
+    });
+
+    it('does not add the extension labels when draft mode is off', async () => {
+      registerDraftDashboardExtension({
+        isEnabled: () => false,
+        getCreateLabels,
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+      const api = new K8sDashboardAPI();
+      await api.saveDashboard({ dashboard: { title: 'New dashboard', schemaVersion: 0 }, k8s: {} });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
+    });
+
+    it('does not ask for or add the extension labels when updating a dashboard', async () => {
+      const api = new K8sDashboardAPI();
+      await api.saveDashboard({
+        dashboard: { title: 'Existing dashboard', uid: 'adh59cn', schemaVersion: 0 },
+        k8s: {},
+      });
+
+      expect(mockPut).toHaveBeenCalledTimes(1);
+      expect(mockPut.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
     });
   });
 

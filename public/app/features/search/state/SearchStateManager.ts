@@ -5,6 +5,7 @@ import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { getDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import {
   RECENTLY_DELETED_SORT_VALUES,
@@ -34,6 +35,7 @@ export const initialState: SearchState = {
   eventTrackingNamespace: 'dashboard_search',
   deleted: false,
   createdBy: undefined,
+  draftsOnly: false,
 };
 
 const defaultQueryParams: SearchQueryParams = {
@@ -44,6 +46,7 @@ const defaultQueryParams: SearchQueryParams = {
   ownerReference: null,
   layout: null,
   createdBy: null,
+  draftsOnly: null,
 };
 
 const getLayoutFromStore = (key: string) => {
@@ -75,6 +78,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
+
+    // Without draft mode there is no Drafts checkbox, so a shared link must not apply a filter nobody can see or clear
+    if (!getDraftDashboardExtension()?.isEnabled()) {
+      delete stateFromUrl.draftsOnly;
+    }
 
     // Force list view when conditions are specified from the URL
     if (needsListLayout(stateFromUrl)) {
@@ -130,6 +138,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       panel_type: this.state.panel_type,
       createdBy: this.state.createdBy ?? null,
       starred: this.state.starred ? this.state.starred : null,
+      draftsOnly: this.state.draftsOnly ? true : null,
       sort: this.state.sort,
     });
 
@@ -158,6 +167,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       createdBy: undefined,
       starred: undefined,
       sort: undefined,
+      draftsOnly: false,
     });
   };
 
@@ -200,6 +210,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = e.currentTarget.checked;
     this.setStateAndDoSearch({ starred });
+  };
+
+  onDraftsOnlyChange = (draftsOnly: boolean) => {
+    this.setStateAndDoSearch({ draftsOnly });
   };
 
   onClearStarred = () => {
@@ -255,6 +269,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
         this.state.createdBy ||
         this.state.sort ||
         this.state.deleted ||
+        this.state.draftsOnly ||
         this.state.layout === SearchLayout.List
     );
   }
@@ -271,6 +286,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       sort: this.state.sort,
       starred: this.state.starred,
       deleted: this.state.deleted,
+      lifecycle: this.state.draftsOnly ? 'draft' : undefined,
     };
 
     // Only dashboards have additional properties

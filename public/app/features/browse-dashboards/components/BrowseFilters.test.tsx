@@ -5,6 +5,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { getSearchTeamsHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { registerDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
 
 import { BrowseFilters } from './BrowseFilters';
@@ -54,11 +55,29 @@ const createStateManager = () => ({
   onSetIncludePanels: jest.fn(),
   onCreatedByChange: jest.fn(),
   onOwnerReferenceChange: jest.fn(),
+  onDraftsOnlyChange: jest.fn(),
 });
 
 describe('BrowseFilters', () => {
   afterEach(() => {
+    registerDraftDashboardExtension(null);
     jest.clearAllMocks();
+  });
+
+  it('turns on the drafts filter when Drafts is checked and draft mode is on', async () => {
+    registerDraftDashboardExtension({
+      isEnabled: () => true,
+      getCreateLabels: async () => ({}),
+      DraftBadge: () => null,
+      SaveAndPublishButton: () => null,
+    });
+    const stateManager = createStateManager();
+    mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
+
+    const { user } = render(<BrowseFilters />);
+    await user.click(await screen.findByRole('checkbox', { name: 'Drafts' }));
+
+    expect(stateManager.onDraftsOnlyChange).toHaveBeenCalledWith(true);
   });
 
   it('shows the owner filter with the all teams option and user teams', async () => {

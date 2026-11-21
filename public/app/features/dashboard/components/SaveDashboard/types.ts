@@ -8,6 +8,8 @@ export interface SaveDashboardOptions extends CloneOptions {
   makeEditable?: boolean;
   // for schema v2 we need to pass the k8s metadata
   k8s?: Partial<ObjectMeta>;
+  // Save the dashboard published: see SaveDashboardCommand.publish
+  publish?: boolean;
 }
 
 export interface SaveDashboardAsOptions {
@@ -30,4 +32,7 @@ export interface SaveDashboardCommand<T> {
 
   // Create the dashboard, under k8s.name when it is set, instead of updating the dashboard it names.
   create?: boolean;
+
+  // Save the dashboard published: a create skips the draft extension's labels, and an update removes the draft label
+  publish?: boolean;
 }

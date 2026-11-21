@@ -69,6 +69,7 @@ export function needsListLayout(q: Partial<SearchState>) {
     q.starred ||
     q.tag?.length ||
     q.createdBy ||
+    q.draftsOnly ||
     q.ownerReference?.length ||
     q.panel_type ||
     q.datasource
