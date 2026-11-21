@@ -17973,7 +17973,9 @@
     },
     "time-series-panel": {
       "null-time-value": "A query returned a time field with null values; filter out rows with empty timestamps",
-      "null-time-value-query": "Query {{refId}} returned a time field with null values; filter out rows with empty timestamps"
+      "null-time-value-query": "Query {{refId}} returned a time field with null values; filter out rows with empty timestamps",
+      "unsorted-time": "Timestamps are out of order. Sort by time ascending in the query or use the Sort by transformation.",
+      "unsorted-time-query": "Query {{refId}} returned timestamps out of order. Sort by time ascending in the query or use the Sort by transformation."
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",
