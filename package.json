@@ -269,7 +269,7 @@
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
     "@grafana/assistant": "0.1.35",
-    "@grafana/aws-sdk": "^0.12.0",
+    "@grafana/aws-sdk": "^0.13.0",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/faro-core": "2.15.0-alpha.0",
