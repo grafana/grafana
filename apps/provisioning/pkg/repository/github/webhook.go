@@ -10,8 +10,8 @@ import (
 	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
@@ -28,13 +28,13 @@ var _ repository.PullRequestRepo = (*githubWebhookRepository)(nil)
 type githubWebhookRepository struct {
 	GithubRepository
 	webhookURL string
-	secret     common.RawSecureValue
+	secret     resource.RawSecureValue
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
-	secret common.RawSecureValue,
+	secret resource.RawSecureValue,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
