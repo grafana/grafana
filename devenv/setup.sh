@@ -19,6 +19,35 @@ bulkFolders() {
 	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
 }
 
+# Prints the target of conf/custom.ini when it is a symlink, nothing otherwise.
+customIniTarget() {
+	[ -L ../conf/custom.ini ] && readlink ../conf/custom.ini
+}
+
+# Prints the HTTP status of a GET on the bootstrap repository: 404 once it is gone, 200 while it
+# is still there, anything else (including 000) when Grafana could not be asked.
+bootstrapRepositoryStatus() {
+	curl -s -o /dev/null -w '%{http_code}' -u "${GRAFANA_AUTH:-admin:admin}" \
+		"${GRAFANA_URL:-http://localhost:3000}/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/bootstrap" \
+		2>/dev/null
+}
+
+provisioningBootstrap() {
+	local target
+	target=$(customIniTarget)
+
+	if [ -e ../conf/custom.ini ] || [ -L ../conf/custom.ini ]; then
+		if [ "$target" != "../devenv/provisioning-bootstrap.ini" ] && [ "$target" != "../devenv/provisioning-bootstrap-cleanup.ini" ]; then
+			echo "conf/custom.ini already exists and is not the provisioning bootstrap link; merge devenv/provisioning-bootstrap.ini into it by hand"
+			exit 1
+		fi
+	fi
+
+	devDatasources
+	echo -e "\xE2\x9C\x94 Setting up the provisioning bootstrap repository over devenv/provisioning-bootstrap"
+	ln -s -f ../devenv/provisioning-bootstrap.ini ../conf/custom.ini
+}
+
 scopes() {
 	echo -e "\xE2\x9C\x94 Setting up scopes, scope nodes, and scope navigations"
 	cd scopes
@@ -62,6 +91,35 @@ undev() {
     cd ..
     echo -e "    \xE2\x9C\x94 Deleting scopes, scope nodes, and scope navigations"
 
+    # Removing the provisioning bootstrap config, only when it is ours. Clearing bootstrap_path
+    # deletes the repository on the next start, and that deletion needs the unified storage
+    # settings still in place, so the first run swaps to a config without bootstrap_path and the
+    # second run, after a restart, removes the link.
+    local iniTarget
+    iniTarget=$(customIniTarget)
+    if [ "$iniTarget" = "../devenv/provisioning-bootstrap.ini" ]; then
+        ln -s -f ../devenv/provisioning-bootstrap-cleanup.ini ../conf/custom.ini
+        echo -e "    \xE2\x9C\x94 Cleared bootstrap_path; restart Grafana, then run ./setup.sh undev again to finish"
+    elif [ "$iniTarget" = "../devenv/provisioning-bootstrap-cleanup.ini" ]; then
+        # Deleting the repository is asynchronous: the restart only starts its finalizers, which
+        # need these settings to reach the library panel. Unlinking while that is pending strands
+        # the repository on a finalizer it can no longer satisfy, so confirm it is gone first.
+        case "$(bootstrapRepositoryStatus)" in
+        404)
+            rm -f ../conf/custom.ini
+            echo -e "    \xE2\x9C\x94 Reverting provisioning bootstrap"
+            ;;
+        200)
+            echo -e "    ! Bootstrap repository still present; keeping conf/custom.ini so its finalizers can finish."
+            echo -e "      Re-run once it is gone. If it stays, see devenv/provisioning-bootstrap/README.md."
+            ;;
+        *)
+            echo -e "    ! Could not ask Grafana whether the bootstrap repository is gone; keeping conf/custom.ini."
+            echo -e "      Start Grafana (make run) and re-run, so the deletion finishes before the settings go."
+            ;;
+        esac
+    fi
+
     # Removing the symlinks
     rm -f ../conf/provisioning/dashboards/custom.yaml
     rm -f ../conf/provisioning/dashboards/bulk-folders.yaml
@@ -77,6 +135,7 @@ usage() {
 	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
 	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
 	echo "  scopes                               - provision scopes, scope nodes, and scope navigations"
+	echo "  provisioning-bootstrap               - provision devenv/provisioning-bootstrap via bootstrap_path (writes conf/custom.ini)"
 	echo "  no args                              - provision core datasources and dev dashboards"
 	echo "  undev                                - removes any provisioning done by the setup.sh"
 }
@@ -96,6 +155,8 @@ main() {
 		bulkFolders "$arg1"
 	elif [[ $cmd == "scopes" ]]; then
 		scopes
+	elif [[ $cmd == "provisioning-bootstrap" ]]; then
+		provisioningBootstrap
 	elif [[ $cmd == "undev" ]]; then
  	   undev
 	else
