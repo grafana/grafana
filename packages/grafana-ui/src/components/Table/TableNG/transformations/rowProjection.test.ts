@@ -61,6 +61,19 @@ it('matches a filter to its field when the field reports empty labels', () => {
   expect(result.crossFilterOrder).toHaveLength(1);
 });
 
+it('matches a filter stored with null labels to its renamed field', () => {
+  const renamed = createDataFrame({
+    fields: frame.fields.map((field) => ({ ...field, config: { displayName: field.name.toUpperCase() } })),
+  });
+  cacheFieldDisplayNames([renamed]);
+  const filter = valueFilter('category', ['A']);
+  filter.options.filters[0].field = { name: 'category', labels: null };
+  const result = transformTableFilters(rows, renamed.fields, [filter]);
+
+  expect(result.filteredRows.map((row) => row.__index)).toEqual([0, 1]);
+  expect(result.crossFilterOrder).toHaveLength(1);
+});
+
 it('matches a filter to its field by name when its reference is malformed', () => {
   const filter = valueFilter('category', ['A']);
   filter.options.filters[0].field = { name: 3 } as never;

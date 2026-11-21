@@ -83,6 +83,20 @@ it('filters the repeated field that its reference points at', () => {
   ).toEqual(['b']);
 });
 
+it('keeps filtering a renamed field through a reference with null labels', () => {
+  const data = toDataFrame({
+    fields: [{ name: 'host', type: FieldType.string, values: ['a', 'b', 'c'], config: { displayName: 'Host name' } }],
+  });
+  const filter = config({
+    fieldName: 'host',
+    field: { name: 'host', labels: null },
+    config: { id: 'inSet', options: { values: ['b'] } },
+  });
+  expect(
+    filterByValueTransformer.transformer(filter.options, { interpolate: (s) => s })([data])[0].fields[0].values
+  ).toEqual(['b']);
+});
+
 it('falls back to the field name when the reference is malformed', () => {
   const malformed = config({
     fieldName: 'Value',

@@ -74,9 +74,10 @@ describe('field references', () => {
     expect(createFieldReferenceResolver(frame)(reference)).toBe(-1);
   });
 
-  it('treats empty labels as no labels', () => {
+  it('treats empty and null labels as no labels', () => {
     const resolve = createFieldReferenceResolver(frame);
     expect(resolve({ name: 'time', labels: {} })).toBe(0);
+    expect(resolve({ name: 'time', labels: null })).toBe(0);
     expect(resolve({ name: 'value', labels: {}, occurrence: 1 })).toBe(5);
     expect(getFieldReferenceKey({ name: 'value', labels: {} })).toBe(getFieldReferenceKey({ name: 'value' }));
   });
@@ -91,6 +92,7 @@ describe('field references', () => {
   it.each([
     { name: 'a name', reference: { name: 'host' }, valid: true },
     { name: 'labels and an occurrence', reference: { name: 'Value', labels: { a: 'b' }, occurrence: 2 }, valid: true },
+    { name: 'null labels', reference: { name: 'host', labels: null }, valid: true },
     { name: 'null', reference: null, valid: false },
     { name: 'a string', reference: 'host', valid: false },
     { name: 'no name', reference: { labels: { a: 'b' } }, valid: false },

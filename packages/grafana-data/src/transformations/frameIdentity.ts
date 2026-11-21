@@ -3,7 +3,7 @@ import { type DataFrame, FieldType } from '../types/dataFrame';
 
 export interface FieldReference {
   name: string;
-  labels?: Labels;
+  labels?: Labels | null;
   occurrence?: number;
 }
 
@@ -33,7 +33,7 @@ export function isFieldReference(value: unknown): value is FieldReference {
   const labels = 'labels' in value ? value.labels : undefined;
   const occurrence = 'occurrence' in value ? value.occurrence : undefined;
   return (
-    (labels === undefined || isLabels(labels)) &&
+    (labels == null || isLabels(labels)) &&
     (occurrence === undefined || (typeof occurrence === 'number' && Number.isInteger(occurrence) && occurrence >= 0))
   );
 }
