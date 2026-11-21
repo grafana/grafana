@@ -281,7 +281,7 @@ describe('XAxisInteractionAreaPlugin', () => {
     // (removing the pan listeners) and registers an `init` hook the existing plot never fires. Callers that
     // pass an unstable callback (e.g. PanelRenderer's `onChangeTimeRange = () => {}` default) lose panning
     // after the first rerender. Change to `it` once fixed.
-    it.failing('pans through the latest queryZoom after the callback changes without a config change', async () => {
+    it('pans through the latest queryZoom after the callback changes without a config change', async () => {
       const config = createConfig();
       const initialQueryZoom = jest.fn();
       const latestQueryZoom = jest.fn();
