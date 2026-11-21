@@ -1,8 +1,8 @@
 package kinds
 
-// TODO: port the schema from pkg/apis/alertenrichment/v1beta1/types.go
-// (Step, Conditional, Matcher, EnricherConfig and the individual enrichers
-// should become CUE definitions, ideally in a kinds/v1beta1 package).
+import (
+	"github.com/grafana/grafana/apps/alerting/alertenrichment/kinds/v1beta1"
+)
 
 alertEnrichmentKind: {
 	kind:       "AlertEnrichment"
@@ -12,9 +12,6 @@ alertEnrichmentKind: {
 
 alertEnrichmentv1beta1: alertEnrichmentKind & {
 	schema: {
-		// TODO: replace with the full AlertEnrichmentSpec.
-		spec: {
-			title: string
-		}
+		spec: v1beta1.#AlertEnrichmentSpec
 	}
 }
