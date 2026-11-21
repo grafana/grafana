@@ -15,15 +15,17 @@ import (
 )
 
 const (
-	flagRepositoryName = "provisioning-sync-cli"
-	userAgent          = "grafana-provisioning-sync-cli"
+	// defaultManager is the manager identity of resources pulled from a repository described by
+	// flags: they are managed by repo "gcx", the CLI that owns them.
+	defaultManager = "gcx"
+	userAgent      = "grafana-provisioning-sync-cli"
 )
 
 // repositoryFromFlags describes a repository that does not exist in Grafana.
 func repositoryFromFlags(opts options) (*provisioning.Repository, error) {
 	name := opts.name
 	if name == "" {
-		name = flagRepositoryName
+		name = defaultManager
 	}
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: opts.namespace},

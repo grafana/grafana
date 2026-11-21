@@ -36,8 +36,8 @@ Usage:
 The repository is either:
   - a Repository in Grafana (--repo): its status is patched exactly as a pull job does, or
   - described with --type and its settings, with no Repository in Grafana: resources are
-    managed under --name, and the sync status, including the last synced commit, is kept in
-    --state-file (default .provisioning-sync/<namespace>/<name>.json).
+    managed by repo --name (default gcx), and the sync status, including the last synced
+    commit, is kept in --state-file (default .provisioning-sync/<namespace>/<name>.json).
 plan --offline compares a repository described with --type against an empty instance and
 needs no Grafana.
 
@@ -62,8 +62,8 @@ Folders keep their UIDs in _folder.json unless --new-folder-ids is set.
 Examples:
   provisioning-sync plan --type github --url https://github.com/org/repo --branch main --offline
   provisioning-sync plan --type local --path ./dashboards --offline
-  provisioning-sync pull --type github --url https://github.com/org/repo --name demo --access-token "$ACCESS_TOKEN"
-  provisioning-sync pull --type github --url https://github.com/org/repo --name demo --access-token "$ACCESS_TOKEN" --incremental
+  provisioning-sync pull --type github --url https://github.com/org/repo --access-token "$ACCESS_TOKEN"
+  provisioning-sync pull --type github --url https://github.com/org/repo --access-token "$ACCESS_TOKEN" --incremental
   provisioning-sync plan --repo my-repo --incremental
   provisioning-sync pull --repo my-repo --token-exchange-url http://localhost:6481/sign/access-token
   provisioning-sync pull --repo my-repo --access-token "$ACCESS_TOKEN" --incremental
@@ -179,7 +179,7 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.repoName, "repo", "", "name of a Repository in Grafana")
 
 	fs.StringVar(&opts.repoType, "type", "", "repository type when not using --repo: git, github or local")
-	fs.StringVar(&opts.name, "name", flagRepositoryName, "repository name that resources pulled with --type are managed under")
+	fs.StringVar(&opts.name, "name", defaultManager, "manager identity that resources pulled with --type are managed under")
 	fs.StringVar(&opts.stateFile, "state-file", "", "file keeping the sync status of a repository described with --type (default .provisioning-sync/<namespace>/<name>.json)")
 	fs.BoolVar(&opts.offline, "offline", false, "plan a repository described with --type against an empty instance, without Grafana")
 

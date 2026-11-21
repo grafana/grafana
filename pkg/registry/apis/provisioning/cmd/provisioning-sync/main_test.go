@@ -78,7 +78,7 @@ func TestRepositoryFromFlags(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, &provisioning.GitHubRepositoryConfig{URL: "https://github.com/org/repo", Branch: "dev", Path: "dashboards"}, cfg.Spec.GitHub)
 		assert.Equal(t, "default", cfg.Namespace)
-		assert.Equal(t, flagRepositoryName, cfg.Name)
+		assert.Equal(t, "gcx", cfg.Name, "resources pulled from flags are managed by gcx")
 		assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow}, cfg.Spec.Workflows)
 	})
 
