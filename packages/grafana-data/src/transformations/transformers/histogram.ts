@@ -191,9 +191,14 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   if (frame.meta?.type === DataFrameType.HeatmapCells) {
     // we assume uniform bucket size for now
     // we assume xMax, yMin, yMax fields
-    let yMinField = frame.fields.find((f) => f.name === 'yMin')!;
-    let yMaxField = frame.fields.find((f) => f.name === 'yMax')!;
-    let countField = frame.fields.find((f) => f.name === 'count')!;
+    let yMinField = frame.fields.find((f) => f.name === 'yMin');
+    let yMaxField = frame.fields.find((f) => f.name === 'yMax');
+    let countField = frame.fields.find((f) => f.name === 'count');
+
+    // yMax and a field named count are optional in heatmap-cells frames, so not every frame can be read here
+    if (!yMinField || !yMaxField || !countField) {
+      return undefined;
+    }
 
     let uniqueMaxs = [...new Set(yMaxField.values)].sort((a, b) => a - b);
     let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
