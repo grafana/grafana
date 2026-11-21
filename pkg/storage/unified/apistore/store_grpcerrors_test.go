@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	claims "github.com/grafana/authlib/types"
@@ -48,7 +49,7 @@ func testStorage(t *testing.T, client resourceclient.ResourceClient) *Storage {
 
 func testContext(t *testing.T) context.Context {
 	requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
-	return identity.WithRequester(t.Context(), requester)
+	return identity.WithRequester(request.WithNamespace(t.Context(), "default"), requester)
 }
 
 type failingStorageClient struct {

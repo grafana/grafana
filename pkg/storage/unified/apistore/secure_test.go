@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 
 	claims "github.com/grafana/authlib/types"
@@ -541,6 +542,7 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 	ctx := claims.WithAuthInfo(context.Background(),
 		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: claims.TypeUser})
 
+	ctx = request.WithNamespace(ctx, "default")
 	err := s.Create(ctx, "/default/customkinds/test", obj, &unstructured.Unstructured{}, 0)
 	require.ErrorContains(t, err, "invalid permissions value")
 	secureStore.AssertExpectations(t) // secret created during preparation, then deleted
