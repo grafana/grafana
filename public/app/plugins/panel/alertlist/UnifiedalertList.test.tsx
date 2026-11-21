@@ -284,6 +284,24 @@ describe('UnifiedAlertList', () => {
     expect(subscribeMock.mock.calls[1][0]).toEqual(TimeRangeUpdatedEvent);
   });
 
+  it.each<[ViewMode, string, string]>([
+    [ViewMode.Stat, '0', 'No alerts matching filters'],
+    [ViewMode.List, 'No alerts matching filters', '0'],
+  ])('shows only the appropriate empty result in %s mode', async (viewMode, expected, absent) => {
+    jest.spyOn(defaultProps, 'replaceVariables').mockImplementation((value: string) => value);
+
+    renderPanel({
+      viewMode,
+      dashboardAlerts: false,
+      alertName: 'no-matching-alert',
+      datasource: GRAFANA_RULES_SOURCE_NAME,
+      folder: undefined,
+    });
+
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+    expect(screen.queryByText(absent)).not.toBeInTheDocument();
+  });
+
   describe('stat mode with feature flag off', () => {
     beforeEach(() => {
       config.featureToggles.alertingAlertListPanelEnhancements = false;
