@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/plugins"
 )
