@@ -75,6 +75,18 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
 }
 
+func TestHandlerOpenAPIV3UnservedGroupVersion(t *testing.T) {
+	handler := withRequester(loadHandler(t, testPlugin(), allowAll(testOptions())))
+
+	for _, path := range []string{
+		"/openapi/v3/apis/nosuch.grafana.app/v1",
+		"/openapi/v3/apis/example.ext.grafana.app/v9",
+	} {
+		res := get(t, handler, path)
+		require.Equal(t, http.StatusNotFound, res.Code, path)
+	}
+}
+
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	opts := allowAll(testOptions())
