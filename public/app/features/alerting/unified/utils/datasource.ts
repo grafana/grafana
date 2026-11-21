@@ -77,7 +77,8 @@ export interface AlertManagerDataSource {
 }
 
 /**
- * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`.
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`. Elsewhere, use
+ * `getDataSourcesForRules`.
  */
 export function getRulesDataSources() {
   const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
@@ -96,10 +97,16 @@ export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
   return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid;
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by name.
+ */
 export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by uid.
+ */
 export function getRulesDataSourceByUID(uid: string) {
   return getRulesDataSources().find((x) => x.uid === uid);
 }
@@ -227,6 +234,10 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   return { availableInternalDataSources, availableExternalDataSources };
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `useDataSourcesForRules` or `getDataSourcesForRules`, and add
+ * the Grafana rules source when the user can view Grafana-managed rules.
+ */
 export function getAllRulesSourceNames(): string[] {
   const availableRulesSources: string[] = getRulesDataSources().map((r) => r.name);
 
@@ -303,6 +314,9 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
+/**
+ * @deprecated Reads `config.datasources` synchronously. Use `getDataSourcesForRules` and find the data source by name.
+ */
 export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: RulesSourceUid }) {
   if ('uid' in rulesSourceIdentifier) {
     return rulesSourceIdentifier.uid;

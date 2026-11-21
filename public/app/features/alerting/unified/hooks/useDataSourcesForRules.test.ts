@@ -7,7 +7,7 @@ import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { getRulesDataSources } from '../utils/datasource';
 
-import { useDataSourcesForRules } from './useDataSourcesForRules';
+import { getDataSourcesForRules, useDataSourcesForRules } from './useDataSourcesForRules';
 
 const originalToggle = config.defaultDatasourceManageAlertsUiToggle;
 
@@ -46,6 +46,26 @@ describe('useDataSourcesForRules', () => {
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         expect(result.current.items.map((ds) => ds.uid)).toEqual(getRulesDataSources().map((ds) => ds.uid));
+      }
+    );
+  });
+
+  // Temporary parity check against the sync function this function replaces.
+  describe.each([
+    { permissions: [AccessControlAction.AlertingRuleExternalRead], label: 'read' },
+    { permissions: [AccessControlAction.AlertingRuleExternalWrite], label: 'write' },
+    { permissions: [], label: 'no external rule permission' },
+  ])('getDataSourcesForRules with $label', ({ permissions }) => {
+    it.each([true, false])(
+      'returns the same data sources in the same order as getRulesDataSources, with the manageAlerts default %s',
+      async (defaultToggle) => {
+        config.defaultDatasourceManageAlertsUiToggle = defaultToggle;
+        grantUserPermissions(permissions);
+        setupMixedDataSources();
+
+        const dataSources = await getDataSourcesForRules();
+
+        expect(dataSources.map((ds) => ds.uid)).toEqual(getRulesDataSources().map((ds) => ds.uid));
       }
     );
   });
