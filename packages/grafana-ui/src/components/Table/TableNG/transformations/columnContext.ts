@@ -47,6 +47,15 @@ export function getFrameFilter(frames: readonly DataFrame[], frameIndex: number)
   return { id: FrameMatcherID.byRefId, options: refId };
 }
 
+export function withCachedDisplayNames(frames: readonly DataFrame[]): DataFrame[] {
+  const copies = frames.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
+  }));
+  cacheFieldDisplayNames(copies);
+  return copies;
+}
+
 function copyWithDisplayNames(frame: DataFrame): DataFrame {
   const copy = {
     ...frame,
