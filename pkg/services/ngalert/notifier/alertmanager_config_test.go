@@ -362,6 +362,29 @@ receivers:
 		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, originalConfig, false, false, false)
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
+
+	for _, identifier := range []string{
+		models.DefaultRoutingTreeName,
+		models.DefaultRoutingTreeNameAlias,
+	} {
+		t.Run("fail to create extra configuration with reserved identifier "+identifier, func(t *testing.T) {
+			mam := setupMam(t, nil)
+			ctx := t.Context()
+			require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+			extraConfig := v1.ExtraConfiguration{
+				Identifier: identifier,
+				AlertmanagerConfig: `route:
+  receiver: original-receiver
+receivers:
+  - name: original-receiver`,
+			}
+
+			_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+			require.ErrorIs(t, err, ErrIdentifierAlreadyExists.Base)
+			require.ErrorContains(t, err, identifier)
+		})
+	}
 }
 
 func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {

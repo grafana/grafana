@@ -87,7 +87,10 @@ function QueryEditorFixture({
 }) {
   const source = 'expr' in query && typeof query.expr === 'string' ? query.expr : '';
   const latest = useRef({ source, query, onChange });
-  latest.current = { source, query, onChange };
+  // Declared first so it runs before the layout effect below reads it.
+  useLayoutEffect(() => {
+    latest.current = { source, query, onChange };
+  });
   const handleContentChange = useCallback(
     (value: string) => {
       if (value === latest.current.source) {

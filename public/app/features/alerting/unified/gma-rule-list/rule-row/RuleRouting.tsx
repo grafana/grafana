@@ -3,7 +3,7 @@ import { type AlertRuleNotificationSettingsType } from '@grafana/api-clients/rtk
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, TextLink } from '@grafana/ui';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { type AlertRuleSearchHit } from '../alert-rules/alertRuleSearchHit';
 

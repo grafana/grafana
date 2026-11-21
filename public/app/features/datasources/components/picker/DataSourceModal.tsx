@@ -14,7 +14,6 @@ import { useDatasources } from '../../hooks';
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
-import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
@@ -122,25 +121,20 @@ export function DataSourceModal({
 
   // Built-in data sources used twice because of mobile layout adjustments
   // In movile the list is appended to the bottom of the DS list
-  const BuiltInList = ({ className }: { className?: string }) => {
-    return (
-      <BuiltInDataSourceList
-        className={className}
-        onChange={onChangeDataSource}
-        current={current}
-        filter={filter}
-        variables={variables}
-        tracing={tracing}
-        metrics={metrics}
-        type={type}
-        annotations={annotations}
-        alerting={alerting}
-        pluginId={pluginId}
-        logs={logs}
-        dashboard={dashboard}
-        mixed={mixed}
-      />
-    );
+  const builtInListProps = {
+    onChange: onChangeDataSource,
+    current,
+    filter,
+    variables,
+    tracing,
+    metrics,
+    type,
+    annotations,
+    alerting,
+    pluginId,
+    logs,
+    dashboard,
+    mixed,
   };
 
   return (
@@ -177,7 +171,8 @@ export function DataSourceModal({
                 src: analyticsInteractionSrc,
               })
             }
-            filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            searchTerm={search}
+            nonSearchFilter={(ds) => (filter ? filter(ds) : true) && !ds.meta.builtIn}
             variables={variables}
             tracing={tracing}
             metrics={metrics}
@@ -192,14 +187,14 @@ export function DataSourceModal({
             favoriteDataSources={favoriteDataSources}
             scrollRef={scrollRef}
           />
-          <BuiltInList className={styles.appendBuiltInDataSourcesList} />
+          <BuiltInDataSourceList {...builtInListProps} className={styles.appendBuiltInDataSourcesList} />
         </ScrollContainer>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <div className={styles.builtInDataSourcesList}>
             <ScrollContainer>
-              <BuiltInList />
+              <BuiltInDataSourceList {...builtInListProps} />
             </ScrollContainer>
           </div>
         </div>

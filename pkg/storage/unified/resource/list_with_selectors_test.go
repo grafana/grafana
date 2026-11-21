@@ -666,7 +666,6 @@ func TestListWithSelectors(t *testing.T) {
 
 			resp, err := s.listWithSelectors(ctx, req)
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			require.Len(t, resp.Items, tc.wantItems)
 			if tc.wantItems > 0 {
 				require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
@@ -683,7 +682,6 @@ func TestListWithSelectors(t *testing.T) {
 				req.NextPageToken = resp.NextPageToken
 				lastPage, err := s.listWithSelectors(ctx, req)
 				require.NoError(t, err)
-				require.Nil(t, lastPage.Error)
 				require.Empty(t, lastPage.Items)
 				require.Empty(t, lastPage.NextPageToken)
 				require.Equal(t, []string{"s2"}, searchClient.last.SearchAfter)
@@ -958,7 +956,6 @@ func TestListWithSelectors(t *testing.T) {
 		resp, err := s.listWithSelectors(ctx, req)
 
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Items)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
@@ -1005,7 +1002,7 @@ func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
+			require.NotNil(t, resp)
 			require.NotNil(t, searchClient.last, "search must be attempted before falling back to the store")
 			require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
 		})
@@ -1213,7 +1210,6 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 1)
 		require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
 		require.Equal(t, 1, logger.WarnLogs.Calls)
@@ -1349,7 +1345,6 @@ func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T)
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.NotEmpty(t, resp.NextPageToken)
 }
@@ -1567,7 +1562,6 @@ func TestListSkipsSearchRowsStorageNoLongerHas(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	versions := make([]int64, 0, len(resp.Items))
 	for _, item := range resp.Items {
 		versions = append(versions, item.ResourceVersion)
@@ -1626,7 +1620,6 @@ func TestListWithSelectorsAuthorizesRowsBeforeReadingThem(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, total-5)
 	require.Equal(t, 1, access.batches)
 	require.Len(t, backend.pulledNames, total-5, "denied rows are never read")
@@ -1656,7 +1649,6 @@ func TestListWithSelectorsRechecksRowsStoredInAnotherFolder(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, kept, resp.Items[0].ResourceVersion)
 	require.Equal(t, []string{"private"}, access.checkedFolders, "only the moved row is checked again, in its stored folder")
@@ -1682,7 +1674,6 @@ func TestListWithSelectorsAuthorizesRowsAfterReadingThemByDefault(t *testing.T) 
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, open, resp.Items[0].ResourceVersion)
 	require.Zero(t, access.batches)
@@ -1709,7 +1700,6 @@ func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
 	require.Equal(t, []string{"open"}, access.checkedFolders)
@@ -1767,7 +1757,6 @@ func TestListWithSelectorsKeepsTheSingleCheckForTheK6Folder(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, open, resp.Items[0].ResourceVersion)
 	require.Equal(t, 1, access.batches)

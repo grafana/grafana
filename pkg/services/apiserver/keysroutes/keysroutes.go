@@ -86,7 +86,11 @@ func BuildForServedGroupVersions(
 				if kind.Scope != supportedKindScope {
 					continue
 				}
-				resourceName := resource.ManifestResourceName(kind)
+				// Without a resource name the route would mount at the group root.
+				if kind.Resource == "" {
+					continue
+				}
+				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
 				if optedOut[gvr] {
 					continue
@@ -125,7 +129,7 @@ func listKeysOptOuts(
 			}
 			for _, kind := range version.Kinds {
 				if !kind.HasListKeysEndpoint() {
-					optedOut[gv.WithResource(resource.ManifestResourceName(kind))] = true
+					optedOut[gv.WithResource(kind.Resource)] = true
 				}
 			}
 		}

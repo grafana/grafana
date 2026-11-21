@@ -24,34 +24,22 @@ export function mockBoundingClientRect(rect: Partial<DOMRect> = {}): void {
     configurable: true,
   });
 
-  // @tanstack/react-virtual >=3.11 reads offsetWidth/offsetHeight directly
-  // (not getBoundingClientRect) to size the scroll container and items.
+  // @tanstack/react-virtual and react-data-grid size their viewport from the client box, which JSDOM reports as 0.
+  // Each size is mocked on the prototype JSDOM defines it on, so it isn't shadowed by JSDOM's own getter.
+  Object.defineProperty(Element.prototype, 'clientWidth', {
+    get: () => merged.width,
+    configurable: true,
+  });
+  Object.defineProperty(Element.prototype, 'clientHeight', {
+    get: () => merged.height,
+    configurable: true,
+  });
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
     get: () => merged.width,
     configurable: true,
   });
   Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
     get: () => merged.height,
-    configurable: true,
-  });
-}
-
-/**
- * Mock `clientWidth`/`clientHeight`, which JSDOM always reports as 0.
- *
- * `mockBoundingClientRect` deliberately leaves these alone, since a component that branches on a zero
- * client size is often being tested for exactly that. Call this on top of it for libraries that size a
- * virtualized viewport from the client box - react-data-grid does, and without it renders no rows at all.
- */
-export function mockClientSize({ width, height }: { width: number; height: number }): void {
-  // On Element rather than HTMLElement, matching where JSDOM defines these - a definition on
-  // HTMLElement.prototype would shadow, and silently defeat, a test's own narrower mock.
-  Object.defineProperty(Element.prototype, 'clientWidth', {
-    get: () => width,
-    configurable: true,
-  });
-  Object.defineProperty(Element.prototype, 'clientHeight', {
-    get: () => height,
     configurable: true,
   });
 }

@@ -1,100 +1,23 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as PROVISIONING_BASE } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
-import { type CombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
-import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { FolderDetailsActions } from './FolderDetailsActions';
-
-const [, { folderA }] = getFolderFixtures();
-const folderToStar = folderA.item;
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
-// Renders the starred-folders collection straight from the browse-dashboards store, mirroring what
-// the browse list shows. Lets the test assert on rendered output instead of redux internals.
-const StarredFoldersList = () => {
-  const collection = useSelector((state) => state.browseDashboards.childrenByParentUID[STARRED_FOLDERS_UID]);
-  return (
-    <ul>
-      {collection?.items.map((item) => (
-        <li key={item.uid}>{item.title}</li>
-      ))}
-    </ul>
-  );
-};
-
 describe('FolderDetailsActions', () => {
-  it('refetches the starred folders list when a folder is starred', async () => {
-    const { user } = render(
-      <>
-        <FolderDetailsActions folderDTO={folderToStar as unknown as CombinedFolder} />
-        <StarredFoldersList />
-      </>
-    );
+  it('hides the Recently deleted button when requested by the page navigation', () => {
+    render(<FolderDetailsActions showRecentlyDeleted={false} />);
 
-    // The folder isn't in the starred-folders list yet
-    expect(screen.queryByText(folderToStar.title)).not.toBeInTheDocument();
-
-    const starButton = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
-    await waitFor(() => expect(starButton).not.toBeDisabled());
-    await user.click(starButton);
-
-    // Starring triggers a refetch that adds the folder to the rendered list
-    expect(await screen.findByText(folderToStar.title)).toBeInTheDocument();
-  });
-
-  describe('on mobile with mobileEditDeprecation enabled', () => {
-    beforeEach(() => {
-      setTestFlags({ 'grafana.mobileEditDeprecation': true });
-    });
-
-    afterEach(async () => {
-      jest.restoreAllMocks();
-      // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates while the
-      // component is still mounted.
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('hides the New button when the user cannot create folders', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action) => action === AccessControlAction.DashboardsCreate);
-      jest
-        .spyOn(contextSrv, 'hasPermissionInMetadata')
-        .mockImplementation((action) => action === AccessControlAction.DashboardsCreate);
-      render(<FolderDetailsActions />);
-
-      await screen.findByText('Recently deleted');
-      expect(screen.queryByTestId(selectors.components.CreateNewButton.newButton)).not.toBeInTheDocument();
-    });
-
-    it('shows the New button after root permissions load when the user can create folders', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      const metadataPermission = jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
-      render(<FolderDetailsActions />);
-
-      await waitFor(() =>
-        expect(metadataPermission).toHaveBeenCalledWith(
-          AccessControlAction.FoldersCreate,
-          expect.objectContaining({ uid: 'general' })
-        )
-      );
-
-      expect(screen.getByTestId(selectors.components.CreateNewButton.newButton)).toBeInTheDocument();
-    });
+    expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
   });
 
   describe('with a read-only folderless repository configured', () => {

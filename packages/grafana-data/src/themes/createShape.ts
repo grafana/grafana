@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 const DEFAULT_BORDER_RADIUS_SM = 4;
 const DEFAULT_BORDER_RADIUS_MD = 6;
@@ -41,9 +41,9 @@ export interface Radii {
 
 /** @internal */
 export const ThemeShapeInputSchema = z.object({
-  borderRadiusSm: z.int().nonnegative().optional(),
-  borderRadius: z.int().nonnegative().optional(),
-  borderRadiusLg: z.int().nonnegative().optional(),
+  borderRadiusSm: z.optional(z.int().check(z.nonnegative())),
+  borderRadius: z.optional(z.int().check(z.nonnegative())),
+  borderRadiusLg: z.optional(z.int().check(z.nonnegative())),
 });
 
 /** @internal */

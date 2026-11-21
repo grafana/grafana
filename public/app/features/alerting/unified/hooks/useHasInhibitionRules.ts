@@ -1,6 +1,6 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 /**
  * Hook to detect if the Grafana Alertmanager has inhibition rules configured,

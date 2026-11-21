@@ -12,7 +12,6 @@ import { getIconForItem } from 'app/features/search/service/utils';
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { canEditItemType } from '../permissions';
-import { useChildrenByParentUIDState } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
 
@@ -25,12 +24,10 @@ type NameCellProps = DashboardsTreeCellProps & {
 
 export function NameCell({ row: { original: data }, onFolderClick, treeID, permissions }: NameCellProps) {
   const styles = useStyles2(getStyles);
-  const { item, level, isOpen } = data;
-  const childrenByParentUID = useChildrenByParentUIDState();
+  const { item, level, isOpen, isLoading } = data;
   // The tree only knows the browsed folder's permissions, which nested items inherit.
   const canEditItem = permissions ? canEditItemType(item.kind, permissions) : true;
 
-  const isLoading = isOpen && !childrenByParentUID[item.uid];
   const iconName = getIconForItem(data.item, isOpen);
   const ownerReference = item.kind !== 'ui' ? item.ownerReference : undefined;
 
