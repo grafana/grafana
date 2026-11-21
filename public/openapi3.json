@@ -17859,6 +17859,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "412": {
             "$ref": "#/components/responses/preconditionFailedError"
           },

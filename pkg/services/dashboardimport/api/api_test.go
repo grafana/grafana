@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -12,12 +13,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -188,6 +191,90 @@ func TestImportDashboardAPI(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("Plugin dashboard import errors", func(t *testing.T) {
+		testCases := []struct {
+			name            string
+			request         dashboardimport.ImportDashboardRequest
+			serviceErr      error
+			expectedStatus  int
+			expectedMessage string
+			serviceCalled   bool
+		}{
+			{
+				name:            "pluginId without path should return 422",
+				request:         dashboardimport.ImportDashboardRequest{PluginId: "test-app"},
+				expectedStatus:  http.StatusUnprocessableEntity,
+				expectedMessage: "Path must be set when pluginId is set",
+				serviceCalled:   false,
+			},
+			{
+				name:            "plugin not installed should return 404",
+				request:         dashboardimport.ImportDashboardRequest{PluginId: "does-not-exist", Path: "dashboards/dash.json"},
+				serviceErr:      plugins.NotFoundError{PluginID: "does-not-exist"},
+				expectedStatus:  http.StatusNotFound,
+				expectedMessage: "plugin with ID 'does-not-exist' not found",
+				serviceCalled:   true,
+			},
+			{
+				name:            "plugin dashboard file not found should return 404",
+				request:         dashboardimport.ImportDashboardRequest{PluginId: "test-app", Path: "dashboards/nope.json"},
+				serviceErr:      pluginDashboards.ErrPluginDashboardNotFound,
+				expectedStatus:  http.StatusNotFound,
+				expectedMessage: "plugin dashboard file not found",
+				serviceCalled:   true,
+			},
+			{
+				name:            "wrapped plugin dashboard file not found should return 404",
+				request:         dashboardimport.ImportDashboardRequest{PluginId: "test-app", Path: "dashboards/nope.json"},
+				serviceErr:      fmt.Errorf("load failed: %w", pluginDashboards.ErrPluginDashboardNotFound),
+				expectedStatus:  http.StatusNotFound,
+				expectedMessage: "load failed: plugin dashboard file not found",
+				serviceCalled:   true,
+			},
+			{
+				name:            "unexpected service error should still return 500",
+				request:         dashboardimport.ImportDashboardRequest{PluginId: "test-app", Path: "dashboards/dash.json"},
+				serviceErr:      errors.New("disk failure"),
+				expectedStatus:  http.StatusInternalServerError,
+				expectedMessage: "Dashboard API error: disk failure",
+				serviceCalled:   true,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				serviceCalled := false
+				service := &serviceMock{
+					importDashboardFunc: func(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+						serviceCalled = true
+						return nil, tc.serviceErr
+					},
+				}
+				importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true}, featuremgmt.WithFeatures())
+				routeRegister := routing.NewRouteRegister()
+				importDashboardAPI.RegisterAPIEndpoints(routeRegister)
+				s := webtest.NewServer(t, routeRegister)
+
+				jsonBytes, err := json.Marshal(tc.request)
+				require.NoError(t, err)
+				req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
+				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1})
+				resp, err := s.SendJSON(req)
+				require.NoError(t, err)
+
+				var body struct {
+					Message string `json:"message"`
+				}
+				require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+				require.NoError(t, resp.Body.Close())
+
+				require.Equal(t, tc.expectedStatus, resp.StatusCode)
+				require.Equal(t, tc.expectedMessage, body.Message)
+				require.Equal(t, tc.serviceCalled, serviceCalled)
+			})
+		}
 	})
 }
 
