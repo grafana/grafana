@@ -38,7 +38,7 @@ describe('searchNotebookTitles', () => {
     configureStore();
   });
 
-  it('asks the search endpoint for title matches, projected down to the title', async () => {
+  it('asks the search endpoint for title and content matches, projected down to the title', async () => {
     const bodies = captureSearches(() => HttpResponse.json({ items: [hit] }));
 
     await expect(searchNotebookTitles('Incident', 10)).resolves.toEqual([hit]);
@@ -46,7 +46,7 @@ describe('searchNotebookTitles', () => {
       {
         apiVersion: 'search.grafana.app/v0alpha1',
         kind: 'SearchQuery',
-        where: { text: { value: 'Incident', fields: ['title'] } },
+        where: { text: { value: 'Incident', fields: ['title', 'content'] } },
         fields: ['title'],
         limit: 10,
       },
