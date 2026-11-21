@@ -25,10 +25,12 @@ interface Props {
   onConvert: (content: string) => void;
 }
 
+type RenderCheck = 'same' | 'changed' | 'unsteady';
+
 interface Review {
   original: string;
   migration: FmtMigration;
-  rendersSame: boolean;
+  check: RenderCheck;
 }
 
 export function FmtMigrationNotice({
@@ -72,15 +74,40 @@ export function FmtMigrationNotice({
     return `${error ?? ''}|${truncated ?? false}|${rendered}`;
   };
 
+  const checkRenders = (original: string, converted: string): RenderCheck => {
+    const variants = frames.length > 1 ? frames.map((frame) => [frame]) : [frames];
+    let check: RenderCheck = 'same';
+
+    for (const series of variants) {
+      const before = render(original, series);
+      const after = render(converted, series);
+
+      if (after === before) {
+        continue;
+      }
+
+      const again = render(original, series);
+
+      if (after === again) {
+        continue;
+      }
+      if (before === again) {
+        return 'changed';
+      }
+      check = 'unsteady';
+    }
+
+    return check;
+  };
+
   const openReview = () => {
     const original = getDraft();
     const migration = migrateFmt(original, { mode, renderMode, hasFmtField });
-    const variants = frames.length > 1 ? frames.map((frame) => [frame]) : [frames];
 
     setReview({
       original,
       migration,
-      rendersSame: variants.every((series) => render(original, series) === render(migration.content, series)),
+      check: migration.changes.length > 0 ? checkRenders(original, migration.content) : 'same',
     });
   };
 
@@ -138,7 +165,7 @@ export function FmtMigrationNotice({
             </Text>
             {review.migration.changes.length > 0 && (
               <Stack direction="column" gap={1}>
-                {review.rendersSame ? (
+                {review.check === 'same' ? (
                   <Text weight="medium">
                     {t('textng.fmt-migration.converts', '', {
                       count: review.migration.changes.length,
@@ -152,10 +179,17 @@ export function FmtMigrationNotice({
                   <Alert
                     severity="error"
                     bottomSpacing={0}
-                    title={t(
-                      'textng.fmt-migration.renders-differently',
-                      'The converted template renders differently for the current query results, so it is not applied'
-                    )}
+                    title={
+                      review.check === 'changed'
+                        ? t(
+                            'textng.fmt-migration.renders-differently',
+                            'The converted template renders differently for the current query results, so it is not applied'
+                          )
+                        : t(
+                            'textng.fmt-migration.renders-unsteadily',
+                            'The template renders differently every time, for example with the current time, so the conversion cannot be checked and is not applied'
+                          )
+                    }
                   />
                 )}
                 <ul className={styles.list} aria-label={t('textng.fmt-migration.changes', 'Changes')}>
@@ -196,7 +230,7 @@ export function FmtMigrationNotice({
               {t('textng.fmt-migration.cancel', 'Cancel')}
             </Button>
             {review.migration.changes.length > 0 && (
-              <Button onClick={apply} disabled={!review.rendersSame}>
+              <Button onClick={apply} disabled={review.check !== 'same'}>
                 {t('textng.fmt-migration.convert', 'Convert')}
               </Button>
             )}
