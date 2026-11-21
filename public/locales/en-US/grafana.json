@@ -10470,6 +10470,25 @@
         "otherGroup": "Others"
       }
     },
+    "quick-edits": {
+      "presets": {
+        "title": "Style"
+      },
+      "range": {
+        "auto": "Auto",
+        "title": "Min / Max"
+      },
+      "thresholds": {
+        "base-only": "Base only",
+        "title": "Thresholds"
+      },
+      "unit": {
+        "none": "None",
+        "title": "Unit",
+        "with-decimals_one": "{{unit}}, {{count}} decimal",
+        "with-decimals_other": "{{unit}}, {{count}} decimals"
+      }
+    },
     "valueFormats": {
       "categories": {
         "acceleration": {
@@ -10990,6 +11009,11 @@
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
+        },
+        "quick-edit": {
+          "hidden": "Hidden",
+          "values_one": "{{count}} value",
+          "values_other": "{{count}} values"
         }
       },
       "stacking": {
