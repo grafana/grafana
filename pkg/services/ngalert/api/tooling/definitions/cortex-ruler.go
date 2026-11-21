@@ -502,6 +502,7 @@ const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
 	OK       NoDataState = "OK"
+	KeepLast NoDataState = "KeepLast"
 )
 
 // swagger:enum ExecutionErrorState
@@ -511,6 +512,7 @@ const (
 	OkErrState       ExecutionErrorState = "OK"
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
+	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
 // swagger:model
