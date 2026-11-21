@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,6 +57,8 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
+			// Runs concurrently with the failing count, so it may not be called.
+			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
@@ -65,7 +70,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
-			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Maybe()
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
@@ -427,5 +432,256 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
 		require.Nil(t, got)
 		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
+	})
+}
+
+// externalPlaylists serves externally stored playlists: pl-1 managed by repository, pl-2 by another
+// repository, pl-3 unmanaged. The channel closes once the kind starts being read.
+func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSearch, *resource.MockResourceClient, <-chan struct{}) {
+	t.Helper()
+	playlistGVR := schema.GroupVersionResource{Group: playlistGVK.Group, Version: playlistGVK.Version, Resource: "playlists"}
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	external := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityExternalStorage)}
+
+	scheme := runtime.NewScheme()
+	listGVK := playlistGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(playlistGVK, &unstructured.Unstructured{})
+	unmanaged := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": playlistGVK.GroupVersion().String(),
+		"kind":       playlistGVK.Kind,
+		"metadata":   map[string]any{"name": "pl-3", "namespace": "default"},
+	}}
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{playlistGVR: listGVK.Kind},
+		managedDataSource(t, playlistGVK, "pl-1", repository, "pl-1.json"),
+		managedDataSource(t, playlistGVK, "pl-2", "another-repo", "pl-2.json"),
+		unmanaged,
+	)
+
+	// The dashboard is indexed, so only the playlist is resolved.
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: dashboardGK}, external})
+	started := make(chan struct{})
+	var once sync.Once
+	clients.EXPECT().ForKind(mock.Anything, playlistKind.WithVersion("")).
+		Run(func(context.Context, schema.GroupVersionKind) { once.Do(func() { close(started) }) }).
+		Return(dyn.Resource(playlistGVR).Namespace("default"), playlistGVR, nil)
+
+	factory := NewMockClientFactory(t)
+	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+	store := resource.NewMockResourceClient(t)
+	return NewResourceLister(store, factory, []SupportedResource{{GroupKind: dashboardGK}, external}), store, started
+}
+
+// Each index call waits for the external read to start, so sequential reads deadlock the bubble.
+func TestResourceListerFromSearch_ReadsTheIndexAndExternalKindsConcurrently(t *testing.T) {
+	t.Run("list", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			lister, store, started := externalPlaylists(t, "repo")
+			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.ListManagedObjectsRequest, ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+					<-started
+					return &resourcepb.ListManagedObjectsResponse{}, nil
+				}).Once()
+
+			got, err := lister.List(t.Context(), "default", "repo", ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, got.Items, 1)
+		})
+	})
+
+	t.Run("namespace stats", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			lister, store, started := externalPlaylists(t, "repo")
+			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.CountManagedObjectsRequest, ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+					<-started
+					return &resourcepb.CountManagedObjectsResponse{}, nil
+				}).Once()
+			store.EXPECT().GetStats(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+					<-started
+					return &resourcepb.ResourceStatsResponse{}, nil
+				}).Once()
+
+			got, err := lister.Stats(t.Context(), "default")
+			require.NoError(t, err)
+			require.Equal(t, []provisioning.ResourceCount{{Group: playlistGVK.Group, Resource: "playlists", Count: 3}}, got.Instance)
+		})
+	})
+}
+
+func TestResourceListerFromSearch_ListsExternallyStoredKindsThroughClients(t *testing.T) {
+	const repository = "repo"
+	lister, store, _ := externalPlaylists(t, repository)
+	// A stale index row for the external kind must not be reported next to the listed object.
+	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+		Items: []*resourcepb.ListManagedObjectsResponse_Item{
+			{Object: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"}, Path: "db-1.json", Title: "Dashboard 1"},
+			{Object: &resourcepb.ResourceKey{Group: playlistGVK.Group, Resource: "playlists", Name: "stale"}, Path: "stale.json"},
+		},
+	}, nil)
+
+	dashboard := provisioning.ResourceListItem{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"}
+	playlist := provisioning.ResourceListItem{Path: "pl-1.json", Group: playlistGVK.Group, Resource: "playlists", Name: "pl-1", Hash: "abc", Title: "Test data"}
+
+	t.Run("merges the listed objects with the indexed ones", func(t *testing.T) {
+		got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{dashboard, playlist}, got.Items,
+			"only the repository's objects, read from the API, and none of the index's rows for the kind")
+		require.Empty(t, got.Continue)
+	})
+
+	t.Run("pages across both sources", func(t *testing.T) {
+		first, err := lister.List(context.Background(), "default", repository, ListOptions{Limit: 1})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{dashboard}, first.Items)
+		require.NotEmpty(t, first.Continue)
+
+		second, err := lister.List(context.Background(), "default", repository, ListOptions{Limit: 1, Continue: first.Continue})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{playlist}, second.Items)
+		require.Empty(t, second.Continue)
+	})
+}
+
+func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *testing.T) {
+	const repository = "repo"
+	repoRow := func(group, resource string, count int64) *resourcepb.CountManagedObjectsResponse_ResourceCount {
+		return &resourcepb.CountManagedObjectsResponse_ResourceCount{Kind: string(utils.ManagerKindRepo), Id: repository, Group: group, Resource: resource, Count: count}
+	}
+
+	t.Run("repository stats replace the index's count of the kind", func(t *testing.T) {
+		lister, store, _ := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				repoRow("dashboard.grafana.app", "dashboards", 3),
+				repoRow(playlistGVK.Group, "playlists", 9),
+			},
+		}, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+		}, got)
+	})
+
+	t.Run("a repository managing only externally stored objects is found", func(t *testing.T) {
+		lister, store, _ := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{{Group: playlistGVK.Group, Resource: "playlists", Count: 1}}, got)
+	})
+
+	t.Run("namespace stats count the kind's instance, managed and unmanaged objects", func(t *testing.T) {
+		lister, store, _ := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{repoRow("dashboard.grafana.app", "dashboards", 3)},
+		}, nil).Once()
+		store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 5},
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 42},
+			},
+		}, nil).Once()
+
+		got, err := lister.Stats(context.Background(), "default")
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 5},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 3},
+		}, got.Instance, "the API's total replaces the index's")
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+		}, got.Unmanaged)
+		require.ElementsMatch(t, []provisioning.ManagerStats{
+			{Kind: utils.ManagerKindRepo, Identity: repository, Stats: []provisioning.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+			{Kind: utils.ManagerKindRepo, Identity: "another-repo", Stats: []provisioning.ResourceCount{
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+		}, got.Managed)
+	})
+}
+
+// The index files a collection member under the collection's group, so its rows there must not
+// be counted next to the API counts.
+func TestResourceListerFromSearch_CountsAnExternallyStoredCollectionMemberOnce(t *testing.T) {
+	const (
+		repository = "repo"
+		collection = "datasource.grafana.app"
+		member     = "grafana-testdata-datasource." + collection
+	)
+	memberGVR := schema.GroupVersionResource{Group: member, Version: "v0alpha1", Resource: "datasources"}
+	memberGVK := schema.GroupVersionKind{Group: member, Version: "v0alpha1", Kind: "DataSource"}
+	external := sets.New(CapabilityExternalStorage)
+
+	scheme := runtime.NewScheme()
+	listGVK := memberGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(memberGVK, &unstructured.Unstructured{})
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{memberGVR: listGVK.Kind},
+		managedDataSource(t, memberGVK, "ds-1", repository, "ds-1.json"),
+	)
+
+	newLister := func(t *testing.T) (*ResourceListerFromSearch, *resource.MockResourceClient) {
+		clients := NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: memberGVK.GroupKind(), Capabilities: external, Collection: collection},
+		})
+		clients.EXPECT().ForKind(mock.Anything, memberGVK.GroupKind().WithVersion("")).
+			Return(dyn.Resource(memberGVR).Namespace("default"), memberGVR, nil)
+		factory := NewMockClientFactory(t)
+		factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		store := resource.NewMockResourceClient(t)
+		return NewResourceLister(store, factory, []SupportedResource{
+			{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}, Capabilities: external},
+		}), store
+	}
+	staleCount := &resourcepb.CountManagedObjectsResponse{
+		Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+			{Kind: string(utils.ManagerKindRepo), Id: repository, Group: collection, Resource: "datasources", Count: 5},
+		},
+	}
+	memberCount := []provisioning.ResourceCount{{Group: member, Resource: "datasources", Count: 1}}
+
+	t.Run("repository stats", func(t *testing.T) {
+		lister, store := newLister(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(staleCount, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, memberCount, got)
+	})
+
+	t.Run("namespace stats", func(t *testing.T) {
+		lister, store := newLister(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(staleCount, nil).Once()
+		store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: collection, Resource: "datasources", Count: 7}},
+		}, nil).Once()
+
+		got, err := lister.Stats(context.Background(), "default")
+		require.NoError(t, err)
+		require.Equal(t, memberCount, got.Instance)
+		require.Empty(t, got.Unmanaged)
+		require.Equal(t, []provisioning.ManagerStats{
+			{Kind: utils.ManagerKindRepo, Identity: repository, Stats: memberCount},
+		}, got.Managed)
 	})
 }
