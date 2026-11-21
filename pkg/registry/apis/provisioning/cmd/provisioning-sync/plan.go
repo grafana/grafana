@@ -155,11 +155,12 @@ func printPlan(out io.Writer, result *planResult, asJSON bool) error {
 		return enc.Encode(result)
 	}
 
+	w := &errWriter{w: out}
 	switch result.Mode {
 	case "incremental":
-		fmt.Fprintf(out, "incremental plan %s..%s: %d changes\n", result.FromRef, result.Ref, len(result.Changes))
+		w.printf("incremental plan %s..%s: %d changes\n", result.FromRef, result.Ref, len(result.Changes))
 	default:
-		fmt.Fprintf(out, "full plan at %q: %d changes\n", result.Ref, len(result.Changes))
+		w.printf("full plan at %q: %d changes\n", result.Ref, len(result.Changes))
 	}
 	for _, c := range result.Changes {
 		line := fmt.Sprintf("  %-8s %s", c.Action, c.Path)
@@ -175,15 +176,15 @@ func printPlan(out io.Writer, result *planResult, asJSON bool) error {
 		if c.Warning != "" {
 			line += " warning=" + c.Warning
 		}
-		fmt.Fprintln(out, line)
+		w.printf("%s\n", line)
 	}
 	for _, p := range result.FoldersMissingMetadata {
-		fmt.Fprintf(out, "  folder missing metadata: %s\n", p)
+		w.printf("  folder missing metadata: %s\n", p)
 	}
 	for _, msg := range result.InvalidFolderMetadata {
-		fmt.Fprintf(out, "  %s\n", msg)
+		w.printf("  %s\n", msg)
 	}
-	return nil
+	return w.err
 }
 
 // plannedResources serves sync.Compare the resources Grafana manages today. Compare only calls

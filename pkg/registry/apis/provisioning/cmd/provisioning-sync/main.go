@@ -19,8 +19,10 @@ const (
 	commandPlan = "plan"
 	commandPull = "pull"
 
-	repoTokenEnv    = "PROVISIONING_REPO_TOKEN"
-	grafanaTokenEnv = "GRAFANA_TOKEN"
+	repoTokenEnv     = "PROVISIONING_REPO_TOKEN"
+	grafanaTokenEnv  = "GRAFANA_TOKEN"
+	accessTokenEnv   = "GRAFANA_ACCESS_TOKEN"
+	exchangeTokenEnv = "GRAFANA_EXCHANGE_TOKEN"
 )
 
 const usage = `provisioning-sync runs the provisioning pull job from the command line.
@@ -33,8 +35,13 @@ The repository is read from Grafana with --repo, or described with --type and it
 plan with --type needs no Grafana and compares against an empty instance.
 
 The repository token comes from --token or $PROVISIONING_REPO_TOKEN and is used instead of
-the token Grafana stores, so no secrets service is involved. Grafana credentials come from
---grafana-token or $GRAFANA_TOKEN, falling back to --grafana-user and --grafana-password.
+the token Grafana stores, so no secrets service is involved.
+
+Grafana only lets the provisioning service identity write repository-managed resources, so
+pull needs an access token for it, like the standalone operator uses: either minted per
+request with --token-exchange-url and --exchange-token ($GRAFANA_EXCHANGE_TOKEN), or given
+with --access-token ($GRAFANA_ACCESS_TOKEN). plan only reads, so a user is enough: --grafana-token
+($GRAFANA_TOKEN) or --grafana-user and --grafana-password.
 
 --incremental diffs the last synced commit against the latest one; --from-ref overrides the
 last synced commit. Local repositories are not versioned and always get a full pull.
@@ -42,8 +49,9 @@ last synced commit. Local repositories are not versioned and always get a full p
 Examples:
   provisioning-sync plan --type github --url https://github.com/org/repo --branch main
   provisioning-sync plan --type local --path ./dashboards
-  provisioning-sync pull --repo my-repo
-  provisioning-sync pull --repo my-repo --incremental
+  provisioning-sync plan --repo my-repo --incremental
+  provisioning-sync pull --repo my-repo --token-exchange-url http://localhost:6481/sign/access-token
+  provisioning-sync pull --repo my-repo --access-token "$ACCESS_TOKEN" --incremental
 
 Flags:
 `
@@ -55,12 +63,15 @@ type options struct {
 	jsonOutput  bool
 	verbose     bool
 
-	grafanaURL      string
-	grafanaToken    string
-	grafanaUser     string
-	grafanaPassword string
-	namespace       string
-	repoName        string
+	grafanaURL       string
+	grafanaToken     string
+	grafanaUser      string
+	grafanaPassword  string
+	accessToken      string
+	tokenExchangeURL string
+	exchangeToken    string
+	namespace        string
+	repoName         string
 
 	repoType  string
 	url       string
@@ -109,7 +120,7 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs := flag.NewFlagSet("provisioning-sync", flag.ContinueOnError)
 	fs.SetOutput(output)
 	fs.Usage = func() {
-		fmt.Fprint(output, usage)
+		_, _ = fmt.Fprint(output, usage)
 		fs.PrintDefaults()
 	}
 
@@ -131,6 +142,9 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.grafanaToken, "grafana-token", "", "Grafana service account token (default $"+grafanaTokenEnv+")")
 	fs.StringVar(&opts.grafanaUser, "grafana-user", "admin", "Grafana basic auth user, used without a token")
 	fs.StringVar(&opts.grafanaPassword, "grafana-password", "admin", "Grafana basic auth password, used without a token")
+	fs.StringVar(&opts.accessToken, "access-token", "", "access token for the provisioning service identity (default $"+accessTokenEnv+")")
+	fs.StringVar(&opts.tokenExchangeURL, "token-exchange-url", "", "token exchange endpoint that mints access tokens for the provisioning service identity")
+	fs.StringVar(&opts.exchangeToken, "exchange-token", "", "token presented to --token-exchange-url (default $"+exchangeTokenEnv+")")
 	fs.StringVar(&opts.namespace, "namespace", "default", "Grafana namespace of the repository")
 	fs.StringVar(&opts.repoName, "repo", "", "name of a Repository in Grafana")
 
@@ -158,15 +172,37 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	if opts.grafanaToken == "" {
 		opts.grafanaToken = os.Getenv(grafanaTokenEnv)
 	}
+	if opts.accessToken == "" {
+		opts.accessToken = os.Getenv(accessTokenEnv)
+	}
+	if opts.exchangeToken == "" {
+		opts.exchangeToken = os.Getenv(exchangeTokenEnv)
+	}
 
 	switch {
+	case opts.tokenExchangeURL != "" && opts.exchangeToken == "":
+		return options{}, errors.New("--token-exchange-url needs --exchange-token or $" + exchangeTokenEnv)
 	case opts.repoName == "" && opts.repoType == "":
 		return options{}, errors.New("set --repo to read the repository from Grafana, or --type to describe it")
 	case opts.repoName != "" && opts.repoType != "":
 		return options{}, errors.New("--repo and --type cannot be used together")
 	case opts.command == commandPull && opts.repoName == "":
 		return options{}, errors.New("pull writes its status to a Repository in Grafana; set --repo")
+	case opts.command == commandPull && opts.tokenExchangeURL == "" && opts.accessToken == "":
+		return options{}, errors.New("pull writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
 	}
 
 	return opts, nil
+}
+
+// errWriter keeps the first write error, so printing code can check it once at the end.
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (e *errWriter) printf(format string, args ...any) {
+	if e.err == nil {
+		_, e.err = fmt.Fprintf(e.w, format, args...)
+	}
 }

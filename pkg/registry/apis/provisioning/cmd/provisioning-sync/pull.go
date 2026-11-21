@@ -8,6 +8,7 @@ import (
 	gosync "sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -65,50 +66,62 @@ func runPull(ctx context.Context, opts options, out io.Writer) error {
 
 	var (
 		mu          gosync.Mutex
-		final       provisioning.JobStatus
 		lastMessage string
 	)
 	progress := jobs.NewJobProgressRecorder(func(_ context.Context, status provisioning.JobStatus) error {
 		mu.Lock()
 		defer mu.Unlock()
-		final = status
-		if !opts.jsonOutput && status.Message != lastMessage {
-			lastMessage = status.Message
-			fmt.Fprintf(out, "... %s\n", status.Message)
+		if opts.jsonOutput || status.Message == lastMessage {
+			return nil
 		}
-		return nil
+		lastMessage = status.Message
+		_, err := fmt.Fprintf(out, "... %s\n", status.Message)
+		return err
 	}, &metrics, provisioning.JobActionPull)
 
 	processErr := worker.Process(ctx, repo, job, progress)
 
-	mu.Lock()
-	defer mu.Unlock()
-	if err := printPullResult(out, final, progress.Variance(), opts.jsonOutput); err != nil {
+	// Completing again after the worker returns is what the job driver does to read the final status.
+	result := pullResult{Variance: progress.Variance(), PreviousRef: cfg.Status.Sync.LastRef, Status: progress.Complete(ctx, processErr)}
+	updated, err := g.getRepository(ctx, opts.namespace, opts.repoName)
+	if err != nil {
+		logging.FromContext(ctx).Warn("unable to read the repository status after the pull", "error", err)
+	} else {
+		result.LastRef = updated.Status.Sync.LastRef
+	}
+	if err := printPullResult(out, result, opts.jsonOutput); err != nil {
 		return err
 	}
 	return processErr
 }
 
-func printPullResult(out io.Writer, status provisioning.JobStatus, variance string, asJSON bool) error {
+type pullResult struct {
+	Variance    string                 `json:"variance,omitempty"`
+	PreviousRef string                 `json:"previousRef,omitempty"`
+	LastRef     string                 `json:"lastRef,omitempty"`
+	Status      provisioning.JobStatus `json:"status"`
+}
+
+func printPullResult(out io.Writer, result pullResult, asJSON bool) error {
 	if asJSON {
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		return enc.Encode(struct {
-			Variance string                 `json:"variance,omitempty"`
-			Status   provisioning.JobStatus `json:"status"`
-		}{variance, status})
+		return enc.Encode(result)
 	}
 
-	fmt.Fprintf(out, "%s pull finished: state=%s message=%q\n", variance, status.State, status.Message)
+	status := result.Status
+	w := &errWriter{w: out}
+	w.printf("%s pull finished: state=%s message=%q\n", result.Variance, status.State, status.Message)
+	w.printf("  lastRef: %q -> %q\n", result.PreviousRef, result.LastRef)
 	for _, s := range status.Summary {
-		fmt.Fprintf(out, "  %s/%s: create=%d update=%d delete=%d noop=%d warning=%d error=%d\n",
+		w.printf("  %s/%s: create=%d update=%d delete=%d noop=%d warning=%d error=%d\n",
 			s.Group, s.Kind, s.Create, s.Update, s.Delete, s.Noop, s.Warning, s.Error)
 	}
 	for _, msg := range status.Errors {
-		fmt.Fprintf(out, "  error: %s\n", msg)
+		w.printf("  error: %s\n", msg)
 	}
 	for _, msg := range status.Warnings {
-		fmt.Fprintf(out, "  warning: %s\n", msg)
+		w.printf("  warning: %s\n", msg)
 	}
-	return nil
+	return w.err
 }
