@@ -371,6 +371,7 @@ type Cfg struct {
 	DisableLogin                      bool
 	AdminEmail                        string
 	DisableLoginForm                  bool
+	DisableForgotPassword             bool
 	SignoutRedirectUrl                string
 	IDResponseHeaderEnabled           bool
 	IDResponseHeaderPrefix            string
@@ -2215,6 +2216,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	readDisableLoginForm(iniFile, cfg)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+	cfg.DisableForgotPassword = auth.Key("disable_forgot_password").MustBool(false)
 
 	// Deprecated
 	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
