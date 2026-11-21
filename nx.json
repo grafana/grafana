@@ -24,11 +24,16 @@
       "grafana": {
         "projects": ["tag:release:grafana", "public/app/plugins/*/*"],
         "projectsRelationship": "fixed"
+      },
+      "plugin-compat": {
+        "projects": ["tag:release:independent"],
+        "projectsRelationship": "independent"
       }
     },
     "version": {
       "versionActions": "scripts/release/version-actions.ts",
       "versionPrefix": "",
+      "updateDependents": "auto",
       "versionActionsOptions": {
         "skipLockFileUpdate": true
       },
