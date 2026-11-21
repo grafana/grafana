@@ -179,7 +179,8 @@ func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
 }
 
 // isMarkForDeleteOnly ignores the annotations that prepareObjectForUpdate sets itself. The manager
-// and source annotations must not change.
+// and source annotations must not change. Blobs are not checked here: only the serializer can read them,
+// so checkManagerOnUpdate compares them.
 func isMarkForDeleteOnly(obj, previous utils.GrafanaMetaAccessor) bool {
 	if !maps.Equal(mapWithout(obj.GetLabels(), utils.LabelKeyFolderTerminating), mapWithout(previous.GetLabels(), utils.LabelKeyFolderTerminating)) {
 		return false
@@ -196,7 +197,7 @@ func isMarkForDeleteOnly(obj, previous utils.GrafanaMetaAccessor) bool {
 	if !terminating && obj.GetDeletionTimestamp() == nil {
 		return false
 	}
-	return specAndFolderUnchanged(obj, previous)
+	return contentUnchanged(obj, previous)
 }
 
 // finalizersUnchangedOrReleased lets the owners of finalizers remove them after the delete starts.
@@ -226,16 +227,24 @@ func mapWithout(m map[string]string, keys ...string) map[string]string {
 	return m
 }
 
-func specAndFolderUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
+// contentUnchanged reports whether a write left the folder, the spec and the secure values as they were.
+// Preparing an update has already replaced new secure values with the names of the secrets it created,
+// so a replaced, added or removed value shows up as a difference here.
+func contentUnchanged(obj, previous utils.GrafanaMetaAccessor) bool {
 	if obj.GetFolder() != previous.GetFolder() {
 		return false
 	}
 	spec, specErr := obj.GetSpec()
 	oldSpec, oldSpecErr := previous.GetSpec()
-	if specErr != nil || oldSpecErr != nil {
+	if specErr != nil || oldSpecErr != nil || !apiequality.Semantic.DeepEqual(spec, oldSpec) {
 		return false
 	}
-	return apiequality.Semantic.DeepEqual(spec, oldSpec)
+	secure, secureErr := obj.GetSecureValues()
+	oldSecure, oldSecureErr := previous.GetSecureValues()
+	if secureErr != nil || oldSecureErr != nil {
+		return false
+	}
+	return apiequality.Semantic.DeepEqual(secure, oldSecure)
 }
 
 // handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning

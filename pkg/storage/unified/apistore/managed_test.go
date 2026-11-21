@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,8 +26,10 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -448,6 +451,186 @@ func TestIsMarkForDeleteOnly(t *testing.T) {
 	t.Run("manager", func(t *testing.T) {
 		other := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "folders/f.json", terminating)
 		require.False(t, isMarkForDeleteOnly(other, previous))
+	})
+
+	t.Run("secure values", func(t *testing.T) {
+		secure := func(names map[string]string) map[string]any {
+			values := make(map[string]any, len(names))
+			for key, name := range names {
+				values[key] = map[string]any{"name": name}
+			}
+			return map[string]any{"secure": values}
+		}
+		isMark := func(t *testing.T, obj, previous *unstructured.Unstructured) bool {
+			t.Helper()
+			return isMarkForDeleteOnly(metaOf(t, obj), metaOf(t, previous))
+		}
+		old := managedUnstructured(t, true, false, secure(map[string]string{"token": "sv-1"}))
+
+		t.Run("unchanged", func(t *testing.T) {
+			obj := managedUnstructured(t, true, true, secure(map[string]string{"token": "sv-1"}))
+			require.True(t, isMark(t, obj, old))
+		})
+
+		t.Run("absent on both sides", func(t *testing.T) {
+			obj := managedUnstructured(t, true, true, nil)
+			require.True(t, isMark(t, obj, managedUnstructured(t, true, false, nil)))
+		})
+
+		t.Run("replaced", func(t *testing.T) {
+			obj := managedUnstructured(t, true, true, secure(map[string]string{"token": "sv-2"}))
+			require.False(t, isMark(t, obj, old))
+		})
+
+		t.Run("removed", func(t *testing.T) {
+			obj := managedUnstructured(t, true, true, nil)
+			require.False(t, isMark(t, obj, old))
+		})
+
+		t.Run("added", func(t *testing.T) {
+			obj := managedUnstructured(t, true, true, secure(map[string]string{"token": "sv-1", "other": "sv-2"}))
+			require.False(t, isMark(t, obj, old))
+		})
+	})
+}
+
+func metaOf(t *testing.T, obj runtime.Object) utils.GrafanaMetaAccessor {
+	t.Helper()
+	accessor, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	return accessor
+}
+
+// managedUnstructured builds a resource that has a spec and the given top-level fields, such as secure or blobs.
+// A managed one belongs to the repository that managedObject uses.
+func managedUnstructured(t *testing.T, managed, terminating bool, extra map[string]any) *unstructured.Unstructured {
+	t.Helper()
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "example.grafana.app/v1",
+		"kind":       "Example",
+		"metadata":   map[string]any{"name": "test", "namespace": "default", "uid": "u1"},
+		"spec":       map[string]any{"title": "a"},
+	}}
+	for key, value := range extra {
+		obj.Object[key] = value
+	}
+	if terminating {
+		obj.SetLabels(map[string]string{utils.LabelKeyFolderTerminating: utils.LabelValueFolderTerminating})
+	}
+	if managed {
+		accessor := metaOf(t, obj)
+		accessor.SetManagerProperties(repoManager)
+		accessor.SetSourceProperties(utils.SourceProperties{Path: "folders/f.json"})
+	}
+	return obj
+}
+
+// An orphaned resource may start its delete, but it must not smuggle other writes through that bypass.
+func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
+	newStorage := func(t *testing.T, secureStore secret.InlineSecureValueSupport) *Storage {
+		t.Helper()
+		repoStorage, _ := repositoryServer(t, http.StatusNotFound)
+		s := testStorage(t, nil)
+		s.configProvider = repoStorage.configProvider
+		s.opts.SecureValues = secureStore
+		return s
+	}
+	secure := func(name string) map[string]any {
+		return map[string]any{"secure": map[string]any{"token": map[string]any{"name": name}}}
+	}
+	blobs := func(uid string) map[string]any {
+		return map[string]any{"blobs": map[string]any{"file": map[string]any{"uid": uid}}}
+	}
+
+	t.Run("allows the terminating label alone", func(t *testing.T) {
+		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t)) // keeping a reference calls nothing
+		previous := managedUnstructured(t, true, false, secure("sv-1"))
+		obj := managedUnstructured(t, true, true, secure("sv-1"))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
+	})
+
+	t.Run("allows the terminating label when the write leaves out the secure values", func(t *testing.T) {
+		s := newStorage(t, nil)
+		previous := managedUnstructured(t, true, false, secure("sv-1"))
+		obj := managedUnstructured(t, true, true, nil)
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects a replaced secure value", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("new-secret"), (*string)(nil)).
+			Return("sv-2", nil).Once()
+		s := newStorage(t, secureStore)
+		previous := managedUnstructured(t, true, false, secure("sv-1"))
+		obj := managedUnstructured(t, true, true, map[string]any{
+			"secure": map[string]any{"token": map[string]any{"create": "new-secret"}},
+		})
+
+		v, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+		// The caller deletes what preparation created, so the rejected write leaves no secret behind.
+		require.Equal(t, []string{"sv-2"}, v.createdSecureValues)
+	})
+
+	t.Run("rejects a renamed secure value reference", func(t *testing.T) {
+		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
+		previous := managedUnstructured(t, true, false, secure("sv-1"))
+		obj := managedUnstructured(t, true, true, secure("sv-2"))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+	})
+
+	t.Run("rejects a removed secure value", func(t *testing.T) {
+		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
+		previous := managedUnstructured(t, true, false, secure("sv-1"))
+		obj := managedUnstructured(t, true, true, map[string]any{
+			"secure": map[string]any{"token": map[string]any{"remove": true}},
+		})
+
+		v, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+		require.True(t, v.hasChanged)
+	})
+
+	t.Run("allows unchanged blobs", func(t *testing.T) {
+		s := newStorage(t, nil)
+		previous := managedUnstructured(t, true, false, blobs("b-1"))
+		obj := managedUnstructured(t, true, true, blobs("b-1"))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects changed blobs", func(t *testing.T) {
+		s := newStorage(t, nil)
+		previous := managedUnstructured(t, true, false, blobs("b-1"))
+		obj := managedUnstructured(t, true, true, blobs("b-2"))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+	})
+
+	t.Run("rejects removed blobs", func(t *testing.T) {
+		s := newStorage(t, nil)
+		previous := managedUnstructured(t, true, false, blobs("b-1"))
+		obj := managedUnstructured(t, true, true, nil)
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+	})
+
+	t.Run("allows changed blobs when the write releases the manager", func(t *testing.T) {
+		s := newStorage(t, nil)
+		previous := managedUnstructured(t, true, false, blobs("b-1"))
+		obj := managedUnstructured(t, false, false, blobs("b-2"))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
 	})
 }
 
