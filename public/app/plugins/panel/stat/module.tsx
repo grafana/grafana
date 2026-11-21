@@ -14,6 +14,7 @@ import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { statPresetsSupplier } from './presets';
+import { getStatQuickEdits } from './quickEdits';
 import { statSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(StatPanel)
@@ -140,4 +141,5 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
   .setPanelChangeHandler(statPanelChangedHandler)
   .setSuggestionsSupplier(statSuggestionsSupplier)
   .setPresetsSupplier(statPresetsSupplier)
+  .setQuickEdits(getStatQuickEdits)
   .setMigrationHandler(sharedSingleStatMigrationHandler);

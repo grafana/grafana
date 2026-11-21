@@ -3,8 +3,10 @@
 import {
   escapeStringForRegex,
   type FieldOverrideContext,
+  fieldReducers,
   getFieldDisplayName,
   type PanelOptionsEditorBuilder,
+  type PanelQuickEdit,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
@@ -102,6 +104,23 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       defaultValue: '',
     });
   }
+}
+
+/**
+ * The calculation and the fields it applies to, as a quick edit for panels that use
+ * {@link addStandardDataReduceOptions}.
+ */
+export function calculationQuickEdit(): PanelQuickEdit<SingleStatBaseOptions> {
+  return {
+    id: 'calculation',
+    title: t('stat.quick-edits.calculation', 'Calculation'),
+    icon: 'calculator-alt',
+    optionIds: ['reduceOptions.calcs', 'reduceOptions.fields'],
+    summary: ({ options }) => {
+      const id = options.reduceOptions?.calcs?.[0] ?? ReducerID.lastNotNull;
+      return { text: fieldReducers.getIfExists(id)?.name ?? id };
+    },
+  };
 }
 
 export function addOrientationOption<T extends SingleStatBaseOptions>(
