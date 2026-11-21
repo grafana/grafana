@@ -76,6 +76,7 @@ type RepositoryController struct {
 
 	queue           workqueue.TypedRateLimitingInterface[string]
 	queueLag        queueLagTracker
+	requeues        repositoryRequeueLimiter
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
@@ -168,7 +169,8 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
-	rc.queue = newWorkerQueue(&rc.queueLag, workqueue.DefaultTypedControllerRateLimiter[string](), workqueue.TypedQueueConfig[string]{
+	rc.requeues.TypedRateLimiter = workqueue.DefaultTypedControllerRateLimiter[string]()
+	rc.queue = newWorkerQueue(&rc.queueLag, &rc.requeues, workqueue.TypedQueueConfig[string]{
 		Name:            "provisioningRepositoryController",
 		MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
 	})
@@ -361,9 +363,26 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if enqueuedAt, ok := rc.queueLag.get(key); ok {
 		logger = logger.With("queue_wait", time.Since(enqueuedAt))
 	}
+	// NATS deliveries carry only identities. Read the current object to let a
+	// configuration correction or deletion supersede backoff, but not status updates.
+	pending := rc.requeues.get(key)
+	retrying := rc.queue.NumRequeues(key) > 0
+	if time.Until(pending.deadline) > 0 {
+		changed := false
+		if pending.observed {
+			obj, err := rc.repos.Get(ctx, namespace, name)
+			changed = err == nil && pending.changed(obj)
+		}
+		if !changed {
+			rc.queue.AddAfter(key, time.Until(pending.deadline))
+			return true
+		}
+		rc.requeues.take(key)
+		rc.queue.Forget(key)
+	}
 	logger.Info("RepositoryController processing key")
 
-	// Pop this pickup's attribution up front so the entry is cleared however the
+	// Pop this reconciliation's attribution so the entry is cleared however the
 	// key leaves this function, without a terminal Forget clobbering a newer
 	// attribution set by a concurrent enqueue while the key was in flight.
 	trigger, ok := rc.popTrigger(key)
@@ -377,14 +396,16 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	// must not be counted, or it would masquerade as a relist recovery. Retries
 	// keep the entry (re-set below) but bump NumRequeues, so they are not
 	// recounted.
-	if ok && attempts == 1 {
+	// Resetting the retry budget must not recount the original delivery whose
+	// attribution was retained while newer events coalesced onto its retry.
+	if ok && !retrying {
 		rc.processed.RecordProcessed(trigger)
 	}
 
 	start := time.Now()
 	repoType, err := rc.processFn(key)
 	logger = logger.With("duration", time.Since(start))
-	// Count every reconcile execution (each pickup, including retries) by outcome,
+	// Count every reconcile execution, including retries, by outcome,
 	// so this counter is the denominator for the reconcile error rate.
 	rc.processed.RecordReconcile(err)
 	if err == nil {
@@ -887,6 +908,7 @@ func repoSpanAttrs(obj *provisioning.Repository) trace.SpanStartOption {
 //
 //nolint:gocyclo
 func (rc *RepositoryController) process(key string) (repoType string, err error) {
+	requeueReason := rc.requeues.take(key)
 	logger := rc.logger.With("key", key)
 	ctx := logging.Context(context.Background(), logger)
 
@@ -960,6 +982,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		return repoType, err
 	}
 	repoType = string(obj.Spec.Type)
+	// Failed configurations can remain unobserved. Compare future deliveries to
+	// the metadata actually attempted, not Status.ObservedGeneration.
+	defer func() {
+		if isRetryableProcessError(err) {
+			rc.requeues.observe(key, obj)
+		}
+	}()
 
 	logger = logger.With(
 		"namespace", namespace,
@@ -1161,6 +1190,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	case shouldRotateWebhookSecret:
 		reason = "webhook_secret_rotation"
 		logger.Info("webhook secret rotation due")
+	case requeueReason != "":
+		// Persisted failure status can make health fresh while a retry is still pending.
+		reason = requeueReason
+		logger.Info("resuming scheduled reconciliation", "reason", reason)
 	default:
 		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
@@ -1221,6 +1254,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+				rc.requeues.observe(key, obj)
+				rc.requeues.schedule(key, tokenWriteRetryDelay, "token_wait")
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("repository token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())
