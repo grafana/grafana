@@ -1,11 +1,17 @@
+import { waitFor } from '@testing-library/react';
+import { lastValueFrom, Subject } from 'rxjs';
+
 import {
+  type AnnotationQuery,
   type AnnotationQueryRequest,
   type DataQueryRequest,
   type DataSourceInstanceSettings,
   dateTime,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { appEvents } from 'app/core/app_events';
+import { BackendSrv, backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { GrafanaDatasource } from './datasource';
 import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, GrafanaQueryType } from './types';
@@ -76,6 +82,47 @@ describe('grafana data source', () => {
       });
 
       ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+    });
+
+    it.each([
+      { name: 'different time ranges', panelFrom: '2026-10-12T00:00:00Z' },
+      { name: 'the same time range', panelFrom: '2026-11-10T00:00:00Z' },
+    ])('keeps concurrent annotation queries with $name from cancelling each other', async ({ panelFrom }) => {
+      const fromFetch = jest.fn((_url: string | Request, _init?: RequestInit) => new Subject<Response>());
+      const realBackendSrv = new BackendSrv({ fromFetch, appEvents, contextSrv, logout: jest.fn() });
+      getMock.mockImplementation(realBackendSrv.get.bind(realBackendSrv));
+
+      const dashboardRequest = makeAnnotationRequest(ds, 'dashboard-annotations', '2026-11-10T00:00:00Z');
+      const panelRequest = makeAnnotationRequest(ds, 'panel-annotations', panelFrom);
+      const resultsPromise = Promise.allSettled([
+        lastValueFrom(ds.query(dashboardRequest)),
+        lastValueFrom(ds.query(panelRequest)),
+      ]);
+
+      await waitFor(() => expect(fromFetch).toHaveBeenCalledTimes(2));
+      for (const { value: response } of fromFetch.mock.results) {
+        response.next(
+          new Response(JSON.stringify([{ time: 1794355200000, text: 'Incident' }]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        );
+        response.complete();
+      }
+
+      const results = await resultsPromise;
+      expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          expect(result.value.data).toMatchObject([
+            { fields: expect.arrayContaining([expect.objectContaining({ name: 'text', values: ['Incident'] })]) },
+          ]);
+        }
+      }
+      expect(getMock.mock.calls.map(([, , requestId]) => requestId)).toEqual([
+        'dashboard-annotations',
+        'panel-annotations',
+      ]);
     });
 
     describe('when fetching annotations for screenshots', () => {
@@ -185,6 +232,36 @@ describe('grafana data source', () => {
     });
   });
 });
+
+function makeAnnotationRequest(ds: GrafanaDatasource, requestId: string, from: string): DataQueryRequest<GrafanaQuery> {
+  const annotation: AnnotationQuery<GrafanaAnnotationQuery> = {
+    name: 'Incidents',
+    enable: true,
+    iconColor: 'red',
+    target: {
+      refId: 'Anno',
+      queryType: GrafanaQueryType.Annotations,
+      type: GrafanaAnnotationType.Tags,
+      limit: 100,
+      tags: ['incident'],
+    },
+  };
+  return {
+    requestId,
+    targets: [ds.annotations!.prepareQuery!(annotation)!],
+    range: {
+      from: dateTime(from),
+      to: dateTime('2026-11-11T00:00:00Z'),
+      raw: { from, to: '2026-11-11T00:00:00Z' },
+    },
+    app: 'dashboard',
+    startTime: 0,
+    interval: '1m',
+    intervalMs: 60000,
+    scopedVars: {},
+    timezone: 'utc',
+  };
+}
 
 function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { uid: string }) {
   return {
