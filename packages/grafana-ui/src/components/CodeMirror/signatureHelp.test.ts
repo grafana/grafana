@@ -77,4 +77,17 @@ describe('signatureHelp extension', () => {
     expect(dom.querySelector('.cm-signature-help-label')?.textContent).toBe('pi(): number');
     expect(dom.querySelector('.cm-signature-help-active-param')).toBeNull();
   });
+
+  it('shows no tooltip and keeps the editor usable when the provider throws', () => {
+    const provider: SignatureHelpProvider = () => {
+      throw new Error('provider failed');
+    };
+
+    const initial = stateFor(provider);
+    const edited = initial.update({ changes: { from: 0, insert: 'x' } }).state;
+
+    expect(activeTooltip(initial)).toBeUndefined();
+    expect(edited.doc.toString()).toBe('xabcdef');
+    expect(activeTooltip(edited)).toBeUndefined();
+  });
 });
