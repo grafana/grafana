@@ -175,6 +175,11 @@ func ProvideAuthZClients(
 			apirequest.GetNamespaceMapper(cfg),
 		)
 
+		// only for Enterprise resolvers that will support Reporting
+		if resolver, ok := acService.(rbac.ReportUIDResolver); ok {
+			server = server.WithReportUIDResolver(resolver)
+		}
+
 		channel := &inprocgrpc.Channel{}
 
 		authenticate := func(ctx context.Context) (context.Context, error) {

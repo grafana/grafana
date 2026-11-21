@@ -2,11 +2,13 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -201,6 +203,100 @@ func TestService_resolveScopeMap(t *testing.T) {
 	}
 }
 
+func TestService_resolveScopeMap_Reports(t *testing.T) {
+	tests := []struct {
+		name      string
+		ns        types.NamespaceInfo
+		scopeMap  map[string]bool
+		uid       string
+		found     bool
+		lookupErr error
+		want      map[string]bool
+	}{
+		{
+			name:     "report IDs resolve independently of UID grants",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:id:42": true, "reports:uid:42": true, "reports:uid:native": true},
+			uid:      "weekly",
+			found:    true,
+			want:     map[string]bool{"reports:uid:weekly": true, "reports:uid:42": true, "reports:uid:native": true},
+		},
+		{
+			name:     "native report UID grants need no legacy lookup",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:uid:native": true, "reports:uid:42": true},
+			want:     map[string]bool{"reports:uid:native": true, "reports:uid:42": true},
+		},
+		{
+			name:     "report ID wildcard needs no lookup",
+			scopeMap: map[string]bool{"reports:id:*": true},
+			want:     map[string]bool{"reports:uid:*": true},
+		},
+		{
+			name:     "other report wildcards stay valid",
+			scopeMap: map[string]bool{"reports:*": true, "reports:uid:*": true},
+			want:     map[string]bool{"reports:*": true, "reports:uid:*": true},
+		},
+		{
+			name:     "missing report ID is never treated as a UID",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:id:42": true},
+			want:     map[string]bool{"reports:id:42": true},
+		},
+		{
+			name:     "not-found lookup values are ignored",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:id:42": true},
+			uid:      "weekly",
+			want:     map[string]bool{"reports:id:42": true},
+		},
+		{
+			name:      "report lookup errors never grant a UID",
+			ns:        types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap:  map[string]bool{"reports:id:42": true},
+			lookupErr: errors.New("report database unavailable"),
+			want:      map[string]bool{"reports:id:42": true},
+		},
+		{
+			name:     "report lookup cannot broaden a named grant to wildcard",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:id:42": true},
+			uid:      "*",
+			found:    true,
+			want:     map[string]bool{"reports:id:42": true},
+		},
+		{
+			name:     "numeric grants cannot use another stack with the same OrgID",
+			ns:       types.NamespaceInfo{Value: "stacks-123", OrgID: 1},
+			scopeMap: map[string]bool{"reports:id:42": true},
+			uid:      "weekly",
+			found:    true,
+			want:     map[string]bool{"reports:id:42": true},
+		},
+		{
+			name:     "invalid report IDs never query storage",
+			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{"reports:id:": true, "reports:id:abc": true, "reports:id:-1": true, "reports:id:0": true},
+			want:     map[string]bool{"reports:id:": true, "reports:id:abc": true, "reports:id:-1": true, "reports:id:0": true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolver := reportUIDResolverFunc(func(_ context.Context, reportID int64, orgID int64) (string, bool, error) {
+				return tt.uid, tt.found, tt.lookupErr
+			})
+
+			s := setupService().
+				WithReportUIDResolver(resolver).
+				WithLegacyScopeResolvers(accesscontrol.NewScopeResolverRegistry(), types.OrgNamespaceFormatter)
+
+			got, err := s.resolveScopeMap(t.Context(), tt.ns, "reports:read", tt.scopeMap)
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 // Test that fetch* functions paginate through all results when the store returns multiple pages.
 // Each test uses pageSize=2 with 5 items, expecting 3 pages (2+2+1).
 func TestService_fetchPagination(t *testing.T) {
@@ -245,4 +341,10 @@ func TestService_fetchPagination(t *testing.T) {
 		require.Len(t, got, 5)
 		require.Equal(t, 3, store.calls)
 	})
+}
+
+type reportUIDResolverFunc func(context.Context, int64, int64) (string, bool, error)
+
+func (f reportUIDResolverFunc) GetReportUIDByID(ctx context.Context, reportID int64, orgID int64) (string, bool, error) {
+	return f(ctx, reportID, orgID)
 }

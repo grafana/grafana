@@ -51,6 +51,7 @@ type Service struct {
 	legacyScopeResolvers     *accesscontrol.ScopeResolverRegistry
 	legacyScopeNamespace     types.NamespaceFormatter
 	identityStore            legacy.LegacyIdentityStore
+	reportUIDResolver        ReportUIDResolver
 	settings                 Settings
 
 	mapper MapperRegistry
@@ -126,6 +127,12 @@ func NewService(
 		teamIDCache:              newCacheWrap[map[int64]string](cache, logger, tracer, longCacheTTL),
 		sf:                       new(singleflight.Group),
 	}
+}
+
+func (s *Service) WithReportUIDResolver(resolver ReportUIDResolver) *Service {
+	service := *s
+	service.reportUIDResolver = resolver
+	return &service
 }
 
 func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
