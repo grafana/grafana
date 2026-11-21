@@ -126,6 +126,35 @@ describe('MenuItem', () => {
     expect(screen.getByText('extra content')).toBeInTheDocument();
   });
 
+  it('forwards data attributes to the menuitem element', () => {
+    render(<MenuItem label="Item" data-analytics-id="menu_item_clicked" />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+  });
+
+  it('keeps rendering testId as data-testid alongside other data attributes', () => {
+    render(<MenuItem label="Item" testId="menu-item" data-analytics-id="menu_item_clicked" />);
+
+    const item = screen.getByTestId('menu-item');
+    expect(item).toHaveAttribute('role', 'menuitem');
+    expect(item).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+  });
+
+  it('does not forward props that are not data attributes to the DOM', () => {
+    const itemWithExtraFields = { label: 'Item', value: 'some-value', 'data-analytics-id': 'menu_item_clicked' };
+    render(<MenuItem {...itemWithExtraFields} />);
+
+    const item = screen.getByRole('menuitem', { name: 'Item' });
+    expect(item).toHaveAttribute('data-analytics-id', 'menu_item_clicked');
+    expect(item).not.toHaveAttribute('value');
+  });
+
+  it('does not let data attributes override the internal data-role used by Menu', () => {
+    render(<MenuItem label="Item" data-role="custom" />);
+
+    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('data-role', 'menuitem');
+  });
+
   it('activates link MenuItem with Space key', async () => {
     const onClick = jest.fn((e: React.MouseEvent) => e.preventDefault());
     render(<MenuItem label="Link Item" url="/some-url" onClick={onClick} />);

@@ -63,6 +63,16 @@ func (f *fakeAuthInfoStorage) Delete(_ context.Context, name string, _ rest.Vali
 	return nil, true, nil
 }
 
+type fakePreferencesCleaner struct {
+	calls *[]string
+	err   error
+}
+
+func (f *fakePreferencesCleaner) DeleteUserPreferences(_ context.Context, namespace, userUID string) error {
+	*f.calls = append(*f.calls, "preferences:"+namespace+"/"+userUID)
+	return f.err
+}
+
 func authInfo(name string) iamv0.AuthInfo {
 	return iamv0.AuthInfo{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: testNamespace}}
 }
@@ -74,7 +84,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 	t.Run("deletes the user's auth infos before the user", func(t *testing.T) {
 		var calls []string
 		authInfos := &fakeAuthInfoStorage{calls: &calls, items: []iamv0.AuthInfo{authInfo("ldap-1"), authInfo("oauth-1")}}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, nil)
 
 		_, deleted, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
@@ -92,7 +102,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 			items:     []iamv0.AuthInfo{authInfo("ldap-1")},
 			deleteErr: map[string]error{"ldap-1": notFound},
 		}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, nil)
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
@@ -107,7 +117,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 			items:     []iamv0.AuthInfo{authInfo("ldap-1")},
 			deleteErr: map[string]error{"ldap-1": errors.New("boom")},
 		}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, nil)
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
@@ -118,7 +128,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 	t.Run("keeps the user when listing auth infos fails", func(t *testing.T) {
 		var calls []string
 		authInfos := &fakeAuthInfoStorage{calls: &calls, listErr: errors.New("boom")}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, nil)
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
@@ -129,7 +139,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 	t.Run("skips the cascade on dry run", func(t *testing.T) {
 		var calls []string
 		authInfos := &fakeAuthInfoStorage{calls: &calls, items: []iamv0.AuthInfo{authInfo("ldap-1")}}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, &fakePreferencesCleaner{calls: &calls})
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}})
 
@@ -139,7 +149,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 
 	t.Run("passes through without auth info storage", func(t *testing.T) {
 		var calls []string
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil, nil)
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
@@ -150,10 +160,63 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 	t.Run("returns the user delete error", func(t *testing.T) {
 		var calls []string
 		authInfos := &fakeAuthInfoStorage{calls: &calls}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls, err: notFound}, authInfos)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls, err: notFound}, authInfos, nil)
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
 
 		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("deletes the user's dashboard preferences after the user", func(t *testing.T) {
+		var calls []string
+		authInfos := &fakeAuthInfoStorage{calls: &calls, items: []iamv0.AuthInfo{authInfo("ldap-1")}}
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, &fakePreferencesCleaner{calls: &calls})
+
+		_, deleted, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
+
+		require.NoError(t, err)
+		assert.True(t, deleted)
+		assert.Equal(t, []string{"authinfo:ldap-1", "user:u1", "preferences:default/u1"}, calls)
+	})
+
+	t.Run("deletes preferences without auth info storage", func(t *testing.T) {
+		var calls []string
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil, &fakePreferencesCleaner{calls: &calls})
+
+		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"user:u1", "preferences:default/u1"}, calls)
+	})
+
+	t.Run("deletes preferences with nil options", func(t *testing.T) {
+		var calls []string
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil, &fakePreferencesCleaner{calls: &calls})
+
+		_, _, err := c.Delete(ctx, "u1", nil, nil)
+
+		require.NoError(t, err)
+		assert.Equal(t, []string{"user:u1", "preferences:default/u1"}, calls)
+	})
+
+	t.Run("keeps the user deleted when preferences cleanup fails", func(t *testing.T) {
+		var calls []string
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil, &fakePreferencesCleaner{calls: &calls, err: errors.New("boom")})
+
+		_, deleted, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
+
+		require.NoError(t, err)
+		assert.True(t, deleted)
+		assert.Equal(t, []string{"user:u1", "preferences:default/u1"}, calls)
+	})
+
+	t.Run("leaves preferences when the user delete fails", func(t *testing.T) {
+		var calls []string
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls, err: notFound}, nil, &fakePreferencesCleaner{calls: &calls})
+
+		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{})
+
+		require.True(t, apierrors.IsNotFound(err))
+		assert.Equal(t, []string{"user:u1"}, calls)
 	})
 }

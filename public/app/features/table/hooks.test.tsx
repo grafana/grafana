@@ -12,7 +12,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import {
@@ -492,6 +492,8 @@ describe('useCommonTableProps', () => {
       jsonSyntaxHighlightingEnabled: false,
       rangeFiltersEnabled: false,
       zebraStriping: false,
+      showRowNumbers: false,
+      showRowNumberToggle: false,
     });
   });
 
@@ -541,6 +543,28 @@ describe('useCommonTableProps', () => {
     });
 
     expect(result.current.zebraStriping).toBe(true);
+  });
+
+  it('keeps row numbers disabled by default, even when both flags are enabled', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.showRowNumbers).toBe(false);
+  });
+
+  it.each([
+    [false, false, false],
+    [true, false, false],
+    [false, true, false],
+    [true, true, true],
+  ])('gates saved row numbering with table.refresh=%s and new features=%s', (refresh, newFeatures, enabled) => {
+    setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, showRowNumbers: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.showRowNumbers).toBe(enabled);
+    expect(result.current.showRowNumberToggle).toBe(enabled);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

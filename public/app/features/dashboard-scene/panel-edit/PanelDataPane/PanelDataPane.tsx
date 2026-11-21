@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaVisualDesignRefresh, useFlagQueryEditorNext } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -18,7 +17,7 @@ import { Button, Container, ScrollContainer, TabContent, TabsBar, useStyles2 } f
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { trackSidebarViewChange } from '../PanelEditNext/tracking';
 
@@ -45,7 +44,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
   public onChangeTab = (tab: PanelDataPaneTab) => {
-    trackSidebarViewChange(tab.tabId, { silent: true });
+    trackSidebarViewChange(tab.tabId, { editor: 'classic' });
     this.setState({ tab: tab.tabId });
   };
 
@@ -73,7 +72,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const showTryNewEditor = useBooleanFlagValue('queryEditorNext', false);
+  const showTryNewEditor = useFlagQueryEditorNext();
 
   if (!tabs || !tabs.length) {
     return;

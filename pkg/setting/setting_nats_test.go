@@ -8,6 +8,36 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+func TestNATSEnabledDefaultFollowsTarget(t *testing.T) {
+	// Turn the single-binary default on, as Grafana 14 will: module targets that
+	// never set [nats] must still start, while explicit values keep winning.
+	saved := natsEnabledDefault
+	t.Cleanup(func() { natsEnabledDefault = saved })
+	natsEnabledDefault = true
+
+	cases := map[string]struct {
+		args []string
+		want bool
+	}{
+		"single binary":                     {nil, true},
+		"core target":                       {[]string{"cfg:target=core"}, true},
+		"storage-server target":             {[]string{"cfg:target=storage-server"}, false},
+		"operator target":                   {[]string{"cfg:target=operator"}, false},
+		"core with a module target":         {[]string{"cfg:target=core,storage-server"}, false},
+		"module target explicitly enabled":  {[]string{"cfg:target=storage-server", "cfg:nats.enabled=true"}, true},
+		"single binary explicitly disabled": {[]string{"cfg:nats.enabled=false"}, false},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			// Loads the shipped conf/defaults.ini, which must leave enabled empty
+			// for the target to decide.
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Args: tc.args}))
+			require.Equal(t, tc.want, cfg.NATS.Enabled)
+		})
+	}
+}
+
 func TestReadNATSSettings(t *testing.T) {
 	t.Run("defaults when section absent", func(t *testing.T) {
 		cfg := NewCfg()
@@ -105,6 +135,38 @@ cluster_tls_ca_path = /etc/nats/ca.crt
 			cfg.Raw = f
 
 			require.NoError(t, readNATSSettings(cfg))
+		}
+	})
+
+	t.Run("notifier defaults follow enabled", func(t *testing.T) {
+		cases := map[string]struct {
+			raw         string
+			notifier    bool
+			watchMaxAge time.Duration
+		}{
+			// Empty values are what conf/defaults.ini ships.
+			"disabled with empty defaults": {"[nats]\nenabled = false\nnotifier =\nnotifier_watch_max_age =\n", false, 0},
+			"enabled with empty defaults":  {"[nats]\nenabled = true\nnotifier =\nnotifier_watch_max_age =\n", true, time.Hour},
+			"enabled only":                 {"[nats]\nenabled = true\n", true, time.Hour},
+			"enabled, notifier off":        {"[nats]\nenabled = true\nnotifier = false\n", false, 0},
+			"enabled, max age set":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n", true, 5 * time.Minute},
+			"enabled, max age off":         {"[nats]\nenabled = true\nnotifier_watch_max_age = 0\n", true, 0},
+			"disabled, notifier set":       {"[nats]\nnotifier = true\n", true, 0},
+			"enabled, shadow only":         {"[nats]\nenabled = true\nnotifier_shadow = true\n", false, 0},
+			"enabled, shadow and notifier": {"[nats]\nenabled = true\nnotifier_shadow = true\nnotifier = true\n", true, time.Hour},
+		}
+		for name, tc := range cases {
+			t.Run(name, func(t *testing.T) {
+				cfg := NewCfg()
+				f, err := ini.Load([]byte(tc.raw))
+				require.NoError(t, err)
+				cfg.Raw = f
+
+				require.NoError(t, readNATSSettings(cfg))
+
+				require.Equal(t, tc.notifier, cfg.NATS.Notifier)
+				require.Equal(t, tc.watchMaxAge, cfg.NATS.NotifierWatchMaxAge)
+			})
 		}
 	})
 

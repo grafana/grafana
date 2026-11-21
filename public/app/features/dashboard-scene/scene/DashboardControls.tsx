@@ -4,8 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
+import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagScopeFilters } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -49,6 +49,7 @@ import { DashboardControlsButton } from './dashboard-controls-menu/DashboardCont
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { dashboardModesEnabled, getPickerMode } from './dashboardModes';
+import { DashboardEditHistoryControls } from './new-toolbar/actions/DashboardEditHistoryControls';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -231,6 +232,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   const {
     refreshPicker,
     timePicker,
@@ -306,7 +308,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </div>
         )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && !scopesMegaMenuEnabled && (
+      {scopeFiltersEnabled && !editPanel && !scopesMegaMenuEnabled && (
         <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
       )}
       {!hideVariableControls && (
@@ -373,6 +375,7 @@ function DashboardControlActions({
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      <DashboardEditHistoryControls dashboard={dashboard} />
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}

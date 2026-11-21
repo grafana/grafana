@@ -35,7 +35,7 @@ export const getStyles: TableCellStyles = memoize(
           '&:first-child': {
             paddingInlineStart: 0,
           },
-          '&:last-child': {
+          '&:last-of-type': {
             paddingInlineEnd: 0,
             borderRight: 'none',
           },

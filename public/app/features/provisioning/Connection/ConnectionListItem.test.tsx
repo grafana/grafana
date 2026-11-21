@@ -81,10 +81,10 @@ describe('ConnectionListItem', () => {
     expect(jest.mocked(saveAs)).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the managed badge for an externally managed connection', () => {
+  it('shows the read-only managed badge for an externally managed connection', () => {
     render(<ConnectionListItem connection={managedConnection()} />, { renderWithRouter: true });
 
-    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
   });
 
   it('names the owning plugin in the badge tooltip, not the connection', async () => {
@@ -99,9 +99,21 @@ describe('ConnectionListItem', () => {
     });
     const { user } = render(<ConnectionListItem connection={connection} />, { renderWithRouter: true });
 
-    await user.hover(screen.getByTestId('icon-exchange-alt'));
+    await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
 
-    expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+    expect(await screen.findByText('Read only, Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+  });
+
+  it('badges a connection provisioned by a repository read-only', () => {
+    const connection = managedConnection();
+    connection.metadata!.annotations = {
+      [AnnoKeyManagerKind]: ManagerKind.Repo,
+      [AnnoKeyManagerIdentity]: 'bootstrap',
+    };
+
+    render(<ConnectionListItem connection={connection} />, { renderWithRouter: true });
+
+    expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
   });
 
   it('does not show the managed badge for an unmanaged connection', () => {

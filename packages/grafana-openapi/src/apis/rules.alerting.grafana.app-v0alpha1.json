@@ -4706,6 +4706,10 @@
                 "description": "origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_ruler_uid) wins over \"api\"\n(spec.externalRulerSync.datasourceUid).",
                 "type": "string",
                 "enum": ["api", "ini"]
+              },
+              "rootFolderUid": {
+                "description": "rootFolderUid is the UID of the folder the synced rules live under. The\nworker finds the folder by it, so a rename does not stop the sync and a\ndeleted folder is recreated with the same UID. Internal bookkeeping.",
+                "type": "string"
               }
             },
             "additionalProperties": false

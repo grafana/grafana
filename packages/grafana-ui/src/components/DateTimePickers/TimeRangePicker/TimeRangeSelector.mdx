@@ -1,0 +1,17 @@
+# TimeRangeSelector
+
+Import `TimeRangeSelector` and `TimeRangeSelectorProps` from `@grafana/ui/unstable`.
+
+Use this standalone selector inside a consumer-owned popover. It supports relative
+and absolute ranges, timezone settings, and recent ranges without navigation or
+zoom controls. Standard quick ranges are supplied by default; pass `quickOptions`
+to replace them, including an empty array to omit predefined options.
+
+The consumer owns the trigger, opening and dismissal, selected value, and history
+persistence. Pass `history` and `showHistory` to display recent ranges.
+
+```tsx
+<TimeRangeSelector value={value} onChange={setValue} timeZone={timeZone} onChangeTimeZone={setTimeZone} />
+```
+
+This unstable API is subject to breaking changes and has no stable compatibility guarantee.

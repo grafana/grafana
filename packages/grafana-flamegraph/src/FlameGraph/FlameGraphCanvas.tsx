@@ -50,6 +50,7 @@ type Props = {
   viewMode: ViewMode;
   paneView: PaneView;
   search: string;
+  sandwichItem?: string;
 };
 
 const FlameGraphCanvas = ({
@@ -78,6 +79,7 @@ const FlameGraphCanvas = ({
   viewMode,
   paneView,
   search,
+  sandwichItem,
 }: Props) => {
   const styles = getStyles();
 
@@ -236,6 +238,7 @@ const FlameGraphCanvas = ({
           viewMode={viewMode}
           paneView={paneView}
           search={search}
+          sandwichItem={sandwichItem}
         />
       )}
     </div>

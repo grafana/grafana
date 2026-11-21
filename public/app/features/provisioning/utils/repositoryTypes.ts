@@ -88,6 +88,10 @@ export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | 
   return getRepositoryTypeConfigs().find((config) => config.type === type);
 };
 
+export const getRepositoryTypeIcon = (type?: RepoType): IconName => {
+  return (type && getRepositoryTypeConfig(type)?.icon) || 'external-link-alt';
+};
+
 const GIT_PROVIDER_TYPES = new Set<string>(['github', 'githubEnterprise', 'gitlab', 'bitbucket', 'git']);
 
 export const isGitProvider = (
