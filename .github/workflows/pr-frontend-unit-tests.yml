@@ -95,11 +95,18 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install frontend dependencies
       uses: ./.github/actions/install-frontend-deps
-    - run: pnpm run test:ci
+    - name: Restore Jest cache
+      id: jest-cache
+      uses: ./.github/actions/restore-jest-cache
+      with:
+        shard: ${{ matrix.shard }}
+        total: ${{ matrix.total }}
+    - run: pnpm run test:ci --cacheDirectory="$JEST_CACHE_DIR"
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.total }}
+        JEST_CACHE_DIR: ${{ steps.jest-cache.outputs.path }}
 
   frontend-unit-tests-enterprise:
     permissions:
@@ -139,11 +146,24 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install frontend dependencies
       uses: ./.github/actions/install-frontend-deps
-    - run: pnpm run test:ci
+    - name: Restore Jest cache
+      id: jest-cache
+      uses: ./.github/actions/restore-jest-cache
+      with:
+        shard: ${{ matrix.shard }}
+        total: ${{ matrix.total }}
+    - run: pnpm run test:ci --cacheDirectory="$JEST_CACHE_DIR"
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
         TEST_SHARD_TOTAL: ${{ matrix.total }}
+        JEST_CACHE_DIR: ${{ steps.jest-cache.outputs.path }}
+    - name: Save Jest cache
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/save-jest-cache
+      with:
+        path: ${{ steps.jest-cache.outputs.path }}
+        key: ${{ steps.jest-cache.outputs.key }}
 
   frontend-decoupled-plugin-tests:
     needs:

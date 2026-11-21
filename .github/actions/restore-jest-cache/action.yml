@@ -1,0 +1,43 @@
+name: Restore Jest cache
+description: >-
+  Restores the Jest cache (transformed files, haste map and test timings) for one test shard.
+  Pass the `path` output to Jest as --cacheDirectory. Save it with .github/actions/save-jest-cache.
+
+inputs:
+  shard:
+    description: The Jest shard index.
+    required: true
+  total:
+    description: The total number of Jest shards.
+    required: true
+
+outputs:
+  path:
+    description: The Jest cache directory.
+    value: ${{ steps.vars.outputs.path }}
+  key:
+    description: The cache key to save the cache under.
+    value: ${{ steps.vars.outputs.key }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute Jest cache key
+      id: vars
+      shell: bash
+      env:
+        PREFIX: jest-cache-v1-${{ runner.os }}-${{ inputs.shard }}of${{ inputs.total }}-
+      run: |
+        echo "path=${RUNNER_TEMP}/jest-cache" >> "$GITHUB_OUTPUT"
+        echo "prefix=${PREFIX}" >> "$GITHUB_OUTPUT"
+        # One cache per day: a branch saves at most once per shard per day.
+        echo "key=${PREFIX}$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+    # Jest keys every cache entry by file content and transform config, so an old entry is
+    # never used for a changed file. Restoring the newest cache for the shard is safe.
+    - name: Restore Jest cache
+      uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      with:
+        path: ${{ steps.vars.outputs.path }}
+        key: ${{ steps.vars.outputs.key }}
+        restore-keys: ${{ steps.vars.outputs.prefix }}
