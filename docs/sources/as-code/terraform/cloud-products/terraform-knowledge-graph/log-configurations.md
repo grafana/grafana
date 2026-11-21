@@ -9,14 +9,20 @@ keywords:
   - Log Configuration
   - Log Correlation
   - Loki
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/log-configurations/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/log-configurations/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/log-configurations/
+  - ../../terraform-knowledge-graph/log-configurations/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/log-configurations/
 ---
 
 # Configure log correlation using Terraform
 
 Log configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define how log data is queried and correlated with entities. You can specify data sources, entity matching rules, label mappings, and filtering options for spans and traces.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 For information about configuring log correlation in the Knowledge Graph UI, refer to [Configure logs correlation](/docs/grafana-cloud/knowledge-graph/configure/logs-correlation/).
 

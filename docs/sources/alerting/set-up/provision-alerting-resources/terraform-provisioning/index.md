@@ -21,6 +21,10 @@ weight: 200
 
 Use Terraform’s Grafana Provider to manage your alerting resources and provision them into your Grafana system. Terraform provider support for Grafana Alerting makes it easy to create, manage, and maintain your entire Grafana Alerting stack as code.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 This guide outlines the steps and references to provision alerting resources with Terraform. For a practical demo, you can clone and try this [example using Grafana OSS and Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/terraform).
 
 To create and manage your alerting resources using Terraform, you have to complete the following tasks.
@@ -68,7 +72,7 @@ Replace the following values:
 
 This Terraform configuration installs the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) and authenticates against your Grafana instance using an API token. For other authentication alternatives including basic authentication, refer to the [`auth` option documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
-For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform](/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/terraform-cloud-stack/). For role-based access control, refer to [Provisioning RBAC with Terraform](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/) and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/).
+For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack with Terraform](/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/get-started/terraform-cloud-stack/). For role-based access control, refer to [Provisioning RBAC with Terraform](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-terraform-provisioning/) and the [alerting provisioning roles (`fixed:alerting.provisioning.*`)](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/).
 
 ## Create Terraform configurations for alerting resources
 
@@ -303,8 +307,8 @@ In this section, we'll create Terraform configurations for each alerting resourc
    ```
 
    To configure the mute timing and contact point previously created in the notification policy tree, replace the following field values:
-   - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
-   - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
+   - `<terraform_contact_point_name>` with the terraform name of the previously defined contact point.
+   - `<terraform_mute_timing_name>` with the terraform name of the previously defined mute timing.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 
@@ -416,4 +420,4 @@ For more examples on the concept of this guide:
 
 - Try the demo [provisioning alerting resources in Grafana OSS using Terraform and Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/terraform).
 - Review all the available options and examples of the Terraform Alerting schemas in the [Grafana Terraform Provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
-- Review the [tutorial to manage a Grafana Cloud stack using Terraform](/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/terraform-cloud-stack/).
+- Review the [tutorial to manage a Grafana Cloud stack using Terraform](/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/get-started/terraform-cloud-stack/).

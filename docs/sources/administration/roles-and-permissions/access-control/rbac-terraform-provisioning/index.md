@@ -71,6 +71,10 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 Before you provision roles and assignments, decide which roles to create and how to assign them to users and teams. For planning guidance, refer to [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
 
 ## Before you begin
@@ -194,7 +198,6 @@ resource "grafana_role" "my_new_role" {
   name        = "custom:users:manager"
   description = "Manage organization users and teams"
   uid         = "customusersmanager"
-  version     = 1
   global      = false
 
   # Manage organization users

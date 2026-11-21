@@ -9,14 +9,20 @@ keywords:
   - Profile Configuration
   - Profile Correlation
   - Pyroscope
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/profile-configurations/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/profile-configurations/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/profile-configurations/
+  - ../../terraform-knowledge-graph/profile-configurations/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/profile-configurations/
 ---
 
 # Configure profile correlation using Terraform
 
 Profile configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define how continuous profiling data is queried and correlated with entities. You can specify data sources, entity matching rules, and label mappings for performance profiling.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 For information about configuring profile correlation in the Knowledge Graph UI, refer to [Configure profiles correlation](/docs/grafana-cloud/knowledge-graph/configure/profiles-correlation/).
 

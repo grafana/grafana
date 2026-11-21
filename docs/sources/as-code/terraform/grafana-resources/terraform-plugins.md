@@ -7,15 +7,21 @@ keywords:
   - Terraform
   - Plugins
 title: Install plugins in Grafana Cloud using Terraform
-weight: 300
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-plugins/
+weight: 400
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/terraform-plugins/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-plugins/
+  - ../terraform-plugins/
+  - ../../infrastructure-as-code/terraform/terraform-plugins/
 ---
 
 # Install plugins in Grafana Cloud using Terraform
 
 This guide shows you how to install plugins in Grafana Cloud using Terraform. For more information about Grafana plugins, refer to the [Find and use Grafana plugins](/docs/grafana-cloud/introduction/find-and-use-plugins/) documentation.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -33,7 +39,7 @@ Save all of the following Terraform configuration files in the same directory.
 
 Use this Terraform configuration to set up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide the authentication required to manage plugin resources.
 
-1. Create a service account and token in Grafana. For more information on creating a service account and token, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens). You can also refer to [Creating and managing a Grafana Cloud stack using Terraform](../terraform-cloud-stack/) to set up a service account and a token.
+1. Create a service account and token in Grafana. For more information on creating a service account and token, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens). You can also refer to [Creating and managing a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/) to set up a service account and a token.
 
 1. Make sure that the token has the following permissions:
 

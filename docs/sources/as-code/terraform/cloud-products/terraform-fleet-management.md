@@ -14,15 +14,21 @@ labels:
     - cloud
 title: Manage Fleet Management in Grafana Cloud using Terraform
 weight: 200
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-fleet-management/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-fleet-management/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-fleet-management/
+  - ../terraform-fleet-management/
+  - ../../infrastructure-as-code/terraform/terraform-fleet-management/
 ---
 
 # Manage Fleet Management in Grafana Cloud using Terraform
 
 Learn how to create [Grafana Fleet Management](https://grafana.com/docs/grafana-cloud/send-data/fleet-management/) collectors and pipelines in Grafana Cloud using Terraform.
 This guide shows you how to create an access policy and a token for Fleet Management, preregister a collector with remote attributes, and create a configuration pipeline.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 Fleet Management supports [Grafana Alloy](https://grafana.com/docs/alloy/latest/) and the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/).
 The two collector types connect to Fleet Management differently and use different configuration syntax, so this guide shows both paths side by side.
@@ -589,6 +595,16 @@ After you apply the changes in the Terraform configurations and run your collect
 - Telemetry is being exported to Grafana Cloud. For example, host metrics are visible in Grafana Cloud Metrics:
 
   {{< figure alt="A dashboard in Grafana Cloud which shows OTLP host metrics data, including a graph for memory usage." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-host-metrics.png" >}}
+
+## Other data sources
+
+The Grafana provider also includes the following Fleet Management data sources, which you can use to read collectors that are already registered.
+These data sources require provider version 3.22.3 or later.
+
+| Data source                                                                                                                                           | Description                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`grafana_fleet_management_collector`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/fleet_management_collector)   | Reads a single collector by ID.                      |
+| [`grafana_fleet_management_collectors`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/fleet_management_collectors) | Lists all collectors registered in Fleet Management. |
 
 ## Summary
 

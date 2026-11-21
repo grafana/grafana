@@ -7,16 +7,22 @@ keywords:
   - Terraform
   - Cloud Provider Observability
 title: Manage Cloud Provider Observability in Grafana Cloud using Terraform
-weight: 210
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-cloud-provider-o11y/
+weight: 100
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-cloud-provider-o11y/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-cloud-provider-o11y/
+  - ../terraform-cloud-provider-o11y/
+  - ../../infrastructure-as-code/terraform/terraform-cloud-provider-o11y/
 ---
 
 # Manage Cloud Provider Observability in Grafana Cloud using Terraform
 
 Manage Cloud Provider Observability, including Amazon CloudWatch and Microsoft Azure resources, in Grafana Cloud using Terraform.
 For more information on Cloud Provider Observability, refer to the [Cloud Provider Observability](/docs/grafana-cloud/monitor-infrastructure/monitor-cloud-provider/) documentation.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -66,7 +72,7 @@ To configure authentication for the Grafana Provider:
    - To obtain the regional Cloud Provider API endpoint, use your access policy token and the following command to return a list of all of the Grafana stacks you own, along with their respective Cloud Provider API hostnames:
 
    ```bash
-   curl -sH "Authorization: Bearer @@@GRAFANA_CLOUD_ACCESS_POLICY_TOKEN@@@" "https://grafana.com/api/instances" | \
+   curl -sH "Authorization: Bearer <GRAFANA_CLOUD_ACCESS_POLICY_TOKEN>" "https://grafana.com/api/instances" | \
    jq '[.items[]|{stackName: .slug, clusterName:.clusterSlug, cloudProviderAPIURL: "https://cloud-provider-api-\(.clusterSlug).grafana.net"}]'
    ```
 
@@ -77,25 +83,32 @@ To configure authentication for the Grafana Provider:
 
 1. Create a file named `cloud-provider.tf` and add the following code block:
 
-   ```tf
+   ```terraform
    terraform {
-       required_providers {
+     required_providers {
        grafana = {
-           source  = "grafana/grafana"
+         source = "grafana/grafana"
        }
      }
    }
 
    provider "grafana" {
-       cloud_provider_url      = "<@@@CLOUD_PROVIDER_URL@@@"
-       cloud_access_policy_token     = "@@@CLOUD_ACCESS_POLICY_TOKEN@@@>"
+     cloud_provider_url          = "<CLOUD_PROVIDER_URL>"
+     cloud_provider_access_token = "<CLOUD_PROVIDER_ACCESS_TOKEN>"
    }
    ```
 
-1. Create a `variables.tf` file and paste the `CLOUD_ACCESS_POLICY_TOKEN` and `CLOUD_PROVIDER_URL` variables with your values.
-1. Run the following Terraform command:
-   ```tf
-   terraform apply -var-file="variables.tf"
+1. Replace the following placeholders:
+   - _`<CLOUD_PROVIDER_URL>`_: The regional Cloud Provider API endpoint from the previous step.
+   - _`<CLOUD_PROVIDER_ACCESS_TOKEN>`_: The Grafana Cloud access policy token you created in step 1.
+
+   Alternatively, set the `GRAFANA_CLOUD_PROVIDER_URL` and `GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN` environment variables instead of hardcoding them in `cloud-provider.tf`.
+
+1. Initialize and apply your Terraform configuration once you have added your resource definitions:
+
+   ```bash
+   terraform init
+   terraform apply
    ```
 
 ## Configure your resources
@@ -122,3 +135,12 @@ You can define the following Cloud Provider Observability resources and data sou
 | `grafana_cloud_provider_aws_cloudwatch_scrape_job`        | Represents a Grafana AWS scrape job. This configures Grafana to fetch a list of metrics and statistics for one or many AWS services, and for a given `grafana_cloud_provider_aws_account`. For a full reference of this resource, refer to the [Terraform Grafana Provider reference documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_provider_aws_cloudwatch_scrape_job).                    |
 | `grafana_cloud_provider_aws_resource_metadata_scrape_job` | Represents a Grafana AWS Resource Metadata scrape job. This resource configures Grafana to fetch resource metadata for one or multiple AWS services, for a given `grafana_cloud_provider_aws_account`. For a full reference of this resource, refer to the [Terraform Grafana Provider reference documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_provider_aws_resource_metadata_scrape_job). |
 | `grafana_cloud_provider_azure_credential`                 | A resource representing an Azure Service Principal credential used by Grafana Cloud to pull Azure Monitor metrics from one or more subscriptions. For a full reference of this resource, refer to the [Terraform Grafana Provider resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_provider_azure_credential).                                                                       |
+
+You can also read existing Cloud Provider Observability configuration with the following data sources:
+
+| Data source name                                                                                                                                                                  | Description                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [`grafana_cloud_provider_aws_account`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_account)                               | Reads an AWS account that's connected to Grafana Cloud.               |
+| [`grafana_cloud_provider_aws_cloudwatch_scrape_job`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_cloudwatch_scrape_job)   | Reads a single Amazon CloudWatch scrape job.                          |
+| [`grafana_cloud_provider_aws_cloudwatch_scrape_jobs`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_aws_cloudwatch_scrape_jobs) | Lists all Amazon CloudWatch scrape jobs in a stack.                   |
+| [`grafana_cloud_provider_azure_credential`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/cloud_provider_azure_credential)                     | Reads a Microsoft Azure credential that's connected to Grafana Cloud. |

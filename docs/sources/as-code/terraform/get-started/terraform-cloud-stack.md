@@ -1,19 +1,26 @@
 ---
+description: Learn how to create a Grafana Cloud stack and add a data source, a folder, and a dashboard to it using Terraform.
 keywords:
   - Infrastructure as Code
   - Quickstart
   - Grafana Cloud
   - Terraform
 title: Create and manage a Grafana Cloud stack using Terraform
-weight: 100
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-cloud-stack/
+weight: 200
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/get-started/terraform-cloud-stack/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-cloud-stack/
+  - ../terraform-cloud-stack/
+  - ../../infrastructure-as-code/terraform/terraform-cloud-stack/
 ---
 
 # Create and manage a Grafana Cloud stack using Terraform
 
 Learn how to add a data source, a dashboard, and a folder to a Grafana Cloud stack using Terraform.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 ## Prerequisites
 
@@ -39,7 +46,7 @@ All of the following Terraform configuration files should be saved in the same d
      required_providers {
        grafana = {
          source  = "grafana/grafana"
-         version = ">= 2.9.0"
+         version = ">= 2.13.0"
        }
      }
    }
@@ -130,8 +137,11 @@ This guide uses the InfluxDB data source. The required arguments for [grafana_da
      name          = "<data-source-name>"
      url           = "<data-source-url>"
      username      = "<username>"
-     password      = "<password>"
      database_name = "<db-name>"
+
+     secure_json_data_encoded = jsonencode({
+       password = "<password>"
+     })
    }
    ```
 

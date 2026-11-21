@@ -9,14 +9,20 @@ keywords:
   - Trace Configuration
   - Trace Correlation
   - Tempo
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/trace-configurations/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/trace-configurations/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/trace-configurations/
+  - ../../terraform-knowledge-graph/trace-configurations/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/trace-configurations/
 ---
 
 # Configure trace correlation using Terraform
 
 Trace configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to define how trace data is queried and correlated with entities. You can specify data sources, entity matching rules, and label mappings for distributed tracing.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 For information about configuring trace correlation in the Knowledge Graph UI, refer to [Configure traces correlation](/docs/grafana-cloud/knowledge-graph/configure/traces-correlation/).
 

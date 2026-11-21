@@ -22,6 +22,10 @@ aliases:
 
 You can configure Git Sync via the Grafana provisioning app platform using Terraform.
 
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
+
 To do so, follow these steps:
 
 1. Read [Before you begin](#before-you-begin).
@@ -48,7 +52,7 @@ You need the three files described in this document to set up Git Sync with Terr
 
 Configure the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) with the authentication required to set up Git Sync.
 
-1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/terraform/terraform-cloud-stack/).
+1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/terraform/get-started/terraform-cloud-stack/).
 
 1. Make sure that the token has the Admin or the `Provisioning:Repositories` writer permission.
 
@@ -173,7 +177,7 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<YOUR_WORKFLOWS>`_: Array with the workflows you want Git Sync to use. For example, `["write", "branch"]`. Use `write` to allow direct commits, `branch` to force using PRs, or leave blank if the repository is read-only.
+- _`<YOUR-WORKFLOWS>`_: Array with the workflows you want Git Sync to use. For example, `["write", "branch"]`. Use `write` to allow direct commits, `branch` to force using PRs, or leave blank if the repository is read-only.
 - _`<SYNC_ENABLED>`_: Whether you want to enable automatic synchronization. Allowed values are `true` and `false`.
 - _`<YOUR_SYNC_TARGET>`_: Where you want to place your provisioned resources. Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
 - _`<SYNC_INTERVAL>`_: How often your Grafana instance automatically pulls updates from the folder managed with Git Sync. The default value is `300` seconds in Grafana Cloud, and `60` seconds in Grafana OSS/Enterprise.

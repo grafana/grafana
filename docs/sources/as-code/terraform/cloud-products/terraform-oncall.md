@@ -8,10 +8,12 @@ keywords:
   - Grafana Cloud IRM
   - OnCall
 title: Manage Grafana IRM in Grafana Cloud using Terraform
-weight: 120
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-oncall/
+weight: 400
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-oncall/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-oncall/
+  - ../terraform-oncall/
+  - ../../infrastructure-as-code/terraform/terraform-oncall/
 ---
 
 # Manage Grafana IRM in Grafana Cloud using Terraform
@@ -25,6 +27,11 @@ Additionally, it includes the necessary steps to configure Slack for IRM.
 {{< admonition type="note" >}}
 Grafana IRM supports Terraform-based configuration for a limited set of resources, primarily those related to OnCall functionality.
 These resources use the `grafana_oncall_` naming convention in Terraform. Additional IRM components are not yet configurable via Terraform.
+For the full list of IRM resources and data sources, refer to [Other resources and data sources](#other-resources-and-data-sources).
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 {{< /admonition >}}
 
 ## Before you begin
@@ -50,7 +57,7 @@ To connect your Slack workspace to Grafana IRM, refer to the [Slack integration 
 
 This Terraform configuration sets up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide necessary authentication when managing resources for Grafana IRM.
 
-You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](../terraform-cloud-stack/) to set up a service account and a token.
+You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/) to set up a service account and a token.
 
 1. Create a Service account and token in Grafana. To create a new one, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens).
 
@@ -106,7 +113,7 @@ To use an existing OnCall API token:
      required_providers {
        grafana = {
          source  = "grafana/grafana"
-         version = ">= 2.9.0"
+         version = ">= 3.15.3"
        }
      }
    }
@@ -351,6 +358,33 @@ After you apply the changes in the Terraform configurations, you can verify the 
 - The Alertmanager integration is added and configured with escalation policies:
 
   ![Alertmanager integration for SREs escalation](/media/docs/grafana-cloud/alerting-and-irm/screenshot-oncall-alertmanager-tf.png)
+
+## Other resources and data sources
+
+This guide covers schedules, escalation chains, integrations, and routes.
+The Grafana provider also includes the following IRM resources:
+
+| Resource                                                                                                                                               | Description                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [`grafana_oncall_on_call_shift`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/oncall_on_call_shift)                   | Creates on-call shifts that you can reference from on-call schedules.                                        |
+| [`grafana_oncall_outgoing_webhook`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/oncall_outgoing_webhook)             | Sends alert group events to external systems through outgoing webhooks.                                      |
+| [`grafana_oncall_user_notification_rule`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/oncall_user_notification_rule) | Sets the personal notification rules for a user, such as notifying by SMS after a wait step.                 |
+| [`grafana_oncall_team_access_management`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/oncall_team_access_management) | Controls whether a team's IRM resources are visible to all users. Requires provider version 4.52.0 or later. |
+
+Use the following data sources to reference existing IRM objects in your configuration:
+
+| Data source                                                                                                                                   | Description                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`grafana_oncall_escalation_chain`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_escalation_chain) | Looks up an escalation chain by name.                                         |
+| [`grafana_oncall_integration`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_integration)           | Looks up an integration by ID, or by a combination of name, team, and type.   |
+| [`grafana_oncall_label`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_label)                       | Looks up a label by key and value. Requires provider version 3.22.3 or later. |
+| [`grafana_oncall_outgoing_webhook`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_outgoing_webhook) | Looks up an outgoing webhook by name.                                         |
+| [`grafana_oncall_schedule`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_schedule)                 | Looks up a schedule by name.                                                  |
+| [`grafana_oncall_slack_channel`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_slack_channel)       | Looks up a Slack channel by name.                                             |
+| [`grafana_oncall_team`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_team)                         | Looks up a team by name.                                                      |
+| [`grafana_oncall_user`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_user)                         | Looks up a user by username.                                                  |
+| [`grafana_oncall_user_group`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_user_group)             | Looks up a Slack user group by its handle.                                    |
+| [`grafana_oncall_users`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/data-sources/oncall_users)                       | Lists users, optionally filtered by team.                                     |
 
 ## Summary
 

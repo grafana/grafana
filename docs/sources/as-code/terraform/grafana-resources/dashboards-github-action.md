@@ -1,4 +1,5 @@
 ---
+description: Learn how to manage multiple dashboards stored as JSON source code using Terraform and GitHub Actions.
 keywords:
   - Infrastructure as Code
   - Quickstart
@@ -6,15 +7,21 @@ keywords:
   - Terraform
   - GitHub Actions
 title: Create and manage dashboards using Terraform and GitHub Actions
-weight: 110
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/dashboards-github-action/
+weight: 100
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/dashboards-github-action/
 aliases:
   - ../infrastructure-as-code/terraform/dashboards-github-action/
+  - ../dashboards-github-action/
+  - ../../infrastructure-as-code/terraform/dashboards-github-action/
 ---
 
 # Create and manage dashboards using Terraform and GitHub Actions
 
 Learn how to create and manage multiple dashboards represented as JSON source code for Grafana using Terraform and GitHub Actions.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 ## Prerequisites
 
@@ -96,7 +103,7 @@ resource "grafana_folder" "AWS" {
 This Terraform configuration iterates through the JSON files in the three folders (`elasticsearch`, `influxdb` and `aws`) you created in the GitHub repository and adds them to the respective folders in the Grafana instance using a Grafana dashboard resource. Available resources include:
 
 - [`grafana_dashboard` (Resource)](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/dashboard).
-- For Kubernetes-style dashboards in Grafana v13 or later, use the appropriate resource depending on your dashboard's Kubernetes version. Refer to [Grafana resources](https://github.com/grafana/terraform-provider-grafana/blob/main/docs/resources) for details on the available resources, such as `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v1`, or `grafana_apps_dashboard_dashboard_v2`.
+- For Kubernetes-style dashboards in Grafana v13 or later, use the appropriate resource depending on your dashboard's Kubernetes version. Refer to [Grafana resources](https://github.com/grafana/terraform-provider-grafana/blob/main/docs/resources) for details on the available resources, such as `grafana_apps_dashboard_dashboard_v1beta1`, `grafana_apps_dashboard_dashboard_v2beta1`, or `grafana_apps_dashboard_dashboard_v2`.
 
 For example, the dashboard represented as JSON source code in the `elasticsearch` folder in the GitHub repository will be created in the `ElasticSearch` folder in the Grafana instance.
 

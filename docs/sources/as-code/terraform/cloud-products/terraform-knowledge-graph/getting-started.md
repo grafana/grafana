@@ -8,14 +8,20 @@ keywords:
   - Knowledge Graph
   - Provider Setup
   - Getting Started
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/getting-started/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/getting-started/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/getting-started/
+  - ../../terraform-knowledge-graph/getting-started/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/getting-started/
 ---
 
 # Get started with Terraform for Knowledge Graph
 
 Learn how to configure Terraform to manage Grafana Cloud Knowledge Graph resources. This guide walks you through setting up the Grafana Terraform provider and preparing your environment.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 ## Before you begin
 
@@ -37,7 +43,7 @@ All Terraform configuration files should be saved in the same directory.
 
 This Terraform configuration sets up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide necessary authentication when managing knowledge graph resources.
 
-You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](/docs/grafana-cloud/as-code/terraform/terraform-cloud-stack/) to set up a service account and a token.
+You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](../../../get-started/terraform-cloud-stack/) to set up a service account and a token.
 
 ### Steps
 
@@ -52,7 +58,7 @@ You can reuse a similar setup to the one described in [Creating and managing a G
      required_providers {
        grafana = {
          source  = "grafana/grafana"
-         version = ">= 2.9.0"
+         version = ">= 4.26.0"
        }
      }
    }

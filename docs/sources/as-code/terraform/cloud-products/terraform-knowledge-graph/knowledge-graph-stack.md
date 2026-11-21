@@ -9,14 +9,20 @@ keywords:
   - Stack Configuration
   - Onboarding
   - Datasets
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/knowledge-graph-stack/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
+  - ../../terraform-knowledge-graph/knowledge-graph-stack/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/knowledge-graph-stack/
 ---
 
 # Configure the Knowledge Graph stack using Terraform
 
 The Knowledge Graph stack resource manages the full onboarding flow for your Grafana Cloud stack. It provisions API tokens, configures datasets based on available metrics, and enables the stack.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 By default, datasets are auto-configured based on detected metrics. To manually configure datasets, for example when your metrics use non-standard label names, use the `dataset` block.
 
@@ -27,7 +33,7 @@ Before you begin, ensure you have the following:
 - A Grafana Cloud account, as shown in [Get started](/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
 - The Grafana Terraform provider configured, as shown in [Get started with Terraform for Knowledge Graph](../getting-started/)
-- A Cloud Access Policy with the following scopes: `stacks:read`, `metrics:read`, `metrics:write`
+- A Grafana Cloud Access Policy token with the `accesspolicies:read`, `accesspolicies:write`, `accesspolicies:delete`, `stacks:read`, and `stack-service-accounts:write` scopes, if you create the required stack tokens with Terraform in the next section
 
 ## Dataset types
 
@@ -41,14 +47,23 @@ The following dataset types are available:
 ## Create the required tokens
 
 Before you configure the Knowledge Graph stack, create the Cloud Access Policy and Grafana Service Account tokens that the resource requires.
+Because `grafana_cloud_access_policy` and `grafana_cloud_stack_service_account` call the Grafana Cloud API, configure a `grafana.cloud` provider alias with `cloud_access_policy_token` alongside the `grafana.asserts` provider from [Get started](../getting-started/).
 
 Create a file named `knowledge-graph-stack.tf` and add the following:
 
 ```terraform
+provider "grafana" {
+  alias                     = "cloud"
+  cloud_access_policy_token = var.cloud_access_policy_token
+}
+
 # Create a Cloud Access Policy with required scopes
 resource "grafana_cloud_access_policy" "knowledge_graph" {
+  provider = grafana.cloud
+
   name         = "knowledge-graph-stack-policy"
   display_name = "Knowledge Graph Stack Policy"
+  region       = var.stack_region
 
   scopes = [
     "stacks:read",
@@ -64,12 +79,17 @@ resource "grafana_cloud_access_policy" "knowledge_graph" {
 
 # Create a token from the Cloud Access Policy
 resource "grafana_cloud_access_policy_token" "knowledge_graph" {
+  provider = grafana.cloud
+
   name             = "knowledge-graph-stack-token"
   access_policy_id = grafana_cloud_access_policy.knowledge_graph.policy_id
+  region           = grafana_cloud_access_policy.knowledge_graph.region
 }
 
 # Create a Grafana Service Account for dashboards and Grafana Managed Alerts
 resource "grafana_cloud_stack_service_account" "knowledge_graph" {
+  provider = grafana.cloud
+
   stack_slug  = var.stack_slug
   name        = "knowledge-graph-managed-alerts-sa"
   role        = "Admin"
@@ -77,9 +97,17 @@ resource "grafana_cloud_stack_service_account" "knowledge_graph" {
 }
 
 resource "grafana_cloud_stack_service_account_token" "knowledge_graph" {
+  provider = grafana.cloud
+
   stack_slug         = var.stack_slug
   service_account_id = grafana_cloud_stack_service_account.knowledge_graph.id
   name               = "knowledge-graph-managed-alerts-token"
+}
+
+variable "cloud_access_policy_token" {
+  description = "A Grafana Cloud Access Policy token for managing access policies and stack service accounts"
+  type        = string
+  sensitive   = true
 }
 
 variable "stack_id" {
@@ -91,12 +119,19 @@ variable "stack_slug" {
   description = "The Grafana Cloud stack slug"
   type        = string
 }
+
+variable "stack_region" {
+  description = "The region of the Grafana Cloud stack, for example prod-us-east-0"
+  type        = string
+}
 ```
 
-Replace the following values:
+Set the following variables, for example in a `terraform.tfvars` file:
 
-- _`<STACK_ID>`_ with your Grafana Cloud stack ID
-- _`<STACK_SLUG>`_ with your Grafana Cloud stack slug
+- `cloud_access_policy_token`: Your Grafana Cloud Access Policy token
+- `stack_id`: Your Grafana Cloud stack ID
+- `stack_slug`: Your Grafana Cloud stack slug
+- `stack_region`: The region of your Grafana Cloud stack, for example `prod-us-east-0`
 
 ## Basic stack configuration with auto-detected datasets
 
@@ -106,6 +141,8 @@ Add the following to `knowledge-graph-stack.tf`:
 
 ```terraform
 resource "grafana_asserts_stack" "main" {
+  provider = grafana.asserts
+
   cloud_access_policy_token = grafana_cloud_access_policy_token.knowledge_graph.token
   grafana_token             = grafana_cloud_stack_service_account_token.knowledge_graph.key
 }
@@ -123,6 +160,8 @@ Use manual configuration when your metrics use non-standard label names, for exa
 
 ```terraform
 resource "grafana_asserts_stack" "manual" {
+  provider = grafana.asserts
+
   cloud_access_policy_token = grafana_cloud_access_policy_token.knowledge_graph.token
   grafana_token             = grafana_cloud_stack_service_account_token.knowledge_graph.key
 
@@ -150,6 +189,8 @@ Configure multiple dataset types with custom label mappings and metric filters:
 
 ```terraform
 resource "grafana_asserts_stack" "multi_dataset" {
+  provider = grafana.asserts
+
   cloud_access_policy_token = grafana_cloud_access_policy_token.knowledge_graph.token
   grafana_token             = grafana_cloud_stack_service_account_token.knowledge_graph.key
 
@@ -241,6 +282,8 @@ Each `filter` block supports the following:
 
 ```terraform
 resource "grafana_asserts_stack" "example" {
+  provider = grafana.asserts
+
   cloud_access_policy_token = grafana_cloud_access_policy_token.knowledge_graph.token
   grafana_token             = grafana_cloud_stack_service_account_token.knowledge_graph.key
 

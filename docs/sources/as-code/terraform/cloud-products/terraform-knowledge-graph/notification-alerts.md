@@ -8,14 +8,20 @@ keywords:
   - Knowledge Graph
   - Notification Alerts
   - Alert Configuration
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/notification-alerts/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/cloud-products/terraform-knowledge-graph/notification-alerts/
 aliases:
   - ../../infrastructure-as-code/terraform/terraform-knowledge-graph/notification-alerts/
+  - ../../terraform-knowledge-graph/notification-alerts/
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/notification-alerts/
 ---
 
 # Configure notification alerts using Terraform
 
 Notification alerts configurations in [Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) allow you to manage how alerts are processed and routed. You can specify match labels to filter alerts, add custom labels, set duration requirements, and control silencing.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 For information about configuring notification alerts in the Knowledge Graph UI, refer to [Configure notifications](/docs/grafana-cloud/knowledge-graph/configure/notifications/).
 

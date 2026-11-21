@@ -11,17 +11,23 @@ labels:
     - cloud
   stage: general-availability
 title: Manage secrets in Grafana Cloud using Terraform
-weight: 130
+weight: 300
 review_date: '2026-09-14'
-canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-secrets-management/
+canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/grafana-resources/terraform-secrets-management/
 aliases:
   - ../infrastructure-as-code/terraform/terraform-secrets-management/
+  - ../terraform-secrets-management/
+  - ../../infrastructure-as-code/terraform/terraform-secrets-management/
 ---
 
 # Manage secrets in Grafana Cloud using Terraform
 
 Use the Terraform Grafana provider to create and manage secure values in [Grafana Secrets Management](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/manage-secrets/) as code.
 With Terraform, you keep secrets such as API keys, tokens, passwords, and certificates in version-controlled, declarative infrastructure alongside the rest of your Grafana stack.
+
+{{< admonition type="note" >}}
+The Grafana Terraform provider is updated frequently. For the latest provider version and the complete reference for every resource and data source, refer to the [Grafana provider in the Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+{{< /admonition >}}
 
 This guide covers _secure values_, which you manage with the [`grafana_apps_secret_securevalue_v1beta1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_secret_securevalue_v1beta1) resource.
 By default, Grafana stores secure values in the built-in _system keeper_, which requires no setup.
@@ -65,7 +71,7 @@ To create a service account and token, follow these steps:
 
 1. Create a service account and token in Grafana.
    To create them, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens).
-   You can also refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/) to set up a service account and token.
+   You can also refer to [Create and manage a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/) to set up a service account and token.
 
 1. Make sure the service account has the role-based access control (RBAC) actions needed to manage secure values:
    - `secret.securevalues:create`
@@ -128,7 +134,7 @@ You can also use a secrets manager or a `terraform.tfvars` file.
 Don't set variables in a file that you commit.
 
 For other authentication options, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
-For end-to-end stack management, refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/).
+For end-to-end stack management, refer to [Create and manage a Grafana Cloud stack using Terraform](../../get-started/terraform-cloud-stack/).
 
 ## Define a secure value
 
