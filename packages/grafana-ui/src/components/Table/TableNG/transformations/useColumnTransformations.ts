@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
-import { getFieldReferenceKey } from '@grafana/data/internal';
+import { createFieldReferenceIndex, type FieldReference } from '@grafana/data/internal';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 import { type TableNGProps } from '../types';
@@ -12,19 +12,17 @@ import { ensureVisibleColumnPerFrame } from './columnVisibility';
 import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
-function shouldResetColumnOrder(previous: string[], current: string[]): boolean {
+function shouldResetColumnOrder(previous: readonly FieldReference[], current: readonly FieldReference[]): boolean {
   // Ignore additions and removals; only a changed relative order of shared columns invalidates saved indices.
-  const previousNames = new Set(previous);
-  const currentNames = new Set(current);
-  const sharedBefore = previous.filter((name) => currentNames.has(name));
-  const sharedAfter = current.filter((name) => previousNames.has(name));
+  const find = createFieldReferenceIndex(current);
+  const shared = previous.map((reference) => find(reference)).filter((index) => index >= 0);
 
-  if (sharedBefore.length === 0) {
+  if (shared.length === 0) {
     // With no overlap, any non-empty catalog means the saved order belongs to a different schema.
     return previous.length !== 0 || current.length !== 0;
   }
 
-  return sharedBefore.some((name, index) => name !== sharedAfter[index]);
+  return shared.some((index, position) => position > 0 && index < shared[position - 1]);
 }
 
 export function useColumnTransformations(
@@ -53,7 +51,7 @@ export function useColumnTransformations(
   // Keep the last non-empty source catalog per frame as the comparison baseline.
   // The baseline belongs to one panel, so it is cleared when the table stays mounted
   // while the dashboard swaps the panel underneath it (for example undoing an edit).
-  const previousCatalogs = useRef(new Map<string, string[]>());
+  const previousCatalogs = useRef(new Map<string, readonly FieldReference[]>());
   const catalogsApi = useRef(api);
   useEffect(() => {
     if (catalogsApi.current !== api) {
@@ -66,10 +64,9 @@ export function useColumnTransformations(
     }
 
     const frameKey = sourceFrame?.refId ?? `#${sourceIndex}`;
-    const columns = context.references.map(getFieldReferenceKey);
     const previous = previousCatalogs.current.get(frameKey);
-    previousCatalogs.current.set(frameKey, columns);
-    if (previous && shouldResetColumnOrder(previous, columns)) {
+    previousCatalogs.current.set(frameKey, context.references);
+    if (previous && shouldResetColumnOrder(previous, context.references)) {
       update((current) =>
         columnTransformations.columnOrder.read(current, context).columnOrder
           ? columnTransformations.columnOrder.write(current, [], context)

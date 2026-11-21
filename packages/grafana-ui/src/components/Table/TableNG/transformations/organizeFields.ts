@@ -2,8 +2,8 @@ import { isEqual, omit } from 'lodash';
 
 import { DataTransformerID, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 import {
+  createFieldReferenceIndex,
   type FieldReference,
-  getFieldReferenceKey,
   type OrganizeFieldsTransformerOptions,
   renameReferencedKeys,
 } from '@grafana/data/internal';
@@ -72,17 +72,15 @@ function entryKeys({ excludeByName, indexByName, renameByName }: OrganizeFieldsT
   ]);
 }
 
-const catalogByReference = new WeakMap<ColumnContext, Map<string, string>>();
+const catalogIndexes = new WeakMap<ColumnContext, (reference: FieldReference) => number>();
 
-function getCatalogByReference(context: ColumnContext): Map<string, string> {
-  let catalog = catalogByReference.get(context);
-  if (!catalog) {
-    catalog = new Map(
-      context.references.map((reference, index) => [getFieldReferenceKey(reference), context.catalog[index]])
-    );
-    catalogByReference.set(context, catalog);
+function findCatalogName(context: ColumnContext, reference: FieldReference): string | undefined {
+  let find = catalogIndexes.get(context);
+  if (!find) {
+    find = createFieldReferenceIndex(context.references);
+    catalogIndexes.set(context, find);
   }
-  return catalog;
+  return context.catalog[find(reference)];
 }
 
 const normalizedEntries = new WeakMap<
@@ -102,10 +100,9 @@ export function normalizeColumnsEntry(
   const entry = findColumnsEntry(transformations, context.frameFilter);
   let normalized = transformations;
   if (entry) {
-    const catalog = getCatalogByReference(context);
     const options = renameReferencedKeys(
       entry.options,
-      (reference) => catalog.get(getFieldReferenceKey(reference)),
+      (reference) => findCatalogName(context, reference),
       context.catalog
     );
     if (options !== entry.options) {

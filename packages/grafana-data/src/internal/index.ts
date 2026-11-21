@@ -144,8 +144,8 @@ export { getPanelDataStatusItems, PanelStatusStore } from '../panel/PanelNotices
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
 export {
+  createFieldReferenceIndex,
   createFieldReferenceResolver,
-  getFieldReferenceKey,
   getFieldReferences,
   getRowIdentity,
   hasSameLabels,
