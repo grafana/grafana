@@ -12,8 +12,9 @@ export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<
   if (shouldMigrateGauge(panel)) {
     const fieldConfig = panel.fieldConfig;
 
-    // This option had no effect in old gauge unless color mode was 'From thresholds'
-    if (newOptions.showThresholdMarkers && fieldConfig?.defaults?.color?.mode !== FieldColorModeId.Thresholds) {
+    // An omitted color mode defaults to thresholds in the old gauge.
+    const colorMode = fieldConfig?.defaults?.color?.mode ?? FieldColorModeId.Thresholds;
+    if (newOptions.showThresholdMarkers && colorMode !== FieldColorModeId.Thresholds) {
       newOptions.showThresholdMarkers = false;
     }
 
