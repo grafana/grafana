@@ -27,19 +27,18 @@ type jobRun struct {
 }
 
 func newJobRun(ctx context.Context, opts options) (*jobRun, error) {
-	t, err := loadTarget(ctx, opts)
+	t, err := loadTarget(opts)
 	if err != nil {
 		return nil, err
 	}
-	repo, err := buildRepository(ctx, t.cfg, opts.token, opts.homePath)
+	repo, err := buildRepository(ctx, t.cfg, opts.token)
 	if err != nil {
 		return nil, fmt.Errorf("build repository: %w", err)
 	}
-	clients := t.grafana.clients
 	return &jobRun{
 		target:              t,
 		repo:                repo,
-		repositoryResources: resources.NewRepositoryResourcesFactory(resources.NewParserFactory(clients), clients, t.lister),
+		repositoryResources: resources.NewRepositoryResourcesFactory(resources.NewParserFactory(t.clients), t.clients, t.lister),
 		metrics:             jobs.RegisterJobMetrics(prometheus.NewRegistry()),
 	}, nil
 }

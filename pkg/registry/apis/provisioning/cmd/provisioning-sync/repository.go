@@ -66,7 +66,7 @@ func repositoryFromFlags(opts options) (*provisioning.Repository, error) {
 
 // buildRepository builds the same repository implementation the server would, but with the
 // token given on the command line instead of one decrypted from Grafana's secrets service.
-func buildRepository(ctx context.Context, cfg *provisioning.Repository, token, homePath string) (repository.Repository, error) {
+func buildRepository(ctx context.Context, cfg *provisioning.Repository, token string) (repository.Repository, error) {
 	decrypter := func(*provisioning.Repository) repository.SecureValues {
 		return staticSecrets{token: common.RawSecureValue(token)}
 	}
@@ -76,15 +76,12 @@ func buildRepository(ctx context.Context, cfg *provisioning.Repository, token, h
 	case provisioning.GitRepositoryType:
 		extra = git.Extra(decrypter, true, nil, nil, userAgent)
 	case provisioning.GitHubRepositoryType:
-		// No webhook builder: the CLI only pulls, so it never registers webhooks.
+		// No webhook builder: the CLI never registers webhooks.
 		extra = github.Extra(decrypter, github.ProvideFactory(), nil, true, nil, nil, userAgent)
 	case provisioning.LocalRepositoryType:
-		if cfg.Spec.Local == nil {
-			return nil, fmt.Errorf("local configuration is required")
-		}
-		// The command line chose this path, so it is the one prefix the CLI permits.
-		permitted := local.ResolvePath(homePath, cfg.Spec.Local.Path)
-		extra = local.Extra(homePath, []string{permitted}, nil)
+		// The command line chose this path, so it is the one prefix the CLI permits. A relative
+		// path resolves against the working directory.
+		extra = local.Extra(".", []string{local.ResolvePath(".", cfg.Spec.Local.Path)}, nil)
 	default:
 		return nil, fmt.Errorf("unsupported repository type %q", cfg.Spec.Type)
 	}
@@ -92,8 +89,8 @@ func buildRepository(ctx context.Context, cfg *provisioning.Repository, token, h
 	return extra.Build(ctx, cfg)
 }
 
-// staticSecrets hands the repository builders the command-line token. The CLI never commits
-// or registers webhooks, so it has no signing key or webhook secret to give.
+// staticSecrets hands the repository builders the command-line token. The CLI never signs
+// commits or registers webhooks, so it has no signing key or webhook secret to give.
 type staticSecrets struct {
 	token common.RawSecureValue
 }

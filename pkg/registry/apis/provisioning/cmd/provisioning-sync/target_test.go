@@ -63,20 +63,20 @@ func TestLoadTargetFromFlagsReadsStateFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(statePath, []byte(`{"sync":{"state":"success","lastRef":"saved-ref"}}`), 0o600))
 
 	opts := options{repoType: "local", path: t.TempDir(), name: "demo", namespace: "default", stateFile: statePath, offline: true}
-	tgt, err := loadTarget(t.Context(), opts)
+	tgt, err := loadTarget(opts)
 	require.NoError(t, err)
 	assert.Equal(t, "demo", tgt.cfg.Name)
 	assert.Equal(t, "saved-ref", tgt.cfg.Status.Sync.LastRef)
 	assert.Nil(t, tgt.lister, "an offline plan has nothing to list")
 
 	opts.fromRef = "override-ref"
-	tgt, err = loadTarget(t.Context(), opts)
+	tgt, err = loadTarget(opts)
 	require.NoError(t, err)
 	assert.Equal(t, "override-ref", tgt.cfg.Status.Sync.LastRef)
 
 	t.Run("a missing state file starts from an empty status", func(t *testing.T) {
 		opts := options{repoType: "local", path: t.TempDir(), namespace: "default", stateFile: filepath.Join(t.TempDir(), "none.json"), offline: true}
-		tgt, err := loadTarget(t.Context(), opts)
+		tgt, err := loadTarget(opts)
 		require.NoError(t, err)
 		assert.Empty(t, tgt.cfg.Status.Sync.LastRef)
 	})
@@ -85,7 +85,7 @@ func TestLoadTargetFromFlagsReadsStateFile(t *testing.T) {
 		corrupt := filepath.Join(t.TempDir(), "corrupt.json")
 		require.NoError(t, os.WriteFile(corrupt, []byte(`{`), 0o600))
 		opts := options{repoType: "local", path: t.TempDir(), namespace: "default", stateFile: corrupt, offline: true}
-		_, err := loadTarget(t.Context(), opts)
+		_, err := loadTarget(opts)
 		require.ErrorContains(t, err, "parse state file")
 	})
 }

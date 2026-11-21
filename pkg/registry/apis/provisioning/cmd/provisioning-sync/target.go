@@ -13,38 +13,32 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// target is the repository a command works on, what it manages in Grafana, and where its sync
-// status (including status.sync.lastRef) is kept.
+// target is the repository a command works on, what it manages in Grafana, and the state file
+// that keeps its sync status, including status.sync.lastRef, between runs.
 type target struct {
-	cfg *provisioning.Repository
-	// grafana and lister are nil for an offline plan.
-	grafana     *grafana
-	lister      resources.ResourceLister
-	patchStatus sync.RepositoryPatchFn
-	// syncedRef reads status.sync.lastRef back after a pull.
-	syncedRef func(ctx context.Context) (string, error)
+	cfg   *provisioning.Repository
+	state *stateFile
+	// clients and lister are nil for an offline plan.
+	clients resources.ClientFactory
+	lister  resources.ResourceLister
 }
 
-// loadTarget reads a Repository from Grafana, whose status the pull patches like the real job,
-// or describes one from flags, whose status lives in a local state file instead.
-func loadTarget(ctx context.Context, opts options) (*target, error) {
-	if opts.repoName != "" {
-		return loadRepositoryTarget(ctx, opts)
-	}
-
+func loadTarget(opts options) (*target, error) {
 	cfg, err := repositoryFromFlags(opts)
 	if err != nil {
 		return nil, err
 	}
 	state := &stateFile{path: opts.stateFile}
-	if opts.stateFile == "" {
-		state.path = filepath.Join(".provisioning-sync", cfg.Namespace, cfg.Name+".json")
+	if state.path == "" {
+		dir, err := os.UserConfigDir()
+		if err != nil {
+			return nil, fmt.Errorf("find a directory for the state file, or set --state-file: %w", err)
+		}
+		state.path = filepath.Join(dir, "grafana-provisioning-sync", cfg.Namespace, cfg.Name+".json")
 	}
 	if err := state.load(cfg); err != nil {
 		return nil, err
@@ -53,52 +47,18 @@ func loadTarget(ctx context.Context, opts options) (*target, error) {
 		cfg.Status.Sync.LastRef = opts.fromRef
 	}
 
-	t := &target{
-		cfg:         cfg,
-		patchStatus: state.patch,
-		syncedRef: func(context.Context) (string, error) {
-			return cfg.Status.Sync.LastRef, nil
-		},
-	}
+	t := &target{cfg: cfg, state: state}
 	if opts.offline {
 		return t, nil
 	}
-	if t.grafana, err = newGrafana(opts); err != nil {
+	if t.clients, err = newClientFactory(opts); err != nil {
 		return nil, err
 	}
-	t.lister = &managedResourceLister{clients: t.grafana.clients}
+	t.lister = &managedResourceLister{clients: t.clients}
 	return t, nil
 }
 
-func loadRepositoryTarget(ctx context.Context, opts options) (*target, error) {
-	g, err := newGrafana(opts)
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := g.getRepository(ctx, opts.namespace, opts.repoName)
-	if err != nil {
-		return nil, err
-	}
-	if opts.fromRef != "" {
-		cfg.Status.Sync.LastRef = opts.fromRef
-	}
-
-	return &target{
-		cfg:         cfg,
-		grafana:     g,
-		lister:      g.apiLister,
-		patchStatus: appcontroller.NewRepositoryStatusPatcher(g.provisioning.ProvisioningV0alpha1()).Patch,
-		syncedRef: func(ctx context.Context) (string, error) {
-			updated, err := g.getRepository(ctx, opts.namespace, opts.repoName)
-			if err != nil {
-				return "", err
-			}
-			return updated.Status.Sync.LastRef, nil
-		},
-	}, nil
-}
-
-// stateFile keeps the status of a repository that does not exist in Grafana.
+// stateFile stands in for the status subresource of a Repository that does not exist in Grafana.
 type stateFile struct {
 	path string
 }

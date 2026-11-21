@@ -37,7 +37,7 @@ func TestPlanFullLocalRepository(t *testing.T) {
 
 	cfg, err := repositoryFromFlags(options{repoType: "local", path: dir, namespace: "default"})
 	require.NoError(t, err)
-	repo, err := buildRepository(t.Context(), cfg, "", ".")
+	repo, err := buildRepository(t.Context(), cfg, "")
 	require.NoError(t, err)
 
 	t.Run("against an empty instance everything is created", func(t *testing.T) {

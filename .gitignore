@@ -99,9 +99,6 @@ default.etcd/
 # kubeconfig path used by example apiserver
 example-apiserver/
 
-# sync status kept by the provisioning-sync dev CLI
-.provisioning-sync/
-
 # devenv
 /devenv/docker-compose.yaml
 /devenv/docker-compose.override.yaml

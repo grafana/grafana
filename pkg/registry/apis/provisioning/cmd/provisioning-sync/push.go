@@ -31,7 +31,7 @@ func runPush(ctx context.Context, opts options, out io.Writer) error {
 	if opts.keepUIDs {
 		exportFn = export.ExportAll
 	}
-	worker := export.NewExportWorker(run.target.grafana.clients, run.repositoryResources, exportFn, repository.WrapWithStageAndPushIfPossible, run.metrics)
+	worker := export.NewExportWorker(run.target.clients, run.repositoryResources, exportFn, repository.WrapWithStageAndPushIfPossible, run.metrics)
 
 	_, status, processErr := run.process(ctx, worker, provisioning.JobSpec{
 		Action:  provisioning.JobActionPush,

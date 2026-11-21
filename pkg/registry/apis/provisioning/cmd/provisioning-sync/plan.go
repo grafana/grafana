@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -32,11 +31,11 @@ type planChange struct {
 }
 
 func runPlan(ctx context.Context, opts options, out io.Writer) error {
-	t, err := loadTarget(ctx, opts)
+	t, err := loadTarget(opts)
 	if err != nil {
 		return err
 	}
-	repo, err := buildRepository(ctx, t.cfg, opts.token, opts.homePath)
+	repo, err := buildRepository(ctx, t.cfg, opts.token)
 	if err != nil {
 		return fmt.Errorf("build repository: %w", err)
 	}
@@ -45,26 +44,19 @@ func runPlan(ctx context.Context, opts options, out io.Writer) error {
 	if opts.incremental {
 		result, err = planIncremental(ctx, repo)
 	} else {
-		result, err = planFullForTarget(ctx, repo, t)
+		// Offline there is no lister, and the plan is against an empty instance.
+		current := &provisioning.ResourceList{}
+		if t.lister != nil {
+			if current, err = t.lister.List(ctx, t.cfg.Namespace, t.cfg.Name, resources.ListOptions{}); err != nil {
+				return fmt.Errorf("list resources managed by %s: %w", t.cfg.Name, err)
+			}
+		}
+		result, err = planFull(ctx, repo, current)
 	}
 	if err != nil {
 		return err
 	}
 	return printPlan(out, result, opts.jsonOutput)
-}
-
-// planFullForTarget compares the repository with what it manages in Grafana; offline, with an
-// empty instance.
-func planFullForTarget(ctx context.Context, repo repository.Repository, t *target) (*planResult, error) {
-	current := &provisioning.ResourceList{}
-	if t.lister != nil {
-		var err error
-		current, err = t.lister.List(ctx, t.cfg.Namespace, t.cfg.Name, resources.ListOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("list resources managed by %s: %w", t.cfg.Name, err)
-		}
-	}
-	return planFull(ctx, repo, current)
 }
 
 func planFull(ctx context.Context, repo repository.Repository, current *provisioning.ResourceList) (*planResult, error) {
@@ -137,9 +129,7 @@ func planIncremental(ctx context.Context, repo repository.Repository) (*planResu
 
 func printPlan(out io.Writer, result *planResult, asJSON bool) error {
 	if asJSON {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(result)
+		return printJSON(out, result)
 	}
 
 	w := &errWriter{w: out}
