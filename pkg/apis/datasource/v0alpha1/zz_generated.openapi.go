@@ -308,6 +308,21 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 							},
 						},
 					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource annotations, including the manager properties (grafana.app/managedBy, ...)",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"title", "name", "group"},
 			},
