@@ -102,7 +102,7 @@ datasources:
 
 For details about individual settings, refer to:
 
-- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/): `tracesToLogsV2` block
+- [Configure trace to logs correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-logs/): `tracesToLogsV2` and `tracesToLogsAdditional` blocks
 - [Configure trace to metrics correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): `tracesToMetrics` block
 - [Configure trace to profiles correlation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): `tracesToProfiles` block
 - [Additional settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/additional-settings/): `serviceMap`, `nodeGraph`, `search`, `traceQuery`, `spanBar` blocks

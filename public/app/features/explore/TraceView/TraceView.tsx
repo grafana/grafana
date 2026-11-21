@@ -18,7 +18,7 @@ import {
   useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import {
   config,
   getTemplateSrv,
@@ -50,6 +50,7 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { useSearch } from './useSearch';
+import { useTraceToLogsDestinations } from './useTraceToLogsDestinations';
 import { useViewRange } from './useViewRange';
 
 const ADAPTIVE_TRACES_APP_PLUGIN_ID = 'grafana-adaptivetraces-app' as const;
@@ -182,20 +183,19 @@ export function TraceView(props: Props) {
   const datasourceRef = datasource?.uid ?? datasource?.name;
   const { settings: loadedInstanceSettings, isLoading } = useDataSourceInstanceSettings(datasourceRef);
   const instanceSettings = datasourceRef && !isLoading ? loadedInstanceSettings : undefined;
-  const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
+  const logsDestinations = useTraceToLogsDestinations(instanceSettings?.jsonData);
+  // The trace header shows a single logs button, built from the first destination.
+  const firstLogsDestination = logsDestinations.find((destination) => destination.index === 0);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
   const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
-  const logsUid = traceToLogsOptions?.datasourceUid;
   const metricsUid = traceToMetricsOptions?.datasourceUid;
   const profilesUid = traceToProfilesOptions?.datasourceUid;
-  const { settings: loadedLogsSettings } = useDataSourceInstanceSettings(logsUid);
   const { settings: loadedMetricsSettings } = useDataSourceInstanceSettings(metricsUid);
   const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
-  const logsDataSourceSettings = logsUid ? loadedLogsSettings : undefined;
   const metricsDataSourceSettings = metricsUid ? loadedMetricsSettings : undefined;
   const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
 
@@ -206,20 +206,19 @@ export function TraceView(props: Props) {
       createSpanLinkFromProps ??
       createSpanLinkFactory({
         splitOpenFn: props.splitOpenFn!,
-        traceToLogsOptions,
+        logsDestinations,
         traceToMetricsOptions,
         traceToProfilesOptions,
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
         trace: traceProp,
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
-        logsDataSourceSettings,
         metricsDataSourceSettings,
         profilesDataSourceSettings,
       }),
     [
       props.splitOpenFn,
-      traceToLogsOptions,
+      logsDestinations,
       traceToMetricsOptions,
       traceToProfilesOptions,
       props.dataFrames,
@@ -227,7 +226,6 @@ export function TraceView(props: Props) {
       traceProp,
       createSpanLinkFromProps,
       dataLinksContext?.dataLinkPostProcessor,
-      logsDataSourceSettings,
       metricsDataSourceSettings,
       profilesDataSourceSettings,
     ]
@@ -237,20 +235,19 @@ export function TraceView(props: Props) {
     () =>
       createTraceLogsLink({
         splitOpenFn: props.splitOpenFn,
-        traceToLogsOptions,
+        traceToLogsOptions: firstLogsDestination?.options,
         trace: traceProp,
         dataFrame: props.dataFrames[0],
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
-        logsDataSourceSettings,
+        logsDataSourceSettings: firstLogsDestination?.settings,
         traceDataSourceSettings: instanceSettings,
       }),
     [
       props.splitOpenFn,
       props.dataFrames,
-      traceToLogsOptions,
+      firstLogsDestination,
       traceProp,
       dataLinksContext?.dataLinkPostProcessor,
-      logsDataSourceSettings,
       instanceSettings,
     ]
   );
@@ -363,6 +360,7 @@ export function TraceView(props: Props) {
             viewRange={viewRange}
             hideHeaderDetails={hideHeaderDetails}
             logsLinkModel={logsLinkModel}
+            allowLogsDatasourceFallback={!firstLogsDestination?.isOneOfMany}
           />
 
           <TraceTimelineViewer
