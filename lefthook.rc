@@ -1,6 +1,12 @@
 # This file is used by lefthook to 'expose' the installed lefthook under
 # the name `lefthook`, as expected by the lefthook pre-commit scripts
 
+# GOWORK=off only applies to building lefthook. Running lefthook under it would
+# pass it on to every hook job, and jobs that build workspace packages (like
+# `make gen-jsonnet`) can't resolve their imports without go.work.
+# The first `go tool -n` call can print a stale /tmp path, so it runs twice
+# (see compile_tool in .citools/Variables.mk).
 lefthook () {
-  GOWORK=off go tool -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook "$@"
+  GOWORK=off go tool -n -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook >/dev/null &&
+    "$(GOWORK=off go tool -n -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook)" "$@"
 }
