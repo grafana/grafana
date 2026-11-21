@@ -34,6 +34,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { SaveProvisionedLibraryPanelDrawer } from 'app/features/library-panels/components/SaveProvisionedLibraryPanelDrawer';
 import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -52,6 +53,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getLibraryPanelBehavior } from '../utils/utils';
 
+import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataPane/PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
@@ -60,7 +62,7 @@ import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryE
 import { QueryEditorContextWrapper } from './PanelEditNext/QueryEditor/QueryEditorContextWrapper';
 import { TransformationEditorRenderer } from './PanelEditNext/QueryEditor/TransformationEditorRenderer';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
-import { buildPanelEditScene } from './PanelEditor';
+import { type PanelEditor, buildPanelEditScene } from './PanelEditor';
 
 const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
@@ -72,6 +74,10 @@ const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
 const runRequestMock = jest.fn().mockImplementation(loadingResponse);
 
 let pluginPromise: Promise<PanelPlugin> | undefined;
+
+jest.mock('app/features/library-panels/components/SaveProvisionedLibraryPanelDrawer', () => ({
+  SaveProvisionedLibraryPanelDrawer: jest.fn(() => null),
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -909,6 +915,76 @@ describe('PanelEditor', () => {
   });
 
   describe('Handling library panels', () => {
+    it('commits a repository-managed panel through the Git drawer instead of the API', async () => {
+      const libraryPanel = createLoadedLibraryPanel(repoAnnotations);
+      const { panelEditor } = await setup({ libraryPanel });
+      const save = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue();
+      const committed = {
+        uid: 'lib-uid',
+        name: 'Library panel',
+        type: 'text',
+        version: 2,
+        model: { type: 'text', title: 'Committed' },
+      };
+      const reload = jest.spyOn(libAPI, 'getLibraryPanel').mockResolvedValue(committed);
+      const afterSave = jest.fn();
+      panelEditor.setState({ isDirty: true, showLibraryPanelSaveModal: true });
+
+      panelEditor.onConfirmSaveLibraryPanel(afterSave);
+      const drawer = renderGitDrawer(panelEditor);
+      expect(drawer).toMatchObject({
+        action: 'update',
+        panel: expect.objectContaining({
+          uid: 'lib-uid',
+          metadata: expect.objectContaining({ annotations: repoAnnotations }),
+        }),
+      });
+      expect(panelEditor.state).toMatchObject({ isDirty: true, showLibraryPanelSaveModal: false });
+      expect(save).not.toHaveBeenCalled();
+      expect(afterSave).not.toHaveBeenCalled();
+
+      act(() => drawer.onWriteSuccess?.());
+      expect(panelEditor.state).toMatchObject({ isDirty: false, showLibraryPanelSaveDrawer: false });
+      expect(afterSave).toHaveBeenCalledTimes(1);
+      // The commit already updated the stored panel, so the cached definition is reloaded like an API save.
+      expect(reload).toHaveBeenCalledWith('lib-uid', true);
+      await waitFor(() => expect(libraryPanel.state._loadedPanel).toBe(committed));
+      reload.mockRestore();
+    });
+
+    it('does not resume navigation after a branch save or a dismissed Git drawer', async () => {
+      const { panelEditor } = await setup({ libraryPanel: createLoadedLibraryPanel(repoAnnotations) });
+      const reload = jest.spyOn(libAPI, 'getLibraryPanel');
+      const afterSave = jest.fn();
+      panelEditor.setState({ isDirty: true });
+
+      panelEditor.onConfirmSaveLibraryPanel(afterSave);
+      const dismissedDrawer = renderGitDrawer(panelEditor);
+      act(() => dismissedDrawer.onDismiss());
+      expect(panelEditor.state).toMatchObject({ isDirty: true, showLibraryPanelSaveDrawer: false });
+
+      panelEditor.onConfirmSaveLibraryPanel(afterSave);
+      const branchDrawer = renderGitDrawer(panelEditor);
+      act(() => branchDrawer.onBranchSaved?.());
+      expect(panelEditor.state.isDirty).toBe(false);
+      expect(afterSave).not.toHaveBeenCalled();
+      // Neither changed the stored panel, so there is nothing to reload.
+      expect(reload).not.toHaveBeenCalled();
+      reload.mockRestore();
+    });
+
+    it('resumes navigation after a direct save of an unmanaged panel', async () => {
+      const { panelEditor } = await setup({ libraryPanel: createLoadedLibraryPanel() });
+      const save = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue();
+      const afterSave = jest.fn();
+      panelEditor.setState({ isDirty: true });
+
+      panelEditor.onConfirmSaveLibraryPanel(afterSave);
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(panelEditor.state.isDirty).toBe(false);
+      expect(afterSave).toHaveBeenCalledTimes(1);
+    });
+
     it('should call the api with the updated panel', async () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
@@ -1185,6 +1261,40 @@ interface SetupOptions {
   pluginLoadTime?: number;
   libraryPanel?: LibraryPanelBehavior;
   initialTableTransformations?: DataTransformerConfig[];
+}
+
+const repoAnnotations = {
+  'grafana.app/managedBy': 'repo',
+  'grafana.app/managerId': 'panels',
+  'grafana.app/sourcePath': 'panel.json',
+};
+
+/** Renders the editor's library-panel dialogs and returns the props the Git drawer was rendered with. */
+function renderGitDrawer(panelEditor: PanelEditor) {
+  jest.mocked(SaveProvisionedLibraryPanelDrawer).mockClear();
+  const { unmount } = render(createElement(LibraryPanelEditModals, { model: panelEditor }));
+  const props = jest.mocked(SaveProvisionedLibraryPanelDrawer).mock.calls.at(-1)?.[0];
+  unmount();
+  if (!props) {
+    throw new Error('Git drawer was not rendered');
+  }
+  return props;
+}
+
+function createLoadedLibraryPanel(annotations?: Record<string, string>) {
+  return new LibraryPanelBehavior({
+    uid: 'lib-uid',
+    name: 'Library panel',
+    isLoaded: true,
+    _loadedPanel: {
+      uid: 'lib-uid',
+      name: 'Library panel',
+      type: 'text',
+      version: 1,
+      model: { type: 'text' },
+      metadata: annotations && { name: 'lib-uid', annotations },
+    },
+  });
 }
 
 async function setup(options: SetupOptions = {}) {

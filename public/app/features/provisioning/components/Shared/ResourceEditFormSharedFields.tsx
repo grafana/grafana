@@ -83,9 +83,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       [checkFile, repository?.name, watch]
     );
 
-    // New resources with an editable path (dashboards, playlists) get a path-exists check so a
-    // duplicate path is caught before submit rather than only by the API.
-    const shouldValidatePath = isNew && (resourceType === 'dashboard' || resourceType === 'playlist');
+    // New resources with an editable path (dashboards, playlists, library panels) get a path-exists check
+    // so a duplicate path is caught before submit rather than only by the API.
+    const shouldValidatePath =
+      isNew && (resourceType === 'dashboard' || resourceType === 'playlist' || resourceType === 'librarypanel');
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;

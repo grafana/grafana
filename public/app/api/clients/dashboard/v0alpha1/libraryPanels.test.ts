@@ -128,6 +128,23 @@ describe('k8sResourceToLegacyModel', () => {
 });
 
 describe('k8sResourceToLegacyDTO', () => {
+  it('keeps the management annotations that identify repository-managed panels', () => {
+    const resource = makeResource();
+    resource.metadata.annotations = {
+      'grafana.app/managedBy': ManagerKind.Repo,
+      'grafana.app/managerId': 'panels-repo',
+      'grafana.app/sourcePath': 'panels/cpu.json',
+    };
+    expect(k8sResourceToLegacyDTO(resource).metadata).toMatchObject({
+      name: 'panel-uid',
+      annotations: {
+        'grafana.app/managedBy': 'repo',
+        'grafana.app/managerId': 'panels-repo',
+        'grafana.app/sourcePath': 'panels/cpu.json',
+      },
+    });
+  });
+
   it('maps k8s metadata onto the legacy DTO shape', () => {
     const dto = k8sResourceToLegacyDTO(makeResource(), { folderName: 'My folder', connectedDashboards: 2 });
 

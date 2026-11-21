@@ -23,8 +23,9 @@ import { type Panel } from '@grafana/schema';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
-import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { getLibraryPanel, saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -94,6 +95,8 @@ export interface PanelEditorState extends SceneObjectState {
   dataPane?: PanelDataPane | PanelDataPaneNext;
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
+  /** Repository-managed library panels are saved by committing them to Git through this drawer. */
+  showLibraryPanelSaveDrawer?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
   pluginLoadError?: string;
@@ -119,6 +122,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _originalSaveModel!: Panel;
   private _reloadBaseline!: ReturnType<PanelEditor['getReloadModel']>;
   private _changesHaveBeenMade = false;
+  private _afterLibraryPanelSave?: () => void;
   // Analytics only: the baseline excludes what the editor itself sets up (default query, plugin defaults),
   // unlike _originalSaveModel, so it can tell which areas the user changed.
   private _changeBaseline!: PanelEditSnapshot;
@@ -542,15 +546,42 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     DashboardInteractions.panelActionClicked(item, getPanelIdForVizPanel(panel), 'panel_editor', panel.state.pluginId);
   }
 
-  public onConfirmSaveLibraryPanel = () => {
-    this._savedInEditor = true;
+  /** `afterSave` runs once the panel is saved, which for a repository-managed panel is after the Git commit. */
+  public onConfirmSaveLibraryPanel = (afterSave?: () => void) => {
+    this._afterLibraryPanelSave = afterSave;
+    const loadedPanel = this.getLibraryPanelBehavior()?.state._loadedPanel;
+    if (loadedPanel && isManagedByRepository(loadedPanel)) {
+      this.setState({ showLibraryPanelSaveModal: false, showLibraryPanelSaveDrawer: true });
+      return;
+    }
     saveLibPanel(this.state.panelRef.resolve());
-    this.setState({ isDirty: false });
-    locationService.partial({ editPanel: null });
+    this.onLibraryPanelSaved();
+  };
+
+  /** A configured-branch commit already updated the stored panel, so reload it as `saveLibPanel` does. */
+  public onLibraryPanelCommitted = () => {
+    const libraryPanel = this.getLibraryPanelBehavior();
+    if (libraryPanel) {
+      getLibraryPanel(libraryPanel.state.uid, true).then((libPanel) => libraryPanel.setPanelFromLibPanel(libPanel));
+    }
+    this.onLibraryPanelSaved();
+  };
+
+  /** `leaveEditor` is false when the save navigates elsewhere, e.g. to the pull-request banner. */
+  public onLibraryPanelSaved = (leaveEditor = true) => {
+    const afterSave = this._afterLibraryPanelSave;
+    this._afterLibraryPanelSave = undefined;
+    this._savedInEditor = true;
+    this.setState({ isDirty: false, showLibraryPanelSaveDrawer: false });
+    if (leaveEditor) {
+      locationService.partial({ editPanel: null });
+      afterSave?.();
+    }
   };
 
   public onDismissLibraryPanelSaveModal = () => {
-    this.setState({ showLibraryPanelSaveModal: false });
+    this._afterLibraryPanelSave = undefined;
+    this.setState({ showLibraryPanelSaveModal: false, showLibraryPanelSaveDrawer: false });
   };
 
   public onUnlinkLibraryPanel = () => {
