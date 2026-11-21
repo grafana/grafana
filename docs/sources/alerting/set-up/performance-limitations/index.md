@@ -96,7 +96,7 @@ To prevent this, Grafana can limit the number of query evaluation results a sing
 query evaluation returned too many results: 12345 (limit: 10000)
 ```
 
-The alert rule enters the [Error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/) and produces no alert instances for that evaluation until you reduce its result set below the limit.
+The alert rule enters the [Error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/) and produces no alert instances for that evaluation until you reduce its result set below the limit. Grafana doesn't retry this error within the same evaluation interval.
 
 In self-managed Grafana, set this limit using the [`alerting_rule_evaluation_results`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#alerting_rule_evaluation_results) option in the `[quota]` section. The default is `-1` (unlimited). In Grafana Cloud, Grafana Labs manages this limit.
 
