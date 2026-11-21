@@ -67,6 +67,24 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		assert.False(t, manager.AllowsEdits, "its configuration comes from bootstrap_path")
 	})
 
+	t.Run("refuses an edit to its configuration", func(t *testing.T) {
+		err := updateRepository(t, helper, "bootstrap", func(repo *unstructured.Unstructured) {
+			repo.Object["spec"].(map[string]any)["title"] = "Edited through the API"
+		})
+		require.Error(t, err, "its configuration comes from bootstrap_path, so the next boot would revert this")
+		assert.True(t, apierrors.IsForbidden(err), "expected a Forbidden error, got %v", err)
+	})
+
+	t.Run("refuses to let its manager be dropped", func(t *testing.T) {
+		// What a client replacing the whole object without its annotations sends. Accepting it
+		// leaves the reconciler no longer recognising the repository as its own.
+		err := updateRepository(t, helper, "bootstrap", func(repo *unstructured.Unstructured) {
+			repo.SetAnnotations(nil)
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected a Forbidden error, got %v", err)
+	})
+
 	helper.AwaitJobs(t, "bootstrap")
 
 	t.Run("provisions the dashboards and folders in the path", func(t *testing.T) {
@@ -138,6 +156,19 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		helper.RequireDashboards(t, "nested-dashboard")
 	})
 
+	// "nested" declares no workflows, so it takes no writes back. The edit cannot be committed
+	// to the repository the resource came from, and is refused rather than applied in Grafana only.
+	t.Run("a resource it provisioned cannot be edited while it is pull-only", func(t *testing.T) {
+		dash, err := helper.DashboardsV1.Resource.Get(t.Context(), "nested-dashboard", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NoError(t, unstructured.SetNestedField(dash.Object, "Edited through the API", "spec", "title"))
+
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), dash, metav1.UpdateOptions{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected a Forbidden error, got %v", err)
+		assert.Contains(t, err.Error(), "write operations are not allowed for this repository")
+	})
+
 	t.Run("re-syncing the bootstrap path is clean", func(t *testing.T) {
 		helper.SyncAndWait(t, "bootstrap", nil)
 		job := helper.AwaitLatestHistoricJob(t, "bootstrap")
@@ -188,6 +219,25 @@ func TestIntegrationProvisioning_Bootstrap(t *testing.T) {
 		file := readFile(t, bootstrapPath, "github-repository.yaml")
 		assert.Contains(t, file, before, "the committed file should carry the reference")
 		assert.NotContains(t, file, "create", "the plaintext token must not be written back")
+	})
+
+	// The manifest lives in a local directory, which may carry a secret -- a git one may not,
+	// so there the rest of the spec is editable and this is not.
+	t.Run("rotating a repository's secret writes the new reference back", func(t *testing.T) {
+		before := mustString(t, requireRepository(t, helper, "with-token"), "secure", "token", "name")
+
+		err := updateRepository(t, helper, "with-token", func(repo *unstructured.Unstructured) {
+			require.NoError(t, unstructured.SetNestedMap(repo.Object,
+				map[string]any{"create": "rotated-not-a-real-token"}, "secure", "token"))
+		})
+		require.NoError(t, err)
+
+		after := mustString(t, requireRepository(t, helper, "with-token"), "secure", "token", "name")
+		assert.NotEqual(t, before, after, "the rotated value should be stored under a new reference")
+
+		file := readFile(t, bootstrapPath, "github-repository.yaml")
+		assert.Contains(t, file, after, "the committed file should carry the new reference")
+		assert.NotContains(t, file, "rotated-not-a-real-token", "the plaintext must not reach the directory")
 	})
 
 	// The managed-object index reports everything a repository manages, whatever its kind, so a
@@ -267,6 +317,22 @@ func requireRepository(t *testing.T, helper *common.ProvisioningTestHelper, name
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	return repo
+}
+
+// updateRepository re-reads and re-applies on conflict: the controllers write the status of a
+// repository under test, so a plain read-modify-write races them rather than reaching admission.
+func updateRepository(t *testing.T, helper *common.ProvisioningTestHelper, name string, mutate func(*unstructured.Unstructured)) error {
+	t.Helper()
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		repo, getErr := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		require.NoError(t, getErr)
+		mutate(repo)
+		if _, err = helper.Repositories.Resource.Update(t.Context(), repo, metav1.UpdateOptions{}); !apierrors.IsConflict(err) {
+			return err
+		}
+	}
+	return err
 }
 
 func metaOf(t *testing.T, obj *unstructured.Unstructured) utils.GrafanaMetaAccessor {
