@@ -7,17 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// OpenFeature provider discovery keys for the per-request config map. They
-// mirror the constants exposed by the grafana-plugin-sdk-go config package
-// and are redeclared here until the SDK version pinned by go.mod includes
-// them.
-const (
-	openFeatureProviderURLKey  = "GF_INSTANCE_OPENFEATURE_PROVIDER_URL"
-	openFeatureProviderTypeKey = "GF_INSTANCE_OPENFEATURE_PROVIDER_TYPE"
-	openFeatureCacheTTLKey     = "GF_INSTANCE_OPENFEATURE_CACHE_TTL"
-	openFeatureContextKey      = "GF_INSTANCE_OPENFEATURE_CONTEXT"
-)
-
 // openFeatureProviderURL resolves the OFREP base URL plugins should evaluate
 // feature flags against. Remote providers (features-service, ofrep) expose
 // their own URL; without one there is nothing plugins could reach, so
