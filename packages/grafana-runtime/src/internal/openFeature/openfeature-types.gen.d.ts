@@ -191,6 +191,7 @@ declare module "@openfeature/core" {
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "datasources.querier.newName"
+    | "datasources.mtOAuthPassthroughFrontend"
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"

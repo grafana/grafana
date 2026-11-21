@@ -146,6 +146,8 @@ export const FlagKeys = {
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
   /** Enable support for query gateway rate limits */
   DatasourcesGatewayRateLimits: "datasources.gatewayRateLimits",
+  /** Send data sources with Forward OAuth Identity to the app platform APIs */
+  DatasourcesMtOAuthPassthroughFrontend: "datasources.mtOAuthPassthroughFrontend",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -1150,6 +1152,17 @@ export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluatio
  */
 export const useFlagDatasourcesGatewayRateLimits = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.gatewayRateLimits", false, options).value;
+};
+
+/**
+ * Send data sources with Forward OAuth Identity to the app platform APIs
+ *
+ * **Details:**
+ * - flag key: `datasources.mtOAuthPassthroughFrontend`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesMtOAuthPassthroughFrontend = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.mtOAuthPassthroughFrontend", false, options).value;
 };
 
 /**
