@@ -1285,7 +1285,8 @@
     },
     "file-export-preview": {
       "copy-code": "Copy code",
-      "download": "Download"
+      "download": "Download",
+      "preview": "Export preview"
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"

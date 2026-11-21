@@ -1,4 +1,5 @@
 import { sql } from '@codemirror/lang-sql';
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, highlightActiveLine, highlightActiveLineGutter, lineNumbers } from '@codemirror/view';
 
@@ -171,6 +172,35 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
       )!;
       expect(text.nodeType).toBe(Node.TEXT_NODE);
       expect(editor.dom).toHaveStyle({ color: theme.components.input.text });
+    } finally {
+      editor.destroy();
+      editor.dom.remove();
+    }
+  });
+
+  it('uses the CodeEditor semantic colors for read-only HCL exports', async () => {
+    const theme = createTheme({ colors: { mode } });
+    const language = await loadLanguageExtension('hcl');
+    const editor = createEditor(
+      theme,
+      'resource "grafana_rule_group" "alerts" {\n  org_id = 1\n  is_paused = false\n}',
+      [language!, EditorState.readOnly.of(true)]
+    );
+
+    try {
+      ensureSyntaxTree(editor.state, editor.state.doc.length, Infinity);
+      editor.dispatch({});
+      const spans = Array.from(editor.contentDOM.querySelectorAll('span'));
+      for (const [text, color] of [
+        ['resource', theme.components.codeEditor.type],
+        ['"alerts"', theme.components.codeEditor.string],
+        ['org_id', theme.components.codeEditor.variable],
+        ['1', theme.components.codeEditor.number],
+        ['false', theme.components.codeEditor.number],
+        ['=', theme.components.codeEditor.operator],
+      ]) {
+        expect(spans.find((span) => span.textContent === text)).toHaveStyle({ color });
+      }
     } finally {
       editor.destroy();
       editor.dom.remove();

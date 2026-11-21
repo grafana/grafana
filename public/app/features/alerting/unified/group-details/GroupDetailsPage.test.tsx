@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -42,10 +42,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
       width: 1,
     });
 });
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,
-}));
 
 const ui = {
   header: byRole('heading', { level: 1 }),
@@ -56,7 +52,8 @@ const ui = {
     dialog: byRole('dialog', { name: /Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
-    editor: byTestId('code-editor'),
+    hclTab: byRole('tab', { name: /Terraform \(HCL\)/ }),
+    editor: byRole('textbox', { name: 'Export preview' }),
     copyCodeButton: byRole('button', { name: 'Copy code' }),
     downloadButton: byRole('button', { name: 'Download' }),
   },
@@ -149,6 +146,9 @@ describe('GroupDetailsPage', () => {
       setFolderResponse(folder);
       setGrafanaRuleGroupExportResolver(({ request }) => {
         const url = new URL(request.url);
+        if (url.searchParams.get('format') === 'hcl') {
+          return HttpResponse.text('resource "grafana_rule_group" "alerts" {\n  name = "test-group-cpu"\n}');
+        }
         return HttpResponse.text(
           url.searchParams.get('format') === 'yaml' ? 'Yaml Export Content' : 'Json Export Content'
         );
@@ -336,6 +336,11 @@ describe('GroupDetailsPage', () => {
       await user.click(ui.export.jsonTab.get(drawer));
       await waitFor(() => {
         expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
+      });
+
+      await user.click(ui.export.hclTab.get(drawer));
+      await waitFor(() => {
+        expect(ui.export.editor.get(drawer)).toHaveTextContent('resource "grafana_rule_group" "alerts"');
       });
 
       expect(ui.export.copyCodeButton.get(drawer)).toBeInTheDocument();
