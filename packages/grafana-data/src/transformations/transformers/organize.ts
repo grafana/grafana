@@ -8,7 +8,13 @@ import {
   type FieldMatcher,
   TransformationApplicabilityLevels,
 } from '../../types/transformations';
-import { type FieldReference, getFieldReferenceKey, getFieldReferences, isFieldReference } from '../frameIdentity';
+import {
+  createFieldIndex,
+  createFieldReferenceIndex,
+  type FieldReference,
+  getFieldReferenceKey,
+  isFieldReference,
+} from '../frameIdentity';
 import { getFieldMatcher } from '../matchers';
 
 import { filterFieldsByNameTransformer, getMatcherConfig } from './filterByName';
@@ -170,21 +176,53 @@ export function renameReferencedKeys(
 
 interface SplitEntries<T> {
   byName: Record<string, T>;
-  byReference: Map<string, T>;
+  byReference: Array<[FieldReference, T]>;
 }
 
-function splitByReference<T>(record: Record<string, T> | undefined, references: Map<string, string>): SplitEntries<T> {
+function splitByReference<T>(
+  record: Record<string, T> | undefined,
+  references: Map<string, FieldReference>
+): SplitEntries<T> {
   const byName: Array<[string, T]> = [];
-  const byReference = new Map<string, T>();
+  const byReference: Array<[FieldReference, T]> = [];
   for (const [key, value] of Object.entries(record ?? {})) {
     const reference = references.get(key);
     if (reference === undefined) {
       byName.push([key, value]);
-    } else if (!byReference.has(reference)) {
-      byReference.set(reference, value);
+    } else {
+      byReference.push([reference, value]);
     }
   }
   return { byName: Object.fromEntries(byName), byReference };
+}
+
+function hasDecisiveValue(entries: Array<[FieldReference, unknown]>): boolean {
+  let find: ((reference: FieldReference) => number) | undefined;
+  return entries.some(([reference, value], index) => {
+    if (!value) {
+      return false;
+    }
+    if (index === 0) {
+      return true;
+    }
+    find ??= createFieldReferenceIndex(entries.map(([entry]) => entry));
+    return find(reference) === index;
+  });
+}
+
+function resolveFields<T>(
+  entries: Array<[FieldReference, T]>,
+  frame: DataFrame,
+  find: () => (reference: FieldReference) => number
+): Map<Field, T> {
+  const resolved = new Map<Field, T>();
+  for (const [reference, value] of entries) {
+    const field = frame.fields[find()(reference)];
+    if (field && !resolved.has(field)) {
+      resolved.set(field, value);
+    }
+  }
+  return resolved;
 }
 
 function getNamesMatcher(record: Record<string, boolean>): FieldMatcher | undefined {
@@ -193,65 +231,67 @@ function getNamesMatcher(record: Record<string, boolean>): FieldMatcher | undefi
 }
 
 function organizeByReference(data: DataFrame[], options: OrganizeFieldsTransformerOptions): DataFrame[] {
-  const references = new Map(
-    getValidReferences(options.referenceByName).map(([key, reference]) => [key, getFieldReferenceKey(reference)])
-  );
+  const references = new Map(getValidReferences(options.referenceByName));
   const exclude = splitByReference(options.excludeByName, references);
   const include = splitByReference(options.includeByName, references);
   const index = splitByReference(options.indexByName, references);
   const rename = splitByReference(options.renameByName, references);
   const excludeMatcher = getNamesMatcher(exclude.byName);
   const includeMatcher = getNamesMatcher(include.byName);
-  const including = Boolean(includeMatcher) || Array.from(include.byReference.values()).some(Boolean);
-  const filtering = including || Boolean(excludeMatcher) || Array.from(exclude.byReference.values()).some(Boolean);
+  const including = Boolean(includeMatcher) || hasDecisiveValue(include.byReference);
+  const filtering = including || Boolean(excludeMatcher) || hasDecisiveValue(exclude.byReference);
+  const ordering = options.orderByMode !== OrderByMode.Auto;
+  const renaming = rename.byReference.length > 0 || Object.keys(rename.byName).length > 0;
 
-  const filtered: Array<{ frame: DataFrame; keys: Map<Field, string> }> = [];
+  const filtered: Array<{ frame: DataFrame; positions: Map<Field, number>; renames: Map<Field, string> }> = [];
   for (const frame of data) {
-    const frameReferences = getFieldReferences(frame);
-    const keys = new Map(
-      frame.fields.map((field, fieldIndex) => [field, getFieldReferenceKey(frameReferences[fieldIndex])])
-    );
-    if (!filtering) {
-      filtered.push({ frame, keys });
-      continue;
+    let lookup: ((reference: FieldReference) => number) | undefined;
+    const find = () => (lookup ??= createFieldIndex(frame));
+    let fields = frame.fields;
+    if (filtering) {
+      const excluded = resolveFields(exclude.byReference, frame, find);
+      const included = resolveFields(include.byReference, frame, find);
+      fields = frame.fields.filter((field) => {
+        const isExcluded = excluded.get(field) ?? excludeMatcher?.(field, frame, data) ?? false;
+        const isIncluded = !including || (included.get(field) ?? includeMatcher?.(field, frame, data) ?? false);
+        return !isExcluded && isIncluded;
+      });
+      if (fields.length === 0) {
+        continue;
+      }
     }
-    const fields = frame.fields.filter((field) => {
-      const key = keys.get(field)!;
-      const excluded = exclude.byReference.get(key) ?? excludeMatcher?.(field, frame, data) ?? false;
-      const included = !including || (include.byReference.get(key) ?? includeMatcher?.(field, frame, data) ?? false);
-      return !excluded && included;
+    filtered.push({
+      frame: filtering ? { ...frame, fields } : frame,
+      positions: ordering ? resolveFields(index.byReference, frame, find) : new Map(),
+      renames: renaming ? resolveFields(rename.byReference, frame, find) : new Map(),
     });
-    if (fields.length > 0) {
-      filtered.push({ frame: { ...frame, fields }, keys });
-    }
   }
 
   const frames = filtered.map(({ frame }) => frame);
   cacheFieldDisplayNames(frames);
-  const ordered = filtered.map(({ frame, keys }) => {
-    if (options.orderByMode === OrderByMode.Auto) {
-      return { frame: { ...frame, fields: createFieldsOrdererAuto(options.orderBy ?? [])(frame.fields) }, keys };
+  const ordered = filtered.map(({ frame, positions, renames }) => {
+    if (!ordering) {
+      return { frame: { ...frame, fields: createFieldsOrdererAuto(options.orderBy ?? [])(frame.fields) }, renames };
     }
-    const positions = new Map(
+    const sortKeys = new Map(
       frame.fields.map((field) => {
-        const position =
-          index.byReference.get(keys.get(field)!) ?? index.byName[getFieldDisplayName(field, frame, frames)];
+        const position = positions.get(field) ?? index.byName[getFieldDisplayName(field, frame, frames)];
         return [field, Number.isInteger(position) ? position : Number.MAX_SAFE_INTEGER];
       })
     );
     return {
-      frame: { ...frame, fields: [...frame.fields].sort((a, b) => positions.get(a)! - positions.get(b)!) },
-      keys,
+      frame: { ...frame, fields: [...frame.fields].sort((a, b) => sortKeys.get(a)! - sortKeys.get(b)!) },
+      renames,
     };
   });
 
-  if (rename.byReference.size === 0 && Object.keys(rename.byName).length === 0) {
+  if (!renaming) {
     return ordered.map(({ frame }) => frame);
   }
-  return ordered.map(({ frame, keys }) => ({
+  return ordered.map(({ frame, renames }) => ({
     ...frame,
     fields: frame.fields.map((field) => {
-      const renameTo = rename.byReference.get(keys.get(field)!) ?? rename.byName[getFieldDisplayName(field, frame)];
+      const renameTo = renames.get(field) ?? rename.byName[getFieldDisplayName(field, frame)];
       if (typeof renameTo !== 'string' || renameTo.length === 0) {
         return field;
       }
