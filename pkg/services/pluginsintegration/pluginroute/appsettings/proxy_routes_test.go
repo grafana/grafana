@@ -13,8 +13,11 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
+	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -120,9 +123,9 @@ const (
 	declaredResources = "/namespaces/{namespace}/app/instance/resources/"
 )
 
-func proxyOperation(target definition.ProxyTarget) *spec3.Operation {
+func proxyOperation(target manifestroutes.ProxyTarget) *spec3.Operation {
 	op := &spec3.Operation{}
-	op.AddExtension(definition.ExtensionProxy, target)
+	op.AddExtension(manifestroutes.ExtensionProxy, target)
 	return op
 }
 
@@ -189,8 +192,8 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 	up := newUpstream(t)
 	manifest := manifestDeclaring(map[string]spec3.PathProps{
 		declaredProxy + "v2/{path:*}": {
-			Get:  proxyOperation(definition.ProxyTarget{URL: up.URL + "/v2"}),
-			Post: proxyOperation(definition.ProxyTarget{URL: up.URL + "/v2", ReqRole: identity.RoleAdmin}),
+			Get:  proxyOperation(manifestroutes.ProxyTarget{URL: up.URL + "/v2"}),
+			Post: proxyOperation(manifestroutes.ProxyTarget{URL: up.URL + "/v2", ReqRole: authlib.RoleAdmin}),
 		},
 		declaredResources + "things": {Get: &spec3.Operation{}},
 	})
@@ -215,7 +218,7 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 
 	t.Run("match the rest of the path with a last {path}, as app-sdk does", func(t *testing.T) {
 		s := newProxyServer(t, pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
-			declaredProxy + "files/{path}": {Get: proxyOperation(definition.ProxyTarget{URL: up.URL + "/files"})},
+			declaredProxy + "files/{path}": {Get: proxyOperation(manifestroutes.ProxyTarget{URL: up.URL + "/files"})},
 		})))
 		up.forwarded = nil
 		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "files/a/b"))
@@ -266,7 +269,7 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	for path, p := range paths {
 		for _, op := range []*spec3.Operation{p.Get, p.Head, p.Post, p.Put, p.Patch, p.Delete, p.Options} {
 			if op != nil {
-				require.NotContains(t, op.Extensions, definition.ExtensionProxy, "%s publishes where it forwards to", path)
+				require.NotContains(t, op.Extensions, manifestroutes.ExtensionProxy, "%s publishes where it forwards to", path)
 			}
 		}
 	}
@@ -276,7 +279,7 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	}
 
 	declared := publish(pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
-		declaredProxy + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
+		declaredProxy + "v2/{path:*}": {Get: proxyOperation(manifestroutes.ProxyTarget{URL: "https://example"})},
 	})))
 	require.Contains(t, declared, item+"/proxy/v2/{path}")
 }
