@@ -270,6 +270,7 @@ describe('Format value', () => {
     expect(instance(0).text).toEqual('A');
     expect(instance(0).color).toEqual('#F2495C');
     expect(instance(1).text).toEqual('B');
+    expect(instance(1).color).toEqual('#F2CC0C');
   });
 
   it('should keep enum color when value mapping only sets a text', () => {
