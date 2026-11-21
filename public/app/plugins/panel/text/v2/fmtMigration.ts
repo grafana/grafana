@@ -312,7 +312,7 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       return OBJECT;
     }
 
-    return path && isSimple(path) && helper === HELPER ? SCALAR | NOTHING : UNKNOWN;
+    return path && isSimple(path) && helper === HELPER && node.params.length > 0 ? SCALAR | NOTHING : UNKNOWN;
   }
 
   function mustache(node: hbs.AST.MustacheStatement, scope: Scope) {
@@ -340,7 +340,7 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     let helper: string | undefined;
     if (first !== undefined && BLOCK_HELPERS.has(first) && (hasArgs || simple)) {
       helper = first;
-    } else if (simple && hasArgs && first === HELPER) {
+    } else if (simple && node.params.length > 0 && first === HELPER) {
       helper = HELPER;
     }
 

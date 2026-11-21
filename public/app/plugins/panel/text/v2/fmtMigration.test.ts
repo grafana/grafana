@@ -136,6 +136,16 @@ const shadowed = () =>
     }),
   ]);
 
+const displayField = () =>
+  withConfig([
+    toDataFrame({
+      fields: [
+        { name: 'display', type: FieldType.other, values: [{ fmt: { cpu: 'own' } }, null] },
+        { name: 'cpu', type: FieldType.number, values: [0.5, 0.25] },
+      ],
+    }),
+  ]);
+
 const fieldNamesOf = (series: DataFrame[]) => series.flatMap((frame) => getFieldNames(frame, [frame]));
 
 function migrate(content: string, options: Partial<FmtMigrationOptions> = {}) {
@@ -367,6 +377,19 @@ describe('migrateFmt', () => {
         { read: '@root.fmt.cpu', reason: 'shadowed' },
       ]);
       expect(render(content, shadowed())).toBe('[own][]');
+    });
+
+    it.each([
+      { desc: 'a call', content: '{{#each data}}{{#with (display row=this)}}[{{fmt.cpu}}]{{/with}}{{/each}}' },
+      { desc: 'a block', content: '{{#each data}}{{#display row=this}}[{{fmt.cpu}}]{{/display}}{{/each}}' },
+    ])('leaves reads under display without a field name, which gives the field named display: $desc', ({ content }) => {
+      const migration = migrate(content, { fieldNames: fieldNamesOf(displayField()) });
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read: 'fmt.cpu', reason: 'row' },
+      ]);
+      expect(render(content, displayField())).toBe('[own]');
     });
 
     it.each([
