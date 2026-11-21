@@ -1395,11 +1395,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1545,7 +1540,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 6
+      "count": 5
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
