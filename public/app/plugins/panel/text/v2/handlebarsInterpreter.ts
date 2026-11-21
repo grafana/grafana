@@ -478,7 +478,7 @@ function isIndexable(value: unknown): value is Record<PropertyKey, unknown> {
   return (typeof value === 'object' && value !== null) || typeof value === 'function';
 }
 
-function isScoped(path: hbs.AST.PathExpression): boolean {
+export function isScoped(path: hbs.AST.PathExpression): boolean {
   return /^\.|this\b/.test(path.original);
 }
 

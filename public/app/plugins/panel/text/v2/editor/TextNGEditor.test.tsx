@@ -679,3 +679,32 @@ describe('TextNGEditor handlebars preview', () => {
     expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
 });
+
+describe('TextNGEditor fmt migration', () => {
+  it('replaces the content with the converted template and commits it like an edit', async () => {
+    const onChange = jest.fn();
+    render(
+      <TextNGEditor
+        content={'{{#each data}}- {{fmt.host}}\n{{/each}}'}
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        renderMode={RenderMode.Once}
+        series={[toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })]}
+        replaceVariables={(target) => target}
+        onChange={onChange}
+        view="split"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Convert to display' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Convert' }));
+
+    expect(screen.getByRole('textbox', { name: 'Text content' })).toHaveValue(
+      '{{#each data}}- {{display "host"}}\n{{/each}}'
+    );
+    expect(onChange).toHaveBeenCalledWith({ content: '{{#each data}}- {{display "host"}}\n{{/each}}' });
+    await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1 web-2'));
+    expect(screen.queryByRole('status', { name: 'fmt is deprecated' })).not.toBeInTheDocument();
+  });
+});

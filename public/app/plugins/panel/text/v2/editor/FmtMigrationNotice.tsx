@@ -1,0 +1,268 @@
+import { css } from '@emotion/css';
+import { useMemo, useState } from 'react';
+
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Alert, Button, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+
+import { type RenderMode, type TextMode } from '../../panelcfg.gen';
+import { findFmtReads, type FmtMigration, type FmtReadReason, migrateFmt } from '../fmtMigration';
+import { getFieldNames } from '../handlebars';
+import { catchTemplateError, interpolateTemplate } from '../renderContent';
+
+const DISPLAY_EXAMPLE = '{{display "cpu"}}';
+const BLOCK_EXAMPLE = '{{#display "cpu"}}{{text}}{{suffix}}{{/display}}';
+
+interface Props {
+  content: string;
+  mode: TextMode;
+  renderMode?: RenderMode;
+  format?: string;
+  frames: DataFrame[];
+  replaceVariables: InterpolateFunction;
+  getDraft: () => string;
+  onConvert: (content: string) => void;
+}
+
+interface Review {
+  original: string;
+  migration: FmtMigration;
+  rendersSame: boolean;
+}
+
+export function FmtMigrationNotice({
+  content,
+  mode,
+  renderMode,
+  format,
+  frames,
+  replaceVariables,
+  getDraft,
+  onConvert,
+}: Props) {
+  const styles = useStyles2(getStyles);
+  const [dismissed, setDismissed] = useState(false);
+  const [review, setReview] = useState<Review>();
+  const hasFields = frames.some((frame) => frame.fields.length > 0);
+  const fieldNames = useMemo(() => frames.flatMap((frame) => getFieldNames(frame, [frame])), [frames]);
+  const reads = useMemo(
+    () => findFmtReads(content, { mode, renderMode, fieldNames }),
+    [content, mode, renderMode, fieldNames]
+  );
+
+  const total = reads.convertible + reads.unconverted.length;
+
+  if (dismissed || total === 0) {
+    return null;
+  }
+
+  const render = (template: string, series: DataFrame[]) => {
+    const {
+      content: rendered,
+      error,
+      truncated,
+    } = catchTemplateError(() =>
+      interpolateTemplate({ content: template, mode, series, renderMode, format }, replaceVariables)
+    );
+    return `${error ?? ''}|${truncated ?? false}|${rendered}`;
+  };
+
+  const openReview = () => {
+    const original = getDraft();
+    const migration = migrateFmt(original, { mode, renderMode, fieldNames });
+    const variants = frames.length > 1 ? frames.map((frame) => [frame]) : [frames];
+
+    setReview({
+      original,
+      migration,
+      rendersSame: variants.every((series) => render(original, series) === render(migration.content, series)),
+    });
+  };
+
+  const apply = () => {
+    if (review) {
+      onConvert(review.migration.content);
+    }
+    setReview(undefined);
+  };
+
+  return (
+    <>
+      <Alert
+        severity="info"
+        title={t('textng.fmt-migration.title', 'fmt is deprecated')}
+        className={styles.notice}
+        bottomSpacing={0}
+        onRemove={() => setDismissed(true)}
+        action={
+          hasFields ? (
+            <Button size="sm" variant="secondary" onClick={openReview}>
+              {reads.convertible > 0
+                ? t('textng.fmt-migration.review', 'Convert to display')
+                : t('textng.fmt-migration.show-reads', 'Show where it is used')}
+            </Button>
+          ) : undefined
+        }
+      >
+        {hasFields
+          ? t('textng.fmt-migration.summary', '', {
+              count: total,
+              converted: reads.convertible,
+              defaultValue_one: '{{converted}} of {{count}} expression can be converted to the display helper.',
+              defaultValue_other: '{{converted}} of {{count}} expressions can be converted to the display helper.',
+            })
+          : t(
+              'textng.fmt-migration.needs-data',
+              'Run the query so the fields can be checked, then convert it to the display helper.'
+            )}
+      </Alert>
+      {review && (
+        <Modal
+          title={t('textng.fmt-migration.review-title', 'Convert fmt to display')}
+          isOpen
+          onDismiss={() => setReview(undefined)}
+          className={styles.modal}
+        >
+          <Stack direction="column" gap={2}>
+            <Text color="secondary">
+              {t(
+                'textng.fmt-migration.guidance',
+                'The display helper reads the formatted value, as in {{value}}, and a block reads several of its properties, as in {{block}}.',
+                { value: DISPLAY_EXAMPLE, block: BLOCK_EXAMPLE, interpolation: { escapeValue: false } }
+              )}
+            </Text>
+            {review.migration.changes.length > 0 && (
+              <Stack direction="column" gap={1}>
+                {review.rendersSame ? (
+                  <Text weight="medium">
+                    {t('textng.fmt-migration.converts', '', {
+                      count: review.migration.changes.length,
+                      defaultValue_one:
+                        'Converts {{count}} expression. The panel renders the same for the current query results.',
+                      defaultValue_other:
+                        'Converts {{count}} expressions. The panel renders the same for the current query results.',
+                    })}
+                  </Text>
+                ) : (
+                  <Alert
+                    severity="error"
+                    bottomSpacing={0}
+                    title={t(
+                      'textng.fmt-migration.renders-differently',
+                      'The converted template renders differently for the current query results, so it is not applied'
+                    )}
+                  />
+                )}
+                <ul className={styles.list} aria-label={t('textng.fmt-migration.changes', 'Changes')}>
+                  {review.migration.changes.map((change) => (
+                    <li key={change.from} className={styles.item}>
+                      <Text color="secondary">{getLineLabel(review.original, change.from)}</Text>
+                      <code>{review.original.slice(change.from, change.to)}</code>
+                      <span aria-hidden>→</span>
+                      <code>{change.text}</code>
+                    </li>
+                  ))}
+                </ul>
+              </Stack>
+            )}
+            {review.migration.unconverted.length > 0 && (
+              <Stack direction="column" gap={1}>
+                <Text weight="medium">
+                  {t('textng.fmt-migration.unconverted', '', {
+                    count: review.migration.unconverted.length,
+                    defaultValue_one: '{{count}} expression stays as it is',
+                    defaultValue_other: '{{count}} expressions stay as they are',
+                  })}
+                </Text>
+                <ul className={styles.list} aria-label={t('textng.fmt-migration.unchanged', 'Unchanged expressions')}>
+                  {review.migration.unconverted.map((read) => (
+                    <li key={read.from} className={styles.item}>
+                      <Text color="secondary">{getLineLabel(review.original, read.from)}</Text>
+                      <code>{review.original.slice(read.from, read.to)}</code>
+                      <Text color="secondary">{getGuidance(read.reason)}</Text>
+                    </li>
+                  ))}
+                </ul>
+              </Stack>
+            )}
+          </Stack>
+          <Modal.ButtonRow>
+            <Button variant="secondary" fill="outline" onClick={() => setReview(undefined)}>
+              {t('textng.fmt-migration.cancel', 'Cancel')}
+            </Button>
+            {review.migration.changes.length > 0 && (
+              <Button onClick={apply} disabled={!review.rendersSame}>
+                {t('textng.fmt-migration.convert', 'Convert')}
+              </Button>
+            )}
+          </Modal.ButtonRow>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+function getLineLabel(content: string, offset: number): string {
+  return t('textng.fmt-migration.line', 'Line {{line}}', { line: content.slice(0, offset).split(/\r\n?|\n/).length });
+}
+
+function getGuidance(reason: FmtReadReason): string {
+  switch (reason) {
+    case 'namespace':
+      return t(
+        'textng.fmt-migration.reason-namespace',
+        'Reads fmt as a whole. Read each field with display instead, as in {{example}}.',
+        { example: DISPLAY_EXAMPLE, interpolation: { escapeValue: false } }
+      );
+    case 'expression':
+      return t(
+        'textng.fmt-migration.reason-expression',
+        'Reads past the formatted value or calls it. A display property may do the same, as in {{example}}.',
+        { example: '{{display "cpu" "text"}}', interpolation: { escapeValue: false } }
+      );
+    case 'row':
+      return t(
+        'textng.fmt-migration.reason-row',
+        'It may not read a row of the query results here, as inside an inline partial or a block on a field value. Pass the row with row=, as in {{example}}.',
+        { example: '{{display "cpu" row=..}}', interpolation: { escapeValue: false } }
+      );
+    case 'shadowed':
+      return t(
+        'textng.fmt-migration.reason-shadowed',
+        'A field is displayed as fmt, so this reads that field. display reads formatted values whatever the fields are called.'
+      );
+    case 'name':
+      return t(
+        'textng.fmt-migration.reason-name',
+        'The field name cannot be passed to display as it is. Rename the field with a transformation, then use display.'
+      );
+  }
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  notice: css({
+    flexGrow: 0,
+  }),
+  modal: css({
+    width: theme.breakpoints.values.md,
+    maxWidth: '90vw',
+  }),
+  list: css({
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    margin: 0,
+    padding: 0,
+  }),
+  item: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: theme.spacing(1),
+    rowGap: theme.spacing(0.5),
+    code: {
+      wordBreak: 'break-all',
+    },
+  }),
+});
