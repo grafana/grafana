@@ -587,8 +587,8 @@ importers:
         specifier: 4.7.2
         version: 4.7.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-highlight-words:
-        specifier: 0.21.0
-        version: 0.21.0(react@19.2.8)
+        specifier: 1.0.0
+        version: 1.0.0(react@19.2.8)
       react-hook-form:
         specifier: ^7.49.2
         version: 7.62.0(react@19.2.8)
@@ -2499,8 +2499,8 @@ importers:
         specifier: ^20.0.0
         version: 20.2.0(@types/react@19.2.18)(react@19.2.8)
       react-highlight-words:
-        specifier: ^0.21.0
-        version: 0.21.0(react@19.2.8)
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.8)
       react-hook-form:
         specifier: ^7.49.2
         version: 7.62.0(react@19.2.8)
@@ -10677,6 +10677,9 @@ packages:
   highlight-words-core@1.2.2:
     resolution: {integrity: sha512-BXUKIkUuh6cmmxzi5OIbUJxrG8OAk2MqoL1DtO3Wo9D2faJg2ph5ntyuQeLqaHJmzER6H5tllCDA9ZnNe9BVGg==}
 
+  highlight-words-core@2.0.0:
+    resolution: {integrity: sha512-dKFj8EZQ8yvU9b/88WGZGwsFC0wmKk5wEVOL4D4POzASma8Gct9LvWax6gPpIzBIF+z8N0si3t1mxyYxOHmjhw==}
+
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
@@ -13193,6 +13196,11 @@ packages:
     resolution: {integrity: sha512-SdWEeU9fIINArEPO1rO5OxPyuhdEKZQhHzZZP1ie6UeXQf+CjycT1kWaB+9bwGcVbR0NowuHK3RqgqNg6bgBDQ==}
     peerDependencies:
       react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
+
+  react-highlight-words@1.0.0:
+    resolution: {integrity: sha512-783Dim5Q6X51x4yGlU2+XDr5L3r9P+3iI1zuRx4khbjqNOZObUoGOtZ5V7UdN8zrpz/IUo+cAdSoYJu4Y0Vo1w==}
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
 
   react-hook-form@7.62.0:
     resolution: {integrity: sha512-7KWFejc98xqG/F4bAxpL41NB3o1nnvQO1RWZT3TqRZYL8RryQETGfEdVnJN2fy1crCiBLLjkRBVK05j24FxJGA==}
@@ -24390,6 +24398,8 @@ snapshots:
 
   highlight-words-core@1.2.2: {}
 
+  highlight-words-core@2.0.0: {}
+
   highlight.js@10.7.3: {}
 
   highlightjs-vue@1.0.0: {}
@@ -27768,6 +27778,11 @@ snapshots:
     dependencies:
       highlight-words-core: 1.2.2
       memoize-one: 4.0.3
+      react: 19.2.8
+
+  react-highlight-words@1.0.0(react@19.2.8):
+    dependencies:
+      highlight-words-core: 2.0.0
       react: 19.2.8
 
   react-hook-form@7.62.0(react@19.2.8):
