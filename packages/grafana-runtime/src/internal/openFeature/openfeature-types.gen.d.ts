@@ -209,6 +209,7 @@ declare module "@openfeature/core" {
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
+    | "grafana.folderPickerSearchFullPath"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
     | "plugins.disableMTPluginsFallback"

@@ -224,6 +224,8 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
   GrafanaFolderPickerFolderEditAccess: "grafana.folderPickerFolderEditAccess",
+  /** Shows the full path of each folder in the folder picker search results, instead of only its immediate parent */
+  GrafanaFolderPickerSearchFullPath: "grafana.folderPickerSearchFullPath",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
   /** Enables usage of the new annotations API client */
@@ -1579,6 +1581,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaFolderPickerFolderEditAccess = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.folderPickerFolderEditAccess", false, options).value;
+};
+
+/**
+ * Shows the full path of each folder in the folder picker search results, instead of only its immediate parent
+ *
+ * **Details:**
+ * - flag key: `grafana.folderPickerSearchFullPath`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFolderPickerSearchFullPath = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.folderPickerSearchFullPath", false, options).value;
 };
 
 /**
