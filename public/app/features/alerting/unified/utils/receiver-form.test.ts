@@ -7,7 +7,9 @@ import {
   type ReceiverFormValues,
 } from '../types/receiver-form';
 
+import { cloudNotifierTypes } from './cloud-alertmanager-notifier-types';
 import {
+  cloudReceiverToFormValues,
   convertJiraFieldToJson,
   convertJsonToJiraField,
   formValuesToCloudReceiver,
@@ -429,6 +431,44 @@ describe('formValuesToCloudReceiver', () => {
     };
 
     expect(formValuesToCloudReceiver(formValues, defaults)).toEqual(expected);
+  });
+});
+
+describe('cloudReceiverToFormValues', () => {
+  it('should convert a Microsoft Teams V2 receiver', () => {
+    const receiver: Receiver = {
+      name: 'teams-workflows',
+      msteamsv2_configs: [
+        {
+          webhook_url: 'https://example.com/workflows/teams',
+          send_resolved: true,
+        },
+      ],
+    };
+
+    const [values, channelMap] = cloudReceiverToFormValues(receiver, cloudNotifierTypes);
+
+    expect(values).toEqual({
+      name: 'teams-workflows',
+      items: [
+        {
+          __id: '1',
+          type: 'msteamsv2',
+          settings: {
+            webhook_url: 'https://example.com/workflows/teams',
+            send_resolved: true,
+          },
+          secureFields: {},
+          sendResolved: true,
+        },
+      ],
+    });
+    expect(channelMap).toEqual({
+      '1': {
+        type: 'msteamsv2',
+        config: { webhook_url: 'https://example.com/workflows/teams', send_resolved: true },
+      },
+    });
   });
 });
 
