@@ -20,6 +20,8 @@ export enum TableCellInspectorMode {
 
 interface TableCellInspectorProps {
   value: unknown;
+  /** Value without formatting, shown in the plain text tab when `value` is pretty-printed. */
+  plainText?: string;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
 }
@@ -47,12 +49,16 @@ export function TableCellInspector(props: TableCellInspectorProps) {
  */
 export function TableCellInspectorDrawer({
   value,
+  plainText,
   onDismiss,
   mode,
   codeMirrorEnabled = false,
 }: TableCellInspectorDrawerProps) {
   const [currentMode, setMode] = useState(mode);
   const text = toString(value).trim();
+  // The plain text tab shows the value as it came from the data source, without the
+  // indentation applied to the code editor.
+  const textOnly = toString(plainText ?? value).trim();
   const styles = useStyles2(getStyles);
 
   const tabs = [
@@ -106,7 +112,7 @@ export function TableCellInspectorDrawer({
             wordWrap={true}
           />
         ) : (
-          <pre className={styles.textContainer}>{text}</pre>
+          <pre className={styles.textContainer}>{textOnly}</pre>
         )}
       </Stack>
     </Drawer>

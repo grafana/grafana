@@ -184,6 +184,7 @@ interface BaseTableProps {
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
+  autoDetectJsonEnabled?: boolean;
   /** Enables numeric and date range filter editors (table.refreshNewFeatures). */
   rangeFiltersEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
@@ -232,10 +233,13 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  /** Raw cell value for the plain text tab when `value` is a formatted version of it. */
+  plainText?: string;
   preformatted?: boolean;
 };
 
 interface TableCellActionsBaseProps {
+  autoDetectJsonEnabled?: boolean;
   onAddToAssistant?: () => void;
   field: Field;
   value: TableCellValue;

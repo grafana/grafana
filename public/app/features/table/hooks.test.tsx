@@ -490,6 +490,7 @@ describe('useCommonTableProps', () => {
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
       jsonSyntaxHighlightingEnabled: false,
+      autoDetectJsonEnabled: false,
       rangeFiltersEnabled: false,
       zebraStriping: false,
       showRowNumbers: false,
@@ -515,6 +516,7 @@ describe('useCommonTableProps', () => {
       wrapper: FeatureFlagsProvider,
     });
     expect(result.current.jsonSyntaxHighlightingEnabled).toBe(newFeatures);
+    expect(result.current.autoDetectJsonEnabled).toBe(newFeatures);
     expect(result.current.rangeFiltersEnabled).toBe(newFeatures);
   });
 

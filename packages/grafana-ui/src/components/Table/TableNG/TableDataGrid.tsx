@@ -294,6 +294,7 @@ export function TableDataGrid({
         <TableCellInspectorDrawer
           mode={inspectCell.mode ?? TableCellInspectorMode.text}
           value={inspectCell.value}
+          plainText={inspectCell.plainText}
           onDismiss={onInspectCellDismiss}
           codeMirrorEnabled={tableRefreshEnabled}
         />
