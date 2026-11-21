@@ -2247,6 +2247,13 @@
             "description": "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:\u003csuffix\u003e` for custom unit that should go after value. `prefix:\u003cprefix\u003e` for custom unit that should go before value. `time:\u003cformat\u003e` For custom date time formats type for example `time:YYYY-MM-DD`. `si:\u003cbase scale\u003e\u003cunit characters\u003e` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:\u003cunit\u003e` for a custom count unit. `currency:\u003cunit\u003e` for custom a currency unit.",
             "type": "string"
           },
+          "varMappings": {
+            "description": "Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "writeable": {
             "description": "True if data source can write a value to the path. Auth/authz are supported separately",
             "type": "boolean"
@@ -2945,6 +2952,49 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPrompt": {
+        "description": "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPromptSource"
+            }
+          },
+          "text": {
+            "description": "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPromptSource": {
+        "description": "A panel that a prompt is answered from.",
+        "type": "object",
+        "required": [
+          "element"
+        ],
+        "properties": {
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardElementReference"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQueryGroupKind": {
         "type": "object",
         "required": [
@@ -3348,6 +3398,13 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPrompt"
+            }
+          },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
           },
@@ -3437,6 +3494,13 @@
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
             "type": "boolean",
             "default": false
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPrompt"
+            }
           },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
@@ -3690,6 +3754,13 @@
           },
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPrompt"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTabRepeatOptions"

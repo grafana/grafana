@@ -1,23 +1,31 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, EmptyState, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
+import MoreButton from '../../components/MoreButton';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useAlertRulesNav } from '../../navigation/useAlertRulesNav';
+import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { FilterSidebarLayout } from '../rule-search/FilterSidebar';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
@@ -29,8 +37,7 @@ function AlertRulesPage() {
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
-    // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="alert-rules">
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>
@@ -42,7 +49,11 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
+            <RuleSequenceDrawerProvider>
+              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </RuleSequenceDrawerProvider>
+          </FilterSidebarLayout>
         </Stack>
       </Box>
     </AlertingPageWrapper>
@@ -50,6 +61,34 @@ function AlertRulesPage() {
 }
 
 export default withPageErrorBoundary(AlertRulesPage);
+
+function AlertRulesPageHeader() {
+  const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const canCreate = createSupported && createAllowed;
+
+  const moreMenu = (
+    <Menu>
+      <Menu.Item
+        label={t('alerting.gma-rule-list.header.design-for-provisioning', 'Design rule for provisioning')}
+        icon="download-alt"
+        url={grafanaRulesNav.designForProvisioningLink()}
+      />
+    </Menu>
+  );
+
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      {canCreate && (
+        <LinkButton href={grafanaRulesNav.newAlertRuleLink()} icon="plus" variant="primary">
+          <Trans i18nKey="alerting.gma-rule-list.header.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+      )}
+      <Dropdown overlay={moreMenu}>
+        <MoreButton />
+      </Dropdown>
+    </Stack>
+  );
+}
 
 interface AlertRulesBodyProps {
   hasIssues: boolean;
@@ -67,7 +106,12 @@ function AlertRulesBody({ hasIssues, mode, filter }: AlertRulesBodyProps) {
     );
   }
   if (mode === 'folders') {
-    return <AlertRulesFoldersView key={filter.folders.join()} folderUids={filter.folders} />;
+    return (
+      <AlertRulesFoldersView
+        key={JSON.stringify([filter.folder, filter.folderUids])}
+        scope={{ folder: filter.folder, folderUids: filter.folderUids }}
+      />
+    );
   }
   return <AlertRulesListView filter={filter} />;
 }

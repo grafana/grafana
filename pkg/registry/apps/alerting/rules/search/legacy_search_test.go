@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
@@ -56,7 +56,7 @@ func TestLegacyBackendMatchesUnifiedResponses(t *testing.T) {
 }
 
 type ruleSearchStore struct {
-	provisioning.RuleStore
+	legacy.RuleStore
 	rules     ngmodels.RulesGroup
 	query     *ngmodels.ListAlertRulesExtendedQuery
 	err       error
@@ -70,8 +70,8 @@ func (s *ruleSearchStore) ListAlertRulesPaginated(ctx context.Context, query *ng
 }
 
 func legacyBackendForTest(store *ruleSearchStore) *legacyClient {
-	service := provisioning.NewAlertRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
-		60, 10, 0, &logtest.Fake{}, nil, statusSearchAccessControl{}, nil)
+	service := legacy.NewLegacyRuleService(store, fakes.NewFakeProvisioningStore(), nil, nil, nil,
+		60, &logtest.Fake{}, nil, statusSearchAccessControl{}, nil)
 	return NewLegacyClient(*service)
 }
 

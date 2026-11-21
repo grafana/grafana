@@ -26,6 +26,24 @@ export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
         badge: t('home.recent-activity-tab.kind-dashboard', 'Dashboard'),
         icon: 'apps',
       };
+    case 'folder':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-folders', 'Folders'),
+        badge: t('home.recent-activity-tab.kind-folder', 'Folder'),
+        icon: 'folder',
+      };
+    case 'notebook':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-notebooks', 'Notebooks'),
+        badge: t('home.recent-activity-tab.kind-notebook', 'Notebook'),
+        icon: 'gf-notebook',
+      };
+    case 'playlist':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-playlists', 'Playlists'),
+        badge: t('home.recent-activity-tab.kind-playlist', 'Playlist'),
+        icon: 'presentation-play',
+      };
     case 'page':
       return {
         filterLabel: t('home.recent-activity-tab.filter-pages', 'Pages'),
@@ -129,11 +147,15 @@ export function toRow(
       const { range, vars } = collectParams(item.search);
       return row(item.dashboard.name, [foldersByUid[item.dashboard.location]?.name, range, ...vars]);
     }
+    case 'playlist':
+      return row(item.playlistName, []);
     case 'explore': {
       // The datasource names the page, the query text is what it restores; "Explore" when no pane names one.
       const title = joinPanes(item.panes.map((pane) => pane.datasource)) ?? getPageKindMeta('explore').badge;
       return row(title, [joinPanes(item.panes.map((pane) => pane.queries.join('; ')))]);
     }
+    case 'folder':
+    case 'notebook':
     case 'page': {
       // Without a title, the last path segment (the page's slug) is the most readable thing the URL has.
       const { range, vars, others } = collectParams(item.search);

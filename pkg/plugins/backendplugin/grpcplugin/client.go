@@ -41,8 +41,6 @@ var pluginSet = func() map[int]goplugin.PluginSet {
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
-		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
-		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
 	}
 	maps.Copy(services, appgrpcplugin.ClientPluginSet())
 	return map[int]goplugin.PluginSet{grpcplugin.ProtocolVersion: services}

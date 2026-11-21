@@ -14,7 +14,6 @@ import (
 // configuration, without spinning up a second server (process-global state makes more
 // than one Grafana per test process unreliable).
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithoutExportFeatureFlag,
 	func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningResources = []string{

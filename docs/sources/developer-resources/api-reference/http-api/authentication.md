@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Authentication options for the HTTP API
-menuTitle: Authentication
+menuTitle: Authenticate
 weight: 03
 aliases:
   - ../../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
@@ -51,7 +51,7 @@ To create a service account token:
 1. Go to **Administration** in the left-side menu
 1. Click **Users and access > Service Accounts**.
 
-For more information on how to use service account tokens, refer to the [Service Accounts](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) documentation.
+For more information on how to use service account tokens, refer to the [Service Accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) documentation.
 
 You use the token in all requests in the `Authorization` header, for example:
 
@@ -72,7 +72,7 @@ To access or create your service account tokens:
 1. Go to **Administration** in the left-side menu
 1. Click **Users and access > Service Accounts**.
 
-For details on creating service accounts, assigning permissions, and adding tokens, refer to [Service Accounts](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/).
+For details on creating service accounts, assigning permissions, and adding tokens, refer to [Service Accounts](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/).
 
 Include the service account token in the `Authorization` header for all requests to your Grafana instance:
 

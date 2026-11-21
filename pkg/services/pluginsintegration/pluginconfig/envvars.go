@@ -79,7 +79,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 
-	licensePluginID := marketplaceLicensePluginID(plugin)
+	licensePluginID := marketplacelicensing.LicensePluginID(plugin)
 	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, licensePluginID)
 	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "licensePluginId", licensePluginID, "envVars", envVarNames(marketplaceEnvVars))
 	hostEnv = append(hostEnv, marketplaceEnvVars...)
@@ -103,15 +103,6 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	return hostEnv
-}
-
-// marketplaceLicensePluginID returns the plugin ID whose marketplace license applies to plugin.
-// Nested plugins are distributed and licensed as part of their parent, so they use the parent's license.
-func marketplaceLicensePluginID(plugin *plugins.Plugin) string {
-	if plugin.Parent != nil {
-		return plugin.Parent.PluginID()
-	}
-	return plugin.PluginID()
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
@@ -152,6 +143,10 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	}
 	if hasPath {
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
+	}
+	// Pass the same validation keys that Grafana uses, so the plugin accepts the same tokens.
+	if validationKeys := p.marketplaceLicensing.ValidationKeys(); validationKeys != "" {
+		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_VALIDATION_KEY", validationKeys))
 	}
 	return variables
 }
