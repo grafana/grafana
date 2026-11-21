@@ -160,6 +160,10 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 {{< figure src="/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png" alt="Pie chart labels" max-width="350px" >}}
 
+#### Solid slice colors
+
+By default, each slice is filled with a radial gradient that shifts the field color. Turn on **Solid slice colors** to fill each slice with the exact field color, so it matches the color shown in the legend.
+
 ### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
