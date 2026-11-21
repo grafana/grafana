@@ -191,60 +191,7 @@ func ProvideService(
 	// TODO: this is very hacky
 	// We need to register the routes in ProvideService to make sure
 	// the routes are registered before the Grafana HTTP server starts.
-	proxyHandler := func(k8sRoute routing.RouteRegister) {
-		handler := func(c *contextmodel.ReqContext) {
-			if err := s.AwaitRunning(c.Req.Context()); err != nil {
-				c.Resp.WriteHeader(http.StatusInternalServerError)
-				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
-				return
-			}
-
-			if s.handler == nil {
-				c.Resp.WriteHeader(http.StatusNotFound)
-				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusNotFound)))
-				return
-			}
-
-			req := c.Req
-			if req.URL.Path == "" {
-				req.URL.Path = "/"
-			}
-
-			if c.SignedInUser != nil {
-				// For unauthenticated requests, we set the namespace to the requested one
-				if !c.IsSignedIn {
-					useNamespaceFromPath(req.URL.Path, c.SignedInUser)
-				}
-
-				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
-				req = req.WithContext(ctx)
-			}
-
-			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.requestRouter.HandleFunc(resp, req, s.handler)
-		}
-		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
-		// Snapshots are shared via URL with the key, so they are always publicly accessible.
-		// Authorization is enforced by the snapshot authorizer.
-		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
-		k8sRoute.Get(snapshotPath, handler)
-		k8sRoute.Get(snapshotPath+"/dashboard", handler)
-
-		// Allow unauthenticated GET of the SSO login-config singleton: the login
-		// page needs it before the user authenticates. The response is secret-free.
-		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
-		k8sRoute.Get(ssoLoginConfigPath, handler)
-
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	}
-
-	s.rr.Group("/apis", proxyHandler)
-	s.rr.Group("/livez", proxyHandler)
-	s.rr.Group("/readyz", proxyHandler)
-	s.rr.Group("/healthz", proxyHandler)
-	s.rr.Group("/openapi", proxyHandler)
-	s.rr.Group("/version", proxyHandler)
+	s.registerRoutes()
 
 	eventualRestConfigProvider.cfg = s
 	close(eventualRestConfigProvider.ready)
@@ -777,6 +724,72 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
+}
+
+// registerRoutes proxies the apiserver paths through the Grafana HTTP server.
+func (s *service) registerRoutes() {
+	handler := func(c *contextmodel.ReqContext) {
+		if err := s.AwaitRunning(c.Req.Context()); err != nil {
+			c.Resp.WriteHeader(http.StatusInternalServerError)
+			_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
+		}
+
+		if s.handler == nil {
+			c.Resp.WriteHeader(http.StatusNotFound)
+			_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusNotFound)))
+			return
+		}
+
+		req := c.Req
+		if req.URL.Path == "" {
+			req.URL.Path = "/"
+		}
+
+		if c.SignedInUser != nil {
+			// For unauthenticated requests, we set the namespace to the requested one
+			if !c.IsSignedIn {
+				useNamespaceFromPath(req.URL.Path, c.SignedInUser)
+			}
+
+			ctx := identity.WithRequester(req.Context(), c.SignedInUser)
+			req = req.WithContext(ctx)
+		}
+
+		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+		s.requestRouter.HandleFunc(resp, req, s.handler)
+	}
+
+	proxyHandler := func(k8sRoute routing.RouteRegister) {
+		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+		// Snapshots are shared via URL with the key, so they are always publicly accessible.
+		// Authorization is enforced by the snapshot authorizer.
+		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+		k8sRoute.Get(snapshotPath, handler)
+		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+		// Allow unauthenticated GET of the SSO login-config singleton: the login
+		// page needs it before the user authenticates. The response is secret-free.
+		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
+		k8sRoute.Get(ssoLoginConfigPath, handler)
+
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	}
+
+	// Kubernetes probes call these signed out. Only GET of the root path is
+	// public, and the apiserver still decides the status.
+	probeHandler := func(k8sRoute routing.RouteRegister) {
+		k8sRoute.Get("/", handler)
+		proxyHandler(k8sRoute)
+	}
+
+	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/livez", probeHandler)
+	s.rr.Group("/readyz", probeHandler)
+	s.rr.Group("/healthz", proxyHandler)
+	s.rr.Group("/openapi", proxyHandler)
+	s.rr.Group("/version", proxyHandler)
 }
 
 func useNamespaceFromPath(path string, user *user.SignedInUser) {

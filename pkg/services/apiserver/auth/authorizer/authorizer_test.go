@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -79,4 +80,22 @@ func TestGrafanaAuthorizer_ViewerMayListKeysButNotCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"list", "create"}, seen)
+}
+
+// Kubernetes probes call /livez and /readyz signed out, with no org role.
+func TestGrafanaAuthorizer_SignedOutProbes(t *testing.T) {
+	a := NewGrafanaBuiltInSTAuthorizer()
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{})
+
+	for _, p := range []string{"/livez", "/readyz"} {
+		decision, _, err := a.Authorize(ctx, attributesFor(t, http.MethodGet, p))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionAllow, decision, p)
+	}
+
+	for _, p := range []string{"/livez/ping", "/readyz/etcd", "/version", "/apis"} {
+		decision, _, err := a.Authorize(ctx, attributesFor(t, http.MethodGet, p))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionDeny, decision, p)
+	}
 }
