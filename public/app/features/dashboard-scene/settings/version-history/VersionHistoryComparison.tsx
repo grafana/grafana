@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { DiffGroup } from './DiffGroup';
@@ -81,7 +81,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
           isOpen={false}
           label={t('dashboard-scene.version-history-comparison.label-view-json-diff', 'View JSON diff')}
         >
-          <MonacoDiffEditor
+          <DiffViewer
             original={JSON.stringify(diffData.lhs, null, 2)}
             modified={JSON.stringify(diffData.rhs, null, 2)}
             language="json"

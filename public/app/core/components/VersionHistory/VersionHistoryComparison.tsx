@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Divider, EmptyState, Icon, Stack, Text } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
 import { DiffGroup } from 'app/features/dashboard-scene/settings/version-history/DiffGroup';
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
@@ -114,7 +114,7 @@ export const VersionHistoryComparison = <T extends DiffArgument>({
         )}
       </Stack>
       {showJsonDiff && (
-        <MonacoDiffEditor
+        <DiffViewer
           original={JSON.stringify(oldVersion, null, 2)}
           modified={JSON.stringify(newVersion, null, 2)}
           language="json"

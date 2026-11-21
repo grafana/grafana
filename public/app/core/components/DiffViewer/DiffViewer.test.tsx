@@ -4,9 +4,8 @@ import { type ReactElement } from 'react';
 
 import { store } from '@grafana/data';
 
-import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
-
 import { DiffViewer } from './DiffViewer';
+import { InlineDiffToggle, useInlineDiffPreference } from './inlineDiffPreference';
 
 function HeaderControlledDiffViewer(): ReactElement {
   const [inline, setInline] = useInlineDiffPreference();

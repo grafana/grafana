@@ -17,8 +17,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
-import { InlineDiffToggle, useInlineDiffPreference } from 'app/core/components/MonacoDiffEditor/inlineDiffPreference';
+import { DiffViewer } from 'app/core/components/DiffViewer/DiffViewer';
+import { InlineDiffToggle, useInlineDiffPreference } from 'app/core/components/DiffViewer/inlineDiffPreference';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -219,7 +219,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
         />
       )}
       <div className={styles.diffContainer}>
-        <MonacoDiffEditor
+        <DiffViewer
           original={diffTexts.original}
           modified={diffTexts.current}
           language={editorFormat}
