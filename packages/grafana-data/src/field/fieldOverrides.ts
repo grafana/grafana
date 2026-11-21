@@ -42,15 +42,7 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import {
-  getVarMappingKind,
-  getVarMappingOptions,
-  type VarMappingKind,
-  resolveVarMapping,
-  resolveVarMappingBoolean,
-  resolveVarMappingOption,
-  resolveVarMappingString,
-} from './overrides/processors';
+import { getVarMappingKind, resolveVarMapping, resolveVarMappingString } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -469,26 +461,9 @@ function resolveVarMappingInput(
     return rawValue;
   }
 
-  const resolved = resolveVarMappingByKind(kind, expr, item, context);
+  const resolved =
+    kind === 'number' ? resolveVarMapping(expr, context, item.settings) : resolveVarMappingString(expr, context);
   return resolved !== undefined ? resolved : rawValue;
-}
-
-function resolveVarMappingByKind(
-  kind: VarMappingKind,
-  expr: string,
-  item: FieldConfigPropertyItem,
-  context: FieldOverrideEnv
-): unknown {
-  switch (kind) {
-    case 'number':
-      return resolveVarMapping(expr, context, item.settings);
-    case 'string':
-      return resolveVarMappingString(expr, context);
-    case 'option':
-      return resolveVarMappingOption(expr, context, getVarMappingOptions(item.settings));
-    case 'boolean':
-      return resolveVarMappingBoolean(expr, context);
-  }
 }
 
 export function setDynamicConfigValue(
