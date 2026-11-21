@@ -78,7 +78,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		},
 	}
 
-	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})
+	info, err := s.getSessionAuthInfo(ctx, token)
 	if err != nil {
 		if !errors.Is(err, user.ErrUserNotFound) {
 			s.log.FromContext(ctx).Error("Failed to fetch auth info", "err", err)
@@ -89,6 +89,40 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	ident.AuthID = info.AuthId
 	ident.AuthenticatedBy = info.AuthModule
 	return ident, nil
+}
+
+// getSessionAuthInfo returns the auth info of the login that created the session.
+// The most recent auth info of the user is not always that login: a user who signed in
+// with OAuth and then calls the API with a JWT gets a newer "jwt" entry, but a JWT
+// never creates a session.
+func (s *Session) getSessionAuthInfo(ctx context.Context, token *auth.UserToken) (*login.UserAuth, error) {
+	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})
+	if err != nil {
+		return nil, err
+	}
+
+	if info.AuthModule != login.JWTModule && info.AuthModule != login.ExtendedJWTModule {
+		return info, nil
+	}
+
+	// Sessions created by an external login keep a link to it, other sessions (e.g. basic
+	// login) have no auth info.
+	if token.ExternalSessionId == 0 {
+		return nil, user.ErrUserNotFound
+	}
+
+	externalSession, err := s.sessionService.GetExternalSession(ctx, token.ExternalSessionId)
+	if err != nil {
+		if errors.Is(err, auth.ErrExternalSessionNotFound) {
+			return nil, user.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
+		UserId:     token.UserId,
+		AuthModule: externalSession.AuthModule,
+	})
 }
 
 func (s *Session) IsEnabled(context.Context) bool {
