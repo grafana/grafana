@@ -133,7 +133,8 @@ export function isValidDuration(durationString: string): boolean {
  * isValidGoDuration returns true if the given string can be parsed into a valid Duration object based on
  * Go's time.parseDuration, false otherwise.
  *
- * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+ * Valid time units are "ns", "us" (or "µs" or "μs"), "ms", "s", "m", "h". Several number and unit pairs may be
+ * joined in one value, for example "1h30m".
  *
  * @see https://pkg.go.dev/time#ParseDuration
  *
@@ -142,15 +143,15 @@ export function isValidDuration(durationString: string): boolean {
  * @internal
  */
 export function isValidGoDuration(durationString: string): boolean {
-  const timeUnits = ['h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
-  return validateDurationByUnits(durationString, timeUnits);
+  const timeUnits = ['h', 'm', 's', 'ms', 'us', 'µs', 'μs', 'ns'];
+  return validateGoDuration(durationString, timeUnits);
 }
 
 /**
  * isValidGrafanaDuration returns `true` if the given string can be parsed into a valid Duration object based on
  * the Grafana SDK's gtime.parseDuration, `false` otherwise.
  *
- * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h", "d", "w", "M", "y".
+ * Valid time units are "ns", "us" (or "µs" or "μs"), "ms", "s", "m", "h", "d", "w", "M", "y".
  *
  * @see https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/gtime#ParseDuration
  *
@@ -159,7 +160,7 @@ export function isValidGoDuration(durationString: string): boolean {
  * @internal
  */
 export function isValidGrafanaDuration(durationString: string): boolean {
-  const timeUnits = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
+  const timeUnits = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms', 'us', 'µs', 'μs', 'ns'];
   return validateDurationByUnits(durationString, timeUnits);
 }
 
@@ -177,4 +178,16 @@ function validateDurationByUnits(durationString: string, timeUnits: string[]): b
   }
 
   return true;
+}
+
+// Anchored so a prefix or suffix cannot match. The number is written as three alternatives instead of
+// [0-9]*[.]?[0-9]+ so that a long run of digits without a unit fails in linear time.
+function validateGoDuration(durationString: string, timeUnits: string[]): boolean {
+  const component = `(?:[0-9]+\\.[0-9]+|[0-9]+|\\.[0-9]+)(?:${timeUnits.join('|')})`;
+  const token = new RegExp(`^[-+]?(?:${component})+$`);
+
+  return durationString
+    .trim()
+    .split(' ')
+    .every((value) => token.test(value));
 }

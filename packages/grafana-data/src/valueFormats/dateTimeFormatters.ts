@@ -260,6 +260,10 @@ export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
     return { text: '' };
   }
 
+  if (size < 0) {
+    return { ...toClock(-size, decimals), suffix: ' ago' };
+  }
+
   // < 1 second
   if (size < 1000) {
     return {
