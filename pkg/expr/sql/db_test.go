@@ -7,11 +7,15 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
+	mysql "github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -412,6 +416,79 @@ func TestQueryFrames_FileReadsDisabled(t *testing.T) {
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "file read operations")
+}
+
+func TestQueryFrames_OutputConversionError(t *testing.T) {
+	tests := []struct {
+		name     string
+		field    *data.Field
+		wantText string
+	}{
+		{
+			name:     "invalid UTF-8 in the first row",
+			field:    data.NewField("bin", nil, []string{"\x01\x02\xff", "ok"}),
+			wantText: "Incorrect string value: '\\xFF' for column 'bin' at row 0",
+		},
+		{
+			name:     "invalid UTF-8 in a later row of a nullable field",
+			field:    data.NewField("bin", nil, []*string{new("ok"), nil, new("\xde\xad\xbe\xef")}),
+			wantText: "Incorrect string value: '\\xBE\\xEF' for column 'bin' at row 2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ids := make([]int64, tt.field.Len())
+			input := data.NewFrame("", data.NewField("id", nil, ids), tt.field).SetRefID("a")
+
+			db := DB{}
+			_, err := db.QueryFrames(t.Context(), &testTracer{}, "b", `SELECT * FROM a`, data.Frames{input})
+
+			require.ErrorContains(t, err, "failed to convert the results of sql expression [b] into a data frame: "+tt.wantText)
+			require.Equal(t, 1, strings.Count(err.Error(), "bin"), "the column is named once")
+			var gfErr errutil.Error
+			require.ErrorAs(t, err, &gfErr)
+			require.Equal(t, "sse.sql.output_conversion", gfErr.MessageID)
+			var catErr *ErrorWithCategory
+			require.ErrorAs(t, err, &catErr)
+			require.Equal(t, ErrCategoryOutputConversion, catErr.Category())
+		})
+	}
+}
+
+// An error the engine returns while producing a row is not a conversion error.
+func TestQueryFrames_RowErrorIsGMSError(t *testing.T) {
+	input := data.NewFrame("", data.NewField("j", nil, []string{"not json"})).SetRefID("a")
+
+	db := DB{}
+	_, err := db.QueryFrames(t.Context(), &testTracer{}, "b", `SELECT JSON_LENGTH(j) FROM a`, data.Frames{input})
+
+	require.ErrorContains(t, err, "Invalid JSON text")
+	var catErr *ErrorWithCategory
+	require.ErrorAs(t, err, &catErr)
+	require.Equal(t, ErrCategoryGeneralGMSError, catErr.Category())
+}
+
+// The TIMESTAMP range error doesn't read the engine's column context, so only
+// the prefix names the column. The schema is built by hand so the test doesn't
+// depend on which SQL type input time fields map to.
+func TestConvertToDataFrame_TimestampOutOfRange(t *testing.T) {
+	// Appended, not a literal: gosec G602 reads a fixed-length literal here as the
+	// length of every schema passed to convertToDataFrame.
+	schema := make(mysql.Schema, 0, 1)
+	schema = append(schema, &mysql.Column{Name: "time", Type: types.Timestamp})
+	iter := mysql.RowsToRowIter(
+		mysql.NewRow(time.Unix(1, 0).UTC()),
+		mysql.NewRow(time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)),
+	)
+
+	_, err := convertToDataFrame(mysql.NewEmptyContext(), iter, schema, "b", 0)
+
+	require.ErrorContains(t, err, "failed to convert the results of sql expression [b] into a data frame: row 1, column time: ")
+	require.ErrorContains(t, err, "outside of timestamp range")
+	var catErr *ErrorWithCategory
+	require.ErrorAs(t, err, &catErr)
+	require.Equal(t, ErrCategoryOutputConversion, catErr.Category())
 }
 
 type testTracer struct {
