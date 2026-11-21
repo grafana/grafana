@@ -3,6 +3,7 @@ import { type Labels } from '../types/data';
 import { FieldType } from '../types/dataFrame';
 
 import {
+  createFieldReferenceIndex,
   createFieldReferenceResolver,
   type FieldReference,
   getFieldReferenceKey,
@@ -57,6 +58,32 @@ describe('field references', () => {
     getFieldReferences(frame).forEach((reference, index) => {
       expect(resolve(reference)).toBe(index);
     });
+  });
+
+  it('finds every field among many that share a name', () => {
+    const series = toDataFrame({
+      fields: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'a', 'b', 'a'].map((instance, index) => ({
+        name: 'Value',
+        type: FieldType.number,
+        values: [index],
+        labels: { instance },
+      })),
+    });
+    const resolve = createFieldReferenceResolver(series);
+
+    expect(resolve({ name: 'Value', labels: { instance: 'i' } })).toBe(8);
+    expect(resolve({ name: 'Value', labels: { instance: 'a' }, occurrence: 2 })).toBe(11);
+    expect(resolve({ name: 'Value', labels: { instance: 'b' }, occurrence: 2 })).toBe(-1);
+    expect(resolve({ name: 'Value', labels: { instance: 'z' } })).toBe(-1);
+  });
+
+  it('finds references by their own occurrence when a list skips repeats', () => {
+    const find = createFieldReferenceIndex([{ name: 'x' }, { name: 'x', occurrence: 2 }, { name: 'y', occurrence: 1 }]);
+
+    expect(find({ name: 'x', occurrence: 2 })).toBe(1);
+    expect(find({ name: 'x', occurrence: 1 })).toBe(-1);
+    expect(find({ name: 'y', occurrence: 1 })).toBe(2);
+    expect(find({ name: 'y' })).toBe(-1);
   });
 
   it('ignores display names, which overrides and renames change', () => {

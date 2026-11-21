@@ -93,9 +93,58 @@ export function getFieldReferences(frame: DataFrame): FieldReference[] {
   }));
 }
 
+function createIndex(items: readonly FieldReference[], countRepeats: boolean): (reference: FieldReference) => number {
+  const groups = groupByName(items);
+  const repeats = new Map<string, Map<string, Map<number, number>>>();
+  const found = new Map<FieldReference, number>();
+  const locate = (reference: FieldReference) => {
+    const group = groups.get(reference.name);
+    if (!group) {
+      return -1;
+    }
+    const occurrence = reference.occurrence ?? 0;
+    if (group.length === 1) {
+      const [index] = group;
+      const own = countRepeats ? 0 : (items[index].occurrence ?? 0);
+      return own === occurrence && hasSameLabels(items[index].labels, reference.labels) ? index : -1;
+    }
+    let byLabels = repeats.get(reference.name);
+    if (!byLabels) {
+      byLabels = new Map();
+      for (const index of group) {
+        const labels = JSON.stringify(sortedLabels(items[index].labels));
+        const byOccurrence = byLabels.get(labels) ?? new Map<number, number>();
+        byLabels.set(labels, byOccurrence);
+        const own = countRepeats ? byOccurrence.size : (items[index].occurrence ?? 0);
+        if (!byOccurrence.has(own)) {
+          byOccurrence.set(own, index);
+        }
+      }
+      repeats.set(reference.name, byLabels);
+    }
+    return byLabels.get(JSON.stringify(sortedLabels(reference.labels)))?.get(occurrence) ?? -1;
+  };
+  return (reference) => {
+    let index = found.get(reference);
+    if (index === undefined) {
+      index = locate(reference);
+      found.set(reference, index);
+    }
+    return index;
+  };
+}
+
+export function createFieldReferenceIndex(
+  references: readonly FieldReference[]
+): (reference: FieldReference) => number {
+  return createIndex(references, false);
+}
+
+export function createFieldIndex(frame: DataFrame): (reference: FieldReference) => number {
+  return createIndex(frame.fields, true);
+}
+
 export function createFieldReferenceResolver(frame: DataFrame): (reference: unknown) => number {
-  const indexes = new Map(
-    getFieldReferences(frame).map((reference, index) => [getFieldReferenceKey(reference), index])
-  );
-  return (reference) => (isFieldReference(reference) ? (indexes.get(getFieldReferenceKey(reference)) ?? -1) : -1);
+  const find = createFieldIndex(frame);
+  return (reference) => (isFieldReference(reference) ? find(reference) : -1);
 }
