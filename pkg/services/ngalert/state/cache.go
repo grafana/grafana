@@ -25,6 +25,8 @@ const emptyLabelKeyPrefix = "__empty_label_key__"
 type ruleStates struct {
 	states             map[data.Fingerprint]*State
 	lastCaptureAttempt *CaptureAttempt
+	// Once evaluation starts, persisted snapshots are no longer authoritative for this rule.
+	evaluationStarted bool
 }
 
 type cache struct {
@@ -320,10 +322,10 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 	if _, ok := c.states[ruleKey.OrgID]; !ok {
 		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
 	}
-	// The capture attempt belongs to the rule, not to a particular set of states,
-	// so it has to outlive the states map being replaced here.
+	// Rule-level metadata must outlive replacement of the instance states.
 	if existing, ok := c.states[ruleKey.OrgID][ruleKey.UID]; ok {
 		s.lastCaptureAttempt = existing.lastCaptureAttempt
+		s.evaluationStarted = existing.evaluationStarted
 	}
 	c.states[ruleKey.OrgID][ruleKey.UID] = &s
 }
@@ -331,6 +333,39 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	c.setLocked(entry)
+}
+
+func (c *cache) markEvaluationStarted(ruleKey ngModels.AlertRuleKey) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if _, ok := c.states[ruleKey.OrgID]; !ok {
+		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	rs, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if !ok {
+		rs = &ruleStates{states: make(map[data.Fingerprint]*State)}
+		c.states[ruleKey.OrgID][ruleKey.UID] = rs
+	}
+	rs.evaluationStarted = true
+}
+
+func (c *cache) restore(entry *State) bool {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if rs := c.states[entry.OrgID][entry.AlertRuleUID]; rs != nil {
+		if rs.evaluationStarted {
+			return false
+		}
+		if current := rs.states[entry.CacheID]; current != nil && !entry.LastEvaluationTime.After(current.LastEvaluationTime) {
+			return false
+		}
+	}
+	c.setLocked(entry)
+	return true
+}
+
+func (c *cache) setLocked(entry *State) {
 	if _, ok := c.states[entry.OrgID]; !ok {
 		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
