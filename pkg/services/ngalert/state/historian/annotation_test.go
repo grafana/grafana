@@ -101,6 +101,31 @@ func TestAnnotationHistorian(t *testing.T) {
 		require.Equal(t, now.Add(-10*time.Second).UnixMilli(), query.From)
 	})
 
+	t.Run("annotation query returns the transition time", func(t *testing.T) {
+		transitionTime := time.Date(2026, time.October, 21, 11, 44, 10, 123*int(time.Millisecond), time.UTC)
+		store := &interceptingAnnotationStore{
+			items: []*annotations.ItemDTO{{
+				AlertUID:  "my-rule",
+				Time:      transitionTime.UnixMilli(),
+				Text:      "MyAlertRule {alertname=MyAlertRule}",
+				PrevState: "Alerting",
+				NewState:  "Normal (NoData)",
+			}},
+		}
+		anns := createTestAnnotationSutWithStore(t, store)
+
+		frame, err := anns.Query(context.Background(), models.HistoryQuery{
+			RuleUID: "my-rule",
+			OrgID:   1,
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 1, frame.Fields[0].Len())
+		got, ok := frame.Fields[0].At(0).(time.Time)
+		require.True(t, ok)
+		require.True(t, transitionTime.Equal(got), "expected %s, got %s", transitionTime, got)
+	})
+
 	t.Run("writing state transitions as annotations succeeds", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		rule := createTestRule()
@@ -649,11 +674,15 @@ type interceptingAnnotationStore struct {
 	lastQuery              *annotations.ItemQuery
 	savedAnnotations       []annotations.Item
 	enforceTagColumnLimits bool
+	items                  []*annotations.ItemDTO
 }
 
 func (i *interceptingAnnotationStore) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	i.lastQuery = query
-	return []*annotations.ItemDTO{}, nil
+	if i.items == nil {
+		return []*annotations.ItemDTO{}, nil
+	}
+	return i.items, nil
 }
 
 func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey, items []annotations.Item, orgID int64, logger log.Logger) error {
