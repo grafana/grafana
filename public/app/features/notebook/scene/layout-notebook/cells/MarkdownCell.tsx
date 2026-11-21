@@ -40,13 +40,10 @@ function ensureHistoryListener() {
   }
   lastKnownLocationService = locationService;
   unlistenHistory = locationService.getHistory().listen((location) => {
-    // If the path changed (e.g. navigated to another notebook), reset the restored state.
-    // If only the hash changed within the same path (e.g. from clicking a ToC link),
-    // mark restoredPathAndHash so subsequent cell mounts or edit toggles won't re-trigger a jump.
+    // If the path changed (e.g. navigated to another notebook), reset the restored state so the
+    // new page's deep link fragment can be restored when its cells mount.
     if (restoredPathAndHash && location.pathname !== restoredPathAndHash.pathname) {
       restoredPathAndHash = null;
-    } else if (location.hash) {
-      restoredPathAndHash = { pathname: location.pathname, hash: location.hash };
     }
   });
 }
@@ -171,6 +168,8 @@ function handleAnchorClick(event: MouseEvent<HTMLDivElement>) {
 
   event.preventDefault();
   destination.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Mark as restored so subsequent cell mounts or edit-mode toggles won't re-trigger a jump to this heading.
+  restoredPathAndHash = { pathname: locationService.getLocation().pathname, hash: `#${id}` };
   // Through locationService, not window.history: the router has to see the fragment, or its next
   // url update starts from a location without it and drops it. Path and search come along so the
   // replace keeps the notebook's time range instead of resolving to a bare hash.

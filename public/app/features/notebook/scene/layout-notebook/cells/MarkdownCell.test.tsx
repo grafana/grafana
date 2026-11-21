@@ -166,20 +166,20 @@ describe('MarkdownCell', () => {
       scrollIntoView.mockRestore();
     });
 
-    it('restores fragment on a new notebook when navigating client-side', async () => {
-      // First notebook with hash
-      window.location.hash = '#herbs';
-      locationService.push({ pathname: '/notebooks/nb1', hash: '#herbs' });
+    it('restores fragment on a new notebook when navigating client-side from an unhashed notebook', async () => {
+      // First notebook without any fragment
+      locationService.push({ pathname: '/notebooks/nb-plain', hash: '' });
+      window.location.hash = '';
       const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
       const { unmount } = render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
 
       await screen.findByRole('heading', { name: 'Herbs' });
-      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+      expect(scrollIntoView).not.toHaveBeenCalled();
       unmount();
 
-      // Navigate to a second notebook with its own deep link fragment
+      // Client-side open of another notebook with a section fragment
       window.location.hash = '#other-heading';
-      locationService.push({ pathname: '/notebooks/nb2', hash: '#other-heading' });
+      locationService.push({ pathname: '/notebooks/nb-hashed', hash: '#other-heading' });
 
       const notebook2Cell: CellContentKind = {
         kind: 'Markdown',
@@ -188,7 +188,8 @@ describe('MarkdownCell', () => {
       render(<MarkdownCell content={notebook2Cell} isEditing={false} onChange={jest.fn()} />);
 
       await screen.findByRole('heading', { name: 'Other Heading' });
-      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
       scrollIntoView.mockRestore();
     });
 
