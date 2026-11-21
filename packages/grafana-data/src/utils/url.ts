@@ -136,9 +136,11 @@ function getUrlSearchParams(): UrlQueryMap {
       // key-value param
       const key = decodeURIComponent(keyValuePair[0]);
       const value = decodeURIComponent(keyValuePair[1]);
-      if (key in params) {
-        params[key] = [...(params[key] as any[]), value];
+      const existing = params[key];
+      if (Array.isArray(existing)) {
+        params[key] = [...(existing as any[]), value];
       } else {
+        // either a new key, or a previous boolean param (e.g. `?a&a=b`) that has no values to append to
         params[key] = [value];
       }
     } else if (keyValuePair.length === 1) {
