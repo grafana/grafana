@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
+	playlistmanifest "github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
+	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
 	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	userstoragemanifest "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
@@ -35,6 +37,21 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// All returns Grafana's built-in apps.
+func CoreAppProviders(cfg *setting.Cfg) []app.Provider {
+	return []app.Provider{
+		simple.NewAppProvider(playlistmanifest.LocalManifest(), &playlistapp.PlaylistConfig{}, playlistapp.New),
+		// collections serves stars.
+		simple.NewAppProvider(collectionsmanifest.LocalManifest(), nil, collectionsapp.New),
+		// Without Defaults, preferences has no configured defaults to merge.
+		simple.NewAppProvider(preferencesmanifest.LocalManifest(), &preferencesapp.Config{
+			Defaults:          prefsapi.DefaultSpec(cfg),
+			HomeDashboardName: home.DASHBOARD_NAME,
+			IsValidTheme:      pref.IsValidThemeID,
+		}, preferencesapp.New),
+	}
+}
 
 // registerCoreAPIs reports whether the router serves the core apps' groups.
 // Like settingsEnabled, it is evaluated through OpenFeature, so a remote
