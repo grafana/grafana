@@ -1504,6 +1504,20 @@ Key metrics for monitoring Unified Search:
 - `unified_search_ring_members`: Number of active search server instances
 - `grafana_vector_storage_hybrid_search_phase_duration_seconds`: HybridSearch database, embedding, and reranking call latency by phase and status.
 
+The `grafana_vector_storage_hybrid_search_duration_seconds` histogram counts HybridSearch server invocations, including calls that fail inside the search server. Its `source` label is `assistant`, `gcx`, `cmdk`, or `unknown`; only an explicit `x-grafana-caller-id` marker selects the first three. Retries that reach the server each count once. Use the query matching the Prometheus scrape format:
+
+```promql
+sum by (source) (increase(grafana_vector_storage_hybrid_search_duration_seconds_count[1h]))
+```
+
+For native histograms, use:
+
+```promql
+sum by (source) (histogram_count(increase(grafana_vector_storage_hybrid_search_duration_seconds[1h])))
+```
+
+These are alternatives for different scrape formats; do not add their results. During rollout, old pods and historical samples have no `source` label. Keep that unlabeled group separate or query a window after all servers are upgraded; it does not mean `unknown`.
+
 ## Data migrations
 
 Unified storage includes an automated migration system that transfers resources from legacy SQL tables to unified storage. Migrations run automatically during Grafana startup when enabled.
