@@ -12,7 +12,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/routes"
-	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -173,7 +172,7 @@ func TestProxyRouteFromOperation(t *testing.T) {
 
 	t.Run("a malformed extension is an error", func(t *testing.T) {
 		op := &spec3.Operation{}
-		op.AddExtension(manifestroutes.ExtensionProxy, map[string]any{"headers": "not a list"})
+		op.AddExtension(routes.ExtensionProxy, map[string]any{"headers": "not a list"})
 		_, ok, err := ProxyRouteFromOperation("/a", http.MethodGet, op)
 		require.Error(t, err)
 		require.True(t, ok)
@@ -181,7 +180,7 @@ func TestProxyRouteFromOperation(t *testing.T) {
 
 	t.Run("paths are rebuilt in the plugin proxy's syntax", func(t *testing.T) {
 		op := &spec3.Operation{}
-		op.AddExtension(manifestroutes.ExtensionProxy, routes.ProxyTarget{URL: "https://x"})
+		op.AddExtension(routes.ExtensionProxy, routes.ProxyTarget{URL: "https://x"})
 		for specPath, want := range map[string]string{
 			"/a/{id}/b/{rest:*}": "a/:p1/b/*",
 			"/a/{rest...}":       "a/*",
