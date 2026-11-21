@@ -293,6 +293,45 @@ func TestStaticFS(t *testing.T) {
 	})
 }
 
+func TestLocalFS_Files_NodeModules(t *testing.T) {
+	outside := t.TempDir()
+	require.NoError(t, createDummyTempFile(outside, "dep.js"))
+
+	newPluginDir := func(t *testing.T) string {
+		t.Helper()
+		pluginDir := t.TempDir()
+		require.NoError(t, createDummyTempFile(pluginDir, "module.js"))
+		return pluginDir
+	}
+
+	t.Run("skips node_modules containing symlinks outside the plugin directory", func(t *testing.T) {
+		pluginDir := newPluginDir(t)
+		nodeModules := filepath.Join(pluginDir, "node_modules")
+		require.NoError(t, os.Mkdir(nodeModules, 0o750))
+		require.NoError(t, createDummyTempFile(nodeModules, "local.js"))
+		require.NoError(t, os.Symlink(outside, filepath.Join(nodeModules, "dep")))
+
+		localFS := NewLocalFS(pluginDir)
+		files, err := localFS.Files()
+		require.NoError(t, err)
+		require.Equal(t, []string{"module.js"}, files)
+
+		staticFS, err := NewStaticFS(localFS)
+		require.NoError(t, err)
+		files, err = staticFS.Files()
+		require.NoError(t, err)
+		require.Equal(t, []string{"module.js"}, files)
+	})
+
+	t.Run("still rejects symlinks outside the plugin directory elsewhere", func(t *testing.T) {
+		pluginDir := newPluginDir(t)
+		require.NoError(t, os.Symlink(outside, filepath.Join(pluginDir, "dep")))
+
+		_, err := NewLocalFS(pluginDir).Files()
+		require.ErrorContains(t, err, "not inside of plugin directory")
+	})
+}
+
 // TestFSTwoDotsInFileName ensures that LocalFS and StaticFS allow two dots in file names.
 // This makes sure that FSes do not believe that two dots in a file name (anywhere in the path)
 // represent a path traversal attempt.
