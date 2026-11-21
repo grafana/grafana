@@ -66,6 +66,34 @@ it('matches mapped display values with a raw field identity despite display name
   ).toEqual([2, 3]);
 });
 
+it('filters the repeated field that its reference points at', () => {
+  const data = toDataFrame({
+    fields: [
+      { name: 'x', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'x', type: FieldType.string, values: ['p', 'q', 'r'] },
+    ],
+  });
+  const second = config({
+    fieldName: 'x 2',
+    field: { name: 'x', occurrence: 1 },
+    config: { id: 'inSet', options: { values: ['q'] } },
+  });
+  expect(
+    filterByValueTransformer.transformer(second.options, { interpolate: (s) => s })([data])[0].fields[0].values
+  ).toEqual(['b']);
+});
+
+it('falls back to the field name when the reference is malformed', () => {
+  const malformed = config({
+    fieldName: 'Value',
+    field: { name: 3 } as never,
+    config: { id: 'inSet', options: { values: [10] } },
+  });
+  expect(
+    filterByValueTransformer.transformer(malformed.options, { interpolate: (s) => s })([frame()])[0].fields[1].values
+  ).toEqual([10]);
+});
+
 it('distinguishes strict raw membership from formatted membership and empty selections', () => {
   const data = toDataFrame({ fields: [{ name: 'Value', type: FieldType.other, values: [1, '1', null, ''] }] });
   const raw = (values: unknown[]) => config({ fieldName: 'Value', config: { id: 'inSet', options: { values } } });

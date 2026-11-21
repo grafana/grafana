@@ -107,7 +107,7 @@ export {
   type OrderByItem,
 } from '../transformations/transformers/order';
 export { type RenameByRegexTransformerOptions } from '../transformations/transformers/renameByRegex';
-export { type OrganizeFieldsTransformerOptions } from '../transformations/transformers/organize';
+export { renameReferencedKeys, type OrganizeFieldsTransformerOptions } from '../transformations/transformers/organize';
 export { compareValues } from '../transformations/matchers/compareValues';
 export {
   type SortByField,
@@ -143,7 +143,14 @@ export { getPanelDataStatusItems, PanelStatusStore } from '../panel/PanelNotices
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
-export { getRowIdentity } from '../transformations/frameIdentity';
+export {
+  createFieldReferenceResolver,
+  getFieldReferenceKey,
+  getFieldReferences,
+  getRowIdentity,
+  isFieldReference,
+  type FieldReference,
+} from '../transformations/frameIdentity';
 
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
 export {

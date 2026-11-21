@@ -18,8 +18,16 @@ it('composes successive actions against the latest host state and preserves othe
     subscribe: () => () => {},
   };
   const { result } = renderHook(() => useTableTransformations(api, 'table'));
-  const frameA = { catalog: ['A', 'B'], frameFilter: { id: 'byRefId', options: 'A' } };
-  const frameB = { catalog: ['C', 'D'], frameFilter: { id: 'byRefId', options: 'B' } };
+  const frameA = {
+    catalog: ['A', 'B'],
+    references: [{ name: 'A' }, { name: 'B' }],
+    frameFilter: { id: 'byRefId', options: 'A' },
+  };
+  const frameB = {
+    catalog: ['C', 'D'],
+    references: [{ name: 'C' }, { name: 'D' }],
+    frameFilter: { id: 'byRefId', options: 'B' },
+  };
 
   act(() => {
     result.current.update((current) => columnTransformations.columnVisibility.write(current, new Set(['B']), frameA));
@@ -31,7 +39,7 @@ it('composes successive actions against the latest host state and preserves othe
     {
       id: 'organize',
       filter: { id: 'byRefId', options: 'B' },
-      options: { indexByName: {}, excludeByName: { D: true }, renameByName: {} },
+      options: { indexByName: {}, excludeByName: { D: true }, renameByName: {}, referenceByName: { D: { name: 'D' } } },
     },
   ]);
 });

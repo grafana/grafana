@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
+import { getFieldReferenceKey } from '@grafana/data/internal';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 import { type TableNGProps } from '../types';
@@ -65,9 +66,10 @@ export function useColumnTransformations(
     }
 
     const frameKey = sourceFrame?.refId ?? `#${sourceIndex}`;
+    const columns = context.references.map(getFieldReferenceKey);
     const previous = previousCatalogs.current.get(frameKey);
-    previousCatalogs.current.set(frameKey, context.catalog);
-    if (previous && shouldResetColumnOrder(previous, context.catalog)) {
+    previousCatalogs.current.set(frameKey, columns);
+    if (previous && shouldResetColumnOrder(previous, columns)) {
       update((current) =>
         columnTransformations.columnOrder.read(current, context).columnOrder
           ? columnTransformations.columnOrder.write(current, [], context)

@@ -115,7 +115,7 @@ it('clears viewer order but retains visibility and unrelated transforms when ups
   expect(getConfigs()).toEqual([
     {
       ...orderedConfig,
-      options: { indexByName: {}, excludeByName: { B: true }, renameByName: {} },
+      options: { indexByName: {}, excludeByName: { B: true }, renameByName: {}, referenceByName: { B: { name: 'B' } } },
     },
     unrelated,
   ]);
@@ -248,7 +248,12 @@ it('reveals one remaining source column when a refresh leaves the entire frame h
   expect(api.set).toHaveBeenCalledWith('table', [
     {
       id: 'organize',
-      options: { indexByName: {}, excludeByName: { C: true, Missing: true }, renameByName: {} },
+      options: {
+        indexByName: {},
+        excludeByName: { C: true, Missing: true },
+        renameByName: {},
+        referenceByName: { C: { name: 'C' } },
+      },
     },
   ]);
 });
@@ -358,6 +363,11 @@ describe('with display name overrides', () => {
           indexByName: { request_count: 0, customer_id: 1, region_name: 2 },
           excludeByName: { region_name: true },
           renameByName: {},
+          referenceByName: {
+            region_name: { name: 'region_name' },
+            request_count: { name: 'request_count' },
+            customer_id: { name: 'customer_id' },
+          },
         },
       },
     ]);
@@ -389,5 +399,98 @@ describe('with display name overrides', () => {
     expect(result.current?.columnCatalog).toEqual(['Customer', 'Region', 'Requests']);
     expect(api.set).not.toHaveBeenCalled();
     expect(onInteraction).not.toHaveBeenCalled();
+  });
+});
+
+describe('when an upstream transformation renames columns', () => {
+  const names = ['time', 'host', 'value', 'region'];
+  const renamedUpstream = (displayNames: Record<string, string>, fieldNames = names): DataFrame[] => {
+    const frame = sourceFrame(fieldNames);
+    return [
+      {
+        ...frame,
+        fields: frame.fields.map((field) =>
+          displayNames[field.name]
+            ? { ...field, config: { ...field.config, displayName: displayNames[field.name] } }
+            : field
+        ),
+      },
+    ];
+  };
+
+  function renderWithViewChanges() {
+    const view = renderColumnState([sourceFrame(names)], []);
+    act(() => view.result.current?.onHiddenColumnsChange(new Set(['host'])));
+    act(() => view.result.current?.onColumnOrderChange(['region', 'time', 'host', 'value']));
+    jest.mocked(view.api.set).mockClear();
+    return view;
+  }
+
+  it('keeps the renamed column hidden and in place', () => {
+    const { result, rerender, api } = renderWithViewChanges();
+
+    rerender({ source: renamedUpstream({ host: 'Host name' }), index: 0 });
+
+    expect(result.current?.hiddenColumns).toEqual(new Set(['Host name']));
+    expect(result.current?.columnOrder).toEqual(['region', 'time', 'Host name', 'value']);
+    expect(api.set).not.toHaveBeenCalled();
+  });
+
+  it('does not move the changes to a column that takes the old name', () => {
+    const { result, rerender, api } = renderWithViewChanges();
+
+    rerender({ source: renamedUpstream({ host: 'region', region: 'host' }), index: 0 });
+
+    expect(result.current?.hiddenColumns).toEqual(new Set(['region']));
+    expect(result.current?.columnOrder).toEqual(['host', 'time', 'region', 'value']);
+    expect(api.set).not.toHaveBeenCalled();
+  });
+
+  it('keeps the order when every column is renamed', () => {
+    const { result, rerender, api } = renderWithViewChanges();
+
+    rerender({ source: renamedUpstream({ time: 'T', host: 'H', value: 'V', region: 'R' }), index: 0 });
+
+    expect(result.current?.hiddenColumns).toEqual(new Set(['H']));
+    expect(result.current?.columnOrder).toEqual(['R', 'T', 'H', 'V']);
+    expect(api.set).not.toHaveBeenCalled();
+  });
+
+  it('writes later changes against the current names', () => {
+    const { result, rerender, getConfigs } = renderWithViewChanges();
+
+    rerender({ source: renamedUpstream({ host: 'Host name' }), index: 0 });
+    act(() => result.current?.onHiddenColumnsChange(new Set(['Host name', 'value'])));
+
+    expect(getConfigs()).toEqual([
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'A' },
+        options: {
+          indexByName: { region: 0, time: 1, 'Host name': 2, value: 3 },
+          excludeByName: { 'Host name': true, value: true },
+          renameByName: {},
+          referenceByName: {
+            'Host name': { name: 'host' },
+            value: { name: 'value' },
+            region: { name: 'region' },
+            time: { name: 'time' },
+          },
+        },
+      },
+    ]);
+  });
+
+  it('keeps a missing column hidden after another column takes its name', () => {
+    const { result, rerender } = renderWithViewChanges();
+
+    rerender({ source: renamedUpstream({ region: 'host' }, ['time', 'value', 'region']), index: 0 });
+    expect(result.current?.hiddenColumns).toEqual(new Set());
+
+    act(() => result.current?.onHiddenColumnsChange(new Set(['value'])));
+    rerender({ source: [sourceFrame(names)], index: 0 });
+
+    expect(result.current?.hiddenColumns).toEqual(new Set(['host', 'value']));
+    expect(result.current?.columnOrder).toEqual(['region', 'time', 'host', 'value']);
   });
 });
