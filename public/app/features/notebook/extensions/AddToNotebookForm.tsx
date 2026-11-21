@@ -58,9 +58,9 @@ export type LooseProps = Partial<CommonProps> & {
  * Internal implementation used by the exposed versioned wrapper.
  * For stability/versioning guidance, refer to AddToNotebookFormExposedComponent.
  */
-export function AddToNotebookForm(props: Props): ReactElement {
-  const { onClose, defaultTitle, onAdded, source } = props;
-  const common = { onDismiss: onClose, entryPoint: NOTEBOOK_ENTRY_POINT.PLUGIN, defaultTitle, onAdded };
+export function AddToNotebookForm(props: Props & { originPluginId?: string }): ReactElement {
+  const { onClose, defaultTitle, onAdded, source, originPluginId } = props;
+  const common = { onDismiss: onClose, entryPoint: NOTEBOOK_ENTRY_POINT.PLUGIN, defaultTitle, onAdded, originPluginId };
 
   if (props.cells) {
     const { cells } = props;

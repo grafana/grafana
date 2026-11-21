@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -110,10 +111,10 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  []resources.SupportedResource
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets            []provisioning.SyncTargetType
+	supportedResourceProvider resources.SupportedResourceProvider
+	allowImageRendering       bool
+	minSyncInterval           time.Duration
 
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
@@ -223,7 +224,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources []resources.SupportedResource,
+	supportedResourceProvider resources.SupportedResourceProvider,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -239,7 +240,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResources...)
+		clients = resources.NewClientFactory(configProvider, supportedResourceProvider)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -266,7 +267,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		supportedResources:                  supportedResources,
+		supportedResourceProvider:           supportedResourceProvider,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -288,7 +289,7 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResourceProvider.Get()))
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -311,7 +312,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources))
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResourceProvider.Get()))
 	return nil
 }
 
@@ -355,9 +356,21 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	return &JobHistoryConfig{}
 }
 
+func ProvideSupportedResourceProvider(cfg *setting.Cfg) (resources.SupportedResourceProvider, error) {
+	if !cfg.ProvisioningEnabled {
+		return resources.NewSupportedResourceProvider(nil), nil
+	}
+	configured, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+	return resources.NewSupportedResourceProvider(configured), nil
+}
+
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
+	ctx context.Context,
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -376,6 +389,8 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
+	manifests resource.ManifestDiscovery,
+	supportedResourceProvider resources.SupportedResourceProvider,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -387,9 +402,13 @@ func RegisterAPIService(
 	}
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
-	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
-	if err != nil {
-		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	// The router always publishes the manifests, but it serves their groups only as middleware.
+	if router.MiddlewareEnabled(cfg, features) {
+		watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+		manifestWatcher := resource.NewLocalManifestWatcher(manifests, watcherReg, supportedResourceProvider.Update, cfg.Logger)
+		if err := manifestWatcher.StartAsync(ctx); err != nil {
+			return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
 	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
@@ -430,7 +449,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -484,7 +503,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
+		supportedResourceProvider,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -950,20 +969,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
-	for _, r := range b.supportedResources {
-		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
-			Group:    r.Group,
-			Kind:     r.Kind,
-			Disabled: !r.IsActive(),
-		})
-	}
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, performanceEnabled))
 	b.admissionHandler.RegisterValidator(
 		provisioning.JobResourceInfo.GetName(),
 		appadmission.NewCombinedValidator(
-			appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled),
+			appjobs.NewAdmissionValidator(b.jobSupportedResources, performanceEnabled),
 			jobAuthz,
 		))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -1076,6 +1087,19 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	return b.admissionHandler.Validate(ctx, a, o)
+}
+
+func (b *APIBuilder) jobSupportedResources() []provisioning.SupportedResource {
+	supported := b.supportedResourceProvider.Get()
+	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(supported))
+	for _, r := range supported {
+		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+	return jobSupportedResources
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {

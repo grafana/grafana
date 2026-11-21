@@ -3,8 +3,8 @@ module github.com/grafana/grafana/pkg/storage/dbproxy
 go 1.27.4
 
 require (
-	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
-	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545
+	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 )
