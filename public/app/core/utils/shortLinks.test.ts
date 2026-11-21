@@ -38,7 +38,7 @@ beforeEach(() => {
     },
   });
 
-  document.execCommand = jest.fn();
+  document.execCommand = jest.fn().mockReturnValue(true);
 
   // `createShortLink` builds the returned URL from `window.location` + `appSubUrl`, so
   // both need to be deterministic here rather than inherited from jsdom or another test.
