@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -19,6 +20,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -33,7 +35,7 @@ var (
 
 func TestResourceClients_SupportedResources(t *testing.T) {
 	t.Run("falls back to the static base set when none is configured", func(t *testing.T) {
-		clients, err := NewClientFactory(nil).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
 		require.NoError(t, err)
 
 		assert.Equal(t, SupportedProvisioningResources, clients.SupportedResources())
@@ -43,12 +45,28 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		active := SupportedResource{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)}
 		disabled := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityDisabled)}
 
-		clients, err := NewClientFactory(nil, active, disabled).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, NewSupportedResourceProvider([]SupportedResource{active, disabled})).Clients(t.Context(), "default")
 		require.NoError(t, err)
 
 		// Disabled resources are not acted on, so they are excluded from the active set.
 		assert.Equal(t, []SupportedResource{active}, clients.SupportedResources())
 	})
+}
+
+func TestMultiClientFactory_AnyGroup(t *testing.T) {
+	widget := schema.GroupVersionKind{Group: "example.ext.grafana.app", Version: "v1", Kind: "Widget"}
+	providers := map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig}
+
+	clients, err := NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
+	require.NoError(t, err)
+	_, _, err = clients.ForKind(t.Context(), widget)
+	require.ErrorContains(t, err, "no clients provider for group example.ext.grafana.app")
+
+	providers[AnyGroup] = apiserver.WithoutRestConfig
+	clients, err = NewClientFactoryForMultipleAPIServers(providers, NewSupportedResourceProvider(nil)).Clients(t.Context(), "default")
+	require.NoError(t, err)
+	_, _, err = clients.ForKind(t.Context(), widget)
+	require.ErrorContains(t, err, "rest config will not be available")
 }
 
 func TestSupportedResourceCapabilities(t *testing.T) {
@@ -454,7 +472,7 @@ func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &flakyClientsProvider{err: errors.New("apis unreachable")}
-	factory := &clientFactory{clientsProvider: provider, configuredResources: configured}
+	factory := &clientFactory{clientsProvider: provider, supportedResourceProvider: NewSupportedResourceProvider(configured)}
 
 	_, err = factory.supportedResources(t.Context())
 	require.ErrorContains(t, err, "apis unreachable")
@@ -507,8 +525,8 @@ func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
 	require.NoError(t, err)
 
 	factory := &clientFactory{
-		clientsProvider:     &flakyClientsProvider{discovery: servedDiscoveryClient{}},
-		configuredResources: configured,
+		clientsProvider:           &flakyClientsProvider{discovery: servedDiscoveryClient{}},
+		supportedResourceProvider: NewSupportedResourceProvider(configured),
 	}
 
 	supported, err := factory.supportedResources(t.Context())
@@ -574,9 +592,9 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 
 	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
 		return &clientFactory{
-			clientsProvider:     &flakyClientsProvider{discovery: discovery},
-			configuredResources: configured,
-			storageGroup:        api,
+			clientsProvider:           &flakyClientsProvider{discovery: discovery},
+			supportedResourceProvider: NewSupportedResourceProvider(configured),
+			storageGroup:              api,
 		}
 	}
 
@@ -603,4 +621,108 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 		require.False(t, supported[1].IsFolderScoped(), "the explicit declaration keeps its own capabilities")
 		require.Equal(t, "datasource.grafana.app", supported[1].Collection)
 	})
+}
+
+func TestSupportedResourceProvider(t *testing.T) {
+	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
+	widget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
+	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Gadget"}, Capabilities: sets.New[string]()}
+
+	t.Run("returns the configured set before an update", func(t *testing.T) {
+		require.Equal(t, []SupportedResource{folder}, NewSupportedResourceProvider([]SupportedResource{folder}).Get())
+	})
+
+	t.Run("adds the kinds of an update, one time each", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+
+		supportedResourceProvider.Update(testManifests(widget, gadget, widget))
+
+		require.Equal(t, []SupportedResource{folder, widget, gadget}, supportedResourceProvider.Get())
+	})
+
+	t.Run("follows the updates", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+
+		supportedResourceProvider.Update(testManifests(widget, gadget))
+		supportedResourceProvider.Update(testManifests(widget))
+
+		require.Equal(t, []SupportedResource{folder, widget}, supportedResourceProvider.Get())
+	})
+
+	t.Run("keeps a configured resource over the same kind of an update", func(t *testing.T) {
+		configured := SupportedResource{GroupKind: widget.GroupKind, Capabilities: sets.New(CapabilityDisabled)}
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{configured})
+
+		supportedResourceProvider.Update(testManifests(widget))
+
+		require.Equal(t, []SupportedResource{configured}, supportedResourceProvider.Get())
+	})
+
+	t.Run("keeps a configured collection over a kind that it covers", func(t *testing.T) {
+		collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{collection})
+
+		supportedResourceProvider.Update(testManifests(widget))
+
+		require.Equal(t, []SupportedResource{collection}, supportedResourceProvider.Get())
+	})
+
+	t.Run("keeps the default set when none is configured", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider(nil)
+
+		supportedResourceProvider.Update(testManifests(widget))
+
+		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), supportedResourceProvider.Get())
+	})
+
+	t.Run("skips a kind that is cluster-scoped or that does not opt in", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+		manifests := testManifests(widget, gadget, SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Other"}})
+		kinds := manifests[0].Versions[0].Kinds
+		kinds[1].Scope = "Cluster"
+		kinds[2].Extensions = nil
+
+		supportedResourceProvider.Update(manifests)
+
+		require.Equal(t, []SupportedResource{folder, widget}, supportedResourceProvider.Get())
+	})
+
+	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+		manifests := testManifests(widget)
+		manifests[0].Versions[0].Served = false
+
+		supportedResourceProvider.Update(manifests)
+
+		require.Equal(t, []SupportedResource{folder}, supportedResourceProvider.Get())
+	})
+
+	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
+		supportedResourceProvider := NewSupportedResourceProvider([]SupportedResource{folder})
+		factory := NewClientFactory(nil, supportedResourceProvider)
+
+		supportedResourceProvider.Update(testManifests(widget))
+
+		clients, err := factory.Clients(t.Context(), "default")
+		require.NoError(t, err)
+		require.Equal(t, []SupportedResource{folder, widget}, clients.SupportedResources())
+	})
+}
+
+const testManifestGroup = "example.ext.grafana.app"
+
+// testManifests returns one app manifest that opts each resource in to provisioning.
+func testManifests(resources ...SupportedResource) []*app.ManifestData {
+	enabled := true
+	version := app.ManifestVersion{Name: "v1", Served: true}
+	for _, r := range resources {
+		folderScoped := r.Capabilities.Has(CapabilityFolder)
+		version.Kinds = append(version.Kinds, app.ManifestVersionKind{
+			Kind:         r.Kind,
+			Scope:        "Namespaced",
+			FolderScoped: &folderScoped,
+			Extensions:   &app.ManifestVersionKindExtensions{Provisioning: &app.ManifestVersionKindProvisioning{Enabled: &enabled}},
+		})
+	}
+	return []*app.ManifestData{{Group: testManifestGroup, Versions: []app.ManifestVersion{version}}}
 }

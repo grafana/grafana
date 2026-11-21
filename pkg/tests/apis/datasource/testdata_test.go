@@ -92,6 +92,25 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 	require.Equal(t, "1", out.GetResourceVersion())
 
+	storage := helper.GetEnv().ResourceClient
+	svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     datasourceV0alpha1.GROUP,
+		Resource:  "datasources",
+		Name:      "test",
+	}
+	// Wait for the background create before testing an update that removes one of its secrets.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(c, err)
+		stored := &unstructured.Unstructured{}
+		require.NoError(c, stored.UnmarshalJSON(rsp.Value))
+		secure, _, err := unstructured.NestedMap(stored.Object, "secure")
+		require.NoError(c, err)
+		require.ElementsMatch(c, []string{"aaa", "bbb"}, slices.Collect(maps.Keys(secure)))
+	}, 5*time.Second, 50*time.Millisecond)
+
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -154,15 +173,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	// Every datasource type is persisted in one unified storage collection
 	t.Run("stored in the shared datasource group", func(t *testing.T) {
-		storage := helper.GetEnv().ResourceClient
-		svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
-		key := &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     datasourceV0alpha1.GROUP,
-			Resource:  "datasources",
-			Name:      "test",
-		}
-
 		// Every dual-write mode (1-3) writes to unified storage in the background
 		stored := &unstructured.Unstructured{}
 		require.EventuallyWithT(t, func(c *assert.CollectT) {

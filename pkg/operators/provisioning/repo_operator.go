@@ -55,6 +55,9 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
+		return fmt.Errorf("failed to start manifest watcher: %w", err)
+	}
 
 	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
