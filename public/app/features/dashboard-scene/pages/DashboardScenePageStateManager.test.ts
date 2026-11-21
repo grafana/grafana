@@ -49,6 +49,23 @@ import {
   DASHBOARD_CACHE_TTL,
   getDashboardScenePageStateManager,
 } from './DashboardScenePageStateManager';
+
+jest.mock('../settings/enterprise-components/DashboardTemplateExtension', () => ({
+  ...jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension'),
+  getDashboardTemplateExtension: jest.fn(() =>
+    jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension()
+  ),
+}));
+
+afterEach(() => {
+  jest
+    .mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension)
+    .mockReset()
+    .mockImplementation(
+      jest.requireActual('../settings/enterprise-components/DashboardTemplateExtension').getDashboardTemplateExtension
+    );
+});
+
 const fetchMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
@@ -2129,7 +2146,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
     beforeEach(() => {
       loadTemplateSpy = jest.fn().mockResolvedValue(fakeTemplateResource);
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: loadTemplateSpy,
         listHistory: jest.fn(),
         restore: jest.fn(),
@@ -3259,7 +3276,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
           dashboard: { ...defaultDashboardV2Spec(), title: 'Embedded' },
         },
       };
-      jest.spyOn(DashboardTemplateExtensionModule, 'getDashboardTemplateExtension').mockReturnValue({
+      jest.mocked(DashboardTemplateExtensionModule.getDashboardTemplateExtension).mockReturnValue({
         loadTemplate: jest.fn().mockResolvedValue(fakeTemplateResource),
         listHistory: jest.fn(),
         restore: jest.fn(),

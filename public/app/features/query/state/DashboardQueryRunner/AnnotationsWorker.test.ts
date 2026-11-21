@@ -19,6 +19,10 @@ import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } 
 import { type DashboardQueryRunnerOptions, type DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
 
+jest.mock('../../../annotations/executeAnnotationQuery', () => ({
+  executeAnnotationQuery: jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
@@ -36,7 +40,7 @@ function getTestContext(dataSourceSrvRejects = false) {
   }));
   createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
   const executeAnnotationQueryMock = jest
-    .spyOn(annotationsSrv, 'executeAnnotationQuery')
+    .mocked(annotationsSrv.executeAnnotationQuery)
     .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
   const dataSourceSrvMock = {

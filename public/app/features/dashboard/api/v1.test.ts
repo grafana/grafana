@@ -1,5 +1,5 @@
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
-import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
@@ -15,6 +15,11 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type DashboardWithAccessInfo } from './types';
 import { K8sDashboardAPI } from './v1';
+jest.mock('app/api/clients/folder/v1beta1/hooks', () => ({
+  getCombinedFolder: jest.fn((...args) =>
+    jest.requireActual('app/api/clients/folder/v1beta1/hooks').getCombinedFolder(...args)
+  ),
+}));
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
@@ -138,7 +143,7 @@ describe('v1 dashboard API', () => {
       },
     });
 
-    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValueOnce({
+    jest.mocked(getCombinedFolder).mockResolvedValueOnce({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -183,9 +188,7 @@ describe('v1 dashboard API', () => {
         annotations: { [AnnoKeyFolder]: 'new-folder' },
       },
     });
-    jest
-      .spyOn(folderHooks, 'getCombinedFolder')
-      .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
+    jest.mocked(getCombinedFolder).mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardAPI();
     await expect(api.getDashboardDTO('test')).rejects.toThrow('Failed to load folder');
@@ -196,7 +199,7 @@ describe('v1 dashboard API', () => {
       ...mockDashboardDto,
       metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
     });
-    jest.spyOn(folderHooks, 'getCombinedFolder').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+    jest.mocked(getCombinedFolder).mockRejectedValueOnce({ message: 'folder not found', status: 403 });
 
     const api = new K8sDashboardAPI();
     const dashboardDTO = await api.getDashboardDTO('test');

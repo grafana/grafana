@@ -8,13 +8,19 @@ import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import * as buildInfoModule from '../api/buildInfo';
+import { discoverFeaturesByUid } from '../api/buildInfo';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
+
+jest.mock('../api/buildInfo', () => ({
+  discoverAlertmanagerFeatures: (...args: unknown[]) =>
+    jest.requireActual('../api/buildInfo').discoverAlertmanagerFeatures(...args),
+  discoverFeaturesByUid: jest.fn((...args) => jest.requireActual('../api/buildInfo').discoverFeaturesByUid(...args)),
+}));
 
 const server = setupMswServer();
 
@@ -34,6 +40,10 @@ function makeMimirDatasource(uid: string, name: string) {
 }
 
 beforeEach(() => {
+  jest
+    .mocked(discoverFeaturesByUid)
+    .mockReset()
+    .mockImplementation(jest.requireActual('../api/buildInfo').discoverFeaturesByUid);
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleExternalWrite]);
 });
 
@@ -125,7 +135,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
     let concurrentCount = 0;
     let peakConcurrentCount = 0;
 
-    jest.spyOn(buildInfoModule, 'discoverFeaturesByUid').mockImplementation(async () => {
+    jest.mocked(discoverFeaturesByUid).mockImplementation(async () => {
       concurrentCount++;
       peakConcurrentCount = Math.max(peakConcurrentCount, concurrentCount);
       await new Promise<void>((resolve) => setTimeout(resolve, 20));

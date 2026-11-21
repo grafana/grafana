@@ -27,7 +27,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import * as libpanels from 'app/features/library-panels/state/api';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -44,6 +44,17 @@ import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
+
+jest.mock('app/features/library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn(),
+}));
+
+beforeEach(() => {
+  jest
+    .mocked(getLibraryPanel)
+    .mockReset()
+    .mockImplementation(jest.requireActual('app/features/library-panels/state/api').getLibraryPanel);
+});
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 const panelPlugin: PanelPlugin = new PanelPlugin(() => null);
@@ -473,7 +484,7 @@ async function buildTestSceneWithLibraryPanel(
     version: 1,
   };
 
-  jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
+  jest.mocked(getLibraryPanel).mockResolvedValue({ ...libraryPanelState, ...panel });
 
   const scene = new DashboardScene(
     {

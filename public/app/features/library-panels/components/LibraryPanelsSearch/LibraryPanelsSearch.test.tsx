@@ -56,9 +56,13 @@ jest.mock('@grafana/runtime/internal', () => ({
   })),
 }));
 
-const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels');
-jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue([]);
-jest.spyOn(api, 'deleteLibraryPanel').mockResolvedValue({ message: 'success' });
+jest.mock('../../state/api', () => ({
+  getLibraryPanels: jest.fn(),
+  getConnectedDashboards: jest.fn().mockResolvedValue([]),
+  deleteLibraryPanel: jest.fn().mockResolvedValue({ message: 'success' }),
+}));
+
+const getLibraryPanelsSpy = jest.mocked(api.getLibraryPanels);
 
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},
