@@ -2,11 +2,8 @@ import {
   type BaseOperator,
   BasicConfig,
   type Config,
-  type Field,
   type ImmutableList,
   type JsonTree,
-  type Operator,
-  type OperatorOptionsI,
   type Settings,
   Utils,
   type ValueSource,
@@ -47,6 +44,19 @@ const widgets: Widgets = {
           onChange={(e) => props?.setValue(e.currentTarget.value)}
         />
       );
+    },
+    sqlFormatValue: function (val, field, widget, operator, operatorDefinition, rightFieldDef, sqlDialect) {
+      // "Any in" and "Not in" take comma-separated text: escape each value on its own so every value is its own literal
+      if ((operator === Op.IN || operator === Op.NOT_IN) && isString(val)) {
+        return val.split(',').map((v) => this.utils.SqlString.escape(v.trim()));
+      }
+
+      const formatText = BasicConfig.widgets.text.sqlFormatValue;
+      // This is just satisfying the type checker, this should never happen
+      if (typeof formatText !== 'function') {
+        return this.utils.SqlString.escape(val);
+      }
+      return formatText.call(this, val, field, widget, operator, operatorDefinition, rightFieldDef, sqlDialect);
     },
   },
   number: {
@@ -245,37 +255,10 @@ const noop = () => '';
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
 
-  // IN operator expects array, override IN formatter for multi-value variables
-  const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp?.bind(config.ctx) || noop;
+  // IN / NOT IN operators expect an array, override their display formatters for comma-separated text.
+  // The SQL formatters get an array already: the text widget's sqlFormatValue splits and escapes each value.
   const formatInOp = supportedOperators[Op.IN].formatOp?.bind(config.ctx) || noop;
-  const customSqlInFormatter = (
-    field: string,
-    op: string,
-    value: string | string[] | ImmutableList<string>,
-    valueSrc: ValueSource | undefined,
-    valueType: string | undefined,
-    opDef: Operator | undefined,
-    operatorOptions: OperatorOptionsI | undefined,
-    fieldDef: Field | undefined
-  ) => {
-    return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
-  };
-
-  // NOT IN operator expects array, override NOT IN formatter for multi-value variables
-  const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp?.bind(config.ctx) || noop;
   const formatNotInOp = supportedOperators[Op.NOT_IN].formatOp?.bind(config.ctx) || noop;
-  const customSqlNotInFormatter = (
-    field: string,
-    op: string,
-    value: string | string[] | ImmutableList<string>,
-    valueSrc: ValueSource | undefined,
-    valueType: string | undefined,
-    opDef: Operator | undefined,
-    operatorOptions: OperatorOptionsI | undefined,
-    fieldDef: Field | undefined
-  ) => {
-    return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
-  };
 
   const customOperators: Record<string, BaseOperator> = {
     ...supportedOperators,
@@ -289,7 +272,6 @@ function getCustomOperators(config: BasicConfig) {
       ) => {
         return formatInOp(field, op, splitIfString(value), valueSrc);
       },
-      sqlFormatOp: customSqlInFormatter,
     },
     [Op.NOT_IN]: {
       ...supportedOperators[Op.NOT_IN],
@@ -301,7 +283,6 @@ function getCustomOperators(config: BasicConfig) {
       ) => {
         return formatNotInOp(field, op, splitIfString(value), valueSrc);
       },
-      sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {
       label: t('grafana-sql.components.get-custom-operators.custom-operators.label.macros', 'Macros'),
