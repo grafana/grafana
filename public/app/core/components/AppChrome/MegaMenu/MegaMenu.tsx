@@ -12,8 +12,8 @@ import {
   useFlagGrafanaScopesDashboardsMegaMenu,
   useFlagGrafanaVisualDesignRefresh,
 } from '@grafana/runtime/internal';
-import { ErrorBoundaryAlert, Icon, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
-import { getFocusStyles, useDragAndDrop } from '@grafana/ui/internal';
+import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
 import { useSelector } from 'app/types/store';
@@ -83,9 +83,7 @@ export const MegaMenu = memo(
     // Only a signed-in user has a profile; anonymous users sign in from the top bar.
     const profileNode = useSelector((store) => store.navIndex['profile']);
     const showProfile = useFlagGrafanaMegaMenuProfile() && profileNode !== undefined;
-    const canEnterEditMode = !editMode && canCustomise && !isLoading;
-    // With the profile at the bottom of the menu, Customise navigation is an item below it rather than a footer button.
-    const showFooter = editMode || (canEnterEditMode && !showProfile) || !peekAndDock;
+    const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -316,18 +314,16 @@ export const MegaMenu = memo(
               </>
             )}
           </div>
-          {(showFooter || showProfile) && <hr className={showProfile ? styles.sectionDivider : styles.dividerLine} />}
           {showProfile && (
-            <div className={styles.bottomItems}>
-              <MegaMenuProfile profileNode={profileNode} />
-              {canEnterEditMode && (
-                <button type="button" className={styles.bottomItem} onClick={onEnterEditMode}>
-                  <Icon name="sliders-v-alt" size="lg" className={styles.bottomItemIcon} />
-                  <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
-                </button>
-              )}
-            </div>
+            <>
+              <hr className={styles.sectionDivider} />
+              <div className={styles.profile}>
+                <MegaMenuProfile profileNode={profileNode} />
+              </div>
+            </>
           )}
+          {/* Below the profile, a line sets the footer's buttons apart from it. */}
+          {showFooter && <hr className={showProfile ? styles.sectionDivider : styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
               {editMode && (
@@ -339,7 +335,7 @@ export const MegaMenu = memo(
                   saving={isSaving}
                 />
               )}
-              {canEnterEditMode && !showProfile && (
+              {!editMode && canCustomise && !isLoading && (
                 <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
                   <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
                 </Button>
@@ -447,34 +443,16 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       background: theme.colors.border.weak,
       margin: theme.spacing(1),
     }),
-    // The profile and, below it, Customise navigation at the bottom of the menu, as navigation items.
-    bottomItems: css({
+    // The profile at the bottom of the menu, inset as the navigation items are. The lines around it give it space;
+    // as the menu's last row it also keeps a gap below.
+    profile: css({
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
-      padding: theme.spacing(0, 1, 1),
-    }),
-    // A navigation item: their height, icon slot, label position, colors and hover.
-    bottomItem: css({
-      alignItems: 'center',
-      background: 'none',
-      border: 'none',
-      borderRadius: theme.shape.radius.default,
-      color: theme.colors.text.secondary,
-      display: 'flex',
-      gap: theme.spacing(1),
-      height: theme.spacing(4),
-      padding: theme.spacing(0, 1, 0, 0.5),
-      textAlign: 'left',
-      '&:hover': {
-        backgroundColor: theme.colors.action.hover,
-        color: theme.colors.text.primary,
+      padding: theme.spacing(0, 1),
+      '&:last-child': {
+        paddingBottom: theme.spacing(1),
       },
-      '&:focus-visible': getFocusStyles(theme),
-    }),
-    bottomItemIcon: css({
-      flexShrink: 0,
-      width: theme.spacing(3),
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls
     footer: css({
