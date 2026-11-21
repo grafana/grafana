@@ -121,13 +121,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// caller can't use the 404-vs-401 distinction to probe which private
 		// flags exist.
 		logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
-		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
-			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
-				ErrorCode:    "FLAG_NOT_FOUND",
-				ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
-			},
-			Key: flagKey,
-		})
+		notFoundBody, err := json.Marshal(flagNotFoundResponse(flagKey))
 		if err != nil {
 			return err
 		}
@@ -136,6 +130,16 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	}
 
 	proxy.ServeHTTP(w, r)
+}
+
+func flagNotFoundResponse(flagKey string) goffmodel.OFREPEvaluateErrorResponse {
+	return goffmodel.OFREPEvaluateErrorResponse{
+		OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
+			ErrorCode:    "FLAG_NOT_FOUND",
+			ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
+		},
+		Key: flagKey,
+	}
 }
 
 func isUnknownNamespace(namespace string) bool {
