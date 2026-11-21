@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense, useMemo, type MouseEvent } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, type MouseEvent } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
-import { addHeadingIds } from './markdownHeadingAnchors';
+import { addHeadingIds, headingIdFromHash } from './markdownHeadingAnchors';
 import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 const MarkdownCellEditor = lazy(() =>
@@ -56,6 +57,21 @@ export function MarkdownCell({
     () => (content.kind === 'Markdown' ? addHeadingIds(renderTextPanelMarkdown(content.spec.text)) : ''),
     [content]
   );
+  const restoredHash = useRef(false);
+  useEffect(() => {
+    // Each cell restores the fragment once its own headings exist: the html is injected by
+    // DangerouslySetHtmlContent's effect, which runs before this one, and by then the browser's
+    // own fragment scroll has already come and gone.
+    if (isEditing || restoredHash.current) {
+      return;
+    }
+    restoredHash.current = true;
+
+    const id = headingIdFromHash(window.location.hash);
+    if (id) {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    }
+  }, [isEditing]);
 
   if (content.kind !== 'Markdown') {
     return null;
@@ -95,21 +111,23 @@ export function MarkdownCell({
  */
 function handleAnchorClick(event: MouseEvent<HTMLDivElement>) {
   const anchor = event.target instanceof Element ? event.target.closest('a') : null;
-  const href = anchor?.getAttribute('href');
-  if (!href?.startsWith('#')) {
+  const id = headingIdFromHash(anchor?.getAttribute('href') ?? '');
+  if (!id) {
     return;
   }
 
-  const destination = document.getElementById(decodeURIComponent(href.slice(1)));
+  const destination = document.getElementById(id);
   if (!destination) {
     return;
   }
 
   event.preventDefault();
   destination.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  // Keeps the address shareable without the instant jump the browser does on a hash change, and
-  // without adding a history entry for every contents link clicked.
-  window.history.replaceState(window.history.state, '', href);
+  // Through locationService, not window.history: the router has to see the fragment, or its next
+  // url update starts from a location without it and drops it. Path and search come along so the
+  // replace keeps the notebook's time range instead of resolving to a bare hash.
+  const { pathname, search } = locationService.getLocation();
+  locationService.replace({ pathname, search, hash: `#${id}` });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

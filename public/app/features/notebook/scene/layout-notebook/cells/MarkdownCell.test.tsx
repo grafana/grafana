@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownCell } from './MarkdownCell';
@@ -107,6 +108,10 @@ describe('MarkdownCell', () => {
       spec: { text: '## Table of Contents\n\n- [Herbs](#herbs)\n\n## Herbs\n\nBasil.' },
     };
 
+    afterEach(() => {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    });
+
     it('gives headings ids so a contents link has somewhere to go', async () => {
       render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
 
@@ -120,6 +125,17 @@ describe('MarkdownCell', () => {
       fireEvent.click(await screen.findByRole('link', { name: 'Herbs' }));
 
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(locationService.getLocation().hash).toBe('#herbs');
+      scrollIntoView.mockRestore();
+    });
+
+    it('opens a copied url at the section its fragment names', async () => {
+      window.location.hash = '#herbs';
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' }));
       scrollIntoView.mockRestore();
     });
 
@@ -131,6 +147,16 @@ describe('MarkdownCell', () => {
       const click = fireEvent.click(await screen.findByRole('link', { name: 'Missing' }));
 
       expect(click).toBe(true);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      scrollIntoView.mockRestore();
+    });
+
+    it('does not throw on a fragment that is not valid percent-encoding', async () => {
+      const markdown: CellContentKind = { kind: 'Markdown', spec: { text: '[Broken](#%)' } };
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+      expect(() => fireEvent.click(screen.getByRole('link', { name: 'Broken' }))).not.toThrow();
       expect(scrollIntoView).not.toHaveBeenCalled();
       scrollIntoView.mockRestore();
     });

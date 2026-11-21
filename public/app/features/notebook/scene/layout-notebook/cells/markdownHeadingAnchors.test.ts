@@ -1,4 +1,4 @@
-import { addHeadingIds, slugifyHeading } from './markdownHeadingAnchors';
+import { addHeadingIds, headingIdFromHash, slugifyHeading } from './markdownHeadingAnchors';
 
 function idsIn(html: string): string[] {
   const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -40,5 +40,20 @@ describe('addHeadingIds', () => {
     const html = '<h2>!!!</h2>';
 
     expect(idsIn(addHeadingIds(html))).toEqual(['']);
+  });
+});
+
+describe('headingIdFromHash', () => {
+  it('decodes a percent-encoded fragment', () => {
+    expect(headingIdFromHash('#caf%C3%A9')).toBe('café');
+  });
+
+  it('falls back to the raw fragment instead of throwing on malformed encoding', () => {
+    expect(headingIdFromHash('#%')).toBe('%');
+  });
+
+  it('ignores anything that is not a fragment', () => {
+    expect(headingIdFromHash('https://grafana.com#herbs')).toBeUndefined();
+    expect(headingIdFromHash('#')).toBeUndefined();
   });
 });

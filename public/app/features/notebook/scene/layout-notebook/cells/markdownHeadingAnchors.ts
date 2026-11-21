@@ -37,3 +37,22 @@ export function slugifyHeading(text: string): string {
     .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .replace(/\s/g, '-');
 }
+
+/**
+ * The heading id a url fragment points at, or undefined when the fragment is not one.
+ *
+ * The decode is guarded: a link whose fragment is malformed percent-encoding (say `#%`) is the
+ * author's mistake, not a reason for the click handler to throw, so the raw text is used instead.
+ */
+export function headingIdFromHash(hash: string): string | undefined {
+  if (!hash.startsWith('#')) {
+    return undefined;
+  }
+
+  const fragment = hash.slice(1);
+  try {
+    return decodeURIComponent(fragment) || undefined;
+  } catch {
+    return fragment || undefined;
+  }
+}
