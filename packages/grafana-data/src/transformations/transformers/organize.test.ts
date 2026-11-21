@@ -500,6 +500,47 @@ describe('OrganizeFields Transformer', () => {
       ).toEqual(['time:time', 'host:host', 'region:region', 'value:value']);
     });
 
+    it('keeps the output of referenced options when upstream renames change display names', async () => {
+      let seed = 23;
+      const random = () => {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647;
+      };
+      const pick = <T>(items: T[]) => items[Math.floor(random() * items.length)];
+      const names = ['time', 'host', 'x', 'x', 'Value'];
+      const outputValues = async (frame: DataFrame, options: OrganizeFieldsTransformerOptions) => {
+        const output = await lastValueFrom(transformDataFrame([{ id: DataTransformerID.organize, options }], [frame]));
+        return output.map((organized) => organized.fields.map((field) => field.values[0]));
+      };
+
+      for (let run = 0; run < 200; run++) {
+        const frame = toDataFrame({
+          fields: Array.from({ length: 1 + Math.floor(random() * 6) }, (_, index) => ({
+            name: pick(names),
+            type: FieldType.number,
+            values: [index],
+            labels: random() < 0.4 ? { host: pick(['a', 'b']) } : undefined,
+          })),
+        });
+        const references = getFieldReferences(frame);
+        const keys = references.map((_, index) => `column ${index}`);
+        const options: OrganizeFieldsTransformerOptions = {
+          excludeByName: Object.fromEntries(keys.filter(() => random() < 0.3).map((key) => [key, true])),
+          indexByName: Object.fromEntries([...keys].sort(() => random() - 0.5).map((key, position) => [key, position])),
+          renameByName: {},
+          referenceByName: Object.fromEntries(keys.map((key, index) => [key, references[index]])),
+        };
+        const renamed = {
+          ...frame,
+          fields: frame.fields.map((field) =>
+            random() < 0.6 ? { ...field, config: { displayName: pick(['x', 'host', 'column 0', 'Value']) } } : field
+          ),
+        };
+
+        expect(await outputValues(renamed, options)).toEqual(await outputValues(frame, options));
+      }
+    });
+
     it('matches the name based output when no key has a reference', async () => {
       const names = ['time', 'Time', 'Value', 'value', 'host', 'x', 'x', 'Renamed'];
       let seed = 7;
@@ -535,7 +576,9 @@ describe('OrganizeFields Transformer', () => {
         };
         const frames = [frame(), frame()].slice(0, 1 + Math.floor(random() * 2));
         const describeOutput = (output: DataFrame[]) =>
-          output.map((f) => f.fields.map((field) => [field.name, field.labels, field.state?.displayName]));
+          output.map((f) =>
+            f.fields.map((field) => [field.values[0], field.name, field.labels, field.state?.displayName])
+          );
         const legacy = await lastValueFrom(
           transformDataFrame([{ id: DataTransformerID.organize, options }], structuredClone(frames))
         );
