@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -266,7 +267,7 @@ func TestHandleCheck_DatasourcePermissions(t *testing.T) {
 
 	t.Run("user with scoped access passes permission check", func(t *testing.T) {
 		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
-			OrgRole: identity.RoleEditor,
+			OrgRole: authlib.RoleEditor,
 			UserID:  1,
 			OrgID:   1,
 			Permissions: map[int64]map[string][]string{
@@ -294,7 +295,7 @@ func TestHandleCheck_DatasourcePermissions(t *testing.T) {
 	// the "user lacks scoped access" test case
 	t.Run("user without scoped access returns 403", func(t *testing.T) {
 		ctx := identity.WithRequester(context.TODO(), &identity.StaticRequester{
-			OrgRole: identity.RoleEditor,
+			OrgRole: authlib.RoleEditor,
 			UserID:  1,
 			OrgID:   1,
 			Permissions: map[int64]map[string][]string{

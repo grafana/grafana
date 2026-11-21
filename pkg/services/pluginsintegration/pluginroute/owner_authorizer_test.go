@@ -51,8 +51,8 @@ func (errChecker) Compile(context.Context, authlib.AuthInfo, authlib.ListRequest
 }
 
 func TestOwnerFromNameAuthorize(t *testing.T) {
-	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"team1"}, OrgRole: identity.RoleEditor}
-	admin := &identity.StaticRequester{UserUID: "root", OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{UserUID: "abc", Groups: []string{"team1"}, OrgRole: authlib.RoleEditor}
+	admin := &identity.StaticRequester{UserUID: "root", OrgRole: authlib.RoleAdmin}
 	all := []resource.Owner{resource.NamespaceResourceOwner, resource.UserResourceOwner, resource.TeamResourceOwner}
 
 	tests := []struct {
@@ -149,8 +149,8 @@ func TestGetAuthorizerOwnerFromName(t *testing.T) {
 	attr := func(verb, name string) authorizer.Attributes {
 		return authorizer.AttributesRecord{APIGroup: "collections.grafana.app", Resource: "stars", Verb: verb, Name: name}
 	}
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: identity.RoleEditor}
-	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgID: 1, OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: authlib.RoleEditor}
+	admin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", OrgID: 1, OrgRole: authlib.RoleAdmin}
 
 	for name, tc := range map[string]struct {
 		caller identity.Requester
@@ -182,7 +182,7 @@ func TestGetAuthorizerReadNoneDeniesCollectionReads(t *testing.T) {
 		kindPolicies:  map[string]kindPolicy{"user-storage": {ownerFromName: hardcodedOwnerFromName("userstorage.grafana.app", "user-storage")}},
 		accessChecker: pluginaccesscontrol.NewAppAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgID: 1, OrgRole: authlib.RoleAdmin}
 
 	for _, route := range []string{"list-keys", "search"} {
 		t.Run(route, func(t *testing.T) {

@@ -24,7 +24,7 @@ func TestIntegrationLegacyRoutingPreservesRequesterCacheKey(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	s := setupTestEnv(t, false)
 	s.cfg.RBAC.PermissionCache = true
-	requester := &identity.StaticRequester{Type: types.TypeUser, UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: identity.RoleNone, CacheKey: "caller-specific-key"}
+	requester := &identity.StaticRequester{Type: types.TypeUser, UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: types.RoleNone, CacheKey: "caller-specific-key"}
 	addContractUserGrant(t, s.sql, "managed:one", 1, 7, ac.Permission{Action: "users:read", Scope: "users:uid:old"})
 	_, err := s.GetUserPermissions(context.Background(), requester, ac.Options{})
 	require.NoError(t, err)
