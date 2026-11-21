@@ -12,7 +12,7 @@ import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
-import { jsonDiff } from '../settings/version-history/utils';
+import { jsonDiff, omitRenderedPluginVersionDiffs } from '../settings/version-history/utils';
 
 function deepEqual(a: string | string[], b: string | string[]) {
   return (
@@ -58,7 +58,7 @@ export function getRawDashboardV2Changes(
   }
 
   // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
-  const diff = jsonDiff(initial, changedSaveModel);
+  const diff = omitRenderedPluginVersionDiffs(jsonDiff(initial, changedSaveModel));
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
@@ -108,7 +108,7 @@ export function getRawDashboardChanges(
     changedSaveModel.refresh = initialSaveModel.refresh;
   }
 
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diff = omitRenderedPluginVersionDiffs(jsonDiff(initialSaveModel, changedSaveModel));
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
