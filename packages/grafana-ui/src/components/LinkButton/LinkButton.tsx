@@ -6,7 +6,7 @@ import { StyledButton } from '../Button/StyledButton';
 
 export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'aria-label'>;
 
-export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ onBlur, onFocus, ...props }, ref) => {
+export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>((props, ref) => {
   return <StyledButton ref={ref} {...props} as="a" />;
 });
 

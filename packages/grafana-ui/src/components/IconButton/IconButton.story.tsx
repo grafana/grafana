@@ -53,7 +53,7 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
-  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive', 'warning', 'info'];
 
   const rowStyle = css({
     display: 'flex',
@@ -110,7 +110,7 @@ ExamplesSizes.parameters = {
 
 const RenderBackgroundScenario = ({ background, tooltip }: ScenarioProps) => {
   const theme = useTheme2();
-  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive', 'warning', 'info'];
 
   return (
     <div

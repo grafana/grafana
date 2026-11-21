@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 
 import { LinkButton } from './LinkButton';
@@ -61,5 +62,22 @@ describe('LinkButton', () => {
   it('passes through empty string href unchanged', () => {
     setup(<LinkButton href="">Current page</LinkButton>);
     expect(screen.getByText('Current page').closest('a')).toHaveAttribute('href', '');
+  });
+
+  it('passes onFocus and onBlur to the link', async () => {
+    const onFocus = jest.fn();
+    const onBlur = jest.fn();
+    setup(
+      <LinkButton href="https://grafana.com" onFocus={onFocus} onBlur={onBlur}>
+        Click me
+      </LinkButton>
+    );
+
+    await userEvent.tab();
+    expect(screen.getByRole('link')).toHaveFocus();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+
+    await userEvent.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 });

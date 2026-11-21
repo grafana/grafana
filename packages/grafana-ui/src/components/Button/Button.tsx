@@ -8,8 +8,17 @@ import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
 import { StyledButton } from './StyledButton';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
+// TODO: move to a status type shared with Alert's AlertVariant, where 'danger' replaces 'destructive' here and 'error' there.
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success' | 'warning' | 'info';
+export const allButtonVariants: ButtonVariant[] = [
+  'primary',
+  'secondary',
+  'accent',
+  'destructive',
+  'success',
+  'warning',
+  'info',
+];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
