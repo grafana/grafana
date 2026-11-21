@@ -32,6 +32,7 @@ export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
           parser: { syntax: 'typescript', tsx: true },
           transform: {
             react: reactRefresh ? { runtime: 'automatic', development: true, refresh: true } : { runtime: 'automatic' },
+            reactCompiler: true,
           },
         },
       },

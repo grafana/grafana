@@ -36,6 +36,9 @@ const inflight = new WeakMap<Page, Map<Request, number>>();
 const STALE_MS = 5000;
 
 export async function setupPerf(page: Page): Promise<CDPSession> {
+  // The stored auth cookie goes stale once an earlier test rotates the session, and a full perf run
+  // outlasts that, so each test starts its own session.
+  await page.request.post('/login', { data: { user: 'admin', password: 'admin' } });
   const pending = new Map<Request, number>();
   inflight.set(page, pending);
   // Only API calls (queries, dashboards, etc.). Some requests never report finished (e.g. aborted

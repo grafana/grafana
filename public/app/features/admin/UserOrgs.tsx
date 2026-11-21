@@ -276,7 +276,12 @@ const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss }: Add
   };
 
   const onAddUserToOrg = async () => {
-    onOrgAdd(selectedOrg!.id, role);
+    // A guard, not `selectedOrg!`: React Compiler trusts the assertion and reads `selectedOrg.id`
+    // during render to memoize this callback, which throws while no org is selected.
+    if (!selectedOrg) {
+      return;
+    }
+    onOrgAdd(selectedOrg.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
