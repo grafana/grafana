@@ -91,6 +91,38 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it('Maps a field named Neutral to custom.neutral and keeps other custom config', () => {
+    const neutralConfig = toDataFrame({
+      fields: [
+        { name: 'Neutral', type: FieldType.number, values: [0, 20] },
+        { name: 'Max', type: FieldType.number, values: [100] },
+      ],
+      refId: 'A',
+    });
+    const series = toDataFrame({
+      fields: [{ name: 'Value', type: FieldType.number, values: [2], config: { custom: { other: 1 } } }],
+    });
+
+    const results = extractConfigFromQuery({ configRefId: 'A', mappings: [] }, [neutralConfig, series]);
+
+    expect(results[0].fields[0].config.custom).toEqual({ other: 1, neutral: 20 });
+    expect(results[0].fields[0].config.max).toBe(100);
+  });
+
+  it('Maps a differently named field to custom.neutral through a manual mapping', () => {
+    const neutralConfig = toDataFrame({
+      fields: [{ name: 'Midpoint', type: FieldType.number, values: [7] }],
+      refId: 'A',
+    });
+
+    const results = extractConfigFromQuery(
+      { configRefId: 'A', mappings: [{ fieldName: 'Midpoint', handlerKey: 'neutral' }] },
+      [neutralConfig, seriesA]
+    );
+
+    expect(results[0].fields[1].config.custom).toEqual({ neutral: 7 });
+  });
+
   it.each([
     ['negative', -3],
     ['non-integer', 2.5],

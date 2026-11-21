@@ -1,7 +1,7 @@
 import { type PanelModel } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './migrations';
+import { gaugePanelMigrationHandler, gaugePanelChangedHandler, shouldRunGaugeMigration } from './migrations';
 
 describe('Gauge Panel Migrations', () => {
   it('from old gauge', () => {
@@ -134,6 +134,61 @@ describe('Gauge Panel Migrations', () => {
     const result = gaugePanelMigrationHandler(panel as PanelModel);
     expect(result.sparkline).toBe(true);
     expect(result.effects?.gradient).toBe(true);
+  });
+
+  describe('neutral option', () => {
+    const buildPanel = (neutral: number | undefined, custom?: Record<string, unknown>) =>
+      ({
+        id: 2,
+        options: {
+          reduceOptions: { calcs: ['lastNotNull'] },
+          shape: 'gauge',
+          sparkline: true,
+          ...(neutral !== undefined ? { neutral } : {}),
+        },
+        fieldConfig: { defaults: { ...(custom ? { custom } : {}) }, overrides: [] },
+        pluginVersion: '13.3.0',
+        type: 'gauge',
+      }) as PanelModel;
+
+    it('moves the panel option to field config custom', () => {
+      const panel = buildPanel(0);
+
+      const result = gaugePanelMigrationHandler(panel);
+
+      expect(result).not.toHaveProperty('neutral');
+      expect(panel.fieldConfig.defaults.custom).toEqual({ neutral: 0 });
+    });
+
+    it('keeps other custom field config values', () => {
+      const panel = buildPanel(47, { other: 1 });
+
+      gaugePanelMigrationHandler(panel);
+
+      expect(panel.fieldConfig.defaults.custom).toEqual({ other: 1, neutral: 47 });
+    });
+
+    it('does not overwrite a neutral value that is already in field config', () => {
+      const panel = buildPanel(10, { neutral: 5 });
+
+      const result = gaugePanelMigrationHandler(panel);
+
+      expect(result).not.toHaveProperty('neutral');
+      expect(panel.fieldConfig.defaults.custom).toEqual({ neutral: 5 });
+    });
+
+    it('leaves field config untouched when there is no neutral option', () => {
+      const panel = buildPanel(undefined);
+
+      gaugePanelMigrationHandler(panel);
+
+      expect(panel.fieldConfig.defaults.custom).toBeUndefined();
+    });
+
+    it('runs the migration for a current-version panel that still has the neutral option', () => {
+      expect(shouldRunGaugeMigration(buildPanel(0))).toBe(true);
+      expect(shouldRunGaugeMigration(buildPanel(undefined))).toBe(false);
+    });
   });
 
   it('from 6.1.1', () => {

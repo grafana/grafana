@@ -19,7 +19,7 @@ import { defaultOptions, type Options } from './panelcfg.gen';
 
 jest.mock('@grafana/ui/internal', () => ({
   ...jest.requireActual('@grafana/ui/internal'),
-  RadialGauge: () => <div data-testid="radial-gauge" />,
+  RadialGauge: ({ neutral }: { neutral?: number }) => <div data-testid="radial-gauge" data-neutral={neutral} />,
 }));
 
 const defaultPanelOptions: Options = {
@@ -58,6 +58,18 @@ describe('GaugePanel', () => {
     renderGaugePanel();
 
     expect(screen.getByTestId('radial-gauge')).toBeInTheDocument();
+  });
+
+  it('passes the neutral value from the field config to the gauge', () => {
+    renderGaugePanel(undefined, { series: [createNumericFrame([42], { custom: { neutral: 25 } })] });
+
+    expect(screen.getByTestId('radial-gauge')).toHaveAttribute('data-neutral', '25');
+  });
+
+  it('does not set a neutral value when the field config has none', () => {
+    renderGaugePanel();
+
+    expect(screen.getByTestId('radial-gauge')).not.toHaveAttribute('data-neutral');
   });
 
   it('shows the error view when there is no data', () => {
