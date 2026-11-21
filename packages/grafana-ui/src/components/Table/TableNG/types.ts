@@ -203,6 +203,27 @@ interface BaseTableProps {
   columnCatalog?: string[];
 }
 
+/**
+ * Imperative scrolling for a TableNG instance. Pass it as the component ref.
+ *
+ * Indexes are positions in the rows the grid is currently showing: after sorting and
+ * filtering, including nested sub-table rows, and only the current page when pagination
+ * is on. They are not raw DataFrame indexes. Scrolling does not change the selected cell.
+ */
+export interface TableNGApi {
+  /** Scroll so the first displayed row is at the top of the grid. */
+  scrollToTop: () => void;
+  /**
+   * Scroll to the bottom of the displayed rows. The position is corrected after layout,
+   * so a variable-height last row or an expanded sub-table still ends in view.
+   */
+  scrollToBottom: () => void;
+  /**
+   * Scroll a displayed row into view. Indexes outside the displayed rows do nothing.
+   */
+  scrollToRow: (index: number) => void;
+}
+
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 

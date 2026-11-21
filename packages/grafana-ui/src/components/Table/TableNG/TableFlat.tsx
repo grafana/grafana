@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -41,12 +41,14 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { useTableScrollHandle } from './scrollApi';
 import { shouldReserveScrollbarGutter } from './scrollbar';
 import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
   type TableColumn,
+  type TableNGApi,
   type TableNGProps,
   type TableRow,
   type TableSummaryRow,
@@ -80,7 +82,7 @@ const COLUMN_VISIBILITY_PANEL_MAX_WIDTH = 400;
 const COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH = 8;
 const COLUMN_VISIBILITY_TABLE_BORDER_WIDTH = 1;
 
-export function TableFlat(props: TableNGProps) {
+export const TableFlat = forwardRef<TableNGApi, TableNGProps>(function TableFlat(props, ref) {
   const {
     cellHeight,
     data,
@@ -524,6 +526,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     transparent,
   });
+  useTableScrollHandle(ref, gridRef, paginatedRows.length);
   const showPagination = enablePagination && numRows > 0;
   const scrollbarWidth = useNativeScrollbarWidth(gridRef);
   const needsScrollbarSpace = useMemo(
@@ -847,4 +850,4 @@ export function TableFlat(props: TableNGProps) {
       </div>
     </div>
   );
-}
+});

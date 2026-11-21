@@ -38,6 +38,7 @@ export type {
   SignatureParameter,
 } from './components/CodeMirror/types';
 export { TableNG } from './components/Table/TableNG/TableNG';
+export type { TableNGApi } from './components/Table/TableNG/types';
 export { RangeSliderG14 } from './components/Slider/RangeSliderG14';
 export type { RangeSliderG14Props } from './components/Slider/types';
 export { usePanelNotices, usePanelStatusSnapshot, PanelStatusActions } from './components/PanelChrome';
