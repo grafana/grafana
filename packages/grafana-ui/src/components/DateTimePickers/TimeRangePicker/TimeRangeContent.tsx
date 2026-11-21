@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useController, useForm } from 'react-hook-form';
 
 import {
@@ -26,6 +26,7 @@ import { isValid } from '../utils';
 import { TimeRangeFields } from './TimeRangeFields';
 
 interface Props {
+  compact?: boolean;
   calendarAnchor?: HTMLElement | null;
   isFullscreen: boolean;
   value: TimeRange;
@@ -69,7 +70,8 @@ export const TimeRangeContent = (props: Props) => {
     onError,
     weekStart,
   } = props;
-  const style = useStyles2(getStyles);
+  const style = useStyles2(getStyles, props.compact);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const {
     handleSubmit,
@@ -189,7 +191,10 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <TimeRangeFields
-        fieldSuffix={fyTooltip}
+        fieldSuffix={props.compact ? undefined : fyTooltip}
+        fullWidth={props.compact}
+        inlineCalendar={props.compact}
+        onCalendarOpenChange={setCalendarOpen}
         onSubmit={onApply}
         from={{
           value: fromField.value,
@@ -219,27 +224,29 @@ export const TimeRangeContent = (props: Props) => {
           referenceElement: calendarAnchor,
         }}
       />
-      <div className={style.buttonsContainer}>
-        <Button
-          data-testid={selectors.components.TimePicker.copyTimeRange}
-          icon="copy"
-          variant="secondary"
-          tooltip={t('time-picker.copy-paste.tooltip-copy', 'Copy time range to clipboard')}
-          type="button"
-          onClick={onCopy}
-        />
-        <Button
-          data-testid={selectors.components.TimePicker.pasteTimeRange}
-          icon="clipboard-alt"
-          variant="secondary"
-          tooltip={t('time-picker.copy-paste.tooltip-paste', 'Paste time range')}
-          type="button"
-          onClick={onPaste}
-        />
-        <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
-          <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
-        </Button>
-      </div>
+      {!(calendarOpen && props.compact) && (
+        <div className={style.buttonsContainer}>
+          <Button
+            data-testid={selectors.components.TimePicker.copyTimeRange}
+            icon="copy"
+            variant="secondary"
+            tooltip={t('time-picker.copy-paste.tooltip-copy', 'Copy time range to clipboard')}
+            type="button"
+            onClick={onCopy}
+          />
+          <Button
+            data-testid={selectors.components.TimePicker.pasteTimeRange}
+            icon="clipboard-alt"
+            variant="secondary"
+            tooltip={t('time-picker.copy-paste.tooltip-paste', 'Paste time range')}
+            type="button"
+            onClick={onPaste}
+          />
+          <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
+            <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -265,12 +272,13 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   return value;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, compact?: boolean) {
   return {
     buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(0.5),
       marginTop: theme.spacing(1),
+      ...(compact && { '& > button:last-child': { marginLeft: 'auto' } }),
     }),
     tooltip: css({
       paddingLeft: theme.spacing(1),

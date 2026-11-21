@@ -5,7 +5,11 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagScopeFilters } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaScopesDashboardsMegaMenu,
+  useFlagScopeFilters,
+  useFlagGrafanaResponsiveTimePickerTabs,
+} from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -23,6 +27,7 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { TimeRangePickerContext } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
@@ -243,6 +248,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hidePlaylistNav,
   } = model.useState();
 
+  const tabsEnabled = useFlagGrafanaResponsiveTimePickerTabs();
+
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
@@ -293,7 +300,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
+            <TimeRangePickerContext.Provider value={tabsEnabled ? 'tabs' : 'legacy'}>
+              <timePicker.Component model={timePicker} />
+            </TimeRangePickerContext.Provider>
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}

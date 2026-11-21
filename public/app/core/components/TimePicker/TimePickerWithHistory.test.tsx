@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act, render, screen } from 'test/test-utils';
 
-import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { getDefaultTimeRange, store, systemDateFormats } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -29,7 +30,58 @@ describe('TimePickerWithHistory', () => {
   };
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     window.localStorage.clear();
+  });
+
+  it.each([true, false])('uses tabbed compact design when rollout is %s', async (enabled) => {
+    setTestFlags({ 'grafana.responsiveTimePickerTabs': enabled });
+    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} widthOverride={600} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    if (enabled) {
+      expect(screen.getByRole('tab', { name: 'Relative' })).toHaveAttribute('aria-selected', 'true');
+    } else {
+      expect(screen.getByRole('button', { name: 'Absolute time range' })).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it.each([true, false])('applies absolute ranges with blocked storage and hideHistory=%s', async (hideHistory) => {
+    const storage = jest.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage blocked by host', 'SecurityError');
+    });
+    try {
+      const user = userEvent.setup();
+      const onChange = jest.fn();
+      const { unmount } = render(
+        <TimePickerWithHistory
+          value={getDefaultTimeRange()}
+          {...props}
+          onChange={onChange}
+          hideHistory={hideHistory}
+          widthOverride={1200}
+        />
+      );
+      await user.click(screen.getByLabelText(/Time range selected/));
+      await user.clear(getFromField());
+      await user.type(getFromField(), '2022-12-01 00:00:00');
+      await user.clear(getToField());
+      await user.type(getToField(), '2022-12-02 00:00:00');
+      await user.click(getApplyButton());
+      expect(onChange.mock.calls[0][0].from.toISOString()).toBe('2022-12-01T00:00:00.000Z');
+      await user.click(screen.getByLabelText(/Time range selected/));
+      expect(getFromField()).toHaveValue('now-6h');
+      const recentRange = screen.queryByRole('checkbox', { name: '2022-12-01 00:00:00 to 2022-12-02 00:00:00' });
+      if (!hideHistory) {
+        expect(recentRange).toBeInTheDocument();
+      } else {
+        expect(screen.queryByText('Recently used absolute ranges')).not.toBeInTheDocument();
+        expect(recentRange).not.toBeInTheDocument();
+      }
+      unmount();
+    } finally {
+      store.delete(LOCAL_STORAGE_KEY);
+      storage.mockRestore();
+    }
   });
 
   it('Should load with no history', async () => {
