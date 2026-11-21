@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -228,7 +227,7 @@ func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plu
 	route := &plugins.Route{
 		Path:         routePath,
 		Method:       method,
-		ReqRole:      types.RoleType(target.ReqRole),
+		ReqRole:      target.ReqRole,
 		ReqAction:    target.ReqAction,
 		URL:          target.URL,
 		AuthType:     target.AuthType,
