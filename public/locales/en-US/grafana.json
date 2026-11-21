@@ -13940,12 +13940,32 @@
         "undo-label": "Assistant edit"
       }
     },
+    "outline": {
+      "aria-label": "Notebook outline",
+      "pane-header": "Content outline",
+      "search": {
+        "no-results": "No results found for your query"
+      },
+      "tree-item": {
+        "collapse": "Collapse {{label}}",
+        "empty": "(empty)",
+        "expand": "Expand {{label}}",
+        "no-title": "<no title>"
+      },
+      "untitled-panel": "Untitled panel"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
       "confirm-keep": "Keep",
       "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
       "confirm-title": "Unsaved panel changes"
+    },
+    "sidebar": {
+      "outline": {
+        "title": "Outline",
+        "tooltip": "Content outline"
+      }
     }
   },
   "notebooks": {

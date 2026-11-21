@@ -13,3 +13,6 @@ export const NOTEBOOK_CELL_FRAME_CLASS = 'notebook-cell-frame';
  * needs this, because the menu renders in a portal and the control is then not `:focus-within`.
  */
 export const NOTEBOOK_CELL_CONTROLS_PINNED_CLASS = 'notebook-cell-controls-pinned';
+
+/** Carries the cell's scene key on its frame, so the outline can find the frame to scroll to. */
+export const NOTEBOOK_CELL_KEY_ATTRIBUTE = 'data-notebook-cell-key';
