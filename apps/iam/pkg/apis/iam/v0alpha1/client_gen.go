@@ -32,6 +32,27 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
+type CreateReconcileLegacyRolesRequest struct {
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) CreateReconcileLegacyRoles(ctx context.Context, namespace string, request CreateReconcileLegacyRolesRequest) (*CreateReconcileLegacyRolesResponse, error) {
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/reconcilelegacyroles",
+		Verb:    "POST",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateReconcileLegacyRolesResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateReconcileLegacyRolesResponse: %w", err)
+	}
+	return &cast, nil
+}
+
 type CreateSearchExternalGroupMappingsRequest struct {
 	Params  CreateSearchExternalGroupMappingsRequestParams
 	Body    CreateSearchExternalGroupMappingsRequestBody
