@@ -27,7 +27,7 @@ and everything should be discoverable from there.
 The code to register the app with the grafana API server (including inserting the app-specific config [ExampleConfig](./pkg/app/config.go))
 is located in [/pkg/registry/apps/example/register.go](../../pkg/registry/apps/example/register.go).
 
-Any app must also have its installer listed in [WireSet](../../pkg/registry/apps/wireset.go) and added to `installers` in [ProvideAppInstallers](../../pkg/registry/apps/apps.go). When building a new app, make to to regerate wire (`make build` in the root of the repo does this).
+Any app must also have its installer listed in [WireSet](../../pkg/registry/apps/wireset.go) and added to `installers` in [ProvideAppInstallers](../../pkg/registry/apps/apps.go). When building a new app, make sure to regenerate wire (`make build` in the root of the repo does this).
 
 ### Generated Code
 

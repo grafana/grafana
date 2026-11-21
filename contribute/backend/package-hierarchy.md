@@ -144,7 +144,7 @@ package alphabeticalimpl
 // the service except for in Wire.
 type Svc struct { … }
 
-func ProviceSvc(numbers numerical.Numerical, db db.DB) Svc { … }
+func ProvideSvc(numbers numerical.Numerical, db db.DB) Svc { … }
 
 func (s *Svc) GetLetter(ctx context.Context, q root.GetLetterQuery) (root.Letter, error) { … }
 func (s *Svc) ListCachedLetters(ctx context.Context, q root.ListCachedLettersQuery) root.Letters { … }
