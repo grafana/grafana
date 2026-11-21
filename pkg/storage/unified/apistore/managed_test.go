@@ -278,6 +278,7 @@ func TestAllowOrphanedUpdate(t *testing.T) {
 			s, _ := repositoryServer(t, http.StatusNotFound)
 			previous := managedObject(t, repoManager, "", nil)
 			obj := managedObject(t, repoManager, "", func(d *dashboard.Dashboard) {
+				terminating(d)
 				d.Spec.Object = map[string]any{"title": "b"}
 			})
 
@@ -287,7 +288,7 @@ func TestAllowOrphanedUpdate(t *testing.T) {
 		t.Run("rejects a write that moves the resource to another manager", func(t *testing.T) {
 			s, _ := repositoryServer(t, http.StatusNotFound)
 			previous := managedObject(t, repoManager, "", nil)
-			obj := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", nil)
+			obj := managedObject(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other"}, "", terminating)
 
 			require.False(t, s.allowOrphanedUpdateBypass(t.Context(), obj, previous))
 		})
@@ -653,6 +654,48 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 		obj := managedUnstructured(t, false, false, blobs("b-2"))
 
 		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
+	})
+}
+
+// Releasing goes from the top folder down: a resource cannot become unmanaged inside a folder that the
+// repository still manages, even when the repository is gone.
+func TestPrepareObjectForUpdateOrphanedRelease(t *testing.T) {
+	editor := func(t *testing.T) context.Context {
+		return identity.WithRequester(t.Context(), &identity.StaticRequester{Type: authtypes.TypeUser, UserID: 2, OrgRole: identity.RoleEditor})
+	}
+	storageWithParent := func(t *testing.T, parentManaged bool) *Storage {
+		t.Helper()
+		parent := managedUnstructured(t, parentManaged, false, nil)
+		parent.SetName("parent")
+		raw, err := parent.MarshalJSON()
+		require.NoError(t, err)
+
+		repoStorage, _ := repositoryServer(t, http.StatusNotFound)
+		s := testStorage(t, &failingStorageClient{value: raw})
+		s.configProvider = repoStorage.configProvider
+		s.opts.EnableFolderSupport = true
+		return s
+	}
+	inParent := func(t *testing.T, managed bool) *unstructured.Unstructured {
+		t.Helper()
+		obj := managedUnstructured(t, managed, false, nil)
+		metaOf(t, obj).SetFolder("parent")
+		return obj
+	}
+
+	t.Run("rejects a release inside a folder the repository still manages", func(t *testing.T) {
+		s := storageWithParent(t, true)
+
+		_, err := s.prepareObjectForUpdate(editor(t), inParent(t, false), inParent(t, true))
+		require.True(t, apierrors.IsForbidden(err), "got %v", err)
+		require.ErrorContains(t, err, "folder is managed by")
+	})
+
+	t.Run("allows a release inside a folder that was released first", func(t *testing.T) {
+		s := storageWithParent(t, false)
+
+		_, err := s.prepareObjectForUpdate(editor(t), inParent(t, false), inParent(t, true))
 		require.NoError(t, err)
 	})
 }
@@ -1345,8 +1388,8 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 	}
 }
 
-// A write that is rerouted to a repository that no longer exists is a conflict with the stored resource.
-// The caller must not see the not-found of a repository it never asked for.
+// A write that is rerouted to a repository that no longer exists is forbidden, not a conflict, because a retry
+// cannot succeed. The caller must not see the not-found of a repository it never asked for.
 func TestHandleManagedResourceRouting_RepositoryGone(t *testing.T) {
 	for name, action := range map[string]resourcepb.WatchEvent_Type{
 		"MODIFIED": resourcepb.WatchEvent_MODIFIED,
@@ -1369,7 +1412,8 @@ func TestHandleManagedResourceRouting_RepositoryGone(t *testing.T) {
 			cleanupSafe, err := s.handleManagedResourceRouting(
 				context.Background(), errResourceIsManagedInRepository, action, "/default/dashboards/dash-uid", obj, &dashboard.Dashboard{})
 
-			require.True(t, apierrors.IsConflict(err), "got %v", err)
+			require.True(t, apierrors.IsForbidden(err), "got %v", err)
+			require.False(t, isRetryableStorageError(err), "got %v", err)
 			require.ErrorContains(t, err, errManagerGone.Error())
 			require.True(t, cleanupSafe, "the repository is gone, so nothing was written")
 		})
