@@ -319,8 +319,8 @@ export const TransformationOperationRow = ({
         headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
-          close: 'Collapse transformation row',
-          open: 'Expand transformation row',
+          close: `Collapse transformation row ${index + 1} - ${uiConfig.name}`,
+          open: `Expand transformation row ${index + 1} - ${uiConfig.name}`,
         }}
       >
         {showFilterEditor && (
