@@ -24,7 +24,7 @@
       "backgroundEmphasis": "palette.neutral300",
       "border": "palette.neutral400",
       "borderEmphasis": "palette.neutral450",
-      "subtleBackground": "palette.neutral150",
+      "subtleBackground": "palette.neutral250",
       "subtleBorder": "palette.neutral300",
       "text": "palette.neutral800",
       "contrastText": "palette.neutral800"
@@ -170,14 +170,14 @@
       "background": "hsl(from palette.neutral400 h s l / 0.5)"
     },
     "dropdown": {
-      "borderColor": "palette.neutral200"
+      "borderColor": "palette.neutral300"
     },
     "switch": {
       "activeBackground": "palette.orange500",
       "activeBackgroundHover": "palette.orange600"
     },
     "tooltip": {
-      "borderColor": "palette.neutral200"
+      "borderColor": "palette.neutral300"
     },
     "codeEditor": {
       "keyword": "palette.blue700",
