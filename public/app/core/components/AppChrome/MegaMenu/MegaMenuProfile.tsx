@@ -64,8 +64,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     // A navigation item's height.
     height: theme.spacing(4),
-    // The navigation items' box and padding: the avatar takes their icon slot and the name starts where their labels do.
-    margin: theme.spacing(0, 1, 1),
+    // The navigation items' padding: the avatar takes their icon slot and the name starts where their labels do. The
+    // menu gives it their inset.
     padding: theme.spacing(0, 1, 0, 0.5),
     textAlign: 'left',
     '&:hover': {

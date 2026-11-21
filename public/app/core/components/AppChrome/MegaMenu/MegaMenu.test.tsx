@@ -165,6 +165,20 @@ describe('MegaMenu', () => {
       expect(await screen.findByRole('menuitem', { name: /sign out/i })).toBeInTheDocument();
     });
 
+    it('offers Customise navigation as an item below the profile, not as a footer button', async () => {
+      setTestFlags({ [PROFILE_FLAG]: true, [CUSTOMISE_FLAG]: true });
+      const { user } = renderWithProfile();
+
+      const customise = await screen.findByRole('button', { name: 'Customise navigation' });
+      const profile = screen.getByRole('button', { name: /profile/i });
+      expect(profile.compareDocumentPosition(customise) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      await user.click(customise);
+
+      expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
+    });
+
     it('leaves the profile to the top bar while the toggle is off', async () => {
       setTestFlags({ [PROFILE_FLAG]: false });
       renderWithProfile();
