@@ -1,7 +1,8 @@
 import { type ReactNode } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import { AuthTypeStep } from './AuthTypeStep';
@@ -12,6 +13,8 @@ setupProvisioningMswServer();
 jest.mock('../hooks/useConnectionStatus', () => ({
   useConnectionStatus: jest.fn(() => ({ isConnected: true })),
 }));
+
+const mockUseConnectionStatus = jest.mocked(useConnectionStatus);
 
 jest.mock('./AppConnectionFields', () => {
   const React = jest.requireActual('react');
@@ -51,6 +54,18 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
   });
 
   return <FormProvider {...methods}>{children}</FormProvider>;
+}
+
+function WebhookDisabledValue() {
+  const { watch } = useFormContext<WizardFormData>();
+  return <div data-testid="webhook-disabled">{String(Boolean(watch('repository.webhook.disabled')))}</div>;
+}
+
+function mockSelectedConnection(webhookDisabled: boolean) {
+  mockUseConnectionStatus.mockReturnValue({
+    isConnected: true,
+    connection: { spec: { type: 'github', webhook: { disabled: webhookDisabled } } },
+  } as ReturnType<typeof useConnectionStatus>);
 }
 
 describe('AuthTypeStep', () => {
@@ -95,5 +110,40 @@ describe('AuthTypeStep', () => {
     });
     expect(screen.getByRole('radio', { name: /Connect with GitHub App/ })).toBeDisabled();
     expect(screen.getByRole('radio', { name: /Connect with OAuth App/ })).toBeDisabled();
+  });
+
+  describe('connection webhook setting', () => {
+    afterEach(() => {
+      mockUseConnectionStatus.mockReturnValue({ isConnected: true } as ReturnType<typeof useConnectionStatus>);
+    });
+
+    it('disables repository webhooks when the selected connection has webhooks disabled', async () => {
+      mockSelectedConnection(true);
+
+      render(
+        <FormWrapper>
+          <AuthTypeStep onGitHubAppSubmit={jest.fn()} />
+          <WebhookDisabledValue />
+        </FormWrapper>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('webhook-disabled')).toHaveTextContent('true');
+      });
+    });
+
+    it('keeps repository webhooks enabled when the selected connection has webhooks enabled', async () => {
+      mockSelectedConnection(false);
+
+      render(
+        <FormWrapper>
+          <AuthTypeStep onGitHubAppSubmit={jest.fn()} />
+          <WebhookDisabledValue />
+        </FormWrapper>
+      );
+
+      await screen.findByText('GitHub App configuration');
+      expect(screen.getByTestId('webhook-disabled')).toHaveTextContent('false');
+    });
   });
 });
