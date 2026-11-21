@@ -38,7 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// All returns Grafana's built-in apps.
+// CoreAppProviders returns the core apps the router serves in-process. A nil
+// cfg leaves the preferences app with zero-value defaults.
 func CoreAppProviders(cfg *setting.Cfg) []app.Provider {
 	return []app.Provider{
 		simple.NewAppProvider(playlistmanifest.LocalManifest(), &playlistapp.PlaylistConfig{}, playlistapp.New),
