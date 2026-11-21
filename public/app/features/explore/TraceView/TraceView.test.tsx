@@ -3,12 +3,20 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame, type TraceSearchProps } from '@grafana/data';
+import {
+  type DataFrame,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  MutableDataFrame,
+  type TraceSearchProps,
+} from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
+import type * as Runtime from '@grafana/runtime';
 import {
   setPluginLinksHook,
   setPluginComponentsHook,
   useAppPluginInstalled,
+  useDataSourceInstanceSettings,
   reportInteraction,
 } from '@grafana/runtime';
 
@@ -19,6 +27,7 @@ import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 
 import { TraceView } from './TraceView';
+import * as LogsLink from './components/TraceTimelineViewer/SpanDetail/LogsLink';
 import { SPAN_NAME } from './components/constants/span';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
@@ -52,7 +61,8 @@ function getTraceView(
   spanFilters?: TraceSearchProps,
   spanId?: string,
   expandSpan?: boolean,
-  storeOverride?: ReturnType<typeof configureStore>
+  storeOverride?: ReturnType<typeof configureStore>,
+  datasource?: DataSourceApi
 ) {
   const store = configureStore({
     explore: {
@@ -71,7 +81,7 @@ function getTraceView(
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
-        datasource={undefined}
+        datasource={datasource}
         topOfViewRef={topOfViewRef}
         timeRange={mockTimeRange()}
         spanFilters={spanFilters}
@@ -113,6 +123,65 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
+  });
+
+  // TraceViewContainer.test.tsx imports this file and runs these tests under its own module mocks, so they use spies.
+  describe('trace-level logs link', () => {
+    let logsLinkButton: jest.SpyInstance;
+    let getDataSourceInstanceSettings: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Only checks what TraceView asks the button to do.
+      logsLinkButton = jest.spyOn(LogsLink, 'LogsLinkButton').mockImplementation(() => <></>);
+      getDataSourceInstanceSettings = jest
+        .spyOn(jest.requireMock<typeof Runtime>('@grafana/runtime'), 'getDataSourceInstanceSettings')
+        .mockImplementation(
+          async (ref) => ({ uid: ref, name: ref, type: 'loki', jsonData: {} }) as unknown as DataSourceInstanceSettings
+        );
+    });
+
+    afterEach(() => {
+      logsLinkButton.mockRestore();
+      getDataSourceInstanceSettings.mockRestore();
+      jest.mocked(useDataSourceInstanceSettings).mockReturnValue({ isLoading: false, settings: undefined });
+    });
+
+    it.each([
+      {
+        name: 'stays on the first destination when there are several',
+        tracesToLogsAdditional: [{ customQuery: false, datasourceUid: 'audit-uid' }],
+        expected: false,
+      },
+      {
+        name: 'keeps data source fallback for a single destination',
+        tracesToLogsAdditional: undefined,
+        expected: true,
+      },
+    ])('$name', async ({ tracesToLogsAdditional, expected }) => {
+      const traceSettings = {
+        uid: 'trace-uid',
+        name: 'Tempo',
+        type: 'tempo',
+        jsonData: { tracesToLogsV2: { customQuery: false, datasourceUid: 'app-uid' }, tracesToLogsAdditional },
+      } as unknown as DataSourceInstanceSettings;
+      jest.mocked(useDataSourceInstanceSettings).mockImplementation((ref) => ({
+        isLoading: false,
+        settings: ref === 'trace-uid' ? traceSettings : undefined,
+      }));
+
+      render(
+        getTraceView([frameOld], undefined, undefined, undefined, undefined, {
+          uid: 'trace-uid',
+          name: 'Tempo',
+          type: 'tempo',
+        } as DataSourceApi)
+      );
+
+      await waitFor(() => expect(logsLinkButton).toHaveBeenCalled());
+      expect(logsLinkButton.mock.lastCall?.[0]).toEqual(
+        expect.objectContaining({ forTrace: true, traceDatasourceUid: 'trace-uid', allowDatasourceFallback: expected })
+      );
+    });
   });
 
   it('renders TraceTimelineViewer', () => {

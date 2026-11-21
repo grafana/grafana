@@ -34,7 +34,7 @@ import {
   toURLRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import {
   reportInteraction,
   usePluginLinks,
@@ -69,17 +69,30 @@ interface Props {
   traceDatasourceUid?: string;
   /** When true, tooltip copy refers to the whole trace rather than a span. */
   forTrace?: boolean;
+  /** Options of the logs destination the link was built from. Defaults to the first configured destination. */
+  traceToLogsOptions?: TraceToLogsOptionsV2;
+  /**
+   * When false, logs are only looked up in the link's own data source. Used when several logs destinations are
+   * configured, so a destination never silently turns into a link to another one.
+   */
+  allowDatasourceFallback?: boolean;
 }
 
-export const LogsLinkButton = ({ linkModel, traceDatasourceUid, forTrace }: Props) => {
+export const LogsLinkButton = ({
+  linkModel,
+  traceDatasourceUid,
+  forTrace,
+  traceToLogsOptions,
+  allowDatasourceFallback = true,
+}: Props) => {
   const styles = useStyles2(getStyles);
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, allowDatasourceFallback);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
   const tooltip = useMemo(
-    () => getLogsButtonTooltip(settings, presence, forTrace ? 'trace' : 'span'),
-    [forTrace, presence, settings]
+    () => getLogsButtonTooltip(settings, presence, forTrace ? 'trace' : 'span', traceToLogsOptions),
+    [forTrace, presence, settings, traceToLogsOptions]
   );
 
   const isLoading = presence === 'loading';
@@ -109,12 +122,20 @@ function getStyles(theme: GrafanaTheme2) {
   });
 }
 
-export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid);
+export const LogsLinkMenuItem = ({
+  linkModel,
+  traceDatasourceUid,
+  traceToLogsOptions,
+  allowDatasourceFallback = true,
+}: Props) => {
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid, allowDatasourceFallback);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
-  const tooltip = useMemo(() => getLogsButtonTooltip(settings, presence), [presence, settings]);
+  const tooltip = useMemo(
+    () => getLogsButtonTooltip(settings, presence, 'span', traceToLogsOptions),
+    [presence, settings, traceToLogsOptions]
+  );
 
   const isLoading = presence === 'loading';
 
@@ -156,12 +177,13 @@ export function isDrilldownContext(app?: CoreApp | string): boolean {
  *
  * For Loki, the link may carry an array of query variations. We probe each until one
  * returns logs and persist that match (by refId) so later spans can skip the full probe.
- * If the configured datasource has no logs, we try other Loki datasources.
+ * If the configured datasource has no logs, we try other Loki datasources, unless allowDatasourceFallback is false.
  * The Explore link is only enabled after a probe resolves a working query.
  */
 function useHasLogs(
   linkModel: LinkModel,
-  traceDatasourceUid?: string
+  traceDatasourceUid: string | undefined,
+  allowDatasourceFallback: boolean
 ): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const { app } = usePanelContext();
@@ -191,7 +213,13 @@ function useHasLogs(
 
     setPresence('loading');
     setMatch(undefined);
-    const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({
+    const subscription = checkForLogsInQueries(
+      queries,
+      effectiveTimeRange,
+      dsList,
+      traceDatasourceUid,
+      allowDatasourceFallback
+    ).subscribe({
       next: (result) => {
         if (result.hasLogs && result.match) {
           setMatch(result.match);
@@ -211,7 +239,15 @@ function useHasLogs(
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid, dynamicTraceToLogsEnabled]);
+  }, [
+    queryKey,
+    timeRangeKey,
+    isLoadingDsList,
+    dsList,
+    traceDatasourceUid,
+    dynamicTraceToLogsEnabled,
+    allowDatasourceFallback,
+  ]);
 
   useEffect(() => {
     if (presence !== 'absent' || !dynamicTraceToLogsEnabled) {
@@ -306,14 +342,20 @@ function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string, d
 
 /**
  * Datasources to probe for Loki multi-query links:
- * 1. previously successful Loki datasource alone (discovery already ran — do not rediscover)
- * 2. otherwise the link's configured datasource, then up to MAX_FALLBACK_LOKI_DATASOURCES others
+ * 1. only the link's configured datasource when datasource fallback is not allowed
+ * 2. previously successful Loki datasource alone (discovery already ran — do not rediscover)
+ * 3. otherwise the link's configured datasource, then up to MAX_FALLBACK_LOKI_DATASOURCES others
  */
 function getLokiDatasourcesToTry(
   primaryUid: string | undefined,
   dsList: DataSourceInstanceListItem[],
-  traceDatasourceUid?: string
+  traceDatasourceUid: string | undefined,
+  allowDatasourceFallback: boolean
 ): string[] {
+  if (!allowDatasourceFallback) {
+    return primaryUid ? [primaryUid] : [];
+  }
+
   const otherUids = dsList
     .filter((ds) => ds.type === 'loki')
     .map((ds) => ds.uid)
@@ -352,7 +394,8 @@ function checkForLogsInQueries(
   queries: DataQuery[],
   timeRange: TimeRange,
   dsList: DataSourceInstanceListItem[],
-  traceDatasourceUid?: string
+  traceDatasourceUid: string | undefined,
+  allowDatasourceFallback: boolean
 ): Observable<LogsCheckResult> {
   if (queries.length === 0) {
     return of({ hasLogs: false });
@@ -375,7 +418,7 @@ function checkForLogsInQueries(
   }
 
   const primaryUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
-  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList, traceDatasourceUid);
+  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList, traceDatasourceUid, allowDatasourceFallback);
 
   return from(datasourcesToTry).pipe(
     concatMap((datasourceUid) => {
@@ -391,7 +434,10 @@ function checkForLogsInQueries(
       if (match.query.refId) {
         setStoredLokiQueryMatch(traceDatasourceUid, match.datasourceUid, match.query.refId);
       }
-      setStoredLokiDatasourceMatch(traceDatasourceUid, match.datasourceUid);
+      // The stored datasource drives fallback discovery, so a destination bound to its own datasource must not set it.
+      if (allowDatasourceFallback) {
+        setStoredLokiDatasourceMatch(traceDatasourceUid, match.datasourceUid);
+      }
     }),
     map((match) => ({ hasLogs: true, match })),
     defaultIfEmpty({ hasLogs: false })
@@ -541,7 +587,8 @@ export function getLogsButtonCTA(
 export function getLogsButtonTooltip(
   settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
   presence: LogsPresence,
-  type: 'span' | 'trace' = 'span'
+  type: 'span' | 'trace' = 'span',
+  traceToLogsOptions?: TraceToLogsOptionsV2
 ) {
   const defaultCTA = t(
     'explore.span-detail-link-buttons.related-logs-tooltip',
@@ -566,7 +613,7 @@ export function getLogsButtonTooltip(
         );
   }
 
-  const options = getTraceToLogsOptions(settings.jsonData);
+  const options = traceToLogsOptions ?? getTraceToLogsOptions(settings.jsonData);
 
   if (presence === 'absent') {
     if (type === 'trace') {

@@ -131,6 +131,26 @@ To change the target log data source, for example from Elasticsearch to Loki, se
 
 1. Click **Save & test**.
 
+## Link to more than one logs destination
+
+You can link spans to more than one logs data source, for example when your services write logs to several Loki instances, or to Loki and Elasticsearch.
+Each destination has its own data source, time shifts, tags, filters, and custom query.
+
+{{< admonition type="note" >}}
+The **Add logs destination** button and the **Link label** field are part of the Tempo data source plugin, which is released separately from Grafana.
+If your Tempo plugin version doesn't show them yet, add destinations with the `tracesToLogsAdditional` block described in [Provision trace to logs settings](#provision-trace-to-logs-settings).
+Grafana versions without support for multiple logs destinations only show the first destination in the trace view.
+{{< /admonition >}}
+
+1. In the **Trace to logs** section of your Tempo data source, click **Add logs destination**.
+1. Configure the new destination with the same steps as the first one.
+1. Optional: Enter a **Link label** for each destination.
+1. Click **Save & test**.
+
+The span details in the trace view show one logs button per destination.
+Each button is labeled with the destination's **Link label**, or with the logs data source name when no label is set.
+The logs button in the trace header uses the first destination.
+
 ## Configure the Loki data source
 
 These settings enable the **Tempo** link on Loki log lines, letting you navigate from a log entry to its trace.
@@ -176,6 +196,36 @@ For more details about derived field options, refer to [Derived fields](https://
 ## Provision trace to logs settings
 
 You can provision the trace to logs configuration using the `tracesToLogsV2` block in your data source YAML file.
+`tracesToLogsV2` holds the first logs destination.
+To add more destinations, list them in the `tracesToLogsAdditional` block.
+Grafana versions without support for multiple logs destinations only use `tracesToLogsV2`.
+
+The following example links spans to application logs in one Loki data source and to audit logs in another:
+
+```yaml
+jsonData:
+  tracesToLogsV2:
+    name: 'Application logs'
+    datasourceUid: '<APPLICATION_LOKI_UID>'
+    spanStartTimeShift: '-2s'
+    spanEndTimeShift: '2s'
+    tags:
+      - key: 'service.name'
+        value: 'service_name'
+    filterByTraceID: true
+    filterBySpanID: false
+    customQuery: false
+  tracesToLogsAdditional:
+    - name: 'Audit logs'
+      datasourceUid: '<AUDIT_LOKI_UID>'
+      spanStartTimeShift: '-5m'
+      spanEndTimeShift: '5m'
+      customQuery: true
+      query: '{job="audit"} |= "$${__span.traceId}"'
+```
+
+Replace `<APPLICATION_LOKI_UID>` and `<AUDIT_LOKI_UID>` with the UIDs of your Loki data sources.
+
 For the full provisioning YAML example including all Tempo settings, refer to [Provision the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/).
 For general provisioning instructions, refer to [Provisioning data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
