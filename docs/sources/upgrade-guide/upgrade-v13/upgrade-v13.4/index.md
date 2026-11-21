@@ -1,17 +1,17 @@
 ---
-description: Guide for upgrading to Grafana v13.3
+description: Guide for upgrading to Grafana v13.4
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
-  - '13.3'
-title: Upgrade to Grafana v13.3
-menuTitle: Upgrade to v13.3
-weight: 492
+  - '13.4'
+title: Upgrade to Grafana v13.4
+menuTitle: Upgrade to v13.4
+weight: 491
 ---
 
-# Upgrade to Grafana v13.3
+# Upgrade to Grafana v13.4
 
 {{< docs/shared lookup="upgrade/intro_2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -34,4 +34,4 @@ To set a limit for one plugin, use `memory_limit` in its `[plugin.<plugin_id>]` 
 To pass the server's `GOMEMLIMIT` and `GOGC` to every plugin process instead, set `forward_go_runtime_env_vars` to `true`.
 
 Size the container for the Grafana server plus each backend plugin process.
-For more information, refer to [`default_memory_limit`](../../setup-grafana/configure-grafana/#default_memory_limit) and [`memory_limit`](../../setup-grafana/configure-grafana/#memory_limit).
+For more information, refer to [`default_memory_limit`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_memory_limit) and [`memory_limit`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#memory_limit).
