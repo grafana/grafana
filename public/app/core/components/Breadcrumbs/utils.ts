@@ -44,7 +44,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       }
       crumbs.unshift({
         text: node.text,
-        href: locationUtil.assureBaseUrl(node.url ?? ''),
+        ...(node.noBreadcrumbLink ? {} : { href: locationUtil.assureBaseUrl(node.url ?? '') }),
         ...(node.highlightText ? { highlightText: node.highlightText } : {}),
       });
     }

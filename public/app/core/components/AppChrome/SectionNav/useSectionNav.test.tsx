@@ -19,6 +19,9 @@ let navTree: NavModelItem[] = [
         url: '/admin/general',
         children: [
           { id: 'plugin-page-advisor', text: 'Advisor', url: '/a/grafana-advisor-app/home' },
+          // An app's pages arrive without ids of their own
+          { text: 'Logs', url: '/a/grafana-dbcfg-app/logs' },
+          { text: 'Traces', url: '/a/grafana-dbcfg-app/traces' },
           {
             id: 'provisioning',
             text: 'Provisioning',
@@ -124,6 +127,15 @@ describe('useSectionNav', () => {
     expect(render('cfg', { path })?.activeId).toBe('plugin-page-advisor');
     expect(render('cfg', { path, currentPage })?.activeId).toBe('plugin-page-advisor');
     expect(render('monitoring', { path })).toBeUndefined();
+  });
+
+  it('marks a link without an id by its url, and no other', () => {
+    expect(render('cfg', { path: '/a/grafana-dbcfg-app/logs' })?.activeId).toBe('/a/grafana-dbcfg-app/logs');
+    expect(render('cfg', { path: '/a/grafana-dbcfg-app/traces' })?.activeId).toBe('/a/grafana-dbcfg-app/traces');
+  });
+
+  it('marks none of the pages of an app on its own landing page', () => {
+    expect(render('cfg', { path: '/a/grafana-dbcfg-app' })?.activeId).toBeUndefined();
   });
 
   it('marks the link a nested page belongs to', () => {
