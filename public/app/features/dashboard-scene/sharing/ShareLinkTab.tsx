@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 
-import { dateTime, type UrlQueryMap } from '@grafana/data';
+import { type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -10,7 +10,6 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
-import { type TimeZone } from '@grafana/schema';
 import { Spinner } from '@grafana/ui';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -19,6 +18,7 @@ import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { getRenderTimeZone } from './getRenderTimeZone';
 import { type SceneShareTabState, type ShareView } from './types';
 
 const ShareLinkTabRenderer = lazy(() => import('./ShareRenderers').then((m) => ({ default: m.ShareLinkTabRenderer })));
@@ -152,28 +152,4 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       shareResource: getTrackingSource(this.state.panelRef),
     });
   };
-}
-
-function getRenderTimeZone(timeZone: TimeZone): string {
-  const utcOffset = 'UTC' + encodeURIComponent(dateTime().format('Z'));
-
-  if (timeZone === 'utc') {
-    return 'UTC';
-  }
-
-  if (timeZone === 'browser') {
-    if (!window.Intl) {
-      return utcOffset;
-    }
-
-    const dateFormat = window.Intl.DateTimeFormat();
-    const options = dateFormat.resolvedOptions();
-    if (!options.timeZone) {
-      return utcOffset;
-    }
-
-    return options.timeZone;
-  }
-
-  return timeZone;
 }
