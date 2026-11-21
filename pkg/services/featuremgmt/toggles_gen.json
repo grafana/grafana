@@ -3701,6 +3701,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelQuickEdits",
+        "resourceVersion": "1795097237850",
+        "creationTimestamp": "2026-11-19T14:07:17Z"
+      },
+      "spec": {
+        "description": "Adds quick edits for a panel's most-changed options to the panel edit popover in dashboard edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.pluginExtensionReactElementProps",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-15T14:07:35Z"
