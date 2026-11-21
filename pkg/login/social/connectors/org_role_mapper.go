@@ -209,12 +209,10 @@ func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg
 
 	orgID, err := strconv.Atoi(orgIdCfg)
 	if err != nil {
+		// Not a numeric ID, so treat the value as an organization name.
 		res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: orgIdCfg})
-
 		if getErr != nil {
-			// skip in case of error
-			m.logger.FromContext(ctx).Warn("Could not fetch organization. Skipping.", "err", err, "org", orgIdCfg)
-			return 0, getErr
+			return 0, fmt.Errorf("failed to resolve organization %q by name: %w", orgIdCfg, getErr)
 		}
 		orgID = int(res.ID)
 	}
