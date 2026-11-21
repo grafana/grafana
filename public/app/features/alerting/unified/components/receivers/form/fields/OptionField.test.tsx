@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { FormProvider, useForm } from 'react-hook-form';
+import { type DeepMap, type FieldError, type FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import {
@@ -21,8 +21,10 @@ const renderOptionField = (
     getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
     readOnly?: boolean;
     secureFields?: NotificationChannelSecureFields;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    defaultValue?: any;
+    secureFieldPathPrefix?: string;
+    onResetSecureField?: (propertyName: string) => void;
+    error?: FieldError | DeepMap<FieldValues, FieldError>;
+    defaultValue?: unknown;
   } = {}
 ) => {
   const defaultProps = {
@@ -514,6 +516,158 @@ describe('OptionField', () => {
         expect(
           screen.getByText('This field is protected and can only be edited by users with elevated permissions')
         ).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Key value object map fields', () => {
+    const option: NotificationChannelOption = {
+      propertyName: 'http_headers',
+      label: 'HTTP headers',
+      description: 'Headers to send with the request',
+      element: 'key_value_object_map',
+      inputType: '',
+      placeholder: '',
+      required: false,
+      secure: false,
+      showWhen: { field: '', is: '' },
+      validationRule: '',
+      dependsOn: '',
+      subformOptions: [
+        {
+          propertyName: 'values',
+          label: 'Values',
+          description: '',
+          element: 'string_array',
+          inputType: '',
+          placeholder: '',
+          required: false,
+          secure: false,
+          showWhen: { field: '', is: '' },
+          validationRule: '',
+          dependsOn: '',
+        },
+        {
+          propertyName: 'secrets',
+          label: 'Secrets',
+          description: '',
+          element: 'string_array',
+          inputType: '',
+          placeholder: '',
+          required: false,
+          secure: true,
+          showWhen: { field: '', is: '' },
+          validationRule: '',
+          dependsOn: '',
+        },
+      ],
+    };
+
+    it('renders values and masks configured secure fields for each map key', () => {
+      renderOptionField(option, {
+        defaultValue: { 'X-Request.Trace': { values: ['trace-id'], secrets: [] } },
+        secureFieldPathPrefix: 'http_config.',
+        secureFields: { 'http_config.http_headers.X-Request%2ETrace.secrets': true },
+      });
+
+      expect(screen.getByDisplayValue('X-Request.Trace')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('trace-id')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+    });
+
+    it('renders unconfigured secure values as password inputs', () => {
+      renderOptionField(option, {
+        defaultValue: { Authorization: { values: [], secrets: ['new-secret'] } },
+        secureFieldPathPrefix: 'http_config.',
+      });
+
+      expect(screen.getByDisplayValue('new-secret')).toHaveAttribute('type', 'password');
+    });
+
+    it('shows validation errors for nested map fields', () => {
+      const error = {
+        Authorization: {
+          secrets: { type: 'required', message: 'A secret is required' },
+        },
+      } satisfies DeepMap<FieldValues, FieldError>;
+
+      renderOptionField(option, {
+        defaultValue: { Authorization: { values: [], secrets: [] } },
+        error,
+      });
+
+      expect(screen.getByText('A secret is required')).toBeInTheDocument();
+    });
+
+    it('clears nested secure flags when a map entry is deleted', async () => {
+      const user = userEvent.setup();
+      const onResetSecureField = jest.fn();
+      renderOptionField(option, {
+        defaultValue: { 'X-Request.Trace': { values: [], secrets: [] } },
+        secureFieldPathPrefix: 'http_config.',
+        secureFields: { 'http_config.http_headers.X-Request%2ETrace.secrets': true },
+        onResetSecureField,
+      });
+
+      await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+
+      expect(onResetSecureField).toHaveBeenCalledWith('http_config.http_headers.X-Request%2ETrace.secrets');
+      expect(screen.queryByDisplayValue('X-Request.Trace')).not.toBeInTheDocument();
+    });
+
+    it('adds a map entry with its schema-defined fields', async () => {
+      const user = userEvent.setup();
+      renderOptionField(option, { defaultValue: {} });
+
+      await user.type(screen.getByRole('textbox', { name: 'New name' }), 'X-Request-ID');
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+
+      expect(screen.getByDisplayValue('X-Request-ID')).toBeInTheDocument();
+      expect(screen.getByText('Values')).toBeInTheDocument();
+      expect(screen.getByText('Secrets')).toBeInTheDocument();
+    });
+
+    it('submits dotted header names as literal object keys after editing an entry', async () => {
+      const user = userEvent.setup();
+      const onSubmit = jest.fn();
+      const defaultValues = {
+        test: {
+          http_headers: {
+            'X.Request.Trace': { values: ['before'], secrets: [] },
+          },
+        },
+      };
+
+      function TestForm() {
+        const methods = useForm({ defaultValues });
+        return (
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onSubmit)}>
+              <OptionField
+                option={option}
+                defaultValue={defaultValues.test.http_headers}
+                pathPrefix="test."
+                secureFields={{}}
+              />
+              <button type="submit">Save</button>
+            </form>
+          </FormProvider>
+        );
+      }
+
+      render(<TestForm />);
+
+      await user.clear(screen.getByDisplayValue('before'));
+      await user.type(screen.getByRole('textbox', { name: 'Values' }), 'after');
+      await user.click(screen.getByRole('button', { name: 'Save' }));
+
+      await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+      expect(onSubmit.mock.calls[0][0]).toEqual({
+        test: {
+          http_headers: {
+            'X.Request.Trace': { values: ['after'], secrets: [] },
+          },
+        },
       });
     });
   });
