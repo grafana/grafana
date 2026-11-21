@@ -374,12 +374,12 @@ func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester,
 	return subjects, nil
 }
 
-func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
+func (a *api) getRoleIDFromK8sObject(ctx context.Context, roleName string, orgID int64) int64 {
 	if a.service.store == nil {
 		return 0
 	}
 
-	permissionID, err := a.service.store.GetPermissionIDByRoleName(context.Background(), orgID, roleName)
+	permissionID, err := a.service.store.GetPermissionIDByRoleName(ctx, orgID, roleName)
 	if err != nil {
 		a.logger.Debug("Failed to get permission ID from legacy database", "error", err, "roleName", roleName, "orgID", orgID)
 		return 0
@@ -961,7 +961,7 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 		permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
 		permDTO.IsServiceAccount = userDetails.IsServiceAccount
 		permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
-		permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
+		permDTO.ID = a.getRoleIDFromK8sObject(ctx, permDTO.RoleName, c.GetOrgID())
 
 		dto = append(dto, permDTO)
 	}

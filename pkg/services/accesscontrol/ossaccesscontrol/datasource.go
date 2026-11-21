@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"go.opentelemetry.io/otel"
 )
 
@@ -22,9 +22,9 @@ var DatasourceQueryActions = []string{
 	datasources.ActionQuery,
 }
 
-func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, db db.DB) *DatasourcePermissionsService {
+func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dbProvider legacysql.LegacyDatabaseProvider) *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{
-		store: resourcepermissions.NewStore(cfg, db, features),
+		store: resourcepermissions.NewStore(cfg, dbProvider, features),
 	}
 }
 

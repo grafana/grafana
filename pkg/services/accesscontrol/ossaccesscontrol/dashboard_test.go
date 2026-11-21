@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -49,8 +50,9 @@ func TestIntegrationDashboardPermissionsMissingFolderIsConflict(t *testing.T) {
 	}
 
 	router := routing.NewRouteRegister()
+	sqlStore := sqlstore.NewTestStore(t)
 	_, err := ProvideDashboardPermissions(
-		setting.NewCfg(), featuremgmt.WithFeatures(), router, sqlstore.NewTestStore(t),
+		setting.NewCfg(), featuremgmt.WithFeatures(), router, legacysql.NewDatabaseProvider(sqlStore), sqlStore.Bus(),
 		actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, &licensing.OSSLicensingService{},
 		dashboardSvc, folderSvc, &actest.FakeService{}, nil, nil, nil,
 		resourcepermissions.NewActionSetService(), noopDashboardPermissionsRegistration{}, nil,

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -1168,7 +1169,7 @@ func createUserWithPermissions(
 	})
 
 	if len(permissions) > 0 {
-		permissionsStore := resourcepermissions.NewStore(cfg, store, featuremgmt.WithFeatures())
+		permissionsStore := resourcepermissions.NewStore(cfg, legacysql.NewDatabaseProvider(store), featuremgmt.WithFeatures())
 		for _, cmd := range permissions {
 			_, err := permissionsStore.SetUserResourcePermission(
 				ctx,
