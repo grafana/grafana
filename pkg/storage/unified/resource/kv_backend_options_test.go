@@ -22,6 +22,7 @@ var callerSuppliedFields = map[string]string{
 	"ReconcileKeyPaths":         "SQL history repair injected only by the SQL backend wiring",
 	"GCGate":                    "shared with the caller's startup sequencing",
 	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
+	"ClockSkewCheck":            "derived from high-availability detection, not from a single setting",
 	"EventPublisher":            "NATS publisher injected by the caller",
 	"WatchNotificationMetadata": "set together with EventPublisher by the caller",
 	"WatchInvalidator":          "shared watch invalidation injected by the caller",

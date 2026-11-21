@@ -65,6 +65,10 @@ func TestNewKVGrpcBackendOptionsStorageServices(t *testing.T) {
 	require.False(t, newKVGrpcBackendOptions(cfg, nil, false, nil, nil).DisableStorageServices)
 }
 
+func TestNewKVGrpcBackendOptionsClockSkewCheckDisabled(t *testing.T) {
+	require.False(t, newKVGrpcBackendOptions(kvGrpcCfg(), nil, false, nil, nil).ClockSkewCheck)
+}
+
 func kvGrpcCfg() *setting.Cfg {
 	cfg := setting.NewCfg()
 	cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
