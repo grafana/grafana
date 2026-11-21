@@ -105,7 +105,7 @@ export const Slider = ({
   }
 
   const dragHandleAriaLabel =
-    ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Use arrow keys to change the value');
+    ariaLabelForHandle ?? t('grafana-ui.slider.drag-handle-aria-label', 'Slider');
 
   const onSliderChange = useCallback(
     (v: number | number[]) => {
@@ -179,6 +179,9 @@ export const Slider = ({
           <Input
             type="text"
             width={7.5}
+            aria-label={t('grafana-ui.slider.numeric-input-aria-label', '{{label}} numeric value', {
+              label: dragHandleAriaLabel,
+            })}
             className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
             value={inputValue}
             onChange={onTextInputChange}
