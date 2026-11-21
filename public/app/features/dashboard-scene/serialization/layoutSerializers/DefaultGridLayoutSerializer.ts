@@ -234,7 +234,7 @@ function buildGridItem(
     key: `grid-item-${id ?? panel.spec.id}`,
     x: gridItem.x,
     y: yOverride ?? gridItem.y,
-    width: gridItem.repeat?.direction === 'h' ? 24 : gridItem.width,
+    width: gridItem.repeat && gridItem.repeat.direction !== 'v' ? 24 : gridItem.width,
     height: gridItem.height,
     itemHeight: gridItem.height,
     body: vizPanel,

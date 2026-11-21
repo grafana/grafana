@@ -78,9 +78,16 @@ describe('V2 Transformers', () => {
     // Transform back to dashboard V2 spec
     const dashV2 = transformSceneToSaveModelSchemaV2(dashV2Scene);
 
+    const expectedLayout = structuredClone(defaultDashboard.spec.layout);
+    if (expectedLayout.kind === 'GridLayout') {
+      // panel-1 repeats with no direction, which is horizontal, so it loads at full width
+      expectedLayout.spec.items[0].spec.width = 24;
+    }
+
     // GroupByVariables are migrated away on load, so they don't survive the round trip
     expect(dashV2).toEqual({
       ...defaultDashboard.spec,
+      layout: expectedLayout,
       variables: defaultDashboard.spec.variables.filter((v) => v.kind !== 'GroupByVariable'),
     });
   });

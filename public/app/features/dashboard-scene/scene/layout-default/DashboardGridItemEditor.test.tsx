@@ -1,3 +1,4 @@
+import { renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
@@ -17,11 +18,35 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
+function isMaxPerRowShown(gridItem: DashboardGridItem) {
+  const { result: categories } = renderHook(() => getDashboardGridItemOptions(gridItem));
+  const maxPerRow = categories.current[0].items.find((item) => item.props.id === 'repeat-options-max-per-row')!;
+  return renderHook(() => maxPerRow.useShowIf()).result.current;
+}
+
+function buildGridItem(repeatDirection?: 'h' | 'v') {
+  return new DashboardGridItem({
+    body: new VizPanel({ key: 'panel-1', pluginId: 'text' }),
+    variableName: 'server',
+    repeatDirection,
+  });
+}
+
 function RepeatDirection({ gridItem }: { gridItem: DashboardGridItem }) {
   const [repeatCategory] = getDashboardGridItemOptions(gridItem);
   const directionItem = repeatCategory.items.find((item) => item.props.id === 'repeat-options-repeat-direction')!;
   return <>{directionItem.props.render(directionItem)}</>;
 }
+
+describe('getDashboardGridItemOptions', () => {
+  it.each([
+    { repeatDirection: undefined, shown: true },
+    { repeatDirection: 'h' as const, shown: true },
+    { repeatDirection: 'v' as const, shown: false },
+  ])('shows max per row for repeat direction $repeatDirection: $shown', ({ repeatDirection, shown }) => {
+    expect(isMaxPerRowShown(buildGridItem(repeatDirection))).toBe(shown);
+  });
+});
 
 describe('getDashboardGridItemOptions tracking', () => {
   let panelSettingChanged: jest.SpyInstance;
