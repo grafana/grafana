@@ -1,5 +1,6 @@
 import { render, type RenderResult, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
@@ -7,12 +8,14 @@ import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddNewConnection } from './ConnectData';
+import { type ConnectionEntryPointProps } from './components/ConnectionEntryPoints';
 
 jest.mock('app/features/datasources/api');
 
@@ -24,10 +27,16 @@ afterAll(() => {
   setTestFlags({});
 });
 
+const mockUsePluginComponents = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
+  usePluginComponents: (...args: unknown[]) => mockUsePluginComponents(...args),
 }));
+
+beforeEach(() => {
+  mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [] });
+});
 
 const renderPage = (plugins: CatalogPlugin[] = [], path = '/add-new-connection'): RenderResult => {
   locationService.push(path);
@@ -177,6 +186,63 @@ describe('Add new connection', () => {
     // Should show the modal if the user has no permissions
     await userEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
+  });
+});
+
+describe('Plugin entry points', () => {
+  const entryPointPluginApp = getCatalogPluginMock({
+    type: PluginType.app,
+    name: 'Entry point app',
+    id: 'entry-point-app',
+  });
+
+  // Behaves like a plugin-provided component: renders a card when the search matches its title.
+  const EntryPointComponent = Object.assign(
+    ({ searchTerm, onVisibilityChange }: ConnectionEntryPointProps) => {
+      const matches = 'Plugin entry point'.toLowerCase().includes(searchTerm.toLowerCase());
+      useEffect(() => onVisibilityChange(matches), [matches, onVisibilityChange]);
+      return matches ? <TextLink href="/a/entry-point-app/start">Plugin entry point</TextLink> : null;
+    },
+    { meta: { id: 'entry-point-app/card/v1', pluginId: 'entry-point-app' } }
+  );
+
+  test('renders components registered on the extension point and hides the plugin generic app card', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([entryPointPluginApp, mockCatalogAppPlugin]);
+
+    expect(await screen.findByRole('link', { name: 'Plugin entry point' })).toHaveAttribute(
+      'href',
+      '/a/entry-point-app/start'
+    );
+    expect(screen.getByText('Sample app')).toBeInTheDocument();
+    expect(screen.queryByText('Entry point app')).not.toBeInTheDocument();
+    expect(mockUsePluginComponents).toHaveBeenCalledWith(
+      expect.objectContaining({ extensionPointId: 'grafana/connections/entry-points/v1' })
+    );
+  });
+
+  test('passes the search term to the component, which does not depend on the search results', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([], '/add-new-connection?search=entry');
+
+    expect(await screen.findByText('Plugin entry point')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).not.toBeInTheDocument();
+  });
+
+  test('shows the empty state when the component does not match the search', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([], '/add-new-connection?search=nothing-matches-this');
+
+    expect(await screen.findByText('No results matching your query were found')).toBeInTheDocument();
+    expect(screen.queryByText('Plugin entry point')).not.toBeInTheDocument();
+  });
+
+  test('renders the page normally when no plugin registers an entry point', async () => {
+    renderPage([entryPointPluginApp, mockCatalogAppPlugin]);
+
+    expect(await screen.findByText('Sample app')).toBeInTheDocument();
+    expect(screen.getByText('Entry point app')).toBeInTheDocument();
+    expect(screen.queryByText('Plugin entry point')).not.toBeInTheDocument();
   });
 });
 
