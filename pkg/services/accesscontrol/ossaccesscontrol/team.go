@@ -64,15 +64,47 @@ func ProvideTeamPermissions(
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 	legacyWatch *legacywatch.Publisher,
 ) (*TeamPermissionsService, error) {
+	options, err := teamPermissionsOptions(sql, teamService, directRestConfigProvider, legacyWatch)
+	if err != nil {
+		return nil, err
+	}
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	if err != nil {
+		return nil, err
+	}
+	return &TeamPermissionsService{srv}, nil
+}
+
+// NewInternalTeamPermissions reuses the team permission and membership writes for
+// trusted callers without an RBAC cache or process-lifetime registrations.
+func NewInternalTeamPermissions(
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, sql db.DB, license licensing.Licensing,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	directRestConfigProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher,
+) (*TeamPermissionsService, error) {
+	options, err := teamPermissionsOptions(sql, teamService, directRestConfigProvider, legacyWatch)
+	if err != nil {
+		return nil, err
+	}
+	srv, err := resourcepermissions.NewInternal(cfg, options, features, license, sql, teamService, userService, actionSetService)
+	if err != nil {
+		return nil, err
+	}
+	return &TeamPermissionsService{srv}, nil
+}
+
+func teamPermissionsOptions(sql db.DB, teamService team.Service,
+	directRestConfigProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher,
+) (resourcepermissions.Options, error) {
 	// The hooks below run inside transactions that resourcepermissions opens on sql,
 	// so their table names must resolve for that same database. Deriving the helper
 	// from sql keeps the two in step.
 	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
 	if err != nil {
-		return nil, err
+		return resourcepermissions.Options{}, err
 	}
 
-	options := resourcepermissions.Options{
+	return resourcepermissions.Options{
 		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
 		OnlyManaged:        true,
@@ -136,11 +168,5 @@ func ProvideTeamPermissions(
 			return nil
 		},
 		RestConfigProvider: directRestConfigProvider,
-	}
-
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
-	if err != nil {
-		return nil, err
-	}
-	return &TeamPermissionsService{srv}, nil
+	}, nil
 }
