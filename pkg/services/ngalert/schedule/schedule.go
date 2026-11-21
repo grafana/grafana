@@ -93,6 +93,7 @@ type schedule struct {
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
 	rrCfg                setting.RecordingRuleSettings
+	seriesBudget         SeriesBudget
 
 	metrics *metrics.Scheduler
 
@@ -138,6 +139,10 @@ type SchedulerCfg struct {
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
 	FeatureToggles         featuremgmt.FeatureToggles
+
+	// SeriesBudget caps the series tracked for stale markers by all recording rules of this scheduler.
+	// nil counts them without a limit.
+	SeriesBudget SeriesBudget
 }
 
 // NewScheduler returns a new scheduler.
@@ -165,6 +170,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
 		jitterEvaluations:      cfg.JitterEvaluations,
 		rrCfg:                  cfg.RecordingRulesCfg,
+		seriesBudget:           cfg.SeriesBudget,
 		stateManager:           stateManager,
 		minRuleInterval:        cfg.MinRuleInterval,
 		schedulableAlertRules:  alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -323,6 +329,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.tracer,
 		sch.featureToggles,
 		sch.recordingWriter,
+		sch.seriesBudget,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
@@ -407,13 +414,16 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	// jitter the start time based on the base interval and total scheduled items
-	var step int64
-	if len(readyToRun) > 0 {
-		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-	}
-
 	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
+
+	// jitter the start time based on the base interval and the number of sequences.
+	// One timer is scheduled per sequence, not per rule: rules in imported groups are
+	// chained into a single sequence, so dividing by len(readyToRun) squeezes
+	// starts into the first fraction of the interval.
+	var step int64
+	if len(sequences) > 0 {
+		step = sch.baseInterval.Nanoseconds() / int64(len(sequences))
+	}
 	sch.runSequences(sequences, step)
 
 	// Stop old routines for rules that got restarted.

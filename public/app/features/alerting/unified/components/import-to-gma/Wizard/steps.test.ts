@@ -1,4 +1,5 @@
 import {
+  getImportPlan,
   getNextStep,
   getPreviousStep,
   getWizardSteps,
@@ -75,5 +76,54 @@ describe('isAutoSyncCommitted', () => {
 
   it('is false when Auto-sync was never selected', () => {
     expect(isAutoSyncCommitted(false, 'datasource', false)).toBe(false);
+  });
+});
+
+describe('getImportPlan', () => {
+  const base = {
+    autoSyncNotificationsEnabled: false,
+    notificationsSource: 'yaml' as const,
+    step1Completed: false,
+    step1Skipped: false,
+    step2Completed: false,
+    step2Skipped: false,
+  };
+
+  it('plans nothing before any step is completed', () => {
+    expect(getImportPlan(base)).toEqual({
+      willEnableAutoSync: false,
+      willImportNotifications: false,
+      willImportRules: false,
+    });
+  });
+
+  it('plans a notifications import once step 1 is completed', () => {
+    expect(getImportPlan({ ...base, step1Completed: true })).toMatchObject({ willImportNotifications: true });
+  });
+
+  it('plans nothing for step 1 when it was skipped, even if it had been completed', () => {
+    expect(getImportPlan({ ...base, step1Completed: true, step1Skipped: true })).toMatchObject({
+      willImportNotifications: false,
+    });
+  });
+
+  it('plans a rules import once step 2 is completed and not skipped', () => {
+    expect(getImportPlan({ ...base, step2Completed: true })).toMatchObject({ willImportRules: true });
+    expect(getImportPlan({ ...base, step2Completed: true, step2Skipped: true })).toMatchObject({
+      willImportRules: false,
+    });
+  });
+
+  it('plans Auto-sync only for the data source source, and not when step 1 was skipped', () => {
+    const autoSync = { ...base, autoSyncNotificationsEnabled: true, notificationsSource: 'datasource' as const };
+    expect(getImportPlan(autoSync)).toMatchObject({ willEnableAutoSync: true });
+    expect(getImportPlan({ ...autoSync, step1Skipped: true })).toMatchObject({ willEnableAutoSync: false });
+    expect(getImportPlan({ ...autoSync, notificationsSource: 'yaml' })).toMatchObject({ willEnableAutoSync: false });
+  });
+
+  it('treats a missing Auto-sync flag as off', () => {
+    expect(getImportPlan({ ...base, autoSyncNotificationsEnabled: undefined })).toMatchObject({
+      willEnableAutoSync: false,
+    });
   });
 });
