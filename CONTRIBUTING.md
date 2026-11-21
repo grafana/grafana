@@ -10,9 +10,9 @@ Whether you're a new contributor or a seasoned veteran, we hope these resources 
 
 #### Interact and be heard
 
-- **Forums:** Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge, submit your own questions and answers!
+- **Forums:** Do you have a problem, question, or curiosity? Visit our [forums](https://www.grafana.com/g/communityengcamp-githubtoforums) for a reservoir of knowledge, submit your own questions and answers!
 - **Meetups:** Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://www.grafana.com/g/communityengcamp-githubtomeetup)!
-- **Community Slack:** Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
+- **Community Slack:** Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://www.grafana.com/g/communityengcamp-githubtoslack).
 
 #### Learn
 
