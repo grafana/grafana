@@ -198,6 +198,76 @@ func TestResponseAdapter(t *testing.T) {
 		require.NoError(t, err, "request should not fail")
 		require.NoError(t, resp.Body.Close())
 	})
+
+	t.Run("should not block CloseWriter when the context is done before the response is ready", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ra := grafanaresponsewriter.NewAdapter(req)
+		t.Cleanup(func() { _ = ra.Close() })
+		cancel()
+
+		resp, err := ra.Response() //nolint:bodyclose
+		require.Nil(t, resp)
+		require.ErrorIs(t, err, context.Canceled)
+
+		// The caller never got a body, so nobody will read the pipe. The handler side must still finish.
+		done := make(chan error, 1)
+		go func() {
+			ra.WriteHeader(http.StatusOK)
+			_, _ = ra.Write([]byte("OK"))
+			done <- ra.CloseWriter()
+		}()
+
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("CloseWriter blocked flushing to a pipe that nobody reads")
+		}
+	})
+
+	t.Run("should not block the handler when the caller gives up before the response is ready", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		started := make(chan struct{})
+		gaveUp := make(chan struct{})
+		handlerDone := make(chan struct{})
+		// ignore the lint error because this test never receives a response: the caller gives up first.
+		//nolint:bodyclose
+		fn := grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			defer close(handlerDone)
+			close(started)
+			<-gaveUp
+			_, _ = w.Write([]byte("OK"))
+			w.(http.Flusher).Flush()
+		}))
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		// Give up while the handler is in flight, before it writes anything.
+		go func() {
+			<-started
+			cancel()
+		}()
+		resp, err := fn(req) //nolint:bodyclose
+		require.Nil(t, resp)
+		require.ErrorIs(t, err, context.Canceled)
+		close(gaveUp)
+
+		select {
+		case <-handlerDone:
+		case <-time.After(5 * time.Second):
+			t.Fatal("handler blocked writing to a pipe that nobody reads")
+		}
+	})
 }
 
 func syncHandler(w http.ResponseWriter, r *http.Request) {
