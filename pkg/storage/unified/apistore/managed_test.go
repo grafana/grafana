@@ -597,6 +597,29 @@ func TestPrepareObjectForUpdateOrphanedDelete(t *testing.T) {
 		require.True(t, v.hasChanged)
 	})
 
+	// The accessor returns this form as the live map, so preparing the update must not change the previous one.
+	liveSecure := func(values common.InlineSecureValues) map[string]any {
+		return map[string]any{"secure": values}
+	}
+
+	t.Run("allows the terminating label alone when the secure values are a live map", func(t *testing.T) {
+		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
+		previous := managedUnstructured(t, true, false, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
+		obj := managedUnstructured(t, true, true, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects a removed secure value when the secure values are a live map", func(t *testing.T) {
+		s := newStorage(t, secret.NewMockInlineSecureValueSupport(t))
+		previous := managedUnstructured(t, true, false, liveSecure(common.InlineSecureValues{"token": {Name: "sv-1"}}))
+		obj := managedUnstructured(t, true, true, liveSecure(common.InlineSecureValues{"token": {Remove: true}}))
+
+		_, err := s.prepareObjectForUpdate(testContext(t), obj, previous)
+		require.ErrorIs(t, err, errResourceIsManagedInRepository)
+	})
+
 	t.Run("allows unchanged blobs", func(t *testing.T) {
 		s := newStorage(t, nil)
 		previous := managedUnstructured(t, true, false, blobs("b-1"))
