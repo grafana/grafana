@@ -393,7 +393,7 @@ SELECT
   STDDEV(value) AS agg_stddev,
   STD(value) AS agg_std,
   STDDEV_POP(value) AS agg_stddev_pop,
-  STDDEV_SAMPLE(value) AS agg_stddev_sample,
+  STDDEV_SAMP(value) AS agg_stddev_samp,
   VARIANCE(value) AS agg_variance,
   VAR_POP(value) AS agg_var_pop,
   VAR_SAMP(value) AS agg_var_samp,
