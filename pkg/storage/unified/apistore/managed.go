@@ -102,10 +102,10 @@ func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) 
 	}
 }
 
-// repositoryGoneError tells a caller that the write conflicts with the stored resource, which names a repository
-// that no longer exists.
+// repositoryGoneError tells a caller that the write is not allowed, because the stored resource names a
+// repository that no longer exists.
 func repositoryGoneError(name string) error {
-	return apierrors.NewConflict(schema.GroupResource{Group: provisioningGroup, Resource: repositoriesResource}, name, errManagerGone)
+	return apierrors.NewForbidden(schema.GroupResource{Group: provisioningGroup, Resource: repositoriesResource}, name, errManagerGone)
 }
 
 func isRepositoryNotFound(err error, name string) bool {
