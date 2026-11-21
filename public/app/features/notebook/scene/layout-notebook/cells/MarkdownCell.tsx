@@ -18,6 +18,17 @@ const MarkdownCellEditor = lazy(() =>
   }))
 );
 
+/**
+ * Tracks whether the URL fragment present at page load has already been restored to its target
+ * heading. Module-scoped so expanding collapsed cells or leaving edit mode later in the session
+ * doesn't treat the existing URL hash as a fresh deep link and steal scroll position.
+ */
+let hasRestoredInitialHash = false;
+
+export function resetInitialHashRestorationForTests() {
+  hasRestoredInitialHash = false;
+}
+
 export interface MarkdownCellProps {
   content: CellContentKind;
   isEditing: boolean;
@@ -57,18 +68,16 @@ export function MarkdownCell({
     () => (content.kind === 'Markdown' ? addHeadingIds(renderTextPanelMarkdown(content.spec.text)) : ''),
     [content]
   );
-  const restoredHash = useRef(false);
   useEffect(() => {
-    // Each cell restores the fragment once its own headings exist: the html is injected by
-    // DangerouslySetHtmlContent's effect, which runs before this one, and by then the browser's
-    // own fragment scroll has already come and gone.
-    if (isEditing || restoredHash.current) {
+    // Restores the fragment once its target heading exists in the DOM. Subsequent renders or newly
+    // mounted/uncollapsed cells will not steal scroll if the initial fragment has already been restored.
+    if (isEditing || hasRestoredInitialHash) {
       return;
     }
-    restoredHash.current = true;
 
     const id = headingIdFromHash(window.location.hash);
-    if (id) {
+    if (id && document.getElementById(id)) {
+      hasRestoredInitialHash = true;
       document.getElementById(id)?.scrollIntoView({ block: 'start' });
     }
   }, [isEditing]);

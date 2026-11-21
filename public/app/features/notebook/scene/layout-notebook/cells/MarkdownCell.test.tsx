@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 import { locationService } from '@grafana/runtime';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-import { MarkdownCell } from './MarkdownCell';
+import { MarkdownCell, resetInitialHashRestorationForTests } from './MarkdownCell';
 
 jest.mock('@grafana/ui/internal', () => {
   const { useEffect, useRef } = require('react');
@@ -110,6 +110,7 @@ describe('MarkdownCell', () => {
 
     afterEach(() => {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      resetInitialHashRestorationForTests();
     });
 
     it('gives headings ids so a contents link has somewhere to go', async () => {
@@ -136,6 +137,31 @@ describe('MarkdownCell', () => {
 
       await screen.findByRole('heading', { name: 'Herbs' });
       await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' }));
+      scrollIntoView.mockRestore();
+    });
+
+    it('does not re-restore hash scroll when editing ends or another cell mounts later', async () => {
+      window.location.hash = '#herbs';
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const { rerender } = render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      await screen.findByRole('heading', { name: 'Herbs' });
+      await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+
+      // Enter and exit edit mode
+      rerender(<MarkdownCell content={withContents} isEditing={true} onChange={jest.fn()} />);
+      rerender(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      // Mount another cell while the hash is still present in the URL
+      const otherCell: CellContentKind = {
+        kind: 'Markdown',
+        spec: { text: '## Other Heading\n\nContent.' },
+      };
+      render(<MarkdownCell content={otherCell} isEditing={false} onChange={jest.fn()} />);
+      await screen.findByRole('heading', { name: 'Other Heading' });
+
+      // Should not have jumped to #herbs again
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
       scrollIntoView.mockRestore();
     });
 
