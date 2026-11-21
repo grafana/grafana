@@ -174,6 +174,11 @@ type Cfg struct {
 	// Env is Dev. See readFrontendDevSettings.
 	FrontendDevServerURL string
 
+	// FrontendDevWorktreeServerURLTemplate, when set, lets a request pick which local frontend dev
+	// server serves its assets (see webassets.FrontendHeader). `%s` is the frontend name and the
+	// result is always `http://<name>.localhost[:port]`. Empty unless Env is Dev.
+	FrontendDevWorktreeServerURLTemplate string
+
 	// Security settings
 	SecretKey             string
 	EmailCodeValidMinutes int
@@ -2504,10 +2509,13 @@ func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
 	// Assigned up front so re-parsing an existing Cfg cannot leave a stale origin behind when
 	// one of the gates below now rejects it.
 	cfg.FrontendDevServerURL = ""
+	cfg.FrontendDevWorktreeServerURLTemplate = ""
 
 	if cfg.Env != Dev {
 		return
 	}
+
+	cfg.readFrontendDevWorktreeTemplate(iniFile)
 
 	// defaults.ini ships a server_url and a config file cannot take it back: the custom-config
 	// merge skips empty values, as does the env override. Only `cfg:frontend_dev.server_url=`
@@ -2536,6 +2544,35 @@ func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
 	// Only the origin is ever used. Host excludes any userinfo, so credentials in the
 	// configured URL are dropped rather than rendered into the page.
 	cfg.FrontendDevServerURL = parsed.Scheme + "://" + parsed.Host
+}
+
+// readFrontendDevWorktreeTemplate accepts only `http://%s.localhost[:port]`, so a request-chosen
+// name can only ever select another loopback `.localhost` dev server.
+func (cfg *Cfg) readFrontendDevWorktreeTemplate(iniFile *ini.File) {
+	raw := valueAsString(iniFile.Section("frontend_dev"), "worktree_server_url_template", "")
+	if raw == "" {
+		return
+	}
+	if cfg.CSPEnabled {
+		cfg.Logger.Warn("Ignoring frontend_dev.worktree_server_url_template, a content security policy is enforced", "template", raw)
+		return
+	}
+	if strings.Count(raw, "%") != 1 || strings.Count(raw, "%s") != 1 {
+		cfg.Logger.Warn("Ignoring invalid frontend_dev.worktree_server_url_template", "template", raw)
+		return
+	}
+	parsed, err := url.Parse(strings.Replace(raw, "%s", "x", 1))
+	if err != nil || parsed.Scheme != "http" || parsed.Hostname() != "x.localhost" || parsed.User != nil ||
+		(parsed.Path != "" && parsed.Path != "/") || parsed.RawQuery != "" || parsed.Fragment != "" {
+		cfg.Logger.Warn("Ignoring invalid frontend_dev.worktree_server_url_template", "template", raw)
+		return
+	}
+	cfg.FrontendDevWorktreeServerURLTemplate = "http://%s.localhost" + func() string {
+		if p := parsed.Port(); p != "" {
+			return ":" + p
+		}
+		return ""
+	}()
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL

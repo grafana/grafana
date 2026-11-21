@@ -5,3 +5,33 @@ go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
 
 [settings]
 idiomatic_version_file_enable_tools = ["node", "pnpm"]
+
+# One shared backend, one frontend dev server per worktree, behind one shared Traefik. See devenv/worktrees/README.md.
+[tasks."worktree:frontend"]
+description = "Run this worktree's frontend dev server against the shared backend (registers the worktree on first run)"
+run = "node scripts/worktree/worktree.mjs frontend"
+
+[tasks."worktree:backend"]
+description = "Run the backend all worktree frontends share, from the main checkout to keep your existing data"
+run = "node scripts/worktree/worktree.mjs backend"
+
+[tasks."worktree:dashboard"]
+description = "Serve a list of the running worktree frontends at http://worktrees.localhost"
+run = "node scripts/worktree/worktree.mjs dashboard"
+
+[tasks."worktree:down"]
+description = "Remove this worktree's routes and registry entry"
+run = "node scripts/worktree/worktree.mjs down"
+
+[tasks."worktree:status"]
+alias = "worktree:urls"
+description = "List all registered worktrees, what each routes to, and whether those targets are listening"
+run = "node scripts/worktree/worktree.mjs status"
+
+[tasks."worktree:traefik:up"]
+description = "Start the shared Traefik proxy (dashboard at traefik.localhost)"
+run = "node scripts/worktree/worktree.mjs traefik-up"
+
+[tasks."worktree:traefik:down"]
+description = "Stop the shared Traefik proxy"
+run = "node scripts/worktree/worktree.mjs traefik-down"

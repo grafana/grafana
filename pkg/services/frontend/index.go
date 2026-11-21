@@ -241,6 +241,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 // resolveAssets returns the preview build's assets when a valid preview cookie is
 // present, falling back to the default assets so a stale cookie can't break the page.
 func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
+	if assets := webassets.WorktreeAssets(ctx, req, p.config); assets != nil {
+		return *assets, "", nil
+	}
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {

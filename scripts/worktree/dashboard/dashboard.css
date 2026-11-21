@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --fg: #1b1b1f;
+  --muted: #6b6b76;
+  --card: #f4f4f7;
+  --border: #d8d8e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111217;
+    --fg: #e8e8ee;
+    --muted: #9a9aa8;
+    --card: #1b1c23;
+    --border: #2c2d38;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    15px/1.5 system-ui,
+    sans-serif;
+  margin: 0;
+  padding: 24px 16px;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-top: 16px;
+}
+
+.card {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--fg);
+}
+
+.card h2 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.card p,
+.card ul {
+  margin: 6px 0 0;
+}
+
+.card ul {
+  padding-left: 18px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.up {
+  background: #2da44e;
+}
+
+.down {
+  background: #d1242f;
+}
