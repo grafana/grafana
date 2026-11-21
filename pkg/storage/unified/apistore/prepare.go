@@ -335,7 +335,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := s.checkManagerOnUpdate(ctx, info, obj, previous); err != nil {
+	if err := s.checkManagerOnUpdate(ctx, info, obj, previous, updateObject, previousObject); err != nil {
 		return v, err
 	}
 
@@ -404,10 +404,20 @@ func (s *Storage) revalidateFolderOnManagerChange(ctx context.Context, obj, prev
 	return s.ensureRepoManagedByParentFolder(ctx, obj)
 }
 
-func (s *Storage) checkManagerOnUpdate(ctx context.Context, info authlib.AuthInfo, obj, previous utils.GrafanaMetaAccessor) error {
+func (s *Storage) checkManagerOnUpdate(ctx context.Context, info authlib.AuthInfo, obj, previous utils.GrafanaMetaAccessor, updateObject, previousObject runtime.Object) error {
 	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
 		if !s.allowOrphanedUpdateBypass(ctx, obj, previous) {
 			return err
+		}
+		// A manager release may change blobs. A write that only starts the delete may not.
+		if !isManagerRelease(obj, previous) {
+			changed, blobsErr := s.blobsChanged(ctx, updateObject, previousObject)
+			if blobsErr != nil {
+				return blobsErr
+			}
+			if changed {
+				return err
+			}
 		}
 	}
 
