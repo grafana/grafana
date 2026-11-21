@@ -157,7 +157,7 @@ export function AlertRuleActions({ rule }: AlertRuleActionsProps) {
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
       {isGranted(abilities.edit) && (
-        <LinkButton size="sm" variant="secondary" fill="text" href={grafanaRulesNav.editLink(uid)}>
+        <LinkButton size="sm" variant="secondary" fill="text" href={grafanaRulesNav.editLink(uid, 'alert')}>
           <Trans i18nKey="common.edit">Edit</Trans>
         </LinkButton>
       )}

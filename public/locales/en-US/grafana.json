@@ -3192,9 +3192,9 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-first-tooltip": "Select a folder first",
-        "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
-        "ungroup-warning-title": "This will remove the alert rule from its group"
+        "retired-group": "This rule used to belong to an evaluation group. It now belongs directly to its folder, and its evaluation interval is set on the rule.",
+        "retired-group-title": "Evaluation groups are retired",
+        "select-folder-first-tooltip": "Select a folder first"
       },
       "evaluation-behaviour": {
         "description": {

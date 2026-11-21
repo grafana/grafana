@@ -165,11 +165,13 @@ function EvaluationBehaviorWrapper({
   group,
   isUngroupedRuleGroup,
   folder,
+  belongedToGroup,
 }: {
   existing: boolean;
   group: string;
   isUngroupedRuleGroup: boolean;
   folder?: RuleFormValues['folder'];
+  belongedToGroup?: boolean;
 }) {
   const formApi = useForm<RuleFormValues>({
     defaultValues: { ...getDefaultFormValues(), group, isUngroupedRuleGroup, folder },
@@ -177,12 +179,16 @@ function EvaluationBehaviorWrapper({
   });
   return (
     <FormProvider {...formApi}>
-      <GrafanaEvaluationBehaviorStep existing={existing} enableProvisionedGroups={false} />
+      <GrafanaEvaluationBehaviorStep
+        existing={existing}
+        enableProvisionedGroups={false}
+        belongedToGroup={belongedToGroup}
+      />
     </FormProvider>
   );
 }
 
-const ungroupWarning = /This will remove the alert rule from its group/i;
+const ungroupWarning = /Evaluation groups are retired/i;
 
 describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => {
   testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
@@ -196,15 +202,15 @@ describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView on', () => 
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 
-  it('shows only the evaluation interval and warns when editing a grouped rule', () => {
-    render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+  it('shows only the evaluation interval and warns when the rule was in a group', () => {
+    render(<EvaluationBehaviorWrapper existing group="" isUngroupedRuleGroup belongedToGroup />);
 
     expect(screen.getByRole('textbox', { name: /evaluation interval/i })).toBeInTheDocument();
     expect(screen.queryByText('Select an evaluation group...')).not.toBeInTheDocument();
     expect(screen.getByText(ungroupWarning)).toBeInTheDocument();
   });
 
-  it('does not warn for a rule that was already ungrouped', () => {
+  it('does not warn for a rule that was never in a group', () => {
     render(<EvaluationBehaviorWrapper existing group={`no_group_for_rule_${'a'.repeat(36)}`} isUngroupedRuleGroup />);
 
     expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
@@ -221,7 +227,7 @@ describe('GrafanaEvaluationBehaviorStep — alerting.gmaOnlyListView off', () =>
   });
 
   it('does not warn when editing a grouped rule', () => {
-    render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} />);
+    render(<EvaluationBehaviorWrapper existing group="my-group" isUngroupedRuleGroup={false} belongedToGroup />);
 
     expect(screen.queryByText(ungroupWarning)).not.toBeInTheDocument();
   });

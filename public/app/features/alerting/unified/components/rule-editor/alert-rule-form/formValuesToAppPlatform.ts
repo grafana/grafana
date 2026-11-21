@@ -62,7 +62,8 @@ function toApiExecErrState(decision: GrafanaAlertStateDecision): AlertRuleExecEr
 export function buildAlertRuleResource(
   values: RuleFormValues,
   existingK8sName?: string,
-  version: RulesAPIVersion = 'v1beta1'
+  version: RulesAPIVersion = 'v1beta1',
+  resourceVersion?: string
 ): AlertRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
@@ -102,6 +103,7 @@ export function buildAlertRuleResource(
     kind: 'AlertRule',
     metadata: {
       name: existingK8sName,
+      resourceVersion,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
       labels: { [FOLDER_ANNOTATION]: folderUid },
     },
@@ -112,7 +114,8 @@ export function buildAlertRuleResource(
 export function buildRecordingRuleResource(
   values: RuleFormValues,
   existingK8sName?: string,
-  version: RulesAPIVersion = 'v1beta1'
+  version: RulesAPIVersion = 'v1beta1',
+  resourceVersion?: string
 ): RecordingRule {
   const folderUid = values.folder?.uid;
   if (!folderUid) {
@@ -136,6 +139,7 @@ export function buildRecordingRuleResource(
     kind: 'RecordingRule',
     metadata: {
       name: existingK8sName,
+      resourceVersion,
       annotations: { [FOLDER_ANNOTATION]: folderUid },
       labels: { [FOLDER_ANNOTATION]: folderUid },
     },

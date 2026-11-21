@@ -7,18 +7,21 @@ import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
+import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
+import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import * as ruleId from '../utils/rule-id';
-import { isFederatedRuleGroup, rulerRuleType } from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRuleIdentifier, rulerRuleType } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
 import { cloneRuleDefinition } from './clone.utils';
+import { type EditableRuleState, useK8sRuleWithLocation } from './useK8sRuleWithLocation';
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
   // Provide prefill if we are trying to restore an old version of an alert rule but we need the user to manually tweak the values
@@ -29,19 +32,39 @@ interface ExistingRuleEditorProps {
   clone?: boolean;
 }
 
-export function ExistingRuleEditor({
+export function ExistingRuleEditor(props: ExistingRuleEditorProps) {
+  const { identifier } = props;
+  if (shouldUseGmaOnlyListView() && isGrafanaRuleIdentifier(identifier)) {
+    return <K8sRuleEditor {...props} uid={identifier.uid} />;
+  }
+  return <RulerRuleEditor {...props} />;
+}
+
+function K8sRuleEditor({ uid, ...props }: ExistingRuleEditorProps & { uid: string }) {
+  const [queryParams] = useURLSearchParams();
+  const kind = queryParams.get('kind');
+  const ruleState = useK8sRuleWithLocation(uid, kind === 'alert' || kind === 'recording' ? kind : undefined);
+  return <ExistingRuleEditorView {...props} ruleState={ruleState} />;
+}
+
+function RulerRuleEditor(props: ExistingRuleEditorProps) {
+  return <ExistingRuleEditorView {...props} ruleState={useRuleWithLocation({ ruleIdentifier: props.identifier })} />;
+}
+
+interface ExistingRuleEditorViewProps extends ExistingRuleEditorProps {
+  ruleState: EditableRuleState;
+}
+
+function ExistingRuleEditorView({
   identifier,
   prefill,
   isManualRestore = false,
   clone = false,
-}: ExistingRuleEditorProps) {
+  ruleState,
+}: ExistingRuleEditorViewProps) {
   const navId = getAlertRulesNavId();
   const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
-  const {
-    loading: loadingAlertRule,
-    result: ruleWithLocation,
-    error: fetchRuleError,
-  } = useRuleWithLocation({ ruleIdentifier: identifier });
+  const { loading: loadingAlertRule, result: ruleWithLocation, error: fetchRuleError, resource } = ruleState;
   const {
     isEditable,
     loading: loadingEditable,
@@ -122,7 +145,12 @@ export function ExistingRuleEditor({
       {clone ? (
         <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />
       ) : (
-        <AlertRuleForm existing={ruleWithLocation} prefill={prefill} isManualRestore={isManualRestore} />
+        <AlertRuleForm
+          existing={ruleWithLocation}
+          existingResource={resource}
+          prefill={prefill}
+          isManualRestore={isManualRestore}
+        />
       )}
     </AlertingPageWrapper>
   );
