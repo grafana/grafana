@@ -101,7 +101,6 @@
         "@grafana/datapro"
       ],
       "area_labels": [
-        "area/explore",
         "area/transformations",
         "area/correlations",
         "area/expressions"
@@ -126,6 +125,7 @@
         "@grafana/sharing-squad"
       ],
       "area_labels": [
+        "area/explore",
         "area/dashboard/snapshot",
         "area/frontend/library-panels",
         "area/library-panel",
