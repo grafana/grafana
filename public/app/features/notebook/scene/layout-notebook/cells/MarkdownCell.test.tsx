@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor } from 'test/test-utils';
 
 import { type CellContentKind } from 'app/features/notebook/types';
 
@@ -99,6 +99,41 @@ describe('MarkdownCell', () => {
 
     expect(await screen.findByLabelText('Markdown')).toBeInTheDocument();
     expect(screen.queryByText('bold')).not.toBeInTheDocument();
+  });
+
+  describe('contents links', () => {
+    const withContents: CellContentKind = {
+      kind: 'Markdown',
+      spec: { text: '## Table of Contents\n\n- [Herbs](#herbs)\n\n## Herbs\n\nBasil.' },
+    };
+
+    it('gives headings ids so a contents link has somewhere to go', async () => {
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      expect(await screen.findByRole('heading', { name: 'Herbs' })).toHaveAttribute('id', 'herbs');
+    });
+
+    it('scrolls smoothly to the heading a contents link names', async () => {
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={withContents} isEditing={false} onChange={jest.fn()} />);
+
+      fireEvent.click(await screen.findByRole('link', { name: 'Herbs' }));
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      scrollIntoView.mockRestore();
+    });
+
+    it('leaves a link whose heading is not on the page to the browser', async () => {
+      const markdown: CellContentKind = { kind: 'Markdown', spec: { text: '[Missing](#missing)' } };
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+      render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+      const click = fireEvent.click(await screen.findByRole('link', { name: 'Missing' }));
+
+      expect(click).toBe(true);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      scrollIntoView.mockRestore();
+    });
   });
 
   describe('the caret', () => {

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo, type MouseEvent } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,6 +8,7 @@ import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
+import { addHeadingIds } from './markdownHeadingAnchors';
 import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 const MarkdownCellEditor = lazy(() =>
@@ -51,17 +52,26 @@ export function MarkdownCell({
     caretOnFocus: caretOffset,
     scrollAlign,
   });
+  const html = useMemo(
+    () => (content.kind === 'Markdown' ? addHeadingIds(renderTextPanelMarkdown(content.spec.text)) : ''),
+    [content]
+  );
 
   if (content.kind !== 'Markdown') {
     return null;
   }
 
   if (!isEditing) {
-    const html = renderTextPanelMarkdown(content.spec.text);
     if (!html) {
       return null;
     }
-    return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+    return (
+      <DangerouslySetHtmlContent
+        html={html}
+        className={cx('markdown-html', styles.markdown)}
+        onClick={handleAnchorClick}
+      />
+    );
   }
 
   return (
@@ -78,11 +88,38 @@ export function MarkdownCell({
   );
 }
 
+/**
+ * Jumps to the heading a table-of-contents link names, smoothly. The target may be in another cell,
+ * so it is looked up in the document rather than inside this cell. Handling the click here also
+ * keeps Grafana's global link interceptor from turning the hash into an instant jump.
+ */
+function handleAnchorClick(event: MouseEvent<HTMLDivElement>) {
+  const anchor = event.target instanceof Element ? event.target.closest('a') : null;
+  const href = anchor?.getAttribute('href');
+  if (!href?.startsWith('#')) {
+    return;
+  }
+
+  const destination = document.getElementById(decodeURIComponent(href.slice(1)));
+  if (!destination) {
+    return;
+  }
+
+  event.preventDefault();
+  destination.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Keeps the address shareable without the instant jump the browser does on a hash change, and
+  // without adding a history entry for every contents link clicked.
+  window.history.replaceState(window.history.state, '', href);
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   markdown: css({
     'h1, h2, h3, h4, h5, h6': {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(1),
+      // Clears the sticky controls row when a contents link scrolls a heading to the top, same
+      // allowance the cell frames make for focus scrolling.
+      scrollMarginTop: theme.spacing(14),
     },
     '& > :first-child': {
       marginTop: 0,
