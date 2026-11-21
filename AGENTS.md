@@ -17,12 +17,15 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with pnpm workspaces (frontend) and Go workspaces (backend).
 
+When writing or reviewing frontend tests, use [contribute/testing.md](contribute/testing.md) to select
+the relevant skill and adapter section. Running existing tests only needs the commands below.
+
 ## Principles
 
 - Follow existing patterns in the surrounding code
 - Write tests for new functionality — for Go code, use `testing/synctest` over sleeps and
-  time-based assertions; for frontend code, use the `frontend-testing-strategy` skill for this
-  repo's testing conventions (and `panel-testing-strategy` on top of it for visualization/panel code)
+  time-based assertions; for frontend code, use the `frontend-testing-strategy` skill (and `panel-testing-strategy`
+  on top of it for visualization/panel code); each links the Grafana conventions in `contribute/testing-grafana-*.md`
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection

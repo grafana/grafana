@@ -9,5 +9,7 @@ especially its tests — invoke these skills with the Skill tool:
 - **`panel-testing-strategy`** — builds on the above with what's specific to panels: the
   panel-props/data-frame builders, the canvas draw-call snapshot harness, and panel a11y/
   interaction-snapshot E2E.
+  Each skill links the Grafana-specific conventions in `contribute/testing-grafana-frontend.md`
+  and `contribute/testing-grafana-panels.md`.
 - **`add-e2e-selectors`** — add versioned `@grafana/e2e-selectors` and wire
   `data-testid` into JSX when making panel UI testable.

@@ -4,7 +4,7 @@
 
 This suite contains Playwright E2E tests for the V2 dashboard layout system. Tests use **page objects** to wrap raw selector chains behind user-intent methods, so specs read like user stories (`controls.enterEditMode()`) instead of selector chains, each interaction has exactly one implementation, and selector changes touch one file instead of every spec.
 
-For general spec-authoring principles (assert real behavior, avoiding AI-slop tests, anti-flake rules) that apply to any Grafana frontend test, also invoke the `frontend-testing-strategy` skill with the Skill tool — this guide covers what's specific to this suite's page-object pattern on top of that.
+For general spec-authoring principles (assert real behavior, avoiding AI-slop tests, anti-flake rules) that apply to any Grafana frontend test, also invoke the `frontend-testing-strategy` skill with the Skill tool and read the [Grafana anti-flake rules](../../contribute/testing-grafana-frontend.md#anti-flake-rules) — this guide covers what's specific to this suite's page-object pattern on top of that.
 
 ## Start Here
 

@@ -32,7 +32,8 @@ This file provides context for AI agents when working on the Grafana Alerting co
 3. **`frontend-testing-strategy` skill** — invoke with the Skill tool for this repo's testing
    conventions: assert real behavior (not existence), avoiding AI-slop tests, and the anti-flake
    rules. Read it before writing or reviewing tests here, alongside the Alerting Testing Guide
-   below.
+   below. It links the Grafana-specific rules (`jest.mocked`, `setTestFlags`, anti-flake examples)
+   in [testing-grafana-frontend.md](../../../../../contribute/testing-grafana-frontend.md).
 
 4. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
    - Emotion usage, `useStyles2` hook patterns

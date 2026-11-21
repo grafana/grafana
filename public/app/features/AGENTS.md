@@ -8,5 +8,7 @@ with the Skill tool — each skill's own description states exactly when it appl
   (not existence), honest test descriptions, avoiding AI-slop tests, and the anti-flake rules.
 - **`panel-testing-strategy`** — builds on the above with what's specific to visualization
   code: the canvas draw-call snapshot harness and panel a11y/interaction-snapshot E2E.
+  Each skill links the Grafana-specific conventions in `contribute/testing-grafana-frontend.md`
+  and `contribute/testing-grafana-panels.md`.
 - **`add-e2e-selectors`** — add versioned `@grafana/e2e-selectors` and wire
   `data-testid` into JSX when making UI testable.
