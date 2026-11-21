@@ -1,5 +1,7 @@
 import { flip, type Placement, shift } from '@floating-ui/react';
 
+export const SCROLL_DISMISS_DISTANCE = 80;
+
 export const BOUNDARY_ELEMENT_ID = 'floating-boundary';
 
 export function getPositioningMiddleware(placement?: Placement) {

@@ -105,7 +105,7 @@ describe('tooltipOnClickHandler', () => {
     const handler = tooltipOnClickHandler(setCoords);
     const el = document.createElement('div');
     handler(makeMouseEvent(el, el, 100, 200));
-    expect(setCoords).toHaveBeenCalledWith({ clientX: 100, clientY: 200 });
+    expect(setCoords).toHaveBeenCalledWith({ clientX: 100, clientY: 200, contextElement: el });
   });
 
   it('does not call setTooltipCoords when clicking on a child element', () => {
