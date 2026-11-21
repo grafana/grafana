@@ -82,7 +82,9 @@ const IEC_UNITS = new Set([
   'Pibits',
 ]);
 
-const BIN_INCRS = Array(53);
+// Every finite power of 2 (2 ** 1024 is Infinity). uPlot draws no ticks when the range needs a
+// larger increment than the list has, so a shorter list hides the axis labels for large values.
+const BIN_INCRS = Array(1024);
 
 for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
