@@ -275,6 +275,65 @@ export function nextListContinuation(state: EditorState, pos: number): string | 
   return undefined;
 }
 
+/**
+ * The continuation for an ordered task item at `pos` — its indentation, the next number, and an
+ * unchecked box (e.g. `  2. [ ] `) — or `undefined` when `pos` isn't on an ordered task, or the item
+ * has nothing but its own markers. This needs its own helper because the editor delegates checklist
+ * continuation to CodeMirror's markup command, and that command continues the number but drops the
+ * box: `1. [x] First` followed by Enter becomes `2. ` instead of `2. [ ] `.
+ */
+export function nextOrderedTaskContinuation(state: EditorState, pos: number): string | undefined {
+  const listItem = findEnclosingMarkNode(syntaxTree(state), pos, ['ListItem']);
+  const marker = listItem?.getChild('ListMark');
+  if (!listItem || !marker || listItem.parent?.name !== 'OrderedList') {
+    return undefined;
+  }
+
+  const taskMarker = listItem.getChild('Task')?.getChild('TaskMarker');
+  if (!taskMarker) {
+    return undefined;
+  }
+  const hasContent = state.sliceDoc(taskMarker.to, listItem.to).trim().length > 0;
+  if (!hasContent) {
+    return undefined;
+  }
+
+  const currentNumber = parseInt(state.sliceDoc(marker.from, marker.to), 10);
+  if (Number.isNaN(currentNumber)) {
+    return undefined;
+  }
+  const indent = state.doc.lineAt(listItem.from).text.match(/^\s*/)?.[0] ?? '';
+  return `${indent}${currentNumber + 1}. [ ] `;
+}
+
+/**
+ * The marker range of an ordered task item at `pos` that holds nothing but its own markers
+ * (the caret line is just `2. [ ] `), or `undefined` when `pos` isn't on such an item. Enter
+ * there should leave the list, the way it does for bullet tasks and plain ordered items, but
+ * CodeMirror's markup continuation counts the checkbox as content on an ordered item and
+ * continues the number instead, so the editor clears the markers itself.
+ */
+export function emptyOrderedTaskMarkerRange(
+  state: EditorState,
+  pos: number
+): { from: number; to: number } | undefined {
+  const listItem = findEnclosingMarkNode(syntaxTree(state), pos, ['ListItem']);
+  const marker = listItem?.getChild('ListMark');
+  if (!listItem || !marker || listItem.parent?.name !== 'OrderedList') {
+    return undefined;
+  }
+
+  const taskMarker = listItem.getChild('Task')?.getChild('TaskMarker');
+  if (!taskMarker) {
+    return undefined;
+  }
+  const hasContent = state.sliceDoc(taskMarker.to, listItem.to).trim().length > 0;
+  if (hasContent) {
+    return undefined;
+  }
+  return { from: listItem.from, to: listItem.to };
+}
+
 /** Converts selected lines to checklist items, or removes the markers when all are already tasks. */
 export function toggleChecklist(view: EditorView): void {
   toggleList(view, 'checklist');

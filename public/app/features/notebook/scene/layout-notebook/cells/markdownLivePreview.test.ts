@@ -9,6 +9,7 @@ import { createTheme } from '@grafana/data';
 import {
   BOLD_NODE,
   buildDecorations,
+  emptyOrderedTaskMarkerRange,
   enclosingListKind,
   findEnclosingMarkNode,
   inlineMarkRange,
@@ -18,6 +19,7 @@ import {
   markdownLanguageSupport,
   markdownLivePreview,
   nextListContinuation,
+  nextOrderedTaskContinuation,
   toggleChecklist,
   toggleBulletedList,
   toggleInlineMark,
@@ -350,6 +352,46 @@ describe('checklists', () => {
 
   it.each(['- [ ] ', '- [x] ', '- [X] '])('ends an empty checklist item %s', (doc) => {
     expect(nextListContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. [ ] First', '1. [x] First', '1. [X] First'])(
+    'continues the numbered task %s with an unchecked item',
+    (doc) => {
+      const state = createState(doc);
+      expect(enclosingListKind(syntaxTree(state), doc.length)).toBe('checklist');
+      expect(nextOrderedTaskContinuation(state, doc.length)).toBe('2. [ ] ');
+    }
+  );
+
+  it('increments multi-digit numbers on numbered tasks', () => {
+    const doc = '9. [x] Ninth';
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBe('10. [ ] ');
+  });
+
+  it('preserves indentation when continuing a nested numbered task', () => {
+    const doc = '- Parent\n  1. [x] Child';
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBe('  2. [ ] ');
+  });
+
+  it.each(['1. [ ] ', '1. [x] '])('does not continue an empty numbered task %s', (doc) => {
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. [ ] ', '1. [x] ', '12. [ ] '])('marks an empty numbered task %s for list exit', (doc) => {
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toEqual({ from: 0, to: doc.length });
+  });
+
+  it('marks only the empty item when it follows a filled numbered task', () => {
+    const doc = '1. [x] First\n2. [ ] ';
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toEqual({ from: 13, to: doc.length });
+  });
+
+  it.each(['1. [ ] First', '- [ ] ', '1. ', 'plain text'])('has no list exit for %s', (doc) => {
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. First', '- [x] First', 'plain text'])('has no numbered task continuation for %s', (doc) => {
+    expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBeUndefined();
   });
 
   it('converts selected bullets and numbered items, preserves indentation and completed tasks', () => {
