@@ -127,12 +127,21 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 	for _, zf := range pluginArchive.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
 		// nolint:gosec
+
+		// Reject any archive member whose name contains a ".." path component, regardless of
+		// position or path separator style. ZIP archives use '/' on every platform while the
+		// host may use a different separator, so we check both forms. A ".." anywhere in the name
+		// (not just at the start) can escape the intended destination once filepath.Join resolves it.
+		if isAbsArchiveMember(zf.Name) || containsDotDotComponent(zf.Name) {
+			return "", fmt.Errorf(
+				"archive member %q contains a path traversal component; rejecting for safety",
+				zf.Name)
+		}
+
 		fullPath := filepath.Join(fs.pluginsDir, zf.Name)
 
-		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) ||
-			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
+		// Check for ZipSlip: the resolved path must be under the plugins root.
+		if !strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) {
 			return "", fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, fs.pluginsDir)
@@ -221,6 +230,26 @@ func installRelPath(pluginsDir, installDir, name string) (string, error) {
 	}
 
 	return rel, nil
+}
+
+// isAbsArchiveMember reports whether the name from a ZIP archive is an absolute path.
+// ZIP archive member names use '/' as the separator on every platform, so we check for
+// leading '/' (POSIX absolute) and, on Windows, drive-relative and UNC forms as well.
+func isAbsArchiveMember(name string) bool {
+	return strings.HasPrefix(name, "/") || filepath.IsAbs(name)
+}
+
+// containsDotDotComponent reports whether the archive member name contains ".." as any path
+// component (not as part of a larger component, not only at the start). Both '/' and '\' are
+// recognised as separators because ZIP archives commonly use '/' while archives crafted on
+// Windows may use '\', and the host is whichever platform Grafana runs on.
+func containsDotDotComponent(name string) bool {
+	for _, component := range strings.FieldsFunc(name, func(r rune) bool { return r == '/' || r == '\\' }) {
+		if component == ".." {
+			return true
+		}
+	}
+	return false
 }
 
 func isSymlink(file *zip.File) bool {
