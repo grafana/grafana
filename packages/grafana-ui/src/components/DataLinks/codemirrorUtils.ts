@@ -1,9 +1,9 @@
+import { type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { type Extension } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
-import { type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from '../CodeMirror/types';
 import { createVariableCompletionSource } from '../CodeMirror/variableCompletion';
 
 // Matches a complete `${...}` variable reference anywhere in the document.
@@ -90,7 +90,7 @@ function getApplyText(suggestion: VariableSuggestion, mode: DataLinkInterpolatio
 export function dataLinkAutocompletion(
   suggestions: VariableSuggestion[],
   options: { mode?: DataLinkInterpolationMode } = {}
-): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
+): (context: CompletionContext) => CompletionResult | null {
   const { mode = 'url' } = options;
 
   return createVariableCompletionSource(suggestions, {

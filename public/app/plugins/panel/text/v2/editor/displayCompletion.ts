@@ -3,6 +3,8 @@ import { type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } fro
 
 import { DISPLAY_PROPERTIES, type DisplayProperty } from '../handlebars';
 
+type DisplayCompletionContext = Pick<CodeMirrorCompletionContext, 'matchBefore' | 'explicit'>;
+
 const HELPER = 'display';
 const CALL_START = String.raw`\{\{(?:[{#~&]*|[^{}]*\()\s*`;
 const QUOTED = String.raw`(?:"(?:\\"|[^"])*"|'(?:\\'|[^'])*')`;
@@ -39,7 +41,7 @@ const getPropertyInfo = (): Record<DisplayProperty, string> => ({
   icon: t('textng.display-completion.icon', 'Icon of the value mapping that matched'),
 });
 
-function completeProperty(context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null {
+function completeProperty(context: DisplayCompletionContext): CodeMirrorCompletionResult | null {
   const match = context.matchBefore(PROPERTY_BEFORE_CURSOR);
   if (!match) {
     return null;
@@ -54,7 +56,7 @@ function completeProperty(context: CodeMirrorCompletionContext): CodeMirrorCompl
   };
 }
 
-function completeField(context: CodeMirrorCompletionContext, fieldNames: string[]): CodeMirrorCompletionResult | null {
+function completeField(context: DisplayCompletionContext, fieldNames: string[]): CodeMirrorCompletionResult | null {
   for (const { quote, beforeCursor, validFor } of FIELD_QUOTES) {
     const match = context.matchBefore(beforeCursor);
     if (match) {
@@ -62,7 +64,7 @@ function completeField(context: CodeMirrorCompletionContext, fieldNames: string[
         from: match.from,
         options: fieldNames
           .filter((name) => !name.endsWith('\\'))
-          .map((name) => ({ label: name, apply: name.split(quote).join(`\\${quote}`), type: 'variable' })),
+          .map((name) => ({ label: name, insertText: name.split(quote).join(`\\${quote}`), type: 'variable' })),
         validFor,
       };
     }
@@ -71,7 +73,7 @@ function completeField(context: CodeMirrorCompletionContext, fieldNames: string[
   return null;
 }
 
-function completeHelper(context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null {
+function completeHelper(context: DisplayCompletionContext): CodeMirrorCompletionResult | null {
   const match = context.matchBefore(HELPER_BEFORE_CURSOR);
   const typed = match?.text ?? '';
   const requested = context.explicit || typed.length > 0;
@@ -99,6 +101,6 @@ function completeHelper(context: CodeMirrorCompletionContext): CodeMirrorComplet
 
 export function displayCompletion(
   fieldNames: string[]
-): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
+): (context: DisplayCompletionContext) => CodeMirrorCompletionResult | null {
   return (context) => completeProperty(context) ?? completeField(context, fieldNames) ?? completeHelper(context);
 }

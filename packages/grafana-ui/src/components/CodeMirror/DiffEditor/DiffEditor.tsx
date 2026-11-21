@@ -9,12 +9,11 @@ import CodeMirrorMerge, { type CodeMirrorMergeRef } from 'react-codemirror-merge
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { Alert } from '../Alert/Alert';
-
-import { createCodeEditorTheme } from './theme';
-import { type CodeMirrorDiffEditorProps, type CodeMirrorExtension } from './types';
-import { useLanguageExtension } from './useLanguageExtension';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Alert } from '../../Alert/Alert';
+import { createCodeEditorTheme } from '../theme';
+import { type CodeMirrorDiffEditorProps, type CodeMirrorExtension } from '../types';
+import { useLanguageExtension } from '../useLanguageExtension';
 
 const readOnlyOptions = { readOnly: true, editable: false, basicSetup: false, indentWithTab: false };
 

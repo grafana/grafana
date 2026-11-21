@@ -4,11 +4,11 @@ import { useArgs } from 'storybook/preview-api';
 
 import { VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
-import { Field } from '../Forms/Field';
+import { Field } from '../../Forms/Field';
+import { createVariableCompletionSource } from '../variableCompletion';
 
 import { CodeMirrorInlineInput } from './InlineInput';
 import mdx from './InlineInput.mdx';
-import { createVariableCompletionSource } from './variableCompletion';
 
 const suggestions: VariableSuggestion[] = [
   { value: '__series.name', label: '__series.name', origin: VariableOrigin.Series },

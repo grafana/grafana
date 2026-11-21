@@ -1,5 +1,6 @@
 import { Prec } from '@codemirror/state';
 import { EditorView, keymap, placeholder as placeholderExtension } from '@codemirror/view';
+import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -7,11 +8,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { BaseCodeEditor } from '../CodeMirror/BaseCodeEditor';
-import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
+import { type CodeMirrorExtension } from '../CodeMirror/types';
 
 import { type QueryInputProps } from './QueryInput';
 
-const QUERY_INPUT_BASIC_SETUP: CodeMirrorBasicSetup = {
+const QUERY_INPUT_BASIC_SETUP: BasicSetupOptions = {
   lineNumbers: false,
   foldGutter: false,
   highlightActiveLine: false,
@@ -23,7 +24,7 @@ const QUERY_INPUT_BASIC_SETUP: CodeMirrorBasicSetup = {
   drawSelection: false,
 };
 
-function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorEditorTheme {
+function createQueryInputTheme(theme: GrafanaTheme2): CodeMirrorExtension {
   return EditorView.theme(
     {
       '&': {

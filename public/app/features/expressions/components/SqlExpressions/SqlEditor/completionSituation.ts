@@ -1,9 +1,9 @@
+import { type CompletionContext as CodeMirrorCompletionContext } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import { type EditorState } from '@codemirror/state';
 import { type SyntaxNode } from '@lezer/common';
 
 import { unquoteIdentifier } from '@grafana/sql';
-import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 

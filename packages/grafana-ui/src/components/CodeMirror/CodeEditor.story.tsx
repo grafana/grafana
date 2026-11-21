@@ -35,7 +35,16 @@ const meta: Meta<typeof CodeMirrorEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
+      exclude: [
+        'onChange',
+        'onBlur',
+        'onSave',
+        'completionSources',
+        'signatureHelp',
+        'variableSuggestions',
+        'variableCompletionOptions',
+        'loadingFallback',
+      ],
     },
   },
   argTypes: {

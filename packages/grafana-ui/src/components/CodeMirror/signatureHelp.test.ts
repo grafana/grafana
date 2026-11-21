@@ -2,7 +2,7 @@ import { EditorSelection, EditorState } from '@codemirror/state';
 import { showTooltip, type EditorView, type Tooltip } from '@codemirror/view';
 
 import { signatureHelp } from './signatureHelp';
-import { type SignatureHelp, type SignatureHelpProvider } from './types';
+import { type NativeSignatureHelpProvider, type SignatureHelp } from './types';
 
 const HELP: SignatureHelp = {
   signatures: [
@@ -17,7 +17,7 @@ const HELP: SignatureHelp = {
   activeParameter: 1,
 };
 
-const stateFor = (provider: SignatureHelpProvider, doc = 'abcdef', pos = 0) =>
+const stateFor = (provider: NativeSignatureHelpProvider, doc = 'abcdef', pos = 0) =>
   EditorState.create({ doc, selection: EditorSelection.single(pos), extensions: [signatureHelp(provider)] });
 
 const activeTooltip = (state: EditorState): Tooltip | undefined =>
@@ -45,7 +45,7 @@ describe('signatureHelp extension', () => {
   });
 
   it('recomputes the tooltip when the selection changes', () => {
-    const provider: SignatureHelpProvider = (_state, pos) => (pos >= 3 ? HELP : null);
+    const provider: NativeSignatureHelpProvider = (_state, pos) => (pos >= 3 ? HELP : null);
     const initial = stateFor(provider, 'abcdef', 0);
 
     expect(activeTooltip(initial)).toBeUndefined();

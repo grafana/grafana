@@ -5,14 +5,14 @@ import { CodeMirrorEditor } from './CodeEditorLazy';
 
 # CodeMirrorEditor
 
-A code editor component using CodeMirror.
+A code editor with syntax highlighting and autocompletion for supported languages.
 
 ### Usage
 
 ```tsx
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
-<CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
+<CodeMirrorEditor value={query} onChange={setQuery} language="sql" />;
 ```
 
 ## Props

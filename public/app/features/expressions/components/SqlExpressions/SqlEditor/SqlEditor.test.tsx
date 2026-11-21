@@ -1,15 +1,17 @@
 import { render } from '@testing-library/react';
 
+import { type InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
+
 import { SqlEditor } from './SqlEditor';
 
-let editorProps: Record<string, unknown> | undefined;
+let editorProps: InternalCodeMirrorEditorProps | undefined;
 
-jest.mock('@grafana/ui/unstable', () => ({
-  CodeMirrorEditor: (props: Record<string, unknown>) => {
+jest.mock('@grafana/ui/internal', () => ({
+  ...jest.requireActual('@grafana/ui/internal'),
+  InternalCodeMirrorEditor: (props: InternalCodeMirrorEditorProps) => {
     editorProps = props;
     return <div className="cm-scroller" />;
   },
-  signatureHelp: jest.fn(),
 }));
 
 describe('SqlEditor', () => {
