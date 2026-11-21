@@ -375,14 +375,7 @@ Your Grafana instance must be configured with Microsoft Entra ID authentication.
 
 #### Configure your Azure App Registration
 
-The App Registration used for Grafana login requires additional configuration:
-
-**Enable token issuance:**
-
-1. In the Azure Portal, open your App Registration.
-1. Select **Authentication** in the side menu.
-1. Under **Implicit grant and hybrid flows**, check both **Access tokens** and **ID tokens**.
-1. Save your changes.
+The App Registration used for Grafana login requires additional configuration.
 
 **Add API permissions:**
 
@@ -392,16 +385,69 @@ The App Registration used for Grafana login requires additional configuration:
 1. Add the following permissions:
    - **Azure Service Management** > **Delegated permissions** > `user_impersonation`
    - **APIs my organization uses** > Search for **Log Analytics API** > **Delegated permissions** > `Data.Read`
+1. Select **Grant admin consent** for your directory.
 
 Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
 
-**Update Grafana scopes:**
+#### Choose how Grafana exchanges the user's token
 
-Update the `scopes` section in your Grafana Azure authentication configuration to include the `.default` scope:
+To query Azure as the signed-in user, Grafana exchanges a token from the user's Grafana login for an Azure token, using the Microsoft Entra [on-behalf-of flow](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow). Which token Grafana sends depends on the login scopes:
 
-```
-.default openid email profile
-```
+| Option                         | Login scopes                                               | Implicit grant and hybrid flows | Token sent   |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------- | ------------ |
+| **Access token** (recommended) | `<client-id>/.default openid email profile offline_access` | Not required                    | Access token |
+| **ID token**                   | `.default openid email profile`                            | **ID tokens** must be enabled   | ID token     |
+
+Grafana chooses automatically. If the user's access token was issued for the Grafana App Registration, Grafana sends it. Otherwise, Grafana sends the user's ID token.
+
+{{< admonition type="note" >}}
+Using the access token requires a version of the Azure Monitor data source that includes this behavior. Earlier versions always send the ID token.
+{{< /admonition >}}
+
+**Option 1: Use the access token (recommended)**
+
+Use this option if your organization doesn't allow the implicit grant and hybrid flows settings on App Registrations.
+
+1. Update the `scopes` setting in your Grafana Microsoft Entra ID authentication configuration. Replace `<client-id>` with the **Application (client) ID** of the App Registration used for Grafana login:
+
+   ```
+   <client-id>/.default openid email profile offline_access
+   ```
+
+   Use the client ID itself. Don't use an Application ID URI such as `api://<client-id>`.
+
+1. Enable **Use refresh token** in the Grafana Microsoft Entra ID authentication configuration, or set `use_refresh_token = true`. Without it, queries fail once the user's access token expires, until the user signs in again.
+
+You don't need to add anything under **Expose an API** in the App Registration.
+
+{{< admonition type="caution" >}}
+With these scopes, the access token from the Grafana login is issued for the Grafana App Registration instead of Microsoft Graph. This affects other features that rely on a Microsoft Graph access token:
+
+- **Group lookups:** When a user belongs to too many groups to fit in the ID token (groups overage), or when `force_use_graph_api` is enabled, Grafana fetches the user's groups from Microsoft Graph with the login access token. These lookups fail, so group-based role and team sync doesn't apply to those users.
+- **Forwarded OAuth identity:** Other data sources that forward the user's OAuth identity receive a token for the Grafana App Registration, not a Microsoft Graph token.
+
+If you rely on either, use the ID token option.
+{{< /admonition >}}
+
+**Switch an existing setup to the access token:**
+
+1. Change the login scopes and enable **Use refresh token** as described above. Keep **ID tokens** enabled under **Implicit grant and hybrid flows** for now, so existing sessions keep working.
+1. Ask all users to sign out of Grafana and sign in again. Refreshing a session doesn't change which token it holds, so sessions started before the change keep using the ID token until the user signs in again.
+1. After all users have signed in again, you can disable **Access tokens** and **ID tokens** under **Implicit grant and hybrid flows**.
+
+**Option 2: Use the ID token**
+
+1. In the Azure Portal, open your App Registration.
+1. Select **Authentication** in the side menu.
+1. Under **Implicit grant and hybrid flows**, check **ID tokens**.
+1. Save your changes.
+1. Update the `scopes` setting in your Grafana Microsoft Entra ID authentication configuration to include the `.default` scope:
+
+   ```
+   .default openid email profile
+   ```
+
+Without **ID tokens** enabled, queries fail with `AADSTS240002`. Refer to [Current User authentication errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/troubleshooting/#current-user-authentication-errors).
 
 #### Current User Grafana server configuration
 
