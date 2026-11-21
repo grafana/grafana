@@ -189,8 +189,8 @@ func allowListAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
 // "removemember" subresources:
 //   - members / groups: read paths, gated on `get_permissions` on the
 //     parent team.
-//   - addmember / removemember: single-member writes, gated on `update`
-//     on the parent team — same bar as a full PUT.
+//   - addmember / removemember: single-member writes, gated on `set_permissions`
+//     on the parent team.
 func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	check := func(verb string, denyReason string) gfauthorizer.SubresourceCheck {
 		return func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -211,12 +211,12 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 		}
 	}
 	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
-	update := check(utils.VerbUpdate, "requires team update")
+	setPermissions := check(utils.VerbSetPermissions, "requires team setpermissions")
 	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"members":      getPermissions,
 		"groups":       getPermissions,
-		"addmember":    update,
-		"removemember": update,
+		"addmember":    setPermissions,
+		"removemember": setPermissions,
 	})
 
 	return allowListAuthorizer(base)
