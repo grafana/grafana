@@ -752,6 +752,70 @@ func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
 		"timezone: '' from V1 should produce nil Timezone in V2, not 'browser'")
 }
 
+func TestV1ToV2alpha1_CollapsedRowPreservesRelativePanelY(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	panel := func(id int, panelType string, x, y, w, h int) map[string]interface{} {
+		return map[string]interface{}{
+			"id":   id,
+			"type": panelType,
+			"gridPos": map[string]interface{}{
+				"x": x,
+				"y": y,
+				"w": w,
+				"h": h,
+			},
+		}
+	}
+
+	rowPanels := []interface{}{
+		panel(1, "stat", 0, 0, 5, 4),
+		panel(2, "stat", 5, 0, 5, 4),
+		panel(3, "stat", 10, 0, 5, 4),
+		panel(4, "stat", 15, 0, 5, 4),
+		panel(5, "stat", 20, 0, 4, 4),
+		panel(6, "timeseries", 0, 4, 12, 6),
+		panel(7, "timeseries", 12, 4, 12, 6),
+	}
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title": "Collapsed row",
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":        100,
+						"type":      "row",
+						"title":     "Storage",
+						"collapsed": true,
+						"gridPos":   map[string]interface{}{"x": 0, "y": 27, "w": 24, "h": 1},
+						"panels":    rowPanels,
+					},
+				},
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	row := v2alpha1Dash.Spec.Layout.RowsLayoutKind.Spec.Rows[0]
+	items := row.Spec.Layout.GridLayoutKind.Spec.Items
+	require.Len(t, items, 7)
+	for _, item := range items[:5] {
+		assert.Equal(t, int64(0), item.Spec.Y)
+	}
+	for _, item := range items[5:] {
+		assert.Equal(t, int64(4), item.Spec.Y)
+	}
+}
+
 // TestV1ToV2alpha1_AnnotationPanelFilterInt64Ids verifies that v1 dashboards whose
 // annotation panel-filter references a panel id outside the uint32 range survive
 // conversion to v2alpha1.
