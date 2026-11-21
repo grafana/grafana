@@ -1,5 +1,4 @@
 ---
-description: Describes how to back up a locally provisioned Grafana instance.
 keywords:
   - grafana
   - backup
@@ -7,7 +6,6 @@ labels:
   products:
     - enterprise
     - oss
-title: Back up Grafana
 weight: 100
 menuTitle: Back up Grafana
 ---

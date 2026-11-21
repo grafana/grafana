@@ -4,7 +4,6 @@ labels:
   products:
     - enterprise
     - oss
-title: Back up Grafana
 ---
 
 # Back up Grafana

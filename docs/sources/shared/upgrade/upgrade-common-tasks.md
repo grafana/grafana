@@ -3,7 +3,8 @@ labels:
   products:
     - enterprise
     - oss
-title: Upgrade guide common tasks
+description: Guide for upgrading to Grafana v13.2
+title: Upgrade to Grafana v13.2
 ---
 
 ## Upgrade Grafana
