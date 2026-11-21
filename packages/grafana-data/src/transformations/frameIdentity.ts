@@ -61,18 +61,36 @@ export function hasSameLabels(a?: Labels | null, b?: Labels | null): boolean {
   );
 }
 
-export function getFieldReferences(frame: DataFrame): FieldReference[] {
-  const seen = new Map<string, number>();
-  return frame.fields.map(({ name, labels }) => {
-    const identity = getFieldReferenceKey({ name, labels });
-    const occurrence = seen.get(identity) ?? 0;
-    seen.set(identity, occurrence + 1);
-    return {
-      name,
-      ...(labels && Object.keys(labels).length > 0 ? { labels } : {}),
-      ...(occurrence > 0 ? { occurrence } : {}),
-    };
+function groupByName(items: ReadonlyArray<{ name: string }>): Map<string, number[]> {
+  const groups = new Map<string, number[]>();
+  items.forEach(({ name }, index) => {
+    const group = groups.get(name);
+    if (group) {
+      group.push(index);
+    } else {
+      groups.set(name, [index]);
+    }
   });
+  return groups;
+}
+
+export function getFieldReferences(frame: DataFrame): FieldReference[] {
+  const occurrences = new Array<number>(frame.fields.length).fill(0);
+  for (const group of groupByName(frame.fields).values()) {
+    if (group.length > 1) {
+      const seen = new Map<string, number>();
+      for (const index of group) {
+        const labels = JSON.stringify(sortedLabels(frame.fields[index].labels));
+        occurrences[index] = seen.get(labels) ?? 0;
+        seen.set(labels, occurrences[index] + 1);
+      }
+    }
+  }
+  return frame.fields.map(({ name, labels }, index) => ({
+    name,
+    ...(labels && Object.keys(labels).length > 0 ? { labels } : {}),
+    ...(occurrences[index] > 0 ? { occurrence: occurrences[index] } : {}),
+  }));
 }
 
 export function createFieldReferenceResolver(frame: DataFrame): (reference: unknown) => number {
