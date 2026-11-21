@@ -4,17 +4,19 @@ import { describe, it } from 'node:test';
 import { getChunkMetrics } from './chunks.mts';
 
 describe('getChunkMetrics', () => {
-  it('counts only unique JS chunk files and subtracts shared initial JS once', () => {
+  it('counts unique named async JS files without including initial entrypoint JS', () => {
     const metrics = getChunkMetrics({
       chunks: [
-        { initial: true, modules: [], assets: ['app.js', 'shared.js', 'theme.css'], size: 999999 },
+        { name: 'app', initial: true, modules: [], assets: ['app.js', 'shared.js', 'theme.css'], size: 999999 },
         {
+          name: 'lazy',
           initial: false,
           modules: [],
           assets: ['async-a.js', 'async-a.js', 'app.js', 'theme.css', 'app.js.map'],
           size: 999999,
         },
-        { initial: false, modules: [], assets: ['async-b.js'], parsedSize: 888888 },
+        { name: 'another-lazy', initial: false, modules: [], assets: ['async-a.js'] },
+        { name: '', initial: false, modules: [], assets: ['async-b.js'], parsedSize: 888888 },
       ],
       assets: [
         { path: 'app.js', size: 10 },
@@ -34,10 +36,11 @@ describe('getChunkMetrics', () => {
 
     assert.deepEqual(metrics, {
       initialChunks: 1,
-      asyncChunks: 2,
+      asyncChunks: 3,
       largestAsyncJsBytes: 22,
       totalJsBytes: 49,
       asyncJsBytes: 32,
+      namedAsyncChunkJsBytes: 12,
       'entrypoints.app.js.bytes': 17,
       'entrypoints.app.css.bytes': 4,
       'entrypoints.app.css.gzipBytes': 0,

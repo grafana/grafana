@@ -1,5 +1,6 @@
 export interface ChunkGraph {
   chunks: Array<{
+    name?: string;
     initial: boolean;
     modules: number[];
     assets: string[];
@@ -34,10 +35,15 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
   };
 
   const chunkJsPaths = new Set<string>();
+  const namedAsyncJsPaths = new Set<string>();
   for (const chunk of chunks) {
+    const isNamedAsync = !chunk.initial && Boolean(chunk.name);
     for (const assetPath of chunk.assets) {
       if (assetPath.endsWith('.js')) {
         chunkJsPaths.add(assetPath);
+        if (isNamedAsync) {
+          namedAsyncJsPaths.add(assetPath);
+        }
       }
     }
 
@@ -76,16 +82,20 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
   // entrypoint assets so shared JS is subtracted only once.
   let totalJsBytes = 0;
   let initialJsBytes = 0;
+  let namedAsyncChunkJsBytes = 0;
   for (const asset of assets) {
     if (chunkJsPaths.has(asset.path)) {
       totalJsBytes += asset.size;
       if (initialAssetPaths.has(asset.path)) {
         initialJsBytes += asset.size;
+      } else if (namedAsyncJsPaths.has(asset.path)) {
+        namedAsyncChunkJsBytes += asset.size;
       }
     }
   }
   metrics.totalJsBytes = totalJsBytes;
   metrics.asyncJsBytes = totalJsBytes - initialJsBytes;
+  metrics.namedAsyncChunkJsBytes = namedAsyncChunkJsBytes;
 
   return metrics;
 }
@@ -106,6 +116,7 @@ function readChunkGraph(graph: ChunkGraph): ChunkGraph {
     if (
       typeof chunk !== 'object' ||
       chunk === null ||
+      (chunk.name !== undefined && typeof chunk.name !== 'string') ||
       typeof chunk.initial !== 'boolean' ||
       !isIntegerArray(chunk.modules) ||
       !isStringArray(chunk.assets)
