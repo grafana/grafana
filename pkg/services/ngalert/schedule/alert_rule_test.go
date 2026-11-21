@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
@@ -559,6 +560,70 @@ func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *a
 	return newAlertRule(ctx, rf, nil, false, RetryConfig{}, nil, st, nil, nil, nil, log.NewNopLogger(), nil, featuremgmt.WithFeatures(), nil, nil)
 }
 
+func TestAlertRuleShutdownPreservesStateForFinalSync(t *testing.T) {
+	for _, stoppedBeforeSync := range []int{0, 1, 2} {
+		t.Run(fmt.Sprintf("%d_rules_stopped_before_sync", stoppedBeforeSync), func(t *testing.T) {
+			store := &state.FakeInstanceStore{}
+			clk := clock.New()
+			cfg := state.ManagerCfg{
+				InstanceStore: store,
+				Clock:         clk,
+				Log:           log.NewNopLogger(),
+				Metrics:       metrics.NewNGAlert(prometheus.NewRegistry()).GetStateMetrics(),
+				Tracer:        tracing.InitializeTracerForTest(),
+				Images:        &state.NoopImageService{},
+			}
+			t.Cleanup(func() {
+				require.NoError(t, cfg.Tracer.(*tracing.TracingService).GetTracerProvider().Shutdown(context.Background()))
+			})
+			persister := state.NewAsyncRuleStatePersister(cfg.Log, clk, time.Hour, cfg)
+			manager := state.NewManager(cfg, persister)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			var routines []*alertRule
+			expected := make(map[string]*state.State)
+			for _, evalState := range []eval.State{eval.Pending, eval.Alerting} {
+				rule := models.RuleGen.With(withQueryForState(t, evalState)).GenerateRef()
+				_, err := manager.ProcessEvalResults(ctx, clk.Now(), rule, eval.Results{{
+					State:       eval.Alerting,
+					EvaluatedAt: clk.Now(),
+				}}, nil, nil)
+				require.NoError(t, err)
+				states := manager.GetStatesForRuleUID(ctx, rule.OrgID, rule.UID)
+				require.Len(t, states, 1)
+				require.Equal(t, evalState, states[0].State)
+				expected[rule.UID] = states[0]
+
+				routine := blankRuleForTests(ctx, rule.GetKeyWithGroup())
+				routine.stateManager = manager
+				routines = append(routines, routine)
+			}
+
+			cancel()
+			// Force the shutdown interleavings without relying on goroutine scheduling.
+			for _, routine := range routines[:stoppedBeforeSync] {
+				require.NoError(t, routine.Run())
+			}
+			require.NoError(t, manager.Run(ctx))
+			for _, routine := range routines[stoppedBeforeSync:] {
+				require.NoError(t, routine.Run())
+			}
+
+			saved := store.RecordedOps()
+			require.Len(t, saved, len(expected), "the final sync must preserve both rules")
+			for _, op := range saved {
+				instance := op.(models.AlertInstance)
+				previous, ok := expected[instance.RuleUID]
+				require.True(t, ok)
+				require.Equal(t, models.InstanceStateType(previous.State.String()), instance.CurrentState)
+				require.Equal(t, previous.StartsAt, instance.CurrentStateSince)
+				delete(expected, instance.RuleUID)
+			}
+		})
+	}
+}
+
 func TestRuleRoutine(t *testing.T) {
 	gen := models.RuleGen
 	createSchedule := func(
@@ -771,7 +836,7 @@ func TestRuleRoutine(t *testing.T) {
 			)
 		}
 
-		t.Run("and clean up the state if parent context is cancelled", func(t *testing.T) {
+		t.Run("and preserve the state if parent context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
 			sender := NewSyncAlertsSenderMock()
 			sch, _, _, _ := createSchedule(t, make(chan time.Time, 1), sender, clock.NewMock())
@@ -792,32 +857,34 @@ func TestRuleRoutine(t *testing.T) {
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+			require.ElementsMatch(t, expectedStates, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertNotCalled(t, "Send")
 		})
 
-		t.Run("and clean up the state but not send anything if the reason is not rule deleted", func(t *testing.T) {
-			stoppedChan := make(chan error)
-			sender := NewSyncAlertsSenderMock()
-			sch, _, _, _ := createSchedule(t, make(chan time.Time, 1), sender, clock.NewMock())
+		for _, stopReason := range []error{nil, errRuleRestarted, errors.New("some reason")} {
+			t.Run(fmt.Sprintf("and clean up the state without sending notifications for stop reason %v", stopReason), func(t *testing.T) {
+				stoppedChan := make(chan error)
+				sender := NewSyncAlertsSenderMock()
+				sch, _, _, _ := createSchedule(t, make(chan time.Time, 1), sender, clock.NewMock())
 
-			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
-			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+				_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+				require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
-			factory := ruleFactoryFromScheduler(sch)
-			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
-			go func() {
-				err := ruleInfo.Run()
-				stoppedChan <- err
-			}()
+				factory := ruleFactoryFromScheduler(sch)
+				ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+				go func() {
+					err := ruleInfo.Run()
+					stoppedChan <- err
+				}()
 
-			ruleInfo.Stop(errors.New("some reason"))
-			err := waitForErrChannel(t, stoppedChan)
-			require.NoError(t, err)
+				ruleInfo.Stop(stopReason)
+				err := waitForErrChannel(t, stoppedChan)
+				require.NoError(t, err)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
-			sender.AssertNotCalled(t, "Send")
-		})
+				require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+				sender.AssertNotCalled(t, "Send")
+			})
+		}
 
 		t.Run("and send resolved notifications if errRuleDeleted is the reason for stopping", func(t *testing.T) {
 			stoppedChan := make(chan error)
