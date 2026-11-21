@@ -5,8 +5,10 @@ import { appEvents } from 'app/core/app_events';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
+import { requestComposerEnter } from '../composer/composerEntryRequests';
 import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardComposerEnabled } from '../scene/dashboardModes';
 import { jsonDiff } from '../settings/version-history/utils';
 import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 
@@ -52,7 +54,26 @@ export function openPendingChangesForEditing(scene: DashboardScene) {
   // Without the plugin's history an edit couldn't be kept, so the preview stays read-only.
   if (proposesNewDashboard(preview.pending) || preview.pending.history) {
     scene.onEnterEditMode('assistant');
+    requestComposerOverAssistantEdit(scene);
   }
+}
+
+/**
+ * With Composer on, the Assistant's edit opens in Editing for Composer to run over: once the scene is active,
+ * Grafana asks the Assistant to enter Composer on it, once.
+ */
+function requestComposerOverAssistantEdit(scene: DashboardScene) {
+  const uid = scene.state.uid;
+  if (!uid || !dashboardComposerEnabled()) {
+    return;
+  }
+  let requested = false;
+  scene.addActivationHandler(() => {
+    if (!requested) {
+      requested = true;
+      requestComposerEnter({ resource: 'dashboard', uid }, { assistantEdit: true });
+    }
+  });
 }
 
 /**
