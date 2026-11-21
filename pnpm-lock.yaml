@@ -263,8 +263,8 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-api-clients
       '@grafana/assistant':
-        specifier: 0.1.34
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        specifier: 0.1.35
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/aws-sdk':
         specifier: ^0.12.0
         version: 0.12.5(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))
@@ -306,7 +306,7 @@ importers:
         version: 0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
         specifier: 13.2.3
-        version: 13.2.3(b0e6f1e1be0dfb3ea5cf0aa9b6616919)
+        version: 13.2.3(1748a23a2a87810d418bd023656497a3)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -1692,7 +1692,7 @@ importers:
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/assistant':
         specifier: ^0.1.1
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
@@ -2168,7 +2168,7 @@ importers:
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/assistant':
         specifier: ^0.1.24
-        version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+        version: 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
@@ -3771,8 +3771,8 @@ packages:
   '@formatjs/intl-localematcher@0.10.1':
     resolution: {integrity: sha512-gBqglQK9rXuHsLmM8wzTMBy4Xo4d0jamirIVKuEL8F1rwbskWdpMA1kZarSkny+uvr5q/K6GSzE0Rcq1wZLl3g==}
 
-  '@grafana/assistant@0.1.34':
-    resolution: {integrity: sha512-f5C5beq/G+W0cNQloBRrMskR415PRg+bv0X/L2/p0DIML4yft4Mg/kYJWBBMo0QD2Q2m9Nj+xXtdKjEvlWvPxA==}
+  '@grafana/assistant@0.1.35':
+    resolution: {integrity: sha512-CUN036hs5L8zgZVU4d9SRl/Qr81dHzlMcE0OBRULFW+BBqquXws3SARVg3NgmK4HapPLQvQn6iVL9HpowR+/xw==}
     peerDependencies:
       '@emotion/css': '>=11.0.0'
       '@grafana/data': '>=12.1.0'
@@ -16459,7 +16459,7 @@ snapshots:
     dependencies:
       '@formatjs/fast-memoize': 3.1.7
 
-  '@grafana/assistant@0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)':
+  '@grafana/assistant@0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
@@ -16469,6 +16469,7 @@ snapshots:
       json-schema-to-ts: 3.1.1
       react: 19.2.8
       rxjs: 7.8.2
+      zod: 4.6.7
 
   '@grafana/aws-sdk@0.12.5(@grafana/plugin-ui@0.18.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0))':
     dependencies:
@@ -16646,7 +16647,7 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.3(b0e6f1e1be0dfb3ea5cf0aa9b6616919)':
+  '@grafana/prometheus@13.2.3(1748a23a2a87810d418bd023656497a3)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -16678,7 +16679,7 @@ snapshots:
       semver: 7.8.5
       uuid: 14.0.2
     optionalDependencies:
-      '@grafana/assistant': 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
+      '@grafana/assistant': 0.1.35(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
     transitivePeerDependencies:
       - '@codemirror/autocomplete'
       - '@codemirror/language'
