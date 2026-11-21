@@ -8,6 +8,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -108,7 +109,7 @@ func fullRoute() *plugins.Route {
 	return &plugins.Route{
 		Path:      "api/*",
 		Method:    http.MethodPost,
-		ReqRole:   authlib.RoleEditor,
+		ReqRole:   types.RoleEditor,
 		ReqAction: "example-app.api:write",
 		URL:       "https://{{.JsonData.host}}/v1",
 		URLParams: []plugins.URLParam{{Name: "key", Content: "{{.SecureJsonData.key}}"}},
