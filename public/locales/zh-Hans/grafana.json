@@ -1541,7 +1541,8 @@
           "contact-point": "直接联络点（与 Agent: 互斥）。",
           "dashboard": "规则关联的数据面板（规范值为数据面板 UID）。",
           "datasource": "规则引用的查询数据源（规范值为 UID）。",
-          "folder": "文件夹（规范值为文件夹 UID）。",
+          "folder": "",
+          "folder-uid": "",
           "health": "规则健康状况：正常、无数据、错误或未知。",
           "label": "标签匹配器：label:key（存在）、label:!key（不存在）、label:key=value（等于）、label:key!=value（不等于）、label:key=~re（正则表达式）、label:key!~re（非正则表达式）。用引号括起包含空格的值：label:team=\"a b\"。",
           "metric": "录制的指标名称（精确匹配）。",
@@ -1562,12 +1563,14 @@
         "invalid-tokens": "无法应用某些筛选条件：{{tokens}}",
         "invalid-value": "为 {{key}} 使用以下值之一：{{values}}",
         "label": "搜索",
+        "missing-value": "",
         "placeholder": "按名称搜索或输入筛选条件查询…",
         "property": {
           "contact-point": "联络点",
           "dashboard": "数据面板",
           "datasource": "查询数据源",
           "folder": "文件夹",
+          "folder-uid": "",
           "health": "健康状况",
           "labels": "标签",
           "metric": "录制的指标",
@@ -1603,6 +1606,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "加载更多",
         "load-more-error": "加载更多结果失败",
         "loading-rules": "正在加载规则",
@@ -1980,6 +1985,7 @@
         "routing": "通知路由",
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
+        "rules-error": "",
         "rules-skipped": "警报规则将不会被导入。",
         "rules-title": "",
         "skipped": "已跳过",
@@ -1992,6 +1998,7 @@
         "validation-warning": "为了避免冲突，某些资源将被重命名。",
         "will-import-config": "将导入此配置",
         "will-import-rules": "将导入规则",
+        "yaml-datasource": "",
         "will-import-rules-count_other": "将导入 {{count}} 条规则"
       },
       "rules-preview": "警报规则预览",
@@ -2096,9 +2103,14 @@
         "target-datasource-required": "请选择一个目标数据源",
         "target-folder": "目标文件夹",
         "target-folder-desc": "用于存储导入规则的文件夹",
+        "yaml-empty-group": "",
         "yaml-error": "解析 YAML 文件失败：{{error}}",
         "yaml-file": "规则 YAML 文件",
-        "yaml-required": "请选择一个文件"
+        "yaml-no-rules": "",
+        "yaml-required": "请选择一个文件",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "已成功将警报规则导入到 Grafana 管理的规则。",
       "target-folder": {
@@ -5692,6 +5704,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6205,7 +6221,10 @@
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "描述您的数据面板。这将打开助手聊天并开始对话。",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "自动网格",
       "auto-grid-description": "调整面板大小以适应并形成统一的网格",
       "build-assistant": "使用助手构建您的数据面板",
@@ -6219,6 +6238,8 @@
       "mobile-not-available": "",
       "or-start-blank": "或者自行构建",
       "select-layout-header": "选择布局",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "新建数据面板"
     },
     "errors": {
@@ -7186,6 +7207,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "社区",
       "customize-with-assistant-button": "使用助手自定义",
       "customize-with-assistant-button-label": "使用助手自定义：{{title}}",
@@ -7202,6 +7224,9 @@
       "edit-template-menu-item": "编辑",
       "more-actions-label": "对{{title}}的更多操作",
       "no-preview": "没有可用的预览",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "使用模板",
       "use-template-button-label": "使用模板：{{title}}",
       "view-dashboard-button": "查看数据面板",
@@ -7236,6 +7261,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "按创建者筛选",
       "search-placeholder": "搜索",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "排序"
     },
     "dashboard-card": {
@@ -11899,13 +11928,19 @@
       "filter-apps": "应用程序",
       "filter-dashboards": "数据面板",
       "filter-explore": "探索",
+      "filter-folders": "",
       "filter-label": "仅显示",
+      "filter-notebooks": "",
       "filter-pages": "页面",
+      "filter-playlists": "",
       "kind-alerting": "警报",
       "kind-app": "应用程序",
       "kind-dashboard": "数据面板",
       "kind-explore": "探索",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "页面",
+      "kind-playlist": "",
       "loading": "正在加载您的近期活动…"
     },
     "recommendations": {
@@ -13523,7 +13558,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13822,8 +13857,8 @@
       "list-none": "您还没有笔记本。请改为创建一个。",
       "list-none-read-only": "您还没有笔记本，也没有创建笔记本的权限。",
       "list-truncated": "并非所有笔记本都会显示。缩小搜索范围以查找其他笔记本。",
-      "lock-time-range": "锁定到 {{range}}",
       "lock-time-range-description": "将此可视化保留在其被捕获的窗口中。解锁后，它将遵循笔记本的时间范围。",
+      "lock-time-range-short": "",
       "lock-time-ranges": "将面板锁定到其显示的时间范围",
       "lock-time-ranges-description": "将每个可视化保留在其被捕获的窗口中。解锁后，它们将遵循笔记本的时间范围。",
       "note-description": "",
@@ -17500,6 +17535,16 @@
       "review": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
@@ -17643,7 +17688,6 @@
     },
     "time-range": {
       "apply": "应用时间范围",
-      "aria-role": "时间范围选择",
       "default-title": "时间范围",
       "dialog-label": "相对时间范围选择器",
       "example-title": "示例时间范围",
