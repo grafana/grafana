@@ -1,33 +1,43 @@
 import { useEffect, useState } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type RulesSourceDataSource } from '@grafana/alerting/internal';
 
 import { logWarning } from '../Analytics';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { getRulesDataSources } from '../utils/datasource';
+
+import { useDataSourcesForRules } from './useDataSourcesForRules';
 
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const CONCURRENCY_LIMIT = 10;
 
+const noRulesSources: RulesSourceDataSource[] = [];
+
+interface DiscoveryState {
+  forList?: RulesSourceDataSource[];
+  withRuler: RulesSourceDataSource[];
+  isDone: boolean;
+}
+
 export function useRulesSourcesWithRuler(): {
-  rulesSourcesWithRuler: DataSourceInstanceSettings[];
+  rulesSourcesWithRuler: RulesSourceDataSource[];
   isLoading: boolean;
 } {
-  const [rulesSourcesWithRuler, setRulesSourcesWithRuler] = useState<DataSourceInstanceSettings[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { items: dataSources, isLoading: isLoadingDataSources } = useDataSourcesForRules();
+  const [discovery, setDiscovery] = useState<DiscoveryState>({ withRuler: noRulesSources, isDone: false });
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
   useEffect(() => {
-    const dataSources = getRulesDataSources();
+    // An empty list needs no discovery. Setting state for it would also re-render forever if the list
+    // hook returns a new empty array on every render.
     if (dataSources.length === 0) {
       return;
     }
+    setDiscovery({ forList: dataSources, withRuler: noRulesSources, isDone: false });
 
     // per-effect-run flag that prevents stale state updates after the component unmounts
     // or the effect re-runs with new dependencies
     let cancelled = false;
-    setIsLoading(true);
 
     async function discoverDsFeaturesInBatches() {
       for (let i = 0; i < dataSources.length; i += CONCURRENCY_LIMIT) {
@@ -41,7 +51,9 @@ export function useRulesSourcesWithRuler(): {
             try {
               const { data: dsFeatures } = await discoverDsFeatures({ uid: ds.uid }, true);
               if (!cancelled && dsFeatures?.rulerConfig) {
-                setRulesSourcesWithRuler((prev) => [...prev, ds]);
+                setDiscovery((prev) =>
+                  prev.forList === dataSources ? { ...prev, withRuler: [...prev.withRuler, ds] } : prev
+                );
               }
             } catch (err) {
               logWarning('Failed to discover datasource features', { error: String(err) });
@@ -51,7 +63,7 @@ export function useRulesSourcesWithRuler(): {
       }
 
       if (!cancelled) {
-        setIsLoading(false);
+        setDiscovery((prev) => (prev.forList === dataSources ? { ...prev, isDone: true } : prev));
       }
     }
 
@@ -60,7 +72,18 @@ export function useRulesSourcesWithRuler(): {
     return () => {
       cancelled = true;
     };
-  }, [discoverDsFeatures]);
+  }, [dataSources, discoverDsFeatures]);
 
-  return { rulesSourcesWithRuler, isLoading };
+  if (dataSources.length === 0) {
+    return { rulesSourcesWithRuler: noRulesSources, isLoading: isLoadingDataSources };
+  }
+
+  // Derived during render so that a list the effect has not processed yet never reads as ready,
+  // and results from an earlier list are never returned.
+  const isCurrentList = discovery.forList === dataSources;
+
+  return {
+    rulesSourcesWithRuler: isCurrentList ? discovery.withRuler : noRulesSources,
+    isLoading: isLoadingDataSources || !isCurrentList || !discovery.isDone,
+  };
 }

@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, delay, http } from 'msw';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -14,6 +14,8 @@ import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { buildInfoResponse } from '../testSetup/featureDiscovery';
 
+import * as dataSourcesForRulesModule from './useDataSourcesForRules';
+import { useDataSourcesForRules } from './useDataSourcesForRules';
 import { useRulesSourcesWithRuler } from './useRuleSourcesWithRuler';
 
 const server = setupMswServer();
@@ -23,7 +25,7 @@ function getProviderWrapper() {
   return ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 }
 
-// Creates a Prometheus datasource with manageAlerts:true so getRulesDataSources() includes it
+// Creates a Prometheus datasource with manageAlerts:true so useDataSourcesForRules() includes it
 function makeMimirDatasource(uid: string, name: string) {
   return mockDataSource({
     uid,
@@ -33,20 +35,85 @@ function makeMimirDatasource(uid: string, name: string) {
   });
 }
 
+// Every data source in these tests supports the ruler, so a ready result must list the same uids as the
+// data source list that the hook reads in the same render.
+function renderRecordingReadyStates() {
+  const readyRenders: Array<{ listed: string[]; withRuler: string[] }> = [];
+  const { result } = renderHook(
+    () => {
+      const listed = useDataSourcesForRules().items.map((ds) => ds.uid);
+      const value = useRulesSourcesWithRuler();
+      if (!value.isLoading) {
+        readyRenders.push({ listed, withRuler: value.rulesSourcesWithRuler.map((ds) => ds.uid) });
+      }
+      return value;
+    },
+    { wrapper: getProviderWrapper() }
+  );
+  return { result, readyRenders };
+}
+
 beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleExternalWrite]);
 });
 
 describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
-  it('starts with empty list and no loading when there are no datasources', () => {
+  it('returns an empty list when there are no datasources', async () => {
     setupDataSources();
 
     const { result } = renderHook(() => useRulesSourcesWithRuler(), {
       wrapper: getProviderWrapper(),
     });
 
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.rulesSourcesWithRuler).toEqual([]);
+  });
+
+  it('is loading while the data source list loads', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    expect(result.current).toEqual({ rulesSourcesWithRuler: [], isLoading: true });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('is not ready before the discovery for the loaded list finishes', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    server.use(
+      http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+        HttpResponse.json(buildInfoResponse.mimir)
+      )
+    );
+
+    const { result, readyRenders } = renderRecordingReadyStates();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(readyRenders.length).toBeGreaterThan(0);
+    readyRenders.forEach(({ listed, withRuler }) => expect(withRuler).toEqual(listed));
+  });
+
+  it('drops the earlier results when the data source cache changes', async () => {
+    setupDataSources(makeMimirDatasource('mimir-1', 'Mimir 1'));
+    server.use(
+      http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+        HttpResponse.json(buildInfoResponse.mimir)
+      )
+    );
+
+    const { result, readyRenders } = renderRecordingReadyStates();
+    await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-1']));
+
+    act(() => {
+      setupDataSources(makeMimirDatasource('mimir-2', 'Mimir 2'));
+    });
+
+    await waitFor(() => expect(result.current.rulesSourcesWithRuler.map((ds) => ds.uid)).toEqual(['mimir-2']));
+    expect(result.current.isLoading).toBe(false);
+    expect(readyRenders.some(({ listed }) => listed.includes('mimir-2'))).toBe(true);
+    readyRenders.forEach(({ listed, withRuler }) => expect(withRuler).toEqual(listed));
   });
 
   it('returns datasources whose buildinfo indicates ruler support (Mimir)', async () => {
@@ -113,7 +180,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
   });
 
   it('BUG: fires all requests simultaneously instead of in batches of 10', async () => {
-    // getRulesDataSources() sorts by name, so all datasources are processed in
+    // useDataSourcesForRules() sorts by name, so all datasources are processed in
     // alphabetical order. We spy on discoverFeaturesByUid (called inside the RTK
     // Query queryFn) to measure true in-process concurrency, which is not subject
     // to test-environment serialization at the network/MSW layer.
@@ -145,7 +212,7 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
   });
 
   it('BUG: isLoading goes false before all datasources have resolved', async () => {
-    // getRulesDataSources() sorts by name alphabetically. We give the slow datasource
+    // useDataSourcesForRules() sorts by name alphabetically. We give the slow datasource
     // a name that sorts BEFORE the fast one ("AA..." < "ZZ..."), so the forEach loop
     // triggers slow-ds first and fast-ds LAST. The broken isLoading only reflects the
     // last-triggered lazy query (fast-ds). Since fast-ds has no delay, isLoading goes
@@ -175,5 +242,23 @@ describe('useRulesSourcesWithRuler — bug reproductions (must fail before fix)'
     // only 1 result present.
     // PASSES after the fix: isLoading stays true until ALL datasources have resolved.
     expect(result.current.rulesSourcesWithRuler).toHaveLength(2);
+  });
+
+  it('settles when the data source list hook returns a new empty array on every render', () => {
+    // A render loop would never end on its own, so the mock stops it with an error after a few calls.
+    let calls = 0;
+    jest.spyOn(dataSourcesForRulesModule, 'useDataSourcesForRules').mockImplementation(() => {
+      calls++;
+      if (calls > 20) {
+        throw new Error('useRulesSourcesWithRuler keeps re-rendering');
+      }
+      return { items: [], isLoading: false };
+    });
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    expect(result.current).toEqual({ rulesSourcesWithRuler: [], isLoading: false });
   });
 });
