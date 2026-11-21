@@ -1,5 +1,8 @@
+import { store } from '@grafana/data';
+
+import { SECTION_STORAGE_KEY } from './constants';
 import { type SearchQueryParams } from './types';
-import { parseRouteParams } from './utils';
+import { cleanupOldExpandedFolders, parseRouteParams } from './utils';
 
 describe('Search utils', () => {
   describe('parseRouteParams', () => {
@@ -53,6 +56,30 @@ describe('Search utils', () => {
         folder: 'current',
         query: 'folder:current test',
       });
+    });
+  });
+
+  describe('cleanupOldExpandedFolders', () => {
+    it('should remove old prefixed keys and keep other keys', () => {
+      const oldKey = `${SECTION_STORAGE_KEY}.folderA`;
+      const otherKey = 'grafana.someOtherKey';
+
+      store.set(oldKey, '1');
+      store.set(otherKey, '1');
+
+      cleanupOldExpandedFolders();
+
+      expect(store.exists(oldKey)).toBe(false);
+      expect(store.exists(otherKey)).toBe(true);
+    });
+
+    it('should remove all prefixed keys regardless of count', () => {
+      const keys = [`${SECTION_STORAGE_KEY}.a`, `${SECTION_STORAGE_KEY}.b`, `${SECTION_STORAGE_KEY}.c`];
+      keys.forEach((key) => store.set(key, '1'));
+
+      cleanupOldExpandedFolders();
+
+      keys.forEach((key) => expect(store.exists(key)).toBe(false));
     });
   });
 });
