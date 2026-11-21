@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -224,6 +225,32 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
 				assert.Equal(t, org.ErrOrgNotFound.Error(), respJSON.Get("message").MustString())
+			})
+		})
+
+		t.Run("With leading and trailing whitespace in login and email", func(t *testing.T) {
+			createCmd := dtos.AdminCreateUserForm{
+				Login:    "  callview  ",
+				Email:    "  spaced@example.com  ",
+				Password: testPassword,
+				Name:     "  Call View  ",
+			}
+			var got *user.CreateUserCommand
+			usrSvc := &usertest.FakeUserService{
+				CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					copied := *cmd
+					got = &copied
+					return &user.User{ID: testUserID}, nil
+				},
+			}
+			adminCreateUserScenario(t, "Should trim login and email before create", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				assert.Equal(t, 200, sc.resp.Code)
+				require.NotNil(t, got)
+				assert.Equal(t, "callview", got.Login)
+				assert.Equal(t, "spaced@example.com", got.Email)
+				assert.Equal(t, testPassword, got.Password)
+				assert.Equal(t, "  Call View  ", got.Name)
 			})
 		})
 	})
