@@ -2,15 +2,16 @@ package pipeline
 
 import (
 	"context"
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type RoleCheckAuthorizer struct {
-	role identity.RoleType
+	role authlib.RoleType
 }
 
-func NewRoleCheckAuthorizer(role identity.RoleType) *RoleCheckAuthorizer {
+func NewRoleCheckAuthorizer(role authlib.RoleType) *RoleCheckAuthorizer {
 	return &RoleCheckAuthorizer{role: role}
 }
 

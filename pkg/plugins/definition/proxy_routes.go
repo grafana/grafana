@@ -13,7 +13,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/routes"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -229,7 +228,7 @@ func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plu
 	route := &plugins.Route{
 		Path:         routePath,
 		Method:       method,
-		ReqRole:      identity.RoleType(target.ReqRole),
+		ReqRole:      types.RoleType(target.ReqRole),
 		ReqAction:    target.ReqAction,
 		URL:          target.URL,
 		AuthType:     target.AuthType,

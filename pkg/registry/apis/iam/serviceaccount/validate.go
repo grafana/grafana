@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -28,7 +28,7 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 		return apierrors.NewUnauthorized("no identity found")
 	}
 
-	requestedRole := identity.RoleType(obj.Spec.Role)
+	requestedRole := types.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
 	}
@@ -77,7 +77,7 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.ServiceAccount)
 		return apierrors.NewBadRequest("service account must have a title")
 	}
 
-	requestedRole := identity.RoleType(obj.Spec.Role)
+	requestedRole := types.RoleType(obj.Spec.Role)
 	if !requestedRole.IsValid() {
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role: %s", requestedRole))
 	}

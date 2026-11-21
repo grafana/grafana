@@ -157,12 +157,12 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 	const repositoryManaged = "dashboard preferences can't be managed by a repository"
 	const folderAnnotation = "dashboard preferences can't have the grafana.app/folder annotation"
 
-	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	// The access client in the loop makes every caller an admin of the folders f1 and missing.
-	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", authlib.RoleEditor)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	// Grafana admins pass the namespace authorizer for every namespace.
-	otherStackAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	otherStackAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", authlib.RoleAdmin)
 	otherStackAdmin.Namespace = "stacks-2"
 	otherStackAdmin.IsGrafanaAdmin = true
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
@@ -358,8 +358,8 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesCreateTakesTheOrgPrefer
 		requester identity.Requester
 		wantErr   string
 	}{
-		{name: "an editor with the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleEditor, "orgs.preferences:write")},
-		{name: "an admin without the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, identity.RoleAdmin), wantErr: "only org admins can change org dashboard preferences"},
+		{name: "an editor with the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleEditor, "orgs.preferences:write")},
+		{name: "an admin without the permission", requester: dashboardPreferencesRequesterWith(authlib.TypeUser, authlib.RoleAdmin), wantErr: "only org admins can change org dashboard preferences"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -381,7 +381,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesCreateTakesTheOrgPrefer
 
 // The builder's minimum is 10s, so only the stack's own minimum from the settings service can decide these.
 func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshInterval(t *testing.T) {
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	withSpec := func(spec string) *dashv2beta1.DashboardPreferences {
 		obj := newDashboardPreferences("user-u1")
 		require.NoError(t, json.Unmarshal([]byte(spec), &obj.Spec))
@@ -433,7 +433,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesUsesTheStackMinRefreshI
 
 // With no minimum set, the minimum check accepts any value without parsing it.
 func TestDashboardsAPIBuilderValidateDashboardPreferencesParsesRefreshWithoutAMinimum(t *testing.T) {
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	builder := &DashboardsAPIBuilder{
 		dashboardService: &dashsvc.DashboardServiceImpl{},
 		accessClient:     &dashboardPreferencesAccessClient{},
@@ -466,7 +466,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferencesParsesRefreshWithoutAMi
 
 // The value checks join the schema's 422, so one response names every problem.
 func TestDashboardsAPIBuilderValidateDashboardPreferencesReportsEveryProblem(t *testing.T) {
-	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", authlib.RoleViewer)
 	builder := &DashboardsAPIBuilder{
 		dashboardService:   &dashsvc.DashboardServiceImpl{},
 		minRefreshInterval: "10s",

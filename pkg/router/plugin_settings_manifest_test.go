@@ -9,12 +9,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
@@ -25,7 +25,7 @@ import (
 func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 	client := func(context.Context, string) (plugins.Client, appclientv3.Client, error) { return nil, nil, nil }
 	legacy := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp, Routes: []*plugins.Route{
-		{Path: "/api/items", Method: http.MethodGet, URL: "https://{{.JsonData.host}}/items", ReqRole: identity.RoleEditor},
+		{Path: "/api/items", Method: http.MethodGet, URL: "https://{{.JsonData.host}}/items", ReqRole: authlib.RoleEditor},
 		{Path: "/api/items/*", Method: http.MethodDelete, URL: "https://{{.JsonData.host}}/items", ReqAction: "example-app.items:write"},
 		{
 			Path:      "token",
