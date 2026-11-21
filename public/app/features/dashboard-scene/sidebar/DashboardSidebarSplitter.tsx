@@ -23,6 +23,7 @@ import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -230,6 +231,7 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
         {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
+        <ManagedDashboardNavBarBadge dashboard={dashboard} />
         {renderDynamicNavActions()}
       </>
     );
