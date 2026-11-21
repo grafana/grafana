@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
@@ -10,6 +12,7 @@ import {
   type GridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import * as fmtMigration from 'app/plugins/panel/text/v2/fmtMigration';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
@@ -451,7 +454,51 @@ describe('dashboard tracking', () => {
         handlebars_count: 1,
         data_macro_count: 1,
         per_row_count: 1,
+        fmt_count: 0,
+        fmt_manual_count: 0,
       });
+    });
+
+    it('counts the text panels that read fmt, and those with reads to change by hand', async () => {
+      const scene = buildSceneWithTextPanels([
+        { mode: 'markdown', content: '{{#each data}}{{fmt.cpu}}{{/each}}' },
+        { mode: 'html', content: '{{#each data}}{{#each fmt}}{{this}}{{/each}}{{/each}}' },
+        { mode: 'markdown', content: '<!-- {{fmt.cpu}} --> {{display "cpu"}}' },
+        { mode: 'code', content: '{{fmt.cpu}}' },
+        { content: '{{fmt.cpu}}', renderMode: 'perRow' },
+      ]);
+
+      trackDashboardSceneLoaded(scene, 42);
+
+      await waitFor(() =>
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'dashboards_text_panel_usage',
+          expect.objectContaining({ handlebars_count: 4, fmt_count: 3, fmt_manual_count: 1 })
+        )
+      );
+    });
+
+    it('still reports the other counts once when the fmt reads cannot be counted', async () => {
+      const find = jest.spyOn(fmtMigration, 'findFmtReads').mockImplementation(() => {
+        throw new Error('analysis failed');
+      });
+
+      trackDashboardSceneLoaded(buildSceneWithTextPanels([{ mode: 'markdown', content: '{{fmt.cpu}}' }]), 42);
+
+      await waitFor(() =>
+        expect(reportInteraction).toHaveBeenCalledWith('dashboards_text_panel_usage', {
+          isDynamicDashboard: true,
+          dashboard_uid: 'dashboard-test',
+          mermaid_count: 0,
+          handlebars_count: 1,
+          data_macro_count: 0,
+          per_row_count: 0,
+        })
+      );
+      expect(
+        jest.mocked(reportInteraction).mock.calls.filter(([name]) => name === 'dashboards_text_panel_usage')
+      ).toHaveLength(1);
+      find.mockRestore();
     });
 
     it('does not count diagrams or templates in code mode, where neither one renders', () => {

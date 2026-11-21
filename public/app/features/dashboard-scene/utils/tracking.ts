@@ -11,6 +11,7 @@ import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLib
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { getTextDataUsage } from 'app/plugins/panel/text/dataUsage';
 import { type Options, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
+import { type findFmtReads } from 'app/plugins/panel/text/v2/fmtMigration';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -136,11 +137,50 @@ function trackTextPanelUsage(dashboard: DashboardScene) {
     return;
   }
 
-  const usage = getTextPanelUsage(dashboard.state.body.getVizPanels());
+  const panels = dashboard.state.body.getVizPanels();
+  const usage = getTextPanelUsage(panels);
 
-  if (usage) {
-    DashboardInteractions.textPanelUsage({ ...usage, dashboard_uid: dashboard.state.uid });
+  if (!usage) {
+    return;
   }
+
+  const dashboardUid = dashboard.state.uid;
+  const report = (fmtUsage: { fmt_count?: number; fmt_manual_count?: number }) =>
+    DashboardInteractions.textPanelUsage({ ...usage, ...fmtUsage, dashboard_uid: dashboardUid });
+  const textOptions = panels
+    .filter((panel) => panel.state.pluginId === TEXT_PANEL_PLUGIN_ID)
+    .map((panel): Partial<Options> => panel.state.options);
+
+  if (!textOptions.some((options) => options.content?.includes('fmt'))) {
+    report({ fmt_count: 0, fmt_manual_count: 0 });
+    return;
+  }
+
+  import('app/plugins/panel/text/v2/fmtMigration')
+    .then((module) => getFmtUsage(textOptions, module.findFmtReads))
+    .catch(() => ({}))
+    .then(report);
+}
+
+function getFmtUsage(textOptions: Array<Partial<Options>>, find: typeof findFmtReads) {
+  const usage = { fmt_count: 0, fmt_manual_count: 0 };
+
+  for (const options of textOptions) {
+    const reads = find(options.content ?? '', {
+      mode: options.mode ?? TextMode.Markdown,
+      renderMode: options.renderMode,
+      fieldNames: [],
+    });
+
+    if (reads.convertible + reads.unconverted.length > 0) {
+      usage.fmt_count++;
+    }
+    if (reads.unconverted.length > 0) {
+      usage.fmt_manual_count++;
+    }
+  }
+
+  return usage;
 }
 
 function isTextV2WithNewFeatures() {

@@ -23,6 +23,8 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+import { isDashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import {
   type CodeOptions,
@@ -52,6 +54,9 @@ import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFea
 import { getTextVariableSuggestions } from './variableSuggestions';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
+const TextFmtDeprecationNotice = lazy(() =>
+  import('./TextFmtDeprecationNotice').then((m) => ({ default: m.TextFmtDeprecationNotice }))
+);
 
 // The view mode has to outlive the component, since the panel remounts while panel edit stays open
 // (toggling the table view is one way), but it must not be saved into the panel's options.
@@ -278,6 +283,7 @@ export function TextNGPanel(props: Props) {
         pagination={paginationBar}
         previewRef={contentRef}
         series={series}
+        allFrames={frames}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
         onChange={(change) => {
@@ -311,12 +317,19 @@ export function TextNGPanel(props: Props) {
   // Publishes nothing visible itself; warns through the shared panel status UI
   // while sandboxed content is blocked pending viewer consent.
   const consentNotice = <TextSandboxConsentNotice consent={consent} />;
+  const fmtNotice =
+    !isEditing && content.includes('fmt') && canSaveDashboard() ? (
+      <Suspense fallback={null}>
+        <TextFmtDeprecationNotice content={content} mode={options.mode} renderMode={renderMode} />
+      </Suspense>
+    ) : null;
 
   if (!panelFooter) {
     return (
       <>
         {panel}
         {consentNotice}
+        {fmtNotice}
       </>
     );
   }
@@ -330,6 +343,7 @@ export function TextNGPanel(props: Props) {
         {panel}
         {panelFooter}
         {consentNotice}
+        {fmtNotice}
       </Stack>
     );
   }
@@ -341,8 +355,14 @@ export function TextNGPanel(props: Props) {
       </Stack>
       {panelFooter}
       {consentNotice}
+      {fmtNotice}
     </Stack>
   );
+}
+
+function canSaveDashboard(): boolean {
+  const scene = window.__grafanaSceneContext;
+  return isDashboardSceneLike(scene) && Boolean(scene.state.meta.canSave) && !isRenderTarget();
 }
 
 // What a render pass turns into blocks, leaving data and variables to the debounce.
