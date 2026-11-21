@@ -2,12 +2,19 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { type VizPanel } from '@grafana/scenes';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { type SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { dispatch } from 'app/store/store';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { getLibraryPanelsWithUnsavedChanges } from './getLibraryPanelsWithUnsavedChanges';
 import { getSaveDashboardErrorInfo } from './saveErrors';
 import { type DashboardChangeInfo, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
@@ -37,7 +44,32 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     },
   });
 
+  const [libraryPanels] = useState(() => getLibraryPanelsWithUnsavedChanges(dashboard));
+  const [skippedLibraryPanels, setSkippedLibraryPanels] = useState<VizPanel[]>([]);
+  const libraryPanelsToSave = libraryPanels.filter((panel) => !skippedLibraryPanels.includes(panel));
+  const canSave = hasChanges || libraryPanelsToSave.length > 0;
+
+  const onToggleLibraryPanel = (panel: VizPanel) => {
+    setSkippedLibraryPanels((skipped) =>
+      skipped.includes(panel) ? skipped.filter((p) => p !== panel) : [...skipped, panel]
+    );
+  };
+
   const onSave = async (overwrite: boolean) => {
+    // Saved first, so the dashboard's post-save snapshot no longer holds them as unsaved
+    const savedLibraryPanels = await saveLibraryPanels(
+      libraryPanelsToSave.filter((panel) => getLibraryPanelBehavior(panel)?.hasUnsavedOptionChanges())
+    );
+    if (!savedLibraryPanels) {
+      return;
+    }
+
+    if (!hasChanges) {
+      dashboard.closeModal();
+      drawer.state.onSaveSuccess?.();
+      return;
+    }
+
     // Re-merge annotations at save time so denylist edits after the form mounted still persist.
     const latestK8s = dashboard.serializer.getK8SMetadata();
     const result = await onSaveDashboard(dashboard, {
@@ -67,7 +99,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   );
 
   const saveButton = (overwrite: boolean) => (
-    <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
+    <SaveButton isValid={canSave} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
   const isMessageTooLongError = (message?: string) => {
@@ -149,7 +181,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         <Stack alignItems="center">
           {saveButton(false)}
           {cancelButton}
-          {!hasChanges && (
+          {!canSave && (
             <div>
               <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.no-changes-to-save">
                 No changes to save
@@ -164,6 +196,30 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   return (
     <Stack gap={2} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+      {libraryPanels.length > 0 && (
+        <Field
+          label={t('dashboard-scene.save-dashboard-form.label-library-panels', 'Library panels')}
+          description={t(
+            'dashboard-scene.save-dashboard-form.description-library-panels',
+            'These library panels have unsaved changes. Updating a library panel changes it in every dashboard that uses it.'
+          )}
+          noMargin
+        >
+          <Stack direction="column" alignItems="flex-start">
+            {libraryPanels.map((panel) => (
+              <Checkbox
+                key={panel.state.key}
+                id={`save-library-panel-${panel.state.key}`}
+                checked={!skippedLibraryPanels.includes(panel)}
+                onChange={() => onToggleLibraryPanel(panel)}
+                label={t('dashboard-scene.save-dashboard-form.label-update-library-panel', 'Update "{{name}}"', {
+                  name: getLibraryPanelBehavior(panel)?.state.name,
+                })}
+              />
+            ))}
+          </Stack>
+        </Field>
+      )}
       {hasMigratedToV2 && (
         <Alert
           title={t(
@@ -289,4 +345,21 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
       )}
     </Stack>
   );
+}
+
+async function saveLibraryPanels(panels: VizPanel[]): Promise<boolean> {
+  try {
+    await Promise.all(panels.map((panel) => saveLibPanel(panel)));
+    return true;
+  } catch (error) {
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          t('dashboard-scene.save-dashboard-form.library-panel-save-error', 'Failed to save library panel'),
+          error instanceof Error ? error.message : undefined
+        )
+      )
+    );
+    return false;
+  }
 }

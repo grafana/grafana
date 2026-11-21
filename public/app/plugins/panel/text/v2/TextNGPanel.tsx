@@ -24,15 +24,7 @@ import {
 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import {
-  type CodeOptions,
-  defaultCodeLanguage,
-  defaultCodeOptions,
-  defaultOptions,
-  type Options,
-  RenderMode,
-  TextMode,
-} from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
@@ -40,7 +32,6 @@ import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGTruncationNotice } from './TextNGTruncationNotice';
 import { type TextSandboxProps } from './TextSandbox';
 import { TextSandboxConsentNotice } from './TextSandboxConsentNotice';
-import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { useTextEditorChangeReporter } from './editor/useTextEditorChangeReporter';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
@@ -48,7 +39,13 @@ import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { useTextPanelHeight } from './useTextPanelHeight';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
-import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
+import {
+  applyEditorChange,
+  EMPTY_CONTENT,
+  getCurrentFrameIndex,
+  getInterpolateFormat,
+  isTextNewFeaturesEnabled,
+} from './utils';
 import { getTextVariableSuggestions } from './variableSuggestions';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -475,23 +472,6 @@ function EditorLoadingFallback({
       {(isCode || hasFooter) && <Stack minHeight={theme.components.height.md} />}
     </div>
   );
-}
-
-function applyEditorChange(options: Options, change: TextNGEditorChange): Options {
-  const { content, mode = options.mode, codeLanguage, showLineNumbers } = change;
-
-  if (codeLanguage === undefined && showLineNumbers === undefined) {
-    return { ...options, content, mode };
-  }
-
-  const code: CodeOptions = {
-    showMiniMap: false,
-    ...options.code,
-    language: codeLanguage ?? options.code?.language ?? defaultCodeLanguage,
-    showLineNumbers: showLineNumbers ?? options.code?.showLineNumbers ?? false,
-  };
-
-  return { ...options, content, mode, code };
 }
 
 function renderPanelContent(

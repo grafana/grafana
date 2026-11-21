@@ -31,6 +31,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { usePanelSidebarVizOptions } from './viz-panel-options/usePanelSidebarVizOptions';
 
 function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
@@ -81,7 +82,9 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
     [layoutElement, plugin]
   );
 
-  return [panelOptions, ...layoutCategories];
+  const vizCategories = usePanelSidebarVizOptions(panel);
+
+  return [panelOptions, ...layoutCategories, ...vizCategories];
 }
 
 export class VizPanelEditableElement implements EditableDashboardElement, BulkActionElement {
