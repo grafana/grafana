@@ -1,3 +1,4 @@
+import { EditorView } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useDebounce, useMeasure } from 'react-use';
@@ -153,6 +154,8 @@ export function TextNGEditor({
     handleDraftChange(next);
     setPreviewSource(next);
     commitDraft();
+    const container = editorContainerRef.current;
+    (container ? EditorView.findFromDOM(container) : null)?.focus();
   };
 
   // Carries the pending draft, so the single options update cannot drop it.
