@@ -326,6 +326,36 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.queryByLabelText('Has a stack trace')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Has error fields')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Is sampled')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Dropped log, temporarily available')).not.toBeInTheDocument();
+  });
+
+  test('Shows log lines retrieved from Time Machine when enabled', async () => {
+    const user = userEvent.setup();
+    log.isFromTimeMachine = true;
+    log.labels.__time_machine__ = 'true';
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    const icon = screen.getByLabelText('Dropped log, temporarily available');
+    await user.hover(icon);
+    expect(
+      await screen.findByText('This log line was dropped by Adaptive Logs but remains available for a limited time')
+    ).toBeInTheDocument();
+  });
+
+  test('Hides the Time Machine icon when isFromTimeMachine is false, even with the marker label', async () => {
+    log.isFromTimeMachine = false;
+    log.labels.__time_machine__ = 'true';
+    render(
+      <LogListContextProvider {...contextProps} dedupStrategy={LogsDedupStrategy.signature} logs={[log]}>
+        <LogLine {...defaultProps} />
+      </LogListContextProvider>
+    );
+    await screen.findByText('log message 1');
+    expect(screen.queryByLabelText('Dropped log, temporarily available')).not.toBeInTheDocument();
   });
 
   describe('Log line menu', () => {

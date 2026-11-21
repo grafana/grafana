@@ -28,7 +28,13 @@ import { t } from '@grafana/i18n';
 import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
+import {
+  checkLogsError,
+  checkLogsFromTimeMachine,
+  checkLogsSampled,
+  downloadLogs as download,
+  type DownloadFormat,
+} from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
@@ -46,6 +52,7 @@ export interface LogListContextData
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   forceEscape: boolean;
+  hasLogsFromTimeMachine?: boolean;
   hasLogsWithErrorAttributes?: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
@@ -265,6 +272,7 @@ export const LogListContextProvider = ({
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
+  const timeMachineLogsEnabled = useBooleanFlagValue('logs.enableTimeMachine', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -574,6 +582,10 @@ export const LogListContextProvider = ({
     [openAssistant]
   );
 
+  const hasLogsFromTimeMachine = useMemo(
+    () => timeMachineLogsEnabled && logs.some((log) => !!checkLogsFromTimeMachine(log)),
+    [logs, timeMachineLogsEnabled]
+  );
   const hasLogsWithErrorAttributes = useMemo(() => logs.some(logHasErrorAttributes), [logs]);
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
@@ -619,6 +631,7 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
+        hasLogsFromTimeMachine,
         hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,

@@ -42,6 +42,7 @@ import {
   mergeLogsVolumeDataFrames,
   sortLogsResult,
   checkLogsSampled,
+  checkLogsFromTimeMachine,
   downloadLogs,
   DownloadFormat,
 } from './utils';
@@ -365,6 +366,23 @@ describe('checkLogsSampled()', () => {
   });
   test('should return undefined otherwise', () => {
     expect(checkLogsSampled({ ...log, labels: {} })).toStrictEqual(undefined);
+  });
+});
+
+describe('checkLogsFromTimeMachine()', () => {
+  const log = {
+    labels: {
+      __time_machine__: 'true',
+      foo: 'boo',
+    } as Labels,
+  } as LogRowModel;
+  test('should return a message if retrieved from Time Machine', () => {
+    expect(checkLogsFromTimeMachine(log)).toStrictEqual(
+      'This log line was dropped by Adaptive Logs but remains available for a limited time'
+    );
+  });
+  test('should return undefined otherwise', () => {
+    expect(checkLogsFromTimeMachine({ ...log, labels: {} })).toStrictEqual(undefined);
   });
 });
 
