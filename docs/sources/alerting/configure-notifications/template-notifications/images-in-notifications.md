@@ -27,7 +27,7 @@ Grafana Cloud users can request this feature by [opening a support ticket in the
 Images in notifications help recipients of alert notifications better understand why an alert has fired or resolved by including a screenshot of the panel associated with the alert.
 
 {{< admonition type="note" >}}
-This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
+This feature is only supported for Grafana-managed alert rules that send notifications through the Grafana Alertmanager. It is not supported when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
 {{< /admonition >}}
 
 When an alert is fired or resolved, Grafana takes a screenshot of the panel associated with the alert. This is determined via the Dashboard UID and Panel ID annotations of the rule. Grafana cannot take a screenshot for alerts that are not associated with a panel.
@@ -117,7 +117,7 @@ Grafana supports a wide range of contact points with varied support for images i
 
 ## Limitations
 
-- This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
+- This feature is only supported for Grafana-managed alert rules that send notifications through the Grafana Alertmanager. It is not supported when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
 - This feature is not supported when using custom templates in email notifications.
 - A number of contact points support at most one image per notification. In this case, just the first image is either uploaded to the receiving service or referenced from cloud storage per notification.
 - When multiple alerts are sent in a single notification a screenshot might be included for each alert. The order the images are shown is random.

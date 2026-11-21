@@ -48,11 +48,11 @@ The latest two minor versions of both Prometheus and Alertmanager are supported.
 
 As an example, if the current Prometheus version is `2.31.1`, >= `2.29.0` is supported.
 
-## The Grafana Alertmanager can only receive Grafana managed alerts
+## The Grafana Alertmanager can only receive Grafana-managed alerts
 
-Grafana cannot be used to receive external alerts. You can only send alerts to the Grafana Alertmanager using Grafana managed alerts.
+Grafana cannot be used to receive external alerts. You can only send alerts to the Grafana Alertmanager using Grafana-managed alerts.
 
-You have the option to send Grafana-managed alerts to an external Alertmanager, you can find this option in the Admin tab on the Alerting page.
+You can send Grafana-managed alerts to an external Alertmanager from the **Settings** page in Grafana Alerting. For more information, refer to [Enable an Alertmanager to receive Grafana-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/#enable-an-alertmanager-to-receive-grafana-managed-alerts).
 
 For more information, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/73447).
 

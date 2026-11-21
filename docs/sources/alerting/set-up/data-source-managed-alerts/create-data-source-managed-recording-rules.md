@@ -1,5 +1,7 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
+aliases:
+  - ../../alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/data-source-managed-alerts/create-data-source-managed-recording-rules/
 description: Recording rules allow you to pre-compute expensive queries in advance and save the results as a new set of time series. Data source-managed recording rules can create a recording rule for Prometheus-based data sources like Mimir or Loki.
 keywords:
   - grafana
@@ -8,18 +10,24 @@ keywords:
   - rules
   - recording rules
   - configure
+  - data source-managed
 labels:
   products:
     - cloud
     - enterprise
     - oss
+menuTitle: Data source-managed recording rules
 title: Create data source-managed recording rules
-weight: 402
+weight: 200
 ---
 
 # Create data source-managed recording rules
 
 [Recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/) allow you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
+
+{{< admonition type="caution" >}}
+Support for data source-managed recording rules in the Grafana Alerting UI is legacy functionality. We recommend using [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/) whenever possible. For details and alternatives, including the [Prometheus Alerting](/docs/plugins/grafana-prometheusalerting-app/latest/) app plugin, refer to [Legacy data source-managed alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
+{{< /admonition >}}
 
 Alert rules and dashboards can then query the new metric resulting from the recording rule. This is faster than querying real-time data and can help to reduce system load.
 
@@ -29,7 +37,7 @@ Note that in data source-managed groups, the alert rules and recording rules wit
 
 ## Before you begin
 
-- Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you will not be able to create or update Grafana Mimir managed alerting rules.
+- Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you can't create or update data source-managed recording rules.
 
 - For Grafana Mimir and Loki data sources, enable the ruler API by configuring their respective services.
   - **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.

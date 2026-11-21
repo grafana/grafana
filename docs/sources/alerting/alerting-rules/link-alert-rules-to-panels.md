@@ -9,7 +9,6 @@ keywords:
   - panels
   - create
   - grafana-managed
-  - data source-managed
 labels:
   products:
     - cloud

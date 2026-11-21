@@ -57,9 +57,8 @@ When alert rules query recorded metrics, consider the following recommendations:
 - **Align alert evaluation with recording frequency**. The evaluation interval of an alert rule that depends on a recorded metric should be aligned with the recording rule's interval. If a recording rule runs every 3 minutes, the alert rule should also be evaluated at a similar frequency to ensure it acts on fresh data. For details about the evaluation sequence, refer to [how rules are evaluated within a group](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/evaluation-within-a-group/).
 - **Use `_over_time` functions for instant queries**. Since all alert rules are ultimately executed as an instant query, you can use functions like `max_over_time(my_metric[5m])` as an instant query. This allows you to get an aggregated value over a period without using a range query and a reduce expression.
 
-## Types of recording rules
+## Create recording rules
 
-Similar to alert rules, Grafana supports two types of recording rules:
+Recording rules in Grafana Alerting are Grafana-managed: Grafana stores and evaluates them, and they can query any Grafana data source supported by alerting. To create them, refer to [Create Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/).
 
-1. [Grafana-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/), which can query any Grafana data source supported by alerting. It's the recommended option.
-2. [Data source-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/), which can query Prometheus-based data sources like Mimir or Loki.
+To manage recording rules that are stored and evaluated in a Prometheus-based data source like Mimir or Loki, refer to [Create data source-managed recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/create-data-source-managed-recording-rules/) in the legacy data source-managed alerts documentation.

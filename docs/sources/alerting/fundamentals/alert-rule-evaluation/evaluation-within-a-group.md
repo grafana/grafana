@@ -26,7 +26,7 @@ Rules within the same evaluation group can be evaluated simultaneously or sequen
 
 - **Grafana-managed** rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
 
-- **Data source-managed** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
+- **[Data source-managed](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/)** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
 
 - **Grafana-managed rules [imported from data source-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/)** are also evaluated sequentially, in the order they appear in the original rule group. Grafana runs them as an evaluation sequence: each rule starts after the previous one finishes. This preserves the evaluation order when a rule depends on a preceding recording rule.
 

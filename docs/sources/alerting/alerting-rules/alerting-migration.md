@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../alerting-rules/alerting-migration/migration-api/ # /docs/grafana/<GRAFANA_VERSION>/alerting-rules/alerting-migration/migration-api/
-canonical: https://grafana.com/docs/grafana/latest/alerting-rules/alerting-migration/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/
 description: Convert alert rules from data sources such as Mimir, Loki, and Prometheus into Grafana-managed alert rules. This enables you to operate and manage these rules using Grafana Alerting.
 labels:
   products:
@@ -100,7 +100,7 @@ To use Grafana Alerting to migrate rules, you need the following [RBAC permissio
 When the `alertingMigrationWizardUI` feature toggle is enabled, the import wizard replaces the **Import to Grafana-managed rules** page. To import rules with the wizard, go to **Alerting** > **Alert rules** and click **More** > **Import alert rules**. This opens the **Rules** step of the wizard on the **Import** tab of the Grafana Alerting settings, which requires the Organization administrator role. For more information, refer to [Import with the Grafana Alerting user interface](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/#import-with-the-grafana-alerting-user-interface).
 {{< /admonition >}}
 
-To convert data source-managed alert rules to Grafana managed alerts:
+To convert data source-managed alert rules to Grafana-managed alert rules:
 
 1. Go to **Alerting > Alert rules**.
 

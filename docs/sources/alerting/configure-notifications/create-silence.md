@@ -29,9 +29,7 @@ weight: 440
 Silences stop notifications from being created for a specified time window but do not interrupt alert evaluation. Use them to temporarily prevent alert notifications, such as during incident response or a maintenance window.
 
 {{< admonition type="note" >}}
-Silences are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) and only suppress notifications for alerts managed by that Alertmanager.
-
-In Grafana Cloud, the standalone Alertmanager UI is deprecated and no longer available. Manage silences here in the Grafana Alerting UI instead. For details, refer to [Configure Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
+This page describes silences in the Grafana Alertmanager, which only suppress notifications for Grafana-managed alerts. To silence alerts handled by another Alertmanager, refer to [Manage notification resources in other Alertmanagers](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/manage-alertmanager-resources/).
 {{< /admonition >}}
 
 ## Mute timings and active time intervals vs silences
@@ -53,7 +51,6 @@ To add a silence, complete the following steps.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Silences**.
-1. From the **Alertmanager** dropdown, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
 1. Click **Create silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
@@ -170,8 +167,6 @@ If [`.Alert.SilenceURL`](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-noti
 When linking to a silence form, provide the default matching labels and comment via `matcher` and `comment` query parameters. The `matcher` parameter should be in the following format `[label][operator][value]` where the `operator` parameter can be one of the following: `=` (equals, not regular expression), `!=` (not equals, not regular expression), `=~` (equals, regular expression), `!~` (not equals, regular expression).
 The URL can contain many query parameters with the key `matcher`.
 For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/alerting/silence/new?matcher=severity%3Dcritical&matcher=cluster!~europe-*&comment=Silence%20critical%20EU%20alert`.
-
-To link to a new silence page for an external Alertmanager, add a `alertmanager` query parameter with the Alertmanager data source name.
 
 {{< /collapse >}}
 

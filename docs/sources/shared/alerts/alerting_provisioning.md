@@ -603,13 +603,14 @@ To reset the notification policy tree to the default and unlock it for editing i
 
 ## Data source-managed resources
 
+The Alerting Provisioning HTTP API only manages Grafana-managed resources. It doesn't manage alert rules stored in a data source, or the configuration of Alertmanagers other than the Grafana Alertmanager.
+
 {{< admonition type="caution" >}}
-Pre-provisioned Loki and Prometheus data source-managed alerts have been deprecated in Grafana Cloud and can not be created in new stacks.
-New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Datasource-managed alerting (DMA) is not provisioned in new stacks. Existing stacks are not affected.
+In Grafana Cloud, data source-managed alerts for the default Loki and Prometheus data sources are deprecated. New Grafana Cloud stacks use Grafana-managed alerts by default, and Grafana Labs doesn't provision data source-managed alerting or the Grafana Cloud Alertmanager for them. Existing stacks aren't affected.
 
-This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
+If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts. For more information, refer to [Legacy data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/data-source-managed-alerts/).
 
-Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
+To convert data source-managed alert rules into Grafana-managed alert rules, refer to [Import data source-managed rules to Grafana-managed rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
 {{< /admonition >}}
 
 ## Paths
