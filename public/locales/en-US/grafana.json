@@ -3033,6 +3033,7 @@
         "confirm": "Restore",
         "conflict": "A rule with this name already exists.",
         "error": "Failed to restore rule. Please try again.",
+        "recording-title": "Restore recording rule",
         "restoring": "Restoring…",
         "title": "Restore alert rule"
       },
