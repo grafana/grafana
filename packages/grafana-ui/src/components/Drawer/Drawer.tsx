@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { FloatingFocusManager, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
+import { usePreventScroll } from '@react-aria/overlays';
 import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
@@ -105,6 +106,7 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
+  usePreventScroll();
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;
