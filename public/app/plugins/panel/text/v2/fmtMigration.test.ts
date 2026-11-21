@@ -380,6 +380,38 @@ describe('migrateFmt', () => {
     });
 
     it.each([
+      { desc: 'in text', content: '{{#each data as |display|}}[{{fmt.cpu}}]{{/each}}', read: 'fmt.cpu' },
+      {
+        desc: 'on the block param',
+        content: '{{#each data as |display|}}{{display.fmt.cpu}}{{/each}}',
+        read: 'display.fmt.cpu',
+      },
+      {
+        desc: 'in a helper argument further in',
+        content: '{{#with this as |display|}}{{#each data}}{{#if (eq fmt.cpu "")}}-{{/if}}{{/each}}{{/with}}',
+        read: 'fmt.cpu',
+      },
+    ])('leaves reads where a block param named display hides the helper: $desc', ({ content, read }) => {
+      const migration = migrate(content);
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read, reason: 'helper' },
+      ]);
+    });
+
+    it('converts the reads outside the block param that hides the helper', () => {
+      const content = '{{#each data as |display|}}{{fmt.cpu}}{{/each}}{{#each data}}{{fmt.cpu}}{{/each}}';
+
+      expect(migrate(content).content).toBe(
+        '{{#each data as |display|}}{{fmt.cpu}}{{/each}}{{#each data}}{{display "cpu"}}{{/each}}'
+      );
+      expect(render('{{#each data as |display|}}{{display "cpu"}};{{/each}}', fleet())).toBe(
+        '[object Object];[object Object];[object Object];'
+      );
+    });
+
+    it.each([
       { desc: 'a call', content: '{{#each data}}{{#with (display row=this)}}[{{fmt.cpu}}]{{/with}}{{/each}}' },
       { desc: 'a block', content: '{{#each data}}{{#display row=this}}[{{fmt.cpu}}]{{/display}}{{/each}}' },
     ])('leaves reads under display without a field name, which gives the field named display: $desc', ({ content }) => {

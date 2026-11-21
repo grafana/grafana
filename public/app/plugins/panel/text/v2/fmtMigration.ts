@@ -6,7 +6,7 @@ import { compileProgram } from './handlebars';
 import { isScoped } from './handlebarsInterpreter';
 import { escapeCommentedTemplates, interpretsHandlebars } from './renderContent';
 
-export type FmtReadReason = 'namespace' | 'expression' | 'row' | 'shadowed' | 'name';
+export type FmtReadReason = 'namespace' | 'helper' | 'expression' | 'row' | 'shadowed' | 'name';
 
 interface FmtRead {
   from: number;
@@ -194,8 +194,12 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     name: string,
     row: ReturnType<typeof getRowArgument>,
     position: Position,
-    chained: boolean
+    chained: boolean,
+    scope: Scope
   ): FmtReadReason | undefined {
+    if (findParam(scope, HELPER) !== undefined) {
+      return 'helper';
+    }
     if (chained || position === 'callee') {
       return 'expression';
     }
@@ -211,11 +215,17 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     return undefined;
   }
 
-  function record(path: hbs.AST.PathExpression, read: Read, position: Position, statement?: hbs.AST.MustacheStatement) {
+  function record(
+    path: hbs.AST.PathExpression,
+    read: Read,
+    scope: Scope,
+    position: Position,
+    statement?: hbs.AST.MustacheStatement
+  ) {
     const name = path.parts[read.index + 1];
     const row = getRowArgument(path, read.index);
     const chained = read.index + 2 < path.parts.length;
-    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained);
+    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained, scope);
 
     if (name === undefined || reason) {
       unconverted.push({ ...rangeOf(path), reason: reason ?? 'namespace' });
@@ -265,7 +275,7 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     const { value, read } = walk(path, scope);
 
     if (read) {
-      record(path, read, position, statement);
+      record(path, read, scope, position, statement);
     }
 
     return value;
