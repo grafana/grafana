@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { createDataFrame, type Field, FieldType, makeTimeRange } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/ui';
+import { ZERO_DURATION_END_OFFSET } from 'app/core/components/TimelineChart/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 
@@ -42,6 +43,43 @@ describe('StateTimelineTooltip', () => {
       expect(screen.queryByText('100')).toBeInTheDocument();
       expect(screen.queryByText('Duration')).toBeInTheDocument();
       expect(screen.queryByText('40s')).toBeInTheDocument(); // 100000 - 60000 = 40000 ms = 40s
+    });
+
+    describe('for a state that ends when it starts', () => {
+      const renderState = (endOffset: number) => {
+        const zeroSeries = createDataFrame({
+          fields: [
+            { ...timeField, values: [1000, 1000 + endOffset, 60000] },
+            { ...valueField, values: [5, null, 7] },
+          ],
+        });
+        render(
+          <StateTimelineTooltip
+            series={zeroSeries}
+            seriesIdx={1}
+            dataIdxs={[null, 0]}
+            mode={TooltipDisplayMode.Single}
+            timeRange={timeRange}
+            withDuration
+            dataLinks={[]}
+            isPinned={false}
+          />
+        );
+      };
+
+      it('shows a zero duration that ends at its start time', () => {
+        renderState(ZERO_DURATION_END_OFFSET);
+
+        expect(screen.queryByText('0ms')).toBeInTheDocument();
+        expect(screen.queryByText(/1000 -\s+1000$/)).toBeInTheDocument();
+      });
+
+      it('still shows a 1ms duration for a state that lasts 1ms', () => {
+        renderState(1);
+
+        expect(screen.queryByText('1ms')).toBeInTheDocument();
+        expect(screen.queryByText(/1000 -\s+1001$/)).toBeInTheDocument();
+      });
     });
 
     it('correctly renders the final duration in a state timeline based on the range', () => {

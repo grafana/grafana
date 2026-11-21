@@ -334,6 +334,13 @@ function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undef
   };
 }
 
+/**
+ * Gap between the start of a state that ends when it starts and the null that ends it.
+ * Time values are whole milliseconds, so a gap this size only comes from such a state, and the
+ * tooltip reports it as zero. 0.5 is exactly representable at timestamp scale, so the gap is exact.
+ */
+export const ZERO_DURATION_END_OFFSET = 0.5;
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
@@ -380,9 +387,22 @@ export function prepareTimelineFields(
         fields: frame.fields.filter((f, i) => i !== endFieldIdx),
       };
 
+      // A state that ends when it starts would share its row with its own start after the join,
+      // losing the null that ends it, so it would last until the next state. End it
+      // ZERO_DURATION_END_OFFSET later instead, which renders as the narrowest possible box.
+      const startValues = frame.fields[startFieldIdx].values;
+      const endField = frame.fields[endFieldIdx];
       let endFrame: DataFrame = {
         length: frame.length,
-        fields: [frame.fields[endFieldIdx]],
+        fields: [
+          {
+            ...endField,
+            values: endField.values.map((end, i) => {
+              const start = startValues[i];
+              return end != null && start != null && end <= start ? start + ZERO_DURATION_END_OFFSET : end;
+            }),
+          },
+        ],
       };
 
       frame = outerJoinDataFrames({
