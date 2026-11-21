@@ -4,6 +4,7 @@ import type uPlot from 'uplot';
 
 import {
   createDataFrame,
+  type DataFrame,
   DataFrameType,
   DataTopic,
   dateTime,
@@ -16,7 +17,13 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AxisPlacement, HeatmapCellLayout, ScaleDistribution, TooltipDisplayMode } from '@grafana/schema';
+import {
+  AxisPlacement,
+  HeatmapCellLayout,
+  ScaleDistribution,
+  type ScaleDistributionConfig,
+  TooltipDisplayMode,
+} from '@grafana/schema';
 import { applyDefaultUPlotAxisMeasureTextMock } from '@grafana/test-utils/canvas';
 import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 import { LinearBucketData, LinearBucketTimeRange } from 'app/plugins/panel/heatmap/mocks/LinearBucketData';
@@ -524,6 +531,161 @@ describe('HeatmapPanel (canvas)', () => {
         { timeRange, width: compactCanvas.width, height: compactCanvas.height }
       );
       await assertCanvasOutput(compactCanvas);
+    });
+
+    describe('y axis range', () => {
+      /** Cells for the given [yMin, yMax] buckets, at two times so the panel has an x extent. */
+      function cellsFrame(buckets: Array<[number, number]>) {
+        const times = [1000, 2000];
+        return toDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields: [
+            { name: 'xMax', type: FieldType.time, values: times.flatMap((t) => buckets.map(() => t)) },
+            { name: 'yMin', type: FieldType.number, values: times.flatMap(() => buckets.map(([min]) => min)) },
+            { name: 'yMax', type: FieldType.number, values: times.flatMap(() => buckets.map(([, max]) => max)) },
+            // a distinct count per cell, so each cell is filled on its own rather than batched by colour
+            {
+              name: 'count',
+              type: FieldType.number,
+              values: times.flatMap((_, t) => buckets.map((_, i) => t * buckets.length + i + 1)),
+            },
+          ],
+        });
+      }
+
+      async function renderedYRange(series: DataFrame, yBucketScale: ScaleDistributionConfig) {
+        renderHeatmapPanel({ series: [series] }, { rowsFrame: { yBucketScale } }, { timeRange });
+        await assertUPlotReady();
+        const [, yScale] = Object.entries(uPlotInstance!.scales).find(([key]) => key.startsWith('y_'))!;
+        return [yScale.min, yScale.max];
+      }
+
+      /** Consecutive buckets from their edges: edges(0, 10, 20) is 0-10 and 10-20. */
+      const edges = (...bounds: number[]) => bounds.slice(1).map((max, i): [number, number] => [bounds[i], max]);
+
+      const startsAtZero = edges(0, 10, 20, 30);
+      const linearFromOne = edges(1, 11, 21, 31);
+      const exponentialFromZero = edges(0, 1, 2, 4, 8);
+      const crossesZero = edges(-20, -10, 0, 10, 20);
+      const unevenFromZero = edges(0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10);
+      // a Prometheus native histogram, whose zero bucket spans +/- its threshold
+      const zeroThreshold = 2.938735877055719e-39;
+      const nativeHistogram: Array<[number, number]> = [
+        [-zeroThreshold, zeroThreshold],
+        ...edges(0.001, 0.00119, 0.00141, 0.00168),
+      ];
+
+      const linear = { type: ScaleDistribution.Linear };
+      const log2 = { type: ScaleDistribution.Log, log: 2 };
+      const log10 = { type: ScaleDistribution.Log, log: 10 };
+      const symlog = { type: ScaleDistribution.Symlog, log: 2, linearThreshold: 1 };
+
+      it.each<[string, Array<[number, number]>, ScaleDistributionConfig, number[]]>([
+        ['buckets from 0, linear: ends at the top bucket', startsAtZero, linear, [0, 30]],
+        ['buckets from 0, log 2: gives the 0-10 bucket room', startsAtZero, log2, [4, 32]],
+        ['buckets from 0, log 10: shows the 0-10 bucket', startsAtZero, log10, [1, 100]],
+        ['buckets from 0, symlog: starts at 0', startsAtZero, symlog, [0, 32]],
+        ['linear buckets from 1, linear: no guessed top', linearFromOne, linear, [1, 31]],
+        ['linear buckets from 1, log 2: no guessed top', linearFromOne, log2, [1, 32]],
+        ['exponential from 0, log 2: shows the 0-1 bucket', exponentialFromZero, log2, [0.5, 8]],
+        ['exponential from 0, log 10: shows the 0-1 bucket', exponentialFromZero, log10, [0.1, 10]],
+        ['crossing 0, linear: reaches the top bucket', crossesZero, linear, [-20, 20]],
+        ['crossing 0, log 2: draws the positive buckets', crossesZero, log2, [4, 32]],
+        ['crossing 0, symlog: frames both signs', crossesZero, symlog, [-32, 32]],
+        ['native histogram, log 2: leaves the zero bucket off', nativeHistogram, log2, [2 ** -10, 2 ** -9]],
+        ['native histogram, log 10: leaves the zero bucket off', nativeHistogram, log10, [0.001, 0.01]],
+        ['uneven from 0, log 2: gives the first bucket room', unevenFromZero, log2, [2 ** -9, 16]],
+        ['uneven from 0, log 10: snapping already leaves room', unevenFromZero, log10, [0.001, 10]],
+        ['all negative, log 2: an empty step instead of failing', edges(-30, -20, -10), log2, [1, 2]],
+      ])('%s', async (_, buckets, scale, range) => {
+        expect(await renderedYRange(cellsFrame(buckets), scale)).toEqual(range);
+      });
+
+      // A classic Prometheus histogram arrives as heatmap-rows with le labels. An explicit Y bucket
+      // scale turns it into cells with yMin/yMax, and its +Inf bucket parses to NaN, so the axis has
+      // to end at the last finite bound: the old guess left the top half of a linear axis empty.
+      const prometheusLes = ['0.005', '0.01', '0.025', '0.05', '0.1', '0.25', '0.5', '1', '2.5', '5', '10', '+Inf'];
+      const classicHistogram = () =>
+        toDataFrame({
+          meta: { type: DataFrameType.HeatmapRows },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            ...prometheusLes.map((le, i) => ({
+              name: le,
+              type: FieldType.number,
+              labels: { le },
+              values: [2 * i + 1, 2 * i + 2],
+            })),
+          ],
+        });
+
+      it.each<[string, ScaleDistributionConfig, number[]]>([
+        ['classic Prometheus histogram, linear: ends at the last finite bound', linear, [0.005, 10]],
+        ['classic Prometheus histogram, log 2: ends at the last finite bound', log2, [2 ** -8, 16]],
+        ['classic Prometheus histogram, log 10: no empty top decade', log10, [0.001, 10]],
+      ])('%s', async (_, scale, range) => {
+        expect(await renderedYRange(classicHistogram(), scale)).toEqual(range);
+      });
+
+      // The 0-1 bucket reaches log(0), so its rect runs off the bottom of the plot and the clip trims
+      // it. With room it shows one octave like every other bucket; it used to show none at all.
+      it('draws every bucket of an exponential histogram from 0 the same height on a log scale', async () => {
+        await renderedYRange(cellsFrame(exponentialFromZero), log2);
+
+        const { top, height } = uPlotInstance!.bbox;
+        const visibleHeights = uPlotInstance!.ctx
+          .__getEvents()
+          .filter((event) => event.type === 'fill' && event.props.path?.length === 1)
+          .map((event) => {
+            const cell = event.props.path[0].props;
+            return Math.min(cell.y + cell.height, top + height) - Math.max(cell.y, top);
+          });
+
+        expect(visibleHeights).toHaveLength(8);
+        expect(Math.min(...visibleHeights)).toBeGreaterThan(Math.max(...visibleHeights) - 1);
+      });
+    });
+
+    /** Buckets 10-20 and 20-30: equal widths, so a linear y scale draws them the same height. */
+    function createEvenlySpacedCellsFrame() {
+      return toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+          { name: 'yMin', type: FieldType.number, values: [10, 20, 10, 20] },
+          { name: 'yMax', type: FieldType.number, values: [20, 30, 20, 30] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+    }
+
+    /** Heights of the cell tiles the heatmap layer filled, rounded past float noise. */
+    function filledCellHeights() {
+      return uPlotInstance!.ctx
+        .__getEvents()
+        .filter((event) => event.type === 'fill' && event.props.path?.length === 1)
+        .map((event) => Math.round(event.props.path[0].props.height * 100) / 100);
+    }
+
+    it('keeps the log fallback when no Y bucket scale is set', async () => {
+      renderHeatmapPanel({ series: [createEvenlySpacedCellsFrame()] }, undefined, { timeRange });
+      await assertUPlotReady();
+
+      // Equal-width buckets come out unequal on the log scale native histograms want.
+      expect(new Set(filledCellHeights()).size).toBe(2);
+    });
+
+    it('draws equal-width buckets at equal heights when the Y bucket scale is linear', async () => {
+      renderHeatmapPanel(
+        { series: [createEvenlySpacedCellsFrame()] },
+        { rowsFrame: { yBucketScale: { type: ScaleDistribution.Linear } } },
+        { timeRange }
+      );
+      await assertUPlotReady();
+
+      const heights = filledCellHeights();
+      expect(heights).toHaveLength(4);
+      expect(new Set(heights).size).toBe(1);
     });
   });
   describe('Exemplars', () => {

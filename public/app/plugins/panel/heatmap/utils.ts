@@ -253,24 +253,35 @@ export function prepConfig(opts: PrepConfigOpts) {
             const yMinValues = Array.isArray(yMinData) ? yMinData : [];
             const yMaxValues = Array.isArray(yMaxData) ? yMaxData : [];
 
-            // uPlot auto-ranges from the yMin facet data, so we grow by one bucket factor.
-            // When yMin values are all 0, multiplicative expansion stays 0; fall back to max(yMax).
-            const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-            dataMax *= bucketFactor;
-            if (dataMax <= 0) {
-              dataMax = yMaxValues.reduce<number>((acc, v) => (typeof v === 'number' && v > acc ? v : acc), 1);
+            // The cells carry explicit bucket bounds, so frame the buckets themselves. uPlot only
+            // auto-ranges the yMin facet, and on a log scale it also drops values <= 0, so its
+            // dataMin and dataMax miss the top bucket's ceiling and any bucket that reaches 0.
+            const extent = sparseBucketExtent(yMinValues, yMaxValues);
+            const lo = extent?.min ?? dataMin;
+            let hi = extent?.max ?? dataMax;
+            if (!(hi > lo)) {
+              // a single value, like one bucket with yMin = yMax = 0, still needs a span to draw into
+              hi = lo === 0 ? 1 : lo + Math.abs(lo);
             }
 
             let scaleMin: number | null, scaleMax: number | null;
 
             const isLogScale =
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
-            if (isLogScale) {
-              // Guard against non-positive values — log(0) = -Infinity causes uPlot to crash in logAxisSplits.
-              const safeMin = dataMin > 0 ? dataMin : dataMax / Math.pow(scaleLog, 2);
-              [scaleMin, scaleMax] = uPlot.rangeLog(safeMin, dataMax, scaleLog, true);
+            if (scaleDistribution === ScaleDistribution.Log) {
+              // log(0) crashes uPlot's logAxisSplits, so the floor is always positive. With no positive
+              // bound at all nothing is drawable, so show a single empty step.
+              const floor = extent ? sparseLogFloor(extent, scaleLog) : lo > 0 ? lo : null;
+              [scaleMin, scaleMax] =
+                floor != null && hi > 0
+                  ? uPlot.rangeLog(floor, hi, scaleLog, true)
+                  : uPlot.rangeLog(1, scaleLog, scaleLog, true);
+            } else if (scaleDistribution === ScaleDistribution.Symlog) {
+              // symlog can show 0 and negative values, so it frames the whole extent, the same way the
+              // shared UPlotScaleBuilder ranges distr 4
+              [scaleMin, scaleMax] = uPlot.rangeAsinh(lo, hi, scaleLog, true);
             } else {
-              [scaleMin, scaleMax] = [dataMin, dataMax];
+              [scaleMin, scaleMax] = [lo, hi];
             }
 
             let { min: explicitMin, max: explicitMax } = yAxisConfig;
@@ -899,29 +910,86 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 }
 
 /**
- * Calculates a bucket expansion factor from yMin/yMax data arrays.
- * Used to expand the y-axis range for sparse heatmaps where uPlot only auto-ranges from yMin.
+ * Reads the extent of a sparse heatmap's buckets from their explicit bounds, pairing each cell's
+ * yMin with its yMax. Besides the lowest and highest bound it records the two values a log axis
+ * needs: the lowest positive floor, and the lowest ceiling of a bucket that reaches down to 0.
  *
  * @param yMinValues - Array of yMin bucket boundary values
- * @param yMaxValues - Array of yMax bucket boundary values
- * @returns A valid expansion factor, or 1 as fallback
+ * @param yMaxValues - Array of yMax bucket boundary values, index-aligned with yMinValues
+ * @returns The extent, or null when neither array holds a finite number
  */
-export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
-  // Guard against invalid bucket factors (e.g., division by zero when first bucket starts at 0)
-  for (let i = 0; i < yMinValues.length; i++) {
-    const yMin = yMinValues[i];
-    const yMax = yMaxValues[i];
-    if (typeof yMin !== 'number' || typeof yMax !== 'number') {
-      continue;
+export function sparseBucketExtent(yMinValues: unknown[], yMaxValues: unknown[]): SparseBucketExtent | null {
+  const finite = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+  let min = Infinity;
+  let max = -Infinity;
+  let positiveFloor = Infinity;
+  let zeroCeiling = Infinity;
+
+  for (let i = 0; i < Math.max(yMinValues.length, yMaxValues.length); i++) {
+    const floor = finite(yMinValues[i]);
+    const ceiling = finite(yMaxValues[i]);
+    for (const bound of [floor, ceiling]) {
+      if (bound != null) {
+        min = Math.min(min, bound);
+        max = Math.max(max, bound);
+      }
     }
-    const factor = yMax / yMin;
-    // finite checks for divide-by-zero
-    if (Number.isFinite(factor) && factor > 0) {
-      return factor;
+    if (floor != null && floor > 0) {
+      positiveFloor = Math.min(positiveFloor, floor);
+    } else if (floor != null && ceiling != null && ceiling > 0) {
+      zeroCeiling = Math.min(zeroCeiling, ceiling);
     }
   }
 
-  return 1;
+  if (min > max) {
+    return null;
+  }
+
+  return {
+    min,
+    max,
+    positiveFloor: Number.isFinite(positiveFloor) ? positiveFloor : null,
+    zeroCeiling: Number.isFinite(zeroCeiling) ? zeroCeiling : null,
+  };
+}
+
+export interface SparseBucketExtent {
+  min: number;
+  max: number;
+  /** Lowest yMin above 0 */
+  positiveFloor: number | null;
+  /** Lowest yMax of a bucket whose yMin is 0 or below */
+  zeroCeiling: number | null;
+}
+
+/**
+ * Picks where a sparse heatmap's log y axis starts, since only positive values exist there.
+ * A bucket that reaches 0 and runs up to the first positive bucket gets at least half an axis step
+ * of height: one step below the snapped floor when snapping alone leaves less. A bucket that
+ * reaches 0 but ends far below every other bucket, like a Prometheus native histogram's zero
+ * bucket, is left off instead, because reaching its threshold would squash every real bucket.
+ *
+ * @param extent - The buckets' extent, from sparseBucketExtent
+ * @param base - The log base of the axis
+ * @returns The axis floor, or null when no bound is positive
+ */
+export function sparseLogFloor(extent: SparseBucketExtent, base: 2 | 10): number | null {
+  const { min, positiveFloor, zeroCeiling } = extent;
+
+  if (min > 0) {
+    return min;
+  }
+
+  const touchesBuckets = zeroCeiling != null && (positiveFloor == null || zeroCeiling >= positiveFloor);
+  if (!touchesBuckets) {
+    return positiveFloor;
+  }
+
+  const bound = positiveFloor == null ? zeroCeiling : Math.min(zeroCeiling, positiveFloor);
+  const log = base === 2 ? Math.log2 : Math.log10;
+  const snapped = base ** Math.floor(log(bound));
+  return log(bound / snapped) >= 0.5 ? snapped : snapped / base;
 }
 
 export const boundedMinMax = (

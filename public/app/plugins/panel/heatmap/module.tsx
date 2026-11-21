@@ -1,13 +1,6 @@
 import { type ChangeEvent } from 'react';
 
-import {
-  type DataFrame,
-  DataFrameType,
-  FieldConfigProperty,
-  FieldType,
-  identityOverrideProcessor,
-  PanelPlugin,
-} from '@grafana/data';
+import { type DataFrame, FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -71,7 +64,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     const opts = context.options ?? defaultOptions;
 
     let isOrdinalY = false;
-    const isHeatmapCells = context.data.some((frame) => frame.meta?.type === DataFrameType.HeatmapCells);
 
     if (context.data.length > 0) {
       try {
@@ -107,7 +99,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
-    if (!opts.calculate && !isHeatmapCells) {
+    if (!opts.calculate) {
       builder.addCustomEditor({
         id: 'rowsFrame-yBucketScale',
         path: 'rowsFrame.yBucketScale',
