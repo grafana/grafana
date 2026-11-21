@@ -7,7 +7,7 @@ import { ThresholdsMode, VariableFormatID, type MatcherScope } from '@grafana/sc
 import { NullValueMode } from '../../src/types/data';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { guessFieldTypeForField } from '../dataframe/guessFieldType';
-import { createDataFrame } from '../dataframe/processDataFrame';
+import { createDataFrame, isDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
 import { isVarMappingProp, unwrapVarMappingPropId } from '../panel/getPanelOptionsWithDefaults';
 import { asHexString } from '../themes/colorManipulator';
@@ -337,6 +337,28 @@ function calculateRange(
   globalRange: NumericRange | undefined,
   data: DataFrame[]
 ): { range?: NumericRange; newGlobalRange?: NumericRange } {
+  // A frame field's range describes its sparklines, so it must not become the global range of number fields.
+  if (field.type === FieldType.frame) {
+    if (isNumber(config.min) && isNumber(config.max)) {
+      return {
+        range: { min: config.min, max: config.max, delta: config.max - config.min },
+        newGlobalRange: globalRange,
+      };
+    }
+    if (!config.fieldMinMax) {
+      return { newGlobalRange: globalRange };
+    }
+    // One range across the frames in every row lets the sparklines in a column share a scale.
+    const sparklineRange = findSparklineMinMax(field.values, config.nullValueMode);
+    const min = config.min ?? sparklineRange.min;
+    const max = config.max ?? sparklineRange.max;
+    // With nothing to scale to, leave the range unset so each cell falls back to its own row's range.
+    if (min == null || max == null) {
+      return { newGlobalRange: globalRange };
+    }
+    return { range: { min, max, delta: max - min }, newGlobalRange: globalRange };
+  }
+
   // If range is defined with min/max, use it
   if (isNumber(config.min) && isNumber(config.max)) {
     const range = { min: config.min, max: config.max, delta: config.max - config.min };
@@ -361,6 +383,48 @@ function calculateRange(
   const min = config.min ?? newGlobalRange!.min;
   const max = config.max ?? newGlobalRange!.max;
   return { range: { min, max, delta: max! - min! }, newGlobalRange };
+}
+
+// Only counts what the Table sparkline cell draws: the first number field of frames that also have a time
+// field, with non-finite values treated as null.
+function findSparklineMinMax(frames: unknown[], nullValueMode?: NullValueMode): NumericRange {
+  let min = Infinity;
+  let max = -Infinity;
+
+  for (const frame of frames) {
+    if (!isDataFrame(frame) || !frame.fields.some((f) => resolveFieldType(f) === FieldType.time)) {
+      continue;
+    }
+    const valueField = frame.fields.find((f) => resolveFieldType(f) === FieldType.number);
+    if (!valueField) {
+      continue;
+    }
+    const nullAsZero = (valueField.config.nullValueMode ?? nullValueMode) === NullValueMode.AsZero;
+
+    for (const v of valueField.values) {
+      let value = Number.isFinite(v) ? v : null;
+      if (value === null && nullAsZero) {
+        value = 0;
+      }
+      if (value !== null) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      }
+    }
+  }
+
+  const rangeMin = min === Infinity ? null : min;
+  const rangeMax = max === -Infinity ? null : max;
+  return { min: rangeMin, max: rangeMax, delta: (rangeMax ?? 0) - (rangeMin ?? 0) };
+}
+
+// Nested field types are only guessed later, when applyFieldOverrides recurses into the frames, so guess them the
+// same way here to count the fields the sparkline will draw.
+function resolveFieldType(field: Field): FieldType {
+  if (!field.type || field.type === FieldType.other) {
+    return guessFieldTypeForField(field) ?? field.type;
+  }
+  return field.type;
 }
 
 // decimals -> cache mapping, -1 is unspecified decimals. pre-init caches for up to 15 decimals
