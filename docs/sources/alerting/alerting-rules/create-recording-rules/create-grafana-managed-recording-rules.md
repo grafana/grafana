@@ -132,3 +132,13 @@ Optionally, you can add custom labels to the resulting metric by selecting exist
 Click **Save rule** or **Save rule and exit** to save the rule.
 
 Once saved, the new recording metric is available for use in dashboards and alert rules.
+
+## Delete a recording rule
+
+Deleting a Grafana-managed recording rule stops its evaluations. No new data points are written to the recorded metric from that point on.
+
+Data points that the rule already wrote remain in the target data source. Grafana does not remove them. How long they are kept depends on the retention settings of that data source.
+
+Dashboards, alert rules, and other recording rules that query the recorded metric stop receiving new data. Queries against the recorded metric continue to return the historical data points still stored in the target data source, within its retention period.
+
+A deleted rule is recoverable from the **Recently deleted** page by a user with an admin role.
