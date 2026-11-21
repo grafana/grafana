@@ -22,6 +22,65 @@ func (_m *MockNamespaceStatsReader) EXPECT() *MockNamespaceStatsReader_Expecter 
 	return &MockNamespaceStatsReader_Expecter{mock: &_m.Mock}
 }
 
+// ManagedStats provides a mock function with given fields: ctx, namespace
+func (_m *MockNamespaceStatsReader) ManagedStats(ctx context.Context, namespace string) ([]v0alpha1.ManagerStats, error) {
+	ret := _m.Called(ctx, namespace)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ManagedStats")
+	}
+
+	var r0 []v0alpha1.ManagerStats
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]v0alpha1.ManagerStats, error)); ok {
+		return rf(ctx, namespace)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []v0alpha1.ManagerStats); ok {
+		r0 = rf(ctx, namespace)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.ManagerStats)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, namespace)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockNamespaceStatsReader_ManagedStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ManagedStats'
+type MockNamespaceStatsReader_ManagedStats_Call struct {
+	*mock.Call
+}
+
+// ManagedStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - namespace string
+func (_e *MockNamespaceStatsReader_Expecter) ManagedStats(ctx interface{}, namespace interface{}) *MockNamespaceStatsReader_ManagedStats_Call {
+	return &MockNamespaceStatsReader_ManagedStats_Call{Call: _e.mock.On("ManagedStats", ctx, namespace)}
+}
+
+func (_c *MockNamespaceStatsReader_ManagedStats_Call) Run(run func(ctx context.Context, namespace string)) *MockNamespaceStatsReader_ManagedStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockNamespaceStatsReader_ManagedStats_Call) Return(_a0 []v0alpha1.ManagerStats, _a1 error) *MockNamespaceStatsReader_ManagedStats_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockNamespaceStatsReader_ManagedStats_Call) RunAndReturn(run func(context.Context, string) ([]v0alpha1.ManagerStats, error)) *MockNamespaceStatsReader_ManagedStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Stats provides a mock function with given fields: ctx, namespace
 func (_m *MockNamespaceStatsReader) Stats(ctx context.Context, namespace string) (*v0alpha1.ResourceStats, error) {
 	ret := _m.Called(ctx, namespace)

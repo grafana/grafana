@@ -16,6 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -23,6 +24,33 @@ import (
 // managedKind is the manager kind reported by CountManagedObjects (e.g. "repo"),
 // which is what the collector keys stats.managed_by.<kind>.count on.
 const managedKind = "repo"
+
+// countIndexed counts through the index-backed lister, as the API server wires it.
+func countIndexed(unified resource.ResourceClient) ManagedCounter {
+	return resources.NewResourceLister(unified, nil, nil).ManagedStats
+}
+
+// Every resource a manager counts goes into its kind's total, including the externally stored
+// kinds the counter adds next to the index's rows.
+func TestMetricCollector_SumsEveryResourceOfAManager(t *testing.T) {
+	countManaged := func(_ context.Context, namespace string) ([]provisioning.ManagerStats, error) {
+		require.Equal(t, "default", namespace)
+		return []provisioning.ManagerStats{
+			{Kind: managedKind, Identity: "a", Stats: []provisioning.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+				{Group: "playlist.grafana.app", Resource: "playlists", Count: 2},
+			}},
+			{Kind: managedKind, Identity: "b", Stats: []provisioning.ResourceCount{
+				{Group: "playlist.grafana.app", Resource: "playlists", Count: 1},
+			}},
+		}, nil
+	}
+	repoLister := func(context.Context) ([]provisioning.Repository, error) { return nil, nil }
+
+	m, err := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, countManaged)(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 6, m["stats.managed_by."+managedKind+".count"])
+}
 
 func managedCount(kind string, count int64) *resourcepb.CountManagedObjectsResponse {
 	return &resourcepb.CountManagedObjectsResponse{
@@ -59,7 +87,7 @@ func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
 				t.Fatal("must not list repositories after count failure")
 				return nil, nil
 			}
-			fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
+			fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, countIndexed(unified))
 			metrics, err := fn(context.Background())
 			require.ErrorContains(t, err, "count managed objects on namespace default:")
 			require.Empty(t, metrics)
@@ -95,7 +123,7 @@ func TestMetricCollector_FallbackDefaultNamespace(t *testing.T) {
 		}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, countIndexed(unified))
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -134,7 +162,7 @@ func TestMetricCollector_AggregatesAcrossNamespaces(t *testing.T) {
 		return []string{"default", "org-2"}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, repoLister, nil, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, repoLister, nil, countIndexed(unified))
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -191,7 +219,7 @@ func TestMetricCollector_RepositoryDimensions(t *testing.T) {
 		}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, countIndexed(unified))
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -258,7 +286,7 @@ func TestMetricCollector_ConnectionStats(t *testing.T) {
 		}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, connLister, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, connLister, countIndexed(unified))
 
 	m, err := fn(context.Background())
 	require.NoError(t, err)
@@ -283,7 +311,7 @@ func TestMetricCollector_ErrorFailFast(t *testing.T) {
 		return []string{"default"}, nil
 	}
 
-	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, nil, nil, unified)
+	fn := MetricCollector(tracing.NewNoopTracerService(), namespaces, nil, nil, countIndexed(unified))
 
 	_, err := fn(context.Background())
 	require.Error(t, err)

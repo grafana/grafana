@@ -1162,7 +1162,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
+			var countManaged usage.ManagedCounter
+			if b.unified != nil {
+				countManaged = b.namespaceStats.ManagedStats
+			}
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, countManaged)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)

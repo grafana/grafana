@@ -582,6 +582,25 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 		require.Equal(t, []provisioning.ResourceCount{{Group: playlistGVK.Group, Resource: "playlists", Count: 1}}, got)
 	})
 
+	t.Run("managed stats count the kind for every manager", func(t *testing.T) {
+		lister, store, _ := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{Namespace: "default"}).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{repoRow("dashboard.grafana.app", "dashboards", 3)},
+		}, nil).Once()
+
+		got, err := lister.ManagedStats(context.Background(), "default")
+		require.NoError(t, err)
+		require.ElementsMatch(t, []provisioning.ManagerStats{
+			{Kind: utils.ManagerKindRepo, Identity: repository, Stats: []provisioning.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+			{Kind: utils.ManagerKindRepo, Identity: "another-repo", Stats: []provisioning.ResourceCount{
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+		}, got)
+	})
+
 	t.Run("namespace stats count the kind's instance, managed and unmanaged objects", func(t *testing.T) {
 		lister, store, _ := externalPlaylists(t, repository)
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{

@@ -32,11 +32,13 @@ type ResourceLister interface {
 }
 
 // NamespaceStatsReader counts every manager in the namespace alongside the instance and unmanaged
-// totals, which only the API server's own stats route reads.
+// totals, which only the API server's own stats route and usage stats read.
 //
 //go:generate mockery --name NamespaceStatsReader --structname MockNamespaceStatsReader --inpackage --filename namespace_stats_reader_mock.go --with-expecter
 type NamespaceStatsReader interface {
 	Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error)
+	// ManagedStats counts what every manager in the namespace manages, without the instance totals.
+	ManagedStats(ctx context.Context, namespace string) ([]provisioning.ManagerStats, error)
 }
 
 type ResourceStore interface {
@@ -329,26 +331,14 @@ func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersion
 
 // RepositoryStats implements ResourceLister.
 func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
-	var counts *resourcepb.CountManagedObjectsResponse
-	var ext externalStats
-	g, gctx := errgroup.WithContext(ctx)
-	g.Go(func() (err error) {
-		counts, err = o.store.CountManagedObjects(gctx, &resourcepb.CountManagedObjectsRequest{
-			Namespace: namespace,
-			Kind:      string(utils.ManagerKindRepo),
-			Id:        repository,
-		})
-		return err
+	stats, err := o.countManaged(ctx, &resourcepb.CountManagedObjectsRequest{
+		Namespace: namespace,
+		Kind:      string(utils.ManagerKindRepo),
+		Id:        repository,
 	})
-	g.Go(func() (err error) {
-		ext, err = o.countExternal(gctx, namespace)
-		return err
-	})
-	if err := g.Wait(); err != nil {
+	if err != nil {
 		return nil, err
 	}
-
-	stats := managedStats(counts, ext)
 	// Kind narrows the request but cannot be relied on to have been applied: search can run at an
 	// older deployment cadence than this caller, and a server predating grafana/grafana#137504
 	// returns every manager sharing the id -- which the bootstrap repository does with its
@@ -359,6 +349,34 @@ func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespac
 		}
 	}
 	return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
+}
+
+// ManagedStats implements NamespaceStatsReader.
+func (o *ResourceListerFromSearch) ManagedStats(ctx context.Context, namespace string) ([]provisioning.ManagerStats, error) {
+	stats, err := o.countManaged(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, err
+	}
+	return stats.Managed, nil
+}
+
+// countManaged reads the index's managed counts and the external counts concurrently.
+func (o *ResourceListerFromSearch) countManaged(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*provisioning.ResourceStats, error) {
+	var counts *resourcepb.CountManagedObjectsResponse
+	var ext externalStats
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		counts, err = o.store.CountManagedObjects(gctx, req)
+		return err
+	})
+	g.Go(func() (err error) {
+		ext, err = o.countExternal(gctx, req.Namespace)
+		return err
+	})
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	return managedStats(counts, ext), nil
 }
 
 // externalStats holds the counts of the externally stored kinds, as index rows. Index rows for

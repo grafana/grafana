@@ -15,13 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // NamespaceLister returns the set of namespaces to collect provisioning usage
 // stats for. In a single-tenant deployment this is one namespace per org.
 type NamespaceLister func(ctx context.Context) ([]string, error)
+
+// ManagedCounter counts what every manager in a namespace manages, including
+// the kinds stored outside unified storage.
+type ManagedCounter func(ctx context.Context, namespace string) ([]provisioning.ManagerStats, error)
 
 // MetricCollector returns the usage-stats callback that phones home aggregated,
 // instance-wide provisioning counts (repositories and connections by type,
@@ -34,7 +36,7 @@ type NamespaceLister func(ctx context.Context) ([]string, error)
 // respective controllers. The two are complementary: this feeds long-term
 // aggregate telemetry, the log lines support operational debugging of a specific
 // object.
-func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), connectionLister func(ctx context.Context) ([]provisioning.Connection, error), unified resource.ResourceClient) usagestats.MetricsFunc {
+func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), connectionLister func(ctx context.Context) ([]provisioning.Connection, error), countManaged ManagedCounter) usagestats.MetricsFunc {
 	return func(ctx context.Context) (m map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
@@ -47,7 +49,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		}()
 
 		m = map[string]any{}
-		if unified == nil {
+		if countManaged == nil {
 			// No unified storage means there is nothing to count.
 			span.SetStatus(codes.Ok, "unified storage is not available")
 			return m, nil
@@ -90,19 +92,21 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 			}
 
 			nsCtx = request.WithNamespace(nsCtx, ns)
-			var count *resourcepb.CountManagedObjectsResponse
-			count, err = unified.CountManagedObjects(nsCtx, &resourcepb.CountManagedObjectsRequest{
-				Namespace: ns,
-			})
+			var managers []provisioning.ManagerStats
+			managers, err = countManaged(nsCtx, ns)
 			if err != nil {
 				nsSpan.RecordError(err)
 				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to count managed objects on namespace %s: %v", ns, err))
 				return m, fmt.Errorf("count managed objects on namespace %s: %w", ns, err)
 			}
-			for _, v := range count.Items {
-				managedCounts[v.Kind] += int(v.Count)
+			var rows int
+			for _, manager := range managers {
+				for _, v := range manager.Stats {
+					managedCounts[string(manager.Kind)] += int(v.Count)
+				}
+				rows += len(manager.Stats)
 			}
-			nsSpan.SetAttributes(attribute.Int("totalManagedObjectsCount", len(count.Items)))
+			nsSpan.SetAttributes(attribute.Int("totalManagedObjectsCount", rows))
 
 			var repos []provisioning.Repository
 			repos, err = repositoryLister(nsCtx)
