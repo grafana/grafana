@@ -55,7 +55,7 @@ export function HeaderCellMenu({
 
   const overlay = useCallback(
     () => (
-      <Menu ariaLabel={menuLabel}>
+      <Menu size="sm" ariaLabel={menuLabel}>
         {groups.map((group, index) => (
           <Fragment key={group[0]}>
             {index > 0 && <Menu.Divider />}

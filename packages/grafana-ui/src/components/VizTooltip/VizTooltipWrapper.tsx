@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import React, { type HTMLAttributes } from 'react';
+import React, { forwardRef, useContext, type HTMLAttributes } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-import { VizTooltipContext } from './VizTooltipContext';
-import { DEFAULT_VIZ_TOOLTIP_SIZE, type VizTooltipSize } from './types';
+import { type TooltipMenuProps, VizTooltipContext, VizTooltipMenuContext } from './VizTooltipContext';
+import { type VizTooltipSize } from './types';
 
 /**
  * Max width applied when a tooltip opts into the `narrow` size. Derived from the theme's `sm`
@@ -19,30 +19,77 @@ const getNarrowMaxWidth = (theme: GrafanaTheme2) => theme.breakpoints.values.sm;
 /** @alpha */
 export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
+  /** Callbacks and focus behavior for the footer's data link menu. */
+  menuProps?: TooltipMenuProps;
+  /** Maximum surface width in pixels, also constrained to the viewport. */
+  maxWidth?: number;
+  /** Whether the surface constrains its height and scrolls overflowing content. */
+  scrollable?: boolean;
   /**
    * Controls how the tooltip sizes itself horizontally. Defaults to `auto`, which preserves the
    * legacy behaviour of growing to fit content. Pass `narrow` to constrain the width and wrap long
-   * values instead of forcing the tooltip wider.
+   * values instead of forcing the tooltip wider. Nested wrappers inherit the outer size when omitted.
    */
   size?: VizTooltipSize;
 }
 
 /** @alpha */
-export const VizTooltipWrapper = ({ children, className, size = DEFAULT_VIZ_TOOLTIP_SIZE }: VizTooltipWrapperProps) => {
-  const styles = useStyles2(getStyles, size);
-  return (
-    <VizTooltipContext.Provider value={size}>
-      <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>
-        {children}
-      </div>
-    </VizTooltipContext.Provider>
-  );
-};
+export const VizTooltipWrapper = forwardRef<HTMLDivElement, VizTooltipWrapperProps>(
+  ({ children, className, menuProps, maxWidth, scrollable = true, size, ...otherProps }, ref) => {
+    const parent = useContext(VizTooltipMenuContext);
+    const parentSize = useContext(VizTooltipContext);
+    const resolvedSize = size ?? parentSize;
+    const styles = useStyles2(getStyles, maxWidth, scrollable, resolvedSize);
 
-const getStyles = (theme: GrafanaTheme2, size: VizTooltipSize) =>
-  css({
-    display: 'flex',
-    flexDirection: 'column',
-    maxWidth: size === 'narrow' ? getNarrowMaxWidth(theme) : undefined,
-    fontSize: theme.typography.bodySmall.fontSize,
-  });
+    return (
+      <VizTooltipMenuContext.Provider value={{ menuProps: menuProps ?? parent?.menuProps }}>
+        <VizTooltipContext.Provider value={resolvedSize}>
+          <div
+            ref={ref}
+            className={clsx(styles.layout, parent ? styles.nested : styles.surface, className)}
+            data-testid={parent ? undefined : selectors.components.Panels.Visualization.Tooltip.Wrapper}
+            {...otherProps}
+          >
+            {children}
+          </div>
+        </VizTooltipContext.Provider>
+      </VizTooltipMenuContext.Provider>
+    );
+  }
+);
+
+VizTooltipWrapper.displayName = 'VizTooltipWrapper';
+
+// Keep caller classes authoritative regardless of Emotion stylesheet insertion order.
+// The universal selector prevents Emotion from adding specificity before :where().
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | undefined, scrollable: boolean, size: VizTooltipSize) => {
+  const viewportMax = `calc(100vw - ${theme.spacing(4)})`;
+  const widthLimit = maxWidth ?? (size === 'narrow' ? getNarrowMaxWidth(theme) : undefined);
+
+  return {
+    layout: css({
+      '*:where(&)': {
+        display: 'flex',
+        flexDirection: 'column',
+        fontSize: theme.typography.bodySmall.fontSize,
+      },
+    }),
+    // Nested wrappers have no surface, so they apply the size limit on their own box.
+    nested: css({
+      '*:where(&)': { maxWidth: size === 'narrow' ? getNarrowMaxWidth(theme) : undefined },
+    }),
+    surface: css({
+      '*:where(&)': {
+        background: theme.colors.background.elevated,
+        borderRadius: theme.shape.radius[theme.components.menu.borderRadius],
+        border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.weak}` : undefined,
+        boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+        maxWidth: widthLimit == null ? viewportMax : `min(${widthLimit}px, ${viewportMax})`,
+        maxHeight: scrollable ? `calc(100vh - ${theme.spacing(4)})` : undefined,
+        overflowY: scrollable ? 'auto' : 'hidden',
+        overflowX: 'hidden',
+        userSelect: 'text',
+      },
+    }),
+  };
+};

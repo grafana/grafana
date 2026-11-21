@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { type Field, FieldType, type LinkModel } from '@grafana/data';
+import { createTheme, type Field, FieldType, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VizTooltipFooter, type AdHocFilterModel } from './VizTooltipFooter';
@@ -32,9 +32,27 @@ describe('VizTooltipFooter', () => {
         <VizTooltipFooter dataLinks={[link]} />
       </MemoryRouter>
     );
-    await userEvent.click(screen.getByRole('link'));
+    await userEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalled();
     jest.spyOn(console, 'warn').mockRestore();
+  });
+
+  it.each(['', '   '])('uses Link as the accessible name when the title is %j', (title) => {
+    const field: Field = { name: '', type: FieldType.string, values: [], config: {} };
+    const link: LinkModel<Field> = {
+      href: 'https://example.com/d/abc',
+      title,
+      origin: field,
+      target: '_blank',
+    };
+
+    render(
+      <MemoryRouter>
+        <VizTooltipFooter dataLinks={[link]} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('menuitem', { name: 'Link' })).toHaveAttribute('href', 'https://example.com/d/abc');
   });
 
   it('should render ad hoc filter button and fire onclick', async () => {
@@ -154,4 +172,28 @@ describe('VizTooltipFooter', () => {
     expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.apply)).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.VizTooltipFooter.buttons.applyInverse)).not.toBeInTheDocument();
   });
+});
+
+it('separates data links from preceding tooltip content without adding a border to a standalone menu', () => {
+  const links: LinkModel[] = [{ title: 'Open dashboard', href: '#dashboard', target: '_self', origin: {} }];
+  const { rerender } = render(
+    <div>
+      <div>Series values</div>
+      <VizTooltipFooter dataLinks={links} />
+    </div>
+  );
+  expect(screen.getByRole('menuitem', { name: 'Open dashboard' })).toBeInTheDocument();
+  expect(screen.getByRole('menu').parentElement).toHaveStyle({
+    borderTop: `1px solid ${createTheme().colors.border.medium}`,
+  });
+
+  rerender(
+    <div>
+      <VizTooltipFooter dataLinks={links} />
+    </div>
+  );
+  expect(screen.getByRole('menu').parentElement).not.toHaveStyle({
+    borderTop: `1px solid ${createTheme().colors.border.medium}`,
+  });
+  expect(screen.getByRole('menu')).toHaveStyle({ border: 'none' });
 });

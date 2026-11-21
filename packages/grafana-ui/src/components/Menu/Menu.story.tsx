@@ -39,7 +39,7 @@ export function Examples() {
           <Menu.Item label="Google" />
           <Menu.Item label="Filter" />
           <Menu.Item label="Active" active />
-          <Menu.Item label="I am a link" url="http://google.com" target="_blank" role="menuitem" />
+          <Menu.Item label="I am a link" url="http://google.com" target="_blank" role="menuitem" variant="link" />
           <Menu.Item label="With destructive prop set" destructive />
         </Menu>
       </StoryExample>

@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DataLinksContextMenu } from './DataLinksContextMenu';
@@ -32,9 +33,15 @@ describe('DataLinksContextMenu', () => {
 
     await userEvent.click(screen.getByLabelText('trigger'));
 
-    expect(screen.getByText('Data links')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Link1' })).toBeInTheDocument();
+    expect(screen.queryByText('Data links')).not.toBeInTheDocument();
+    const firstLink = screen.getByRole('menuitem', { name: 'Link1' });
+    expect(firstLink).toHaveStyle({
+      fontSize: createTheme().typography.bodySmall.fontSize,
+    });
     expect(screen.getByRole('menuitem', { name: 'Link2' })).toBeInTheDocument();
+
+    firstLink.focus();
+    expect(firstLink).toHaveStyle({ background: 'none', textDecoration: 'underline' });
   });
 
   it('renders single link with correct attributes and style', () => {
@@ -157,3 +164,31 @@ describe('DataLinksContextMenu', () => {
     });
   });
 });
+
+it.each(['Control', 'Meta', 'Shift'])(
+  'preserves browser navigation for %s-click on a context-menu link',
+  async (modifier) => {
+    const onClick = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <DataLinksContextMenu links={() => twoLinks().map((link) => ({ ...link, onClick }))}>
+        {({ triggerProps }) => <button {...triggerProps}>Open links</button>}
+      </DataLinksContextMenu>
+    );
+    await user.click(screen.getByRole('button', { name: 'Open links' }));
+    const link = screen.getByRole('menuitem', { name: 'Link1' });
+    expect(link).toHaveAttribute('href', '/link1');
+    let prevented: boolean | undefined;
+    document.addEventListener(
+      'click',
+      (event) => {
+        prevented = event.defaultPrevented;
+      },
+      { once: true }
+    );
+    await user.keyboard(`{${modifier}>}`);
+    await user.click(link);
+    expect(prevented).toBe(false);
+    expect(onClick).not.toHaveBeenCalled();
+  }
+);

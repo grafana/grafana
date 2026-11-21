@@ -505,7 +505,7 @@ describe('HeatmapPanel (brittle)', () => {
       renderHeatmapPanel({ series: [frameWithLinks] }, undefined, { replaceVariables: (v) => v });
 
       expect(screen.getByText(linkTitle)).toBeVisible();
-      expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
+      expect(screen.getByRole('menuitem', { name: linkTitle })).toHaveAttribute('href', linkUrl);
     });
   });
 

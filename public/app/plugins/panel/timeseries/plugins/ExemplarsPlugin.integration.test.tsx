@@ -751,7 +751,7 @@ describe('ExemplarsPlugin', () => {
       setUp();
       //@ts-expect-error
       await userEvent[userAction](getMarker());
-      const links = screen.getAllByRole('link');
+      const links = screen.getAllByRole('menuitem');
       expect(links[0]).toBeVisible();
       expect(links[1]).toBeVisible();
       expect(screen.getByText('Trace Link 1')).toBeVisible();
@@ -764,7 +764,7 @@ describe('ExemplarsPlugin', () => {
       setUp();
       //@ts-expect-error
       await userEvent[userAction](getMarker(1));
-      const links = screen.getAllByRole('link');
+      const links = screen.getAllByRole('menuitem');
       expect(links[0]).toBeVisible();
 
       expect(screen.getByText('2203801e0171aa8e')).toBeVisible();
