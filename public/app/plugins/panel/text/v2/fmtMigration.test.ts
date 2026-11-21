@@ -204,6 +204,11 @@ describe('migrateFmt', () => {
         expected: '{{#each data as |row|}}{{display "cpu" row=row}}{{/each}}',
       },
       {
+        desc: 'a block param read as a data variable, which Handlebars resolves before @index',
+        content: '{{#each data as |index|}}{{@index.fmt.cpu}}{{/each}}',
+        expected: '{{#each data as |index|}}{{display "cpu" row=@index}}{{/each}}',
+      },
+      {
         desc: 'a row read through this',
         renderMode: RenderMode.PerRow,
         content: '{{this.fmt.cpu}} {{./fmt.cpu}}',
@@ -353,6 +358,17 @@ describe('migrateFmt', () => {
       expect(render('{{#each data}}[{{display "cpu"}}]{{/each}}', shadowed())).toBe('[50.0%][25.0%]');
     });
 
+    it('reads a block param named root as that block param, not as @root, the way Handlebars does', () => {
+      const content = '{{#each data as |root|}}[{{@root.fmt.cpu}}]{{/each}}';
+      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read: '@root.fmt.cpu', reason: 'shadowed' },
+      ]);
+      expect(render(content, shadowed())).toBe('[own][]');
+    });
+
     it.each([
       {
         desc: 'a block entered on a missing context, which Handlebars counts as a level',
@@ -468,6 +484,12 @@ describe('rendering after the conversion', () => {
     {
       content:
         '{{#each data}}{{#with service}}{{../fmt.cpu}}{{#with ../status}}{{../../fmt.cpu}}{{/with}}{{/with}};{{/each}}',
+      once: 2,
+      perRow: 0,
+    },
+    {
+      content:
+        '{{#each data as |index|}}{{@index.fmt.cpu}}|{{/each}}{{#each data as |root|}}{{@root.fmt.status}}|{{/each}}',
       once: 2,
       perRow: 0,
     },

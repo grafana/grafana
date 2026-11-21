@@ -84,6 +84,12 @@ interface Edit extends Replacement {
 
 type Position = 'statement' | 'param' | 'callee';
 
+interface Read {
+  index: number;
+  base: number;
+  stopsAtFalsy: boolean;
+}
+
 const ROOT_PARTIAL_SCOPE: Scope = { context: NOTHING, depths: [], params: [] };
 
 export function findFmtReads(content: string, options: FmtMigrationOptions): FmtReads {
@@ -184,20 +190,19 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     !path.data && path.depth === 0 && path.parts.length === 1 && !isScoped(path);
 
   function getReason(
-    path: hbs.AST.PathExpression,
-    index: number,
-    base: number,
-    position: Position,
+    read: Read,
     name: string,
-    row: ReturnType<typeof getRowArgument>
+    row: ReturnType<typeof getRowArgument>,
+    position: Position,
+    chained: boolean
   ): FmtReadReason | undefined {
-    if (index + 2 < path.parts.length || position === 'callee') {
+    if (chained || position === 'callee') {
       return 'expression';
     }
-    if (base & UNKNOWN || (path.data && base & SCALAR)) {
+    if (read.base & UNKNOWN || (read.stopsAtFalsy && read.base & SCALAR)) {
       return 'row';
     }
-    if (base & ROW && shadowed) {
+    if (read.base & ROW && shadowed) {
       return 'shadowed';
     }
     if (!isWritableName(name) || name === '__proto__' || (row && row.text === undefined)) {
@@ -206,16 +211,11 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     return undefined;
   }
 
-  function record(
-    path: hbs.AST.PathExpression,
-    index: number,
-    base: number,
-    position: Position,
-    statement?: hbs.AST.MustacheStatement
-  ) {
-    const name = path.parts[index + 1];
-    const row = getRowArgument(path, index);
-    const reason = name === undefined ? 'namespace' : getReason(path, index, base, position, name, row);
+  function record(path: hbs.AST.PathExpression, read: Read, position: Position, statement?: hbs.AST.MustacheStatement) {
+    const name = path.parts[read.index + 1];
+    const row = getRowArgument(path, read.index);
+    const chained = read.index + 2 < path.parts.length;
+    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained);
 
     if (name === undefined || reason) {
       unconverted.push({ ...rangeOf(path), reason: reason ?? 'namespace' });
@@ -228,21 +228,19 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
     replacements.set(statement ?? path, replacement);
   }
 
-  function resolve(
-    path: hbs.AST.PathExpression,
-    scope: Scope,
-    position: Position,
-    statement?: hbs.AST.MustacheStatement
-  ): number {
+  function walk(path: hbs.AST.PathExpression, scope: Scope): { value: number; read?: Read } {
     const { parts, depth, data } = path;
+    const [first] = parts;
+    const param = !depth && !isScoped(path) && first !== undefined ? findParam(scope, first) : undefined;
     let value: number;
     let start = 1;
+    let stopsAtFalsy = false;
 
-    if (data) {
-      value =
-        parts[0] === 'root' ? root | (depth ? NOTHING : 0) : DATA_SCALARS.has(parts[0]) ? SCALAR | NOTHING : UNKNOWN;
-    } else if (isParam(scope, path)) {
-      value = findParam(scope, parts[0]) ?? UNKNOWN;
+    if (param !== undefined) {
+      value = param;
+    } else if (first !== undefined && data) {
+      value = first === 'root' ? root | (depth ? NOTHING : 0) : DATA_SCALARS.has(first) ? SCALAR | NOTHING : UNKNOWN;
+      stopsAtFalsy = true;
     } else {
       value = depth ? unionOf(scope.depths.slice(depth)) : scope.context;
       start = 0;
@@ -250,10 +248,24 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
 
     for (let index = start; index < parts.length; index++) {
       if (parts[index] === NAMESPACE) {
-        record(path, index, value, position, statement);
-        return UNKNOWN;
+        return { value: UNKNOWN, read: { index, base: value, stopsAtFalsy } };
       }
       value = propertyKind(value, parts[index], shadowed);
+    }
+
+    return { value };
+  }
+
+  function resolve(
+    path: hbs.AST.PathExpression,
+    scope: Scope,
+    position: Position,
+    statement?: hbs.AST.MustacheStatement
+  ): number {
+    const { value, read } = walk(path, scope);
+
+    if (read) {
+      record(path, read, position, statement);
     }
 
     return value;
