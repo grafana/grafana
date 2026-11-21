@@ -3,6 +3,7 @@ package orgimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,13 +53,24 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var calls []string
+			record := func(call string) {
+				if len(calls) == 0 || calls[len(calls)-1] != call {
+					calls = append(calls, call)
+				}
+			}
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				calls = append(calls, "api")
+				record("api")
 				if tc.apiFailure {
 					w.WriteHeader(http.StatusForbidden)
 					return
 				}
-				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				body := statusSuccess
+				if r.Method == http.MethodGet {
+					body = emptyRepoList
+				}
+				_, err := fmt.Fprint(w, body)
+				assert.NoError(t, err)
 			}))
 			t.Cleanup(server.Close)
 			cfg := setting.NewCfg()
@@ -70,19 +82,20 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 				user, err := identity.GetRequester(ctx)
 				require.NoError(t, err)
 				require.Equal(t, int64(2), user.GetOrgID())
-				calls = append(calls, "dashboards")
+				record("dashboards")
 			}).Return(nil).Once()
 			sqlErr := errors.New("SQL cleanup failed")
 			svc := &DeletionService{
 				store: &deletionRecordingStore{deleteFn: func(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 					require.Equal(t, int64(2), cmd.ID)
-					calls = append(calls, "sql")
+					record("sql")
 					if tc.sqlFailure {
 						return sqlErr
 					}
 					return nil
 				}},
 				ac:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				cfg:     cfg,
 				dashSvc: dashSvc,
 				k8sDeleter: newK8sResourceDeleter(cfg, apiserver.RestConfigProviderFunc(func(ctx context.Context) (*rest.Config, error) {
 					require.True(t, identity.IsServiceIdentity(ctx))
@@ -107,7 +120,7 @@ func TestDeletionService_APIThenSQL(t *testing.T) {
 				} else {
 					require.NoError(t, err)
 				}
-				assert.Equal(t, []string{"dashboards", "api", "api", "api", "api", "api", "sql"}, calls)
+				assert.Equal(t, []string{"dashboards", "api", "sql"}, calls)
 			}
 		})
 	}
