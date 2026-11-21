@@ -39,7 +39,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
-      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
+      return t.datasource?.uid !== MIXED_DATASOURCE_NAME && t.datasource?.type !== 'mixed';
     });
 
     if (!queries.length) {
@@ -47,13 +47,15 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     }
 
     // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, (query) =>
+      query.datasource?.uid ? `uid:${query.datasource.uid}` : `type:${query.datasource?.type}`
+    );
     const batches: BatchedQueries[] = [];
 
     for (const key in sets) {
       // dashboard ds expects to have only 1 query with const query = options.targets[0]; therefore
       //   we should not batch them together
-      if (key === SHARED_DASHBOARD_QUERY) {
+      if (sets[key][0].datasource?.uid === SHARED_DASHBOARD_QUERY) {
         sets[key].forEach((a) => {
           batches.push(...this.getBatchesForQueries([a], request));
         });
@@ -115,14 +117,15 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       }
     );
 
-    if (datasourceUid !== '') {
+    // V2 exports can identify a datasource by type without an instance UID.
+    if (datasourceUid !== '' || (!dsRef?.uid && dsRef?.type)) {
       batches.push({
-        datasource: getDataSourceInstance(datasourceUid),
+        datasource: getDataSourceInstance(datasourceUid || dsRef, request.scopedVars),
         queries: cloneDeep(queries),
         scopedVars: {
           ...request.scopedVars,
         },
-        uid: datasourceUid,
+        uid: datasourceUid || dsRef?.type,
       });
     }
 
