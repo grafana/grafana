@@ -12,6 +12,7 @@ import (
 	"net/mail"
 	"net/netip"
 	"net/textproto"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -109,16 +110,26 @@ func countUndelivered(count int) {
 	emailsSentFailed.Add(float64(count))
 }
 
-func (sc *SmtpClient) sendMessage(ctx context.Context, dialers []*gomail.Dialer, smtp setting.SmtpSettings, msg *Message) error {
+func (sc *SmtpClient) sendMessage(ctx context.Context, dialers []*gomail.Dialer, smtp setting.SmtpSettings, msg *Message) (err error) {
 	ctx, span := tracer.Start(ctx, "notifications.SmtpClient.sendMessage", trace.WithAttributes(
 		attribute.String("smtp.sender", msg.From),
 		attribute.StringSlice("smtp.recipients", msg.To),
 	))
 	defer span.End()
 
+	// mail.v2 can panic inside base64LineWriter while an attachment is encoded.
+	// That panic runs on the send goroutine, so one bad email takes the process down.
+	defer func() {
+		if r := recover(); r != nil {
+			emailsSentTotal.Inc()
+			emailsSentFailed.Inc()
+			err = tracing.Errorf(span, "panic while sending email: %v\n%s", r, debug.Stack())
+		}
+	}()
+
 	m := sc.buildEmail(ctx, smtp, msg)
 
-	err := sc.dialAndSend(dialers, m)
+	err = sc.dialAndSend(dialers, m)
 	err = sc.redactConnectError(smtp, err)
 	emailsSentTotal.Inc()
 	if err != nil {
@@ -228,17 +239,27 @@ func (sc *SmtpClient) setFiles(
 	}
 
 	for _, file := range msg.EmbeddedContents {
-		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Embed(file.Name, gomail.SetCopyFunc(writeAttachment(file.Name, file.Content)))
 	}
 
 	for _, file := range msg.AttachedFiles {
-		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
+		m.Attach(file.Name, gomail.SetCopyFunc(writeAttachment(file.Name, file.Content)))
+	}
+}
+
+// writeAttachment copies an attachment into the writer mail.v2 provides.
+// base64LineWriter does not check that its own writer is set, and a nil one panics
+// mid-encode (screenshots on alert emails). Catch it here so WriteTo returns an error.
+// A panic from the encoder's Close still escapes this func; sendMessage catches that.
+func writeAttachment(name string, content []byte) func(io.Writer) error {
+	return func(writer io.Writer) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("panic while writing email attachment %q: %v\n%s", name, r, debug.Stack())
+			}
+		}()
+		_, err = writer.Write(content)
+		return err
 	}
 }
 
