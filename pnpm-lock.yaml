@@ -500,8 +500,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       jquery:
-        specifier: 3.7.1
-        version: 3.7.1
+        specifier: 4.1.0
+        version: 4.1.0
       js-yaml:
         specifier: ^4.1.0
         version: 4.3.2
@@ -819,8 +819,8 @@ importers:
         specifier: 29.5.14
         version: 29.5.14
       '@types/jquery':
-        specifier: 3.5.33
-        version: 3.5.33
+        specifier: 4.0.1
+        version: 4.0.1
       '@types/js-yaml':
         specifier: ^4.0.5
         version: 4.0.9
@@ -2433,8 +2433,8 @@ importers:
         specifier: ^3.5.1
         version: 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/jquery':
-        specifier: ^3.5.33
-        version: 3.5.33
+        specifier: ^4.0.0
+        version: 4.0.1
       '@types/lodash':
         specifier: ^4.17.25
         version: 4.17.27
@@ -2466,8 +2466,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.1
       jquery:
-        specifier: ^3.7.1
-        version: 3.7.1
+        specifier: ^4.0.0
+        version: 4.1.0
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -7247,8 +7247,8 @@ packages:
   '@types/jest@29.5.14':
     resolution: {integrity: sha512-ZN+4sdnLUbo8EVvVc2ao0GFW6oVrQRPn4K2lglySj7APvSrgzxHiNNK99us4WDMi57xxA2yggblIAMNhXOotLQ==}
 
-  '@types/jquery@3.5.33':
-    resolution: {integrity: sha512-SeyVJXlCZpEki5F0ghuYe+L+PprQta6nRZqhONt9F13dWBtR/ftoaIbdRQ7cis7womE+X2LKhsDdDtkkDhJS6g==}
+  '@types/jquery@4.0.1':
+    resolution: {integrity: sha512-9a59A/tycXgYuPABcp6/3spSShn0NT2UOM4EfHvMumjYi4lJWTsK5SZWjhx3yRm9IHGCeWXdV2YfNsrWrft/CA==}
 
   '@types/js-cookie@3.0.6':
     resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
@@ -7370,9 +7370,6 @@ packages:
 
   '@types/semver@7.8.0':
     resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
-
-  '@types/sizzle@2.3.3':
-    resolution: {integrity: sha512-JYM8x9EGF163bEyhdJBpR2QX1R5naCJHC8ucJylJ3w9/CVBaskdQ8WqBf8MmQrd1kRvp/a4TS8HJ+bxzR7ZJYQ==}
 
   '@types/slate-plain-serializer@0.7.5':
     resolution: {integrity: sha512-OBeo9unVBRn79l0E17X3h0NU/O/4pLP+RFvRWeoqZt4sun2TDJO4PNeUy/nTL3WmZHrPccp5EdIkj5cKaTzo1A==}
@@ -11617,8 +11614,8 @@ packages:
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
 
-  jquery@3.7.1:
-    resolution: {integrity: sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==}
+  jquery@4.1.0:
+    resolution: {integrity: sha512-tnN2N83S+xD3yhmdBP4nnJ1XOO0Fl586rG23FA5h/JAe8XN3W9a1zGwDMltBptn+UpcqEKicnO61+jQ0EiF2fw==}
 
   js-cookie@3.0.8:
     resolution: {integrity: sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==}
@@ -20586,9 +20583,7 @@ snapshots:
       expect: 29.7.0
       pretty-format: 29.7.0
 
-  '@types/jquery@3.5.33':
-    dependencies:
-      '@types/sizzle': 2.3.3
+  '@types/jquery@4.0.1': {}
 
   '@types/js-cookie@3.0.6': {}
 
@@ -20718,8 +20713,6 @@ snapshots:
   '@types/resolve@1.20.6': {}
 
   '@types/semver@7.8.0': {}
-
-  '@types/sizzle@2.3.3': {}
 
   '@types/slate-plain-serializer@0.7.5':
     dependencies:
@@ -25889,7 +25882,7 @@ snapshots:
 
   jpeg-js@0.4.4: {}
 
-  jquery@3.7.1: {}
+  jquery@4.1.0: {}
 
   js-cookie@3.0.8: {}
 
