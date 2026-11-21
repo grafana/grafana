@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,6 +57,8 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
+			// Read concurrently with the count, so it may or may not have started when the count fails.
+			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
@@ -65,7 +70,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 	for _, tc := range resourceErrorCases(t) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
-			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Maybe()
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
@@ -431,8 +436,9 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 }
 
 // externalPlaylists serves playlists through a fake API group, as a kind stored outside unified
-// storage is: pl-1 managed by repo, pl-2 by another repository, and pl-3 by nobody.
-func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSearch, *resource.MockResourceClient) {
+// storage is: pl-1 managed by repo, pl-2 by another repository, and pl-3 by nobody. The returned
+// channel closes once the kind starts being read.
+func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSearch, *resource.MockResourceClient, <-chan struct{}) {
 	t.Helper()
 	playlistGVR := schema.GroupVersionResource{Group: playlistGVK.Group, Version: playlistGVK.Version, Resource: "playlists"}
 	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
@@ -458,19 +464,61 @@ func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSear
 	// The dashboard is indexed, so it is never resolved: only the external kind is listed.
 	clients := NewMockResourceClients(t)
 	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: dashboardGK}, external})
+	started := make(chan struct{})
+	var once sync.Once
 	clients.EXPECT().ForKind(mock.Anything, playlistKind.WithVersion("")).
+		Run(func(context.Context, schema.GroupVersionKind) { once.Do(func() { close(started) }) }).
 		Return(dyn.Resource(playlistGVR).Namespace("default"), playlistGVR, nil)
 
 	factory := NewMockClientFactory(t)
 	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
 
 	store := resource.NewMockResourceClient(t)
-	return NewResourceLister(store, factory, []SupportedResource{{GroupKind: dashboardGK}, external}), store
+	return NewResourceLister(store, factory, []SupportedResource{{GroupKind: dashboardGK}, external}), store, started
+}
+
+// Every index call below returns only once the external kind is being read, so reading them one
+// after the other blocks every goroutine in the bubble, which synctest reports as a deadlock.
+func TestResourceListerFromSearch_ReadsTheIndexAndExternalKindsConcurrently(t *testing.T) {
+	t.Run("list", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			lister, store, started := externalPlaylists(t, "repo")
+			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.ListManagedObjectsRequest, ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+					<-started
+					return &resourcepb.ListManagedObjectsResponse{}, nil
+				}).Once()
+
+			got, err := lister.List(t.Context(), "default", "repo", ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, got.Items, 1)
+		})
+	})
+
+	t.Run("namespace stats", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			lister, store, started := externalPlaylists(t, "repo")
+			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.CountManagedObjectsRequest, ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+					<-started
+					return &resourcepb.CountManagedObjectsResponse{}, nil
+				}).Once()
+			store.EXPECT().GetStats(mock.Anything, mock.Anything).
+				RunAndReturn(func(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+					<-started
+					return &resourcepb.ResourceStatsResponse{}, nil
+				}).Once()
+
+			got, err := lister.Stats(t.Context(), "default")
+			require.NoError(t, err)
+			require.Equal(t, []provisioning.ResourceCount{{Group: playlistGVK.Group, Resource: "playlists", Count: 3}}, got.Instance)
+		})
+	})
 }
 
 func TestResourceListerFromSearch_ListsExternallyStoredKindsThroughClients(t *testing.T) {
 	const repository = "repo"
-	lister, store := externalPlaylists(t, repository)
+	lister, store, _ := externalPlaylists(t, repository)
 	// The playlist row is stale: the index does not hold an externally stored kind, and reporting a
 	// row it does have next to the listed object puts one resource at a path twice.
 	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
@@ -511,7 +559,7 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 	}
 
 	t.Run("repository stats replace the index's count of the kind", func(t *testing.T) {
-		lister, store := externalPlaylists(t, repository)
+		lister, store, _ := externalPlaylists(t, repository)
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
 			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
 				repoRow("dashboard.grafana.app", "dashboards", 3),
@@ -528,7 +576,7 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 	})
 
 	t.Run("a repository managing only externally stored objects is found", func(t *testing.T) {
-		lister, store := externalPlaylists(t, repository)
+		lister, store, _ := externalPlaylists(t, repository)
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
 			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
 
@@ -538,7 +586,7 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 	})
 
 	t.Run("namespace stats count the kind's instance, managed and unmanaged objects", func(t *testing.T) {
-		lister, store := externalPlaylists(t, repository)
+		lister, store, _ := externalPlaylists(t, repository)
 		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
 			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{repoRow("dashboard.grafana.app", "dashboards", 3)},
 		}, nil).Once()

@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -81,6 +82,10 @@ func ValidateListerMode(mode string) error {
 // mode needs nothing: it has to fail validation rather than a store lookup.
 func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerSearch }
 
+// maxConcurrentKindReads bounds the kinds read through their API groups at once: a collection
+// can expand to many groups, often served by the same API server.
+const maxConcurrentKindReads = 8
+
 type ResourceListerFromSearch struct {
 	store ResourceStore
 	// clients lists a collection's members through the groups that serve them; nil without one.
@@ -115,17 +120,22 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, err
 	}
 
-	objects, err := o.store.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
-		Namespace: namespace,
-		Kind:      string(utils.ManagerKindRepo),
-		Id:        repository,
+	var objects *resourcepb.ListManagedObjectsResponse
+	var scan apiScan
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		objects, err = o.store.ListManagedObjects(gctx, &resourcepb.ListManagedObjectsRequest{
+			Namespace: namespace,
+			Kind:      string(utils.ManagerKindRepo),
+			Id:        repository,
+		})
+		return err
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	scan, err := o.listThroughAPIGroups(ctx, namespace, repository)
-	if err != nil {
+	g.Go(func() (err error) {
+		scan, err = o.listThroughAPIGroups(gctx, namespace, repository)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
@@ -218,35 +228,61 @@ func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, nam
 		return scan, fmt.Errorf("get clients for unindexed resources: %w", err)
 	}
 
+	// Each kind writes only its own slot, so the kinds are read concurrently without a lock and
+	// merged in the configured order.
+	type kindScan struct {
+		resolved bool
+		listed   bool
+		gr       schema.GroupResource
+		items    []provisioning.ResourceListItem
+	}
 	collections := o.collectionGroups()
-	var items []provisioning.ResourceListItem
-	for _, supported := range o.addressableResources(clients) {
+	kinds := o.addressableResources(clients)
+	results := make([]kindScan, len(kinds))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentKindReads)
+	for i, supported := range kinds {
 		listed := o.isMember(supported.GroupKind) || supported.IsExternallyStored()
 		// A kind stored in a group a collection also names is resolved as well, so its index
 		// rows can be told apart by resource; no other kind needs a lookup here.
 		if !listed && !collections.Has(supported.Group) {
 			continue
 		}
-		client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
-		if err != nil {
-			return scan, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
-		}
-		if !listed {
-			scan.declared.Insert(gvr.GroupResource())
-			continue
-		}
-		scan.covered.Insert(gvr.GroupResource())
-		err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
-			if item, ok := managedResourceItem(obj, gvr, repository); ok {
-				items = append(items, item)
+		g.Go(func() error {
+			client, gvr, err := clients.ForKind(gctx, supported.WithVersion(""))
+			if err != nil {
+				return fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
+			}
+			results[i] = kindScan{resolved: true, listed: listed, gr: gvr.GroupResource()}
+			if !listed {
+				return nil
+			}
+			err = ForEach(gctx, client, func(obj *unstructured.Unstructured) error {
+				if item, ok := managedResourceItem(obj, gvr, repository); ok {
+					results[i].items = append(results[i].items, item)
+				}
+				return nil
+			})
+			if err != nil {
+				return fmt.Errorf("list %s: %w", gvr, err)
 			}
 			return nil
 		})
-		if err != nil {
-			return scan, fmt.Errorf("list %s: %w", gvr, err)
+	}
+	if err := g.Wait(); err != nil {
+		return scan, err
+	}
+
+	for _, r := range results {
+		switch {
+		case !r.resolved:
+		case r.listed:
+			scan.covered.Insert(r.gr)
+			scan.items = append(scan.items, r.items...)
+		default:
+			scan.declared.Insert(r.gr)
 		}
 	}
-	scan.items = items
 	return scan, nil
 }
 
@@ -288,18 +324,26 @@ func managedResourceItem(obj *unstructured.Unstructured, gvr schema.GroupVersion
 
 // RepositoryStats implements ResourceLister.
 func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespace, repository string) ([]provisioning.ResourceCount, error) {
-	ext, err := o.countExternal(ctx, namespace)
-	if err != nil {
+	var counts *resourcepb.CountManagedObjectsResponse
+	var ext externalStats
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		counts, err = o.store.CountManagedObjects(gctx, &resourcepb.CountManagedObjectsRequest{
+			Namespace: namespace,
+			Kind:      string(utils.ManagerKindRepo),
+			Id:        repository,
+		})
+		return err
+	})
+	g.Go(func() (err error) {
+		ext, err = o.countExternal(gctx, namespace)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{
-		Namespace: namespace,
-		Kind:      string(utils.ManagerKindRepo),
-		Id:        repository,
-	}, ext)
-	if err != nil {
-		return nil, err
-	}
+
+	stats := managedStats(counts, ext)
 	// Kind narrows the request but cannot be relied on to have been applied: search can run at an
 	// older deployment cadence than this caller, and a server predating grafana/grafana#137504
 	// returns every manager sharing the id -- which the bootstrap repository does with its
@@ -339,52 +383,75 @@ func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace 
 		return ext, fmt.Errorf("get clients for externally stored resources: %w", err)
 	}
 
-	for _, supported := range o.addressableResources(clients) {
-		if !supported.IsExternallyStored() {
-			continue
-		}
-		client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
-		if err != nil {
-			return ext, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
-		}
-		ext.covered.Insert(gvr.GroupResource())
-
-		var total int64
-		var managers []managerKey
-		managed := make(map[managerKey]int64)
-		err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
-			meta, err := utils.MetaAccessor(obj)
-			if err != nil {
-				return fmt.Errorf("read metadata of %s: %w", obj.GetName(), err)
-			}
-			total++
-			manager, ok := meta.GetManagerProperties()
-			if !ok {
-				return nil
-			}
-			key := managerKey{kind: manager.Kind, identity: manager.Identity}
-			if _, seen := managed[key]; !seen {
-				managers = append(managers, key)
-			}
-			managed[key]++
-			return nil
+	kinds := slices.DeleteFunc(o.addressableResources(clients), func(r SupportedResource) bool {
+		return !r.IsExternallyStored()
+	})
+	// Each kind writes only its own slot, so the kinds are counted concurrently without a lock
+	// and merged in the configured order.
+	results := make([]externalStats, len(kinds))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentKindReads)
+	for i, supported := range kinds {
+		g.Go(func() (err error) {
+			results[i], err = countKind(gctx, clients, supported)
+			return err
 		})
-		if err != nil {
-			return ext, fmt.Errorf("count %s: %w", gvr, err)
-		}
+	}
+	if err := g.Wait(); err != nil {
+		return ext, err
+	}
 
-		if total > 0 {
-			ext.instance = append(ext.instance, &resourcepb.ResourceStatsResponse_Stats{
-				Group: gvr.Group, Resource: gvr.Resource, Count: total,
-			})
-		}
-		for _, m := range managers {
-			ext.managed = append(ext.managed, &resourcepb.CountManagedObjectsResponse_ResourceCount{
-				Kind: string(m.kind), Id: m.identity, Group: gvr.Group, Resource: gvr.Resource, Count: managed[m],
-			})
-		}
+	for _, r := range results {
+		ext.covered = ext.covered.Union(r.covered)
+		ext.instance = append(ext.instance, r.instance...)
+		ext.managed = append(ext.managed, r.managed...)
 	}
 	return ext, nil
+}
+
+// countKind counts the objects of one kind through its API group.
+func countKind(ctx context.Context, clients ResourceClients, supported SupportedResource) (externalStats, error) {
+	client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
+	if err != nil {
+		return externalStats{}, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
+	}
+
+	var total int64
+	var managers []managerKey
+	managed := make(map[managerKey]int64)
+	err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("read metadata of %s: %w", obj.GetName(), err)
+		}
+		total++
+		manager, ok := meta.GetManagerProperties()
+		if !ok {
+			return nil
+		}
+		key := managerKey{kind: manager.Kind, identity: manager.Identity}
+		if _, seen := managed[key]; !seen {
+			managers = append(managers, key)
+		}
+		managed[key]++
+		return nil
+	})
+	if err != nil {
+		return externalStats{}, fmt.Errorf("count %s: %w", gvr, err)
+	}
+
+	counted := externalStats{covered: sets.New(gvr.GroupResource())}
+	if total > 0 {
+		counted.instance = []*resourcepb.ResourceStatsResponse_Stats{{
+			Group: gvr.Group, Resource: gvr.Resource, Count: total,
+		}}
+	}
+	for _, m := range managers {
+		counted.managed = append(counted.managed, &resourcepb.CountManagedObjectsResponse_ResourceCount{
+			Kind: string(m.kind), Id: m.identity, Group: gvr.Group, Resource: gvr.Resource, Count: managed[m],
+		})
+	}
+	return counted, nil
 }
 
 // withoutCovered returns the index rows of the resources the external counts do not cover.
@@ -397,14 +464,9 @@ func withoutCovered[T interface {
 	})
 }
 
-// managedStats counts the managed objects the request selects, one entry per manager, with the
-// externally stored kinds counted from ext rather than the index.
-func (o *ResourceListerFromSearch) managedStats(ctx context.Context, req *resourcepb.CountManagedObjectsRequest, ext externalStats) (*provisioning.ResourceStats, error) {
-	counts, err := o.store.CountManagedObjects(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
+// managedStats groups the index's managed-object counts by manager, with the externally stored
+// kinds counted from ext rather than the index.
+func managedStats(counts *resourcepb.CountManagedObjectsResponse, ext externalStats) *provisioning.ResourceStats {
 	lookup := make(map[string]*provisioning.ManagerStats)
 	for _, v := range append(withoutCovered(counts.Items, ext.covered), ext.managed...) {
 		key := v.Kind + ":" + v.Id
@@ -431,27 +493,32 @@ func (o *ResourceListerFromSearch) managedStats(ctx context.Context, req *resour
 	for _, v := range lookup {
 		stats.Managed = append(stats.Managed, *v)
 	}
-	return stats, nil
+	return stats
 }
 
 // Stats implements NamespaceStatsReader.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace string) (*provisioning.ResourceStats, error) {
-	ext, err := o.countExternal(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-	stats, err := o.managedStats(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: namespace}, ext)
-	if err != nil {
+	var counts *resourcepb.CountManagedObjectsResponse
+	var info *resourcepb.ResourceStatsResponse
+	var ext externalStats
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		counts, err = o.store.CountManagedObjects(gctx, &resourcepb.CountManagedObjectsRequest{Namespace: namespace})
+		return err
+	})
+	g.Go(func() (err error) {
+		info, err = o.store.GetStats(gctx, &resourcepb.ResourceStatsRequest{Namespace: namespace})
+		return err
+	})
+	g.Go(func() (err error) {
+		ext, err = o.countExternal(gctx, namespace)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	// Get full instance stats
-	info, err := o.store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-		Namespace: namespace,
-	})
-	if err != nil {
-		return nil, err
-	}
+	stats := managedStats(counts, ext)
 
 	// Create a map to track managed counts by group/resource
 	managedCounts := make(map[string]int64)
