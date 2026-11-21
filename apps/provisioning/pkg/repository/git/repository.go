@@ -1157,25 +1157,28 @@ func (r *gitRepository) commitAndPush(ctx context.Context, writer nanogit.Staged
 //   - HTTP 429 Too Many Requests: For all operations (rate limiting is temporary)
 //
 // The retry behavior:
-//   - Total attempts: 8 (1 initial attempt + 7 retries)
-//   - Initial delay: 100ms before the first retry
-//   - Exponential backoff: delay doubles after each failed attempt (100ms → 200ms → 400ms → 800ms → 1.6s → 3.2s → 5s)
-//   - Maximum delay: capped at 5 seconds
+//   - Total attempts: 5 (1 initial attempt + 4 retries)
+//   - Initial delay: 2s before the first retry
+//   - Exponential backoff: delay doubles after each failed attempt (2s → 4s → 8s → 16s)
+//   - Maximum delay: capped at 60 seconds
 //   - Jitter: enabled to prevent thundering herd problems
-//   - Total retry window: approximately 10 seconds from first attempt to last retry
+//   - Total retry window: up to approximately 30 seconds from first attempt to last retry
+//
+// Provisioning is background work and not latency sensitive, so the backoff is deliberately conservative
+// to avoid adding load to Git servers that are already degraded.
 //
 // All attempts will fail when:
 //   - The Git server is completely unavailable or unreachable
-//   - Network connectivity issues persist beyond the retry window (~10 seconds)
+//   - Network connectivity issues persist beyond the retry window (~30 seconds)
 //   - The server returns transient errors consistently for the entire retry duration
 //   - Context cancellation occurs before retries complete
 //
 // Non-transient errors (e.g., 4xx client errors except 429, authentication failures) are not retried and returned immediately.
 func defaultGitRetrier() *retry.ExponentialBackoffRetrier {
 	return retry.NewExponentialBackoffRetrier().
-		WithMaxAttempts(8). // 1 initial + 7 retries = 8 total attempts (~10s total retry window)
-		WithInitialDelay(100 * time.Millisecond).
-		WithMaxDelay(5 * time.Second).
+		WithMaxAttempts(5). // 1 initial + 4 retries = 5 total attempts (~30s total retry window)
+		WithInitialDelay(2 * time.Second).
+		WithMaxDelay(60 * time.Second).
 		WithMultiplier(2.0).
 		WithJitter()
 }
