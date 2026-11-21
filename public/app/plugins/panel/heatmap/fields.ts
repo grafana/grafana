@@ -288,6 +288,25 @@ const getSparseHeatmapData = (
     options.filterValues?.ge
   );
 
+  // The numeric x scale builds its range and ticks from xBucketSize/xLayout
+  // (see utils.ts), which previously only the dense path set; without them it
+  // computes a [NaN, NaN] range and the panel silently renders nothing.
+  // Sparse x spacing is assumed uniform, so infer the bucket size from the
+  // smallest gap between distinct finite x values, mirroring how the dense path
+  // derives it from the layout repetition in the data.
+  const xField = frame.fields[0];
+  const xsUniq = [...new Set(xField.values.filter((v) => Number.isFinite(v)))].sort((a, b) => a - b);
+
+  let xBucketSize: number | undefined = undefined;
+
+  for (let i = 1; i < xsUniq.length; i++) {
+    const diff = xsUniq[i] - xsUniq[i - 1];
+
+    if (xBucketSize === undefined || diff < xBucketSize) {
+      xBucketSize = diff;
+    }
+  }
+
   return {
     heatmap: frame,
     heatmapColors: {
@@ -297,6 +316,14 @@ const getSparseHeatmapData = (
       maxValue,
     },
     exemplars,
+    xBucketSize,
+    xBucketCount: xsUniq.length,
+    xLayout:
+      xField.name === 'xMax'
+        ? HeatmapCellLayout.le
+        : xField.name === 'xMin'
+          ? HeatmapCellLayout.ge
+          : HeatmapCellLayout.unknown,
     display: (v) => formattedValueToString(disp(v)),
   };
 };
