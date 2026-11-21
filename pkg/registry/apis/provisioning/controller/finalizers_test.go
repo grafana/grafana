@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -531,10 +532,13 @@ func TestFinalizer_process(t *testing.T) {
 			// the case's repo so its webhook client drives the deletion hook.
 			factory := repository.NewMockFactory(t)
 			factory.On("Build", mock.Anything, mock.Anything).Return(tc.repo, nil).Maybe()
+			jobs := NewMockJobQueueCleaner(t)
+			jobs.On("CountRunning", mock.Anything, mock.Anything, mock.Anything).Return(0, nil).Maybe()
 			f := &finalizer{
 				lister:        tc.lister,
 				clientFactory: tc.clientFactory,
 				repoFactory:   factory,
+				jobs:          jobs,
 				metrics:       &metrics,
 			}
 			cfg := &provisioning.Repository{}
@@ -1324,6 +1328,70 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	assert.Contains(t, err.Error(), "clear job queue")
 }
 
+func TestProcess_OrphanFinalizers_WaitForRunningJobs(t *testing.T) {
+	testCases := []struct {
+		name              string
+		finalizers        []string
+		countErr          error
+		blockingFinalizer string
+	}{
+		{name: "release orphan waits for running jobs", finalizers: []string{repository.ReleaseOrphanResourcesFinalizer}},
+		{name: "remove orphan waits for running jobs", finalizers: []string{repository.RemoveOrphanResourcesFinalizer}},
+		{
+			name: "waits after clearing the queue and before the cleanup finalizer",
+			finalizers: []string{
+				repository.RemovePendingJobsFinalizer,
+				repository.CleanFinalizer,
+				repository.RemoveOrphanResourcesFinalizer,
+			},
+		},
+		{
+			name:              "count error blames release orphan when both orphan finalizers are set",
+			finalizers:        []string{repository.ReleaseOrphanResourcesFinalizer, repository.RemoveOrphanResourcesFinalizer},
+			countErr:          assert.AnError,
+			blockingFinalizer: repository.ReleaseOrphanResourcesFinalizer,
+		},
+		{
+			name:              "count error blames remove orphan",
+			finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+			countErr:          assert.AnError,
+			blockingFinalizer: repository.RemoveOrphanResourcesFinalizer,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			jobs := NewMockJobQueueCleaner(t)
+			if slices.Contains(tc.finalizers, repository.RemovePendingJobsFinalizer) {
+				jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, nil)
+			}
+			jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, tc.countErr)
+
+			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			f := &finalizer{
+				jobs:        jobs,
+				lister:      resources.NewMockResourceLister(t),
+				repoFactory: repository.NewMockFactory(t),
+				metrics:     &metrics,
+			}
+
+			repo := mockRepo{name: "my-repo", namespace: "default"}
+			cfg := repo.Config()
+			cfg.Finalizers = tc.finalizers
+			err := f.process(context.Background(), cfg)
+
+			if tc.blockingFinalizer == "" {
+				assert.ErrorIs(t, err, errJobsRunning)
+				return
+			}
+			var fe *finalizerError
+			require.ErrorAs(t, err, &fe)
+			assert.Equal(t, tc.blockingFinalizer, fe.finalizer)
+			assert.ErrorContains(t, err, "count running jobs")
+		})
+	}
+}
+
 // TestProcess_CleanFinalizer_BuildFailureBlocks verifies that when the cleanup
 // finalizer can't build the repository (e.g. expired credentials), process fails
 // so deletion is blocked — forcing it is done by removing the cleanup finalizer.
@@ -1439,7 +1507,9 @@ func TestProcess_RemoveOrphanResourcesFinalizer_NonEmptyFolderRecordsUserCause(t
 	}).Return(client, schema.GroupVersionKind{}, nil).Once()
 
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
-	f := &finalizer{lister: resourceLister, clientFactory: clientFactory, metrics: &metrics, maxWorkers: 1}
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Return(0, nil)
+	f := &finalizer{lister: resourceLister, clientFactory: clientFactory, jobs: jobs, metrics: &metrics, maxWorkers: 1}
 
 	err := f.process(context.Background(), &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
