@@ -429,3 +429,144 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
 	})
 }
+
+// externalPlaylists serves playlists through a fake API group, as a kind stored outside unified
+// storage is: pl-1 managed by repo, pl-2 by another repository, and pl-3 by nobody.
+func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSearch, *resource.MockResourceClient) {
+	t.Helper()
+	playlistGVR := schema.GroupVersionResource{Group: playlistGVK.Group, Version: playlistGVK.Version, Resource: "playlists"}
+	dashboardGK := schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	external := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityExternalStorage)}
+
+	scheme := runtime.NewScheme()
+	listGVK := playlistGVK
+	listGVK.Kind += "List"
+	scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+	scheme.AddKnownTypeWithName(playlistGVK, &unstructured.Unstructured{})
+	unmanaged := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": playlistGVK.GroupVersion().String(),
+		"kind":       playlistGVK.Kind,
+		"metadata":   map[string]any{"name": "pl-3", "namespace": "default"},
+	}}
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme,
+		map[schema.GroupVersionResource]string{playlistGVR: listGVK.Kind},
+		managedDataSource(t, playlistGVK, "pl-1", repository, "pl-1.json"),
+		managedDataSource(t, playlistGVK, "pl-2", "another-repo", "pl-2.json"),
+		unmanaged,
+	)
+
+	// The dashboard is indexed, so it is never resolved: only the external kind is listed.
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: dashboardGK}, external})
+	clients.EXPECT().ForKind(mock.Anything, playlistKind.WithVersion("")).
+		Return(dyn.Resource(playlistGVR).Namespace("default"), playlistGVR, nil)
+
+	factory := NewMockClientFactory(t)
+	factory.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+	store := resource.NewMockResourceClient(t)
+	return NewResourceLister(store, factory, []SupportedResource{{GroupKind: dashboardGK}, external}), store
+}
+
+func TestResourceListerFromSearch_ListsExternallyStoredKindsThroughClients(t *testing.T) {
+	const repository = "repo"
+	lister, store := externalPlaylists(t, repository)
+	// The playlist row is stale: the index does not hold an externally stored kind, and reporting a
+	// row it does have next to the listed object puts one resource at a path twice.
+	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
+		Items: []*resourcepb.ListManagedObjectsResponse_Item{
+			{Object: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"}, Path: "db-1.json", Title: "Dashboard 1"},
+			{Object: &resourcepb.ResourceKey{Group: playlistGVK.Group, Resource: "playlists", Name: "stale"}, Path: "stale.json"},
+		},
+	}, nil)
+
+	dashboard := provisioning.ResourceListItem{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"}
+	playlist := provisioning.ResourceListItem{Path: "pl-1.json", Group: playlistGVK.Group, Resource: "playlists", Name: "pl-1", Hash: "abc", Title: "Test data"}
+
+	t.Run("merges the listed objects with the indexed ones", func(t *testing.T) {
+		got, err := lister.List(context.Background(), "default", repository, ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{dashboard, playlist}, got.Items,
+			"only the repository's objects, read from the API, and none of the index's rows for the kind")
+		require.Empty(t, got.Continue)
+	})
+
+	t.Run("pages across both sources", func(t *testing.T) {
+		first, err := lister.List(context.Background(), "default", repository, ListOptions{Limit: 1})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{dashboard}, first.Items)
+		require.NotEmpty(t, first.Continue)
+
+		second, err := lister.List(context.Background(), "default", repository, ListOptions{Limit: 1, Continue: first.Continue})
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceListItem{playlist}, second.Items)
+		require.Empty(t, second.Continue)
+	})
+}
+
+func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *testing.T) {
+	const repository = "repo"
+	repoRow := func(group, resource string, count int64) *resourcepb.CountManagedObjectsResponse_ResourceCount {
+		return &resourcepb.CountManagedObjectsResponse_ResourceCount{Kind: string(utils.ManagerKindRepo), Id: repository, Group: group, Resource: resource, Count: count}
+	}
+
+	t.Run("repository stats replace the index's count of the kind", func(t *testing.T) {
+		lister, store := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				repoRow("dashboard.grafana.app", "dashboards", 3),
+				repoRow(playlistGVK.Group, "playlists", 9),
+			},
+		}, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+		}, got)
+	})
+
+	t.Run("a repository managing only externally stored objects is found", func(t *testing.T) {
+		lister, store := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+
+		got, err := lister.RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{{Group: playlistGVK.Group, Resource: "playlists", Count: 1}}, got)
+	})
+
+	t.Run("namespace stats count the kind's instance, managed and unmanaged objects", func(t *testing.T) {
+		lister, store := externalPlaylists(t, repository)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{repoRow("dashboard.grafana.app", "dashboards", 3)},
+		}, nil).Once()
+		store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 5},
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 42},
+			},
+		}, nil).Once()
+
+		got, err := lister.Stats(context.Background(), "default")
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 5},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 3},
+		}, got.Instance, "the API's total replaces the index's")
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
+			{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+		}, got.Unmanaged)
+		require.ElementsMatch(t, []provisioning.ManagerStats{
+			{Kind: utils.ManagerKindRepo, Identity: repository, Stats: []provisioning.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 3},
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+			{Kind: utils.ManagerKindRepo, Identity: "another-repo", Stats: []provisioning.ResourceCount{
+				{Group: playlistGVK.Group, Resource: "playlists", Count: 1},
+			}},
+		}, got.Managed)
+	})
+}

@@ -40,10 +40,14 @@ const (
 	// CapabilityDisabled marks a resource as declared but not acted on (surfaced, inert).
 	// Absent means active.
 	CapabilityDisabled = "disabled"
+	// CapabilityExternalStorage marks a resource stored outside unified storage, which the
+	// managed-object index does not hold: it is listed and counted through its API group
+	// instead. Absent means indexed.
+	CapabilityExternalStorage = "externalstorage"
 )
 
 // KnownCapabilities is the set of recognised capability tokens; unknown tokens are rejected.
-var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled)
+var KnownCapabilities = sets.New(CapabilityFolder, CapabilitySkipValidation, CapabilityDisabled, CapabilityExternalStorage)
 
 // Dashboard GVR/GVK values are re-exported from apps/provisioning/pkg/resources
 // so there is a single source of truth. Folder and User live here because
@@ -90,6 +94,12 @@ func (r SupportedResource) IsValidated() bool { return !r.Capabilities.Has(Capab
 
 // IsFolderScoped reports whether the resource carries the folder annotation on write.
 func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(CapabilityFolder) }
+
+// IsExternallyStored reports whether the resource is read through its API group rather than the
+// managed-object index.
+func (r SupportedResource) IsExternallyStored() bool {
+	return r.Capabilities.Has(CapabilityExternalStorage)
+}
 
 // ParseSupportedResources parses the shared resource grammar — one entry per resource:
 //
