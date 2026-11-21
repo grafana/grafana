@@ -385,7 +385,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       },
 
       '&:focus-visible': getFocusStyles(theme),
-
       '&:[disabled]': {
         cursor: 'default',
         // Need type assertion here due to the use of !important
