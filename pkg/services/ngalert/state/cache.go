@@ -183,9 +183,7 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
-	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 	labels = clampExpandedValues(log, labels, "label", maxLabelValueSize, alertRule.Title, alertRule.UID, stateMetrics)
-	annotations = clampExpandedValues(log, annotations, "annotation", maxLabelValueSize, alertRule.Title, alertRule.UID, stateMetrics)
 
 	// If the result contains an error, we want to add the ref_id and datasource_uid labels
 	// to the new state if the alert rule should be in the ErrorErrState.
@@ -231,6 +229,16 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	if len(dupes) > 0 {
 		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
+
+	// Expand annotations with template data that includes the already-expanded
+	// rule labels, so annotations can reference them via $labels. The rule labels
+	// are expanded first (using only the query and built-in labels), and only the
+	// resulting concrete values are added to the annotation data, so there is no
+	// circular dependency even when a rule label is itself a template.
+	annotationData := template.NewData(lbs, result)
+	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, annotationData, externalURL, result.EvaluatedAt)
+	annotations = clampExpandedValues(log, annotations, "annotation", maxLabelValueSize, alertRule.Title, alertRule.UID, stateMetrics)
+
 	return lbs, annotations
 }
 
