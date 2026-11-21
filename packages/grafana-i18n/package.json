@@ -61,7 +61,7 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-pseudo": "^2.2.1",
     "micro-memoize": "^4.1.2",
-    "react-i18next": "^17.0.9"
+    "react-i18next": "^18.0.0"
   },
   "devDependencies": {
     "@types/react": "19.2.18",
