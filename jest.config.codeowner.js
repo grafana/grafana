@@ -36,10 +36,7 @@ if (teamFiles.length === 0) {
 
 const sourceFiles = teamFiles.filter(isCoverageSourceFile);
 
-const testFiles = teamFiles.filter((file) => {
-  const ext = path.extname(file);
-  return ['.ts', '.tsx', '.js', '.jsx'].includes(ext) && (file.includes('.test.') || file.includes('.spec.'));
-});
+const testFiles = teamFiles.filter((file) => /\.(test|spec)\.[jt]sx?$/.test(file));
 
 if (testFiles.length === 0) {
   console.log(`No test files found for team ${codeownerName}`);
