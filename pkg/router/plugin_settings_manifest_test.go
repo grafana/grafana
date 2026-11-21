@@ -45,7 +45,7 @@ func TestPublishedSettingsManifestReplacesPluginJSONRoutes(t *testing.T) {
 	require.True(t, ok)
 	body, err := appManifestJSON(published)
 	require.NoError(t, err)
-	require.Contains(t, string(body), definition.ExtensionProxy, "the proxy routes are published with where they forward to")
+	require.Contains(t, string(body), manifestroutes.ExtensionProxy, "the proxy routes are published with where they forward to")
 
 	var decoded appmanifestv1alpha2.AppManifest
 	require.NoError(t, json.Unmarshal(body, &decoded))
