@@ -210,44 +210,47 @@ export function useSplitter(options: UseSplitterOptions) {
   const pressedKeys = useRef(new Set<string>());
   const keysLastHandledAt = useRef<number | null>(null);
   const handlePressedKeys = useCallback(
-    (time: number) => {
-      const nothingPressed = pressedKeys.current.size === 0;
-      if (nothingPressed) {
-        keysLastHandledAt.current = null;
-        return;
-      } else if (primarySizeRef.current === null) {
-        return;
-      }
-
-      const dt = time - (keysLastHandledAt.current ?? time);
-      const dx = dt * PIXELS_PER_MS;
-      let sizeChange = 0;
-
-      if (direction === 'row') {
-        if (pressedKeys.current.has('ArrowLeft')) {
-          sizeChange -= dx;
+    (startTime: number) => {
+      const tick = (time: number) => {
+        const nothingPressed = pressedKeys.current.size === 0;
+        if (nothingPressed) {
+          keysLastHandledAt.current = null;
+          return;
+        } else if (primarySizeRef.current === null) {
+          return;
         }
-        if (pressedKeys.current.has('ArrowRight')) {
-          sizeChange += dx;
+
+        const dt = time - (keysLastHandledAt.current ?? time);
+        const dx = dt * PIXELS_PER_MS;
+        let sizeChange = 0;
+
+        if (direction === 'row') {
+          if (pressedKeys.current.has('ArrowLeft')) {
+            sizeChange -= dx;
+          }
+          if (pressedKeys.current.has('ArrowRight')) {
+            sizeChange += dx;
+          }
+        } else {
+          if (pressedKeys.current.has('ArrowUp')) {
+            sizeChange -= dx;
+          }
+          if (pressedKeys.current.has('ArrowDown')) {
+            sizeChange += dx;
+          }
         }
-      } else {
-        if (pressedKeys.current.has('ArrowUp')) {
-          sizeChange -= dx;
-        }
-        if (pressedKeys.current.has('ArrowDown')) {
-          sizeChange += dx;
-        }
-      }
 
-      // measure primary and container
-      primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
-      containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
+        // measure primary and container
+        primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
+        containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
 
-      onUpdateSize(sizeChange);
+        onUpdateSize(sizeChange);
 
-      keysLastHandledAt.current = time;
+        keysLastHandledAt.current = time;
 
-      window.requestAnimationFrame(handlePressedKeys);
+        window.requestAnimationFrame(tick);
+      };
+      tick(startTime);
     },
     [direction, measurementProp, onUpdateSize]
   );

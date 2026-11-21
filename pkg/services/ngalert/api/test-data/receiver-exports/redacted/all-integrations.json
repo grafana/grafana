@@ -633,6 +633,7 @@
      "uid": "telegram-uid",
      "type": "telegram",
      "settings": {
+      "api_url": "http://localhost:8081/telegram",
       "bottoken": "[REDACTED]",
       "chatid": "12345678",
       "disable_notifications": true,
@@ -669,7 +670,8 @@
       "message": "test-message",
       "message_thread_id": "13579",
       "parse_mode": "html",
-      "protect_content": true
+      "protect_content": true,
+      "send_message_as_caption": true
      },
      "disableResolveMessage": true
     },

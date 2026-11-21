@@ -793,3 +793,106 @@ describe('getFieldOverrideCategories', () => {
     });
   });
 });
+
+describe('getFieldOverrideCategories change reporting', () => {
+  const registry = makeRegistry([
+    makeItem('min', { isCustom: false, process: numberOverrideProcessor }),
+    makeItem('displayName', { isCustom: false, process: stringOverrideProcessor }),
+  ]);
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [{ matcher: { id: 'byName', options: 'Revenue' }, properties: [{ id: 'min', value: 20 }] }],
+  };
+
+  function setup() {
+    const onOverrideChanged = jest.fn();
+    const categories = getFieldOverrideCategories(
+      fieldConfig,
+      registry,
+      [],
+      '',
+      jest.fn(),
+      undefined,
+      false,
+      undefined,
+      onOverrideChanged
+    );
+    const findItem = (fragment: string) => categories[0].items.find((item) => item.props.id?.includes(fragment))!;
+    return { categories, findItem, onOverrideChanged };
+  }
+
+  it('reports adding an override with its matcher id', () => {
+    const { categories, onOverrideChanged } = setup();
+    const addButton = categories[categories.length - 1].props.customRender!() as React.ReactElement<{
+      onOverrideAdd: (value: { value: string }) => void;
+    }>;
+
+    addButton.props.onOverrideAdd({ value: 'byRegexp' });
+
+    expect(onOverrideChanged).toHaveBeenCalledWith({ item: 'add_override', overrideIndex: 1, matcherId: 'byRegexp' });
+  });
+
+  it('reports removing an override with its matcher id', () => {
+    const { categories, onOverrideChanged } = setup();
+    const title = categories[0].props.renderTitle!(true) as React.ReactElement<{ onOverrideRemove: () => void }>;
+
+    title.props.onOverrideRemove();
+
+    expect(onOverrideChanged).toHaveBeenCalledWith({ item: 'remove_override', overrideIndex: 0, matcherId: 'byName' });
+  });
+
+  it('reports a matcher change without the matcher options', () => {
+    const { findItem, onOverrideChanged } = setup();
+    const matcherItem = findItem('-matcher');
+    const matcher = matcherItem.props.render(matcherItem) as React.ReactElement<{
+      onChange: (options: unknown) => void;
+    }>;
+
+    matcher.props.onChange('Cost');
+
+    expect(onOverrideChanged).toHaveBeenCalledWith({
+      item: 'change_override_matcher',
+      overrideIndex: 0,
+      matcherId: 'byName',
+    });
+    expect(JSON.stringify(onOverrideChanged.mock.calls)).not.toContain('Cost');
+  });
+
+  it('does not report a matcher editor that sends back the options it has', () => {
+    const { findItem, onOverrideChanged } = setup();
+    const matcherItem = findItem('-matcher');
+    const matcher = matcherItem.props.render(matcherItem) as React.ReactElement<{
+      onChange: (options: unknown, scope?: string) => void;
+    }>;
+
+    matcher.props.onChange('Revenue', 'series');
+    matcher.props.onChange('Cost', 'series');
+
+    expect(onOverrideChanged.mock.calls).toEqual([
+      [{ item: 'change_override_matcher', overrideIndex: 0, matcherId: 'byName' }],
+    ]);
+  });
+
+  it('reports adding, changing and removing a property by its id', () => {
+    const { findItem, onOverrideChanged } = setup();
+    const addItem = findItem('-add-button');
+    const addPicker = addItem.props.render(addItem) as React.ReactElement<{
+      onChange: (value: { value: string }) => void;
+    }>;
+    const propertyItem = findItem('-property-min');
+    const property = propertyItem.props.render(propertyItem) as React.ReactElement<{
+      onChange: (value: unknown) => void;
+      onRemove: () => void;
+    }>;
+
+    addPicker.props.onChange({ value: 'displayName' });
+    property.props.onChange(42);
+    property.props.onRemove();
+
+    expect(onOverrideChanged.mock.calls).toEqual([
+      [{ item: 'add_override_property', overrideIndex: 0, matcherId: 'byName', propertyId: 'displayName' }],
+      [{ item: 'change_override_property', overrideIndex: 0, matcherId: 'byName', propertyId: 'min' }],
+      [{ item: 'remove_override_property', overrideIndex: 0, matcherId: 'byName', propertyId: 'min' }],
+    ]);
+  });
+});

@@ -160,3 +160,14 @@ func TestIdentity_GroupsAndExternalGroupsContract(t *testing.T) {
 	ext := id.ExternalUserInfo()
 	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, ext.Groups)
 }
+
+func TestIdentity_SignedInUser_ServiceAccountTokenID(t *testing.T) {
+	id := &Identity{ID: "1", Type: types.TypeServiceAccount, OrgID: 1, ServiceAccountTokenID: 7, ServiceAccountTokenName: "cli-token"}
+
+	u := id.SignedInUser()
+	assert.Equal(t, int64(1), u.UserID)
+	assert.True(t, u.IsServiceAccount)
+	assert.Zero(t, u.ApiKeyID)
+	assert.Equal(t, int64(7), u.ServiceAccountTokenID)
+	assert.Equal(t, "cli-token", u.ServiceAccountTokenName)
+}

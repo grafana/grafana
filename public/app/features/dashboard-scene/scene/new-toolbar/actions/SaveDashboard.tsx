@@ -10,13 +10,15 @@ import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scen
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { useComposerPaused } from '../../../composer/useComposerPaused';
+import { savesPendingChanges } from '../../../lifecycle/pendingChangesSave';
 import { getDashboardSaveActions } from '../../../saving/dashboardSaveActions';
 import { dashboardModesEnabled } from '../../dashboardModes';
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, uid, editview, isEditing } = dashboard.state;
-  const isDirty = dashboard.state.isDirty;
+  // Pending changes are unsaved changes until Save saves them.
+  const isDirty = dashboard.state.isDirty || savesPendingChanges(dashboard);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   const showChanges = dashboardModesEnabled() && isEditing;
@@ -25,10 +27,6 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
   const isManaged = dashboard.isManaged();
-  // Edits to pending changes are recorded as they're made: the banner's Apply saves the dashboard.
-  if (dashboard.recordsToPendingChanges()) {
-    return null;
-  }
 
   // In dashboard settings we still use the nav toolbar for a short while
   const buttonSize = Boolean(editview) ? 'sm' : 'md';

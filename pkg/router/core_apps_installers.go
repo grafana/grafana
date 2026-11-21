@@ -9,21 +9,31 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-app-sdk/plugin/appadapter"
-
+	"github.com/grafana/grafana-app-sdk/simple"
+	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
+	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
+	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
+	userstoragemanifest "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
+	userstorageapp "github.com/grafana/grafana/apps/userstorage/pkg/app"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
+	prefsapi "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // registerCoreAPIs reports whether the router serves the core apps' groups.
@@ -35,18 +45,20 @@ func registerCoreAPIs() bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagRouterRegisterCoreAPIs, false, openfeature.TransactionContext(ctx))
 }
 
-// coreAppsFromInstallers builds a core app for each installer. They call
-// Grafana's API like an external app plugin does: through the local token
-// exchange, as the caller. An installer that cannot be served is skipped
-// with a warning, so one bad app does not leave the others unserved.
-func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
-	if len(installers) == 0 {
-		return nil, nil
-	}
+// coreAppsFromInstallers builds a core app for each installer, and for the
+// apps in directInstallers. They call Grafana's API like an
+// external app plugin does: through the local token exchange, as the caller. An
+// installer that cannot be served is skipped with a warning, so one bad app
+// does not leave the others unserved.
+func coreAppsFromInstallers(ctx context.Context, installers []appsdk.AppInstaller, cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
 	if !pluginAuth.LocalTokens() || pluginAuth.LocalAPIURL() == "" {
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagRouterRegisterCoreAPIs)
 	}
-	log := logging.DefaultLogger
+
+	log := logging.FromContext(ctx)
+
+	installers = append(directInstallers(ctx, cfg), installers...)
+
 	apps := make([]CoreApp, 0, len(installers))
 	for _, installer := range installers {
 		if installer == nil || installer.ManifestData() == nil {
@@ -60,6 +72,68 @@ func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *plugin
 		apps = append(apps, coreApp)
 	}
 	return apps, nil
+}
+
+// directInstallers are the installers of the apps the embedded API server has
+// no installer for: it serves their groups from its own builders, so the router
+// adds them here. An app that cannot be installed is skipped with a warning.
+func directInstallers(ctx context.Context, cfg *setting.Cfg) []appsdk.AppInstaller {
+	log := logging.FromContext(ctx)
+	installers := []appsdk.AppInstaller{}
+
+	collectionsManifest := collectionsmanifest.LocalManifest()
+	collections, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(collectionsManifest, nil, collectionsapp.New),
+		app.Config{
+			KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+			ManifestData: *collectionsManifest.ManifestData,
+		},
+		collectionsmanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the collections app", "err", err)
+	} else {
+		installers = append(installers, collections)
+	}
+
+	// Without its config the app has no defaults to merge, and accepts any theme.
+	preferencesConfig := &preferencesapp.Config{
+		Defaults:          prefsapi.DefaultSpec(cfg),
+		HomeDashboardName: home.DASHBOARD_NAME,
+		IsValidTheme:      pref.IsValidThemeID,
+	}
+	preferencesManifest := preferencesmanifest.LocalManifest()
+	preferences, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(preferencesManifest, preferencesConfig, preferencesapp.New),
+		app.Config{
+			KubeConfig:     rest.Config{}, // replaced when the installer initializes the app
+			ManifestData:   *preferencesManifest.ManifestData,
+			SpecificConfig: preferencesConfig,
+		},
+		preferencesmanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the preferences app", "err", err)
+	} else {
+		installers = append(installers, preferences)
+	}
+
+	userstorageManifest := userstoragemanifest.LocalManifest()
+	userstorage, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(userstorageManifest, nil, userstorageapp.New),
+		app.Config{
+			KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+			ManifestData: *userstorageManifest.ManifestData,
+		},
+		userstoragemanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the userstorage app", "err", err)
+	} else {
+		installers = append(installers, userstorage)
+	}
+
+	return installers
 }
 
 // coreAppPluginID names the identity a core app is called with, from its API
