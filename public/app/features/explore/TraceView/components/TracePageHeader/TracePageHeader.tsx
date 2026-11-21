@@ -55,6 +55,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { TraceProfilesButton } from '../../SpanProfiles';
 import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
 import {
   type ViewRangeTimeUpdate,
@@ -364,6 +365,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             {logsLinkModel && <LogsLinkButton linkModel={logsLinkModel} traceDatasourceUid={datasourceUid} forTrace />}
+            <TraceProfilesButton />
 
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button

@@ -24,6 +24,7 @@ import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 export const RelatedProfilesTitle = 'Related profiles';
 
+import { SpanProfileRevealContext, useSpanProfiles, useSpanProfilesStatus } from '../../../SpanProfiles';
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { type SpanLinkDef, type SpanLinkFunc, type SpanLinkModel, SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
@@ -81,6 +82,18 @@ export const SpanDetailLinkButtons = ({
   app,
   focusSpanLink,
 }: Props) => {
+  const profiles = useSpanProfiles();
+  const profileStatus = useSpanProfilesStatus();
+  const { reveal } = React.useContext(SpanProfileRevealContext);
+  const hasProfile = Boolean(profiles[span.spanID]?.length);
+  const profilesLoading = profileStatus === 'loading';
+  const profileTooltip = profilesLoading
+    ? t('explore.span-profiles.checking', 'Checking for profiles…')
+    : hasProfile
+      ? t('explore.span-profiles.available', 'Profiles available for this span')
+      : profileStatus === 'done'
+        ? t('explore.span-profiles.absent', 'No profiles found for this span')
+        : t('explore.span-profiles.unavailable', 'Profile availability could not be determined');
   // Hooks must run unconditionally on every render, so fetch the plugin links up front.
   // The context only depends on props, and the fetched links are only consumed below when
   // a profiles link exists and we're in Explore.
@@ -103,6 +116,12 @@ export const SpanDetailLinkButtons = ({
     const links = (createSpanLink?.(span) || [])
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
+      // Presence-based correlation replaces the legacy configured profile links.
+      .filter(
+        (link) =>
+          profileStatus === 'disabled' ||
+          (link.type !== SpanLinkType.Profiles && link.type !== SpanLinkType.ProfilesDrilldown)
+      )
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
           return createLinkModel(
@@ -166,7 +185,7 @@ export const SpanDetailLinkButtons = ({
     });
 
     return links;
-  }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, settings, span]);
+  }, [app, createSpanLink, datasourceType, datasourceUid, isLoading, pluginLinks, profileStatus, settings, span]);
 
   return (
     <span className={styles.linksContainer}>
@@ -184,6 +203,18 @@ export const SpanDetailLinkButtons = ({
             <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
           )
         )
+      )}
+      {profileStatus !== 'disabled' && (
+        <Button
+          size="sm"
+          icon={profilesLoading ? 'spinner' : 'fire'}
+          variant={hasProfile ? 'primary' : 'secondary'}
+          disabled={!hasProfile}
+          tooltip={profileTooltip}
+          onClick={() => reveal(span.spanID)}
+        >
+          <Trans i18nKey="explore.span-profiles.button">Span profile</Trans>
+        </Button>
       )}
       <ShareSpanButton focusSpanLink={focusSpanLink} />
     </span>
@@ -220,7 +251,6 @@ const SingleLinkButton: React.FC<{ spanLinkModel: SpanLinkModel }> = ({ spanLink
 };
 
 const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
-  const [_, setIsOpen] = React.useState(false);
   const styles = useStyles2(getResponsibleButtonStyles);
 
   const menu = useMemo(
@@ -247,7 +277,7 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   );
 
   return (
-    <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={setIsOpen}>
+    <Dropdown overlay={menu} placement="bottom-start">
       <Button
         variant="secondary"
         fill="outline"

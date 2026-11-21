@@ -35,6 +35,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { useSpanProfiles } from '../../../SpanProfiles';
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
@@ -301,6 +302,7 @@ export type SpanDetailProps = {
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
+  const profiles = useSpanProfiles();
   const {
     color,
     detailState,
@@ -591,8 +593,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     );
   }
 
-  if (span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey)) {
-    listOfContentCards.push(
+  const flameGraph =
+    profiles[span.spanID]?.length || span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) ? (
       <SpanFlameGraph
         span={span}
         timeZone={timeZone}
@@ -603,8 +605,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         traceDuration={traceDuration}
         traceName={traceName}
       />
-    );
-  }
+    ) : null;
 
   return (
     <div data-testid="span-detail-component" className={styles.spanDetailComponent}>
@@ -648,6 +649,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       </div>
       <div className={styles.content}>
         <CardsContainer listOfContentCards={listOfContentCards} />
+        {flameGraph}
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
