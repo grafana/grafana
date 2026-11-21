@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"testing"
@@ -217,6 +219,33 @@ func TestSendEmailSync(t *testing.T) {
 
 		require.Error(t, err)
 	})
+}
+
+func TestPlainTextEmailIsNotHTMLEscaped(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "escaping.html"), []byte(`<p>{{ .Value }}</p>`), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "escaping.txt"), []byte(`{{ .Value }}`), 0o600))
+	cfg := createSmtpConfig(t)
+	cfg.StaticRootPath = dir
+	// one pattern matching both files, so the .txt and .html templates have to be told apart by extension
+	cfg.Smtp.TemplatesPatterns = []string{"escaping.*"}
+	ns, mailer, err := createSutWithConfig(t, newBus(t), cfg)
+	require.NoError(t, err)
+
+	value := `{"key":"a & b <c>"}`
+	err = ns.SendEmailCommandHandlerSync(context.Background(), &SendEmailCommandSync{
+		SendEmailCommand: SendEmailCommand{
+			Subject:  "subject",
+			To:       []string{"asdf@grafana.com"},
+			Template: "escaping",
+			Data:     map[string]any{"Value": value},
+		},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, mailer.Sent, 1)
+	require.Equal(t, value, mailer.Sent[0].Body["text/plain"])
+	require.Equal(t, `<p>{&#34;key&#34;:&#34;a &amp; b &lt;c&gt;&#34;}</p>`, mailer.Sent[0].Body["text/html"])
 }
 
 func TestSendEmailAsync(t *testing.T) {
