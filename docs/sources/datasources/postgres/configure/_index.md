@@ -79,14 +79,14 @@ If your database is publicly accessible but protected by a firewall, you must al
 
 **Authentication section:**
 
-| Setting               | Description                                                                                                                                                                                                                                                                                                                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                             |
-| Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver resolves the password using the standard [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). To use a non-default password file location, set the `PGPASSFILE` environment variable in the Grafana server process. |
-| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible.                                                                                                                                           |
-| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                                                                                                                                         |
-| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                                                                                                                                    |
-| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                                                                                                                                         |
+| Setting               | Description                                                                                                                                                                                                                                                                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                                                                                 |
+| Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver can read the password from a [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). Refer to [Use PostgreSQL client files](#use-postgresql-client-files). |
+| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible.                                                                               |
+| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                                                                             |
+| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                                                                        |
+| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                                                                             |
 
 ### TLS/SSL mode reference
 
@@ -128,6 +128,29 @@ If you select the **verify-ca** or **verify-full** mode with the **certificate c
 | TLS/SSL Client Certificate | Optional. Provide the client certificate. Only needed when the server enforces mutual TLS. |
 | TLS/SSL Client Key         | Optional. Provide the client key. Only needed when the server enforces mutual TLS.         |
 
+### Use PostgreSQL client files
+
+If you leave **Password** or the TLS/SSL certificate settings empty, the PostgreSQL client driver can use these files from the home directory of the Grafana server process:
+
+- `.pgpass`, the [password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html)
+- `.postgresql/root.crt`, the root certificate
+- `.postgresql/postgresql.crt` and `.postgresql/postgresql.key`, the client certificate and key
+
+On Windows, the driver uses `pgpass.conf` and the certificate files in `%APPDATA%\postgresql\` instead.
+
+Grafana doesn't pass its environment variables to the data source by default, so the driver can't find these files. To use them, add `grafana-postgresql-datasource` to `forward_host_env_vars` in the Grafana configuration file, and then restart Grafana:
+
+```ini
+[plugins]
+forward_host_env_vars = grafana-postgresql-datasource
+```
+
+The driver reads the files from the directory in the `HOME` environment variable. In the Grafana Docker image, `HOME` is `/usr/share/grafana`. To use a password file in a different location, set the `PGPASSFILE` environment variable in the Grafana server process.
+
+{{< admonition type="note" >}}
+`forward_host_env_vars` passes all environment variables of the Grafana server process to the data source. The driver also uses `PG*` variables, such as `PGPASSWORD`, for settings that the data source doesn't set.
+{{< /admonition >}}
+
 ### Connect to a cloud-hosted PostgreSQL database
 
 Managed PostgreSQL services such as Amazon RDS, Azure Database for PostgreSQL, and DigitalOcean encrypt connections with TLS/SSL. To verify the server's identity, set the **TLS/SSL Mode** to `verify-full` (or `verify-ca`) and provide the provider's server root certificate in the **TLS/SSL Root Certificate** field. You don't need to supply a client certificate or client key unless the service is configured to enforce mutual TLS.
@@ -158,12 +181,12 @@ A self-signed client certificate, for example one generated with `openssl`, is o
 
 These settings control how Grafana manages connections to your PostgreSQL server. Tune these values if you share the database with other applications or use connection pooling software such as PgBouncer.
 
-| Setting       | Description                                                                                                                                                                                                          |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database. |
-| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.                                                                               |
-| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections.   |
-| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). Set a lower value if your network or security policy requires periodic reconnection.                             |
+| Setting       | Description                                                                                                                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database.                         |
+| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.                                                                                                       |
+| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections.                           |
+| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). If set to `0`, connections are reused indefinitely. Set a lower value if your network or security policy requires periodic reconnection. |
 
 **Private data source connect:**
 
@@ -328,7 +351,7 @@ The following table lists all `jsonData` and `secureJsonData` fields supported w
 | `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                                                                                                                                                     |
 | `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                                                                                                                                                     |
 | `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                                                                                                                                                      |
-| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                                                                                                                                         |
+| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. `0` means no limit. Default: `14400`.                                                                                                                                     |
 | `postgresVersion`        | `jsonData`       | Server version code for the query builder. Examples: `900` (9.0), `903` (9.3), `1000` (10), `1100` (11), `1200` (12), `1300` (13), `1400` (14), `1500` (15). Grafana auto-detects this on save when possible. |
 | `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                                                                                                                                                 |
 | `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`).                                                                                                 |
