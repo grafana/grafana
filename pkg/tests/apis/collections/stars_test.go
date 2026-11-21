@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -47,6 +48,9 @@ func TestIntegrationStars(t *testing.T) {
 			EnableFeatureToggles: flags,
 			Provisioning:         testinfra.FeatureEnabled,
 		})
+		if routed {
+			helper.WaitForCoreApp(collections.APIGroup)
+		}
 
 		t.Run(fmt.Sprintf("test stars (routed:%t)", routed), func(t *testing.T) {
 			ctx := context.Background()
@@ -252,6 +256,160 @@ func TestIntegrationStars(t *testing.T) {
 				"stars", adminStarName,
 				"update", "servicemodel.ext.grafana.com", "Component", "xxx").Do(ctx)
 			require.NoError(t, res.Error())
+		})
+	}
+}
+
+// TestIntegrationStarsUpsert checks that a user who is not an org admin can
+// create their own stars object by writing to its name, with no separate create
+// step. A collection-level create may only use the user's own name.
+func TestIntegrationStarsUpsert(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, routed := range []bool{false, true} {
+		var flags []string
+		if routed {
+			flags = append(flags,
+				featuremgmt.FlagGrafanaUseRouterMiddleware,
+				featuremgmt.FlagRouterRegisterCoreAPIs,
+				featuremgmt.FlagApppluginsLoadAppManifest,
+			)
+		}
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			LocalPluginAPI:       routed,
+			EnableFeatureToggles: flags,
+			Provisioning:         testinfra.FeatureEnabled,
+		})
+		if routed {
+			helper.WaitForCoreApp(collections.APIGroup)
+		}
+
+		t.Run(fmt.Sprintf("upsert stars (routed:%t)", routed), func(t *testing.T) {
+			ctx := context.Background()
+			gvr := collections.StarsResourceInfo.GroupVersionResource()
+			viewer := helper.Org1.Viewer
+			editor := helper.Org1.Editor
+			viewerStars := helper.GetResourceClient(apis.ResourceClientArgs{User: viewer, GVR: gvr})
+			editorStars := helper.GetResourceClient(apis.ResourceClientArgs{User: editor, GVR: gvr})
+			viewerName := "user-" + viewer.Identity.GetIdentifier()
+			editorName := "user-" + editor.Identity.GetIdentifier()
+			viewerREST := viewer.RESTClient(t, &collections.GroupVersion)
+
+			starPath := func(name, op, uid string) []string {
+				return []string{"apis", "collections.grafana.app", "v1alpha1", "namespaces", "default",
+					"stars", name, "update", "dashboard.grafana.app", "Dashboard", uid}
+			}
+			names := func(t *testing.T, c *apis.K8sResourceClient, name string) []string {
+				t.Helper()
+				obj, err := c.Resource.Get(ctx, name, metav1.GetOptions{})
+				require.NoError(t, err)
+				stars := typed(t, obj, &collections.Stars{})
+				if len(stars.Spec.Resource) == 0 {
+					return nil
+				}
+				return stars.Spec.Resource[0].Names
+			}
+
+			t.Run("a viewer's first star creates their object", func(t *testing.T) {
+				_, err := viewerStars.Resource.Get(ctx, viewerName, metav1.GetOptions{})
+				require.Error(t, err, "nothing stored yet")
+
+				res := viewerREST.Put().AbsPath(starPath(viewerName, "update", "first")...).Do(ctx)
+				require.NoError(t, res.Error())
+				require.Equal(t, []string{"first"}, names(t, viewerStars, viewerName))
+
+				res = viewerREST.Put().AbsPath(starPath(viewerName, "update", "second")...).Do(ctx)
+				require.NoError(t, res.Error())
+				require.ElementsMatch(t, []string{"first", "second"}, names(t, viewerStars, viewerName))
+			})
+
+			t.Run("removing the last star deletes the object, and the next one creates it again", func(t *testing.T) {
+				for _, uid := range []string{"first", "second"} {
+					res := viewerREST.Delete().AbsPath(starPath(viewerName, "update", uid)...).Do(ctx)
+					require.NoError(t, res.Error())
+				}
+				_, err := viewerStars.Resource.Get(ctx, viewerName, metav1.GetOptions{})
+				require.Error(t, err, "object is gone")
+
+				res := viewerREST.Put().AbsPath(starPath(viewerName, "update", "again")...).Do(ctx)
+				require.NoError(t, res.Error())
+				require.Equal(t, []string{"again"}, names(t, viewerStars, viewerName))
+			})
+
+			t.Run("a plain PUT of the owner's own name creates it without a resource version", func(t *testing.T) {
+				if !routed {
+					t.Skip("upsert on write is served by the router's owner-scoped store")
+				}
+				obj := &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": collections.GroupVersion.String(),
+					"kind":       "Stars",
+					"metadata":   map[string]any{"name": editorName, "namespace": "default"},
+					"spec": map[string]any{"resource": []map[string]any{
+						{"group": "dashboard.grafana.app", "kind": "Dashboard", "names": []string{"a", "b"}},
+					}},
+				}}
+				_, err := editorStars.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, []string{"a", "b"}, names(t, editorStars, editorName))
+
+				// Replacing it again, still without a resource version
+				obj.Object["spec"] = map[string]any{"resource": []map[string]any{
+					{"group": "dashboard.grafana.app", "kind": "Dashboard", "names": []string{"c"}},
+				}}
+				_, err = editorStars.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, []string{"c"}, names(t, editorStars, editorName))
+			})
+
+			t.Run("a PUT to another user's name is forbidden and creates nothing", func(t *testing.T) {
+				other := &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": collections.GroupVersion.String(),
+					"kind":       "Stars",
+					"metadata":   map[string]any{"name": "user-someone-else", "namespace": "default"},
+					"spec": map[string]any{"resource": []map[string]any{
+						{"group": "dashboard.grafana.app", "kind": "Dashboard", "names": []string{"a"}},
+					}},
+				}}
+				_, err := viewerStars.Resource.Update(ctx, other, metav1.UpdateOptions{})
+				require.Error(t, err)
+				require.True(t, apierrors.IsForbidden(err), "got %v", err)
+
+				adminStars := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+				_, err = adminStars.Resource.Get(ctx, "user-someone-else", metav1.GetOptions{})
+				require.True(t, apierrors.IsNotFound(err), "got %v", err)
+			})
+
+			t.Run("a collection-level create checks the name in the object", func(t *testing.T) {
+				if !routed {
+					t.Skip("the router's owner authorizer applies to the routed API")
+				}
+				starsNamed := func(name string) *unstructured.Unstructured {
+					return &unstructured.Unstructured{Object: map[string]any{
+						"apiVersion": collections.GroupVersion.String(),
+						"kind":       "Stars",
+						"metadata":   map[string]any{"name": name, "namespace": "default"},
+						"spec": map[string]any{"resource": []any{map[string]any{
+							"group": "dashboard.grafana.app", "kind": "Dashboard", "names": []any{"posted"},
+						}}},
+					}}
+				}
+
+				_, err := viewerStars.Resource.Create(ctx, starsNamed("user-someone-else"), metav1.CreateOptions{})
+				require.True(t, apierrors.IsInvalid(err), "got %v", err)
+
+				// A generated name is only made after the name is checked.
+				generated := starsNamed("")
+				generated.SetGenerateName("user-")
+				_, err = viewerStars.Resource.Create(ctx, generated, metav1.CreateOptions{})
+				require.True(t, apierrors.IsInvalid(err), "got %v", err)
+
+				require.NoError(t, viewerStars.Resource.Delete(ctx, viewerName, metav1.DeleteOptions{}))
+				_, err = viewerStars.Resource.Create(ctx, starsNamed(viewerName), metav1.CreateOptions{})
+				require.NoError(t, err)
+				require.Equal(t, []string{"posted"}, names(t, viewerStars, viewerName))
+			})
 		})
 	}
 }

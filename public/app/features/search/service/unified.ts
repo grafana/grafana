@@ -17,6 +17,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import kbn from 'app/core/utils/kbn';
 import { STARRED_KINDS } from 'app/features/stars/kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
@@ -515,9 +516,9 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
 }
 
 export function toURL(resource: string, name: string, title: string): string {
-  if (resource === 'folders') {
-    return `${config.appSubUrl}/dashboards/f/${name}`;
-  }
-  const slug = kbn.slugifyForUrl(title);
-  return `${config.appSubUrl}/d/${name}/${slug}`;
+  const route =
+    resource === CORE_KINDS.folder.resource
+      ? CORE_KINDS.folder.getRoute(name)
+      : `${CORE_KINDS.dashboard.getRoute(name)}/${kbn.slugifyForUrl(title)}`;
+  return `${config.appSubUrl}${route}`;
 }

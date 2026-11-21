@@ -197,30 +197,38 @@ describe('picking', () => {
     });
   });
 
-  it('leaves Composer on Escape', async () => {
+  it('keeps Composer open on Escape', async () => {
     const { scene, session, startPick } = setup();
-    const pick = startPick();
+    const modeBefore = scene.state.mode;
+    const resolved = jest.fn();
+    startPick().then(resolved);
 
-    fireEvent.keyDown(window, { key: 'Escape' });
+    const escape = fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
 
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
-    expect(scene.state.mode).toBe('view');
+    expect(escape).toBe(false); // swallowed, so exit edit and close view panel do not see it either
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(scene.state.mode).toBe(modeBefore);
   });
 
-  it('cancels a drag on the first Escape and leaves Composer on the next', async () => {
+  it('cancels a drag on Escape and keeps Composer open', async () => {
     const { session, startPick } = setup();
-    const pick = startPick();
+    const resolved = jest.fn();
+    startPick().then(resolved);
     const overlay = screen.getByTestId('dashboard-composer-overlay');
     fireEvent.pointerDown(overlay, { clientX: 150, clientY: 250, button: 0, shiftKey: true });
     fireEvent.pointerMove(overlay, { clientX: 350, clientY: 450 });
+    expect(screen.getByTestId('composer-region-draft')).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(screen.queryByTestId('composer-region-draft')).not.toBeInTheDocument();
+    expect(resolved).not.toHaveBeenCalled();
     expect(session.isClosed).toBe(false);
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-    await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 
   it('leaves Escape and pointer events inside an annotation anchor to the plugin', async () => {
@@ -242,9 +250,17 @@ describe('picking', () => {
     expect(resolved).not.toHaveBeenCalled();
     expect(session.getOverlayState().picking).toBe(true);
 
-    fireEvent.keyDown(document.body, { key: 'Escape' });
+    const outside = fireEvent.keyDown(document.body, { key: 'Escape' });
+    await act(async () => {});
+
+    expect(outside).toBe(false); // outside the anchor the overlay still swallows it, and stays open
+    expect(resolved).not.toHaveBeenCalled();
+    expect(session.isClosed).toBe(false);
+
+    act(() => {
+      session.exit();
+    });
     await expect(pick).resolves.toBeNull();
-    expect(session.isClosed).toBe(true);
   });
 });
 
@@ -1872,17 +1888,32 @@ describe('hover pass-through', () => {
     expect(seen.mousedown).not.toHaveBeenCalled();
   });
 
-  it('keeps blocking presses and clicks while Select is off, and still passes moves', () => {
+  it('passes presses and clicks to the document while no pick is pending, so it works as outside Composer', () => {
     setup();
+    const { plot, seen } = panelInContainer();
+
+    const pressed = fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.mouseDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.click(plot, { clientX: 200, clientY: 350 });
+    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
+
+    expect(pressed).toBe(true);
+    expect(seen.pointerdown).toHaveBeenCalledTimes(1);
+    expect(seen.mousedown).toHaveBeenCalledTimes(1);
+    expect(seen.click).toHaveBeenCalledTimes(1);
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds presses again while paused, even with no pick pending', () => {
+    const { session } = setup();
+    act(() => session.setPaused(true));
     const { plot, seen } = panelInContainer();
 
     fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
     fireEvent.click(plot, { clientX: 200, clientY: 350 });
-    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
 
     expect(seen.pointerdown).not.toHaveBeenCalled();
     expect(seen.click).not.toHaveBeenCalled();
-    expect(seen.pointermove).toHaveBeenCalledTimes(1);
   });
 
   it('lets the wheel scroll', () => {

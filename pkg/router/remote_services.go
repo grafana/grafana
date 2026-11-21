@@ -28,11 +28,16 @@ import (
 //
 // TLS verifies against apiservice_ca_bundle_file, which cloud already sets for
 // the aggregator's remotes. The router adds remote_services_audience (the CAP
-// token audience, required) and remote_services_insecure, since the aggregator
-// always skips TLS verification.
+// token audience, defaulting to the aggregator's hardcoded discovery audience)
+// and remote_services_insecure, since the aggregator always skips TLS
+// verification.
 const (
 	remoteServicesSection = "grafana-apiserver"
 	remoteServicesAuth    = "grpc_client_authentication"
+
+	// defaultRemoteServicesAudience is the audience the aggregator hardcodes for
+	// its discovery requests, so existing deployments need no new setting.
+	defaultRemoteServicesAudience = "cloudAppPlatformDiscovery"
 )
 
 // remoteService is one entry of the remote services file: an MT apiserver that
@@ -140,7 +145,7 @@ func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesL
 	}
 	auth := cfg.SectionWithEnvOverrides(remoteServicesAuth)
 	opts := remoteServiceOptions{
-		audience:       section.Key("remote_services_audience").MustString(""),
+		audience:       section.Key("remote_services_audience").MustString(defaultRemoteServicesAudience),
 		tokenNamespace: auth.Key("token_namespace").MustString(""),
 		// The CA cloud already sets for the aggregator's remotes.
 		caFile:   section.Key("apiservice_ca_bundle_file").MustString(""),
@@ -149,9 +154,6 @@ func newRemoteServicesLoader(ctx context.Context, cfg *setting.Cfg, base RoutesL
 	configs := remoteServiceTargets(ctx, svcs, remoteServiceOptedIn, opts)
 	if len(configs) == 0 {
 		return base, nil
-	}
-	if opts.audience == "" {
-		return nil, fmt.Errorf("router: [%s] remote_services_audience is required to mount remote services", remoteServicesSection)
 	}
 	token, exchangeURL := auth.Key("token").MustString(""), auth.Key("token_exchange_url").MustString("")
 	if token == "" || exchangeURL == "" {

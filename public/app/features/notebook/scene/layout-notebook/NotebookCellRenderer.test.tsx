@@ -86,9 +86,9 @@ beforeEach(() => {
 });
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({
+jest.mock('@grafana/ui/internal', () => ({
+  ...jest.requireActual('@grafana/ui/internal'),
+  InternalCodeMirrorEditor: ({
     value,
     readOnly,
     onChange,

@@ -11,10 +11,10 @@ github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek
 github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add h1:uvDiO+HucdyuXsQJ8jRvxHb1nShJsQ/CXk0KnYJJpu4=
-github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add/go.mod h1:/9R8cKylpkYtY+XVr7laVnqaCekVn994o6+Hd34cqxo=
-github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1jqwo5dV64QO5i5QdMomnJQmIbW7ueGZb88=
-github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
+github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 h1:a3QPmwwRg21XC7Wa5QVwQLY00Y0evUvyNN6Y71GDviU=
+github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545/go.mod h1:byN2GJCn9fWuMtyHujH3u7VNX7HLOBVssbD24ukTZdM=
+github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 h1:i3aNB3oqkz8NCLMgAppYal2dDKNl30nnhX/iYwp/AB8=
+github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545/go.mod h1:SbL0IDzpCoLNCEPRzj+YxQnWfelyKagbjcjVS5gkyuw=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
