@@ -19,14 +19,45 @@ const MarkdownCellEditor = lazy(() =>
 );
 
 /**
- * Tracks whether the URL fragment present at page load has already been restored to its target
- * heading. Module-scoped so expanding collapsed cells or leaving edit mode later in the session
- * doesn't treat the existing URL hash as a fresh deep link and steal scroll position.
+ * Tracks the URL fragment that arrived via initial page load / route navigation so it is restored
+ * only once to its target heading. Subsequent cell mounts or edit-mode toggles within the same
+ * route will not treat the URL fragment as a fresh deep link and steal scroll position.
+ *
+ * Reset whenever the pathname changes, so client-side navigation to another notebook restores its
+ * own deep link fragment.
  */
-let hasRestoredInitialHash = false;
+let restoredPathAndHash: { pathname: string; hash: string } | null = null;
+
+let unlistenHistory: (() => void) | null = null;
+let lastKnownLocationService: typeof locationService | null = null;
+
+function ensureHistoryListener() {
+  if (unlistenHistory && lastKnownLocationService === locationService) {
+    return;
+  }
+  if (unlistenHistory) {
+    unlistenHistory();
+  }
+  lastKnownLocationService = locationService;
+  unlistenHistory = locationService.getHistory().listen((location) => {
+    // If the path changed (e.g. navigated to another notebook), reset the restored state.
+    // If only the hash changed within the same path (e.g. from clicking a ToC link),
+    // mark restoredPathAndHash so subsequent cell mounts or edit toggles won't re-trigger a jump.
+    if (restoredPathAndHash && location.pathname !== restoredPathAndHash.pathname) {
+      restoredPathAndHash = null;
+    } else if (location.hash) {
+      restoredPathAndHash = { pathname: location.pathname, hash: location.hash };
+    }
+  });
+}
 
 export function resetInitialHashRestorationForTests() {
-  hasRestoredInitialHash = false;
+  restoredPathAndHash = null;
+  if (unlistenHistory) {
+    unlistenHistory();
+    unlistenHistory = null;
+  }
+  lastKnownLocationService = null;
 }
 
 export interface MarkdownCellProps {
@@ -69,15 +100,23 @@ export function MarkdownCell({
     [content]
   );
   useEffect(() => {
+    ensureHistoryListener();
+
     // Restores the fragment once its target heading exists in the DOM. Subsequent renders or newly
-    // mounted/uncollapsed cells will not steal scroll if the initial fragment has already been restored.
-    if (isEditing || hasRestoredInitialHash) {
+    // mounted/uncollapsed cells will not steal scroll if the fragment for this pathname has already been restored.
+    const { pathname, hash: routerHash } = locationService.getLocation();
+    const hash = routerHash || window.location.hash;
+    if (isEditing || !hash) {
       return;
     }
 
-    const id = headingIdFromHash(window.location.hash);
+    if (restoredPathAndHash && restoredPathAndHash.pathname === pathname && restoredPathAndHash.hash === hash) {
+      return;
+    }
+
+    const id = headingIdFromHash(hash);
     if (id && document.getElementById(id)) {
-      hasRestoredInitialHash = true;
+      restoredPathAndHash = { pathname, hash };
       document.getElementById(id)?.scrollIntoView({ block: 'start' });
     }
   }, [isEditing]);
