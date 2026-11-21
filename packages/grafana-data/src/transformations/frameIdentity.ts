@@ -47,6 +47,20 @@ export function getFieldReferenceKey({ name, labels, occurrence = 0 }: FieldRefe
   return JSON.stringify([name, sortedLabels(labels), occurrence]);
 }
 
+function isSameLabelValue(a: unknown, b: unknown): boolean {
+  return a === b || ((typeof a !== 'string' || typeof b !== 'string') && JSON.stringify([a]) === JSON.stringify([b]));
+}
+
+export function hasSameLabels(a?: Labels | null, b?: Labels | null): boolean {
+  const left = a ?? {};
+  const right = b ?? {};
+  const keys = Object.keys(left);
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every((key) => Object.prototype.hasOwnProperty.call(right, key) && isSameLabelValue(left[key], right[key]))
+  );
+}
+
 export function getFieldReferences(frame: DataFrame): FieldReference[] {
   const seen = new Map<string, number>();
   return frame.fields.map(({ name, labels }) => {

@@ -1,4 +1,5 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
+import { type Labels } from '../types/data';
 import { FieldType } from '../types/dataFrame';
 
 import {
@@ -7,6 +8,7 @@ import {
   getFieldReferenceKey,
   getFieldReferences,
   getRowIdentity,
+  hasSameLabels,
   isFieldReference,
 } from './frameIdentity';
 
@@ -80,6 +82,23 @@ describe('field references', () => {
     expect(resolve({ name: 'time', labels: null })).toBe(0);
     expect(resolve({ name: 'value', labels: {}, occurrence: 1 })).toBe(5);
     expect(getFieldReferenceKey({ name: 'value', labels: {} })).toBe(getFieldReferenceKey({ name: 'value' }));
+  });
+
+  it('compares labels the same way as reference keys', () => {
+    const labelSets = [
+      ...[undefined, null, {}, { a: 'x' }, { a: 'y' }, { b: 'x' }, { a: 'x', b: 'y' }, { b: 'y', a: 'x' }],
+      ...([{ a: 1 }, { a: '1' }, { a: [1] }, { a: [1] }, { a: null }, { a: undefined }] as unknown as Labels[]),
+    ];
+    const keyOf = (labels?: FieldReference['labels']) => getFieldReferenceKey({ name: 'v', labels });
+
+    expect(hasSameLabels({ a: 'x', b: 'y' }, { b: 'y', a: 'x' })).toBe(true);
+    expect(hasSameLabels(null, {})).toBe(true);
+    expect(hasSameLabels({ a: 'x' }, { a: 'x', b: 'y' })).toBe(false);
+    for (const a of labelSets) {
+      for (const b of labelSets) {
+        expect(hasSameLabels(a, b)).toBe(keyOf(a) === keyOf(b));
+      }
+    }
   });
 
   it('builds the same key for the same identity and another for a different occurrence', () => {

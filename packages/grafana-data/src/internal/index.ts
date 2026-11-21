@@ -148,6 +148,7 @@ export {
   getFieldReferenceKey,
   getFieldReferences,
   getRowIdentity,
+  hasSameLabels,
   isFieldReference,
   type FieldReference,
 } from '../transformations/frameIdentity';

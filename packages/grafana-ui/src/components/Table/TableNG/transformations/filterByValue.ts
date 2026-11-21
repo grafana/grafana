@@ -6,8 +6,8 @@ import {
   DataTransformerID,
 } from '@grafana/data';
 import {
-  getFieldReferenceKey,
   getRowIdentity,
+  hasSameLabels,
   isFieldReference,
   FilterByValueType,
   FilterByValueMatch,
@@ -33,12 +33,15 @@ export function tableFilterKey(field: Pick<Field, 'name' | 'labels'>, parentInde
 export function matchesTableFilter(config: FilterByValueConfig, field: Field, parentIndex?: number) {
   return (
     config.options.target?.parentIndex === parentIndex &&
-    config.options.filters.some((predicate) =>
-      isFieldReference(predicate.field)
-        ? getFieldReferenceKey({ name: predicate.field.name, labels: predicate.field.labels }) ===
-          getFieldReferenceKey({ name: field.name, labels: field.labels })
-        : predicate.fieldName === (field.state?.displayName ?? field.name)
-    )
+    config.options.filters.some((predicate) => {
+      const reference = predicate.field;
+      const sameField = reference?.name === field.name && hasSameLabels(reference.labels, field.labels);
+      const sameDisplayName = predicate.fieldName === (field.state?.displayName ?? field.name);
+      if (sameField === sameDisplayName) {
+        return sameField;
+      }
+      return isFieldReference(reference) ? sameField : sameDisplayName;
+    })
   );
 }
 
