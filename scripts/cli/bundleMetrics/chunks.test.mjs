@@ -4,10 +4,10 @@ import { describe, it } from 'node:test';
 import { getChunkMetrics } from './chunks.mts';
 
 describe('getChunkMetrics', () => {
-  it('deduplicates entrypoint assets, keeps shared assets per entrypoint, and filters asset types', () => {
+  it('counts only unique JS chunk files and subtracts shared initial JS once', () => {
     const metrics = getChunkMetrics({
       chunks: [
-        { initial: true, modules: [], assets: ['app.js', 'theme.css'], size: 999999 },
+        { initial: true, modules: [], assets: ['app.js', 'shared.js', 'theme.css'], size: 999999 },
         {
           initial: false,
           modules: [],
@@ -24,6 +24,7 @@ describe('getChunkMetrics', () => {
         { path: 'NOTICE', size: 100, gzipSize: 50 },
         { path: 'async-a.js', size: 12, gzipSize: 6 },
         { path: 'async-b.js', size: 20, gzipSize: 8 },
+        { path: 'standalone.js', size: 3 },
       ],
       entrypoints: [
         { name: 'app', assets: ['app.js', 'app.js', 'shared.js', 'theme.css', 'app.js.map', 'NOTICE'] },
@@ -35,6 +36,8 @@ describe('getChunkMetrics', () => {
       initialChunks: 1,
       asyncChunks: 2,
       largestAsyncJsBytes: 22,
+      totalJsBytes: 49,
+      asyncJsBytes: 32,
       'entrypoints.app.js.bytes': 17,
       'entrypoints.app.css.bytes': 4,
       'entrypoints.app.css.gzipBytes': 0,

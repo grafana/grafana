@@ -28,6 +28,8 @@ const rsdoctorMetrics = {
   initialChunks: 2,
   asyncChunks: 1,
   largestAsyncJsBytes: 500,
+  totalJsBytes: 630,
+  asyncJsBytes: 500,
   'entrypoints.app.js.bytes': 130,
   'entrypoints.app.js.gzipBytes': 65,
   'entrypoints.app.css.bytes': 20,
@@ -199,6 +201,8 @@ describe('reportBundleMetrics', () => {
       initialChunks: 0,
       asyncChunks: 0,
       largestAsyncJsBytes: 0,
+      totalJsBytes: 0,
+      asyncJsBytes: 0,
       compileMs: 13,
     });
 

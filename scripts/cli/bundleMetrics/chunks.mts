@@ -33,7 +33,14 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
     largestAsyncJsBytes: 0,
   };
 
+  const chunkJsPaths = new Set<string>();
   for (const chunk of chunks) {
+    for (const assetPath of chunk.assets) {
+      if (assetPath.endsWith('.js')) {
+        chunkJsPaths.add(assetPath);
+      }
+    }
+
     if (chunk.initial) {
       metrics.initialChunks++;
       continue;
@@ -46,7 +53,12 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
     );
   }
 
+  const initialAssetPaths = new Set<string>();
   for (const entrypoint of entrypoints) {
+    for (const assetPath of entrypoint.assets) {
+      initialAssetPaths.add(assetPath);
+    }
+
     const js = totalAssets(entrypoint.assets, 'js', assetsByPath);
     const css = totalAssets(entrypoint.assets, 'css', assetsByPath);
 
@@ -59,6 +71,21 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
       metrics[`entrypoints.${entrypoint.name}.css.gzipBytes`] = css.gzipBytes;
     }
   }
+
+  // Count only JS referenced by the chunk graph. Subtract the union of initial
+  // entrypoint assets so shared JS is subtracted only once.
+  let totalJsBytes = 0;
+  let initialJsBytes = 0;
+  for (const asset of assets) {
+    if (chunkJsPaths.has(asset.path)) {
+      totalJsBytes += asset.size;
+      if (initialAssetPaths.has(asset.path)) {
+        initialJsBytes += asset.size;
+      }
+    }
+  }
+  metrics.totalJsBytes = totalJsBytes;
+  metrics.asyncJsBytes = totalJsBytes - initialJsBytes;
 
   return metrics;
 }
