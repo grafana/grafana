@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	authlib "github.com/grafana/authlib/types"
 )
 

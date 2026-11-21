@@ -18,7 +18,7 @@ import (
 
 func proxyTargetOf(route *plugins.Route) routes.ProxyTarget {
 	target := routes.ProxyTarget{
-		ReqRole:      types.RoleType(route.ReqRole),
+		ReqRole:      route.ReqRole,
 		ReqAction:    route.ReqAction,
 		URL:          route.URL,
 		AuthType:     route.AuthType,
