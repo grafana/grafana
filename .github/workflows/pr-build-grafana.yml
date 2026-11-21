@@ -137,6 +137,21 @@ jobs:
       build-number: ${{ github.run_id }}
       tag-prefix: 'grafana/grafana-image-tags:'
 
+  meticulous-fork-eligibility:
+    name: Meticulous fork eligibility
+    needs:
+      - detect-changes
+      - build-docker-variants
+    if: github.event_name == 'pull_request' &&
+      github.repository == 'grafana/grafana' &&
+      github.event.pull_request.head.repo.fork == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      needs.detect-changes.outputs.frontend-src == 'true'
+    runs-on: ubuntu-x64-small
+    steps:
+      # The manually dispatched Meticulous workflow uses this job's conclusion as its frontend gate.
+      - run: 'true'
+
   run-meticulous-tests:
     name: Run Meticulous tests
     runs-on: ubuntu-x64
