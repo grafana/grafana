@@ -1,10 +1,12 @@
 import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
-import { config } from '@grafana/runtime';
+import { config, ThemeChangedEvent } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+
+import { appEvents } from '../app_events';
 
 import { backendSrv } from './backend_srv';
 import { contextSrv } from './context_srv';
-import { changeTheme } from './theme';
+import { changeTheme, connectThemeChannel } from './theme';
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(() => ({ unwrap: () => Promise.resolve({}) })),
@@ -60,6 +62,51 @@ describe('changeTheme', () => {
       name: 'user',
       patch: { spec: { theme: 'light' } },
     });
+  });
+
+  it('broadcasts a preview immediately and applies previews from peers without persisting or rebroadcasting', async () => {
+    const originalBroadcastChannel = Object.getOwnPropertyDescriptor(globalThis, 'BroadcastChannel');
+    const channel = { postMessage: jest.fn(), close: jest.fn(), onmessage: (event: MessageEvent) => {} };
+    Object.defineProperty(globalThis, 'BroadcastChannel', { configurable: true, value: jest.fn(() => channel) });
+    const disconnect = connectThemeChannel();
+    const onThemeChange = jest.fn();
+    const subscription = appEvents.subscribe(ThemeChangedEvent, ({ payload }) => onThemeChange(payload.colors.mode));
+
+    try {
+      const change = changeTheme('light', true);
+      expect(channel.postMessage).toHaveBeenCalledWith('light');
+      await change;
+
+      channel.onmessage(new MessageEvent('message', { data: 'dark' }));
+      channel.onmessage(new MessageEvent('message', { data: 'unknown-theme' }));
+      expect(onThemeChange.mock.calls).toEqual([['light'], ['dark']]);
+      expect(channel.postMessage).toHaveBeenCalledTimes(1);
+      expect(preferencesAPI.endpoints.updatePreferences.initiate).not.toHaveBeenCalled();
+    } finally {
+      subscription.unsubscribe();
+      disconnect?.();
+      if (originalBroadcastChannel) {
+        Object.defineProperty(globalThis, 'BroadcastChannel', originalBroadcastChannel);
+      } else {
+        Reflect.deleteProperty(globalThis, 'BroadcastChannel');
+      }
+    }
+    expect(channel.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the active stylesheet when a preview is reversed before loading finishes', async () => {
+    const originalLink = document.createElement('link');
+    originalLink.rel = 'stylesheet';
+    originalLink.href = 'dark.css';
+    document.head.appendChild(originalLink);
+
+    await changeTheme('light', true);
+    const pendingLink = document.head.querySelector<HTMLLinkElement>('link[href="light.css"]');
+    await changeTheme('dark', true);
+    pendingLink?.dispatchEvent(new Event('load'));
+
+    expect(document.head.querySelector('link[href="dark.css"]')).toBe(originalLink);
+    expect(document.head.querySelector('link[href="light.css"]')).toBeNull();
   });
 
   it('removes the previous theme stylesheet', async () => {

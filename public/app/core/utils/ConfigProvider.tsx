@@ -9,6 +9,7 @@ import { useFlagDatavizTabularNums, useFlagGrafanaVisualDesignRefresh } from '@g
 import { appEvents } from '../app_events';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { contextSrv } from '../services/context_srv';
+import { connectThemeChannel } from '../services/theme';
 
 // temporarily remap dark/light to the visual refresh themes if the flag is enabled
 // when delivering the visual refresh, remove this remapping and use the updated dark/light themes directly
@@ -64,6 +65,8 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
 
     return () => sub.unsubscribe();
   }, [visualRefreshEnabled, tabularNums]);
+
+  useEffect(connectThemeChannel, []);
 
   useEffect(() => {
     if (contextSrv.user.theme !== 'system') {
