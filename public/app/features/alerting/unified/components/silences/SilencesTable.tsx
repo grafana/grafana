@@ -13,6 +13,7 @@ import {
   LinkButton,
   LoadingPlaceholder,
   Stack,
+  Text,
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -22,6 +23,7 @@ import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
+import { trackSilencePrefillPartial } from '../../Analytics';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
@@ -40,6 +42,7 @@ import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
 import { SilenceStateTag } from './SilenceStateTag';
 import { SilencesFilter } from './SilencesFilter';
+import { createSilencePrefillLink } from './utils';
 
 export interface SilenceTableItem extends Silence {
   silencedAlerts: AlertmanagerAlert[] | undefined;
@@ -82,8 +85,19 @@ const SilencesTable = () => {
   const [queryParams] = useQueryParams();
   const filteredSilences = useFilteredSilences(silences, queryParams);
 
-  const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
+  const { silenceState: silenceStateInParams, queryString } = getSilenceFiltersFromUrlParams(queryParams);
   const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
+  const silencePrefill = useMemo(
+    () => createSilencePrefillLink(alertManagerSourceName, parsePromQLStyleMatcherLooseSafe(queryString ?? '')),
+    [alertManagerSourceName, queryString]
+  );
+
+  const canPrefillSilence = silencePrefill.status === 'ready';
+  const handleAddSilenceClick = () => {
+    if (silencePrefill.status === 'ready' && silencePrefill.prefilledMatchers < silencePrefill.totalMatchers) {
+      trackSilencePrefillPartial();
+    }
+  };
 
   const [itemsExpired, itemsNotExpired] = useMemo(() => {
     const items = filteredSilences.map<SilenceTableItemProps>((silence) => ({
@@ -139,8 +153,22 @@ const SilencesTable = () => {
         <Stack direction="column">
           <SilencesFilter silences={silences} />
           {canCreateSilence && (
-            <Stack justifyContent="end">
-              <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
+            <Stack direction="column" alignItems="flex-end" gap={1}>
+              {!canPrefillSilence && (
+                <Text color="secondary">
+                  {t(
+                    'alerting.silences.prefill-cannot-fit',
+                    'Cannot open a new silence because the destination URL exceeds 2,000 bytes.'
+                  )}
+                </Text>
+              )}
+              <LinkButton
+                href={silencePrefill.status === 'ready' ? silencePrefill.href : undefined}
+                onClick={handleAddSilenceClick}
+                disabled={!canPrefillSilence}
+                role={canPrefillSilence ? undefined : 'link'}
+                icon="plus"
+              >
                 <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>
               </LinkButton>
             </Stack>
