@@ -18,6 +18,13 @@ export interface RemoveCorrelationResponse {
 
 export type CorrelationType = 'query' | 'external';
 
+// key names match the grafana_explore_correlation_editor_saved interaction so the events can be compared
+export type CorrelationInteractionDetails = {
+  correlationType: CorrelationType;
+  sourceDatasourceType: string;
+  targetDataSourceType?: string;
+};
+
 export type Correlation = CorrelationExternal | CorrelationQuery;
 
 export type GetCorrelationsParams = {
