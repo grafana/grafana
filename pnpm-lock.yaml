@@ -740,6 +740,9 @@ importers:
       '@manypkg/get-packages':
         specifier: ^3.0.0
         version: 3.1.0
+      '@nx/devkit':
+        specifier: 24.0.2
+        version: 24.0.2(nx@24.0.2(@swc/core@1.13.3(@swc/helpers@0.5.17)))
       '@playwright/test':
         specifier: 1.64.1
         version: 1.64.1
@@ -4835,6 +4838,11 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@nx/devkit@24.0.2':
+    resolution: {integrity: sha512-G2YWq9/Pj87Y20WCf6Clu1m9sTeoYcXCpivBo/I2foKVG1oOdOzMq966Na3eQ+ZdO0NneyBZvzoDYa6kJIufVw==}
+    peerDependencies:
+      nx: '>= 23 <= 25 || ^24.0.0-0'
 
   '@nx/nx-darwin-arm64@24.0.2':
     resolution: {integrity: sha512-UXiD8QtdWPsoVXMkdFnuMtw2FoaF3kPiNcKvX4dv956YK6vuL8lafxvikADqjwlRlFhKAci+ePzpbjJDNsQBiA==}
@@ -18057,6 +18065,15 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
+
+  '@nx/devkit@24.0.2(nx@24.0.2(@swc/core@1.13.3(@swc/helpers@0.5.17)))':
+    dependencies:
+      ejs: 5.0.1
+      minimatch: 10.2.5
+      nx: 24.0.2(@swc/core@1.13.3(@swc/helpers@0.5.17))
+      semver: 7.8.6
+      tslib: 2.9.1
+      yargs-parser: 21.1.1
 
   '@nx/nx-darwin-arm64@24.0.2':
     optional: true

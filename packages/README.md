@@ -65,7 +65,20 @@ Below 1.0 Nx shifts the bump down one level (its [`adjustSemverBumpsForZeroMajor
 
 `perf`, `refactor`, `docs`, `build`, `types`, `examples`, `test`, `style`, `ci` and `revert` do not release either. Use `fix` for an internal improvement that consumers should get. Several pull requests in one release combine into the highest bump, and every releasing title becomes a changelog entry.
 
-Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the publish workflow creates. Do not delete these tags.
+The `Release NPM independent packages` workflow runs when a change to an independent package lands on `main`. A package is independent when its project has the `release:independent` tag. The workflow has four jobs:
+
+1. `plan` finds the merged version pull request that is still labelled `nx-release:pending` and works out which packages it released, and so which `<name>@<version>` tags are missing.
+2. `tag` creates those tags with the shared `create-release-tag.yml` workflow, one tag at a time. Tags that already exist are skipped.
+3. `release` starts after the tags exist, relabels the version pull request `nx-release:tagged`, and then opens or updates one pull request titled `chore: Release frontend packages`, from the `nx-release-branch--main` branch and labelled `nx-release:pending`, with the new versions and changelog entries. The title is a conventional commit of the `chore` type, so the squash-merged release commit never counts as a change when Nx works out the next version or the changelog. Nx counts the commits since the last tag, which is why the tags come first.
+4. `publish` also starts after the tags exist, and builds, validates and publishes just the tagged packages to npm. It does not wait for the `release` job.
+
+Merging the version pull request releases the packages.
+
+To preview a release, run the workflow from the Actions tab with `dry_run` enabled. To publish again after a failed run, re-run the failed jobs: jobs that succeeded keep their results, and tags that already exist are skipped. Or run the workflow with `tags` set to a comma-separated list of existing tags, which publishes them and does not prepare a version pull request.
+
+If the `tag` job failed after a version pull request was merged, re-run the failed jobs or start the workflow by hand, with `tags` empty, within 2 to 3 days: after that a new run no longer finds the merged version pull request. Later than that, add the label `nx-release:pending` to the merged version pull request again and start the workflow by hand, or create the missing tags with the `Create Release Tag` workflow.
+
+Nx finds the changes since the last release from the `<name>@<version>` git tag of the package, for example `@grafana/plugin-compat@0.10.0`, which the `tag` job creates. Do not delete these tags. If the tag for the version on `main` is missing, the `release` job fails with an error that names the tag and does not open a version pull request. Create the tag on the commit that published that version, for example by running the `Create Release Tag` workflow from the Actions tab with the tag and the commit, and run the workflow again.
 
 ### Stable releases
 

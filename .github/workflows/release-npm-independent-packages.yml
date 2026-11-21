@@ -1,0 +1,246 @@
+name: Release NPM independent packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # One entry for each package that is released on its own. Merging the version pull request changes the
+      # package's version and changelog, which also matches this filter and starts the release.
+      - 'packages/grafana-plugin-compat/**'
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Publish these tags and skip the version pull request, for example to retry a failed publish. Separate several tags with commas: @grafana/plugin-compat@0.12.0 or @grafana/plugin-compat@0.12.0,@grafana/other@1.0.0'
+        type: string
+        default: ''
+      dry_run:
+        description: Show what would change without tagging, opening a pull request or publishing
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  RELEASE_BRANCH: nx-release-branch--main
+  PR_TITLE: 'chore: Release frontend packages'
+
+jobs:
+  # Finishes the last release in three jobs, in this order: plan works out which tags the merged version pull request
+  # needs, tag creates them, and release then prepares the next version pull request. Nx counts commits from the last
+  # tag, so the next release must not be prepared before the previous one is tagged. Publish only needs the tags.
+  plan:
+    name: Plan the tags of the last release
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      TAGS: ${{ inputs.tags }}
+    outputs:
+      pr: ${{ steps.plan.outputs.pr }}
+      release_created: ${{ steps.plan.outputs.release_created }}
+      tagged: ${{ steps.plan.outputs.tagged }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          persist-credentials: false
+          # The planned tags come from the version of each package at the merge commit of the version pull request
+          # and at its parent, so the history and the tags are needed, but not the file contents.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # The script asks Nx which projects have the release:independent tag.
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      - name: Plan the tags
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
+
+  # One call of the shared workflow for each tag. It creates an annotated tag and does nothing when the same tag is
+  # already there, so a retry is safe. A manual run with tags and a dry run do not create tags.
+  tag:
+    name: Tag ${{ matrix.tag }}
+    needs: plan
+    if: needs.plan.outputs.pr != '' && !inputs.dry_run
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/create-release-tag.yml
+    with:
+      tag: ${{ matrix.tag }}
+      commit: ${{ matrix.commit }}
+
+  release:
+    name: Prepare the next version pull request
+    needs: [plan, tag]
+    # The tag job is skipped when there is nothing to tag. When it failed, the label stays pending: re-run the failed
+    # jobs or start the workflow by hand within 2 to 3 days, before the merged version pull request is no longer found.
+    # When starting it by hand, leave the tags input empty: a run with tags only publishes them and skips this job.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && inputs.tags == '' }}
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: main
+
+      # grafana-writer is the only app allowed to create refs and push here: it carries workflows:write, which
+      # skips the pre-receive workflow-file scan that times out on this repository.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+
+      # Every tag exists when the tag job succeeded, so the version pull request is marked as released.
+      - name: Mark the version pull request as tagged
+        if: needs.tag.result == 'success'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          PR_NUMBER: ${{ needs.plan.outputs.pr }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label nx-release:pending --add-label nx-release:tagged
+
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          persist-credentials: false
+          # nx release reads the commits since the package's last release tag, so it needs the full
+          # history and the tags, including the ones the tag job has just created. It lists the changed files
+          # of each of those commits, which needs trees but not blobs.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      - name: Version and generate changelogs
+        id: prepare
+        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+
+      - name: Describe the dry run
+        if: env.DRY_RUN == 'true' && steps.prepare.outputs.changed == 'true'
+        run: |
+          echo "Dry run: the version pull request would be created or updated with these changes."
+          git status --short
+          git diff --stat
+
+      # Commits what Nx changed to the version pull request branch and opens the pull request, or updates it when the
+      # result differs. It runs only when Nx changed files: with nothing to commit the action would reset an existing
+      # version branch to main. An open pull request is never closed.
+      # Commits are signed by the writer app, and the token of the pull request app creates and edits the pull request.
+      - name: Create or update the version pull request
+        if: env.DRY_RUN != 'true' && steps.prepare.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          branch-token: ${{ steps.get-writer-app-token.outputs.token }}
+          sign-commits: true
+          base: main
+          branch: ${{ env.RELEASE_BRANCH }}
+          commit-message: ${{ env.PR_TITLE }}
+          title: ${{ env.PR_TITLE }}
+          labels: |
+            no-changelog
+            area/frontend
+            nx-release:pending
+          body: |
+            This pull request releases the independently versioned packages, with the versions and changelog entries that Nx derived from the conventional commit titles merged since their last release. Merging it publishes them to npm.
+
+            It is generated and is rebuilt from main whenever a change to these packages lands. Do not edit it.
+
+            Created by: [GitHub Action job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+  publish:
+    name: Publish the tagged packages
+    needs: [plan, tag]
+    # Runs only when there are tags to publish, or on a dry run, which builds, packs and validates without
+    # publishing. It does not wait for the next version pull request, so a failure there does not block it.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && (needs.plan.outputs.release_created == 'true' || inputs.dry_run) }}
+    # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners
+    runs-on: github-hosted-ubuntu-x64-small
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      # Build from the commit the release was tagged on. Usually that is the pushed commit, but when an earlier run
+      # failed before tagging, a later push finishes the release and the tags point at the older merge commit.
+      - name: Checkout the tagged commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      # Trusted Publishing is only available in npm v11.5.1 and later
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
+
+      # Only the tagged packages are built and packed. A dry run without tags leaves this empty, which selects
+      # every independent package.
+      - name: Choose the packages
+        id: projects
+        env:
+          TAGGED: ${{ needs.plan.outputs.tagged }}
+        run: echo "names=$(jq -r '[.[].name] | join(",")' <<< "${TAGGED:-[]}")" >> "$GITHUB_OUTPUT"
+
+      - name: Build packages
+        env:
+          PROJECTS: ${{ steps.projects.outputs.names }}
+        run: pnpm exec nx run-many -t build --projects="${PROJECTS:-tag:release:independent}"
+
+      - name: Pack packages
+        env:
+          PACK_PROJECTS: ${{ steps.projects.outputs.names }}
+        run: |
+          rm -rf ./npm-artifacts
+          pnpm run packages:pack:independent
+
+      - name: Validate packages
+        run: ./scripts/validate-npm-packages.sh
+
+      - name: Publish packages
+        if: env.DRY_RUN != 'true'
+        run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
+
+      - name: Report dry run
+        if: env.DRY_RUN == 'true'
+        run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
