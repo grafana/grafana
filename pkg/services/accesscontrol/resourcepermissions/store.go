@@ -351,6 +351,8 @@ func (s *store) SetResourcePermissions(
 	return permissions, err
 }
 
+// roleAdder assigns a managed role to its subject. It is a no-op when the
+// assignment already exists.
 type roleAdder func(roleID int64) error
 
 func (s *store) setResourcePermission(
@@ -669,19 +671,14 @@ func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
 		if res, err := sess.Query("SELECT 1 FROM user_role WHERE org_id=? AND user_id=? AND role_id=?", orgID, userID, roleID); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return fmt.Errorf("role is already added to this user")
+			return nil
 		}
 
-		userRole := &accesscontrol.UserRole{
-			OrgID:   orgID,
-			UserID:  userID,
-			RoleID:  roleID,
-			Created: time.Now(),
-		}
-
-		_, err := sess.Insert(userRole)
-
-		return err
+		return s.insertRoleAssignment(sess, "user_role",
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid"},
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid", "created"},
+			orgID, userID, roleID, "", time.Now(),
+		)
 	}
 }
 
@@ -690,18 +687,14 @@ func (s *store) teamAdder(sess *db.Session, orgID, teamID int64) roleAdder {
 		if res, err := sess.Query("SELECT 1 FROM team_role WHERE org_id=? AND team_id=? AND role_id=?", orgID, teamID, roleID); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return fmt.Errorf("role is already added to this team")
+			return nil
 		}
 
-		teamRole := &accesscontrol.TeamRole{
-			OrgID:   orgID,
-			TeamID:  teamID,
-			RoleID:  roleID,
-			Created: time.Now(),
-		}
-
-		_, err := sess.Insert(teamRole)
-		return err
+		return s.insertRoleAssignment(sess, "team_role",
+			[]string{"org_id", "team_id", "role_id"},
+			[]string{"org_id", "team_id", "role_id", "created"},
+			orgID, teamID, roleID, time.Now(),
+		)
 	}
 }
 
@@ -710,26 +703,35 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 		if res, err := sess.Query("SELECT 1 FROM builtin_role WHERE role_id=? AND role=? AND org_id=?", roleID, builtinRole, orgID); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return fmt.Errorf("built-in role already has the role granted")
+			return nil
 		}
 
-		_, err := sess.Table("builtin_role").Insert(accesscontrol.BuiltinRole{
-			RoleID:  roleID,
-			OrgID:   orgID,
-			Role:    builtinRole,
-			Updated: time.Now(),
-			Created: time.Now(),
-		})
-
-		return err
+		now := time.Now()
+		return s.insertRoleAssignment(sess, "builtin_role",
+			[]string{"org_id", "role_id", "role"},
+			[]string{"org_id", "role_id", "role", "created", "updated"},
+			orgID, roleID, builtinRole, now, now,
+		)
 	}
+}
+
+// insertRoleAssignment inserts an assignment row unless one with the same key
+// columns exists. A concurrent writer can insert the same assignment between an
+// adder's existence check and this insert, so the insert is an upsert on the
+// table's unique index instead of failing the transaction.
+func (s *store) insertRoleAssignment(sess *db.Session, table string, keyCols, cols []string, args ...any) error {
+	_, err := sess.Exec(append([]any{s.sql.GetDialect().UpsertSQL(table, keyCols, cols)}, args...)...)
+	return err
 }
 
 func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
 	role := accesscontrol.Role{OrgID: orgID, Name: name}
 	has, err := sess.Where("org_id = ? AND name = ?", orgID, name).Get(&role)
+	if err != nil {
+		return nil, err
+	}
 
-	// If managed role does not exist, create it and add it to user/team/builtin
+	// If managed role does not exist, create it
 	if !has {
 		uid, err := generateNewRoleUID(sess, orgID)
 		if err != nil {
@@ -747,13 +749,12 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 		if _, err := sess.Insert(&role); err != nil {
 			return nil, err
 		}
-
-		if err := add(role.ID); err != nil {
-			return nil, err
-		}
 	}
 
-	if err != nil {
+	// Ensure the role is assigned to its user/team/builtin role. An existing managed
+	// role can have lost its assignment, and permissions written to it would then
+	// apply to nobody and never be returned when reading the resource's permissions.
+	if err := add(role.ID); err != nil {
 		return nil, err
 	}
 
