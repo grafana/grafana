@@ -8,9 +8,14 @@ import { type UPlotConfigBuilder, Button } from '@grafana/ui';
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+  /**
+   * Set when each value is drawn until the next one, like the state timeline does.
+   * The last value then reaches into the time range even if its timestamp is before it.
+   */
+  holdLastValue?: boolean;
 }
 
-export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
+export const OutsideRangePlugin = memo(({ config, onChangeTimeRange, holdLastValue }: ThresholdControlsPluginProps) => {
   const [data, setData] = useState<uPlot['data']>([]);
   const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
 
@@ -65,8 +70,10 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
   let first = timeValues[i];
   let last = timeValues[j];
 
+  const end = holdLastValue ? getHeldValuesEnd(data) : last;
+
   // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= timeRange.max && last >= timeRange.min) {
+  if (first <= timeRange.max && end >= timeRange.min) {
     return null;
   }
 
@@ -105,3 +112,36 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
 });
 
 OutsideRangePlugin.displayName = 'OutsideRangePlugin';
+
+/**
+ * Matches how the timeline draws: in each series an undefined value continues the previous one and a null ends it.
+ * Returns the time where the last held value of any series ends, or Infinity if one reaches the edge of the chart.
+ */
+function getHeldValuesEnd(data: uPlot.AlignedData): number {
+  const timeValues = data[0];
+  let end = -Infinity;
+
+  for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
+    const values = data[seriesIdx];
+
+    let lastIdx = values.length - 1;
+    while (lastIdx >= 0 && values[lastIdx] == null) {
+      lastIdx--;
+    }
+    if (lastIdx < 0) {
+      continue;
+    }
+
+    let endIdx = lastIdx + 1;
+    while (endIdx < values.length && values[endIdx] === undefined) {
+      endIdx++;
+    }
+    if (endIdx >= values.length) {
+      return Infinity;
+    }
+
+    end = Math.max(end, timeValues[endIdx]);
+  }
+
+  return end;
+}

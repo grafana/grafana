@@ -19,8 +19,10 @@ describe('OutsideRangePlugin', () => {
     } as unknown as UPlotConfigBuilder;
   });
 
-  function renderPlugin(onChangeTimeRange = jest.fn()) {
-    return render(<OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />);
+  function renderPlugin(onChangeTimeRange = jest.fn(), holdLastValue?: boolean) {
+    return render(
+      <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} holdLastValue={holdLastValue} />
+    );
   }
 
   function applyScale(data: uPlot['data'] | undefined, scales: uPlot['scales']) {
@@ -175,6 +177,106 @@ describe('OutsideRangePlugin', () => {
       { x: { time: true, min: 2000, max: 3000 } }
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  describe('when the last value is held', () => {
+    it('does not render when the last value starts before the time range', () => {
+      const { container } = renderPlugin(jest.fn(), true);
+
+      applyScale([[1000], [2]], { x: { time: true, min: 2000, max: 3000 } });
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('does not render when trailing values are undefined', () => {
+      const { container } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500],
+          [1, 2, undefined],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders when the last value ends before the time range', async () => {
+      const onChangeTimeRange = jest.fn();
+      const { getByText } = renderPlugin(onChangeTimeRange, true);
+
+      applyScale(
+        [
+          [500, 1000, 1500],
+          [1, 2, null],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+
+      await userEvent.click(getByText('Zoom to data'));
+      expect(onChangeTimeRange).toHaveBeenCalledWith({ from: 500, to: 1000 });
+    });
+
+    it('renders when a null after trailing undefined values ends the last value before the time range', () => {
+      const { getByText } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, 2, undefined, null],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+    });
+
+    it('renders when every joined series has ended before the time range', () => {
+      const { getByText } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, undefined, null, undefined],
+          [undefined, 2, undefined, null],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+    });
+
+    it('does not render when one joined series is still held into the time range', () => {
+      const { container } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [500, 1000, 1500, 1800],
+          [1, undefined, null, undefined],
+          [undefined, 2, undefined, undefined],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('renders when all values start after the time range', () => {
+      const { getByText } = renderPlugin(jest.fn(), true);
+
+      applyScale(
+        [
+          [4000, 4500],
+          [1, 2],
+        ],
+        { x: { time: true, min: 2000, max: 3000 } }
+      );
+
+      expect(getByText('Data outside time range')).toBeInTheDocument();
+    });
   });
 
   describe('edge cases', () => {

@@ -179,7 +179,7 @@ export const StateTimelinePanel = ({
                   canvasRegionRendering={false}
                 />
               )}
-              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
+              <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} holdLastValue />
             </>
           );
         }}
