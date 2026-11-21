@@ -620,11 +620,11 @@ const intervals_in_seconds: Record<string, number> = {
 
 export function describeInterval(str: string) {
   // Default to seconds if no unit is provided
-  if (Number(str)) {
+  if (str.trim() !== '' && Number.isFinite(Number(str))) {
     return {
       sec: intervals_in_seconds.s,
       type: 's',
-      count: parseInt(str, 10),
+      count: Number(str),
     };
   }
 
@@ -648,7 +648,7 @@ export function describeInterval(str: string) {
   return {
     sec,
     type: matches[2],
-    count: parseInt(matches[1], 10),
+    count: parseFloat(matches[1]),
   };
 }
 
