@@ -32,7 +32,7 @@ import { type ImportFormValues } from '../types';
 
 import { ImportSourceCard } from './ImportSourceCard';
 import { usePredictedAutoSyncIdentifier } from './useAutoSyncPrediction';
-import { getRoutingTreeOptions, isStep2Valid } from './utils';
+import { RULES_JOB_FIELDS, buildRulesImportJob, getRoutingTreeOptions, isStep2Valid } from './utils';
 
 interface Step2ContentProps {
   step1Completed: boolean;
@@ -336,28 +336,16 @@ function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOver
 export function useStep2Validation(canImport: boolean): boolean {
   const {
     watch,
+    getValues,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
-  const [
-    rulesSource,
-    rulesDatasourceUID,
-    rulesYamlFile,
-    yamlImportTargetDatasourceUID,
-    selectedRoutingTree,
-    targetDatasourceUID,
-  ] = watch([
-    'rulesSource',
-    'rulesDatasourceUID',
-    'rulesYamlFile',
-    'yamlImportTargetDatasourceUID',
-    'selectedRoutingTree',
-    'targetDatasourceUID',
-  ]);
+  watch(RULES_JOB_FIELDS);
+  const job = buildRulesImportJob(getValues());
 
   const hasStep2Errors =
     !!errors.rulesSource ||
-    (rulesSource === 'datasource' && !!errors.rulesDatasourceUID) ||
-    (rulesSource === 'yaml' && (!!errors.rulesYamlFile || !!errors.yamlImportTargetDatasourceUID)) ||
+    (job?.type === 'datasource' && !!errors.rulesDatasourceUID) ||
+    (job?.type === 'yaml' && (!!errors.rulesYamlFile || !!errors.yamlImportTargetDatasourceUID)) ||
     !!errors.selectedRoutingTree ||
     !!errors.targetDatasourceUID;
 
@@ -365,12 +353,5 @@ export function useStep2Validation(canImport: boolean): boolean {
     return false;
   }
 
-  return isStep2Valid({
-    rulesSource,
-    rulesYamlFile,
-    rulesDatasourceUID,
-    yamlImportTargetDatasourceUID,
-    selectedRoutingTree,
-    targetDatasourceUID,
-  });
+  return isStep2Valid(job);
 }

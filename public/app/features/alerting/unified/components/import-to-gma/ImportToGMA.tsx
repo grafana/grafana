@@ -20,6 +20,7 @@ import { getImportPlan } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { useRulesToImport } from './hooks';
 import { ReviewStep } from './review/ReviewStep';
+import { buildRulesImportJob } from './steps/utils';
 import { type ImportFormValues } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import { useImportJob } from './useImportJob';
@@ -121,6 +122,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
 
   const formValues = getImportValues();
   const plan = getImportPlan(formValues);
+  const rulesJob = buildRulesImportJob(formValues);
 
   // What the review shows and the import sends, so the two can't disagree. Nothing is read until the rules
   // step is completed. The rules step shows the overwrite warning, so no target folder is passed here.
@@ -178,6 +180,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
           {activeStep === StepKey.Review && (
             <ReviewStep
               formData={formValues}
+              rulesJob={rulesJob}
               onStartImport={startImport}
               dryRunResult={dryRun.dryRunResult}
               rulesToImport={rulesToImport}

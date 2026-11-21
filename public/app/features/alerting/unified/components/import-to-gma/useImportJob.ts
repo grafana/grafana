@@ -15,6 +15,7 @@ import { useAutoSyncConfiguration } from '../settings/useAutoSyncConfiguration';
 
 import { type NotificationsLock } from './LockNotices';
 import { type ImportPlan, getImportPlan } from './Wizard/steps';
+import { buildRulesImportJob } from './steps/utils';
 import { type ImportFormValues } from './types';
 import { buildRoutingParams, useImportNotifications, useImportRules } from './useImport';
 
@@ -97,9 +98,10 @@ export function useImportJob({ getImportValues, rulesToImport, liveNotifications
 
     const values = getImportValues();
     const plan = getImportPlan(values);
+    const rulesJob = buildRulesImportJob(values);
     const trackedNotificationsSource =
       plan.willEnableAutoSync || plan.willImportNotifications ? values.notificationsSource : undefined;
-    const trackedRulesSource = plan.willImportRules ? values.rulesSource : undefined;
+    const trackedRulesSource = plan.willImportRules ? rulesJob?.type : undefined;
 
     try {
       // Mutually exclusive: Auto-sync only applies to the datasource source, so at most one of
@@ -123,20 +125,17 @@ export function useImportJob({ getImportValues, rulesToImport, liveNotifications
       }
 
       // Independent of Auto-sync, which only mirrors Alertmanager config, never rules.
-      // A YAML file has no data source of its own, so its rules run against the one picked for them.
-      const rulesDataSourceUID =
-        values.rulesSource === 'yaml' ? values.yamlImportTargetDatasourceUID : values.rulesDatasourceUID;
-      if (plan.willImportRules && rulesDataSourceUID) {
+      if (plan.willImportRules && rulesJob?.datasource) {
         const baseParams = {
-          dataSourceUID: rulesDataSourceUID,
-          targetFolderUID: values.targetFolder?.uid,
-          pauseAlertingRules: values.pauseAlertingRules,
-          pauseRecordingRules: values.pauseRecordingRules,
+          dataSourceUID: rulesJob.datasource.uid,
+          targetFolderUID: rulesJob.targetFolder?.uid,
+          pauseAlertingRules: rulesJob.pauseAlertingRules,
+          pauseRecordingRules: rulesJob.pauseRecordingRules,
           payload: rulesToImport ?? {},
-          targetDatasourceUID: values.targetDatasourceUID,
+          targetDatasourceUID: rulesJob.targetDatasourceUID,
         };
 
-        const { notificationSettings } = buildRoutingParams(values.selectedRoutingTree);
+        const { notificationSettings } = buildRoutingParams(rulesJob.selectedRoutingTree);
         await importRules({ ...baseParams, notificationSettings });
       }
 

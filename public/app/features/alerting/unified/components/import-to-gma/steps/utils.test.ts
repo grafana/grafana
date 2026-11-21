@@ -5,6 +5,7 @@ import { type Step1Values } from '../types';
 
 import {
   buildDryRunArgs,
+  buildRulesImportJob,
   canRunDryRun,
   getRoutingTreeOptions,
   isStep1Valid,
@@ -365,20 +366,73 @@ describe('getRoutingTreeOptions', () => {
   });
 });
 
-describe('isStep2Valid', () => {
-  const dataSourceRules = {
-    rulesSource: 'datasource' as const,
-    rulesYamlFile: null,
-    rulesDatasourceUID: 'prometheus-uid',
+describe('buildRulesImportJob', () => {
+  const file = new File(['groups: []'], 'rules.yaml');
+  const settings = mockImportFormValues({
     selectedRoutingTree: 'imported',
     targetDatasourceUID: 'prometheus-uid',
-    yamlImportTargetDatasourceUID: undefined,
-  };
-  const yamlRules = {
-    ...dataSourceRules,
+    pauseAlertingRules: false,
+    pauseRecordingRules: true,
+    targetFolder: { uid: 'folder-uid', title: 'Folder' },
+  });
+
+  it('is undefined while no source is chosen', () => {
+    expect(buildRulesImportJob({ ...settings, rulesSource: 'datasource' })).toBeUndefined();
+    expect(buildRulesImportJob({ ...settings, rulesSource: 'yaml' })).toBeUndefined();
+  });
+
+  it('describes a data source import with its filters and settings', () => {
+    const values = {
+      ...settings,
+      rulesDatasourceUID: 'prometheus-uid',
+      rulesDatasourceName: 'Prometheus',
+      namespace: 'ns',
+      ruleGroup: 'group',
+    };
+
+    expect(buildRulesImportJob(values)).toEqual({
+      type: 'datasource',
+      datasource: { uid: 'prometheus-uid', name: 'Prometheus' },
+      namespace: 'ns',
+      ruleGroup: 'group',
+      selectedRoutingTree: 'imported',
+      targetDatasourceUID: 'prometheus-uid',
+      targetFolder: { uid: 'folder-uid', title: 'Folder' },
+      pauseAlertingRules: false,
+      pauseRecordingRules: true,
+    });
+  });
+
+  it('uses the data source chosen for a YAML file, not one left over from before the source was switched', () => {
+    const job = buildRulesImportJob({
+      ...settings,
+      rulesSource: 'yaml',
+      rulesYamlFile: file,
+      rulesDatasourceUID: 'left-over-uid',
+      rulesDatasourceName: 'Left over',
+      yamlImportTargetDatasourceUID: 'yaml-target-uid',
+      yamlImportTargetDatasourceName: 'Target',
+    });
+
+    expect(job?.type === 'yaml' && job.file).toBe(file);
+    expect(job?.datasource).toEqual({ uid: 'yaml-target-uid', name: 'Target' });
+  });
+
+  it('exists for a YAML file that has no data source to run against yet', () => {
+    const job = buildRulesImportJob({ ...settings, rulesSource: 'yaml', rulesYamlFile: file });
+
+    expect(job?.type === 'yaml' && job.file).toBe(file);
+    expect(job?.datasource).toBeUndefined();
+  });
+});
+
+describe('isStep2Valid', () => {
+  const settings = mockImportFormValues({ selectedRoutingTree: 'imported', targetDatasourceUID: 'prometheus-uid' });
+  const dataSourceRules = buildRulesImportJob({ ...settings, rulesDatasourceUID: 'prometheus-uid' });
+  const yamlValues = {
+    ...settings,
     rulesSource: 'yaml' as const,
     rulesYamlFile: new File(['groups: []'], 'rules.yaml'),
-    rulesDatasourceUID: undefined,
     yamlImportTargetDatasourceUID: 'yaml-target-uid',
   };
 
@@ -386,27 +440,36 @@ describe('isStep2Valid', () => {
     expect(isStep2Valid(dataSourceRules)).toBe(true);
   });
 
+  it('needs a source to be chosen', () => {
+    expect(isStep2Valid(buildRulesImportJob(settings))).toBe(false);
+  });
+
   it.each([
-    ['a data source', { rulesDatasourceUID: undefined }],
     ['a policy tree', { selectedRoutingTree: '' }],
     ['a recording rules target', { targetDatasourceUID: undefined }],
   ])('needs %s', (_, missing) => {
-    expect(isStep2Valid({ ...dataSourceRules, ...missing })).toBe(false);
+    expect(isStep2Valid(buildRulesImportJob({ ...settings, ...missing, rulesDatasourceUID: 'prometheus-uid' }))).toBe(
+      false
+    );
   });
 
   it('does not ask a data source rules source for a YAML target', () => {
-    expect(isStep2Valid({ ...dataSourceRules, yamlImportTargetDatasourceUID: undefined })).toBe(true);
+    expect(
+      isStep2Valid(
+        buildRulesImportJob({
+          ...settings,
+          yamlImportTargetDatasourceUID: undefined,
+          rulesDatasourceUID: 'prometheus-uid',
+        })
+      )
+    ).toBe(true);
   });
 
   it('accepts a YAML file with a data source to run against', () => {
-    expect(isStep2Valid(yamlRules)).toBe(true);
+    expect(isStep2Valid(buildRulesImportJob(yamlValues))).toBe(true);
   });
 
   it('needs a data source to run the rules of a YAML file against', () => {
-    expect(isStep2Valid({ ...yamlRules, yamlImportTargetDatasourceUID: undefined })).toBe(false);
-  });
-
-  it('needs the YAML file itself', () => {
-    expect(isStep2Valid({ ...yamlRules, rulesYamlFile: null })).toBe(false);
+    expect(isStep2Valid(buildRulesImportJob({ ...yamlValues, yamlImportTargetDatasourceUID: undefined }))).toBe(false);
   });
 });
