@@ -345,8 +345,14 @@ func applyChange(
 		if change.Action == repository.FileActionCreated && createdNothing(err) {
 			quotaTracker.Release()
 		}
-		writeSpan.RecordError(err)
-		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+		if errors.Is(err, resources.ErrForeignNamespace) {
+			// Not this org's file. Every org reads the same bootstrap directory, so most
+			// files belong to some other org: that is the normal case, not a warning.
+			resultBuilder.AsSkipped()
+		} else {
+			writeSpan.RecordError(err)
+			resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+		}
 	}
 
 	progress.Record(writeCtx, resultBuilder.Build())
