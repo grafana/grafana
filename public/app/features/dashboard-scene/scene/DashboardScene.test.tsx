@@ -2488,6 +2488,21 @@ describe('DashboardScene', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
       expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
     });
+
+    it('Should use the source panel ID for repeat clones in public dashboards', () => {
+      const previousToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'public-token';
+
+      try {
+        const cloneRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
+        const sourceRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
+
+        expect(scene.enrichDataRequest(cloneRunner).panelId).toEqual(2);
+        expect(scene.enrichDataRequest(sourceRunner).panelId).toEqual(1);
+      } finally {
+        config.publicDashboardAccessToken = previousToken;
+      }
+    });
   });
 
   describe('When variables change', () => {
