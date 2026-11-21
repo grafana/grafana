@@ -407,6 +407,35 @@ describe('findNextStateIndex', () => {
       expect(result).toEqual(2);
     });
   });
+
+  describe('equal consecutive values', () => {
+    // start/end time frame after the join: the last row is the null from the end time field
+    const field = {
+      name: 'value',
+      type: FieldType.number,
+      values: [0, 0, 1, null],
+      config: {},
+    };
+
+    it('skips equal values when merging', () => {
+      expect(findNextStateIndex(field, 0)).toEqual(2);
+      expect(findNextStateIndex(field, 0, true)).toEqual(2);
+    });
+
+    it('stops at the next value when not merging', () => {
+      expect(findNextStateIndex(field, 0, false)).toEqual(1);
+      expect(findNextStateIndex(field, 1, false)).toEqual(2);
+    });
+
+    it('ends at the null from the end time field', () => {
+      expect(findNextStateIndex(field, 2, false)).toEqual(3);
+    });
+
+    it('still skips undefined when not merging', () => {
+      const sparse = { ...field, values: [0, undefined, 0, 1] };
+      expect(findNextStateIndex(sparse, 0, false)).toEqual(2);
+    });
+  });
 });
 
 describe('getThresholdItems', () => {

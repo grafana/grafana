@@ -87,6 +87,54 @@ describe('StateTimelineTooltip', () => {
       expect(screen.queryByText('Duration')).not.toBeInTheDocument();
     });
 
+    describe('equal consecutive states', () => {
+      // 10:00-11:00 = 0, 11:00-12:00 = 0, 12:00-13:00 = 1, as start/end time fields after the join
+      const hour = 3600000;
+      const frame = createDataFrame({
+        fields: [
+          { ...timeField, values: [10 * hour, 11 * hour, 12 * hour, 13 * hour] },
+          { ...valueField, values: [0, 0, 1, null] },
+        ],
+      });
+      const range = makeTimeRange('1970-01-01T09:00:00+00:00', '1970-01-01T14:00:00+00:00');
+
+      it('ends the state at the next row when mergeValues is false', () => {
+        render(
+          <StateTimelineTooltip
+            series={frame}
+            seriesIdx={1}
+            dataIdxs={[null, 0]}
+            mode={TooltipDisplayMode.Single}
+            timeRange={range}
+            withDuration
+            mergeValues={false}
+            dataLinks={[]}
+            isPinned={false}
+          />
+        );
+
+        expect(screen.getByText('1h')).toBeInTheDocument();
+      });
+
+      it('ends the state at the next value change when mergeValues is true', () => {
+        render(
+          <StateTimelineTooltip
+            series={frame}
+            seriesIdx={1}
+            dataIdxs={[null, 0]}
+            mode={TooltipDisplayMode.Single}
+            timeRange={range}
+            withDuration
+            mergeValues
+            dataLinks={[]}
+            isPinned={false}
+          />
+        );
+
+        expect(screen.getByText('2h')).toBeInTheDocument();
+      });
+    });
+
     it('works without a seriesIdx is withDuration is false', () => {
       render(
         <StateTimelineTooltip
