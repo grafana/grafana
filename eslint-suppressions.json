@@ -1548,11 +1548,6 @@
       "count": 6
     }
   },
-  "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 5
-    }
-  },
   "public/app/features/alerting/unified/group-details/components/DraggableRulesTable.tsx": {
     "react-hooks/refs": {
       "count": 3
