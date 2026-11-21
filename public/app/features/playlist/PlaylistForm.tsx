@@ -16,6 +16,9 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
+import { isValidInterval } from './utils';
+
+const DEFAULT_INTERVAL = '5m';
 
 interface Props {
   onSubmit: (playlist: Playlist) => void | Promise<void>;
@@ -51,7 +54,7 @@ export const PlaylistForm = ({
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
+  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval } = usePlaylistItems(propItems);
 
   // When the selector is locked the repository can't be changed, so derive the value from the
   // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
@@ -62,6 +65,10 @@ export const PlaylistForm = ({
     : selectedRepository; // undefined leaves nothing selected (placeholder)
 
   const doSubmit = async (specUpdates: Playlist['spec']) => {
+    // Enter submits even with Save disabled, and per-item intervals aren't RHF fields.
+    if (items.some((item) => item.interval && !isValidInterval(item.interval))) {
+      return;
+    }
     setSaving(true);
     // Strip UI-only properties (dashboards) from items before submission
     const apiItems = items.map(({ dashboards, ...item }) => item);
@@ -72,7 +79,7 @@ export const PlaylistForm = ({
         ...playlist,
         spec: {
           ...specUpdates,
-          interval: specUpdates?.interval ?? '5m',
+          interval: specUpdates?.interval ?? DEFAULT_INTERVAL,
           title: specUpdates?.title ?? '',
           items: apiItems,
         },
@@ -84,8 +91,11 @@ export const PlaylistForm = ({
 
   return (
     <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
-      {({ register, errors }) => {
-        const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
+      {({ register, errors, watch }) => {
+        const hasInvalidItemInterval = items.some((item) => item.interval && !isValidInterval(item.interval));
+        const isDisabled = items.length === 0 || Object.keys(errors).length > 0 || hasInvalidItemInterval;
+        // Blank rows inherit the global interval, so track its live value for their placeholders.
+        const currentInterval = watch('interval') || interval || DEFAULT_INTERVAL;
         return (
           <>
             <Field
@@ -111,9 +121,12 @@ export const PlaylistForm = ({
                 type="text"
                 {...register('interval', {
                   required: t('playlist-edit.form.interval-required', 'Interval is required'),
+                  validate: (value) =>
+                    isValidInterval(value) ||
+                    t('playlist-edit.form.interval-invalid', 'Invalid interval, e.g. 30s, 5m or 1h'),
                 })}
                 placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
-                defaultValue={interval ?? '5m'}
+                defaultValue={interval ?? DEFAULT_INTERVAL}
                 data-testid={selectors.pages.PlaylistForm.interval}
                 id={playlistIntervalId}
               />
@@ -133,7 +146,13 @@ export const PlaylistForm = ({
               </Box>
             )}
 
-            <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
+            <PlaylistTable
+              items={items}
+              deleteItem={deleteItem}
+              moveItem={moveItem}
+              intervalPlaceholder={currentInterval}
+              updateItemInterval={updateItemInterval}
+            />
 
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>
               <Field label={t('playlist-edit.form.add-title-label', 'Add by title')}>
