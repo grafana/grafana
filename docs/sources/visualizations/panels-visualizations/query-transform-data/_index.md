@@ -185,6 +185,7 @@ Saved queries are supported in:
 Learn more about saved queries:
 
 - [Saved queries dialog box](#saved-queries-dialog-box)
+- [Saved queries page and inline previews](#saved-queries-page-and-inline-previews)
 - [Roles, permission, and RBAC](#roles-permissions-and-rbac)
 - [How to save a query](#save-a-query)
 - [Variables in saved queries](#variables-in-saved-queries)
@@ -227,6 +228,69 @@ When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the
 Click the button to open the associated Drilldown app, while maintaining the context of the query.
 Learn more about these apps in the [Drilldown documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/).
 {{< /admonition >}}
+
+### Saved queries page and inline previews
+
+The **Saved queries** page lets you create, edit, and preview queries without leaving Saved queries.
+This experimental experience requires the `grafana.savedQueriesPage` feature toggle.
+The same toggle enables inline editing and previews in the **Saved queries** dialog box.
+If you don't have access to this experience, you can still use the existing dialog box and open queries in Explore.
+For information about feature availability, refer to [Feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+You need saved-query write permissions to create or edit queries.
+For details, refer to [Roles, permissions, and RBAC](#roles-permissions-and-rbac).
+
+#### Create or edit a query
+
+Use the Saved queries page to compose a new query or update a query you've already saved:
+
+1. Open **Saved queries** from the navigation menu.
+1. Click **New query**, or open an existing query and click **Edit**.
+1. Choose a data source and enter your query in its query editor.
+   For a new query, you can choose any available data source.
+   For an existing query, you can switch to another instance of the same data source type.
+1. Enter or update the title, description, and tags as needed.
+1. Click **Run query** to preview the current query, or press `Ctrl + Enter` or `Cmd + Enter` while editing.
+1. Click **Save** to persist your query and metadata.
+
+Editing an existing query runs it automatically when the editor opens.
+New queries don't run until you request a preview.
+Running a query doesn't save your edits, and **Cancel** on an in-flight run stops execution without saving or discarding the edits.
+If you leave an editor with unsaved changes, Grafana asks you to confirm that you want to discard them.
+Saving an edit updates the stored query for everyone who can access it.
+To keep the original query unchanged, duplicate it before editing.
+
+If **Add from recent queries** is available, click it and choose **Save query** on a history entry to use that entry as the starting point for a new saved query.
+Review the query, data source, and description, then click **Save**.
+If a history entry contains multiple queries, this action uses its first query.
+This option also requires the `queryHistory.recentQueriesUI` feature toggle.
+You can continue to use **New query in Explore** or **Edit in Explore** when you prefer the Explore workflow.
+If a data source doesn't provide an embedded query editor, use Explore to edit its query.
+
+#### Edit and reuse a query in the dialog box
+
+You can also edit the query itself, not just its metadata, from the [Saved queries dialog box](#saved-queries-dialog-box):
+
+1. Select a saved query from the list.
+1. Optionally, click **Run query** to preview its results before using it.
+1. To change the saved query, click **Edit**, update the query or metadata, then click **Save**.
+   The editor expands to use the dialog box, and **Back to saved queries** returns you to the list and details view.
+1. Click **Select query** to use the query in the editor that opened the dialog box.
+
+If you open the dialog box from the command palette, click **Open in Explore** instead of **Select query**.
+Selecting or previewing a query doesn't save changes to the original query.
+
+#### Preview query results
+
+Open a saved query's detail page, or select a query in the dialog box, then click **Run query**.
+Grafana chooses a visualization for the returned data.
+After results load, you can choose another visualization, change the relative time range, or hide the results preview.
+On narrow surfaces, the visualization and time range controls appear as icon buttons.
+
+Visualization, time range, and preview visibility changes don't update the saved query.
+Changing a template variable override affects the preview and the query you select for reuse, not the original saved query.
+If the query fails, the preview displays the error.
+If it returns no data, try another time range or edit the query.
 
 ### Roles, permissions, and RBAC
 
