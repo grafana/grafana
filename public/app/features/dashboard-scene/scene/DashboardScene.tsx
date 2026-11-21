@@ -2296,12 +2296,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isRepeatCloneOrChildOf(panel)) {
-        // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
+      // Repeat clones share their source's saved queries and keep its ID as the key prefix. The
+      // public dashboard query API only resolves saved panel IDs, so the path hash would 404 there.
+      if (isRepeatCloneOrChildOf(panel) && !config.publicDashboardAccessToken) {
         panelId = djb2Hash(panel.getPathId());
       } else {
-        // Otherwise, it's the absolute original panel, and we can use the key directly
-        // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
         panelId = getPanelIdForVizPanel(panel);
       }
     }
