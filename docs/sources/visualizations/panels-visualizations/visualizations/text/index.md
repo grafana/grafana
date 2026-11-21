@@ -186,8 +186,10 @@ It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{di
 It leaves the expressions that it can't convert without changing the result, and shows the line of each one with how to change it:
 
 - **`fmt` read as a whole**: For example, `{{#each fmt}}` or `{{lookup fmt "cpu"}}`. Read each field with `display` instead.
+- **Reads past a formatted value**: For example, `{{fmt.cpu.length}}`. A property of the display value, such as `{{display "cpu" "text"}}`, might give what you need.
 - **Inline partials and blocks on field values**: The context there might not be a row of the query results. Pass the row in the `row` argument.
 - **A field named `fmt`**: The field hides the namespace, so `fmt.cpu` reads the field instead of a formatted value.
+- **A block parameter named `display`**: Inside its block, `display` is the block parameter instead of the helper. Rename the block parameter.
 
 ## Style content with theme colors
 
