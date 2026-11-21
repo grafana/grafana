@@ -183,6 +183,12 @@ export interface PluginInclude {
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
 
+  // Gates this include's nav visibility by a feature flag, independent of role/action. If left
+  // out, defaults to `true`. `true`/`false` are static overrides; a bare string is a flag key
+  // (fails closed if unresolvable); `{flag, fallback}` lets you choose a different fallback.
+  // See docs/sources/developers/plugins/plugin.schema.json.
+  available?: boolean | string | { flag: string; fallback?: boolean };
+
   // Marks the app's default page: the one the app root URL resolves to. Serialized by the
   // plugin settings endpoints; at most one include should set it.
   defaultNav?: boolean;

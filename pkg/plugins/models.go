@@ -159,6 +159,7 @@ type Includes struct {
 	Slug       string            `json:"slug"`
 	Icon       string            `json:"icon"`
 	UID        string            `json:"uid"`
+	Available  *FlagExpr         `json:"available,omitempty"`
 
 	ID string `json:"-"`
 }

@@ -255,6 +255,50 @@ test("The new page works", () => {
 });
 ```
 
+## Control a plugin's nav item availability with a flag
+
+`plugin.json`'s `includes[]` entries have an `available` field that makes it possible to make an
+include item unavailable. If you leave it out, it defaults to `true`, and the include is considered
+available. `available` accepts **any** flag key, including ones a plugin defines and owns itself, evaluated
+against whatever OpenFeature provider the Grafana instance is configured with (refer to
+[`pkg/services/ofrep`](../pkg/services/ofrep) for how that's served). The whole capability is gated
+behind `grafana.pluginNavAvailability` (default off) — `available` is ignored entirely until that
+toggle is on.
+
+- Field omitted entirely: always available.
+
+- A literal boolean: static override.
+
+  ```json
+  "available": false
+  ```
+
+- A bare flag key: sugar for `{"flag": "my-plugin.myFlag", "fallback": false}` below. Setting this
+  field to a flag key is an explicit opt-in to gating, so unlike the field being omitted, this
+  fails **closed** (unavailable) if the flag can't be resolved.
+
+  ```json
+  "available": "my-plugin.myFlag"
+  ```
+
+- An explicit `{flag, fallback}` object, for when the default fail-closed fallback isn't what you want:
+
+  ```json
+  "available": { "flag": "my-plugin.myFlag", "fallback": true }
+  ```
+
+  `fallback` is used only when the flag genuinely can't be resolved (unknown key, provider
+  unreachable) — an internal evaluation error (e.g. a panic in the flag provider) fails **open**
+  instead, regardless of `fallback`, since that's a bug in our own plumbing, not a flag-resolution
+  outcome.
+
+This only supports one flag per include today. Combining several (AND/OR) isn't supported, and
+wasn't needed by anything built so far — if that changes, the natural extension is additive:
+`{"and": [{flag, fallback}, ...]}` / `{"or": [...]}` wrapping the same leaf shape, at which point
+it's worth revisiting whether this should share a representation with
+[`pkg/services/accesscontrol`](../pkg/services/accesscontrol)'s `ac.Evaluator` tree
+(`EvalAny`/`EvalAll`/`EvalPermission`) rather than growing its own.
+
 ## Enabling toggles in development
 
 Add the feature flag to the feature_toggle section in your custom.ini, for example:
