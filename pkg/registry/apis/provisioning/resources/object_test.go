@@ -57,7 +57,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			// Read concurrently with the count, so it may or may not have started when the count fails.
+			// Runs concurrently with the failing count, so it may not be called.
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
 			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
@@ -435,9 +435,8 @@ func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
 	})
 }
 
-// externalPlaylists serves playlists through a fake API group, as a kind stored outside unified
-// storage is: pl-1 managed by repo, pl-2 by another repository, and pl-3 by nobody. The returned
-// channel closes once the kind starts being read.
+// externalPlaylists serves externally stored playlists: pl-1 managed by repository, pl-2 by another
+// repository, pl-3 unmanaged. The channel closes once the kind starts being read.
 func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSearch, *resource.MockResourceClient, <-chan struct{}) {
 	t.Helper()
 	playlistGVR := schema.GroupVersionResource{Group: playlistGVK.Group, Version: playlistGVK.Version, Resource: "playlists"}
@@ -461,7 +460,7 @@ func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSear
 		unmanaged,
 	)
 
-	// The dashboard is indexed, so it is never resolved: only the external kind is listed.
+	// The dashboard is indexed, so only the playlist is resolved.
 	clients := NewMockResourceClients(t)
 	clients.EXPECT().SupportedResources().Return([]SupportedResource{{GroupKind: dashboardGK}, external})
 	started := make(chan struct{})
@@ -477,8 +476,7 @@ func externalPlaylists(t *testing.T, repository string) (*ResourceListerFromSear
 	return NewResourceLister(store, factory, []SupportedResource{{GroupKind: dashboardGK}, external}), store, started
 }
 
-// Every index call below returns only once the external kind is being read, so reading them one
-// after the other blocks every goroutine in the bubble, which synctest reports as a deadlock.
+// Each index call waits for the external read to start, so sequential reads deadlock the bubble.
 func TestResourceListerFromSearch_ReadsTheIndexAndExternalKindsConcurrently(t *testing.T) {
 	t.Run("list", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
@@ -519,8 +517,7 @@ func TestResourceListerFromSearch_ReadsTheIndexAndExternalKindsConcurrently(t *t
 func TestResourceListerFromSearch_ListsExternallyStoredKindsThroughClients(t *testing.T) {
 	const repository = "repo"
 	lister, store, _ := externalPlaylists(t, repository)
-	// The playlist row is stale: the index does not hold an externally stored kind, and reporting a
-	// row it does have next to the listed object puts one resource at a path twice.
+	// A stale index row for the external kind must not be reported next to the listed object.
 	store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.ListManagedObjectsResponse{
 		Items: []*resourcepb.ListManagedObjectsResponse_Item{
 			{Object: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1"}, Path: "db-1.json", Title: "Dashboard 1"},
@@ -619,8 +616,8 @@ func TestResourceListerFromSearch_CountsExternallyStoredKindsThroughClients(t *t
 	})
 }
 
-// The index files a collection member under the collection's group rather than the group that
-// serves it, so dropping only the served group's rows counted the member's objects twice.
+// The index files a collection member under the collection's group, so its rows there must not
+// be counted next to the API counts.
 func TestResourceListerFromSearch_CountsAnExternallyStoredCollectionMemberOnce(t *testing.T) {
 	const (
 		repository = "repo"

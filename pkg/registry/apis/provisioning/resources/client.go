@@ -40,9 +40,8 @@ const (
 	// CapabilityDisabled marks a resource as declared but not acted on (surfaced, inert).
 	// Absent means active.
 	CapabilityDisabled = "disabled"
-	// CapabilityExternalStorage marks a resource stored outside unified storage, which the
-	// managed-object index does not hold: it is listed and counted through its API group
-	// instead. Absent means indexed.
+	// CapabilityExternalStorage marks a resource stored outside unified storage, so absent from
+	// the index: it is listed and counted through its API group. Absent means indexed.
 	CapabilityExternalStorage = "externalstorage"
 )
 

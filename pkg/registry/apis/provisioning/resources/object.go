@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"cmp"
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -84,7 +84,7 @@ func ValidateListerMode(mode string) error {
 func NeedsResourceStore(mode string) bool { return mode == "" || mode == ListerSearch }
 
 // maxConcurrentKindReads bounds the kinds read through their API groups at once: a collection
-// can expand to many groups, often served by the same API server.
+// can expand to many groups served by one API server.
 const maxConcurrentKindReads = 8
 
 type ResourceListerFromSearch struct {
@@ -100,10 +100,9 @@ type ResourceListerFromSearch struct {
 	external bool
 }
 
-// NewResourceLister returns a lister over the managed-object index. A configured collection's
-// members, and the kinds stored outside unified storage, are listed and counted through clients
-// instead; see listThroughAPIGroups and countExternal. This is the only reader that also counts
-// the whole namespace.
+// NewResourceLister returns a lister over the managed-object index. Collection members and
+// externally stored kinds are read through clients instead. This is the only reader that also
+// counts the whole namespace.
 func NewResourceLister(store ResourceStore, clients ClientFactory, configured []SupportedResource) *ResourceListerFromSearch {
 	return &ResourceListerFromSearch{
 		store:       store,
@@ -196,10 +195,25 @@ func (o *ResourceListerFromSearch) addressableResources(clients ResourceClients)
 	}
 	for _, r := range o.configured {
 		if !seen.Has(r.GroupKind) && !provisioningresources.IsCollection(r.Group) {
+			r.Collection = storingCollection(o.configured, r.GroupKind)
 			out = append(out, r)
 		}
 	}
 	return out
+}
+
+// readKinds calls read for every kind concurrently and returns the results in the kinds' order.
+func readKinds[T any](ctx context.Context, kinds []SupportedResource, read func(context.Context, SupportedResource) (T, error)) ([]T, error) {
+	results := make([]T, len(kinds))
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentKindReads)
+	for i, kind := range kinds {
+		g.Go(func() (err error) {
+			results[i], err = read(gctx, kind)
+			return err
+		})
+	}
+	return results, g.Wait()
 }
 
 // apiScan is what the API group scan answered: the resources it listed, which the index no
@@ -210,11 +224,9 @@ type apiScan struct {
 	declared sets.Set[schema.GroupResource]
 }
 
-// listThroughAPIGroups lists what a repository manages that the index cannot answer for, one
-// request per served group instead of one for the whole repository: the members of the configured
-// collections, which the index reports under the collection's group, and possibly a different
-// name, so the object it describes cannot be addressed; and the kinds stored outside unified
-// storage, which the index does not hold at all.
+// listThroughAPIGroups lists what a repository manages that the index cannot answer for: the
+// collection members, which the index files under the collection's group, so they cannot be
+// addressed from it; and the externally stored kinds, which it does not hold at all.
 func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, namespace, repository string) (apiScan, error) {
 	scan := apiScan{
 		covered:  sets.New[schema.GroupResource](),
@@ -229,60 +241,52 @@ func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, nam
 		return scan, fmt.Errorf("get clients for unindexed resources: %w", err)
 	}
 
-	// Each kind writes only its own slot, so the kinds are read concurrently without a lock and
-	// merged in the configured order.
-	type kindScan struct {
-		resolved bool
-		listed   bool
-		gr       schema.GroupResource
-		items    []provisioning.ResourceListItem
-	}
 	collections := o.collectionGroups()
-	kinds := o.addressableResources(clients)
-	results := make([]kindScan, len(kinds))
-	g, gctx := errgroup.WithContext(ctx)
-	g.SetLimit(maxConcurrentKindReads)
-	for i, supported := range kinds {
-		listed := o.isMember(supported.GroupKind) || supported.IsExternallyStored()
-		// A kind stored in a group a collection also names is resolved as well, so its index
-		// rows can be told apart by resource; no other kind needs a lookup here.
-		if !listed && !collections.Has(supported.Group) {
-			continue
-		}
-		g.Go(func() error {
-			client, gvr, err := clients.ForKind(gctx, supported.WithVersion(""))
-			if err != nil {
-				return fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
-			}
-			results[i] = kindScan{resolved: true, listed: listed, gr: gvr.GroupResource()}
-			if !listed {
-				return nil
-			}
-			err = ForEach(gctx, client, func(obj *unstructured.Unstructured) error {
-				if item, ok := managedResourceItem(obj, gvr, repository); ok {
-					results[i].items = append(results[i].items, item)
-				}
-				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("list %s: %w", gvr, err)
-			}
-			return nil
-		})
-	}
-	if err := g.Wait(); err != nil {
+	// A kind stored in a group a collection also names is resolved as well, so its index rows
+	// can be told apart by resource; no other kind needs a lookup here.
+	kinds := slices.DeleteFunc(o.addressableResources(clients), func(r SupportedResource) bool {
+		return !o.isListed(r) && !collections.Has(r.Group)
+	})
+	results, err := readKinds(ctx, kinds, func(ctx context.Context, supported SupportedResource) (apiScan, error) {
+		return o.scanKind(ctx, clients, supported, repository)
+	})
+	if err != nil {
 		return scan, err
 	}
 
 	for _, r := range results {
-		switch {
-		case !r.resolved:
-		case r.listed:
-			scan.covered.Insert(r.gr)
-			scan.items = append(scan.items, r.items...)
-		default:
-			scan.declared.Insert(r.gr)
+		scan.items = append(scan.items, r.items...)
+		scan.covered = scan.covered.Union(r.covered)
+		scan.declared = scan.declared.Union(r.declared)
+	}
+	return scan, nil
+}
+
+// isListed reports whether a kind is listed through its API group rather than the index.
+func (o *ResourceListerFromSearch) isListed(r SupportedResource) bool {
+	return o.isMember(r.GroupKind) || r.IsExternallyStored()
+}
+
+// scanKind lists one kind's objects managed by repository, or only resolves its resource when the
+// index lists it.
+func (o *ResourceListerFromSearch) scanKind(ctx context.Context, clients ResourceClients, supported SupportedResource, repository string) (apiScan, error) {
+	client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
+	if err != nil {
+		return apiScan{}, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
+	}
+	if !o.isListed(supported) {
+		return apiScan{declared: sets.New(gvr.GroupResource())}, nil
+	}
+
+	scan := apiScan{covered: sets.New(gvr.GroupResource())}
+	err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
+		if item, ok := managedResourceItem(obj, gvr, repository); ok {
+			scan.items = append(scan.items, item)
 		}
+		return nil
+	})
+	if err != nil {
+		return apiScan{}, fmt.Errorf("list %s: %w", gvr, err)
 	}
 	return scan, nil
 }
@@ -357,22 +361,15 @@ func (o *ResourceListerFromSearch) RepositoryStats(ctx context.Context, namespac
 	return nil, apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: "stats"}, repository)
 }
 
-// externalStats counts the kinds stored outside unified storage, in the rows the index answers
-// with. covered names their resources: a row the index holds for one replaces nothing, it is
-// dropped, so a resource is never counted from both.
+// externalStats holds the counts of the externally stored kinds, as index rows. Index rows for
+// a covered resource are dropped in their favour.
 type externalStats struct {
 	covered  sets.Set[schema.GroupResource]
 	managed  []*resourcepb.CountManagedObjectsResponse_ResourceCount
 	instance []*resourcepb.ResourceStatsResponse_Stats
 }
 
-type managerKey struct {
-	kind     utils.ManagerKind
-	identity string
-}
-
-// countExternal counts every object of the externally stored kinds through its API group, both
-// in total and per manager. Unlike the index, the API server has no count, so each is listed.
+// countExternal counts the externally stored kinds through their API groups.
 func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace string) (externalStats, error) {
 	ext := externalStats{covered: sets.New[schema.GroupResource]()}
 	if !o.external || o.clients == nil {
@@ -387,20 +384,10 @@ func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace 
 	kinds := slices.DeleteFunc(o.addressableResources(clients), func(r SupportedResource) bool {
 		return !r.IsExternallyStored()
 	})
-	// Each kind writes only its own slot, so the kinds are counted concurrently without a lock
-	// and merged in the configured order.
-	results := make([]externalStats, len(kinds))
-	g, gctx := errgroup.WithContext(ctx)
-	g.SetLimit(maxConcurrentKindReads)
-	for i, supported := range kinds {
-		// A disabled kind comes from the configured set, which carries no storage group.
-		storage := cmp.Or(supported.Collection, storingCollection(o.configured, supported.GroupKind))
-		g.Go(func() (err error) {
-			results[i], err = countKind(gctx, clients, supported, storage)
-			return err
-		})
-	}
-	if err := g.Wait(); err != nil {
+	results, err := readKinds(ctx, kinds, func(ctx context.Context, supported SupportedResource) (externalStats, error) {
+		return countKind(ctx, clients, supported)
+	})
+	if err != nil {
 		return ext, err
 	}
 
@@ -412,17 +399,16 @@ func (o *ResourceListerFromSearch) countExternal(ctx context.Context, namespace 
 	return ext, nil
 }
 
-// countKind counts the objects of one kind through its API group. storage is the collection group
-// the index files the kind under, empty when it is its own.
-func countKind(ctx context.Context, clients ResourceClients, supported SupportedResource, storage string) (externalStats, error) {
+// countKind counts one kind's objects, in total and per manager. The API server has no count, so
+// they are listed.
+func countKind(ctx context.Context, clients ResourceClients, supported SupportedResource) (externalStats, error) {
 	client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
 	if err != nil {
 		return externalStats{}, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
 	}
 
 	var total int64
-	var managers []managerKey
-	managed := make(map[managerKey]int64)
+	managed := make(map[string]*resourcepb.CountManagedObjectsResponse_ResourceCount)
 	err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
@@ -433,37 +419,34 @@ func countKind(ctx context.Context, clients ResourceClients, supported Supported
 		if !ok {
 			return nil
 		}
-		key := managerKey{kind: manager.Kind, identity: manager.Identity}
-		if _, seen := managed[key]; !seen {
-			managers = append(managers, key)
+		key := string(manager.Kind) + ":" + manager.Identity
+		if managed[key] == nil {
+			managed[key] = &resourcepb.CountManagedObjectsResponse_ResourceCount{
+				Kind: string(manager.Kind), Id: manager.Identity, Group: gvr.Group, Resource: gvr.Resource,
+			}
 		}
-		managed[key]++
+		managed[key].Count++
 		return nil
 	})
 	if err != nil {
 		return externalStats{}, fmt.Errorf("count %s: %w", gvr, err)
 	}
 
-	// The index reports a collection member under the collection's group: a row it holds there
-	// for this resource is the same objects, and counting it as well counts them twice.
-	counted := externalStats{covered: sets.New(gvr.GroupResource())}
-	if storage != "" {
-		counted.covered.Insert(schema.GroupResource{Group: storage, Resource: gvr.Resource})
+	counted := externalStats{
+		covered: sets.New(gvr.GroupResource()),
+		managed: slices.Collect(maps.Values(managed)),
+	}
+	// The index files a collection member under the collection's group.
+	if supported.Collection != "" {
+		counted.covered.Insert(schema.GroupResource{Group: supported.Collection, Resource: gvr.Resource})
 	}
 	if total > 0 {
-		counted.instance = []*resourcepb.ResourceStatsResponse_Stats{{
-			Group: gvr.Group, Resource: gvr.Resource, Count: total,
-		}}
-	}
-	for _, m := range managers {
-		counted.managed = append(counted.managed, &resourcepb.CountManagedObjectsResponse_ResourceCount{
-			Kind: string(m.kind), Id: m.identity, Group: gvr.Group, Resource: gvr.Resource, Count: managed[m],
-		})
+		counted.instance = []*resourcepb.ResourceStatsResponse_Stats{{Group: gvr.Group, Resource: gvr.Resource, Count: total}}
 	}
 	return counted, nil
 }
 
-// withoutCovered returns the index rows of the resources the external counts do not cover.
+// withoutCovered drops the index rows of the covered resources.
 func withoutCovered[T interface {
 	GetGroup() string
 	GetResource() string
