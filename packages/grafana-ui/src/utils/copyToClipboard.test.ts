@@ -159,4 +159,29 @@ describe('copyTextToClipboard', () => {
     await expect(copyTextToClipboard(Promise.reject(new Error('403')))).rejects.toThrow('403');
     expect(execCommand).not.toHaveBeenCalled();
   });
+
+  it('should reject when the fallback copy command is refused', async () => {
+    const execCommand = jest.fn().mockReturnValue(false);
+    setupTests({ isSecureContext: false, execCommand });
+
+    await expect(copyTextToClipboard('copy me')).rejects.toThrow('Copy command was refused by the browser');
+  });
+
+  it('should clean up the textarea and restore focus when the fallback copy is refused', async () => {
+    const execCommand = jest.fn().mockReturnValue(false);
+    const remove = jest.fn();
+    const appendChild = jest.fn((node: HTMLElement) => {
+      node.remove = remove;
+    });
+    const body = { appendChild } as unknown as HTMLElement;
+    const element = document.createElement('div');
+    element.focus = jest.fn();
+    jest.spyOn(document, 'activeElement', 'get').mockReturnValue(element);
+    setupTests({ isSecureContext: false, execCommand, body });
+
+    await expect(copyTextToClipboard('copy me')).rejects.toThrow();
+    expect(appendChild).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(element.focus).toHaveBeenCalled();
+  });
 });
