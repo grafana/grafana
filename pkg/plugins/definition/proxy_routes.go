@@ -1,7 +1,6 @@
 package definition
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,45 +8,46 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/routes"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-// ExtensionProxy declares, on an OpenAPI operation, the plugin route a matched
-// request is forwarded with. Its value is a ProxyTarget. It names upstream hosts
-// and secure settings by template, so it is removed from the published OpenAPI;
-// the published settings manifest keeps it, so it can be declared again.
-const ExtensionProxy = "x-grafana-proxy"
-
-// ProxyTarget is everything in a plugin route except where it matches: the path
-// comes from the OpenAPI path and the method from the operation.
-type ProxyTarget struct {
-	ReqRole      identity.RoleType     `json:"reqRole,omitempty"`
-	ReqAction    string                `json:"reqAction,omitempty"`
-	URL          string                `json:"url,omitempty"`
-	URLParams    []plugins.URLParam    `json:"urlParams,omitempty"`
-	Headers      []plugins.Header      `json:"headers,omitempty"`
-	AuthType     string                `json:"authType,omitempty"`
-	TokenAuth    *plugins.JWTTokenAuth `json:"tokenAuth,omitempty"`
-	JwtTokenAuth *plugins.JWTTokenAuth `json:"jwtTokenAuth,omitempty"`
-	Body         json.RawMessage       `json:"body,omitempty"`
-}
-
-func proxyTargetOf(route *plugins.Route) ProxyTarget {
-	return ProxyTarget{
-		ReqRole:      route.ReqRole,
+func proxyTargetOf(route *plugins.Route) routes.ProxyTarget {
+	target := routes.ProxyTarget{
+		ReqRole:      types.RoleType(route.ReqRole),
 		ReqAction:    route.ReqAction,
 		URL:          route.URL,
-		URLParams:    route.URLParams,
-		Headers:      route.Headers,
 		AuthType:     route.AuthType,
-		TokenAuth:    route.TokenAuth,
-		JwtTokenAuth: route.JwtTokenAuth,
+		TokenAuth:    proxyTokenAuthOf(route.TokenAuth),
+		JwtTokenAuth: proxyTokenAuthOf(route.JwtTokenAuth),
 		Body:         route.Body,
 	}
+	for _, p := range route.URLParams {
+		target.URLParams = append(target.URLParams, routes.ProxyURLParam{Name: p.Name, Content: p.Content})
+	}
+	for _, h := range route.Headers {
+		target.Headers = append(target.Headers, routes.ProxyHeader{Name: h.Name, Content: h.Content})
+	}
+	return target
+}
+
+func proxyTokenAuthOf(auth *plugins.JWTTokenAuth) *routes.ProxyTokenAuth {
+	if auth == nil {
+		return nil
+	}
+	return &routes.ProxyTokenAuth{URL: auth.Url, Scopes: auth.Scopes, Params: auth.Params}
+}
+
+func routeTokenAuthOf(auth *routes.ProxyTokenAuth) *plugins.JWTTokenAuth {
+	if auth == nil {
+		return nil
+	}
+	return &plugins.JWTTokenAuth{Url: auth.URL, Scopes: auth.Scopes, Params: auth.Params}
 }
 
 // proxyMethods are the methods a route can name.
@@ -74,10 +74,11 @@ var proxyParamName = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
 var reservedProxyParams = map[string]bool{"namespace": true, "name": true, "path": true}
 
 // ProxyRoutesToOpenAPI converts plugin.json proxy routes into OpenAPI paths,
-// relative to the proxy root, with each operation's ExtensionProxy set. A
-// route is converted only when its path uses no more of the plugin proxy's
-// pattern syntax than plain segments, :name parameters and *; otherwise an
-// error names the route, and no paths are returned.
+// relative to the proxy root, with each operation's
+// routes.ExtensionProxy set. A route is converted only when its path
+// uses no more of the plugin proxy's pattern syntax than plain segments, :name
+// parameters and *; otherwise an error names the route, and no paths are
+// returned.
 //
 // Routes are matched in the order they are declared, so a route that only
 // repeats the path and a method of an earlier one is never reached, and is
@@ -207,7 +208,7 @@ func proxyOperation(route *plugins.Route, params []string) *spec3.Operation {
 			Schema:   spec.StringProperty(),
 		}})
 	}
-	op.AddExtension(ExtensionProxy, proxyTargetOf(route))
+	op.AddExtension(routes.ExtensionProxy, proxyTargetOf(route))
 	return op
 }
 
@@ -217,45 +218,32 @@ func proxyOperation(route *plugins.Route, params []string) *spec3.Operation {
 // rebuilt in the plugin proxy's pattern syntax, with its parameters renamed,
 // since the proxy only reads what a final * matches.
 func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plugins.Route, bool, error) {
-	if op == nil {
-		return nil, false, nil
-	}
-	raw, ok := op.Extensions[ExtensionProxy]
-	if !ok {
-		return nil, false, nil
-	}
-	var target ProxyTarget
-	switch v := raw.(type) {
-	case ProxyTarget:
-		// Kept as converted, so the body template is forwarded byte for byte.
-		target = v
-	default:
-		// A spec read from JSON holds the extension as decoded JSON.
-		b, err := json.Marshal(v)
-		if err != nil {
-			return nil, true, fmt.Errorf("invalid %s: %w", ExtensionProxy, err)
-		}
-		if err := json.Unmarshal(b, &target); err != nil {
-			return nil, true, fmt.Errorf("invalid %s: %w", ExtensionProxy, err)
-		}
+	target, ok, err := routes.ProxyTargetFromOperation(op)
+	if !ok || err != nil {
+		return nil, ok, err
 	}
 	routePath, err := proxyRoutePath(specPath)
 	if err != nil {
 		return nil, true, err
 	}
-	return &plugins.Route{
+	route := &plugins.Route{
 		Path:         routePath,
 		Method:       method,
-		ReqRole:      target.ReqRole,
+		ReqRole:      identity.RoleType(target.ReqRole),
 		ReqAction:    target.ReqAction,
 		URL:          target.URL,
-		URLParams:    target.URLParams,
-		Headers:      target.Headers,
 		AuthType:     target.AuthType,
-		TokenAuth:    target.TokenAuth,
-		JwtTokenAuth: target.JwtTokenAuth,
+		TokenAuth:    routeTokenAuthOf(target.TokenAuth),
+		JwtTokenAuth: routeTokenAuthOf(target.JwtTokenAuth),
 		Body:         target.Body,
-	}, true, nil
+	}
+	for _, p := range target.URLParams {
+		route.URLParams = append(route.URLParams, plugins.URLParam{Name: p.Name, Content: p.Content})
+	}
+	for _, h := range target.Headers {
+		route.Headers = append(route.Headers, plugins.Header{Name: h.Name, Content: h.Content})
+	}
+	return route, true, nil
 }
 
 func proxyRoutePath(specPath string) (string, error) {
@@ -288,8 +276,8 @@ func proxyRoutePath(specPath string) (string, error) {
 }
 
 // WithoutProxyExtension returns a copy of props whose operations do not carry
-// ExtensionProxy, for publishing. The operations are copied because they are
-// shared with the served routes.
+// routes.ExtensionProxy, for publishing. The operations are copied
+// because they are shared with the served routes.
 func WithoutProxyExtension(props spec3.PathProps) spec3.PathProps {
 	out := props
 	for _, op := range []**spec3.Operation{
@@ -302,7 +290,7 @@ func WithoutProxyExtension(props spec3.PathProps) spec3.PathProps {
 		cp := **op
 		var ext spec.Extensions
 		for k, v := range cp.Extensions {
-			if k == ExtensionProxy {
+			if k == routes.ExtensionProxy {
 				continue
 			}
 			if ext == nil {
@@ -332,6 +320,8 @@ func operationFor(props *spec3.PathProps, method string) **spec3.Operation {
 		return &props.Delete
 	case http.MethodOptions:
 		return &props.Options
+	case http.MethodTrace:
+		return &props.Trace
 	}
 	panic("unexpected method " + method)
 }
