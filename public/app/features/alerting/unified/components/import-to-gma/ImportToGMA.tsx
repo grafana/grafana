@@ -8,7 +8,10 @@ import { LoadingPlaceholder } from '@grafana/ui';
 import { trackImportToGMAWizardStarted } from '../../Analytics';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { useStagedConfig } from '../../settings/import/useStagedConfig';
+import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
 import { ConfirmImportModal } from './ConfirmImportModal';
 import { type NotificationsLock } from './LockNotices';
@@ -27,23 +30,31 @@ import { useNotificationsDryRun } from './useNotificationsDryRun';
 import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
 import { useRulesStepNavigation } from './useRulesStepNavigation';
 
-function Wizard({ notificationsLock }: { notificationsLock?: NotificationsLock }) {
+function Wizard({ notificationsLock, rulesOnly }: { notificationsLock?: NotificationsLock; rulesOnly?: boolean }) {
   const [searchParams] = useURLSearchParams();
   // Settings > Import > Alert rules links here with ?step=rules, so rule-only imports start on the rules step.
   const initialStep = searchParams.get('step') === StepKey.Rules ? StepKey.Rules : undefined;
 
   return (
-    <StepperStateProvider initialStep={initialStep}>
+    <StepperStateProvider initialStep={initialStep} rulesOnly={rulesOnly}>
       <ImportWizardContent notificationsLock={notificationsLock} />
     </StepperStateProvider>
   );
 }
 
-export function ImportWizardGate() {
+export function ImportWizardGate({ rulesOnly: forceRulesOnly = false }: { rulesOnly?: boolean }) {
   const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
+  // Without notifications permission there is no notifications step, so nothing to lock and nothing to read.
+  const { canImportNotifications } = useCanImportToGMA();
+  const rulesOnly = forceRulesOnly || !canImportNotifications;
   const { isActive, isLoading } = useIsAutoSyncActive();
-  const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({ skip: !importAlertmanagerAPIEnabled });
+  const { stagedConfig, isLoading: isStagedConfigLoading } = useStagedConfig({
+    skip: !importAlertmanagerAPIEnabled || rulesOnly,
+  });
 
+  if (rulesOnly) {
+    return <Wizard rulesOnly />;
+  }
   if (!importAlertmanagerAPIEnabled) {
     return <Wizard notificationsLock="import-api-disabled" />;
   }
@@ -62,6 +73,21 @@ export function ImportWizardGate() {
   }
   return <Wizard notificationsLock={notificationsLock} />;
 }
+
+/**
+ * Rule import for users who can't open Settings > Import, in the regular alert rules shell. Always rules only,
+ * because a notifications import ends in Settings, where these users can't go.
+ */
+export const ImportRulesPage = withPageErrorBoundary(function ImportRulesPage() {
+  return (
+    <AlertingPageWrapper
+      navId={getAlertRulesNavId()}
+      pageNav={{ text: t('alerting.import-to-gma.pageTitle', 'Import alert rules') }}
+    >
+      <ImportWizardGate rulesOnly />
+    </AlertingPageWrapper>
+  );
+});
 
 /**
  * Inner content component that uses the stepper state

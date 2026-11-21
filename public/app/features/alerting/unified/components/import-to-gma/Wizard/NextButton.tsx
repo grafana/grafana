@@ -37,8 +37,8 @@ export const NextButton = ({
   disabledTooltip,
   label,
 }: NextButtonProps) => {
-  const { activeStep, setActiveStep } = useStepperState();
-  const nextStep = getNextStep(activeStep);
+  const { steps, activeStep, setActiveStep } = useStepperState();
+  const nextStep = getNextStep(activeStep, steps);
   const isLast = isLastStep(activeStep);
   const [{ execute: handleClick }, nextState] = useAsync(async () => {
     const shouldProceed = await onNext();

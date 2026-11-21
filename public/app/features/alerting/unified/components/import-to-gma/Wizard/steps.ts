@@ -8,23 +8,24 @@ import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type W
  * Returns the wizard steps configuration.
  * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getWizardSteps = (): WizardStep[] => [
-  {
-    id: StepKey.Notifications,
-    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
-    description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
-  },
-  {
-    id: StepKey.Rules,
-    name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
-    description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
-  },
-  {
-    id: StepKey.Review,
-    name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
-    description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
-  },
-];
+export const getWizardSteps = ({ rulesOnly = false }: { rulesOnly?: boolean } = {}): WizardStep[] =>
+  [
+    {
+      id: StepKey.Notifications,
+      name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
+      description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
+    },
+    {
+      id: StepKey.Rules,
+      name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
+      description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
+    },
+    {
+      id: StepKey.Review,
+      name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
+      description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
+    },
+  ].filter((step) => !(rulesOnly && step.id === StepKey.Notifications));
 
 /** Whether Step 1's notifications will be handled via continuous Auto-sync instead of a one-time import. */
 export function isAutoSyncSelected(
@@ -77,14 +78,12 @@ export function getImportPlan(
   };
 }
 
-export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export const getNextStep = (currentStep: StepKey, steps = getWizardSteps()): WizardStep | undefined => {
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   return steps[currentIndex + 1];
 };
 
-export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export const getPreviousStep = (currentStep: StepKey, steps = getWizardSteps()): WizardStep | undefined => {
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   if (currentIndex <= 0) {
     return undefined;

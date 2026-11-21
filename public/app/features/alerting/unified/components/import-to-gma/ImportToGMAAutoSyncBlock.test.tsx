@@ -96,6 +96,7 @@ const ui = {
 // the lock must apply to any user allowed to reach the wizard.
 function grantWizardPermissions() {
   grantUserPermissions([
+    AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.ActionAlertingNotificationsConfigRead,
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingProvisioningSetStatus,
@@ -104,6 +105,7 @@ function grantWizardPermissions() {
 
 describe('Import wizard auto-sync gate', () => {
   it('renders the wizard normally when the sync feature is off, regardless of config', async () => {
+    grantWizardPermissions();
     setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
 
     render(<ImportWizardGate />);
