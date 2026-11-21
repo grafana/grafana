@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,15 +13,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 )
 
 var (
@@ -101,6 +105,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if err := validateNoTeamHTTPHeadersOnCreate(ctx, ds, s.resourceInfo); err != nil {
 		return nil, err
 	}
+	if err := legacyannotations.CheckManagerOnCreate(ctx, ds); err != nil {
+		return nil, err
+	}
 
 	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
@@ -171,6 +178,15 @@ func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo 
 		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
+	retainAnnotationsOnPut(ctx, oldDS, ds)
+
+	if err := legacyannotations.CheckManagerOnUpdate(ctx, ds, oldDS); err != nil {
+		return nil, err
+	}
+	if err := s.checkFileProvisionedEdits(ctx, oldDS); err != nil {
+		return nil, err
+	}
+
 	// Expose any secure value changes to the dual writer
 	var secureChanges common.InlineSecureValues
 	for k, v := range ds.Secure {
@@ -220,6 +236,20 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		}()
 	}
 
+	// The manager lives on the stored object, so deleting a managed resource needs a
+	// read first. Only the gate needs it, so a missing object falls through to the
+	// delete, which reports not-found the way it always did.
+	if old, err := s.Get(ctx, name, &metav1.GetOptions{}); err == nil {
+		if ds, ok := old.(*v0alpha1.DataSource); ok {
+			if err := legacyannotations.CheckManagerOnDelete(ctx, ds); err != nil {
+				return nil, false, err
+			}
+			if err := s.checkFileProvisionedEdits(ctx, ds); err != nil {
+				return nil, false, err
+			}
+		}
+	}
+
 	err := s.datasources.DeleteDataSource(ctx, name)
 	return nil, false, err
 }
@@ -238,9 +268,63 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 		return nil, err
 	}
 	for _, ds := range dss.Items {
-		if err = s.datasources.DeleteDataSource(ctx, ds.Name); err != nil {
+		// Through s.Delete, so a collection delete cannot get past the gates a
+		// single delete has to pass.
+		if _, _, err := s.Delete(ctx, ds.Name, deleteValidation, options); err != nil {
 			return nil, err
 		}
 	}
 	return nil, nil
+}
+
+// checkFileProvisionedEdits refuses a write to a data source provisioned from a file
+// whose config did not set `editable`. /api/datasources has always refused these with
+// its read_only check; this path had no equivalent, so the same data source answered
+// differently depending on which endpoint you asked.
+//
+// Deliberately limited to the file-provisioning kinds. Their provisioner writes through
+// the SQL service and never this path, so nothing legitimate is blocked. Terraform and
+// kubectl do write through here, with a caller's own token rather than an identity that
+// can be told apart from a user's, so refusing their non-editable resources would refuse
+// the manager along with everyone else.
+func (s *legacyStorage) checkFileProvisionedEdits(ctx context.Context, old *v0alpha1.DataSource) error {
+	meta, err := utils.MetaAccessor(old)
+	if err != nil {
+		return err
+	}
+	manager, managed := meta.GetManagerProperties()
+	if !managed || manager.AllowsEdits {
+		return nil
+	}
+	switch manager.Kind {
+	case utils.ManagerKindClassicFP, utils.ManagerKindFileProvisioning: //nolint:staticcheck
+	default:
+		return nil
+	}
+	if auth, err := identity.GetRequester(ctx); err == nil && identity.IsServiceIdentityAuth(auth) {
+		return nil // the provisioner rewriting its own file
+	}
+	return apierrors.NewForbidden(s.resourceInfo.GroupResource(), old.Name,
+		errors.New("data source is provisioned from a file and its config does not allow edits"))
+}
+
+// retainAnnotationsOnPut keeps the stored annotations when a PUT carries none.
+//
+// A PUT replaces the whole object, so an empty annotation map would otherwise read as
+// "release this resource". Grafana's own UI sends exactly that: its converter
+// hard-codes an empty map and drops annotations on read, so an ordinary save would
+// strip a data source's provenance, and an admin -- who is allowed to release a
+// repo-managed resource -- would detach it without meaning to.
+//
+// Removing a manager stays possible with a PATCH that clears the annotations, which
+// goes through the same gate as any other manager change. This mirrors what the Team
+// LBAC guard above does for spec.jsonData.teamHttpHeaders, and for the same reason.
+func retainAnnotationsOnPut(ctx context.Context, old, proposed *v0alpha1.DataSource) {
+	if len(proposed.Annotations) > 0 || len(old.Annotations) == 0 {
+		return
+	}
+	if requestInfo, ok := request.RequestInfoFrom(ctx); ok && requestInfo.Verb == "patch" {
+		return
+	}
+	proposed.Annotations = maps.Clone(old.Annotations)
 }

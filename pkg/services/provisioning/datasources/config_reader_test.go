@@ -244,6 +244,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 		validateDatasourceV1(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
 
+		// The file name is the manager identity and source path of everything it provisions.
+		require.Equal(t, "all-properties.yaml", dsCfg.SourceFile)
+
 		dsCount := 0
 		delDsCount := 0
 
@@ -268,6 +271,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		dsCfg := cfg[0]
 
 		require.Equal(t, dsCfg.APIVersion, int64(0))
+		require.Equal(t, "version-0.yaml", dsCfg.SourceFile)
 
 		validateDatasourceV0(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
