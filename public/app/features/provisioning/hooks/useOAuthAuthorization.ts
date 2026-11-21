@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { type OAuthConnectionType } from '../types';
 import { buildOAuthAuthorizeUrl, onOAuthAuthorizationComplete } from '../utils/connectionOAuth';
 
-interface AuthorizeParams {
+export interface AuthorizeParams {
   type: OAuthConnectionType;
   clientID: string;
   name: string;
