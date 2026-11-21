@@ -1,7 +1,6 @@
 import { type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
-import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
@@ -61,10 +60,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
     private store = storeImpl,
-    private interactionProfiler: performanceUtils.SceneRenderProfiler | undefined = config.dashboardPerformanceMetrics
-      .length
-      ? getDashboardSceneProfiler()
-      : undefined
+    private interactionProfiler?: performanceUtils.SceneRenderProfiler
   ) {
     super({
       loading: false,
@@ -84,6 +80,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         children: undefined,
       },
     });
+
+    // This service is created on every page, and the profiler pulls in most of @grafana/scenes,
+    // so it is loaded after startup instead of being imported statically.
+    if (!interactionProfiler && config.dashboardPerformanceMetrics.length) {
+      import('app/features/dashboard/services/DashboardProfiler').then(({ getDashboardSceneProfiler }) => {
+        this.interactionProfiler ??= getDashboardSceneProfiler();
+      });
+    }
   }
 
   // Loads a node from the API and adds it to the nodes cache

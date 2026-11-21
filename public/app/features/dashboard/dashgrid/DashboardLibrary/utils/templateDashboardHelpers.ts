@@ -5,7 +5,7 @@ import { type PluginDashboard } from 'app/types/plugins';
 import { CONTENT_KINDS, CREATION_ORIGINS, type SourceEntryPoint } from '../constants';
 import { type GnetDashboard } from '../types';
 
-import { isGnetDashboard } from './dashboardLibraryHelpers';
+import { isGnetDashboard } from './isGnetDashboard';
 
 export type AssistantSource = 'assistant_button' | 'assistant_chat';
 
