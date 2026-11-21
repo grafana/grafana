@@ -292,6 +292,37 @@ describe('BarChart utils', () => {
       expect(yAxis?.grid?.show).toBe(true);
     });
 
+    it('gives a field placed on the right its own axis when it shares a unit with a left field', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'x', type: FieldType.string, values: ['a', 'b', 'c'], config: { custom: {} } },
+          { name: 'small', type: FieldType.number, values: [1, 2, 3], config: { unit: 'short', custom: {} } },
+          {
+            name: 'large',
+            type: FieldType.number,
+            values: [1000, 2000, 3000],
+            config: { unit: 'short', custom: { axisPlacement: AxisPlacement.Right } },
+          },
+        ],
+      });
+      applyBarChartFieldDefaults(df);
+
+      const result = prepConfig(
+        createPrepConfigOpts({
+          series: prepBarChartSeries([df]).series,
+          orientation: VizOrientation.Vertical,
+        })
+      ).builder.getConfig();
+
+      expect(result.series.slice(1).map((s) => s.scale)).toEqual(['short', 'short/right']);
+
+      const yAxes = result.axes?.filter((a) => a.scale !== 'x');
+      expect(yAxes?.map((a) => [a.scale, a.side])).toEqual([
+        ['short', 3],
+        ['short/right', 1],
+      ]);
+    });
+
     it('prepData closure updates internal state and delegates to builder.prepData', () => {
       const frame1 = createPreparedBarChartSeries();
       const { prepData } = prepConfig(
