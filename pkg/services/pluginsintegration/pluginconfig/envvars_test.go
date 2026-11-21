@@ -3,6 +3,7 @@ package pluginconfig
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -573,6 +574,50 @@ func mustAbs(t *testing.T, path string) string {
 	abs, err := filepath.Abs(path)
 	require.NoError(t, err)
 	return abs
+}
+
+func TestPluginEnvVarsProvider_logLevel(t *testing.T) {
+	ctx := setOpenFeatureFlags(t, marketplaceLicensingOff)
+	levels := map[string]string{"plugin.quiet": "warn", "plugin.verbose": "debug"}
+
+	tests := []struct {
+		name     string
+		pluginID string
+		settings map[string]string
+		want     []string
+	}{
+		{name: "level of the plugin's logger", pluginID: "quiet", want: []string{"GF_PLUGIN_LOG_LEVEL=warn"}},
+		{name: "nothing at debug, the SDK default", pluginID: "verbose", want: nil},
+		{
+			name:     "a log_level plugin setting comes last, so it wins",
+			pluginID: "quiet",
+			settings: map[string]string{"log_level": "error"},
+			want:     []string{"GF_PLUGIN_LOG_LEVEL=warn", "GF_PLUGIN_LOG_LEVEL=error"},
+		},
+	}
+	for _, tc := range tests {
+		for _, skipHostEnvVars := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s/skipHostEnvVars=%t", tc.name, skipHostEnvVars), func(t *testing.T) {
+				t.Setenv("GF_PLUGIN_LOG_LEVEL", "")
+				cfg := &PluginInstanceCfg{
+					PluginSettings: map[string]map[string]string{tc.pluginID: tc.settings},
+					Features:       featuremgmt.WithFeatures(),
+				}
+				provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+				provider.logLevelFor = func(loggerName string) string { return levels[loggerName] }
+
+				envVars := provider.PluginEnvVars(ctx, &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}, SkipHostEnvVars: skipHostEnvVars})
+
+				var got []string
+				for _, v := range envVars {
+					if strings.HasPrefix(v, "GF_PLUGIN_LOG_LEVEL=") {
+						got = append(got, v)
+					}
+				}
+				assert.Equal(t, tc.want, got)
+			})
+		}
+	}
 }
 
 func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
