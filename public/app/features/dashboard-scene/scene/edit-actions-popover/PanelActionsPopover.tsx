@@ -21,6 +21,7 @@ import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from '../dashboardModes';
 import { useSelectionCountFor } from '../layouts-shared/useIsMultiSelection';
 import { PanelGroupByPicker } from '../panel-actions/PanelGroupByAction/PanelGroupByAction';
+import { PinnablePanel } from '../panel-pinning/PanelPinningProvider';
 import { isDashboardSceneLike, isFullDashboardEditing } from '../types/dashboard';
 
 import { DeleteActionButton, DuplicateActionButton, getActionStyles } from './EditActions';
@@ -42,6 +43,14 @@ type PanelActionItem = 'view' | 'restore' | 'edit' | 'explore' | 'settings' | 'd
  * is on, otherwise the edit-mode-only panel edit actions.
  */
 export function PanelActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
+  return (
+    <PinnablePanel panel={panel}>
+      <PanelActionsContent panel={panel}>{children}</PanelActionsContent>
+    </PinnablePanel>
+  );
+}
+
+function PanelActionsContent({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
   const root = getDashboardScene(panel);
 

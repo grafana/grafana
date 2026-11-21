@@ -59,6 +59,7 @@ The panel menu also gives you access to several actions.
 If an option is only available in view mode or edit mode, that's indicated:
 
 - **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations, if enabled.
+- **Pin to top / Unpin panel**: View mode only. Keep one panel visible above the scrolling dashboard when [experimental panel pinning](#pin-a-panel) is enabled.
 - **Edit**: Open the panel editor to edit panel and visualization options.
 - **Share**: Share the panel as a link, embed, or snapshot.
 - **Explore**: Open the panel in **Explore**, where you can focus on your query.
@@ -79,6 +80,27 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
+
+## Pin a panel
+
+Keep a search or filter panel visible while you scroll through the rest of a dashboard.
+This experimental feature is disabled by default and requires the `grafana.dashboardPanelPinning` feature toggle and the new dashboard layouts experience.
+Ask your administrator to enable the toggle as described in [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+To pin a panel:
+
+1. Open the dashboard in view mode.
+1. Open the panel menu and select **Pin to top**.
+
+The panel appears below the dashboard controls, with a **Pinned to top** indicator.
+Its original position remains reserved in the dashboard layout.
+The pinned area uses at most 40% of the viewport height.
+Only one panel can be pinned at a time; pinning another restores the previous panel to its original position.
+
+To restore the panel, select **Unpin panel** from its menu or use the pinned area's **Unpin panel** control.
+Pinning also ends when you enter edit mode or when the source panel leaves the rendered layout.
+Pinning is temporary viewer state: it doesn't change the saved dashboard and doesn't persist after a page reload.
+Bottom and side docking aren't supported.
 
 ## View mode panel controls
 
