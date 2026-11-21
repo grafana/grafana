@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, type IconName, type TimeRange } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Trans, formatDate, t } from '@grafana/i18n';
 import {
   CustomVariable,
   type SceneComponentProps,
@@ -424,7 +424,7 @@ interface TimestampProps {
 
 const Timestamp = ({ time }: TimestampProps) => {
   const dateTime = new Date(time);
-  const formattedDate = dateTime.toLocaleString('en-US', {
+  const formattedDate = formatDate(dateTime, {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',

@@ -75,6 +75,7 @@ export const CentralAlertHistoryScene = ({
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = useMemo(() => {
+    const allStateOption = `${t('alerting.central-alert-history.state-filter.all', 'All')} : ${StateFilterValues.all}`;
     // create the variables for the filters
     // textbox variable for filtering by labels
     const labelsFilterVariable = new TextBoxVariable({
@@ -92,7 +93,15 @@ export const CentralAlertHistoryScene = ({
         'End state:'
       ),
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending},To NoData : ${StateFilterValues.noData},To Error : ${StateFilterValues.error},To Recovering : ${StateFilterValues.recovering}`,
+      query: [
+        allStateOption,
+        `${t('alerting.central-alert-history.state-filter.to-firing', 'To Firing')} : ${StateFilterValues.firing}`,
+        `${t('alerting.central-alert-history.state-filter.to-normal', 'To Normal')} : ${StateFilterValues.normal}`,
+        `${t('alerting.central-alert-history.state-filter.to-pending', 'To Pending')} : ${StateFilterValues.pending}`,
+        `${t('alerting.central-alert-history.state-filter.to-no-data', 'To NoData')} : ${StateFilterValues.noData}`,
+        `${t('alerting.central-alert-history.state-filter.to-error', 'To Error')} : ${StateFilterValues.error}`,
+        `${t('alerting.central-alert-history.state-filter.to-recovering', 'To Recovering')} : ${StateFilterValues.recovering}`,
+      ].join(','),
     });
 
     //custom variable for filtering by the previous state
@@ -104,7 +113,15 @@ export const CentralAlertHistoryScene = ({
         'Start state:'
       ),
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending},From NoData : ${StateFilterValues.noData},From Error : ${StateFilterValues.error},From Recovering : ${StateFilterValues.recovering}`,
+      query: [
+        allStateOption,
+        `${t('alerting.central-alert-history.state-filter.from-firing', 'From Firing')} : ${StateFilterValues.firing}`,
+        `${t('alerting.central-alert-history.state-filter.from-normal', 'From Normal')} : ${StateFilterValues.normal}`,
+        `${t('alerting.central-alert-history.state-filter.from-pending', 'From Pending')} : ${StateFilterValues.pending}`,
+        `${t('alerting.central-alert-history.state-filter.from-no-data', 'From NoData')} : ${StateFilterValues.noData}`,
+        `${t('alerting.central-alert-history.state-filter.from-error', 'From Error')} : ${StateFilterValues.error}`,
+        `${t('alerting.central-alert-history.state-filter.from-recovering', 'From Recovering')} : ${StateFilterValues.recovering}`,
+      ].join(','),
     });
 
     return new EmbeddedScene({
@@ -179,9 +196,12 @@ export function getEventsScenesFlexItem() {
     minHeight: 300,
     ySizing: 'content',
     body: PanelBuilders.timeseries()
-      .setTitle('Alert Events')
+      .setTitle(t('alerting.central-alert-history.chart.title', 'Alert Events'))
       .setDescription(
-        'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+        t(
+          'alerting.central-alert-history.chart.description',
+          'Each alert event represents an alert instance that changed its state at a particular point in time. The history of the data is displayed over a period of time.'
+        )
       )
       .setData(getQueryRunnerForAlertHistoryDataSource())
       .setColor({ mode: 'continuous-BlPu' })
@@ -199,7 +219,7 @@ export function getEventsScenesFlexItem() {
       .setCustomFieldConfig('scaleDistribution', { type: ScaleDistribution.Linear })
       .setOption('legend', { showLegend: false })
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
-      .setNoValue('No events found')
+      .setNoValue(t('alerting.central-alert-history.chart.no-events', 'No events found'))
       .build(),
   });
 }

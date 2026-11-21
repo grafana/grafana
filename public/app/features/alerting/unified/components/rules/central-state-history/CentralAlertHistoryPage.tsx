@@ -33,7 +33,15 @@ function HistoryPage() {
       : ActiveTab.AlertEvents;
 
   return (
-    <AlertingPageWrapper navId="alerts-history" isLoading={false}>
+    <AlertingPageWrapper
+      navId="alerts-history"
+      isLoading={false}
+      renderTitle={() => (
+        <h1>
+          <Trans i18nKey="alerting.central-alert-history.title">History</Trans>
+        </h1>
+      )}
+    >
       {notificationsEnabled && (
         <TabsBar>
           <Tab
