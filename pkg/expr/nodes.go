@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -381,6 +382,12 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					return
 				}
 
+				if dn.isInputToSQLExpr {
+					instrument(nil, "unknown")
+					vars[dn.refID] = dn.convertSQLInput(ctx, s, dataFrames)
+					continue
+				}
+
 				var result mathexp.Results
 				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
@@ -483,15 +490,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 
 	if dn.isInputToSQLExpr {
-		var converted bool
-		dataType := categorizeFrameInputType(dataFrames)
-
-		result, converted = handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
-		status := "ok"
-		if result.Error != nil {
-			status = "error"
-		}
-		s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
+		result = dn.convertSQLInput(ctx, s, dataFrames)
 	} else {
 		responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 		if err != nil {
@@ -500,4 +499,18 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	return result, err
+}
+
+// convertSQLInput converts the frames of a node that feeds a SQL expression
+// and records the input metric. Both the grouped and ungrouped paths call it
+// so SQL inputs are handled the same way with either.
+func (dn *DSNode) convertSQLInput(ctx context.Context, s *Service, dataFrames data.Frames) mathexp.Results {
+	dataType := categorizeFrameInputType(dataFrames)
+	result, converted := handleSqlInput(ctx, s.tracer, dn.RefID(), dn.IsInputTo(), dn.datasource.Type, dataFrames)
+	status := "ok"
+	if result.Error != nil {
+		status = "error"
+	}
+	s.metrics.SqlCommandInputCount.WithLabelValues(status, fmt.Sprintf("%t", converted), dn.datasource.Type, dataType).Inc()
+	return result
 }
