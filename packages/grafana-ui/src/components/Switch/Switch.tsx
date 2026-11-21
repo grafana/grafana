@@ -142,20 +142,31 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => {
         position: 'absolute',
 
         '&:checked': {
-          '~ label': {
-            background: theme.components.switch.activeBackground,
-            borderColor: theme.components.switch.activeBackground,
+          '~ label': visualRefreshEnabled
+            ? {
+                background: theme.colors.accent.subtleBackground,
+                borderColor: theme.colors.accent.text,
 
-            '&:hover': {
-              background: theme.components.switch.activeBackgroundHover,
-              borderColor: theme.components.switch.activeBackgroundHover,
-            },
-          },
+                '&:hover': {
+                  background: theme.colors.accent.subtleBackground,
+                  borderColor: theme.colors.accent.text,
+                },
+              }
+            : {
+                background: theme.components.switch.activeBackground,
+                borderColor: theme.components.switch.activeBackground,
+
+                '&:hover': {
+                  background: theme.components.switch.activeBackgroundHover,
+                  borderColor: theme.components.switch.activeBackgroundHover,
+                },
+              },
 
           '~ svg': {
             transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-            background: theme.colors.accent.contrastText,
-            color: theme.components.switch.activeBackground,
+            background: visualRefreshEnabled ? theme.colors.accent.text : theme.colors.accent.contrastText,
+            color: visualRefreshEnabled ? theme.colors.accent.contrastText : theme.components.switch.activeBackground,
+            ...(visualRefreshEnabled && { stroke: 'currentColor', strokeWidth: 1 }),
           },
         },
 
