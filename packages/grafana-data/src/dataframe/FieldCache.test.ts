@@ -4,69 +4,92 @@ import { FieldCache } from './FieldCache';
 import { toDataFrame } from './processDataFrame';
 
 describe('FieldCache', () => {
-  it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time },
-        { name: 'string', type: FieldType.string },
-        { name: 'number', type: FieldType.number },
-        { name: 'boolean', type: FieldType.boolean },
-        { name: 'other', type: FieldType.other },
-        { name: 'undefined' },
-      ],
-    });
-    const fieldCache = new FieldCache(frame);
-    const allFields = fieldCache.getFields();
-    expect(allFields).toHaveLength(6);
-
+  describe('a frame holding differently typed fields', () => {
+    const presentTypes = [FieldType.time, FieldType.string, FieldType.number, FieldType.boolean, FieldType.other];
     const expectedFieldNames = ['time', 'string', 'number', 'boolean', 'other', 'undefined'];
+    let fieldCache: FieldCache;
 
-    expect(allFields.map((f) => f.name)).toEqual(expectedFieldNames);
+    beforeEach(() => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'string', type: FieldType.string },
+          { name: 'number', type: FieldType.number },
+          { name: 'boolean', type: FieldType.boolean },
+          { name: 'other', type: FieldType.other },
+          { name: 'undefined' },
+        ],
+      });
+      fieldCache = new FieldCache(frame);
+    });
 
-    expect(fieldCache.hasFieldOfType(FieldType.time)).toBeTruthy();
-    expect(fieldCache.hasFieldOfType(FieldType.string)).toBeTruthy();
-    expect(fieldCache.hasFieldOfType(FieldType.number)).toBeTruthy();
-    expect(fieldCache.hasFieldOfType(FieldType.boolean)).toBeTruthy();
-    expect(fieldCache.hasFieldOfType(FieldType.other)).toBeTruthy();
+    it('exposes every field in declaration order, tagged with its position', () => {
+      expect(fieldCache.fields.map((f) => [f.name, f.index])).toEqual([
+        ['time', 0],
+        ['string', 1],
+        ['number', 2],
+        ['boolean', 3],
+        ['other', 4],
+        ['undefined', 5],
+      ]);
+      expect(fieldCache.getFields().map((f) => f.name)).toEqual(expectedFieldNames);
+    });
 
-    expect(fieldCache.getFields(FieldType.time).map((f) => f.name)).toEqual([expectedFieldNames[0]]);
-    expect(fieldCache.getFields(FieldType.string).map((f) => f.name)).toEqual([expectedFieldNames[1]]);
-    expect(fieldCache.getFields(FieldType.number).map((f) => f.name)).toEqual([expectedFieldNames[2]]);
-    expect(fieldCache.getFields(FieldType.boolean).map((f) => f.name)).toEqual([expectedFieldNames[3]]);
-    expect(fieldCache.getFields(FieldType.other).map((f) => f.name)).toEqual([
-      expectedFieldNames[4],
-      expectedFieldNames[5],
-    ]);
+    it('groups fields by type, with the field left untyped grouped under "other"', () => {
+      expect(presentTypes.map((type) => fieldCache.getFields(type).map((f) => f.name))).toEqual([
+        ['time'],
+        ['string'],
+        ['number'],
+        ['boolean'],
+        ['other', 'undefined'],
+      ]);
+      expect(fieldCache.getFields(FieldType.trace)).toEqual([]);
+    });
 
-    expect(fieldCache.fields[0].name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.fields[1].name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.fields[2].name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.fields[3].name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.fields[4].name).toEqual(expectedFieldNames[4]);
-    expect(fieldCache.fields[5].name).toEqual(expectedFieldNames[5]);
-    expect(fieldCache.fields[6]).toBeUndefined();
+    it('reports the types the frame contains', () => {
+      expect(presentTypes.map((type) => [type, fieldCache.hasFieldOfType(type)])).toEqual([
+        ['time', true],
+        ['string', true],
+        ['number', true],
+        ['boolean', true],
+        ['other', true],
+      ]);
+    });
 
-    expect(fieldCache.getFirstFieldOfType(FieldType.time)!.name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.string)!.name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.number)!.name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.boolean)!.name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.other)!.name).toEqual(expectedFieldNames[4]);
+    it('answers hasFieldOfType with undefined, not false, for an absent type', () => {
+      // hasFieldOfType is declared to return boolean, but it indexes fieldByType without a
+      // guard, so a missing key short-circuits to undefined. Pinned as the shipped behaviour.
+      expect(fieldCache.hasFieldOfType(FieldType.trace)).toBeUndefined();
+    });
 
-    expect(fieldCache.hasFieldNamed('tim')).toBeFalsy();
-    expect(fieldCache.hasFieldNamed('time')).toBeTruthy();
-    expect(fieldCache.hasFieldNamed('string')).toBeTruthy();
-    expect(fieldCache.hasFieldNamed('number')).toBeTruthy();
-    expect(fieldCache.hasFieldNamed('boolean')).toBeTruthy();
-    expect(fieldCache.hasFieldNamed('other')).toBeTruthy();
-    expect(fieldCache.hasFieldNamed('undefined')).toBeTruthy();
+    it('matches field names exactly, not by prefix', () => {
+      const lookups = [...expectedFieldNames, 'tim', ''];
+      expect(lookups.map((name) => [name, fieldCache.hasFieldNamed(name)])).toEqual([
+        ['time', true],
+        ['string', true],
+        ['number', true],
+        ['boolean', true],
+        ['other', true],
+        ['undefined', true],
+        ['tim', false],
+        ['', false],
+      ]);
+    });
 
-    expect(fieldCache.getFieldByName('time')!.name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.getFieldByName('string')!.name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.getFieldByName('number')!.name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.getFieldByName('boolean')!.name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.getFieldByName('other')!.name).toEqual(expectedFieldNames[4]);
-    expect(fieldCache.getFieldByName('undefined')!.name).toEqual(expectedFieldNames[5]);
-    expect(fieldCache.getFieldByName('null')).toBeUndefined();
+    it('returns the first field of each type', () => {
+      expect(presentTypes.map((type) => fieldCache.getFirstFieldOfType(type)?.name)).toEqual([
+        'time',
+        'string',
+        'number',
+        'boolean',
+        'other',
+      ]);
+    });
+
+    it('looks a field up by name, keeping its position', () => {
+      expect(expectedFieldNames.map((name) => fieldCache.getFieldByName(name)?.index)).toEqual([0, 1, 2, 3, 4, 5]);
+      expect(fieldCache.getFieldByName('null')).toBeUndefined();
+    });
   });
 
   describe('field retrieval', () => {
