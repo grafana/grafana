@@ -324,19 +324,19 @@ const checkKeyValConditionForRegex = (tag: TraceSearchTag, span: TraceSpan) => {
     span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
     span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
     (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForRegex(tag, kv)))) ||
-    (span.kind && tag.key === KIND && tag.value?.includes(span.kind)) ||
+    (span.kind && tag.key === KIND && span.kind.includes(tag.value || '')) ||
     (span.statusCode !== undefined &&
       tag.key === STATUS &&
-      tag.value?.includes(SpanStatusCode[span.statusCode].toLowerCase())) ||
-    (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value?.includes(span.statusMessage)) ||
+      SpanStatusCode[span.statusCode].toLowerCase().includes(tag.value || '')) ||
+    (span.statusMessage && tag.key === STATUS_MESSAGE && span.statusMessage.includes(tag.value || '')) ||
     (span.instrumentationLibraryName &&
       tag.key === LIBRARY_NAME &&
-      tag.value?.includes(span.instrumentationLibraryName)) ||
+      span.instrumentationLibraryName.includes(tag.value || '')) ||
     (span.instrumentationLibraryVersion &&
       tag.key === LIBRARY_VERSION &&
-      tag.value?.includes(span.instrumentationLibraryVersion)) ||
-    (span.traceState && tag.key === TRACE_STATE && tag.value?.includes(span.traceState)) ||
-    (tag.key === ID && tag.value?.includes(span.spanID))
+      span.instrumentationLibraryVersion.includes(tag.value || '')) ||
+    (span.traceState && tag.key === TRACE_STATE && span.traceState.includes(tag.value || '')) ||
+    (tag.key === ID && span.spanID.includes(tag.value || ''))
   );
 };
 
