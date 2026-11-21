@@ -102,6 +102,31 @@ describe('getEffectiveTableTransformations', () => {
     expect(result).toEqual([columns({ excludeByName: { region: true } })]);
   });
 
+  it('drops a hidden column that is gone next to one that organize hides by its display name', async () => {
+    const hidden = columns({ excludeByName: { 'errors per minute': true, zone: true } });
+    const frames = () => [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'service', type: FieldType.string, values: VALUES.service },
+          {
+            name: 'errors',
+            type: FieldType.number,
+            values: VALUES.errors,
+            config: { displayName: 'errors per minute' },
+          },
+        ],
+      }),
+    ];
+
+    const output = await view([hidden], frames());
+
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([['service']]);
+    expect(getEffectiveTableTransformations([hidden], frames(), DONE)).toEqual([
+      columns({ excludeByName: { 'errors per minute': true } }),
+    ]);
+  });
+
   it('drops changes for a query that no longer returns a frame', () => {
     const result = getEffectiveTableTransformations(
       [rowFilter('service', { frameIndex: 1, refId: 'B' }), columns({ excludeByName: { service: true } }, 'B')],
@@ -154,6 +179,215 @@ describe('getEffectiveTableTransformations', () => {
     expect(result).toEqual([hidden]);
   });
 
+  it('keeps a hidden column that organize still hides by name when its query returns several named frames', async () => {
+    const hidden = columns({ excludeByName: { latency: true, zone: true } }, 'B');
+    const frames = () => ['Alpha', 'Beta'].map((name) => ({ ...services('B', ['service', 'latency']), name }));
+
+    const output = await lastValueFrom(transformDataFrame([hidden], frames()));
+
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([['service'], ['service']]);
+    expect(getEffectiveTableTransformations([hidden], frames(), DONE)).toEqual([
+      columns({ excludeByName: { latency: true } }, 'B'),
+    ]);
+  });
+
+  it('does not cache display names on the frames of the panel it checks', () => {
+    const series = ['Alpha', 'Beta'].map((name) => ({ ...services('B', ['service', 'latency']), name }));
+
+    getEffectiveTableTransformations([columns({ excludeByName: { latency: true, zone: true } }, 'B')], series, DONE);
+
+    expect(series.flatMap((frame) => frame.fields.map((field) => field.state))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('checks an entry against the names organize gives its own frames rather than the whole series', async () => {
+    const ordered = columns({ indexByName: { latency: 0, service: 1 } }, 'B');
+    const frames = () => [
+      { ...services('A'), name: 'Alpha' },
+      { ...services('B', ['service', 'latency']), name: 'Beta' },
+      { ...services('B', ['service', 'latency']), name: 'Beta' },
+    ];
+
+    const output = await lastValueFrom(transformDataFrame([ordered], frames()));
+
+    expect(output.slice(1).map((frame) => frame.fields.map((field) => field.name))).toEqual([
+      ['latency', 'service'],
+      ['latency', 'service'],
+    ]);
+    expect(getEffectiveTableTransformations([ordered], frames(), DONE)).toEqual([ordered]);
+  });
+
+  it.each([
+    {
+      desc: 'keeps a Time key that organize applies to time columns through its fallback',
+      times: ['timestamp', 'timestamp'],
+      excludeByName: { Time: true },
+      shown: [['latency'], ['latency']],
+      kept: true,
+    },
+    {
+      desc: 'drops Time and Value keys when Value turns that fallback off and organize hides nothing',
+      times: ['timestamp', 'timestamp'],
+      excludeByName: { Time: true, Value: true },
+      shown: [
+        ['timestamp', 'latency'],
+        ['timestamp', 'latency'],
+      ],
+      kept: false,
+    },
+    {
+      desc: 'keeps every key when dropping a stale Value key would let Time hide another time column',
+      times: ['Time', 'timestamp'],
+      excludeByName: { Time: true, Value: true },
+      shown: [['latency'], ['timestamp', 'latency']],
+      kept: true,
+    },
+  ])('$desc when a query returns several frames', async ({ times, excludeByName, shown, kept }) => {
+    const hidden = columns({ excludeByName });
+    const frames = () =>
+      times.map((name) =>
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name, type: FieldType.time, values: [1, 2, 3] },
+            { name: 'latency', type: FieldType.number, values: VALUES.latency },
+          ],
+        })
+      );
+
+    const output = await view([hidden], frames());
+
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual(shown);
+    expect(getEffectiveTableTransformations([hidden], frames(), DONE)).toEqual(kept ? [hidden] : []);
+  });
+
+  it.each([
+    {
+      desc: 'a key that only matches the raw name of a labeled column',
+      excludeByName: { cpu: true },
+      fields: [
+        { name: 'service', type: FieldType.string, values: VALUES.service },
+        { name: 'cpu', type: FieldType.number, values: VALUES.latency, labels: { host: 'a' } },
+      ],
+      organizeShows: ['service'],
+    },
+    {
+      desc: 'a Time key that only the time fallback applies',
+      excludeByName: { Time: true },
+      fields: [
+        { name: 'timestamp', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'latency', type: FieldType.number, values: VALUES.latency },
+      ],
+      organizeShows: ['latency'],
+    },
+  ])(
+    'drops $desc on a single frame, since the table hides only the columns it lists',
+    async ({ excludeByName, fields, organizeShows }) => {
+      const hidden = columns({ excludeByName });
+      const frames = () => [toDataFrame({ refId: 'A', fields })];
+
+      const output = await view([hidden], frames());
+
+      expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([organizeShows]);
+      expect(getEffectiveTableTransformations([hidden], frames(), DONE)).toEqual([]);
+    }
+  );
+
+  it('drops a key that only hides a column the panel keeps out of the table when a query returns several frames', async () => {
+    const hidden = columns({ excludeByName: { debug: true, latency: true } });
+    const frames = () =>
+      ['Alpha', 'Beta'].map((name) =>
+        toDataFrame({
+          refId: 'A',
+          name,
+          fields: [
+            { name: 'service', type: FieldType.string, values: VALUES.service },
+            { name: 'latency', type: FieldType.number, values: VALUES.latency },
+            {
+              name: 'debug',
+              type: FieldType.string,
+              values: VALUES.region,
+              config: { custom: { hideFrom: { viz: true } } },
+            },
+          ],
+        })
+      );
+
+    const output = await view([hidden], frames());
+
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([['service'], ['service']]);
+    expect(getEffectiveTableTransformations([hidden], frames(), DONE)).toEqual([
+      columns({ excludeByName: { latency: true } }),
+    ]);
+  });
+
+  it('drops an order that matches the data when its query also returns a frame without columns', () => {
+    const result = getEffectiveTableTransformations(
+      [columns({ indexByName: { service: 0, region: 1, errors: 2 } })],
+      [toDataFrame({ refId: 'A', fields: [] }), services()],
+      DONE
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it('keeps a key that removes the only frame of its query, even when the table lists that column by another name', async () => {
+    const hidden = columns({ excludeByName: { Value: true, zone: true }, indexByName: { gone: 0 } });
+    const frames = () => [
+      toDataFrame({
+        refId: 'A',
+        name: 'cpu',
+        fields: [{ name: 'Value', type: FieldType.number, values: VALUES.latency }],
+      }),
+    ];
+
+    const effective = getEffectiveTableTransformations([hidden], frames(), DONE);
+
+    expect(effective).toEqual([columns({ excludeByName: { Value: true } })]);
+    expect(await view([hidden], frames())).toEqual([]);
+    expect(await view(effective, frames())).toEqual([]);
+  });
+
+  it('keeps a key for a column the panel keeps out of the table while it helps remove the frame', () => {
+    const hidden = columns({ excludeByName: { latency: true, debug: true } });
+    const series = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'latency', type: FieldType.number, values: VALUES.latency },
+          {
+            name: 'debug',
+            type: FieldType.string,
+            values: VALUES.region,
+            config: { custom: { hideFrom: { viz: true } } },
+          },
+        ],
+      }),
+    ];
+
+    expect(getEffectiveTableTransformations([hidden], series, DONE)).toEqual([hidden]);
+  });
+
+  it('keeps the column order as it is while hiding removes one of the frames of a query', async () => {
+    const entry = columns(
+      { excludeByName: { latency: true }, indexByName: { errors: 0, service: 1, latency: 2 } },
+      'B'
+    );
+    const frames = () => [
+      { ...services('B', ['latency']), name: 'Alpha' },
+      { ...services('B', ['service', 'latency', 'errors']), name: 'Beta' },
+    ];
+
+    const output = await view([entry], frames());
+
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([['errors', 'service']]);
+    expect(getEffectiveTableTransformations([entry], frames(), DONE)).toEqual([entry]);
+  });
+
   it('drops a column order that matches the order of the data', () => {
     const result = getEffectiveTableTransformations(
       [columns({ excludeByName: { region: true }, indexByName: { service: 0, region: 1, errors: 2 } })],
@@ -193,7 +427,32 @@ describe('getEffectiveTableTransformations', () => {
     expect(result).toEqual([order({ errors: 0, service: 1, region: 2 })]);
   });
 
-  it('keeps only the known part of an order when the data has duplicate column names', () => {
+  it('keeps the part of an order that organize applies to several frames of one query', async () => {
+    const ordered = columns({ indexByName: { Time: 0, latency: 1 } }, 'B');
+    const frames = () =>
+      ['Alpha', 'Beta'].map((name) =>
+        toDataFrame({
+          refId: 'B',
+          name,
+          fields: [
+            { name: 'latency', type: FieldType.number, values: VALUES.latency },
+            { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+          ],
+        })
+      );
+
+    const effective = getEffectiveTableTransformations([ordered], frames(), DONE);
+
+    expect(effective).toEqual([columns({ indexByName: { Time: 0 } }, 'B')]);
+    const output = await view([ordered], frames());
+    expect(output.map((frame) => frame.fields.map((field) => field.name))).toEqual([
+      ['Time', 'latency'],
+      ['Time', 'latency'],
+    ]);
+    expect(await view(effective, frames())).toEqual(output);
+  });
+
+  it('drops column changes for a frame that repeats a column name, since the table shows that frame as it is', () => {
     const series = [
       toDataFrame({
         refId: 'A',
@@ -206,12 +465,12 @@ describe('getEffectiveTableTransformations', () => {
     ];
 
     const result = getEffectiveTableTransformations(
-      [columns({ indexByName: { latency: 0, service: 1, gone: 2 } })],
+      [columns({ excludeByName: { service: true }, indexByName: { latency: 0, service: 1, gone: 2 } })],
       series,
       DONE
     );
 
-    expect(result).toEqual([columns({ indexByName: { latency: 0, service: 1 } })]);
+    expect(result).toEqual([]);
   });
 
   it('leaves the transformed data unchanged when it drops changes that no longer apply', async () => {

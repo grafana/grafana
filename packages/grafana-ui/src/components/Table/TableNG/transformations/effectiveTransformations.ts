@@ -4,11 +4,14 @@ import {
   type DataFrame,
   type DataTransformerConfig,
   DataTransformerID,
+  FieldMatcherID,
   FieldType,
+  getFieldMatcher,
   getFrameMatchers,
   LoadingState,
 } from '@grafana/data';
 import {
+  createOrderFieldsComparer,
   type FilterByValueConfig,
   type FilterByValueFilter,
   type FilterByValueTransformerOptions,
@@ -23,6 +26,7 @@ import { mergeColumnOrder } from './columnOrder';
 
 interface SourceData {
   frames: DataFrame[];
+  series: readonly DataFrame[];
   complete: boolean;
 }
 
@@ -35,7 +39,11 @@ export function getEffectiveTableTransformations(
 ): DataTransformerConfig[] {
   const source =
     sourceSeries.length > 0
-      ? { frames: withCachedDisplayNames(sourceSeries), complete: dataState === LoadingState.Done }
+      ? {
+          frames: withCachedDisplayNames(sourceSeries),
+          series: sourceSeries,
+          complete: dataState === LoadingState.Done,
+        }
       : undefined;
 
   return transformations.flatMap((config) => getEffectiveConfig(config, source) ?? []);
@@ -83,15 +91,28 @@ function getEffectiveColumns(config: DataTransformerConfig, source?: SourceData)
     return config;
   }
 
-  const targets = getTargetFrames(config, source.frames);
+  const targets = getTargetFrames(config, source.series);
   if (!targets || (targets.length === 0 && !source.complete)) {
     return config;
   }
 
-  const catalogs = withCachedDisplayNames(targets).map((frame) => getVisibleFields(frame.fields).map(getDisplayName));
-  const names = new Set(catalogs.flat());
-  const hiddenColumns = hidden.filter((name) => names.has(name));
-  const order = getEffectiveOrder(indexByName, catalogs);
+  const frames = withCachedDisplayNames(targets);
+  const excluded = getExcludedFields(hidden, frames);
+  const removed = excluded.some(removesFrame);
+  const catalogs = frames.map((frame) => getVisibleFields(frame.fields).map(getDisplayName));
+  const managedByTable = frames.length === 1 && !removed;
+  if (managedByTable && new Set(catalogs[0]).size !== catalogs[0].length) {
+    return undefined;
+  }
+
+  const hiddenColumns = managedByTable
+    ? hidden.filter((name) => catalogs[0].includes(name))
+    : getEffectiveHidden(hidden, frames, excluded);
+  const order = !removed
+    ? getEffectiveOrder(indexByName, catalogs)
+    : frames.length > 1 && !isEmpty(indexByName)
+      ? indexByName
+      : undefined;
 
   if (hiddenColumns.length === 0 && !order) {
     return undefined;
@@ -109,9 +130,35 @@ function getEffectiveColumns(config: DataTransformerConfig, source?: SourceData)
   return isEqual(next, options) ? config : { ...config, options: next };
 }
 
-function getTargetFrames(config: DataTransformerConfig, frames: DataFrame[]): DataFrame[] | undefined {
+function getExcludedFields(names: string[], frames: DataFrame[]): boolean[][] {
+  const matches = getFieldMatcher({ id: FieldMatcherID.byNames, options: { names } });
+  return frames.map((frame) => frame.fields.map((field) => matches(field, frame, frames)));
+}
+
+function removesFrame(excluded: boolean[]): boolean {
+  return excluded.length > 0 && excluded.every(Boolean);
+}
+
+function getEffectiveHidden(hidden: string[], frames: DataFrame[], excluded: boolean[][]): string[] {
+  const visible = frames.map((frame) => new Set(getVisibleFields(frame.fields)));
+  const layout = (fields: boolean[][]) =>
+    fields.map((flags, index) =>
+      removesFrame(flags) ? undefined : flags.filter((_, column) => visible[index].has(frames[index].fields[column]))
+    );
+  const names = new Set(
+    visible.flatMap((fields) => [...fields].flatMap((field) => [field.name, getDisplayName(field)]))
+  );
+  const applied = hidden.filter((name) => names.has(name));
+  if (applied.length === hidden.length) {
+    return applied;
+  }
+
+  return isEqual(layout(getExcludedFields(applied, frames)), layout(excluded)) ? applied : hidden;
+}
+
+function getTargetFrames(config: DataTransformerConfig, frames: readonly DataFrame[]): DataFrame[] | undefined {
   if (!config.filter?.options) {
-    return frames;
+    return [...frames];
   }
 
   try {
@@ -132,20 +179,13 @@ function getEffectiveOrder(
     return undefined;
   }
 
-  if (catalogs.some((catalog) => new Set(catalog).size !== catalog.length)) {
-    return known;
+  if (catalogs.length === 1) {
+    const order = mergeColumnOrder(catalogs[0], indexByName);
+    return isEqual(order, catalogs[0]) ? undefined : Object.fromEntries(order.map((name, index) => [name, index]));
   }
 
-  const orders = catalogs.map((catalog) => mergeColumnOrder(catalog, indexByName));
-  if (orders.every((order, index) => isEqual(order, catalogs[index]))) {
-    return undefined;
-  }
-
-  if (orders.length === 1) {
-    return Object.fromEntries(orders[0].map((name, index) => [name, index]));
-  }
-
-  return known;
+  const compare = createOrderFieldsComparer(indexByName);
+  return catalogs.every((catalog) => isEqual([...catalog].sort(compare), catalog)) ? undefined : known;
 }
 
 function getEffectiveFilter(config: FilterByValueConfig, source?: SourceData): DataTransformerConfig | undefined {
