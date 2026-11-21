@@ -64,6 +64,11 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 	}
 	created[unrelatedName] = createNotebook(t, ctx, admin, gvr, unrelatedName, "Quarterly capacity review")
 
+	// Neither word appears in the title, so a match can only come from a cell.
+	const contentName = "nbsearch-content"
+	createNotebookWithCells(t, ctx, admin, gvr, contentName, "Weekly review",
+		"Checked the hysteresis settings after the rollout", "select zzcodeonly from metrics")
+
 	t.Run("finds notebooks by title and leaves non-matches out", func(t *testing.T) {
 		results, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
 			Where: &searchV0.WhereNode{
@@ -76,6 +81,24 @@ func TestIntegrationNotebooksSearchAPI(t *testing.T) {
 		got := names(results)
 		assert.Subset(t, got, []string{"nbsearch-cpu", "nbsearch-memory", "nbsearch-disk"})
 		assert.NotContains(t, got, unrelatedName, "a notebook whose title lacks the term should not match")
+	})
+
+	t.Run("finds notebooks by the text of their Markdown cells", func(t *testing.T) {
+		searchFor := func(word string, fields ...string) []string {
+			results, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+				Where: &searchV0.WhereNode{
+					Text: &searchV0.TextPredicate{Value: word, Fields: fields},
+				},
+				Limit: 10,
+			})
+			require.Equal(t, http.StatusOK, code)
+			return names(results)
+		}
+
+		assert.Equal(t, []string{contentName}, searchFor("hysteresis", "content"))
+		assert.Equal(t, []string{contentName}, searchFor("hysteresis", "title", "content"))
+		assert.Empty(t, searchFor("hysteresis", "title"), "the word is not in the title")
+		assert.Empty(t, searchFor("zzcodeonly", "content"), "code cells are not indexed")
 	})
 
 	t.Run("returns the search envelope", func(t *testing.T) {
@@ -286,6 +309,55 @@ func TestIntegrationNotebooksSearchRequiresFeatureFlag(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
+}
+
+// createNotebookWithCells creates a notebook with one Markdown cell and one code cell, in that
+// order in the layout.
+func createNotebookWithCells(
+	t *testing.T,
+	ctx context.Context,
+	client *apis.K8sResourceClient,
+	gvr schema.GroupVersionResource,
+	name, title, markdown, code string,
+) *unstructured.Unstructured {
+	t.Helper()
+
+	item := func(element string) map[string]any {
+		return map[string]any{
+			"kind": "NotebookLayoutItem",
+			"spec": map[string]any{
+				"element": map[string]any{"kind": "ElementReference", "name": element},
+				"source":  "user",
+			},
+		}
+	}
+	cell := func(kind string, spec map[string]any) map[string]any {
+		return map[string]any{
+			"kind": "Cell",
+			"spec": map[string]any{"content": map[string]any{"kind": kind, "spec": spec}},
+		}
+	}
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"spec": map[string]any{
+			"title": title,
+			"elements": map[string]any{
+				"text":   cell("Markdown", map[string]any{"text": markdown}),
+				"source": cell("Code", map[string]any{"language": "sql", "code": code}),
+			},
+			"layout": map[string]any{
+				"kind": "NotebookLayout",
+				"spec": map[string]any{"cells": []any{item("text"), item("source")}},
+			},
+		},
+	}}
+	obj.SetName(name)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Notebook")
+
+	out, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	return out
 }
 
 // createNotebook writes the smallest notebook the admission chain accepts: a

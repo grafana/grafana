@@ -10,6 +10,14 @@ notebookV2beta1: {
 	search: {
 		global: true
 	}
+	searchFields: [
+		{
+			name: "content"
+			type: "string"
+			capabilities: ["text"]
+			description: "The text of the notebook's Markdown cells"
+		},
+	]
 	validation: {
 		operations: ["CREATE", "UPDATE"]
 	}
