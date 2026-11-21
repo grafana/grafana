@@ -6,6 +6,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/grafana/authlib v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261120113603-423cd15e9545 // @grafana/identity-access-team
+	github.com/grafana/grafana-app-sdk v0.63.3
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.2
 	k8s.io/apiserver v0.37.2
