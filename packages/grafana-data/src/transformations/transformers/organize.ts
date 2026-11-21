@@ -96,30 +96,49 @@ export function renameReferencedKeys(
 
   const referenced = new Set(references.map(([key]) => key));
   const maps = [options.excludeByName, options.includeByName, options.indexByName, options.renameByName];
-  const taken = new Set(usedNames);
-  for (const key of maps.flatMap((record) => Object.keys(record ?? {}))) {
-    if (!referenced.has(key)) {
-      taken.add(key);
+  const unreferenced = new Set(
+    maps.flatMap((record) => Object.keys(record ?? {})).filter((key) => !referenced.has(key))
+  );
+
+  const claims = new Map<string, FieldReference | null>();
+  const resolved: Array<[string, string]> = [];
+  for (const [key, reference] of references) {
+    const name = getName(reference);
+    if (name === undefined || unreferenced.has(name)) {
+      continue;
     }
+    const claimed = claims.get(name);
+    if (claimed === undefined) {
+      claims.set(name, reference);
+    } else if (claimed && getFieldReferenceKey(claimed) !== getFieldReferenceKey(reference)) {
+      claims.set(name, null);
+    }
+    resolved.push([key, name]);
   }
 
   const names = new Map<string, string>();
-  const gone: string[] = [];
-  for (const [key, reference] of references) {
-    const name = getName(reference);
-    if (name === undefined) {
-      gone.push(key);
-    } else {
+  for (const [key, name] of resolved) {
+    if (claims.get(name)) {
       names.set(key, name);
     }
   }
-  for (const key of gone) {
-    let name = key;
-    for (let suffix = 1; taken.has(name); suffix++) {
-      name = `${key} ${suffix}`;
+  const taken = new Set([...usedNames, ...unreferenced, ...claims.keys()]);
+  const unclaimed = references.map(([key]) => key).filter((key) => !names.has(key));
+  for (const key of unclaimed) {
+    if (!taken.has(key)) {
+      taken.add(key);
+      names.set(key, key);
     }
-    taken.add(name);
-    names.set(key, name);
+  }
+  for (const key of unclaimed) {
+    if (!names.has(key)) {
+      let name = key;
+      for (let suffix = 1; taken.has(name); suffix++) {
+        name = `${key} ${suffix}`;
+      }
+      taken.add(name);
+      names.set(key, name);
+    }
   }
   if (
     references.length === Object.keys(options.referenceByName).length &&
@@ -131,14 +150,9 @@ export function renameReferencedKeys(
   const rekey = <T>(record: Record<string, T> | undefined): Record<string, T> => {
     const rekeyed = new Map<string, T>();
     for (const [key, value] of Object.entries(record ?? {})) {
-      const name = names.get(key);
-      if (name !== undefined && !rekeyed.has(name)) {
+      const name = names.get(key) ?? key;
+      if (!rekeyed.has(name)) {
         rekeyed.set(name, value);
-      }
-    }
-    for (const [key, value] of Object.entries(record ?? {})) {
-      if (!referenced.has(key) && !rekeyed.has(key)) {
-        rekeyed.set(key, value);
       }
     }
     return Object.fromEntries(rekeyed);

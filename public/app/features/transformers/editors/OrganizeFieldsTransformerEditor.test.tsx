@@ -63,6 +63,30 @@ describe('OrganizeFieldsTransformerEditor', () => {
     expect(onChange).toHaveBeenCalledWith({ ...options, excludeByName: { region: true, 'Host name': true } });
   });
 
+  it('keeps a field hidden by name when a referenced field takes its name', async () => {
+    const onChange = jest.fn();
+    const swapped = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'host', type: FieldType.string, values: ['web-1'], config: { displayName: 'region' } },
+          { name: 'region', type: FieldType.string, values: ['us'], config: { displayName: 'Region (old)' } },
+        ],
+      }),
+    ];
+    const options = {
+      excludeByName: { host: false, region: true },
+      indexByName: {},
+      renameByName: {},
+      referenceByName: { host: { name: 'host' } },
+    };
+    render(<OrganizeFieldsTransformerEditor input={swapped} options={options} onChange={onChange} />);
+
+    await userEvent.click(visibilityToggle('time'));
+
+    expect(onChange).toHaveBeenCalledWith({ ...options, excludeByName: { host: false, region: true, time: true } });
+  });
+
   it('shows keys with malformed references by name', () => {
     const options = {
       excludeByName: { region: true },

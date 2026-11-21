@@ -1,10 +1,11 @@
 import { lastValueFrom } from 'rxjs';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { getFieldReferences } from '../frameIdentity';
+import { createFieldReferenceResolver, getFieldReferences } from '../frameIdentity';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -346,6 +347,92 @@ describe('OrganizeFields Transformer', () => {
           { excludeByName: { host: true }, indexByName: { host: 0 }, referenceByName: referencesFor(source()) }
         )
       ).toEqual(['time:time', 'value:value', 'region:host']);
+    });
+
+    it('keeps keys apart when the fields they reference share a display name', async () => {
+      const shared = withDisplayNames(source(), { host: 'name', region: 'name' });
+      const options = {
+        excludeByName: { host: true },
+        indexByName: {},
+        renameByName: { region: 'Region' },
+        referenceByName: { host: { name: 'host' }, region: { name: 'region' } },
+      };
+      const rekeyed = renameReferencedKeys(options, () => 'name', ['time', 'name', 'value', 'name']);
+
+      expect(await organize(shared, rekeyed)).toEqual(['time:time', 'value:value', 'region:Region']);
+    });
+
+    it('keeps a key without a reference when a referenced field takes its name', async () => {
+      const swapped = withDisplayNames(source(), { host: 'region', region: 'Region (old)' });
+      const options = {
+        excludeByName: { host: false, region: true },
+        indexByName: {},
+        renameByName: {},
+        referenceByName: { host: { name: 'host' } },
+      };
+      const rekeyed = renameReferencedKeys(options, (reference) => (reference.name === 'host' ? 'region' : undefined), [
+        'time',
+        'region',
+        'value',
+        'Region (old)',
+      ]);
+
+      expect(await organize(swapped, rekeyed)).toEqual(['time:time', 'host:region', 'value:value']);
+    });
+
+    it('re-keys references without changing what the transformation outputs', async () => {
+      let seed = 11;
+      const random = () => {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647;
+      };
+      const pick = <T>(items: T[]) => items[Math.floor(random() * items.length)];
+      const names = ['time', 'host', 'x', 'x', 'value'];
+      const keys = ['time', 'host', 'x', 'x 1', 'x 2', 'value', 'Host name', 'gone'];
+      const describeOutput = async (frame: DataFrame, options: OrganizeFieldsTransformerOptions) => {
+        const output = await lastValueFrom(
+          transformDataFrame([{ id: DataTransformerID.organize, options }], [structuredClone(frame)])
+        );
+        return output.map((organized) => organized.fields.map((field) => [field.values[0], field.state?.displayName]));
+      };
+
+      for (let run = 0; run < 300; run++) {
+        const frame = toDataFrame({
+          fields: Array.from({ length: 1 + Math.floor(random() * 5) }, (_, index) => ({
+            name: pick(names),
+            type: FieldType.number,
+            values: [index],
+            labels: random() < 0.3 ? { host: pick(['a', 'b']) } : undefined,
+            config: random() < 0.5 ? { displayName: pick(keys) } : {},
+          })),
+        });
+        const references = getFieldReferences(frame);
+        const record = <T>(value: () => T) =>
+          Object.fromEntries(Array.from({ length: Math.floor(random() * 4) }, () => [pick(keys), value()]));
+        const options: OrganizeFieldsTransformerOptions = {
+          excludeByName: record(() => random() < 0.7),
+          indexByName: record(() => Math.floor(random() * 5)),
+          renameByName: record(() => pick(['', 'renamed'])),
+        };
+        options.referenceByName = Object.fromEntries(
+          [...Object.keys(options.excludeByName), ...Object.keys(options.indexByName ?? {})]
+            .concat(Object.keys(options.renameByName))
+            .filter(() => random() < 0.6)
+            .map((key) => [key, random() < 0.8 ? pick(references) : { name: 'gone' }])
+        );
+        const resolve = createFieldReferenceResolver(frame);
+        const displayName = (index: number) => getFieldDisplayName(frame.fields[index], frame, [frame]);
+        const rekeyed = renameReferencedKeys(
+          options,
+          (reference) => {
+            const index = resolve(reference);
+            return index < 0 ? undefined : displayName(index);
+          },
+          frame.fields.map((_, index) => displayName(index))
+        );
+
+        expect(await describeOutput(frame, rekeyed)).toEqual(await describeOutput(frame, options));
+      }
     });
 
     it('matches keys without a reference by name', async () => {
