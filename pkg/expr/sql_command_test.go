@@ -262,7 +262,7 @@ func TestHandleSqlInput(t *testing.T) {
 					data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
 				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 			},
-			expectErr: "missing time field",
+			expectErr: "frame 0: missing time field",
 			converted: true,
 		},
 	}
