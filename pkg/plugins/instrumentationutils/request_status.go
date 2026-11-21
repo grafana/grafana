@@ -113,3 +113,16 @@ func RequestStatusFromHTTPStatus(statusCode int) RequestStatus {
 	}
 	return RequestStatusOK
 }
+
+// RequestStatusFromCheckHealthResult returns a RequestStatus based on the
+// health check result and error. A returned error takes precedence; otherwise
+// a result with HealthStatusError is reported as RequestStatusError.
+func RequestStatusFromCheckHealthResult(res *backend.CheckHealthResult, err error) RequestStatus {
+	if err != nil {
+		return RequestStatusFromError(err)
+	}
+	if res != nil && res.Status == backend.HealthStatusError {
+		return RequestStatusError
+	}
+	return RequestStatusOK
+}
