@@ -106,6 +106,8 @@ export const FlagKeys = {
   CujTracking: "cujTracking",
   /** Enables commenting on Notebook cells */
   DashboardNotebookComments: "dashboard.notebookComments",
+  /** Adds a Create page action to notebooks that asks Grafana Assistant to build a Page telling the notebook's story */
+  DashboardNotebookCreatePage: "dashboard.notebookCreatePage",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -930,6 +932,17 @@ export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolea
  */
 export const useFlagDashboardNotebookComments = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.notebookComments", false, options).value;
+};
+
+/**
+ * Adds a Create page action to notebooks that asks Grafana Assistant to build a Page telling the notebook's story
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebookCreatePage`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebookCreatePage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebookCreatePage", false, options).value;
 };
 
 /**

@@ -712,6 +712,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebookCreatePage",
+			Description: "Adds a Create page action to notebooks that asks Grafana Assistant to build a Page telling the notebook's story",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.dashboardComposer",
 			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
 			Stage:       FeatureStageExperimental,
