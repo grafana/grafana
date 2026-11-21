@@ -384,6 +384,12 @@ func TestLoadingSettings(t *testing.T) {
 	})
 }
 
+func TestAllowEmbeddingHostsSetting(t *testing.T) {
+	cfg, err := NewCfgFromBytes([]byte("[security]\nallow_embedding_hosts = wiki.example.com foo.example.com\n"))
+	require.NoError(t, err)
+	require.Equal(t, []string{"wiki.example.com", "foo.example.com"}, cfg.AllowEmbeddingHosts)
+}
+
 func TestResolveGrafanaComProxyAPIToken(t *testing.T) {
 	skipStaticRootValidation = true
 
