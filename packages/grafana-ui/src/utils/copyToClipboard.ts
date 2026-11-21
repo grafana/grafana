@@ -43,10 +43,14 @@ function copyTextToClipboardFallback(text: string, appendTo?: Ref) {
   textarea.value = text;
   textarea.focus();
   textarea.select();
-  document.execCommand('copy');
+  const copied = document.execCommand('copy');
   textarea.remove();
 
   if (previouslyFocused instanceof HTMLElement) {
     previouslyFocused.focus();
+  }
+
+  if (!copied) {
+    throw new Error('The browser refused to copy to the clipboard');
   }
 }

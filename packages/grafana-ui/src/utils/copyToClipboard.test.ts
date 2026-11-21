@@ -83,6 +83,26 @@ describe('copyTextToClipboard', () => {
     expect(element.focus).toHaveBeenCalled();
   });
 
+  it('should reject when the browser refuses the fallback copy', async () => {
+    const execCommand = jest.fn().mockReturnValue(false);
+    setupTests({ isSecureContext: false, execCommand });
+
+    await expect(copyTextToClipboard('copy me')).rejects.toThrow('The browser refused to copy to the clipboard');
+    expect(execCommand).toHaveBeenCalledWith('copy');
+  });
+
+  it('should clean up and restore focus when the browser refuses the fallback copy', async () => {
+    const execCommand = jest.fn().mockReturnValue(false);
+    const element = document.createElement('div');
+    element.focus = jest.fn();
+    jest.spyOn(document, 'activeElement', 'get').mockReturnValue(element);
+    setupTests({ isSecureContext: false, execCommand });
+
+    await expect(copyTextToClipboard('copy me')).rejects.toThrow();
+    expect(document.querySelector('textarea')).toBeNull();
+    expect(element.focus).toHaveBeenCalled();
+  });
+
   it('should use writeText when ClipboardItem is unavailable', async () => {
     const writeText = jest.fn().mockResolvedValue(undefined);
     setupTests({ isSecureContext: true, clipboard: { writeText } });
