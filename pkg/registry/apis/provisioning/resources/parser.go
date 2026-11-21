@@ -632,6 +632,9 @@ func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error)
 	return false, nil
 }
 
+// ToSaveBytes serializes the resource as it is stored in the repository. Only
+// the name and the user annotations of the metadata are written: Grafana-owned
+// annotations and server fields are derived again when the file is read back.
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	obj := f.Obj.DeepCopy().Object
 	delete(obj, "status")
@@ -639,7 +642,11 @@ func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
 	if name == "" {
 		delete(obj, "metadata")
 	} else {
-		obj["metadata"] = map[string]any{"name": name}
+		metadata := map[string]any{"name": name}
+		if annotations := userAnnotations(f.Obj.GetAnnotations()); len(annotations) > 0 {
+			metadata["annotations"] = annotations
+		}
+		obj["metadata"] = metadata
 	}
 
 	switch path.Ext(f.Info.Path) {

@@ -2168,11 +2168,11 @@ func TestHasStrippedMetadata(t *testing.T) {
 		require.False(t, hasRemovedMetadata(original, parsed))
 	})
 
-	t.Run("original annotation key removed by parser", func(t *testing.T) {
+	t.Run("Grafana-owned annotation removed by parser", func(t *testing.T) {
 		original := &unstructured.Unstructured{Object: map[string]any{
 			"metadata": map[string]any{
 				"name":        "my-dash",
-				"annotations": map[string]any{"custom/note": "important", "old/key": "value"},
+				"annotations": map[string]any{"custom/note": "important", "grafana.app/createdBy": "user:1"},
 			},
 		}}
 		parsed := &unstructured.Unstructured{Object: map[string]any{
@@ -2182,6 +2182,26 @@ func TestHasStrippedMetadata(t *testing.T) {
 			},
 		}}
 		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("user annotation removed is an intentional change, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name": "my-dash",
+				"annotations": map[string]any{
+					"custom/note":                            "important",
+					"old/key":                                "value",
+					"grafana.app/useCrossDashboardVariables": `{"global":"all","folder":"none"}`,
+				},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
 	})
 
 	t.Run("namespace changed by parser", func(t *testing.T) {

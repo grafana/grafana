@@ -2,12 +2,14 @@ package resources
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -200,6 +202,74 @@ spec:
 				require.Equal(t, tc.expectedFolder, annotations["grafana.app/folder"], "folder annotation should match expected")
 			})
 		}
+	})
+
+	t.Run("user annotations round-trip through the repository file", func(t *testing.T) {
+		// What the frontend sends on save: the full metadata it loaded.
+		body := []byte(`{
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "dash",
+    "namespace": "xxx",
+    "uid": "abc",
+    "resourceVersion": "12",
+    "generation": 3,
+    "creationTimestamp": "2026-01-01T00:00:00Z",
+    "labels": {"grafana.app/deprecatedInternalID": "7", "team": "platform"},
+    "annotations": {
+      "grafana.app/managedBy": "repo",
+      "grafana.app/managerId": "repo",
+      "grafana.app/sourcePath": "team-a/dash.json",
+      "grafana.app/sourceChecksum": "old",
+      "grafana.app/folder": "team-a",
+      "grafana.app/folderTitle": "Team A",
+      "grafana.app/updatedBy": "user:1",
+      "grafana.app/useCrossDashboardVariables": "{\"global\":[\"gateway_base_url\"],\"folder\":\"none\"}",
+      "example.com/owner": "team-a"
+    }
+  },
+  "spec": {"title": "Test dashboard"},
+  "status": {}
+}`)
+		info := &repository.FileInfo{Path: "team-a/dash.json", Data: body}
+		first, err := parser.Parse(context.Background(), info)
+		require.NoError(t, err)
+		written, err := first.ToSaveBytes()
+		require.NoError(t, err)
+
+		var file map[string]any
+		require.NoError(t, json.Unmarshal(written, &file))
+		require.Equal(t, map[string]any{
+			"name": "dash",
+			"annotations": map[string]any{
+				utils.AnnoKeyUseCrossDashboardVariables: `{"global":["gateway_base_url"],"folder":"none"}`,
+				"example.com/owner":                     "team-a",
+			},
+		}, file["metadata"])
+
+		second, err := parser.Parse(context.Background(), &repository.FileInfo{Path: info.Path, Data: written})
+		require.NoError(t, err)
+		rewritten, err := second.ToSaveBytes()
+		require.NoError(t, err)
+		require.Equal(t, string(written), string(rewritten))
+	})
+
+	t.Run("an annotation-only change produces a different file", func(t *testing.T) {
+		withSelection := func(selection string) []byte {
+			parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+				Path: "dash.json",
+				Data: []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"dash","annotations":{"grafana.app/useCrossDashboardVariables":` + selection + `}},"spec":{"title":"Test dashboard"}}`),
+			})
+			require.NoError(t, err)
+			data, err := parsed.ToSaveBytes()
+			require.NoError(t, err)
+			return data
+		}
+
+		require.NotEqual(t,
+			string(withSelection(`"{\"global\":\"none\",\"folder\":\"none\"}"`)),
+			string(withSelection(`"{\"global\":[\"gateway_base_url\"],\"folder\":\"none\"}"`)))
 	})
 }
 
@@ -1210,4 +1280,126 @@ secure:
 	})
 	require.NoError(t, err)
 	require.Equal(t, "my-ds", parsed.Obj.GetName())
+}
+
+func TestParsedResource_ToSaveBytes(t *testing.T) {
+	newObj := func(metadata map[string]any) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v1",
+			"kind":       "Dashboard",
+			"metadata":   metadata,
+			"spec":       map[string]any{"title": "Test dashboard"},
+			"status":     map[string]any{"conversion": map[string]any{"failed": false}},
+		}}
+	}
+	serverMetadata := func() map[string]any {
+		return map[string]any{
+			"name":              "dash",
+			"namespace":         "default",
+			"uid":               "abc",
+			"resourceVersion":   "12",
+			"generation":        int64(3),
+			"generateName":      "d",
+			"creationTimestamp": "2026-01-01T00:00:00Z",
+			"managedFields":     []any{map[string]any{"manager": "grafana"}},
+			"labels":            map[string]any{"team": "platform", utils.LabelKeyDeprecatedInternalID: "7"},
+			"annotations": map[string]any{
+				utils.AnnoKeyManagerKind:     "repo",
+				utils.AnnoKeyManagerIdentity: "repo",
+				utils.AnnoKeySourcePath:      "dash.json",
+				utils.AnnoKeyFolder:          "team-a",
+				utils.AnnoKeyCreatedBy:       "user:1",
+			},
+		}
+	}
+
+	t.Run("without user annotations only the name is kept, as before", func(t *testing.T) {
+		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.json"}, Obj: newObj(serverMetadata())}
+
+		data, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+
+		want, err := json.MarshalIndent(map[string]any{
+			"apiVersion": "dashboard.grafana.app/v1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash"},
+			"spec":       map[string]any{"title": "Test dashboard"},
+		}, "", "  ")
+		require.NoError(t, err)
+		require.Equal(t, string(want), string(data), "existing files must stay byte-identical")
+	})
+
+	t.Run("keeps user annotations and drops labels and everything else", func(t *testing.T) {
+		metadata := serverMetadata()
+		annotations := metadata["annotations"].(map[string]any)
+		annotations[utils.AnnoKeyUseCrossDashboardVariables] = `{"global":"all","folder":"none"}`
+		annotations["example.com/owner"] = "team-a"
+		obj := newObj(metadata)
+		before := obj.DeepCopy()
+		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.json"}, Obj: obj}
+
+		data, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+
+		var file map[string]any
+		require.NoError(t, json.Unmarshal(data, &file))
+		require.Equal(t, map[string]any{
+			"apiVersion": "dashboard.grafana.app/v1",
+			"kind":       "Dashboard",
+			"metadata": map[string]any{
+				"name": "dash",
+				"annotations": map[string]any{
+					utils.AnnoKeyUseCrossDashboardVariables: `{"global":"all","folder":"none"}`,
+					"example.com/owner":                     "team-a",
+				},
+			},
+			"spec": map[string]any{"title": "Test dashboard"},
+		}, file)
+		require.Equal(t, before, obj, "the object is written to Grafana afterwards and must not be modified")
+
+		again, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+		require.Equal(t, string(data), string(again))
+	})
+
+	t.Run("writes the same metadata to YAML files", func(t *testing.T) {
+		metadata := serverMetadata()
+		metadata["annotations"].(map[string]any)["example.com/owner"] = "team-a"
+		for _, ext := range []string{".yaml", ".yml"} {
+			t.Run(ext, func(t *testing.T) {
+				parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash" + ext}, Obj: newObj(metadata)}
+
+				data, err := parsed.ToSaveBytes()
+				require.NoError(t, err)
+
+				var file map[string]any
+				require.NoError(t, yaml.Unmarshal(data, &file))
+				require.Equal(t, map[string]any{
+					"name":        "dash",
+					"annotations": map[string]any{"example.com/owner": "team-a"},
+				}, file["metadata"])
+			})
+		}
+	})
+
+	t.Run("without a name no metadata is written", func(t *testing.T) {
+		metadata := serverMetadata()
+		delete(metadata, "name")
+		metadata["annotations"].(map[string]any)["example.com/owner"] = "team-a"
+		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.json"}, Obj: newObj(metadata)}
+
+		data, err := parsed.ToSaveBytes()
+		require.NoError(t, err)
+
+		var file map[string]any
+		require.NoError(t, json.Unmarshal(data, &file))
+		require.NotContains(t, file, "metadata")
+	})
+
+	t.Run("rejects unsupported file extensions", func(t *testing.T) {
+		parsed := &ParsedResource{Info: &repository.FileInfo{Path: "dash.txt"}, Obj: newObj(serverMetadata())}
+
+		_, err := parsed.ToSaveBytes()
+		require.EqualError(t, err, "unexpected format")
+	})
 }

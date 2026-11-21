@@ -55,6 +55,11 @@ const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeyBlob = "grafana.app/blob"
 const AnnoKeyMessage = "grafana.app/message"
 
+// AnnoKeyUseCrossDashboardVariables holds a dashboard's JSON selection of the
+// cross-dashboard (global and folder) variables it uses. Unlike the other keys
+// in this group it is user content, set from the dashboard UI.
+const AnnoKeyUseCrossDashboardVariables = "grafana.app/useCrossDashboardVariables"
+
 // Identify where values came from
 
 const oldAnnoKeyRepoName = "grafana.app/repoName"
