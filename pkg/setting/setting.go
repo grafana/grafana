@@ -465,7 +465,8 @@ type Cfg struct {
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
-	ConcurrentQueryCount int
+	ConcurrentQueryCount        int
+	FrontendMaxParallelRequests int
 	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
 	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
@@ -2558,6 +2559,16 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
 	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
 	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
+
+	cfg.FrontendMaxParallelRequests = 0
+	if raw := strings.TrimSpace(datasources.Key("frontend_max_parallel_requests").String()); raw != "" {
+		limit, err := strconv.Atoi(raw)
+		if err != nil || limit < 1 || limit > 1000 {
+			cfg.Logger.Warn("Ignoring invalid [datasources] frontend_max_parallel_requests. Expected an integer from 1 to 1000.")
+		} else {
+			cfg.FrontendMaxParallelRequests = limit
+		}
+	}
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {

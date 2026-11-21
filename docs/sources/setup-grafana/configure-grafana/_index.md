@@ -1123,6 +1123,10 @@ How often the background job deletes resources (alert rules, library panels) who
 
 ### `[datasources]`
 
+#### `frontend_max_parallel_requests`
+
+Sets the frontend request budget for data source queries. Accepts integers from 1 to 1000. If empty, the budget is 1000 when Grafana uses `h2` or `socket_h2` as its server protocol and 5 otherwise.
+
 #### `default_manage_alerts_ui_toggle`
 
 Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.

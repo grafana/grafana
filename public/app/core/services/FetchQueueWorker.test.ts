@@ -6,8 +6,8 @@ import { type FetchQueue, type FetchQueueUpdate, FetchStatus } from './FetchQueu
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { type ResponseQueue } from './ResponseQueue';
 
-const getTestContext = (http2Enabled = false) => {
-  const config: GrafanaBootConfig = { http2Enabled } as unknown as GrafanaBootConfig;
+const getTestContext = (http2Enabled = false, frontendMaxParallelRequests?: number) => {
+  const config = { http2Enabled, frontendMaxParallelRequests } as GrafanaBootConfig;
   const dataUrl = 'http://localhost:3000/api/ds/query?=abc';
   const apiUrl = 'http://localhost:3000/api/alerts?state=all';
   const updates: Subject<FetchQueueUpdate> = new Subject<FetchQueueUpdate>();
@@ -90,6 +90,47 @@ describe('FetchQueueWorker', () => {
           });
 
           expect(addMock.mock.calls).toEqual([['api', { url: 'http://localhost:3000/api/alerts?state=all' }]]);
+        });
+      });
+
+      describe('and a custom request budget is configured', () => {
+        describe('and HTTP/2 is disabled', () => {
+          it('then data requests can use the remaining budget after API requests', () => {
+            const { updates, addMock, dataUrl, apiUrl } = getTestContext(false, 10);
+            const data = { state: FetchStatus.Pending, options: { url: dataUrl } };
+
+            updates.next({
+              noOfPending: 3,
+              noOfInProgress: 8,
+              state: {
+                first: data,
+                second: data,
+                api: { state: FetchStatus.Pending, options: { url: apiUrl } },
+              },
+            });
+
+            expect(addMock.mock.calls).toEqual([
+              ['api', { url: apiUrl }],
+              ['first', { url: dataUrl }],
+            ]);
+          });
+        });
+
+        describe('and HTTP/2 is enabled and the custom budget is full', () => {
+          it('then only the API request should pass through', () => {
+            const { updates, addMock, dataUrl, apiUrl } = getTestContext(true, 10);
+
+            updates.next({
+              noOfPending: 2,
+              noOfInProgress: 10,
+              state: {
+                data: { state: FetchStatus.Pending, options: { url: dataUrl } },
+                api: { state: FetchStatus.Pending, options: { url: apiUrl } },
+              },
+            });
+
+            expect(addMock.mock.calls).toEqual([['api', { url: apiUrl }]]);
+          });
         });
       });
     });

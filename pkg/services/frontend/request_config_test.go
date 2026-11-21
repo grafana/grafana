@@ -358,6 +358,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com"
 		cfg.PluginImportTelemetryPackages = []string{"react-router-dom", "react-router"}
+		cfg.FrontendMaxParallelRequests = 15
 		return cfg
 	}
 
@@ -396,6 +397,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Nil(t, config.FullFrontendSettings)
 		// The legacy per-request settings are still populated.
 		assert.Equal(t, "https://grafana.example.com", config.AppURL)
+		assert.Equal(t, 15, config.FrontendMaxParallelRequests)
 		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.PluginImportTelemetryPackages)
 	})
 

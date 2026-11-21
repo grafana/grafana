@@ -46,12 +46,14 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		// RbacEnabled and LiveNamespaced are always true.
 		assert.True(t, settings.RbacEnabled)
 		assert.True(t, settings.LiveNamespaced)
+		assert.Zero(t, settings.FrontendMaxParallelRequests)
 	})
 
 	t.Run("maps values from config", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com/"
 		cfg.AppSubURL = "/grafana"
+		cfg.FrontendMaxParallelRequests = 15
 		cfg.Anonymous.Enabled = true
 		cfg.PluginImportTelemetryPackages = []string{"custom-router", "custom-history"}
 
@@ -63,6 +65,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 
 		assert.Equal(t, "https://grafana.example.com/", settings.AppUrl)
 		assert.Equal(t, "/grafana", settings.AppSubUrl)
+		assert.Equal(t, 15, settings.FrontendMaxParallelRequests)
 		assert.True(t, settings.AnonymousEnabled)
 		assert.Equal(t, []string{"custom-router", "custom-history"}, settings.PluginImportTelemetryPackages)
 	})

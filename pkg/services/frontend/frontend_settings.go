@@ -48,6 +48,7 @@ type FSFrontendSettings struct {
 	TrustedTypesDefaultPolicyEnabled bool              `json:"trustedTypesDefaultPolicyEnabled,omitempty"`
 	CSPReportOnlyEnabled             bool              `json:"cspReportOnlyEnabled,omitempty"`
 	Http2Enabled                     bool              `json:"http2Enabled,omitempty"`
+	FrontendMaxParallelRequests      int               `json:"frontendMaxParallelRequests,omitempty"`
 	ReportingStaticContext           map[string]string `json:"reportingStaticContext,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
