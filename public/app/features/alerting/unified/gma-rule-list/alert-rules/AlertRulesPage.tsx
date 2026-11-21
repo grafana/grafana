@@ -16,6 +16,9 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearchIndicator, RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
@@ -30,6 +33,8 @@ function AlertRulesPage() {
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
+
+  const savedSearches = useRuleListSavedSearches('alert');
 
   useTrackRuleListPageView('alert', mode);
 
@@ -46,7 +51,19 @@ function AlertRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+              appliedSavedSearch={
+                <RuleListSavedSearchIndicator
+                  query={query}
+                  schema={alertRuleSearchSchema}
+                  savedSearches={savedSearches.savedSearches}
+                />
+              }
+              trailing={
+                <Stack direction="row" gap={1} alignItems="center">
+                  <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
+                  <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+                </Stack>
+              }
             />
           </div>
           <FilterSidebarLayout sidebar={<AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />}>
@@ -60,7 +77,7 @@ function AlertRulesPage() {
   );
 }
 
-export default withPageErrorBoundary(AlertRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));
 
 function AlertRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);

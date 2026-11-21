@@ -15,6 +15,9 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearchIndicator, RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
@@ -28,6 +31,8 @@ function RecordingRulesPage() {
     useRuleListSearchState(recordingRuleSearchSchema);
   const rejectionIssues = useRecordingRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
+
+  const savedSearches = useRuleListSavedSearches('recording');
 
   useTrackRuleListPageView('recording', mode);
 
@@ -45,7 +50,19 @@ function RecordingRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+              appliedSavedSearch={
+                <RuleListSavedSearchIndicator
+                  query={query}
+                  schema={recordingRuleSearchSchema}
+                  savedSearches={savedSearches.savedSearches}
+                />
+              }
+              trailing={
+                <Stack direction="row" gap={1} alignItems="center">
+                  <RuleListSavedSearches kind="recording" savedSearches={savedSearches} />
+                  <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+                </Stack>
+              }
             />
           </div>
           <FilterSidebarLayout
@@ -61,7 +78,7 @@ function RecordingRulesPage() {
   );
 }
 
-export default withPageErrorBoundary(RecordingRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('recording', RecordingRulesPage));
 
 function RecordingRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
