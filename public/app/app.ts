@@ -55,6 +55,7 @@ import {
   setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setDataSourcePicker,
+  setEmbeddedKeybindings,
   setJourneyRegistry,
   setJourneyTracker,
   setKindRegistry,
@@ -386,6 +387,7 @@ export class GrafanaApp {
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
+      setEmbeddedKeybindings(keybindingsService.embeddedKeybindings);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
       const stPodReady = new StPodReadyService();
