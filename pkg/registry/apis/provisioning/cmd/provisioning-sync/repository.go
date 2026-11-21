@@ -21,10 +21,14 @@ const (
 
 // repositoryFromFlags describes a repository that does not exist in Grafana.
 func repositoryFromFlags(opts options) (*provisioning.Repository, error) {
+	name := opts.name
+	if name == "" {
+		name = flagRepositoryName
+	}
 	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: flagRepositoryName, Namespace: opts.namespace},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: opts.namespace},
 		Spec: provisioning.RepositorySpec{
-			Title: flagRepositoryName,
+			Title: name,
 			Type:  provisioning.RepositoryType(opts.repoType),
 			Sync:  provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 		},

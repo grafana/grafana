@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
@@ -24,45 +23,37 @@ import (
 // maxSyncWorkers matches the value the provisioning API server runs pull jobs with.
 const maxSyncWorkers = 10
 
-// runPull runs the same sync worker the job driver runs, so the Repository status (including
+// runPull runs the same sync worker the job driver runs, so the repository status (including
 // status.sync.lastRef for the next incremental pull) is updated exactly as a real pull job would.
 func runPull(ctx context.Context, opts options, out io.Writer) error {
-	g, err := newGrafana(opts)
+	t, err := loadTarget(ctx, opts)
 	if err != nil {
 		return err
 	}
-	cfg, err := g.getRepository(ctx, opts.namespace, opts.repoName)
-	if err != nil {
-		return err
-	}
-	if opts.fromRef != "" {
-		cfg.Status.Sync.LastRef = opts.fromRef
-	}
-
-	repo, err := buildRepository(ctx, cfg, opts.token, opts.homePath)
+	repo, err := buildRepository(ctx, t.cfg, opts.token, opts.homePath)
 	if err != nil {
 		return fmt.Errorf("build repository: %w", err)
 	}
 
-	clients := resources.NewClientFactory(g, nil)
-	repositoryResources := resources.NewRepositoryResourcesFactory(resources.NewParserFactory(clients), clients, g.lister)
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(g.provisioning.ProvisioningV0alpha1())
+	clients := t.grafana.clients
+	repositoryResources := resources.NewRepositoryResourcesFactory(resources.NewParserFactory(clients), clients, t.lister)
 	metrics := jobs.RegisterJobMetrics(prometheus.NewRegistry())
 	tracer := tracing.NewNoopTracerService()
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, maxSyncWorkers, metrics, setting.ProvisioningSyncResourceTimeoutDefault)
-	worker := sync.NewSyncWorker(clients, repositoryResources, statusPatcher.Patch, syncer, metrics, tracer, maxSyncWorkers, setting.ProvisioningMaxFileSizeDefault)
+	worker := sync.NewSyncWorker(clients, repositoryResources, t.patchStatus, syncer, metrics, tracer, maxSyncWorkers, setting.ProvisioningMaxFileSizeDefault)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("provisioning-sync-cli-%d", time.Now().Unix()),
-			Namespace: opts.namespace,
+			Namespace: t.cfg.Namespace,
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
-			Repository: opts.repoName,
+			Repository: t.cfg.Name,
 			Pull:       &provisioning.SyncJobOptions{Incremental: opts.incremental},
 		},
 	}
+	previousRef := t.cfg.Status.Sync.LastRef
 
 	var (
 		mu          gosync.Mutex
@@ -82,12 +73,9 @@ func runPull(ctx context.Context, opts options, out io.Writer) error {
 	processErr := worker.Process(ctx, repo, job, progress)
 
 	// Completing again after the worker returns is what the job driver does to read the final status.
-	result := pullResult{Variance: progress.Variance(), PreviousRef: cfg.Status.Sync.LastRef, Status: progress.Complete(ctx, processErr)}
-	updated, err := g.getRepository(ctx, opts.namespace, opts.repoName)
-	if err != nil {
+	result := pullResult{Variance: progress.Variance(), PreviousRef: previousRef, Status: progress.Complete(ctx, processErr)}
+	if result.LastRef, err = t.syncedRef(ctx); err != nil {
 		logging.FromContext(ctx).Warn("unable to read the repository status after the pull", "error", err)
-	} else {
-		result.LastRef = updated.Status.Sync.LastRef
 	}
 	if err := printPullResult(out, result, opts.jsonOutput); err != nil {
 		return err

@@ -32,15 +32,11 @@ type planChange struct {
 }
 
 func runPlan(ctx context.Context, opts options, out io.Writer) error {
-	cfg, current, err := loadPlanInputs(ctx, opts)
+	t, err := loadTarget(ctx, opts)
 	if err != nil {
 		return err
 	}
-	if opts.fromRef != "" {
-		cfg.Status.Sync.LastRef = opts.fromRef
-	}
-
-	repo, err := buildRepository(ctx, cfg, opts.token, opts.homePath)
+	repo, err := buildRepository(ctx, t.cfg, opts.token, opts.homePath)
 	if err != nil {
 		return fmt.Errorf("build repository: %w", err)
 	}
@@ -49,7 +45,7 @@ func runPlan(ctx context.Context, opts options, out io.Writer) error {
 	if opts.incremental {
 		result, err = planIncremental(ctx, repo)
 	} else {
-		result, err = planFull(ctx, repo, current)
+		result, err = planFullForTarget(ctx, repo, t)
 	}
 	if err != nil {
 		return err
@@ -57,27 +53,18 @@ func runPlan(ctx context.Context, opts options, out io.Writer) error {
 	return printPlan(out, result, opts.jsonOutput)
 }
 
-// loadPlanInputs returns the repository and what it manages today. A repository described by
-// flags has no Grafana behind it, so it manages nothing yet.
-func loadPlanInputs(ctx context.Context, opts options) (*provisioning.Repository, *provisioning.ResourceList, error) {
-	if opts.repoName == "" {
-		cfg, err := repositoryFromFlags(opts)
-		return cfg, &provisioning.ResourceList{}, err
+// planFullForTarget compares the repository with what it manages in Grafana; offline, with an
+// empty instance.
+func planFullForTarget(ctx context.Context, repo repository.Repository, t *target) (*planResult, error) {
+	current := &provisioning.ResourceList{}
+	if t.lister != nil {
+		var err error
+		current, err = t.lister.List(ctx, t.cfg.Namespace, t.cfg.Name, resources.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("list resources managed by %s: %w", t.cfg.Name, err)
+		}
 	}
-
-	g, err := newGrafana(opts)
-	if err != nil {
-		return nil, nil, err
-	}
-	cfg, err := g.getRepository(ctx, opts.namespace, opts.repoName)
-	if err != nil {
-		return nil, nil, err
-	}
-	current, err := g.lister.List(ctx, opts.namespace, opts.repoName, resources.ListOptions{})
-	if err != nil {
-		return nil, nil, fmt.Errorf("list resources managed by %s: %w", opts.repoName, err)
-	}
-	return cfg, current, nil
+	return planFull(ctx, repo, current)
 }
 
 func planFull(ctx context.Context, repo repository.Repository, current *provisioning.ResourceList) (*planResult, error) {

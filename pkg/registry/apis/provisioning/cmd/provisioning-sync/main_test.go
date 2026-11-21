@@ -25,11 +25,16 @@ func TestParseOptions(t *testing.T) {
 		{name: "unknown command", args: []string{"push"}, wantErr: `expected a "plan" or "pull" command`},
 		{name: "no repository", args: []string{"plan"}, wantErr: "set --repo"},
 		{name: "repo and type", args: []string{"plan", "--repo", "r", "--type", "git"}, wantErr: "cannot be used together"},
-		{name: "pull without repo", args: []string{"pull", "--type", "local", "--path", "x"}, wantErr: "set --repo"},
+		{name: "pull from flags as a user", args: []string{"pull", "--type", "local", "--path", "x"}, wantErr: "provisioning service identity"},
+		{name: "offline pull", args: []string{"pull", "--type", "local", "--path", "x", "--access-token", "at", "--offline"}, wantErr: "only works with plan"},
+		{name: "state file with repo", args: []string{"plan", "--repo", "r", "--state-file", "s.json"}, wantErr: "--repo keeps its status in Grafana"},
+		{name: "offline with repo", args: []string{"plan", "--repo", "r", "--offline"}, wantErr: "--repo keeps its status in Grafana"},
 		{name: "extra arguments", args: []string{"plan", "--repo", "r", "extra"}, wantErr: "unexpected arguments"},
 		{name: "pull as a user", args: []string{"pull", "--repo", "r", "--grafana-token", "t"}, wantErr: "provisioning service identity"},
 		{name: "exchange without token", args: []string{"pull", "--repo", "r", "--token-exchange-url", "http://signer"}, wantErr: "needs --exchange-token"},
 		{name: "plan from flags", args: []string{"plan", "--type", "local", "--path", "x"}},
+		{name: "offline plan from flags", args: []string{"plan", "--type", "local", "--path", "x", "--offline"}},
+		{name: "pull from flags", args: []string{"pull", "--type", "github", "--url", "https://github.com/o/r", "--name", "demo", "--state-file", "s.json", "--access-token", "at"}},
 		{name: "plan as a user", args: []string{"plan", "--repo", "r", "--grafana-token", "t"}},
 		{name: "pull with access token", args: []string{"pull", "--repo", "r", "--access-token", "at", "--incremental"}},
 		{name: "pull with token exchange", args: []string{"pull", "--repo", "r", "--token-exchange-url", "http://signer", "--exchange-token", "x"}},
@@ -70,6 +75,13 @@ func TestRepositoryFromFlags(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, &provisioning.GitHubRepositoryConfig{URL: "https://github.com/org/repo", Branch: "dev", Path: "dashboards"}, cfg.Spec.GitHub)
 		assert.Equal(t, "default", cfg.Namespace)
+		assert.Equal(t, flagRepositoryName, cfg.Name)
+	})
+
+	t.Run("name", func(t *testing.T) {
+		cfg, err := repositoryFromFlags(options{repoType: "local", path: "/tmp/dashboards", name: "demo"})
+		require.NoError(t, err)
+		assert.Equal(t, "demo", cfg.Name)
 	})
 
 	t.Run("git", func(t *testing.T) {

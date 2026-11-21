@@ -80,7 +80,8 @@ func TestRunPlanPrintsJSON(t *testing.T) {
 	writeDashboard(t, dir, "root.json", "root")
 
 	var out bytes.Buffer
-	err := run(t.Context(), []string{"plan", "--type", "local", "--path", dir, "--json"}, &out, io.Discard)
+	stateFile := filepath.Join(t.TempDir(), "state.json")
+	err := run(t.Context(), []string{"plan", "--type", "local", "--path", dir, "--state-file", stateFile, "--offline", "--json"}, &out, io.Discard)
 	require.NoError(t, err)
 
 	var result planResult

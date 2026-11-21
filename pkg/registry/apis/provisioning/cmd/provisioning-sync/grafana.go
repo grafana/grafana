@@ -22,7 +22,10 @@ import (
 type grafana struct {
 	restConfig   *rest.Config
 	provisioning client.Interface
-	lister       resources.ResourceLister
+	clients      resources.ClientFactory
+	// apiLister reads a Repository's resources subresource, so it only answers for repositories
+	// that exist in Grafana.
+	apiLister resources.ResourceLister
 }
 
 func newGrafana(opts options) (*grafana, error) {
@@ -66,11 +69,13 @@ func newGrafana(opts options) (*grafana, error) {
 		return nil, fmt.Errorf("create provisioning REST client: %w", err)
 	}
 
-	return &grafana{
+	g := &grafana{
 		restConfig:   cfg,
 		provisioning: provisioningClient,
-		lister:       resources.NewResourceListerFromProvisioningAPI(restClient, 0),
-	}, nil
+		apiLister:    resources.NewResourceListerFromProvisioningAPI(restClient, 0),
+	}
+	g.clients = resources.NewClientFactory(g, nil)
+	return g, nil
 }
 
 func (g *grafana) getRepository(ctx context.Context, namespace, name string) (*provisioning.Repository, error) {

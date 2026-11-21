@@ -29,10 +29,15 @@ const usage = `provisioning-sync runs the provisioning pull job from the command
 
 Usage:
   provisioning-sync plan [flags]   print what a pull would change, without writing anything
-  provisioning-sync pull [flags]   run the pull job against a Repository in a running Grafana
+  provisioning-sync pull [flags]   run the pull job against a running Grafana
 
-The repository is read from Grafana with --repo, or described with --type and its settings.
-plan with --type needs no Grafana and compares against an empty instance.
+The repository is either:
+  - a Repository in Grafana (--repo): its status is patched exactly as a pull job does, or
+  - described with --type and its settings, with no Repository in Grafana: resources are
+    managed under --name, and the sync status, including the last synced commit, is kept in
+    --state-file (default .provisioning-sync/<namespace>/<name>.json).
+plan --offline compares a repository described with --type against an empty instance and
+needs no Grafana.
 
 The repository token comes from --token or $PROVISIONING_REPO_TOKEN and is used instead of
 the token Grafana stores, so no secrets service is involved.
@@ -47,8 +52,10 @@ with --access-token ($GRAFANA_ACCESS_TOKEN). plan only reads, so a user is enoug
 last synced commit. Local repositories are not versioned and always get a full pull.
 
 Examples:
-  provisioning-sync plan --type github --url https://github.com/org/repo --branch main
-  provisioning-sync plan --type local --path ./dashboards
+  provisioning-sync plan --type github --url https://github.com/org/repo --branch main --offline
+  provisioning-sync plan --type local --path ./dashboards --offline
+  provisioning-sync pull --type github --url https://github.com/org/repo --name demo --access-token "$ACCESS_TOKEN"
+  provisioning-sync pull --type github --url https://github.com/org/repo --name demo --access-token "$ACCESS_TOKEN" --incremental
   provisioning-sync plan --repo my-repo --incremental
   provisioning-sync pull --repo my-repo --token-exchange-url http://localhost:6481/sign/access-token
   provisioning-sync pull --repo my-repo --access-token "$ACCESS_TOKEN" --incremental
@@ -62,6 +69,7 @@ type options struct {
 	fromRef     string
 	jsonOutput  bool
 	verbose     bool
+	offline     bool
 
 	grafanaURL       string
 	grafanaToken     string
@@ -74,6 +82,8 @@ type options struct {
 	repoName         string
 
 	repoType  string
+	name      string
+	stateFile string
 	url       string
 	branch    string
 	path      string
@@ -149,6 +159,9 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.repoName, "repo", "", "name of a Repository in Grafana")
 
 	fs.StringVar(&opts.repoType, "type", "", "repository type when not using --repo: git, github or local")
+	fs.StringVar(&opts.name, "name", flagRepositoryName, "repository name that resources pulled with --type are managed under")
+	fs.StringVar(&opts.stateFile, "state-file", "", "file keeping the sync status of a repository described with --type (default .provisioning-sync/<namespace>/<name>.json)")
+	fs.BoolVar(&opts.offline, "offline", false, "plan a repository described with --type against an empty instance, without Grafana")
 	fs.StringVar(&opts.url, "url", "", "git or GitHub repository URL")
 	fs.StringVar(&opts.branch, "branch", "main", "git or GitHub branch")
 	fs.StringVar(&opts.path, "path", "", "subdirectory in a git or GitHub repository, or the directory of a local one")
@@ -186,8 +199,10 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 		return options{}, errors.New("set --repo to read the repository from Grafana, or --type to describe it")
 	case opts.repoName != "" && opts.repoType != "":
 		return options{}, errors.New("--repo and --type cannot be used together")
-	case opts.command == commandPull && opts.repoName == "":
-		return options{}, errors.New("pull writes its status to a Repository in Grafana; set --repo")
+	case opts.repoName != "" && (opts.stateFile != "" || opts.offline):
+		return options{}, errors.New("--state-file and --offline are for repositories described with --type; --repo keeps its status in Grafana")
+	case opts.offline && opts.command != commandPlan:
+		return options{}, errors.New("--offline only works with plan")
 	case opts.command == commandPull && opts.tokenExchangeURL == "" && opts.accessToken == "":
 		return options{}, errors.New("pull writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
 	}
