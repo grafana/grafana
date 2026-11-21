@@ -3,6 +3,11 @@ package graphite
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"math"
+	"math/rand/v2"
+	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,6 +132,31 @@ func TestFloat_UnmarshalJSON(t *testing.T) {
 			input:       []byte(`"123.456"`),
 			expectError: true,
 		},
+		{
+			name:     "leading whitespace",
+			input:    []byte(" 1.5"),
+			expected: FloatFrom(1.5),
+		},
+		{
+			name:     "trailing whitespace",
+			input:    []byte("1.5 \n"),
+			expected: FloatFrom(1.5),
+		},
+		{
+			name:     "null with whitespace",
+			input:    []byte(" null "),
+			expected: NewFloat(0, false),
+		},
+		{
+			name:        "overflow",
+			input:       []byte("1e400"),
+			expectError: true,
+		},
+		{
+			name:        "NaN",
+			input:       []byte("NaN"),
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -138,6 +168,212 @@ func TestFloat_UnmarshalJSON(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestFloat_UnmarshalJSONRenderResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		value       string
+		expected    Float
+		expectError bool
+	}{
+		{name: "integer", value: "42", expected: FloatFrom(42)},
+		{name: "decimal", value: "123.456", expected: FloatFrom(123.456)},
+		{name: "negative", value: "-42.5", expected: FloatFrom(-42.5)},
+		{name: "zero", value: "0", expected: FloatFrom(0)},
+		{name: "negative zero", value: "-0", expected: FloatFrom(math.Copysign(0, -1))},
+		{name: "exponent", value: "1.5e3", expected: FloatFrom(1500)},
+		{name: "negative exponent", value: "1E-2", expected: FloatFrom(0.01)},
+		{name: "signed upper-case exponent", value: "-2.5E+10", expected: FloatFrom(-2.5e10)},
+		{name: "largest float64", value: "1.7976931348623157e308", expected: FloatFrom(math.MaxFloat64)},
+		{name: "smallest float64", value: "5e-324", expected: FloatFrom(math.SmallestNonzeroFloat64)},
+		{name: "integer above 2^53 rounds", value: "9007199254740993", expected: FloatFrom(9007199254740992)},
+		{name: "integer above int64", value: "12345678901234567890123", expected: FloatFrom(1.2345678901234568e22)},
+		{name: "underflow rounds to zero", value: "1e-400", expected: FloatFrom(0)},
+		{name: "overflow", value: "1e400", expectError: true},
+		{name: "negative overflow", value: "-1e400", expectError: true},
+		{name: "whitespace around value", value: " \n\t1.5\r\n ", expected: FloatFrom(1.5)},
+		{name: "null", value: "null", expected: NewFloat(0, false)},
+		{name: "null with whitespace", value: " null ", expected: NewFloat(0, false)},
+		{name: "sql.NullFloat64 object", value: `{"Float64": 42.5, "Valid": true}`, expected: FloatFrom(42.5)},
+		{name: "NaN string", value: `"NaN"`, expectError: true},
+		{name: "Infinity string", value: `"Infinity"`, expectError: true},
+		{name: "-Infinity string", value: `"-Infinity"`, expectError: true},
+		{name: "numeric string", value: `"1.5"`, expectError: true},
+		{name: "bare NaN", value: "NaN", expectError: true},
+		{name: "bare Infinity", value: "Infinity", expectError: true},
+		{name: "bare -Infinity", value: "-Infinity", expectError: true},
+		{name: "leading zero", value: "01", expectError: true},
+		{name: "trailing decimal point", value: "1.", expectError: true},
+		{name: "boolean", value: "true", expectError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := `[{"target":"a","datapoints":[[` + tt.value + `,1700000000]]}]`
+			var series []TargetResponseDTO
+			err := json.Unmarshal([]byte(body), &series)
+			if tt.expectError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			point := series[0].DataPoints[0]
+			assert.Equal(t, tt.expected, point[0])
+			assert.Equal(t, math.Float64bits(tt.expected.Float64), math.Float64bits(point[0].Float64))
+			assert.Equal(t, FloatFrom(1700000000), point[1])
+		})
+	}
+}
+
+// referenceFloat decodes every value through json.Unmarshal into any. It is the reference for Float.
+type referenceFloat struct {
+	sql.NullFloat64
+}
+
+func (f *referenceFloat) UnmarshalJSON(data []byte) error {
+	var err error
+	var v any
+	if err = json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch x := v.(type) {
+	case float64:
+		f.Float64 = x
+	case map[string]any:
+		err = json.Unmarshal(data, &f.NullFloat64)
+	case nil:
+		f.Valid = false
+		return nil
+	default:
+		err = fmt.Errorf("json: cannot unmarshal %v into Go value of type null.Float", reflect.TypeOf(v).Name())
+	}
+	f.Valid = err == nil
+	return err
+}
+
+type referenceTargetResponseDTO struct {
+	Target     string              `json:"target"`
+	DataPoints [][2]referenceFloat `json:"datapoints"`
+	Tags       map[string]any      `json:"tags"`
+}
+
+func randomRenderValue(rng *rand.Rand) string {
+	switch rng.IntN(8) {
+	case 0:
+		return "null"
+	case 1:
+		return strconv.FormatInt(rng.Int64N(1<<62)-1<<61, 10)
+	case 2:
+		return strconv.FormatFloat(rng.NormFloat64()*math.Pow(10, float64(rng.IntN(40)-20)), 'g', -1, 64)
+	case 3:
+		return strconv.FormatFloat(rng.Float64()*1e6, 'f', rng.IntN(12), 64)
+	case 4:
+		return strconv.FormatFloat(math.Float64frombits(rng.Uint64()), 'e', -1, 64)
+	case 5:
+		return fmt.Sprintf("%de%d", rng.IntN(1000)-500, rng.IntN(800)-400)
+	case 6:
+		return fmt.Sprintf("-0.%06dE+%d", rng.IntN(1000000), rng.IntN(30))
+	default:
+		return fmt.Sprintf(`{"Float64": %g, "Valid": %t}`, rng.NormFloat64(), rng.IntN(2) == 0)
+	}
+}
+
+func TestFloat_UnmarshalJSONMatchesReference(t *testing.T) {
+	edgeCases := []string{
+		"42", "-42.5", "0", "-0", "1.5e3", "1E-2", "-2.5E+10", "1.7976931348623157e308", "5e-324",
+		"9007199254740993", "12345678901234567890123", "1e-400", "1e400", "-1e400", "null", " null ",
+		`{"Float64": 42.5, "Valid": true}`, `"NaN"`, `"1.5"`, "NaN", "Infinity", "-Infinity", "-Inf", "+Inf",
+		"0x1p4", "-0x1p4", "01", "-01", "1.", ".5", "1_000", "true", "[]", "-", "1e", "-nan", "infinity",
+	}
+	const randomCount = 500
+	values := make([]string, 0, len(edgeCases)+randomCount)
+	values = append(values, edgeCases...)
+	rng := rand.New(rand.NewPCG(1, 2))
+	for range randomCount {
+		values = append(values, randomRenderValue(rng))
+	}
+
+	for _, v := range values {
+		body := []byte(`[{"target":"a","datapoints":[[` + v + `,1700000000],[null,` + v + `]]}]`)
+		var got []TargetResponseDTO
+		gotErr := json.Unmarshal(body, &got)
+		var want []referenceTargetResponseDTO
+		wantErr := json.Unmarshal(body, &want)
+		require.Equal(t, wantErr != nil, gotErr != nil, "document error for value %q: got %v, want %v", v, gotErr, wantErr)
+		if wantErr == nil {
+			for i, wp := range want[0].DataPoints {
+				for j, w := range wp {
+					g := got[0].DataPoints[i][j]
+					require.Equal(t, w.Valid, g.Valid, "Valid for value %q at [%d][%d]", v, i, j)
+					require.Equal(t, math.Float64bits(w.Float64), math.Float64bits(g.Float64), "Float64 bits for value %q at [%d][%d]", v, i, j)
+				}
+			}
+		}
+
+		if !json.Valid([]byte(v)) {
+			continue
+		}
+		var g Float
+		gErr := g.UnmarshalJSON([]byte(v))
+		var w referenceFloat
+		wErr := w.UnmarshalJSON([]byte(v))
+		require.Equal(t, fmt.Sprint(wErr), fmt.Sprint(gErr), "UnmarshalJSON error for value %q", v)
+		require.Equal(t, w.Valid, g.Valid, "UnmarshalJSON Valid for value %q", v)
+		require.Equal(t, math.Float64bits(w.Float64), math.Float64bits(g.Float64), "UnmarshalJSON Float64 bits for value %q", v)
+	}
+}
+
+func renderResponseBody(tb testing.TB, seriesCount, pointCount int) []byte {
+	tb.Helper()
+	series := make([]TargetResponseDTO, seriesCount)
+	for s := range series {
+		target := fmt.Sprintf("servers.web%03d.cpu.usage", s)
+		points := make(DataTimeSeriesPoints, pointCount)
+		for p := range points {
+			value := FloatFrom(float64(s*len(points)+p) * 1.0137 / 7)
+			if (s+p)%10 == 0 {
+				value = NewFloat(0, false)
+			}
+			points[p] = DataTimePoint{value, FloatFrom(float64(1700000000 + 60*p))}
+		}
+		series[s] = TargetResponseDTO{Target: target, DataPoints: points, Tags: map[string]any{"name": target}}
+	}
+	body, err := json.Marshal(series)
+	require.NoError(tb, err)
+	return body
+}
+
+func TestUnmarshalRenderResponseAllocs(t *testing.T) {
+	const seriesCount, pointCount = 20, 500
+	body := renderResponseBody(t, seriesCount, pointCount)
+	allocs := testing.AllocsPerRun(5, func() {
+		var got []TargetResponseDTO
+		if err := json.Unmarshal(body, &got); err != nil {
+			t.Fatal(err)
+		}
+	})
+	require.Less(t, allocs, float64(seriesCount*pointCount)/10, "allocations per decode of %d points", seriesCount*pointCount)
+}
+
+func BenchmarkUnmarshalRenderResponse(b *testing.B) {
+	for _, bc := range []struct {
+		name                    string
+		seriesCount, pointCount int
+	}{
+		{name: "small", seriesCount: 5, pointCount: 60},
+		{name: "large", seriesCount: 100, pointCount: 1000},
+	} {
+		b.Run(bc.name, func(b *testing.B) {
+			body := renderResponseBody(b, bc.seriesCount, bc.pointCount)
+			b.SetBytes(int64(len(body)))
+			b.ReportAllocs()
+			for b.Loop() {
+				var got []TargetResponseDTO
+				require.NoError(b, json.Unmarshal(body, &got))
 			}
 		})
 	}
