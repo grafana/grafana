@@ -37,6 +37,7 @@ type EnvVarsProvider struct {
 	marketplaceLicensing marketplacelicensing.Licensing
 	logger               log.Logger
 	ssoSettings          pluginsso.SettingsProvider
+	logLevelFor          func(loggerName string) string
 }
 
 func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSettings pluginsso.SettingsProvider, marketplace marketplacelicensing.Licensing) *EnvVarsProvider {
@@ -46,6 +47,7 @@ func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSe
 		logger:               log.New("plugins.envvars"),
 		marketplaceLicensing: marketplace,
 		ssoSettings:          ssoSettings,
+		logLevelFor:          log.LevelFor,
 	}
 }
 
@@ -89,6 +91,10 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
 	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
+	// Debug is the SDK default. This goes before the plugin settings, so that a log_level plugin setting wins.
+	if level := p.logLevelFor("plugin." + plugin.ID); level != "debug" {
+		hostEnv = append(hostEnv, p.envVar("GF_PLUGIN_LOG_LEVEL", level))
+	}
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.apiAccessEnvVars(plugin)...)
