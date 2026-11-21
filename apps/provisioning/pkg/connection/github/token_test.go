@@ -3,6 +3,7 @@ package github_test
 import (
 	"encoding/base64"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -32,6 +33,25 @@ func TestGenerateJWTToken(t *testing.T) {
 		// Verify expiration is ~10 minutes
 		expiresIn := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
 		assert.InDelta(t, 10*time.Minute, expiresIn, float64(time.Second))
+	})
+
+	t.Run("tolerates clock drift between Grafana and GitHub", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			now := time.Now()
+
+			token, expiresAt, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+			require.NoError(t, err)
+
+			parsedToken, _, err := new(jwt.Parser).ParseUnverified(string(token), &jwt.RegisteredClaims{})
+			require.NoError(t, err)
+			claims := parsedToken.Claims.(*jwt.RegisteredClaims)
+
+			// GitHub rejects a JWT whose iat is in its future or whose exp is more than
+			// 10 minutes ahead of its clock, so both must hold for a Grafana clock that runs fast.
+			assert.Equal(t, now.Add(-time.Minute).Unix(), claims.IssuedAt.Unix())
+			assert.Equal(t, now.Add(9*time.Minute).Unix(), claims.ExpiresAt.Unix())
+			assert.Equal(t, claims.ExpiresAt.Unix(), expiresAt.Unix())
+		})
 	})
 
 	t.Run("fails with invalid base64", func(t *testing.T) {

@@ -14,6 +14,10 @@ const (
 	// Based on https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
 	// The expiration time muse max 10 minutes.
 	JWTExpirationMinutes = 10
+
+	// jwtClockDriftAllowance absorbs clock drift between Grafana and GitHub: GitHub rejects
+	// tokens whose iat is in its future or whose exp is more than 10 minutes ahead of its clock.
+	jwtClockDriftAllowance = 60 * time.Second
 )
 
 // GenerateJWTToken mints a GitHub App JWT from the appID and base64-encoded PEM
@@ -38,8 +42,8 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 	// Create the JWT token
 	now := time.Now()
 	claims := jwt.RegisteredClaims{
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(JWTExpirationMinutes) * time.Minute)),
+		IssuedAt:  jwt.NewNumericDate(now.Add(-jwtClockDriftAllowance)),
+		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(JWTExpirationMinutes)*time.Minute - jwtClockDriftAllowance)),
 		Issuer:    appID,
 	}
 
