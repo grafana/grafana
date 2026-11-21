@@ -163,7 +163,8 @@ describe('Sparkline', () => {
       expect.anything(),
       undefined,
       true,
-      expect.any(Function)
+      expect.any(Function),
+      undefined
     );
 
     await hoverIndex(1);
@@ -215,8 +216,29 @@ describe('Sparkline', () => {
       expect.anything(),
       undefined,
       false,
+      undefined,
       undefined
     );
+  });
+
+  it('forwards time selections to the supplied callback without changing the local scale', async () => {
+    const onRangeSelected = jest.fn();
+    render(
+      <Sparkline
+        width={WIDTH}
+        height={HEIGHT}
+        theme={createTheme()}
+        sparkline={makeSparkline()}
+        onRangeSelected={onRangeSelected}
+      />
+    );
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
+    expect(prepareConfigSpy.mock.calls.at(-1)?.[6]).toBe(onRangeSelected);
+    const plot = plotInstance!;
+    const left = plot.valToPos(1680444000000, 'x');
+    plot.setSelect({ left, width: plot.valToPos(1681653600000, 'x') - left, top: 0, height: HEIGHT });
+    expect(onRangeSelected).toHaveBeenCalledWith({ from: 1680444000000, to: 1681653600000 });
+    expect(scaleRange(plot, 'x')).toEqual([1679839200000, 1682258400000]);
   });
 
   it.each([false, true])(
