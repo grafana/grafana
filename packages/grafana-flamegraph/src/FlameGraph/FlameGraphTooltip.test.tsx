@@ -60,7 +60,7 @@ describe('FlameGraphTooltip', () => {
       unitTitle: 'RAM',
       unitSelf: '955 KiB',
       unitValue: '8.03 GiB',
-      samples: '8,624,078,250',
+      samples: undefined,
     });
   });
 
@@ -124,7 +124,7 @@ describe('FlameGraphTooltip', () => {
       unitTitle: 'Time',
       unitSelf: '978 µs',
       unitValue: '8.62 s',
-      samples: '8,624,078,250',
+      samples: undefined,
     });
   });
 });

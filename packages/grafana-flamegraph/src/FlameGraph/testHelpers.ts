@@ -9,7 +9,7 @@ import { FlameGraphDataContainer, type LevelItem, type Options } from './dataTra
 // [3]  [6]
 //      [7]
 // Each node starts with [ ends with ], single digit is used for label and the length of a node is it's value.
-export function textToDataContainer(text: string, options?: Options) {
+export function textToDataContainer(text: string, options?: Options, unit?: string) {
   const levels = text.split('\n');
 
   if (levels.length === 0) {
@@ -80,6 +80,10 @@ export function textToDataContainer(text: string, options?: Options) {
   const df = arrayToDataFrame(dfSorted);
   const labelField = df.fields.find((f) => f.name === 'label')!;
   labelField.type = FieldType.string;
+  if (unit) {
+    const valueField = df.fields.find((f) => f.name === 'value')!;
+    valueField.config.unit = unit;
+  }
   return new FlameGraphDataContainer(df, options || { collapsing: true });
 }
 
