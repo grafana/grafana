@@ -1,0 +1,170 @@
+diff --git a/lib/default.mjs b/lib/default.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd8e40f06894f5c8976005a82519ea94ac7464d6
+--- /dev/null
++++ b/lib/default.mjs
+@@ -0,0 +1,2 @@
++// Keep the CommonJS barrel out of named-only bundles by re-exporting it separately.
++export { default } from "./index.js";
+diff --git a/lib/index.d.ts b/lib/index.d.ts
+index 626da179b4739e0673c5c9e60bf87b39e92a4d50..4a0856a3c3c459ca781cfcabdfe5f58c1cf6aec7 100644
+--- a/lib/index.d.ts
++++ b/lib/index.d.ts
+@@ -1,13 +1,15 @@
+-import { createAction, Priority } from "./utils";
+-export { createAction, Priority };
+-export * from "./useMatches";
+-export * from "./KBarPortal";
+-export * from "./KBarPositioner";
+-export * from "./KBarSearch";
+-export * from "./KBarResults";
+-export * from "./useKBar";
+-export * from "./useRegisterActions";
+-export * from "./KBarContextProvider";
+-export * from "./KBarAnimator";
+-export * from "./types";
+-export * from "./action";
++import "./action/HistoryImpl.js";
++export { createAction, Priority } from "./utils.js";
++export { NO_GROUP, useMatches, useDeepMatches } from "./useMatches.js";
++export { KBarPortal } from "./KBarPortal.js";
++export { KBarPositioner } from "./KBarPositioner.js";
++export { KBAR_LISTBOX, getListboxItemId, KBarSearch } from "./KBarSearch.js";
++export { KBarResults } from "./KBarResults.js";
++export { useKBar } from "./useKBar.js";
++export { useRegisterActions } from "./useRegisterActions.js";
++export { KBarContext, KBarProvider } from "./KBarContextProvider.js";
++export { KBarAnimator } from "./KBarAnimator.js";
++export { VisualState } from "./types.js";
++export { ActionInterface } from "./action/ActionInterface.js";
++export { ActionImpl } from "./action/ActionImpl.js";
++export type { Action, ActionGroup, ActionId, ActionSection, ActionStore, ActionTree, History, HistoryItem, IKBarContext, KBarOptions, KBarProviderProps, KBarQuery, KBarState, } from "./types.js";
+diff --git a/lib/index.js b/lib/index.js
+index e989022c801dd2e582c37a3adbadce29dd3c052d..5a96d4d9e3791cc33c78833ca1c5663e489fa4d0 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,31 +1,38 @@
+ "use strict";
+-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    var desc = Object.getOwnPropertyDescriptor(m, k);
+-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+-      desc = { enumerable: true, get: function() { return m[k]; } };
+-    }
+-    Object.defineProperty(o, k2, desc);
+-}) : (function(o, m, k, k2) {
+-    if (k2 === undefined) k2 = k;
+-    o[k2] = m[k];
+-}));
+-var __exportStar = (this && this.__exportStar) || function(m, exports) {
+-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+-};
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.Priority = exports.createAction = void 0;
+-var utils_1 = require("./utils");
+-Object.defineProperty(exports, "createAction", { enumerable: true, get: function () { return utils_1.createAction; } });
+-Object.defineProperty(exports, "Priority", { enumerable: true, get: function () { return utils_1.Priority; } });
+-__exportStar(require("./useMatches"), exports);
+-__exportStar(require("./KBarPortal"), exports);
+-__exportStar(require("./KBarPositioner"), exports);
+-__exportStar(require("./KBarSearch"), exports);
+-__exportStar(require("./KBarResults"), exports);
+-__exportStar(require("./useKBar"), exports);
+-__exportStar(require("./useRegisterActions"), exports);
+-__exportStar(require("./KBarContextProvider"), exports);
+-__exportStar(require("./KBarAnimator"), exports);
+-__exportStar(require("./types"), exports);
+-__exportStar(require("./action"), exports);
++exports.ActionImpl = exports.ActionInterface = exports.VisualState = exports.KBarAnimator = exports.KBarProvider = exports.KBarContext = exports.useRegisterActions = exports.useKBar = exports.KBarResults = exports.KBarSearch = exports.getListboxItemId = exports.KBAR_LISTBOX = exports.KBarPositioner = exports.KBarPortal = exports.useDeepMatches = exports.useMatches = exports.NO_GROUP = exports.Priority = exports.createAction = void 0;
++// Both package entries use these CommonJS modules. Keep the history listener
++// even when a bundler drops all unused exports.
++require("./action/HistoryImpl.js");
++var utils_js_1 = require("./utils.js");
++Object.defineProperty(exports, "createAction", { enumerable: true, get: function () { return utils_js_1.createAction; } });
++Object.defineProperty(exports, "Priority", { enumerable: true, get: function () { return utils_js_1.Priority; } });
++var useMatches_js_1 = require("./useMatches.js");
++Object.defineProperty(exports, "NO_GROUP", { enumerable: true, get: function () { return useMatches_js_1.NO_GROUP; } });
++Object.defineProperty(exports, "useMatches", { enumerable: true, get: function () { return useMatches_js_1.useMatches; } });
++Object.defineProperty(exports, "useDeepMatches", { enumerable: true, get: function () { return useMatches_js_1.useDeepMatches; } });
++var KBarPortal_js_1 = require("./KBarPortal.js");
++Object.defineProperty(exports, "KBarPortal", { enumerable: true, get: function () { return KBarPortal_js_1.KBarPortal; } });
++var KBarPositioner_js_1 = require("./KBarPositioner.js");
++Object.defineProperty(exports, "KBarPositioner", { enumerable: true, get: function () { return KBarPositioner_js_1.KBarPositioner; } });
++var KBarSearch_js_1 = require("./KBarSearch.js");
++Object.defineProperty(exports, "KBAR_LISTBOX", { enumerable: true, get: function () { return KBarSearch_js_1.KBAR_LISTBOX; } });
++Object.defineProperty(exports, "getListboxItemId", { enumerable: true, get: function () { return KBarSearch_js_1.getListboxItemId; } });
++Object.defineProperty(exports, "KBarSearch", { enumerable: true, get: function () { return KBarSearch_js_1.KBarSearch; } });
++var KBarResults_js_1 = require("./KBarResults.js");
++Object.defineProperty(exports, "KBarResults", { enumerable: true, get: function () { return KBarResults_js_1.KBarResults; } });
++var useKBar_js_1 = require("./useKBar.js");
++Object.defineProperty(exports, "useKBar", { enumerable: true, get: function () { return useKBar_js_1.useKBar; } });
++var useRegisterActions_js_1 = require("./useRegisterActions.js");
++Object.defineProperty(exports, "useRegisterActions", { enumerable: true, get: function () { return useRegisterActions_js_1.useRegisterActions; } });
++var KBarContextProvider_js_1 = require("./KBarContextProvider.js");
++Object.defineProperty(exports, "KBarContext", { enumerable: true, get: function () { return KBarContextProvider_js_1.KBarContext; } });
++Object.defineProperty(exports, "KBarProvider", { enumerable: true, get: function () { return KBarContextProvider_js_1.KBarProvider; } });
++var KBarAnimator_js_1 = require("./KBarAnimator.js");
++Object.defineProperty(exports, "KBarAnimator", { enumerable: true, get: function () { return KBarAnimator_js_1.KBarAnimator; } });
++var types_js_1 = require("./types.js");
++Object.defineProperty(exports, "VisualState", { enumerable: true, get: function () { return types_js_1.VisualState; } });
++var ActionInterface_js_1 = require("./action/ActionInterface.js");
++Object.defineProperty(exports, "ActionInterface", { enumerable: true, get: function () { return ActionInterface_js_1.ActionInterface; } });
++var ActionImpl_js_1 = require("./action/ActionImpl.js");
++Object.defineProperty(exports, "ActionImpl", { enumerable: true, get: function () { return ActionImpl_js_1.ActionImpl; } });
+diff --git a/lib/index.mjs b/lib/index.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..1c14928376215de94fb17f84c0d08e1514110eb0
+--- /dev/null
++++ b/lib/index.mjs
+@@ -0,0 +1,36 @@
++import "./action/HistoryImpl.js";
++import { createAction, Priority } from "./utils.js";
++import { NO_GROUP, useMatches, useDeepMatches } from "./useMatches.js";
++import { KBarPortal } from "./KBarPortal.js";
++import { KBarPositioner } from "./KBarPositioner.js";
++import { KBAR_LISTBOX, getListboxItemId, KBarSearch } from "./KBarSearch.js";
++import { KBarResults } from "./KBarResults.js";
++import { useKBar } from "./useKBar.js";
++import { useRegisterActions } from "./useRegisterActions.js";
++import { KBarContext, KBarProvider } from "./KBarContextProvider.js";
++import { KBarAnimator } from "./KBarAnimator.js";
++import { VisualState } from "./types.js";
++import { ActionInterface } from "./action/ActionInterface.js";
++import { ActionImpl } from "./action/ActionImpl.js";
++export {
++  ActionImpl,
++  ActionInterface,
++  KBAR_LISTBOX,
++  KBarAnimator,
++  KBarContext,
++  KBarPortal,
++  KBarPositioner,
++  KBarProvider,
++  KBarResults,
++  KBarSearch,
++  NO_GROUP,
++  Priority,
++  VisualState,
++  createAction,
++  getListboxItemId,
++  useDeepMatches,
++  useKBar,
++  useMatches,
++  useRegisterActions
++};
++export { default } from "./default.mjs";
+diff --git a/package.json b/package.json
+index 14bc5a6b103d054fbd7ec768817452295618fa5a..77e16e9c8145624daa8456bb6ec16daa001bd57b 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,10 @@
+   "name": "kbar",
+   "version": "1.0.0",
+   "main": "lib/index.js",
++  "module": "lib/index.mjs",
++  "browser": "lib/index.mjs",
+   "types": "lib/index.d.ts",
++  "sideEffects": ["./lib/index.js", "./lib/index.mjs", "./lib/action/HistoryImpl.js"],
+   "scripts": {
+     "build": "rm -rf ./lib && tsc",
+     "prepublishOnly": "npm run build",
