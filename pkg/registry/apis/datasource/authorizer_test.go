@@ -240,3 +240,89 @@ func TestGetAuthorizer_CheckError(t *testing.T) {
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Equal(t, "failed to check permissions", reason)
 }
+
+// TestGetAuthorizer_QueryTypesSkipDatasourceCheck covers the cluster-scoped
+// querytypes resource. The request has no namespace, so the access client
+// would reject it with a namespace mismatch; the client here errors on any
+// call to prove the authorizer never reaches it.
+func TestGetAuthorizer_QueryTypesSkipDatasourceCheck(t *testing.T) {
+	tests := []struct {
+		name        string
+		verb        string
+		subresource string
+		objName     string
+	}{
+		{name: "list", verb: "list"},
+		{name: "get", verb: "get", objName: "random_walk"},
+		{name: "validate", verb: "create", subresource: "validate", objName: "random_walk"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &recordingAccessClient{err: errors.New("namespace mismatch")}
+			b := newAuthorizerTestBuilder(client)
+
+			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Resource:        "querytypes",
+				Verb:            tc.verb,
+				Subresource:     tc.subresource,
+				Name:            tc.objName,
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision)
+			require.Empty(t, client.lastReq, "query types must not be checked as a datasource")
+		})
+	}
+}
+
+func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
+	tests := []struct {
+		verb        string
+		subresource string
+	}{
+		{verb: "create"},
+		{verb: "update"},
+		{verb: "patch"},
+		{verb: "delete"},
+		{verb: "deletecollection"},
+		{verb: "watch"},
+		{verb: "get", subresource: "validate"},
+		{verb: "update", subresource: "validate"},
+		{verb: "get", subresource: "status"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.verb+"/"+tc.subresource, func(t *testing.T) {
+			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
+			b := newAuthorizerTestBuilder(client)
+
+			decision, reason, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Resource:        "querytypes",
+				Verb:            tc.verb,
+				Subresource:     tc.subresource,
+				Name:            "random_walk",
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision)
+			require.Equal(t, "unsupported verb or subresource for query types", reason)
+			require.Empty(t, client.lastReq, "the denial must not come from the datasource check")
+		})
+	}
+}
+
+func TestGetAuthorizer_QueryTypesRequireUser(t *testing.T) {
+	b := newAuthorizerTestBuilder(&recordingAccessClient{})
+
+	decision, _, err := b.GetAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Resource:        "querytypes",
+		Verb:            "list",
+	})
+
+	require.Error(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
+}
