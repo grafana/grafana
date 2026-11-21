@@ -6614,6 +6614,10 @@
       "paused": "This dashboard has been paused by the administrator",
       "try-again-later": "Try again later"
     },
+    "quick-edits": {
+      "close": "Close",
+      "presets-unavailable": "No styles to show for this panel's data"
+    },
     "remove-panel": {
       "text": {
         "remove-panel": "Are you sure you want to remove this panel?"
@@ -8035,6 +8039,8 @@
     "panel-edit-actions": {
       "panels-selected_one": "{{count}} panel selected",
       "panels-selected_other": "{{count}} panels selected",
+      "show-panel-actions": "Back to panel actions",
+      "show-quick-edits": "Quick edits",
       "tooltip-edit-panel-visualization": "Edit visualization",
       "tooltip-panel-settings": "Panel settings"
     },

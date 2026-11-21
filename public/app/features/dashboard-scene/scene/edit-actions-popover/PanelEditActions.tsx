@@ -26,6 +26,7 @@ import {
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { PanelActionsWithQuickEdits, useOffersQuickEdits } from './PanelQuickEditActions';
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
@@ -59,6 +60,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(panel);
+  const offersQuickEdits = useOffersQuickEdits(panel);
 
   const onClickEdit = () => {
     DashboardInteractions.panelActionClicked(
@@ -94,7 +96,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
   };
 
-  return (
+  const actions = (
     <>
       <EditActionButton
         onClick={onClickEditVisualization}
@@ -137,6 +139,11 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
       />
     </>
   );
+
+  if (!offersQuickEdits) {
+    return actions;
+  }
+  return <PanelActionsWithQuickEdits panel={panel}>{actions}</PanelActionsWithQuickEdits>;
 }
 
 export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {

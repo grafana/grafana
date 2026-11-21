@@ -37,11 +37,24 @@ import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 /** With `grafana.panelActionsPopover` on, every edit actions popover opens this soon, and without a fade. */
 export const PANEL_ACTIONS_POPOVER_REST_DURATION_MS = 150;
+const POINTER_EVENTS = ['pointermove', 'pointerdown'] as const;
+
+interface EditActionsPopoverContextValue {
+  closePopover: () => void;
+  /** Holds the popover open while something its content opened elsewhere is in use, e.g. a quick-edit card. */
+  holdOpen: (hold: boolean) => void;
+  /** The element the popover belongs to, e.g. a panel, for placing what its content opens beside it. */
+  getReference: () => Element | null;
+}
 
 /**
- * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
+ * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it, or hold it open.
  */
-const EditActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
+const EditActionsPopoverContext = createContext<EditActionsPopoverContextValue>({
+  closePopover: () => {},
+  holdOpen: () => {},
+  getReference: () => null,
+});
 export const useEditActionsPopover = () => useContext(EditActionsPopoverContext);
 
 /**
@@ -108,14 +121,21 @@ export function EditActionsPopover({
   // Read from the client on each render rather than with the hook, so a popover doesn't need an OpenFeatureProvider above it.
   const isActionsPopoverEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false);
   const [isOpen, setIsOpen] = useState(false);
+  const heldByContentRef = useRef(false);
+  // Where the pointer last was while held open, as hover stops reporting once it is ignored.
+  const lastPointerTarget = useRef<EventTarget | null>(null);
+  const trackPointer = useRef((event: PointerEvent) => {
+    lastPointerTarget.current = event.target;
+  });
 
   const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
   const isEnabled = !disabled && (isSelectable || showOutsideEditMode);
 
   const keepOpenRef = useRef(keepOpen);
   keepOpenRef.current = keepOpen;
+  // Hover closes it when the pointer moves to something it opened, which is portaled elsewhere.
   const onOpenChange = useCallback((open: boolean) => {
-    if (!open && keepOpenRef.current) {
+    if (!open && (keepOpenRef.current || heldByContentRef.current)) {
       return;
     }
     setIsOpen(open);
@@ -178,7 +198,40 @@ export function EditActionsPopover({
     }
   }, [keepOpen, isOpen, refs]);
 
-  const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
+  const popoverContextValue = useMemo(
+    () => ({
+      closePopover: () => setIsOpen(false),
+      holdOpen: (hold: boolean) => {
+        if (hold === heldByContentRef.current) {
+          return;
+        }
+        heldByContentRef.current = hold;
+        if (hold) {
+          lastPointerTarget.current = null;
+          POINTER_EVENTS.forEach((type) =>
+            window.addEventListener(type, trackPointer.current, { capture: true, passive: true })
+          );
+          return;
+        }
+        POINTER_EVENTS.forEach((type) => window.removeEventListener(type, trackPointer.current, { capture: true }));
+        // Close now when the pointer left while held open; hover will not report leaving again.
+        const target = lastPointerTarget.current;
+        const inside =
+          target instanceof Node &&
+          (refs.domReference.current?.contains(target) || refs.floating.current?.contains(target));
+        if (target && !inside) {
+          setIsOpen(false);
+        }
+      },
+      getReference: () => (refs.domReference.current instanceof Element ? refs.domReference.current : null),
+    }),
+    [refs]
+  );
+
+  useEffect(() => {
+    const listener = trackPointer.current;
+    return () => POINTER_EVENTS.forEach((type) => window.removeEventListener(type, listener, { capture: true }));
+  }, []);
 
   const floating = (
     <div
