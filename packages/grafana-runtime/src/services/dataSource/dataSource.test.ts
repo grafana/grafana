@@ -36,6 +36,8 @@ import {
   syncDataSourceInstanceSettings,
 } from './settings';
 
+jest.mock('../../services/backendSrv', () => makeSpyable('../../services/backendSrv'));
+
 class TestRuntime extends RuntimeDataSource {
   query() {
     return Promise.resolve({ data: [] });

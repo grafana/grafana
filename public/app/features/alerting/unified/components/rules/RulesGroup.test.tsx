@@ -21,6 +21,8 @@ import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RulesGroup } from './RulesGroup';
 
+jest.mock('../../Analytics', () => makeSpyable('../../Analytics'));
+
 jest.mock('../../hooks/useHasRuler');
 
 jest.mock('@grafana/assistant', () => ({
