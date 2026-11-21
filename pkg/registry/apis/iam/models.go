@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -116,6 +117,9 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Getters for existence validation during TeamBinding create
 	teamGetter rest.Getter
 	userGetter rest.Getter
+
+	// Runs handlers after each team is deleted through the Team API, not set in standalone.
+	teamDeleted *teamdelete.DeletedRegistry
 
 	// authInfoStorage is set when the AuthInfo API is registered; the user delete cascades to it.
 	authInfoStorage rest.Storage

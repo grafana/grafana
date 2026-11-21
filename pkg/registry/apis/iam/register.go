@@ -67,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -108,6 +109,7 @@ func RegisterAPIService(
 	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
 	legacyWatch *legacywatch.Publisher,
+	teamDeleted *teamdelete.DeletedRegistry,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.WithWatchNotifications(legacy.NewLegacySQLStores(dbProvider), legacyWatch)
@@ -203,6 +205,7 @@ func RegisterAPIService(
 		ssoLoginConfig:  sso.NewLoginConfigHandler(cfgProvider, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
+		teamDeleted:     teamDeleted,
 		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
@@ -662,9 +665,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		teamUniStore.BeginUpdate = b.BeginTeamUpdate
 	}
 
-	storage[teamResource.StoragePath()] = teamUniStore
 	b.teamGetter = teamUniStore
-	teamStorage := rest.Storage(teamUniStore)
+	var teamStore grafanarest.Storage = teamUniStore
 
 	if b.legacyTeamStore != nil {
 		dw, err := opts.DualWriteBuilder(teamResource.GroupResource(), b.legacyTeamStore, teamUniStore)
@@ -672,12 +674,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			return err
 		}
 
-		storage[teamResource.StoragePath()] = dw
-		teamStorage = dw
+		teamStore = dw
 		if getter, ok := dw.(rest.Getter); ok {
 			b.teamGetter = getter
 		}
 	}
+
+	// Wrapping the final storage runs the deleted handlers once in every dual-write mode.
+	teamStore = team.WithDeletedHandlers(teamStore, b.teamDeleted)
+	storage[teamResource.StoragePath()] = teamStore
+	teamStorage := rest.Storage(teamStore)
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 

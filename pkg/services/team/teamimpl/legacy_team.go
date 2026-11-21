@@ -79,6 +79,12 @@ func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamComm
 }
 
 func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
+	_, err := s.deleteTeam(ctx, cmd)
+	return err
+}
+
+// deleteTeam deletes the team and returns its UID.
+func (s *LegacyService) deleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "team.DeleteTeam", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 		attribute.Int64("teamID", cmd.ID),
@@ -86,10 +92,10 @@ func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamComm
 	defer span.End()
 	uid, err := s.store.Delete(ctx, cmd)
 	if err != nil {
-		return err
+		return "", err
 	}
 	s.watch.Publish(ctx, legacywatch.Deleted, teamResource, cmd.OrgID, uid, 0)
-	return nil
+	return uid, nil
 }
 
 func (s *LegacyService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
