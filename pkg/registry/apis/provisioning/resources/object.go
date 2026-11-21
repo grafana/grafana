@@ -134,7 +134,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return err
 	})
 	g.Go(func() (err error) {
-		scan, err = o.listThroughAPIGroups(gctx, namespace, repository)
+		scan, err = o.listThroughAPIGroups(gctx, namespace, repository, page)
 		return err
 	})
 	if err := g.Wait(); err != nil {
@@ -229,7 +229,7 @@ type apiScan struct {
 // listThroughAPIGroups lists what a repository manages that the index cannot answer for: the
 // collection members, which the index files under the collection's group, so they cannot be
 // addressed from it; and the externally stored kinds, which it does not hold at all.
-func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, namespace, repository string) (apiScan, error) {
+func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, namespace, repository string, page resourcePage) (apiScan, error) {
 	scan := apiScan{
 		covered:  sets.New[schema.GroupResource](),
 		declared: sets.New[schema.GroupResource](),
@@ -250,7 +250,7 @@ func (o *ResourceListerFromSearch) listThroughAPIGroups(ctx context.Context, nam
 		return !o.isListed(r) && !collections.Has(r.Group)
 	})
 	results, err := readKinds(ctx, kinds, func(ctx context.Context, supported SupportedResource) (apiScan, error) {
-		return o.scanKind(ctx, clients, supported, repository)
+		return o.scanKind(ctx, clients, supported, repository, page)
 	})
 	if err != nil {
 		return scan, err
@@ -270,8 +270,8 @@ func (o *ResourceListerFromSearch) isListed(r SupportedResource) bool {
 }
 
 // scanKind lists one kind's objects managed by repository, or only resolves its resource when the
-// index lists it.
-func (o *ResourceListerFromSearch) scanKind(ctx context.Context, clients ResourceClients, supported SupportedResource, repository string) (apiScan, error) {
+// index lists it or the page resumes past it.
+func (o *ResourceListerFromSearch) scanKind(ctx context.Context, clients ResourceClients, supported SupportedResource, repository string, page resourcePage) (apiScan, error) {
 	client, gvr, err := clients.ForKind(ctx, supported.WithVersion(""))
 	if err != nil {
 		return apiScan{}, fmt.Errorf("get client for %s: %w", supported.GroupKind, err)
@@ -281,6 +281,9 @@ func (o *ResourceListerFromSearch) scanKind(ctx context.Context, clients Resourc
 	}
 
 	scan := apiScan{covered: sets.New(gvr.GroupResource())}
+	if page.passed(gvr.GroupResource()) {
+		return scan, nil
+	}
 	err = ForEach(ctx, client, func(obj *unstructured.Unstructured) error {
 		if item, ok := managedResourceItem(obj, gvr, repository); ok {
 			scan.items = append(scan.items, item)
