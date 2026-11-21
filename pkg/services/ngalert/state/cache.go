@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
+	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -230,6 +231,30 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	}
 	if len(dupes) > 0 {
 		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+	}
+	// The alert name is the rule title, and it is part of the state identity.
+	// Expand it from labels only. $value and $values change every evaluation
+	// and would mint a new state. A plain title has no template and is left as-is.
+	alertName := string(prometheusModel.AlertNameLabel)
+	titleUsesValue := strings.Contains(alertRule.Title, "$value") || strings.Contains(alertRule.Title, ".Value")
+	if _, ok := lbs[alertName]; ok && strings.Contains(alertRule.Title, "{{") && !titleUsesValue {
+		labelData := templateData
+		labelData.Value = nil
+		labelData.Values = nil
+		expanded, err := template.Expand(ctx, alertRule.Title, alertRule.Title, labelData, externalURL, result.EvaluatedAt)
+		if err != nil {
+			log.Error("Error in expanding title template", "error", err)
+		} else if expanded != "" {
+			if maxLabelValueSize > 0 && len(expanded) > maxLabelValueSize {
+				log.Warn("Truncating expanded title exceeding size cap",
+					"size", len(expanded), "cap", maxLabelValueSize, "rule", alertRule.Title, "rule_uid", alertRule.UID)
+				expanded = util.TruncateUTF8(expanded, maxLabelValueSize)
+				if stateMetrics != nil {
+					stateMetrics.TruncatedStrings.WithLabelValues("label").Inc()
+				}
+			}
+			lbs[alertName] = expanded
+		}
 	}
 	return lbs, annotations
 }
