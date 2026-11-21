@@ -33,12 +33,13 @@ The local path mount is referred to as a `repository`. File provisioning uses th
 
 Using the local path lets you also use it with a tool like `fuse`, allowing you to mount S3 buckets as local paths. You can also use tools like `restic` to automatically back up your dashboards to your preferred backup storage solution.
 
-You can set up file provisioning in two ways:
+You can set up file provisioning in three ways:
 
 - [Using the UI](#set-up-file-provisioning-using-the-ui) through **Administration** > **Provisioning**.
 - [As code](#set-up-file-provisioning-as-code) with `gcx`, the Grafana CLI, so you can manage the configuration in a GitOps-style workflow.
+- [From a bootstrap directory](#bootstrap-file-provisioning-from-a-directory), so the instance provisions itself at startup with no call to the Grafana API.
 
-Both approaches require you to first [configure the permitted paths](#configure-permitted-paths) in the Grafana configuration file.
+The first two approaches require you to first [configure the permitted paths](#configure-permitted-paths) in the Grafana configuration file. The bootstrap directory is permitted implicitly.
 
 {{< admonition type="note" >}}
 
@@ -269,6 +270,27 @@ To delete a repository:
 ```sh
 gcx resources delete repository/<REPOSITORY_NAME>
 ```
+
+## Bootstrap file provisioning from a directory
+
+Both approaches above need a running Grafana instance to apply the `Repository` resource to. Starting in Grafana 13.4.0, you can skip that step: set `bootstrap_path` and Grafana registers a local repository over that directory itself, on every start.
+
+```ini
+[provisioning]
+bootstrap_path = /etc/grafana/provisioning/bootstrap
+```
+
+Use this when the instance has to come up already provisioned and nothing can call the API afterwards, for example when you run Grafana on ephemeral storage or from an immutable image. It differs from the approaches above in three ways:
+
+- You don't add the bootstrap path to `permitted_provisioning_paths`. Grafana permits it because it registers the repository itself.
+- The repository always syncs [folderless](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets), so dashboards in the directory become top-level dashboards and subdirectories become top-level folders.
+- Its configuration isn't editable in Grafana, because it comes from the configuration file. The resources it provisions stay editable, and Grafana commits each edit back to the directory.
+
+The directory can hold `Repository` and `Connection` manifests as well as dashboards and folders, so it can declare the rest of your provisioning setup. A local repository declared this way reads a different directory, which must be outside the bootstrap path and listed in `permitted_provisioning_paths`.
+
+The setting owns what it creates: emptying `bootstrap_path` deletes the repository and everything it provisioned, including the resources of any repository it declared.
+
+For the full setup, refer to [Bootstrap provisioning configuration from a directory](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-bootstrap/). It applies to local repositories as well as Git ones.
 
 ## Verify your dashboards in Grafana
 
