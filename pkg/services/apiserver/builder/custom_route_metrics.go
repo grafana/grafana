@@ -24,49 +24,46 @@ func NewCustomRouteMetrics(_ prometheus.Registerer) *CustomRouteMetrics {
 	return &CustomRouteMetrics{}
 }
 
-type responseWriterWithStatus struct {
+// ResponseWriterWithStatus tracks the first final HTTP status while allowing streaming and upgrades.
+type ResponseWriterWithStatus struct {
 	http.ResponseWriter
 	statusCode int
 	written    bool
 }
 
-func newResponseWriterWithStatus(w http.ResponseWriter) *responseWriterWithStatus {
-	return &responseWriterWithStatus{
+func NewResponseWriterWithStatus(w http.ResponseWriter) *ResponseWriterWithStatus {
+	return &ResponseWriterWithStatus{
 		ResponseWriter: w,
 		statusCode:     http.StatusOK,
-		written:        false,
 	}
 }
 
-func (w *responseWriterWithStatus) WriteHeader(statusCode int) {
-	if !w.written {
+func (w *ResponseWriterWithStatus) WriteHeader(statusCode int) {
+	if !w.written && (statusCode >= 200 || statusCode == http.StatusSwitchingProtocols) {
 		w.statusCode = statusCode
 		w.written = true
 	}
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (w *responseWriterWithStatus) Write(b []byte) (int, error) {
-	if !w.written {
-		// If WriteHeader hasn't been called,
-		// this is a StatusOK (default)
-		w.written = true
-	}
+func (w *ResponseWriterWithStatus) Write(b []byte) (int, error) {
+	w.written = true
 	return w.ResponseWriter.Write(b)
 }
 
-func (w *responseWriterWithStatus) StatusCode() int {
+func (w *ResponseWriterWithStatus) StatusCode() int {
 	return w.statusCode
 }
 
 // Flush implements http.Flusher, so handlers that stream their response, such
 // as plugin routes, can still flush through the wrapper.
-func (w *responseWriterWithStatus) Flush() {
+func (w *ResponseWriterWithStatus) Flush() {
+	w.written = true
 	_ = http.NewResponseController(w.ResponseWriter).Flush()
 }
 
 // Unwrap returns the wrapped writer for http.ResponseController.
-func (w *responseWriterWithStatus) Unwrap() http.ResponseWriter {
+func (w *ResponseWriterWithStatus) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
@@ -75,7 +72,7 @@ func (w *responseWriterWithStatus) Unwrap() http.ResponseWriter {
 // making custom routes appear alongside regular Kubernetes API metrics.
 func (m *CustomRouteMetrics) InstrumentHandler(group, version, resource string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wrappedWriter := newResponseWriterWithStatus(w)
+		wrappedWriter := NewResponseWriterWithStatus(w)
 		startTime := time.Now()
 
 		handler(wrappedWriter, r)

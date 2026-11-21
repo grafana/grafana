@@ -87,6 +87,15 @@ func SetRequestMetaData(ctx context.Context, rmd RequestMetaData) context.Contex
 	return context.WithValue(ctx, requestMetaDataContextKey, &rmd)
 }
 
+// EnsureRequestMetaData preserves the metadata shared with outer middleware,
+// installing the defaults when the request came in without that middleware.
+func EnsureRequestMetaData(ctx context.Context) context.Context {
+	if _, ok := ctx.Value(requestMetaDataContextKey).(*RequestMetaData); ok {
+		return ctx
+	}
+	return SetRequestMetaData(ctx, defaultRequestMetadata())
+}
+
 // SetOwner returns an `web.Handler` that sets the team name for an request.
 func SetOwner(team string) web.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {

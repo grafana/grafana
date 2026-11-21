@@ -20,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -110,9 +112,13 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
+	record := r.builder.cfg.RecordProxyRequest
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
+		if record != nil {
+			record(ctx, r.builder.pluginJSON.ID, http.StatusInternalServerError, string(requestmeta.StatusSourceServer))
+		}
 		return nil, errors.New("datasource proxy is not configured")
 	}
 
@@ -120,8 +126,28 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+
+		var status int
+		if record != nil {
+			recorder := builder.NewResponseWriterWithStatus(w)
+			w = recorder
+			defer func() {
+				if status == 0 {
+					status = recorder.StatusCode()
+				}
+				record(req.Context(), r.builder.pluginJSON.ID, status, pluginproxy.StatusSource(req.Context(), status))
+			}()
+		}
+
 		respondError := func(err error) {
-			responder.Error(proxyResponseError(req.Context(), err))
+			err = proxyResponseError(req.Context(), err)
+			// The Kubernetes responder writes to the original response writer.
+			status = http.StatusInternalServerError
+			var s apierrors.APIStatus
+			if errors.As(err, &s) && s.Status().Code != 0 {
+				status = int(s.Status().Code)
+			}
+			responder.Error(err)
 		}
 		if r.builder.cfg.HandlerOrigin != "" {
 			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
@@ -136,6 +162,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			respondError(err)
 			return
 		}
+		req = req.WithContext(requestmeta.EnsureRequestMetaData(req.Context()))
 		if deps.GrafanaConfig != nil {
 			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
 		}
