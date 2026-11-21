@@ -1,5 +1,5 @@
-// Command provisioning-sync runs the provisioning pull (sync) job from the command line, for
-// development and testing against git, GitHub and local repositories.
+// Command provisioning-sync runs the provisioning pull (sync) and push (export) jobs from the
+// command line, for development and testing against git, GitHub and local repositories.
 package main
 
 import (
@@ -18,6 +18,7 @@ import (
 const (
 	commandPlan = "plan"
 	commandPull = "pull"
+	commandPush = "push"
 
 	repoTokenEnv     = "PROVISIONING_REPO_TOKEN"
 	grafanaTokenEnv  = "GRAFANA_TOKEN"
@@ -25,11 +26,12 @@ const (
 	exchangeTokenEnv = "GRAFANA_EXCHANGE_TOKEN"
 )
 
-const usage = `provisioning-sync runs the provisioning pull job from the command line.
+const usage = `provisioning-sync runs the provisioning pull and push jobs from the command line.
 
 Usage:
   provisioning-sync plan [flags]   print what a pull would change, without writing anything
-  provisioning-sync pull [flags]   run the pull job against a running Grafana
+  provisioning-sync pull [flags]   run the pull (sync) job: repository -> Grafana
+  provisioning-sync push [flags]   run the push (export) job: unmanaged Grafana resources -> repository
 
 The repository is either:
   - a Repository in Grafana (--repo): its status is patched exactly as a pull job does, or
@@ -46,10 +48,16 @@ Grafana only lets the provisioning service identity write repository-managed res
 pull needs an access token for it, like the standalone operator uses: either minted per
 request with --token-exchange-url and --exchange-token ($GRAFANA_EXCHANGE_TOKEN), or given
 with --access-token ($GRAFANA_ACCESS_TOKEN). plan only reads, so a user is enough: --grafana-token
-($GRAFANA_TOKEN) or --grafana-user and --grafana-password.
+($GRAFANA_TOKEN) or --grafana-user and --grafana-password. So does push, which only writes to
+the repository.
 
 --incremental diffs the last synced commit against the latest one; --from-ref overrides the
 last synced commit. Local repositories are not versioned and always get a full pull.
+
+push commits everything in one commit (--message) to the configured branch, or to a new one
+with --push-branch, under --push-path. Exported resources get new names unless --keep-uids is
+set, as the export job does; --keep-uids is what migration uses, so a later pull takes them over.
+Folders keep their UIDs in _folder.json unless --new-folder-ids is set.
 
 Examples:
   provisioning-sync plan --type github --url https://github.com/org/repo --branch main --offline
@@ -59,6 +67,8 @@ Examples:
   provisioning-sync plan --repo my-repo --incremental
   provisioning-sync pull --repo my-repo --token-exchange-url http://localhost:6481/sign/access-token
   provisioning-sync pull --repo my-repo --access-token "$ACCESS_TOKEN" --incremental
+  provisioning-sync push --type github --url https://github.com/org/repo --push-branch export --message "Export"
+  provisioning-sync push --type local --path ./dashboards --keep-uids
 
 Flags:
 `
@@ -70,6 +80,12 @@ type options struct {
 	jsonOutput  bool
 	verbose     bool
 	offline     bool
+
+	message    string
+	pushBranch string
+	pushPath   string
+	keepUIDs   bool
+	newFolders bool
 
 	grafanaURL       string
 	grafanaToken     string
@@ -120,10 +136,14 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	}
 	logging.DefaultLogger = logging.NewSLogLogger(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
 
-	if opts.command == commandPlan {
+	switch opts.command {
+	case commandPlan:
 		return runPlan(ctx, opts, stdout)
+	case commandPush:
+		return runPush(ctx, opts, stdout)
+	default:
+		return runPull(ctx, opts, stdout)
 	}
-	return runPull(ctx, opts, stdout)
 }
 
 func parseOptions(args []string, output io.Writer) (options, error) {
@@ -134,12 +154,12 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 		fs.PrintDefaults()
 	}
 
-	if len(args) == 0 || (args[0] != commandPlan && args[0] != commandPull) {
+	if len(args) == 0 || (args[0] != commandPlan && args[0] != commandPull && args[0] != commandPush) {
 		fs.Usage()
 		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
 			return options{}, errHelp
 		}
-		return options{}, fmt.Errorf("expected a %q or %q command", commandPlan, commandPull)
+		return options{}, fmt.Errorf("expected a %q, %q or %q command", commandPlan, commandPull, commandPush)
 	}
 
 	opts := options{command: args[0]}
@@ -162,6 +182,12 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.name, "name", flagRepositoryName, "repository name that resources pulled with --type are managed under")
 	fs.StringVar(&opts.stateFile, "state-file", "", "file keeping the sync status of a repository described with --type (default .provisioning-sync/<namespace>/<name>.json)")
 	fs.BoolVar(&opts.offline, "offline", false, "plan a repository described with --type against an empty instance, without Grafana")
+
+	fs.StringVar(&opts.message, "message", "", "push: commit message (default \"Export from Grafana <job>\")")
+	fs.StringVar(&opts.pushBranch, "push-branch", "", "push: git branch to commit to, created if missing (default --branch)")
+	fs.StringVar(&opts.pushPath, "push-path", "", "push: directory in the repository to write under")
+	fs.BoolVar(&opts.keepUIDs, "keep-uids", false, "push: keep resource names instead of generating new ones")
+	fs.BoolVar(&opts.newFolders, "new-folder-ids", false, "push: write new folder UIDs to _folder.json, so pulling the export does not collide with the original folders")
 	fs.StringVar(&opts.url, "url", "", "git or GitHub repository URL")
 	fs.StringVar(&opts.branch, "branch", "main", "git or GitHub branch")
 	fs.StringVar(&opts.path, "path", "", "subdirectory in a git or GitHub repository, or the directory of a local one")
@@ -179,6 +205,15 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 		return options{}, fmt.Errorf("unexpected arguments: %v", fs.Args())
 	}
 
+	opts.readTokensFromEnvironment()
+	if err := opts.validate(); err != nil {
+		return options{}, err
+	}
+	return opts, nil
+}
+
+// readTokensFromEnvironment fills the tokens not given as flags, so they can stay out of argv.
+func (opts *options) readTokensFromEnvironment() {
 	if opts.token == "" {
 		opts.token = os.Getenv(repoTokenEnv)
 	}
@@ -191,23 +226,28 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	if opts.exchangeToken == "" {
 		opts.exchangeToken = os.Getenv(exchangeTokenEnv)
 	}
+}
 
+func (opts *options) validate() error {
 	switch {
 	case opts.tokenExchangeURL != "" && opts.exchangeToken == "":
-		return options{}, errors.New("--token-exchange-url needs --exchange-token or $" + exchangeTokenEnv)
+		return errors.New("--token-exchange-url needs --exchange-token or $" + exchangeTokenEnv)
 	case opts.repoName == "" && opts.repoType == "":
-		return options{}, errors.New("set --repo to read the repository from Grafana, or --type to describe it")
+		return errors.New("set --repo to read the repository from Grafana, or --type to describe it")
 	case opts.repoName != "" && opts.repoType != "":
-		return options{}, errors.New("--repo and --type cannot be used together")
+		return errors.New("--repo and --type cannot be used together")
 	case opts.repoName != "" && (opts.stateFile != "" || opts.offline):
-		return options{}, errors.New("--state-file and --offline are for repositories described with --type; --repo keeps its status in Grafana")
+		return errors.New("--state-file and --offline are for repositories described with --type; --repo keeps its status in Grafana")
 	case opts.offline && opts.command != commandPlan:
-		return options{}, errors.New("--offline only works with plan")
+		return errors.New("--offline only works with plan")
+	case opts.command == commandPush && (opts.incremental || opts.fromRef != ""):
+		return errors.New("--incremental and --from-ref are for pull and plan; push always exports everything")
+	case opts.command != commandPush && (opts.message != "" || opts.pushBranch != "" || opts.pushPath != "" || opts.keepUIDs || opts.newFolders):
+		return errors.New("--message, --push-branch, --push-path, --keep-uids and --new-folder-ids only work with push")
 	case opts.command == commandPull && opts.tokenExchangeURL == "" && opts.accessToken == "":
-		return options{}, errors.New("pull writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
+		return errors.New("pull writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
 	}
-
-	return opts, nil
+	return nil
 }
 
 // errWriter keeps the first write error, so printing code can check it once at the end.

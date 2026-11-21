@@ -21,8 +21,11 @@ func TestParseOptions(t *testing.T) {
 		args    []string
 		wantErr string
 	}{
-		{name: "missing command", args: nil, wantErr: `expected a "plan" or "pull" command`},
-		{name: "unknown command", args: []string{"push"}, wantErr: `expected a "plan" or "pull" command`},
+		{name: "missing command", args: nil, wantErr: `expected a "plan", "pull" or "push" command`},
+		{name: "unknown command", args: []string{"export"}, wantErr: `expected a "plan", "pull" or "push" command`},
+		{name: "incremental push", args: []string{"push", "--repo", "r", "--incremental"}, wantErr: "push always exports everything"},
+		{name: "push options on pull", args: []string{"pull", "--repo", "r", "--access-token", "at", "--push-branch", "b"}, wantErr: "only work with push"},
+		{name: "push as a user", args: []string{"push", "--type", "github", "--url", "https://github.com/o/r", "--push-branch", "export", "--message", "m", "--push-path", "p", "--keep-uids", "--new-folder-ids"}},
 		{name: "no repository", args: []string{"plan"}, wantErr: "set --repo"},
 		{name: "repo and type", args: []string{"plan", "--repo", "r", "--type", "git"}, wantErr: "cannot be used together"},
 		{name: "pull from flags as a user", args: []string{"pull", "--type", "local", "--path", "x"}, wantErr: "provisioning service identity"},
@@ -76,6 +79,7 @@ func TestRepositoryFromFlags(t *testing.T) {
 		assert.Equal(t, &provisioning.GitHubRepositoryConfig{URL: "https://github.com/org/repo", Branch: "dev", Path: "dashboards"}, cfg.Spec.GitHub)
 		assert.Equal(t, "default", cfg.Namespace)
 		assert.Equal(t, flagRepositoryName, cfg.Name)
+		assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow}, cfg.Spec.Workflows)
 	})
 
 	t.Run("name", func(t *testing.T) {
@@ -94,6 +98,7 @@ func TestRepositoryFromFlags(t *testing.T) {
 		cfg, err := repositoryFromFlags(options{repoType: "local", path: "/tmp/dashboards"})
 		require.NoError(t, err)
 		assert.Equal(t, &provisioning.LocalRepositoryConfig{Path: "/tmp/dashboards"}, cfg.Spec.Local)
+		assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow}, cfg.Spec.Workflows, "local repositories have no branches")
 	})
 
 	errorCases := map[string]options{

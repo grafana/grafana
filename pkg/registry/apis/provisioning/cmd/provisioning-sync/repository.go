@@ -54,6 +54,11 @@ func repositoryFromFlags(opts options) (*provisioning.Repository, error) {
 		return nil, fmt.Errorf("unsupported repository type %q: expected git, github or local", opts.repoType)
 	}
 
+	// Write access is what running push asks for; the branch workflow only applies to git.
+	cfg.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
+	if cfg.Spec.Type.IsGit() {
+		cfg.Spec.Workflows = append(cfg.Spec.Workflows, provisioning.BranchWorkflow)
+	}
 	return cfg, nil
 }
 
