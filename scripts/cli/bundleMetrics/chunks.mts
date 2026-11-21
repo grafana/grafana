@@ -93,9 +93,9 @@ export function getChunkMetrics(chunkGraph: ChunkGraph): Record<string, number> 
       }
     }
   }
-  metrics.totalJsBytes = totalJsBytes;
-  metrics.asyncJsBytes = totalJsBytes - initialJsBytes;
-  metrics.namedAsyncChunkJsBytes = namedAsyncChunkJsBytes;
+  metrics.totalChunksJsBytes = totalJsBytes;
+  metrics.asyncChunksJsBytes = totalJsBytes - initialJsBytes;
+  metrics.namedAsyncChunksJsBytes = namedAsyncChunkJsBytes;
 
   return metrics;
 }
