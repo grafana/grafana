@@ -22,10 +22,16 @@ type TemplateLimits struct {
 	MaxTemplateSizeBytes int `json:"max_template_size_bytes"`
 }
 
+// ConfigLimits contains limits related to the Alertmanager configuration.
+type ConfigLimits struct {
+	MaxGrafanaConfigSizeBytes int `json:"max_grafana_config_size_bytes"`
+}
+
 // TenantLimits contains all limit categories for a tenant.
 type TenantLimits struct {
 	Silences  *SilenceLimits  `json:"silences,omitempty"`
 	Templates *TemplateLimits `json:"templates,omitempty"`
+	Config    *ConfigLimits   `json:"config,omitempty"`
 }
 
 // GetLimits retrieves the tenant-scoped limits from the remote Alertmanager.

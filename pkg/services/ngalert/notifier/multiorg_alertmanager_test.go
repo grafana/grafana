@@ -263,7 +263,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	postable, err := Load([]byte(newConfig))
 	require.NoError(t, err)
 
-	err = mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable)
+	err = mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable, 0)
 	require.NoError(t, err)
 
 	// Verify that the org has the new config.
@@ -339,7 +339,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration_LegacyTimeInterval
 
 	postable, err := Load([]byte(defaultConfig))
 	require.NoError(t, err)
-	require.NoError(t, mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable))
+	require.NoError(t, mam.saveAndApplyConfig(ctx, 2, mam.alertmanagers[2], postable, 0))
 
 	require.NoError(t, mam.ActivateHistoricalConfiguration(ctx, 2, legacyID))
 

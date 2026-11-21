@@ -100,7 +100,7 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 		}),
 	}
 
-	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
+	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg, 0)
 	require.NoError(t, err)
 
 	_, err = moa.SaveAndApplyExtraConfiguration(context.Background(), 1, &user.SignedInUser{}, noopExtraConfigAuthz{}, v1.ExtraConfiguration{
@@ -248,7 +248,7 @@ receivers:
 			require.NoError(t, err)
 			ctx := context.Background()
 
-			err = moa.saveAndApplyConfig(ctx, 1, am, tc.config)
+			err = moa.saveAndApplyConfig(ctx, 1, am, tc.config, 0)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
