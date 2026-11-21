@@ -72,5 +72,46 @@ describe('color dimension', () => {
       expect(dim.get(0)).toBe(theme.visualization.getColorByName('green'));
       expect(dim.get(1)).toBe(theme.visualization.getColorByName('red'));
     });
+
+    it('scales a time field over its own min and max', () => {
+      const start = 1700000000000;
+      const frame = toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [start, start + 30000, start + 60000],
+            config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
+          },
+        ],
+      });
+      const dim = getColorDimension(frame, { fixed: '', field: 'time' }, theme);
+
+      // oldest is the start of the green-yellow-red gradient, newest is the end
+      expect([dim.get(0), dim.get(1), dim.get(2)]).toEqual([
+        'rgb(115, 191, 105)',
+        'rgb(226, 192, 61)',
+        'rgb(242, 73, 92)',
+      ]);
+      expect(dim.field?.state?.range).toEqual({ min: start, max: start + 60000, delta: 60000 });
+    });
+
+    it('keeps a configured min and max for a time field', () => {
+      const start = 1700000000000;
+      const frame = toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [start, start + 60000],
+            config: { color: { mode: FieldColorModeId.ContinuousGrYlRd }, min: start - 60000 },
+          },
+        ],
+      });
+      const dim = getColorDimension(frame, { fixed: '', field: 'time' }, theme);
+
+      // with the min a minute earlier, the oldest value sits in the middle of the gradient
+      expect([dim.get(0), dim.get(1)]).toEqual(['rgb(226, 192, 61)', 'rgb(242, 73, 92)']);
+    });
   });
 });
