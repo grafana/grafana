@@ -16,10 +16,7 @@
  */
 
 import { config } from '@grafana/runtime';
-import {
-  isExtensionSidebarFloatingOverridden,
-  setExtensionSidebarFloatingOverride,
-} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import { setExtensionSidebarFloatingOverride } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { dashboardComposerEnabled } from '../scene/dashboardModes';
@@ -174,11 +171,6 @@ export function settleComposerEnterRequest(uid: string, { keepFloating = false }
     dropOutstanding();
     notifyChange();
   }
-}
-
-/** Whether the user docked the sidebar while the request on `uid` waited, so its session should not float. */
-export function wasComposerEnterRequestDocked(uid: string): boolean {
-  return floated?.target.uid === uid && !isExtensionSidebarFloatingOverridden();
 }
 
 function releaseFloatedSidebar(): void {

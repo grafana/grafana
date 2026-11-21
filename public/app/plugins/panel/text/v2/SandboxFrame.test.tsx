@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
+import { TextSandbox } from './TextSandbox';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
@@ -28,7 +29,15 @@ async function frame() {
   return screen.getByTitle<HTMLIFrameElement>('Text content');
 }
 
+const notifications = new WeakMap<HTMLIFrameElement, { document: string; revision: number }>();
+
 function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {}) {
+  const current = notifications.get(frame) ?? { document: 'first', revision: 0 };
+  if (type === 'ready' && 'document' in extra && extra.document !== current.document) {
+    current.document = String(extra.document);
+    current.revision++;
+  }
+  notifications.set(frame, current);
   const shell = new DOMParser().parseFromString(frame.srcdoc, 'text/html');
   const channel = shell.querySelector('script')!.dataset.channel;
   fireEvent(
@@ -36,7 +45,14 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
     new MessageEvent('message', {
       source: frame.contentWindow,
       origin: frame.hasAttribute('sandbox') ? 'null' : window.location.origin,
-      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...(type === 'ready' && { document: 'first' }), ...extra },
+      data: {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel,
+        revision: current.revision,
+        type,
+        ...(type === 'ready' && { document: 'first' }),
+        ...extra,
+      },
       ...envelope,
     })
   );
@@ -309,9 +325,46 @@ it('updates height and pagination metrics only from valid runtime messages', asy
   expect(element.style.height).toBe('180px');
 });
 
-it.each(['html', 'policy', 'globalCss'] as const)(
-  'recreates on %s changes and ignores the old generation',
-  async (field) => {
+it.each(['dark', 'light'])(
+  'declares the host %s color scheme so the empty shell paints transparent',
+  async (scheme) => {
+    const original = window.getComputedStyle;
+    const spy = jest.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) => {
+      const style = original(element, pseudo);
+      return element instanceof HTMLIFrameElement ? ({ ...style, colorScheme: scheme } as CSSStyleDeclaration) : style;
+    });
+    try {
+      render(<SandboxFrame {...props()} />);
+      const element = await frame();
+      const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
+      expect(shell.head.querySelector('meta[name="color-scheme"]')?.getAttribute('content')).toBe(scheme);
+    } finally {
+      spy.mockRestore();
+    }
+  }
+);
+
+it('is a block element so its baseline gap cannot overflow a container sized to the frame', async () => {
+  render(<SandboxFrame {...props()} />);
+  expect((await frame()).style.display).toBe('block');
+});
+
+it('fills the minimum height without reporting it as content height', async () => {
+  const options = props({ minHeight: 300 });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'resize', { height: 11, contentHeight: 11 });
+  expect(element.style.height).toBe('300px');
+  expect(element).toHaveAttribute('data-text-content-height', '11');
+  expect(options.onHeight).toHaveBeenLastCalledWith(11, 11);
+  notify(element, 'resize', { height: 450, contentHeight: 450 });
+  expect(element.style.height).toBe('450px');
+});
+
+it.each([{ policy: undefined }, { mermaid: { securityLevel: 'strict' as const } }, { diagramError: 'Changed error' }])(
+  'recreates on policy or diagram configuration changes: %j',
+  async (change) => {
     const options = props();
     const { rerender } = render(<SandboxFrame {...options} />);
     const previous = await frame();
@@ -319,7 +372,7 @@ it.each(['html', 'policy', 'globalCss'] as const)(
     const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
       .channel;
     notify(previous, 'ready');
-    rerender(<SandboxFrame {...options} {...{ [field]: field === 'policy' ? undefined : options[field] + ' ' }} />);
+    rerender(<SandboxFrame {...options} {...change} />);
     const current = await frame();
     expect(current).not.toBe(previous);
     notify(
@@ -400,7 +453,7 @@ it('discards bootstrap completion for a replaced document', async () => {
   const options = props();
   const { rerender } = render(<SandboxFrame {...options} />);
   const previous = screen.getByTitle<HTMLIFrameElement>('Text content');
-  rerender(<SandboxFrame {...options} html="<p>Updated content</p>" />);
+  rerender(<SandboxFrame {...options} policy={undefined} />);
   const current = await frame();
   await act(async () => resolve('stale runtime'));
   expect(current.srcdoc).toContain('/* trusted runtime */');
@@ -500,7 +553,7 @@ it.each(['refresh', 'unmount'] as const)('discards Mermaid loading after %s', as
     unmount();
   }
   await act(async () => resolve('late Mermaid source'));
-  expect(postMessage).not.toHaveBeenCalled();
+  expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'mermaid-source' }), '*');
 });
 
 it('reports a Mermaid loading error without removing permitted content', async () => {
@@ -571,14 +624,14 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
     const errorCount = jest.mocked(options.onState).mock.calls.length;
     act(() => jest.runAllTimers());
     expect(options.onState).toHaveBeenCalledTimes(errorCount);
-    view.rerender(<SandboxFrame {...options} html="<p>Refreshed secret</p>" />);
+    view.rerender(<SandboxFrame {...options} globalCss="p{color:red}" html="<p>Refreshed secret</p>" />);
     await frame();
     expect(createPolicy).toHaveBeenCalledWith('grafana-text-panel-shell', expect.any(Object));
     const shell = createHTML.mock.calls[0][0];
     expect(shell).toContain('trusted runtime');
     expect(shell).not.toContain('Refreshed secret');
     expect(setter).toHaveBeenCalledWith(createHTML.mock.results[0].value);
-    view.rerender(<SandboxFrame {...options} html="<p>Another generation</p>" />);
+    view.rerender(<SandboxFrame {...options} globalCss="p{color:blue}" html="<p>Another generation</p>" />);
     await frame();
     expect(createPolicy).toHaveBeenCalledTimes(2);
   } finally {
@@ -589,4 +642,259 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
       Reflect.deleteProperty(window, 'trustedTypes');
     }
   }
+});
+
+it.each([true, false])('renders before fonts finish (font available: %s)', async (ok) => {
+  jest.useRealTimers();
+  const originalFetch = global.fetch;
+  const originalTimeout = AbortSignal.timeout;
+  const style = document.createElement('style');
+  style.dataset.emotion = 'text-global';
+  style.textContent = `@font-face { font-family: Test; src: url("/public/fonts/startup-${ok}.woff2"); }`;
+  document.head.append(style);
+  // JSDOM does not expose CSSStyleSheet.ownerNode.
+  Object.defineProperty(style.sheet, 'ownerNode', { value: style });
+  let finish!: (response: Partial<Response>) => void;
+  global.fetch = jest.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        finish = (response) => resolve(response as Response);
+      })
+  );
+  AbortSignal.timeout = () => new AbortController().signal;
+  const runtime = jest.mocked(loadSandboxRuntime);
+  runtime.mockClear();
+  try {
+    const { rerender } = render(<TextSandbox html="<p>Initial</p>" />);
+    await act(async () => {});
+    const fallback = screen.getByTitle<HTMLIFrameElement>('Text panel content');
+    expect(runtime).toHaveBeenCalledTimes(1);
+    const fallbackMessage = jest.spyOn(fallback.contentWindow!, 'postMessage').mockImplementation(() => {});
+    notify(fallback, 'ready');
+    expect(fallbackMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ html: '<p>Initial</p>', globalCss: expect.not.stringContaining('@font-face') }),
+      '*'
+    );
+    rerender(<TextSandbox html="<p>Latest</p>" />);
+    await act(async () => {
+      finish({ ok, blob: async () => new Blob(['font'], { type: 'font/woff2' }) });
+    });
+    await waitFor(() =>
+      expect(fallbackMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'styles',
+          revision: 1,
+          styleRevision: 1,
+          globalCss: expect.stringContaining(ok ? 'data:font/woff2;base64,Zm9udA==' : 'local("Arial")'),
+        }),
+        '*'
+      )
+    );
+    expect(screen.getByTitle('Text panel content')).toBe(fallback);
+    expect(runtime).toHaveBeenCalledTimes(1);
+    rerender(<TextSandbox html="<p>Latest</p>" minHeight={200} />);
+    expect(screen.getByTitle('Text panel content')).toBe(fallback);
+    expect(runtime).toHaveBeenCalledTimes(1);
+    runtime.mockClear();
+    render(<TextSandbox html="<p>Cached fonts</p>" />);
+    await act(async () => {});
+    expect(runtime).toHaveBeenCalledTimes(1);
+  } finally {
+    style.remove();
+    global.fetch = originalFetch;
+    AbortSignal.timeout = originalTimeout;
+  }
+});
+
+it('shares one message listener across frames and removes it after the last frame unmounts', async () => {
+  const add = jest.spyOn(window, 'addEventListener');
+  const remove = jest.spyOn(window, 'removeEventListener');
+  const first = props({ title: 'First' });
+  const second = props({ title: 'Second', policy: undefined });
+  try {
+    const { rerender, unmount } = render(
+      <>
+        <SandboxFrame key="first" {...first} />
+        <SandboxFrame key="second" {...second} />
+      </>
+    );
+    await act(async () => {});
+    const firstFrame = screen.getByTitle<HTMLIFrameElement>('First');
+    const secondFrame = screen.getByTitle<HTMLIFrameElement>('Second');
+    const messageListeners = add.mock.calls.filter(([type]) => type === 'message');
+    expect(messageListeners).toHaveLength(1);
+    const listener = messageListeners[0][1];
+    const firstPost = jest.spyOn(firstFrame.contentWindow!, 'postMessage').mockImplementation(() => {});
+    const secondPost = jest.spyOn(secondFrame.contentWindow!, 'postMessage').mockImplementation(() => {});
+
+    notify(firstFrame, 'ready', {}, { source: secondFrame.contentWindow });
+    expect(firstPost).not.toHaveBeenCalled();
+    notify(firstFrame, 'ready');
+    expect(firstPost).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), '*');
+    expect(secondPost).not.toHaveBeenCalled();
+    notify(secondFrame, 'ready');
+    expect(secondPost).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), window.location.origin);
+
+    rerender(<SandboxFrame key="second" {...second} />);
+    expect(remove).not.toHaveBeenCalledWith('message', listener);
+    notify(secondFrame, 'rendered');
+    expect(second.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+    unmount();
+    expect(remove).toHaveBeenCalledWith('message', listener);
+
+    const remount = render(<SandboxFrame {...first} />);
+    await act(async () => {});
+    expect(add.mock.calls.filter(([type]) => type === 'message')).toHaveLength(2);
+    const freshFrame = screen.getByTitle<HTMLIFrameElement>('First');
+    notify(freshFrame, 'ready');
+    notify(freshFrame, 'rendered');
+    expect(first.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+    remount.unmount();
+  } finally {
+    add.mockRestore();
+    remove.mockRestore();
+  }
+});
+
+it('notifies height consumers only when frame dimensions change', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'resize', { height: 180, contentHeight: 160 });
+  notify(element, 'resize', { height: 180, contentHeight: 160 });
+  expect(options.onHeight).toHaveBeenCalledTimes(1);
+  expect(options.onHeight).toHaveBeenLastCalledWith(180, 160);
+  notify(element, 'resize', { height: 180, contentHeight: 140 });
+  expect(options.onHeight).toHaveBeenCalledTimes(2);
+  expect(options.onHeight).toHaveBeenLastCalledWith(180, 140);
+  notify(element, 'resize', { height: 150, contentHeight: 140 });
+  expect(options.onHeight).toHaveBeenCalledTimes(3);
+  expect(options.onHeight).toHaveBeenLastCalledWith(150, 140);
+  expect(element.style.height).toBe('150px');
+});
+
+it('reuses protected documents for content updates and rejects replies from earlier renders', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const shell = element.srcdoc;
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  expect(await frame()).toBe(element);
+  expect(element.srcdoc).toBe(shell);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'render', revision: 1, html: '<p>Updated</p>', globalCss: undefined }),
+    '*'
+  );
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  for (const revision of [0, undefined, -1, 1.5, Infinity]) {
+    notify(element, 'rendered', { revision });
+    notify(element, 'error', { revision });
+    notify(element, 'resize', { revision, height: 999, contentHeight: 999 });
+    notify(element, 'blocked', { revision, resources: [{ directive: 'img-src' }] });
+  }
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  expect(options.onHeight).not.toHaveBeenCalled();
+  notify(element, 'rendered', { revision: 1 });
+  notify(element, 'resize', { revision: 1, height: 42, contentHeight: 40 });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+  expect(options.onHeight).toHaveBeenLastCalledWith(42, 40);
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ html: '<p>Updated</p>', globalCss: options.globalCss, revision: 2 }),
+    '*'
+  );
+});
+
+it('preserves blocked reports and pending Mermaid loading when styles change', async () => {
+  let finish!: (source: string) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  const options = props({ mermaid: { securityLevel: 'strict' } });
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  const resources = [{ directive: 'img-src', origin: 'https://blocked.test' }];
+  notify(element, 'blocked', { resources });
+  jest.mocked(options.onState).mockClear();
+  rerender(<SandboxFrame {...options} globalCss="p{color:blue}" />);
+  expect(await frame()).toBe(element);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'styles', revision: 0, styleRevision: 1, globalCss: 'p{color:blue}' }),
+    '*'
+  );
+  expect(options.onState).not.toHaveBeenCalled();
+  await act(async () => finish('/* Mermaid source */'));
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'mermaid-source', revision: 0, source: '/* Mermaid source */' }),
+    '*'
+  );
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources });
+});
+
+it('sends only the latest content when updated before the CSP handshake', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  rerender(<SandboxFrame {...options} html="<p>Latest</p>" />);
+  expect(await frame()).toBe(element);
+  expect(postMessage).not.toHaveBeenCalled();
+  notify(element, 'ready');
+  expect(postMessage).toHaveBeenCalledTimes(1);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ html: '<p>Latest</p>', revision: 1 }), '*');
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+});
+
+it('recreates legacy documents on content changes to discard script side effects', async () => {
+  const options = props({ policy: undefined });
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  expect(await frame()).not.toBe(element);
+});
+
+it('recreates blocked documents so unchanged stylesheet violations are reported again', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'blocked', { resources: [{ directive: 'font-src', origin: 'https://fonts.test' }] });
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  const updated = await frame();
+  expect(updated).not.toBe(element);
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  notify(updated, 'ready');
+  notify(updated, 'blocked', { resources: [{ directive: 'font-src', origin: 'https://fonts.test' }] });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [{ directive: 'font-src', origin: 'https://fonts.test' }],
+  });
+});
+
+it('recreates failed documents when the failure and a content update land in one render', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  postMessage.mockClear();
+  act(() => {
+    jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS);
+    rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  });
+  const updated = await frame();
+  expect(updated).not.toBe(element);
+  expect(postMessage).not.toHaveBeenCalled();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
 });

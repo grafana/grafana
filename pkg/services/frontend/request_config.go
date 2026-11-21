@@ -72,6 +72,9 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		TrustedTypesDefaultPolicyEnabled:     (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for")),
 		VerifyEmailEnabled:                   cfg.VerifyEmailEnabled,
 		BuildInfo:                            getBuildInfo(license, cfg),
+		// The nav overrides travel in the slim settings too: the client-built nav
+		// tree reads them at boot, before the bootdata call would arrive
+		Navigation: frontendsettings.ReadNavigationSettings(cfg),
 	}
 
 	securitySection := cfg.SectionWithEnvOverrides("security")

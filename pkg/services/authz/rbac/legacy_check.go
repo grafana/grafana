@@ -4,21 +4,88 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // LegacyCheck is a deprecated compatibility RPC used by ST callers during the
 // migration from local AccessControl evaluation to centralized AuthZ checks.
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	return s.withLegacyCheckInstrumentation(ctx, req, func(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+		if req.GetInternalIdentity() != nil {
+			return &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "internal legacy identities require the embedded server",
+			}, nil
+		}
+
+		return s.legacyCheck(ctx, req)
+	})
+}
+
+func (s *Service) withLegacyCheckInstrumentation(
+	ctx context.Context,
+	req *authzextv1.LegacyCheckRequest,
+	check func(context.Context, *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error),
+) (response *authzextv1.LegacyCheckResponse, err error) {
+	start := time.Now()
+	evaluation := "organization"
+	if req.GetInternalIdentity() != nil {
+		evaluation = "internal"
+	} else if req != nil && req.RequesterOrgId != nil && (req.GetRequesterOrgId() == accesscontrol.GlobalOrgID || req.GetRequesterOrgId() == accesscontrol.NoOrgID) {
+		evaluation = "global"
+	}
+
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.LegacyCheck", trace.WithAttributes(
+		attribute.String("evaluation", evaluation),
+		attribute.Bool("restricted", req.GetRestriction() != nil),
+		attribute.Bool("skip_cache", req.GetSkipCache()),
+		attribute.Bool("skip_scope_resolution", req.GetSkipScopeResolution()),
+	))
+
+	defer func() {
+		checkErr := err
+		errorType := "rpc"
+		// Application failures use a successful gRPC status, so inspect the response too.
+		if checkErr == nil && (response.GetError() != "" || response.GetErrorCode() != authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED) {
+			checkErr = fmt.Errorf("legacy check failed (%s): %s", response.GetErrorCode(), response.GetError())
+			errorType = "application"
+		}
+		if checkErr != nil {
+			s.metrics.legacyCheckErrors.WithLabelValues(evaluation, errorType).Inc()
+			_ = tracing.Error(span, checkErr)
+		}
+
+		allowed := checkErr == nil && response.GetAllowed()
+
+		s.metrics.legacyCheckRequests.WithLabelValues(evaluation, strconv.FormatBool(allowed)).Inc()
+		s.metrics.legacyCheckDuration.WithLabelValues(evaluation, strconv.FormatBool(allowed)).Observe(time.Since(start).Seconds())
+		span.SetAttributes(attribute.Bool("allowed", allowed))
+
+		span.End()
+	}()
+
+	return check(ctx, req)
+}
+
+func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	span := trace.SpanFromContext(ctx)
+
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
@@ -31,9 +98,22 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
+	requesterOrgID, err := legacyRequesterOrgID(req, ns)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
+
+	var (
+		userUID string
+		idType  types.IdentityType
+
+		isInternalIdentity = req.GetInternalIdentity() != nil
+	)
+	if !isInternalIdentity {
+		userUID, idType, err = s.validateSubject(ctx, req.GetSubject())
+		if err != nil {
+			return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+		}
 	}
 
 	ctx = request.WithNamespace(ctx, ns.Value)
@@ -41,6 +121,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+	span.SetAttributes(attribute.Int("action_count", len(actions)))
 
 	scopeRequest := legacyScopeRequest{
 		namespace:    ns,
@@ -49,11 +130,18 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		skipCache:    req.GetSkipCache(),
 	}
 
+	if restriction := req.GetRestriction(); restriction != nil {
+		// Preserve presence even when protobuf decodes an empty list as nil.
+		scopeRequest.restrictedActions = append([]string{}, restriction.GetActions()...)
+	}
+
 	var args legacyEvaluationArgs
-	if global := req.GetGlobalEvaluation(); global != nil {
-		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
+	if isInternalIdentity {
+		args, err = s.prepareLegacyInternalEvaluation(ctx, req, scopeRequest)
+	} else if requesterOrgID == accesscontrol.GlobalOrgID || requesterOrgID == accesscontrol.NoOrgID {
+		args, err = s.prepareLegacyGlobalEvaluation(ctx, requesterOrgID, actions, scopeRequest)
 	} else {
-		args, err = s.prepareLegacyOrgEvaluation(ctx, actions, scopeRequest)
+		args, err = s.prepareLegacyPermissions(ctx, actions, scopeRequest)
 	}
 
 	if err != nil {
@@ -87,29 +175,29 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
 }
 
-// getLegacyIdentityScopes loads one action for resolver callbacks that perform
-// further checks as the subject. Composite checks use getLegacyIdentityPermissions.
-func (s *Service) getLegacyIdentityScopes(
-	ctx context.Context,
-	ns types.NamespaceInfo,
-	idType types.IdentityType,
-	userUID string,
-	action string,
-	skipCache bool,
-) ([]string, error) {
-	permissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		ns,
-		idType,
-		userUID,
-		[]string{action},
-		skipCache,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not get legacy identity permissions: %w", err)
+func legacyRequesterOrgID(req *authzextv1.LegacyCheckRequest, namespace types.NamespaceInfo) (int64, error) {
+	if namespace.OrgID < 1 {
+		return 0, errors.New("legacy check requires a concrete namespace")
+	}
+	if req.RequesterOrgId == nil {
+		if req.GetInternalIdentity() != nil {
+			return namespace.OrgID, nil
+		}
+		return 0, errors.New("legacy check requires requester org ID")
 	}
 
-	return permissions[action], nil
+	orgID := *req.RequesterOrgId
+	if orgID < accesscontrol.NoOrgID {
+		return 0, errors.New("requester org must be positive, 0 or NoOrgID")
+	}
+	if orgID > 0 && orgID != namespace.OrgID {
+		return 0, errors.New("requester org does not match namespace")
+	}
+	if req.GetInternalIdentity() != nil && orgID < 1 {
+		return 0, errors.New("internal legacy identity requires an organization requester")
+	}
+
+	return orgID, nil
 }
 
 // getLegacyIdentityPermissions loads only the requested actions, including
@@ -138,16 +226,10 @@ func (s *Service) getLegacyIdentityPermissions(
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
 	case types.TypeRenderService:
-		for _, action := range actions {
-			scopes, err := s.getRendererPermissions(ctx, action)
-			if err != nil {
-				return nil, fmt.Errorf("could not get renderer permissions: %w", err)
-			}
-			if scopes["*"] {
-				permissions[action] = []string{"*"}
-			}
-		}
-		return permissions, nil
+		// TODO: this is a "temporary" fix. We are aiming to ask a render team to use JWT tokens intead
+		//		and remove the types.TypeRenderService.
+		// Local evaluation authenticates the render service with the Admin org role.
+		query.Role = string(org.RoleAdmin)
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
@@ -206,32 +288,4 @@ type legacyEvaluationArgs struct {
 	permissions       map[string][]string
 	hasAnyPermissions bool
 	scopeRequest      legacyScopeRequest
-}
-
-func (s *Service) prepareLegacyOrgEvaluation(
-	ctx context.Context,
-	actions []string,
-	scopeRequest legacyScopeRequest,
-) (legacyEvaluationArgs, error) {
-	permissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		scopeRequest.namespace,
-		scopeRequest.identityType,
-		scopeRequest.userUID,
-		actions,
-		scopeRequest.skipCache,
-	)
-	if err != nil {
-		return legacyEvaluationArgs{}, err
-	}
-
-	// The legacy loader adds SharedWithMe for users, service accounts and anonymous
-	// identities even without stored grants (legacypermissions/loader.go). Renderers
-	// have fixed grants. Their full permission sets are nonempty even when this
-	// filtered result is empty.
-	return legacyEvaluationArgs{
-		permissions:       permissions,
-		hasAnyPermissions: true,
-		scopeRequest:      scopeRequest,
-	}, nil
 }

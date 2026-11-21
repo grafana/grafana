@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -48,7 +49,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			})).Return(&org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{{
 					UID: "uid1", UserID: 42, Name: "Test User", Email: email, Login: login,
-					Role: "Viewer", Created: created, LastSeenAt: seen, IsDisabled: true,
+					Role: "Viewer", Created: created, LastSeenAt: seen, IsDisabled: true, IsProvisioned: true,
 				}},
 				TotalCount: 25,
 			}, nil).Once()
@@ -69,6 +70,7 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 			require.Equal(t, seen.Unix(), hit.LastSeenAt)
 			require.NotEmpty(t, hit.LastSeenAtAge)
 			require.True(t, hit.Disabled)
+			require.True(t, hit.Provisioned)
 		})
 	}
 }
@@ -157,6 +159,30 @@ func TestLegacyUserSortOptions(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, legacyUserSortOptions(tt.sort))
+		})
+	}
+}
+
+func TestUserSortParamsRoundTrip(t *testing.T) {
+	for _, tt := range []struct {
+		legacy string
+		want   string
+	}{
+		{legacy: "login-asc", want: "login"},
+		{legacy: "login-desc", want: "-login"},
+		{legacy: "email-asc", want: "email"},
+		{legacy: "email-desc", want: "-email"},
+		{legacy: "name-asc", want: "title"},
+		{legacy: "name-desc", want: "-title"},
+		{legacy: "lastSeenAtAge-asc", want: "lastSeenAt"},
+		{legacy: "lastSeenAtAge-desc", want: "-lastSeenAt"},
+	} {
+		t.Run(tt.legacy, func(t *testing.T) {
+			opt, ok := sortopts.SortOptionsByQueryParam[tt.legacy]
+			require.True(t, ok)
+			params := legacysort.ConvertToSortParams([]model.SortOption{opt}, UserSortFieldMapping())
+			require.Equal(t, []string{tt.want}, params)
+			require.Equal(t, []model.SortOption{opt}, legacyUserSortOptions(params))
 		})
 	}
 }

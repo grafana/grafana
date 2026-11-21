@@ -109,7 +109,9 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
+	// A cross-namespace caller (e.g. a service's access policy token with namespace "*") has no
+	// single stack or org to resolve display information in, so respond with the authenticated details.
+	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil && ns.Value != "*" {
 		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
 		key := authInfo.GetUID()
@@ -135,7 +137,8 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 				if item.Identity != rsp.Identity {
 					continue
 				}
-				if item.DisplayName != "" {
+				// Access-policy resolvers only provide a generic label; prefer the authenticated name.
+				if item.DisplayName != "" && (rsp.Identity.Type != authlib.TypeAccessPolicy || rsp.DisplayName == "") {
 					rsp.DisplayName = item.DisplayName
 				}
 				rsp.AvatarURL = item.AvatarURL

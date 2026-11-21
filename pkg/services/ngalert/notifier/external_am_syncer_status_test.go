@@ -195,6 +195,7 @@ func TestSyncReasonMethods(t *testing.T) {
 		{ReasonMimirFetch, "mimir_fetch", "MimirFetchFailed"},
 		{ReasonSave, "save", "SaveFailed"},
 		{ReasonIdentifierMismatch, "identifier_mismatch", "IdentifierMismatch"},
+		{ReasonIdentifierTaken, "identifier_taken", "IdentifierTaken"},
 		{ReasonUnclassified, "unclassified", "SyncFailed"},
 	}
 	for _, c := range cases {
@@ -231,6 +232,12 @@ func TestClassifySaveError(t *testing.T) {
 		require.NotNil(t, got)
 		assert.Equal(t, ReasonSave, got.Reason)
 		assert.Equal(t, "disk full", got.Error())
+	})
+	t.Run("identifier-taken error → ReasonIdentifierTaken", func(t *testing.T) {
+		built := ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": "test"}})
+		got := ClassifySaveError(built)
+		require.NotNil(t, got)
+		assert.Equal(t, ReasonIdentifierTaken, got.Reason)
 	})
 	t.Run("identifier-mismatch error → ReasonIdentifierMismatch", func(t *testing.T) {
 		built := ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": "test"}})

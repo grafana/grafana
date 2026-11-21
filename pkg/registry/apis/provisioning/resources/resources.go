@@ -304,6 +304,10 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
 
+	if err := checkSecureValues(parsed); err != nil {
+		return "", parsed.GVK, err
+	}
+
 	// Check if the resource already exists
 	id := resourceID{
 		Name:     parsed.Obj.GetName(),
@@ -466,6 +470,13 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	// Before the identity-change delete below, not just at the write: rejecting
+	// the destination afterwards would leave the old resource deleted with no
+	// replacement.
+	if err := checkSecureValues(newParsed); err != nil {
+		return "", "", newParsed.GVK, size, err
 	}
 
 	if oldParseErr != nil {

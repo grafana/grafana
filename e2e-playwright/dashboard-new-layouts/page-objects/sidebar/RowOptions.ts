@@ -24,6 +24,32 @@ export class RowOptions extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput);
   }
 
+  /** Returns the row's fill screen switch */
+  getFillScreenSwitch(): Locator {
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dash-row-edit Fill screen')
+    ).getByRole('switch', {
+      name: 'Fill screen',
+      exact: true,
+    });
+  }
+
+  /** Toggles the row's fill screen option */
+  async toggleFillScreen() {
+    await test.step('Toggle Fill screen for the row', async () => {
+      // Switch inputs sit behind their labels, so target the input with force.
+      await this.getFillScreenSwitch().click({ force: true });
+    });
+  }
+
+  /** Returns the switch that hides the row header in view mode */
+  getHideHeaderSwitch(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('switch', {
+      name: 'Hide row header',
+      exact: true,
+    });
+  }
+
   /** Sets the row title */
   async setTitle(rowTitle: string) {
     await test.step(`Set row title to "${rowTitle}"`, async () => {

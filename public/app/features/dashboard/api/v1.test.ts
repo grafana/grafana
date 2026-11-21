@@ -138,7 +138,7 @@ describe('v1 dashboard API', () => {
       },
     });
 
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValueOnce({
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValueOnce({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -184,7 +184,7 @@ describe('v1 dashboard API', () => {
       },
     });
     jest
-      .spyOn(folderHooks, 'getFolderByUidFacade')
+      .spyOn(folderHooks, 'getCombinedFolder')
       .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardAPI();
@@ -196,7 +196,7 @@ describe('v1 dashboard API', () => {
       ...mockDashboardDto,
       metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
     });
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
 
     const api = new K8sDashboardAPI();
     const dashboardDTO = await api.getDashboardDTO('test');
@@ -571,6 +571,46 @@ describe('v1 dashboard API', () => {
       const result = await api.getDeletedDashboard('deleted-dash-1');
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getDashboardHistoryVersions', () => {
+    it('should stop requesting history once the requested versions are found', async () => {
+      mockGet.mockResolvedValueOnce({
+        metadata: { resourceVersion: '1', continue: 'token-page2' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+        ],
+      });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [3]);
+
+      expect(result.map((item) => item.metadata.generation)).toEqual([3]);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should follow the continue token while versions are still missing', async () => {
+      mockGet
+        .mockResolvedValueOnce({
+          metadata: { resourceVersion: '1', continue: 'token-page2' },
+          items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } }],
+        })
+        .mockResolvedValueOnce({
+          metadata: { resourceVersion: '1' },
+          items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } }],
+        });
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [1]);
+
+      expect(result.map((item) => item.metadata.generation)).toEqual([1]);
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenLastCalledWith(
+        expect.any(String),
+        expect.objectContaining({ limit: 1000, continue: 'token-page2' })
+      );
     });
   });
 

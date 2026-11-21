@@ -1,11 +1,11 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
+import { Box, Divider, FilterInput, Grid, Icon, Label, ScrollContainer, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
-import { type FilterDefinition } from './filterDefinitions';
+import { type FilterHelp } from './filterDefinitions';
 import { type FilterIssue } from './parser';
 
 export interface RuleSearchInputProps {
@@ -13,7 +13,7 @@ export interface RuleSearchInputProps {
   query: string;
   /** Also called with the applied query itself, for example on blur after Enter. */
   onApply: (query: string) => void;
-  filters: FilterDefinition[];
+  filterHelp: FilterHelp[];
   issues?: FilterIssue[];
   /** Rendered beside the input box, so it stays aligned with the box however many issue messages show below. */
   trailing?: ReactNode;
@@ -23,12 +23,14 @@ const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /** The typed text is a draft until it is applied. A change to the applied query, such as Back/Forward, replaces it. */
-export function RuleSearchInput({ query, onApply, filters, issues = [], trailing }: RuleSearchInputProps) {
+export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trailing }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setDraft(query);
-  }, [query]);
+  }
 
   const handleChange = (value: string) => {
     setDraft(value);
@@ -47,7 +49,7 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
 
   const handleBlur = () => onApply(draft);
 
-  const issueMessages = describeIssues(issues, filters);
+  const issueMessages = describeIssues(issues, filterHelp);
   const hasIssues = issueMessages.length > 0;
 
   return (
@@ -57,7 +59,7 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
           <span>
             <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
           </span>
-          <PopupCard content={<SearchHelp filters={filters} />}>
+          <PopupCard content={<SearchHelp filterHelp={filterHelp} />}>
             <Icon
               name="info-circle"
               size="sm"
@@ -96,12 +98,12 @@ export function RuleSearchInput({ query, onApply, filters, issues = [], trailing
   );
 }
 
-function describeIssues(issues: FilterIssue[], filters: FilterDefinition[]): string[] {
-  const keysWith = (reason: 'invalid' | 'unavailable') => [
+function describeIssues(issues: FilterIssue[], filterHelp: FilterHelp[]): string[] {
+  const keysWith = (reason: 'invalid' | 'unavailable' | 'missingValue') => [
     ...new Set(issues.flatMap((issue) => (issue.key !== null && issue.reason === reason ? [issue.key] : []))),
   ];
   const has = (reason: FilterIssue['reason']) => issues.some((issue) => issue.reason === reason);
-  const valuesByKey = new Map<string, string[] | undefined>(filters.map(({ key, values }) => [key, values]));
+  const valuesByKey = new Map<string, string[] | undefined>(filterHelp.map(({ key, values }) => [key, values]));
   const messages: string[] = [];
 
   const invalidKeys = keysWith('invalid');
@@ -125,6 +127,15 @@ function describeIssues(issues: FilterIssue[], filters: FilterDefinition[]): str
         })
       );
     }
+  }
+  const keysWithoutValue = keysWith('missingValue');
+  if (keysWithoutValue.length > 0) {
+    messages.push(
+      t('alerting.gma-rule-list.search.missing-value', 'Put a value right after the colon, with no space: {{tokens}}', {
+        interpolation: { escapeValue: false },
+        tokens: keysWithoutValue.map((key) => `${key}:`).join(', '),
+      })
+    );
   }
   for (const issue of issues) {
     if (issue.reason === 'rejected') {
@@ -168,34 +179,37 @@ function describeIssues(issues: FilterIssue[], filters: FilterDefinition[]): str
   return messages;
 }
 
-function SearchHelp({ filters }: { filters: FilterDefinition[] }) {
+function SearchHelp({ filterHelp }: { filterHelp: FilterHelp[] }) {
   return (
-    <Stack direction="column" gap={1}>
-      <Text element="p">
-        <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
-          Search syntax allows you to query rules by the filters below.
-        </Trans>
-      </Text>
-      <Divider spacing={0} />
-      <Grid columns={3} gap={1} alignItems="center">
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+    // The popup has no height limit, so a tall help would be cut off.
+    <ScrollContainer maxHeight="60vh">
+      <Stack direction="column" gap={1}>
+        <Text element="p">
+          <Trans i18nKey="alerting.gma-rule-list.search.help-intro">
+            Search syntax allows you to query rules by the filters below.
+          </Trans>
         </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
-        </Text>
-        <Text weight="bold">
-          <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
-        </Text>
-        {filters.map((definition) => (
-          <HelpRow key={definition.key} definition={definition} />
-        ))}
-      </Grid>
-    </Stack>
+        <Divider spacing={0} />
+        <Grid columns={3} gap={1} alignItems="center">
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-filter-type">Filter type</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-expression">Expression</Trans>
+          </Text>
+          <Text weight="bold">
+            <Trans i18nKey="alerting.gma-rule-list.search.help-availability">Availability</Trans>
+          </Text>
+          {filterHelp.map((definition) => (
+            <HelpRow key={definition.key} definition={definition} />
+          ))}
+        </Grid>
+      </Stack>
+    </ScrollContainer>
   );
 }
 
-function HelpRow({ definition }: { definition: FilterDefinition }) {
+function HelpRow({ definition }: { definition: FilterHelp }) {
   return (
     <>
       <Stack direction="column" gap={0.25}>
@@ -210,7 +224,7 @@ function HelpRow({ definition }: { definition: FilterDefinition }) {
   );
 }
 
-function HelpAvailability({ definition }: { definition: FilterDefinition }) {
+function HelpAvailability({ definition }: { definition: FilterHelp }) {
   const { unavailableValues = [] } = definition;
 
   return (

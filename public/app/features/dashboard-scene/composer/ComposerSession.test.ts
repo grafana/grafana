@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getEffectiveExtensionSidebarPresentation,
@@ -13,12 +13,13 @@ import { setDashboardMutationClientForTests } from 'app/features/plugins/compone
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { canManuallyEditDashboard, getDashboardMode } from '../scene/dashboardModes';
+import { canManuallyEditDashboard, getDashboardMode, getPickerMode } from '../scene/dashboardModes';
 import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { DashboardInteractions } from '../utils/interactions';
+import { resolveMultiValueOperatorsOnActivate } from '../utils/resolveMultiValueOperatorsOnActivate';
 
 import { ComposerSession } from './ComposerSession';
 import { canEnterComposer } from './composerAccess';
@@ -94,7 +95,11 @@ function setup() {
   return scene;
 }
 
-function enter(scene: DashboardScene) {
+/** Enters Composer over Editing, where it writes, unless `from` says Viewing. */
+function enter(scene: DashboardScene, from: 'view' | 'edit' = 'edit') {
+  if (from === 'edit') {
+    scene.setDashboardMode('edit');
+  }
   return ComposerSession.enter(scene);
 }
 
@@ -132,8 +137,14 @@ describe('entering and leaving Composer', () => {
     const scene = setup();
     setTestFlags(flags);
     expect(canEnterComposer(scene)).toEqual({ ok: false, reason: 'unsupported' });
-    expect(() => enter(scene)).toThrow('unsupported');
+    expect(() => enter(scene, 'view')).toThrow('unsupported');
     expect(getDashboardMode(scene.state)).toBe('view');
+  });
+
+  it('tells a consumer that presses reach the dashboard while no pick is pending', () => {
+    const session = enter(setup());
+
+    expect(session.passthrough).toBe(true);
   });
 
   it('requires edit permission and an active dashboard', () => {
@@ -143,19 +154,79 @@ describe('entering and leaving Composer', () => {
     expect(canEnterComposer(null)).toEqual({ ok: false, reason: 'no_document' });
   });
 
-  it('attributes the edit session and period it starts to Assistant', () => {
+  it('starts no edit session over Viewing until Assistant edits, which switches it to Editing', async () => {
     const scene = setup();
     const sessionStarted = jest.spyOn(DashboardInteractions, 'editSessionStarted');
-    const periodStarted = jest.spyOn(DashboardInteractions, 'editPeriodStarted');
     try {
-      enter(scene);
+      const session = enter(scene, 'view');
+      expect(getDashboardMode(scene.state)).toBe('composer');
+      expect(getPickerMode(scene.state)).toBe('view');
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(sessionStarted).not.toHaveBeenCalled();
+      expect(session.canWrite).toBe(false);
+
+      const { spec, revision } = await retitled(session, 'Assistant edit');
+      const outcome = await session.applySpec(spec, { signal: live(), baseRevision: revision });
+
+      expect(outcome.status).toBe('applied');
+      expect(scene.state.title).toBe('Assistant edit');
+      expect(getDashboardMode(scene.state)).toBe('composer');
+      expect(getPickerMode(scene.state)).toBe('edit');
+      expect(session.canWrite).toBe(true);
       expect(sessionStarted).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
-      expect(periodStarted).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
-      expect(scene.getEditSessionSource()).toBe('assistant');
-      expect(scene.getEditSessionTracking()).toMatchObject({ edit_source: 'assistant', mode: 'composer' });
     } finally {
       sessionStarted.mockRestore();
-      periodStarted.mockRestore();
+    }
+  });
+
+  it('switches to Editing for an Assistant edit through the generic Mutation API too', async () => {
+    const scene = setup();
+    enter(scene, 'view');
+    const spec = JSON.parse(getDashboardResourceText(scene)).spec;
+    spec.title = 'Assistant mutation';
+
+    const result = await new DashboardMutationClient(scene).execute(
+      { type: 'APPLY_SPEC', payload: { spec } },
+      'grafana-assistant-app'
+    );
+
+    expect(result.success).toBe(true);
+    expect(scene.state.title).toBe('Assistant mutation');
+    expect(getDashboardMode(scene.state)).toBe('composer');
+    expect(getPickerMode(scene.state)).toBe('edit');
+  });
+
+  it('starts a user edit session when switched to Editing, and writes from then on', async () => {
+    const scene = setup();
+    const sessionStarted = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+    try {
+      const session = enter(scene, 'view');
+      const changes: boolean[] = [];
+      session.onCanWriteChange((canWrite) => changes.push(canWrite));
+
+      scene.setComposerEditing(true);
+
+      expect(getDashboardMode(scene.state)).toBe('composer');
+      expect(getPickerMode(scene.state)).toBe('edit');
+      expect(scene.state.isEditing).toBe(true);
+      expect(sessionStarted).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+      expect(isFullDashboardEditing(scene.state)).toBe(false);
+      expect(session.canWrite).toBe(true);
+      expect(changes).toEqual([true]);
+
+      // With nothing unsaved, switching back to Viewing needs no prompt.
+      scene.setComposerEditing(false);
+      expect(getPickerMode(scene.state)).toBe('view');
+      expect(session.canWrite).toBe(false);
+      expect(changes).toEqual([true, false]);
+      expect(session.signal.aborted).toBe(false);
+
+      scene.setComposerEditing(true);
+      const { spec, revision } = await retitled(session, 'Over Editing');
+      expect((await session.applySpec(spec, { signal: live(), baseRevision: revision })).status).toBe('applied');
+      expect(scene.state.title).toBe('Over Editing');
+    } finally {
+      sessionStarted.mockRestore();
     }
   });
 
@@ -164,7 +235,7 @@ describe('entering and leaving Composer', () => {
     const removeAll = jest.spyOn(KeybindingSet.prototype, 'removeAll');
     const addBinding = jest.spyOn(KeybindingSet.prototype, 'addBinding');
     try {
-      const session = enter(scene);
+      const session = enter(scene, 'view');
       expect(removeAll).toHaveBeenCalledTimes(1);
       addBinding.mockClear();
       session.exit();
@@ -190,14 +261,14 @@ describe('entering and leaving Composer', () => {
     session.exit();
 
     expect(session.signal.aborted).toBe(true);
-    expect(getDashboardMode(scene.state)).toBe('view');
+    expect(getDashboardMode(scene.state)).toBe('edit');
     expect(scene.state.isDirty).toBe(true);
     expect(scene.state.title).toBe('Composer title');
     expect(scene.getComposerSession()).toBeUndefined();
     expect(sidebarPresentation()).toBe('docked');
   });
 
-  it('returns to clean Viewing when an edit is restored to the saved spec before exit', async () => {
+  it('leaves the dashboard clean when an edit is restored to the saved spec before exit', async () => {
     const scene = setup();
     // A loaded dashboard's saved version is fully populated; the sparse fixture JSON is not, and v1 only
     // writes `preload` once it is set.
@@ -218,26 +289,22 @@ describe('entering and leaving Composer', () => {
     expect(scene.state.isDirty).toBe(false);
 
     session.exit();
-    expect(getDashboardMode(scene.state)).toBe('view');
+    expect(getDashboardMode(scene.state)).toBe('edit');
     expect(scene.state.isDirty).toBe(false);
   });
 
-  it('returns to Viewing and keeps the dirty flag when a real change remains', async () => {
+  it('returns to Viewing when it is over Viewing, with no edit session', () => {
     const scene = setup();
-    const session = enter(scene);
-    const { spec, revision } = await retitled(session, 'Still changed');
-    await session.applySpec(spec, { signal: live(), baseRevision: revision });
-
-    session.exit();
-
+    enter(scene, 'view').exit();
     expect(getDashboardMode(scene.state)).toBe('view');
-    expect(scene.state.isDirty).toBe(true);
+    expect(scene.state.isEditing).toBeFalsy();
   });
 
-  it('returns to Editing when entered from Editing', () => {
+  it('returns to Editing when it was switched to Editing', () => {
     const scene = setup();
-    scene.setDashboardMode('edit');
-    enter(scene).exit();
+    const session = enter(scene, 'view');
+    scene.setComposerEditing(true);
+    session.exit();
     expect(getDashboardMode(scene.state)).toBe('edit');
   });
 
@@ -289,6 +356,154 @@ describe('entering and leaving Composer', () => {
   });
 });
 
+describe('why a session ended', () => {
+  it.each([
+    ['the plugin', (_scene: DashboardScene, session: ComposerSession) => session.exit(), 'plugin_exit'],
+    ['the toolbar button', (scene: DashboardScene) => scene.leaveComposer(), 'toolbar_button'],
+    ['the mode picker', (scene: DashboardScene) => scene.setDashboardMode('view', 'picker'), 'mode_change'],
+    ['openFullEditor', (scene: DashboardScene) => scene.openFullEditor(), 'manual_edit'],
+    [
+      'discarding the edit session',
+      (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true }),
+      'mode_change',
+    ],
+  ])('names %s on the aborted signal', (_name, leave, reason) => {
+    const scene = setup();
+    const session = enter(scene);
+
+    leave(scene, session);
+
+    expect(session.signal.aborted).toBe(true);
+    expect(session.signal.reason).toBe(reason);
+  });
+
+  it('names the scene deactivating as navigation', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    deactivate();
+    deactivate = () => {};
+
+    expect(session.signal.reason).toBe('navigation');
+  });
+
+  it('names the Composer flag turning off', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    await act(async () => setTestFlags({ ...COMPOSER_FLAGS, 'grafana.dashboardComposer': false }));
+
+    expect(session.signal.reason).toBe('flag_off');
+  });
+
+  it('reports the first reason named, as the path that started the exit', () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    session.noteExitReason('toolbar_button');
+    session.exit('sidebar_closed');
+
+    expect(session.signal.reason).toBe('toolbar_button');
+  });
+});
+
+describe('edit periods that used Composer', () => {
+  const tracked = () => jest.spyOn(DashboardInteractions, 'editPeriodEnded');
+
+  it('marks a period Composer was entered over', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it.each([
+    ['the user', (scene: DashboardScene) => scene.setComposerEditing(true)],
+    ['Assistant', (scene: DashboardScene) => scene.startComposerEditingForAssistant()],
+  ])('marks the period %s started by switching Composer from Viewing to Editing', (_name, switchToEditing) => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene, 'view');
+      switchToEditing(scene);
+      session.exit();
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('marks a period that starts while Composer stays open after a save', async () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      const session = enter(scene);
+      const saved = await retitled(session, 'Saved');
+      await session.applySpec(saved.spec, { signal: live(), baseRevision: saved.revision });
+      // A save ends the period; Composer stays open over Editing.
+      await scene.saveCompleted(scene.getSaveModel(), {
+        slug: 'slug',
+        uid: 'composer-test',
+        url: 'url',
+        version: 2,
+        status: 'success',
+      });
+
+      const next = await retitled(session, 'After save');
+      await session.applySpec(next.spec, { signal: live(), baseRevision: next.revision });
+      session.exit();
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledTimes(1);
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: true }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves a period Composer never touched unmarked', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      scene.setDashboardMode('edit');
+
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+
+  it('leaves the next period unmarked when Composer was used only in the one before', () => {
+    const ended = tracked();
+    try {
+      const scene = setup();
+      enter(scene).exit();
+      scene.exitEditMode({ skipConfirm: true });
+      ended.mockClear();
+
+      scene.setDashboardMode('edit');
+      scene.exitEditMode({ skipConfirm: true });
+
+      expect(ended).toHaveBeenCalledWith(expect.objectContaining({ composer_used: false }));
+    } finally {
+      ended.mockRestore();
+    }
+  });
+});
+
 describe('checked apply', () => {
   it('applies inside the edit session, bumps the revision and supports native undo after exit', async () => {
     const scene = setup();
@@ -328,9 +543,8 @@ describe('checked apply', () => {
     expect(scene.state.title).toBe('Theirs');
   });
 
-  // Since #133913 a rebuilt ad hoc variable resolves its data source after the build, outside the write. The
-  // result must reach the live variable, and must not count as a change, or every write would make the next
-  // one stale.
+  // A rebuilt ad hoc variable resolves its data source when it activates, outside the write. The result must
+  // not count as a change, or every write would make the next one stale.
   it('keeps its revision through the lookups a rebuilt spec finishes later', async () => {
     const scene = setup();
     const session = enter(scene);
@@ -358,6 +572,11 @@ describe('checked apply', () => {
 
     const applied = await session.applySpec(withAdhoc, { signal: live(), baseRevision: revision });
     expect(applied).toMatchObject({ status: 'applied', revision: revision + 1 });
+    const filters = sceneGraph.lookupVariable('filters', scene);
+    if (filters instanceof AdHocFiltersVariable) {
+      // What the variable runs when its filter control mounts.
+      resolveMultiValueOperatorsOnActivate(filters);
+    }
     // Let the data source lookup land.
     await act(async () => {});
 
@@ -495,6 +714,23 @@ describe('picking', () => {
     const exited = session.pickElement(live());
     session.exit();
     await expect(exited).resolves.toBeNull();
+  });
+
+  it('keeps picking while working, and reports a turn running whether paused or working', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    const pick = session.pickElement(live());
+    session.setWorking(true);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(session.assistantWorking).toBe(true);
+    session.completePick(null);
+    await expect(pick).resolves.toBeNull();
+
+    session.setWorking(false);
+    expect(session.assistantWorking).toBe(false);
+    session.setPaused(true);
+    expect(session.assistantWorking).toBe(true);
   });
 
   it('keeps the highlight target for the overlay', () => {

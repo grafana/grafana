@@ -9,14 +9,18 @@ files without adding anything.
 - **Free text** searches rule titles: `cpu high`. A word is a filter only when it starts with one of
   the page's keys. Any other `key:value` word is title text, so `foo:bar` searches titles, and so does
   `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
-- **`key:value`** filters: `folder:` and `datasource:` take UIDs and match them exactly. `folder:`
-  replaces the old list's `namespace:`.
+- **`key:value`** filters: `folder:` takes a folder name, or part of it, and matches every folder whose
+  title contains each of its words, ignoring case, like the old list's `namespace:`. The rule search
+  then searches the matching folders by UID. `folderUid:` and `datasource:` take UIDs and match them
+  exactly; the sidebar's folder picker writes `folderUid:`. With both folder filters, a folder must
+  match the name and be one of the UIDs.
 - **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
   `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
   `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash
   is an ordinary character, so a value can't contain a quote.
 - **Repeats**: a single-value filter keeps its last value, so `state:firing state:normal` is
-  `state:normal`. Folders, data sources, labels and title words add up.
+  `state:normal`. `folder:` is single-value too, since the folder search takes one text query.
+  Folder UIDs, data sources, labels and title words add up.
 - **Case**: `state:`, `health:` and `paused:` values ignore case. Keys don't: `State:firing` is title
   text.
 
@@ -35,7 +39,7 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
 
 ## Invalid filters
 
-`parse(query, kind)` returns the filter and its issues, in two steps:
+`parse(query, schema)` returns the page's filter and its issues, in two steps:
 
 1. **Parsing** turns the text into the filter. It rejects a token only when the filter can't hold its
    value: a missing value (`label:`), a value outside the filter's set (`state:bogus`,
@@ -45,7 +49,7 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
    next to `policy:`, `panelId:` without `dashboard:`, and the filters the rule search can't serve
    yet, `policy:default` and `paused:false`.
 
-So `state:bogus` is a parse rejection and `folder:f*` is feedback. The page sends no request while
+So `state:bogus` is a parse rejection and `datasource:__expr__` is feedback. The page sends no request while
 there are issues.
 
 The rule search validates the rest itself, such as label regexes. When it refuses a search (422), each
@@ -59,18 +63,31 @@ A _token_ is a piece of the typed query. A _filter definition_ describes a filte
 parser applies a token when one of the page's definitions accepts it.
 
 - `tokenizer.ts`: the query into `RawToken`s.
-- `ruleSearchFilter.ts`: the `RuleSearchFilter` model, and the API values each `state:` and `health:`
-  value matches.
-- `filterDefinitions.ts`, `alertFilters.ts`, `recordingFilters.ts`: each page's filters, in the order
-  the search help lists them, with each kind's key type.
-- `parser.ts`: `parse(query, kind)`, the parsing and feedback steps above. Label matchers reuse
-  `parseMatcher` from `utils/matchers.ts`, as RuleList.v2 does.
-- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
+- `sharedRuleFilter.ts`: `SharedRuleFilter`, what both pages' filters hold, and the API values each
+  `health:` value matches. Each page extends it: `AlertRuleFilter` in `alert-rules/alertRuleFilters.ts`
+  and `RecordingRuleFilter` in `recording-rules/recordingRuleFilters.ts`, with the page's search schema.
+- `filterDefinitions.ts`: `RuleSearchSchema`, `FilterDefinition` and `FilterHelp`. A definition owns
+  everything about one filter: its help, `apply` for the parsing step, `feedback` for the feedback step,
+  and the renamed values it suggests a replacement for. The search input reads only the `FilterHelp` part. A schema is typed by its page's key union, so a definition can't
+  join a page that has no such filter.
+- `sharedFilters.ts`: the filters both pages share. Label matchers reuse `parseMatcher` from
+  `utils/matchers.ts`, as RuleList.v2 does.
+- `parser.ts`: `parse(query, schema)`, which runs the page's definitions through the parsing and
+  feedback steps above. It knows no filter itself, except free text and its wildcards.
+- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and the
+  page's filter.
 - `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
+- `setFilterValues.ts`: the sidebar's one edit, which replaces a single filter's tokens in the query and writes the
+  other tokens back in their typed order. The new tokens go where the filter's first token was, or at the end.
+  Spacing and quote placement can change, never the meaning.
+- `FilterSidebar.tsx` and `LabelMatchersFilter.tsx`: the sidebar shell and the controls both pages' sidebars
+  compose, such as `alert-rules/AlertRulesFilterSidebar.tsx`. A label row is sent only once it has a key and a
+  value, or a key with exists or absent.
 - `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
-- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts`
-  builds the Alert request from them. The builder tests assert the exact `where` clause per query,
-  typed by the generated request type; whether the server accepts it is the server's job.
+- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts` and
+  `recording-rules/recordingRuleSearchQuery.ts` build each page's request from them. The builder tests
+  assert the exact `where` clause per query, typed by the generated request type; whether the server
+  accepts it is the server's job.
 
 ## New filters
 

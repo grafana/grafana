@@ -1,14 +1,16 @@
 import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
-export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
+import { type RecordingFilterKey, type RecordingRuleFilter } from './recordingRuleFilters';
+
+export function buildRecordingRuleSearchQuery(apiArgs: RuleSearchApiArgs<RecordingRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildRecordingRuleLeaves(filter)),
+    where: toWhere(buildRecordingRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: RECORDING_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -17,12 +19,18 @@ export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continue
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildRecordingRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  return [...buildSharedLeaves(filter), ...buildRecordingLeaves(filter), ...buildHealthLeaves(filter, 'Recording')];
+export function buildRecordingRuleLeaves(
+  apiArgs: RuleSearchApiArgs<RecordingRuleFilter>
+): Array<SourcedLeaf<RecordingFilterKey>> {
+  return [
+    ...buildSharedLeaves(apiArgs),
+    ...buildRecordingLeaves(apiArgs.filter),
+    ...buildHealthLeaves(apiArgs.filter, 'Recording'),
+  ];
 }
 
-function buildRecordingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const leaves: SourcedLeaf[] = [];
+function buildRecordingLeaves(filter: RecordingRuleFilter): Array<SourcedLeaf<RecordingFilterKey>> {
+  const leaves: Array<SourcedLeaf<RecordingFilterKey>> = [];
 
   if (filter.metric) {
     leaves.push({ key: 'metric', leaf: { filter: { field: 'metric', operator: 'In', values: [filter.metric] } } });

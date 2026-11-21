@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useMeasure } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,12 +13,14 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
+import { getFieldNames } from '../handlebars';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, isTextNewFeaturesEnabled } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { displayCompletion } from './displayCompletion';
 import { getEditorLayoutStyles } from './editorLayout';
 import { reducerCompletion, variableCompletion } from './variableCompletion';
 import { type ViewMode } from './viewMode';
@@ -96,6 +98,8 @@ export function TextNGEditor({
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  // Measured on a wrapper the pane sizes, which the frame cannot resize, so the fill cannot feed back.
+  const [previewFillRef, { height: previewFillHeight }] = useMeasure<HTMLDivElement>();
   const editorTheme = useMemo(
     () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
     [theme, transparent]
@@ -186,9 +190,18 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
+  const fieldNames = useMemo(() => {
+    const frames = series ?? [];
+    return Array.from(new Set(frames.flatMap((frame) => getFieldNames(frame, frames))));
+  }, [series]);
+
   const completionSources = useMemo(
-    () => [variableCompletion(suggestions ?? []), ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : [])],
-    [suggestions]
+    () => [
+      variableCompletion(suggestions ?? []),
+      ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : []),
+      ...(isTextNewFeaturesEnabled() && mode !== TextMode.Code ? [displayCompletion(fieldNames)] : []),
+    ],
+    [suggestions, fieldNames, mode]
   );
 
   const basicSetup = useMemo(
@@ -265,13 +278,16 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <TextNGHtmlView
-        html={previewHtml}
-        hasData={Boolean(series?.length)}
-        consent={consent}
-        className={cx('markdown-html', styles.fullHeight)}
-        testId={testId}
-      />
+      <div ref={previewFillRef} className={styles.fullHeight}>
+        <TextNGHtmlView
+          html={previewHtml}
+          hasData={Boolean(series?.length)}
+          minHeight={previewFillHeight}
+          consent={consent}
+          className={cx('markdown-html', styles.fullHeight)}
+          testId={testId}
+        />
+      </div>
     );
   };
 

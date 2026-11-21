@@ -16,7 +16,6 @@ import {
   resetComposerEnterRequestsForTests,
   settleComposerEnterRequest,
   subscribeToComposerEnterRequests,
-  wasComposerEnterRequestDocked,
 } from './composerEntryRequests';
 import { type ComposerEnterRequestOptions } from './types';
 
@@ -165,15 +164,9 @@ describe('a request that floats the sidebar', () => {
 
   it('still goes ahead, docked, when the user docks the sidebar while it waits', () => {
     requestComposerEnter(TARGET, { float: true });
-    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
     setExtensionSidebarPresentation('docked');
     expect(sidebarPresentation()).toBe('docked');
-    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(true);
-    expect(wasComposerEnterRequestDocked('another-dashboard')).toBe(false);
     expect(getPendingComposerEnterTarget()).toEqual(TARGET);
-
-    settleComposerEnterRequest(TARGET.uid);
-    expect(wasComposerEnterRequestDocked(TARGET.uid)).toBe(false);
   });
 
   it('leaves the layout alone for a request that does not float it', () => {

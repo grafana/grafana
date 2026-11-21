@@ -113,7 +113,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
 					if r.Method == http.MethodGet {
 						w.Header().Set("Content-Type", "application/json")
-						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"},"spec":{"section":"auth.generic_oauth","key":"client_id"}}]}`))
 						return
 					}
 					w.WriteHeader(http.StatusOK)
@@ -143,7 +143,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
 					w.Header().Set("Content-Type", "application/json")
 					if r.Method == http.MethodGet {
-						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"},"spec":{"section":"auth.generic_oauth","key":"client_id"}}]}`))
 						return
 					}
 					w.WriteHeader(http.StatusNotFound)
@@ -179,7 +179,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
 					if r.Method == http.MethodGet {
 						w.Header().Set("Content-Type", "application/json")
-						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"},"spec":{"section":"auth.generic_oauth","key":"client_id"}}]}`))
 						return
 					}
 					w.WriteHeader(http.StatusInternalServerError)
@@ -221,6 +221,59 @@ func TestRemoteSettingService_writes(t *testing.T) {
 			if tc.wantURISubstr != "" {
 				assert.Truef(t, anyContains(reqs, tc.wantURISubstr), "expected a request URI containing %q; got %v", tc.wantURISubstr, reqs)
 			}
+		})
+	}
+}
+
+// The apiserver stores a sanitized section/key label when the value isn't a
+// valid label value, so Delete can't select on it and must match the spec.
+func TestRemoteSettingService_DeleteInvalidLabelValues(t *testing.T) {
+	ctx := request.WithNamespace(t.Context(), "stacks-11")
+
+	tests := []struct {
+		name         string
+		section, key string
+		// a sibling the list also returns, which must not be deleted
+		siblingSection, siblingKey string
+		wantSelector               string
+	}{
+		{
+			name:    "key with a space",
+			section: "auth.saml", key: "role_values editor",
+			siblingSection: "auth.saml", siblingKey: "role_values_editor",
+			wantSelector: "labelSelector=section%3Dauth.saml%2Csource%3Dus",
+		},
+		{
+			name:    "section with brackets",
+			section: "[auth.saml]", key: "enabled",
+			siblingSection: "auth.saml", siblingKey: "enabled",
+			wantSelector: "labelSelector=key%3Denabled%2Csource%3Dus",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var reqs []string
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				reqs = append(reqs, r.Method+" "+r.URL.RequestURI())
+				if r.Method == http.MethodGet {
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{"items":[` +
+						`{"metadata":{"name":"match-a1b2c3"},"spec":{"section":"` + tc.section + `","key":"` + tc.key + `"}},` +
+						`{"metadata":{"name":"sibling"},"spec":{"section":"` + tc.siblingSection + `","key":"` + tc.siblingKey + `"}}]}`))
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer srv.Close()
+
+			err := newTestClient(t, srv.URL, 500).(Writer).Delete(ctx, tc.section, tc.key)
+			assert.NoError(t, err)
+
+			assert.Truef(t, anyContains(reqs, tc.wantSelector), "expected a list with %q; got %v", tc.wantSelector, reqs)
+			assert.Truef(t, anyContains(reqs, "DELETE "), "expected a delete; got %v", reqs)
+			assert.Truef(t, anyContains(reqs, "/match-a1b2c3"), "expected the matching setting to be deleted; got %v", reqs)
+			assert.Falsef(t, anyContains(reqs, "/sibling"), "the sibling must not be deleted; got %v", reqs)
 		})
 	}
 }

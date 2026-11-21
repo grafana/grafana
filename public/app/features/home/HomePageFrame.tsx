@@ -22,11 +22,11 @@ const getEdition = () => {
 };
 
 interface Props {
-  actions?: ReactNode;
+  actions: ReactNode;
   children: ReactNode;
 }
 
-/** The page chrome both homepage layouts share: greeting, edition subtitle and the home layout. */
+/** The homepage chrome: greeting, edition subtitle and the home layout. */
 export function HomePageFrame({ actions, children }: Props) {
   const greeting = useHomeGreeting();
 

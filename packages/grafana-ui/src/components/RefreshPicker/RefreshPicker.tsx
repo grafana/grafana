@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
+import { Icon } from '../Icon/Icon';
 import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 
 // Default intervals used in the refresh picker component
@@ -114,14 +115,28 @@ const RefreshPickerComponent = memo((props: Props) => {
   const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
   const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
 
+  const iconOnly = !text && !loadingText;
+  const refreshLabel = t('refresh-picker.refresh-button.label', 'Refresh');
+  const runButtonIconName = isLoading ? 'spinner' : 'sync';
+  // An icon-only run button keeps "Refresh" as hidden text: @grafana/plugin-e2e finds the button by its text
+  const runButtonIcon = iconOnly ? (
+    <>
+      <Icon name={runButtonIconName} size="md" />
+      <span className={styles.visuallyHidden}>{refreshLabel}</span>
+    </>
+  ) : (
+    runButtonIconName
+  );
+
   return (
     <ButtonGroup className="refresh-picker">
       <ToolbarButton
-        aria-label={loadingText && isLoading ? loadingText : text}
-        tooltip={tooltip}
+        aria-label={isLoading ? loadingText || tooltip || text || refreshLabel : text || tooltip || refreshLabel}
+        tooltip={tooltip ?? (iconOnly ? refreshLabel : undefined)}
         onClick={onRefresh}
         variant={variant}
-        icon={isLoading ? 'spinner' : 'sync'}
+        icon={runButtonIcon}
+        iconOnly={iconOnly}
         style={width ? { width } : undefined}
         data-testid={selectors.components.RefreshPicker.runButtonV2}
       >
@@ -228,5 +243,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hideText: css({
     visibility: 'hidden',
+  }),
+  visuallyHidden: css({
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
   }),
 });

@@ -145,7 +145,7 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
 
 	const pkg = "com.github.grafana.grafana.pkg.apis.search.v0alpha1."
-	assert.Contains(t, r.Schemas, pkg+"SearchQuery")
+	assert.Contains(t, r.Schemas, pkg+"GlobalSearchQuery")
 	assert.Contains(t, r.Schemas, pkg+"GlobalSearchResults")
 	for name, schema := range r.Schemas {
 		for _, ref := range collectRefs(&schema) {

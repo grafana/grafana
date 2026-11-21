@@ -60,7 +60,7 @@ func TestIncrementalSync_NoopFolderMetadata(t *testing.T) {
 			}
 
 			err := IncrementalSync(t.Context(), repo, previousRef, currentRef, repoResources, progress,
-				tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false)
+				tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker)
 			if tt.treeErr != nil {
 				require.ErrorIs(t, err, readErr)
 			} else {

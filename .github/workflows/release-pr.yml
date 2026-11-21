@@ -250,31 +250,38 @@ jobs:
           require-lockfile: true
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        env:
+          PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
         run: |
           # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
-            npm version "$VERSION" --no-git-tag-version
+            if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
+              npm version "$VERSION" --no-git-tag-version
+              package_runner=(yarn run)
+            else
+              pnpm version "$VERSION" --no-git-tag-version --no-git-checks
+              package_runner=(pnpm exec)
+            fi
             # Release branches cut before lerna was replaced with nx release still have lerna.json
             if [ -f lerna.json ]; then
-              npm exec --no -- lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+              "${package_runner[@]}" lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
             else
-              npm exec --no -- nx release version "$VERSION"
+              "${package_runner[@]}" nx release version "$VERSION"
             fi
           fi
       - name: Refresh lockfile
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         env:
           PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
-          # pnpm defaults to a frozen lockfile when CI is set; the version bump changes it. Yarn ignores this.
-          pnpm_config_frozen_lockfile: 'false'
         run: |
           if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
-            yarn install
+            YARN_ENABLE_IMMUTABLE_INSTALLS=false yarn install
+            yarn prettier:write
           else
-            pnpm install
+            pnpm install --no-frozen-lockfile
+            pnpm run prettier:write
           fi
-          npm run prettier:write
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash

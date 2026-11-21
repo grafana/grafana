@@ -133,8 +133,8 @@ message CreateRequest {
 }
 
 message CreateResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The updated resource version
   int64 resource_version = 2;
@@ -152,8 +152,8 @@ message UpdateRequest {
 }
 
 message UpdateResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The updated resource version
   int64 resource_version = 2;
@@ -168,11 +168,16 @@ message DeleteRequest {
   // Preconditions: make sure the uid matches the current saved value
   // +optional
   string uid = 3;
+
+  // The user to record as the deleter (updatedBy on the deletion marker) when the caller acts on
+  // that user's behalf. Only honored when the caller is a service identity; ignored otherwise.
+  // +optional
+  string acting_user_uid = 4;
 }
 
 message DeleteResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The resource version for the deletion marker
   int64 resource_version = 2;
@@ -186,8 +191,8 @@ message ReadRequest {
 }
 
 message ReadResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The new resource version
   int64 resource_version = 2;
@@ -294,8 +299,8 @@ message ListResponse {
   // +optional
   int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
 
-  // Error details
-  ErrorResult error = 5;
+  reserved 5;
+  reserved "error";
 }
 
 message WatchRequest {
@@ -362,6 +367,18 @@ message BulkRequest {
 
   // Hint that a new version will be written on-top of this
   string folder = 4;
+
+  // Declares blobs for this resource after same-stream v1 acknowledgement.
+  // Value excludes these named entries and all inline data. Send each upload's
+  // chunks in declaration order before the next resource. The server inserts
+  // authoritative references and publishes only after every upload succeeds.
+  // Invalid for DELETED actions or together with blob_chunk.
+  repeated BulkBlobUpload blob_uploads = 5;
+
+  // Continuation of the pending resource's current blob. A chunk frame sets
+  // only this field; key, action, value, folder, and blob_uploads must be unset.
+  // Never forwarded to resource persistence or counted as a resource write.
+  BulkBlobChunk blob_chunk = 6;
 }
 
 message BulkResponse {
@@ -385,8 +402,8 @@ message BulkResponse {
     string              error  = 3;
   }
 
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // Total events processed
   int64 processed = 2;
@@ -441,8 +458,8 @@ message ListManagedObjectsResponse {
   // More results exist... pass this in the next request
   string next_page_token = 2;
 
-  // Error details
-  ErrorResult error = 3;
+  reserved 3;
+  reserved "error";
 }
 
 // Count the items that exist with
@@ -470,8 +487,8 @@ message CountManagedObjectsResponse {
   // Resource counts
   repeated ResourceCount items = 1;
 
-  // Error details
-  ErrorResult error = 2;
+  reserved 2;
+  reserved "error";
 }
 
 message HealthCheckRequest {
@@ -494,8 +511,8 @@ message QuotaUsageRequest {
 }
 
 message QuotaUsageResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // Current usage
   int64 usage = 2;
@@ -504,39 +521,28 @@ message QuotaUsageResponse {
   int64 limit = 3;
 }
 
-// A single usage event recorded against an object (e.g. a dashboard view).
-message ResourceEvent {
-  // Metric name, e.g. "views", "queries", "errors". Must be declared for the
-  // object's group/resource.
-  string metric = 1;
-  // Increment to apply for the metric. Must not be negative.
-  uint64 value = 2;
+message BulkBlobUpload {
+  // Named slot at blobs.<name> in the pending resource.
+  string name = 1;
+
+  string content_type = 2;
+
+  // Expected decoded byte count, > 0 and <= 64 MiB. Must match received bytes;
+  // persisted size and other reference metadata come from the upload result.
+  int64 size = 3;
 }
 
-message RecordEventRequest {
-  // The object the events are recorded against (group/resource/namespace/name).
-  ResourceKey key = 1;
-  // The events to record.
-  repeated ResourceEvent events = 2;
-}
+message BulkBlobChunk {
+  // Must match the current upload declaration. Uploads cannot be interleaved.
+  string name = 1;
 
-// Empty on success; failures are reported via gRPC status.
-message RecordEventResponse {}
+  // Raw bytes, not base64. Non-final chunks contain 1..64 KiB.
+  bytes value = 2;
 
-message GetResourceDailyStatsRequest {
-  // The object to read daily stats for (group/resource/namespace/name).
-  ResourceKey key = 1;
-  // Inclusive lower bound, "YYYY-MM-DD". Empty means no lower bound.
-  string from_day = 2;
-  // Inclusive upper bound, "YYYY-MM-DD". Empty means no upper bound.
-  string to_day = 3;
-}
-
-message DailyStat {
-  // Calendar day, "YYYY-MM-DD".
-  string day = 1;
-  // metric -> count for that day, e.g. {"views": 12, "queries": 40}.
-  map<string, uint64> metrics = 2;
+  // Explicit EOF marker: value must be empty. The server waits for successful
+  // upload completion before accepting the next blob or publishing the resource.
+  // Stream EOF or a new resource before this marker is an incomplete upload.
+  bool last = 3;
 }
 
 
@@ -593,19 +599,6 @@ message ListStoredResourcesResponse {
   // objects by the time the caller queries it). Errors are returned as gRPC
   // errors, not embedded in this response.
   repeated StoredResource items = 1;
-}
-
-// Generic, per-object usage analytics for unified storage. Tracked resources
-// are declared server-side; events for untracked resources are ignored.
-service ResourceStats {
-  // Record usage events against an object. Events are buffered in memory and
-  // flushed asynchronously; a small amount of loss is acceptable. Events for
-  // untracked resources are silently dropped.
-  rpc RecordEvent(RecordEventRequest) returns (RecordEventResponse);
-
-  // Read the per-day usage buckets for a single object. Results are streamed
-  // sorted ascending by day; days with no data are omitted.
-  rpc GetResourceDailyStats(GetResourceDailyStatsRequest) returns (stream DailyStat);
 }
 
 service BulkStore {

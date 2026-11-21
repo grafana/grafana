@@ -46,9 +46,9 @@ Each annotation includes the alarm name as its title, the alarm history item typ
 To add a CloudWatch annotation to a dashboard:
 
 1. Open the dashboard where you want to add annotations.
-1. Click **Edit**, then click **Settings** in the top navigation.
-1. Select the **Annotations** tab.
-1. Click **Add annotation query**.
+1. Select **Editing** in the dashboard mode drop-down list.
+1. Click the **Add new element** icon (plus sign).
+1. Click **Annotation query**.
 1. Enter a **Name** for the annotation, for example, `CloudWatch alarms`.
 1. Select your **Amazon CloudWatch** data source.
 1. Configure the query fields described in the following sections.

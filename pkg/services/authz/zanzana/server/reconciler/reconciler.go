@@ -12,13 +12,13 @@ import (
 	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -34,9 +34,13 @@ type ReconcileResult struct {
 	InSync         bool // true if no changes were needed
 }
 
+type ClientFactory interface {
+	ForResource(ctx context.Context, namespace string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error)
+}
+
 type Reconciler struct {
 	server        zanzana.ServerInternal
-	clientFactory resources.ClientFactory
+	clientFactory ClientFactory
 	cfg           Config
 	logger        log.Logger
 	tracer        tracing.Tracer
@@ -113,7 +117,7 @@ var DefaultCRDs = []schema.GroupVersionResource{
 // NewReconciler creates a new reconciler instance.
 func NewReconciler(
 	srv zanzana.ServerInternal,
-	clientFactory resources.ClientFactory,
+	clientFactory ClientFactory,
 	cfg Config,
 	logger log.Logger,
 	tracer tracing.Tracer,
@@ -200,13 +204,11 @@ func (r *Reconciler) queueAllNamespaces(ctx context.Context) {
 	start := time.Now()
 
 	// Fetch global role permissions once per tick and cache them for all namespaces.
-	globalPerms, err := r.fetchGlobalRolePerms(ctx)
+	globalPerms, err := r.refreshGlobalRolePerms(ctx)
 	if err != nil {
-		r.logger.Error("Failed to fetch global roles", "error", err)
-		r.metrics.errorsTotal.WithLabelValues("fetch_global_roles").Inc()
-		globalPerms = nil
+		r.logger.Error("Failed to obtain GlobalRole permissions", "error", err)
+		return
 	}
-
 	r.setGlobalRolePerms(globalPerms)
 
 	stores, err := r.server.ListAllStores(ctx)
@@ -334,8 +336,19 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) (
 
 	result := &ReconcileResult{}
 
+	globalRolePerms := r.getGlobalRolePerms()
+	if globalRolePerms == nil {
+		// Followers do not run queueAllNamespaces. Fetch a snapshot for this
+		// reconciliation without retaining a cache that no leader loop refreshes.
+		var err error
+		globalRolePerms, err = r.refreshGlobalRolePerms(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// 1. Build expected tuple map from CRDs
-	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
+	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace, globalRolePerms)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)

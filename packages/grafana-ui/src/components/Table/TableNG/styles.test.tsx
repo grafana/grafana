@@ -10,7 +10,7 @@ import {
   ThemeContext,
   toDataFrame,
 } from '@grafana/data';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
 import { NESTED_ROW_CLASS } from './constants';
@@ -51,7 +51,7 @@ it('limits frozen hover backgrounds to direct cells of unselected body rows', ()
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 const makeFrame = (theme: GrafanaTheme2): DataFrame =>

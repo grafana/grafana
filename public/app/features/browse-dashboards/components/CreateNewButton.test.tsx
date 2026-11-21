@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
@@ -12,6 +12,7 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
@@ -116,6 +117,22 @@ describe('NewActionsButton', () => {
     expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+  });
+
+  it('should hide New dashboard but keep Import dashboard and New folder on mobile when mobileEditDeprecation is enabled', async () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
+    const { user } = render(
+      <CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} isReadOnlyRepo={false} />
+    );
+    const newButton = screen.getByText('New');
+    await user.click(newButton);
+
+    expect(screen.queryByRole('menuitem', { name: 'New dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
+    cleanup();
+    setTestFlags({});
   });
 
   it('should show Import dashboard button when folder is provisioned', async () => {

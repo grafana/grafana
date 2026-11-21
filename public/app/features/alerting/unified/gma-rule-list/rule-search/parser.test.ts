@@ -1,10 +1,19 @@
+import { type RuleSearchSchema } from './filterDefinitions';
 import { parse } from './parser';
-import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
+import { sharedFilters } from './sharedFilters';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
+
+// Only the filters both pages share, so these rows hold on either page. Each page's own filters are tested next to
+// its schema.
+const sharedSchema: RuleSearchSchema<SharedRuleFilter> = {
+  filters: Object.values(sharedFilters),
+  createEmptyFilter: createRulesApiFilter,
+};
 
 interface Row {
   name: string;
   query: string;
-  filter: Partial<RuleSearchFilter>;
+  filter: Partial<SharedRuleFilter>;
 }
 
 describe('parsing', () => {
@@ -35,14 +44,18 @@ describe('parsing', () => {
       filter: { text: ['state:firing'] },
     },
     { name: 'a key the page has no filter for as title text', query: 'foo:bar', filter: { text: ['foo:bar'] } },
-    { name: "the Recording rules page's key as title text", query: 'metric:cpu', filter: { text: ['metric:cpu'] } },
     { name: 'a key in another letter case as title text', query: 'State:firing', filter: { text: ['State:firing'] } },
     {
       name: 'title text with an unknown key and a space',
       query: 'foo:"a b"',
       filter: { text: ['foo:a b'] },
     },
-    { name: 'several folders', query: 'folder:f1 folder:"My Folder"', filter: { folders: ['f1', 'My Folder'] } },
+    { name: 'the last folder', query: 'folder:f1 folder:"My Folder"', filter: { folder: 'My Folder' } },
+    {
+      name: 'several folder UIDs beside a folder name',
+      query: 'folderUid:f1 folder:Team folderUid:f2',
+      filter: { folder: 'Team', folderUids: ['f1', 'f2'] },
+    },
     {
       name: 'several data sources',
       query: 'datasource:ds-1 datasource:ds-2',
@@ -90,126 +103,75 @@ describe('parsing', () => {
       query: 'label:team!=',
       filter: { labels: [{ key: 'team', operator: 'notEqual', value: '' }] },
     },
-    { name: 'state in any letter case', query: 'state:FIRING', filter: { state: 'firing' } },
     {
       name: 'health in any letter case',
       query: 'health:NoData',
       filter: { health: 'nodata' },
     },
-    { name: 'paused in any letter case', query: 'paused:TRUE', filter: { paused: 'true' } },
     { name: 'hidden plugin rules', query: 'plugins:hide', filter: { hidePluginRules: true } },
-    { name: 'a dashboard and a panel', query: 'dashboard:d panelId:4', filter: { dashboardUid: 'd', panelId: '4' } },
-    { name: 'a contact point with a space', query: 'contactPoint:"on call"', filter: { contactPoint: 'on call' } },
-    { name: 'a named policy', query: 'policy:escalation', filter: { policy: 'escalation' } },
-    {
-      name: "the default tree's name as the default policy",
-      query: 'policy:user-defined',
-      filter: { policy: 'default' },
-    },
-    {
-      name: 'the last value of a single-value filter',
-      query: 'state:firing state:normal',
-      filter: { state: 'normal' },
-    },
-  ])('reads $name on the Alert rules page', ({ query, filter }) => {
-    expect(parse(query, 'alert').filter).toEqual({ ...createEmptyFilter(), ...filter });
-  });
-
-  it.each<Row>([
-    { name: 'a metric', query: 'metric:cpu', filter: { metric: 'cpu' } },
-    { name: 'a target data source', query: 'targetDatasource:ds-2', filter: { targetDataSourceUid: 'ds-2' } },
-    { name: 'health:ok', query: 'health:ok', filter: { health: 'ok' } },
-    { name: "the Alert rules page's keys as title text", query: 'state:firing', filter: { text: ['state:firing'] } },
-  ])('reads $name on the Recording rules page', ({ query, filter }) => {
-    expect(parse(query, 'recording').filter).toEqual({ ...createEmptyFilter(), ...filter });
+  ])('reads $name', ({ query, filter }) => {
+    expect(parse(query, sharedSchema).filter).toEqual(createRulesApiFilter(filter));
   });
 
   it.each([
-    ['state:bogus', 'state'],
     ['label:', 'label'],
     ['rule:', 'rule'],
     ['folder:""', 'folder'],
+  ])('rejects %j as a %s filter with no value and leaves the filter empty', (query, key) => {
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'missingValue' }],
+    });
+  });
+
+  it('reports folder: followed by a space as missing its value, and reads the rest as title text', () => {
+    expect(parse('folder: "perf folder 1"', sharedSchema)).toEqual({
+      filter: createRulesApiFilter({ text: ['perf folder 1'] }),
+      issues: [{ key: 'folder', reason: 'missingValue' }],
+    });
+  });
+
+  it.each([
     ['label:=api', 'label'],
     ['label:!', 'label'],
-    ['paused:maybe', 'paused'],
     ['plugins:show', 'plugins'],
     ['health:err', 'health'],
     ['folder:"My Fol', 'folder'],
   ])('rejects %j as an invalid %s value and leaves the filter empty', (query, key) => {
-    expect(parse(query, 'alert')).toEqual({ filter: createEmptyFilter(), issues: [{ key, reason: 'invalid' }] });
-  });
-
-  it.each(['"cpu high', 'foo:"a b'])('rejects the unclosed quote in %j and leaves the filter empty', (query) => {
-    expect(parse(query, 'alert')).toEqual({
-      filter: createEmptyFilter(),
-      issues: [{ key: null, reason: 'unclosedQuote' }],
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key, reason: 'invalid' }],
     });
   });
 
-  it('rejects a renamed value with the value that replaces it', () => {
-    expect(parse('state:Inactive', 'alert').issues).toEqual([
-      { key: 'state', reason: 'renamed', from: 'Inactive', to: 'normal' },
-    ]);
-  });
-
-  it('applies a valid value even when an earlier one was rejected', () => {
-    expect(parse('state:bogus state:firing', 'alert')).toMatchObject({
-      filter: { state: 'firing' },
-      issues: [{ key: 'state', reason: 'invalid' }],
+  it.each(['"cpu high', 'foo:"a b'])('rejects the unclosed quote in %j and leaves the filter empty', (query) => {
+    expect(parse(query, sharedSchema)).toEqual({
+      filter: createRulesApiFilter(),
+      issues: [{ key: null, reason: 'unclosedQuote' }],
     });
   });
 });
 
-function alertIssues(query: string) {
-  return parse(query, 'alert').issues;
-}
-
 describe('feedback', () => {
-  it.each([
-    'cpu',
-    'folder:f1',
-    'label:team=api',
-    'label:team=~api.*',
-    'dashboard:d panelId:4',
-    'policy:p',
-    'contactPoint:c',
-    'paused:true',
-  ])('reports no issues for %j', (query) => {
-    expect(alertIssues(query)).toEqual([]);
-  });
+  it.each(['cpu', 'folder:f1', 'folder:f*', 'label:team=api', 'label:team=~api.*'])(
+    'reports no issues for %j',
+    (query) => {
+      expect(parse(query, sharedSchema).issues).toEqual([]);
+    }
+  );
 
   it.each([
-    ['folder:f*', 'folder'],
-    ['dashboard:d*', 'dashboard'],
-    ['policy:p*', 'policy'],
-    ['contactPoint:c*', 'contactPoint'],
     ['datasource:__expr__', 'datasource'],
+    ['folderUid:f*', 'folderUid'],
     ['datasource:"my ds"', 'datasource'],
     ['label:team=a*', 'label'],
     ['label:!!team', 'label'],
     ['label:a=b!=c', 'label'],
-    ['panelId:4', 'panelId'],
-    ['dashboard:d panelId:0', 'panelId'],
-    ['policy:p contactPoint:c', 'contactPoint'],
   ])('reports %j as an invalid %s filter', (query, key) => {
-    expect(alertIssues(query)).toEqual([{ key, reason: 'invalid' }]);
-  });
-
-  it.each([
-    ['policy:default', 'policy'],
-    ['paused:false', 'paused'],
-  ])('reports %j as an unavailable %s filter', (query, key) => {
-    expect(alertIssues(query)).toEqual([{ key, reason: 'unavailable' }]);
+    expect(parse(query, sharedSchema).issues).toEqual([{ key, reason: 'invalid' }]);
   });
 
   it.each(['cpu*', '100%'])('reports the wildcard in %j', (query) => {
-    expect(alertIssues(query)).toEqual([{ key: null, reason: 'wildcardInText' }]);
-  });
-
-  it.each([
-    ['metric:cpu_*', 'metric'],
-    ['targetDatasource:t*', 'targetDatasource'],
-  ])('reports %j as an invalid %s filter on the Recording rules page', (query, key) => {
-    expect(parse(query, 'recording').issues).toEqual([{ key, reason: 'invalid' }]);
+    expect(parse(query, sharedSchema).issues).toEqual([{ key: null, reason: 'wildcardInText' }]);
   });
 });

@@ -60,6 +60,7 @@ function buildApplyDashboard(uid?: string): DashboardScene {
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
     applyDashboardMode: DashboardScene.prototype.applyDashboardMode,
+    refreshPredefinedVariables: jest.fn().mockResolvedValue(undefined),
     activateSidebar: jest.fn(),
     setState: jest.fn(),
     forEachChild: jest.fn(),
@@ -239,6 +240,17 @@ describe('applyJsonToDashboard', () => {
     );
     expect(result.success).toBe(false);
     expect(result.error).toContain('metadata');
+  });
+
+  it('does not apply the spec when entering edit mode is blocked', () => {
+    const dashboard = buildApplyDashboard('abc-123');
+    dashboard.state.isEditing = false;
+    jest.mocked(dashboard.onEnterEditMode).mockReturnValue(false);
+
+    const result = applyJsonToDashboard(dashboard, getDashboardResourceText(buildDashboard('abc-123')));
+
+    expect(result.success).toBe(false);
+    expect(dashboard.publishEvent).not.toHaveBeenCalled();
   });
 
   it('applies the resource text generated for a saved dashboard', () => {

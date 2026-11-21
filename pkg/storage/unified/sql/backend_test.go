@@ -8,17 +8,22 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
+	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/sqlite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -1026,10 +1031,9 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
-		require.NotNil(t, resp)
-		require.NotNil(t, resp.Error)
-		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
+		resp, err := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
+		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.Nil(t, resp)
 	})
 
 	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
@@ -1153,6 +1157,222 @@ func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+type recordingPublisher struct {
+	err      error
+	subjects []string
+	payloads [][]byte
+}
+
+func (p *recordingPublisher) Enabled() bool { return true }
+
+func (p *recordingPublisher) Publish(ctx context.Context, subject string, data []byte) error {
+	// Like the NATS publisher, reject a cancelled context.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	p.subjects = append(p.subjects, subject)
+	p.payloads = append(p.payloads, data)
+	return p.err
+}
+
+func TestBackend_publishesWatchNotifications(t *testing.T) {
+	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
+	meta.SetFolder("folderuid")
+
+	setup := func(t *testing.T, pub *recordingPublisher) (testBackend, context.Context) {
+		b, ctx := setupBackendTest(t)
+		b.watchPublisher = resource.NewWatchNotificationPublisher(pub, nil, b.log)
+		return b, ctx
+	}
+
+	tests := []struct {
+		name     string
+		typ      resourcepb.WatchEvent_Type
+		stmt     string
+		write    func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error)
+		wantType resourcepb.WatchNotification_Type
+	}{
+		{"create", resourcepb.WatchEvent_ADDED, "insert resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.create(ctx, e)
+		}, resourcepb.WatchNotification_ADDED},
+		{"update", resourcepb.WatchEvent_MODIFIED, "update resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.update(ctx, e)
+		}, resourcepb.WatchNotification_MODIFIED},
+		{"delete", resourcepb.WatchEvent_DELETED, "delete resource", func(b testBackend, ctx context.Context, e resource.WriteEvent) (int64, error) {
+			return b.delete(ctx, e)
+		}, resourcepb.WatchNotification_DELETED},
+	}
+	t.Run("publishes when the request is cancelled after commit", func(t *testing.T) {
+		t.Parallel()
+		pub := &recordingPublisher{}
+		b, _ := setup(t, pub)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		b.publishWatchNotification(ctx, resourcepb.WatchNotification_ADDED, resource.WriteEvent{Key: resKey, Object: meta}, 200, "folderuid")
+
+		require.Equal(t, []string{"us.watch.v1.gr.ns.rs"}, pub.subjects)
+	})
+
+	for _, tt := range tests {
+		event := resource.WriteEvent{Type: tt.typ, Key: resKey, Object: meta, PreviousRV: 150}
+
+		t.Run(tt.name+" publishes after commit", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+				func() { b.ExecWithResult(tt.stmt, 0, 1) },
+				func() { b.ExecWithResult("insert resource_history", 0, 1) },
+			)
+			b.SQLMock.ExpectCommit()
+
+			rv, err := tt.write(b, ctx, event)
+			require.NoError(t, err)
+
+			require.Equal(t, []string{"us.watch.v1.gr.ns.rs"}, pub.subjects)
+			var got resourcepb.WatchNotification
+			require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
+			require.Equal(t, tt.wantType, got.GetType())
+			require.Equal(t, "gr", got.GetGroup())
+			require.Equal(t, "rs", got.GetResource())
+			require.Equal(t, "ns", got.GetNamespace())
+			require.Equal(t, "nm", got.GetName())
+			require.Equal(t, rv, got.GetResourceVersion())
+			require.Equal(t, "folderuid", got.GetFolder())
+			require.Equal(t, int64(150), got.GetPreviousResourceVersion())
+			require.Nil(t, got.GetMetadata())
+		})
+
+		t.Run(tt.name+" does not fail when publishing fails", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{err: errTest}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			expectSuccessfulResourceVersionExec(t, b.TestDBProvider,
+				func() { b.ExecWithResult(tt.stmt, 0, 1) },
+				func() { b.ExecWithResult("insert resource_history", 0, 1) },
+			)
+			b.SQLMock.ExpectCommit()
+
+			_, err := tt.write(b, ctx, event)
+			require.NoError(t, err)
+			require.Len(t, pub.subjects, 1)
+		})
+
+		t.Run(tt.name+" publishes nothing when the write fails", func(t *testing.T) {
+			t.Parallel()
+			pub := &recordingPublisher{}
+			b, ctx := setup(t, pub)
+			b.SQLMock.ExpectBegin()
+			b.ExecWithErr(tt.stmt, errTest)
+			b.SQLMock.ExpectRollback()
+
+			_, err := tt.write(b, ctx, event)
+			require.Error(t, err)
+			require.Empty(t, pub.subjects)
+		})
+	}
+}
+
+func TestIntegrationReadHistoryVersions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	storageBackend, _ := newTestBackend(t, GarbageCollectionConfig{})
+	b := storageBackend.(*backend)
+
+	created, err := unitest.WriteEvent(ctx, b, "item1", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	updated, err := unitest.WriteEvent(ctx, b, "item1", resourcepb.WatchEvent_MODIFIED, unitest.WithNamespaceAndRV("namespace", created))
+	require.NoError(t, err)
+	other, err := unitest.WriteEvent(ctx, b, "item2", resourcepb.WatchEvent_ADDED, unitest.WithResource("other"))
+	require.NoError(t, err)
+
+	key := func(name, res string, rv int64) historyVersion {
+		return historyVersion{Namespace: "namespace", Group: "group", Resource: res, Name: name, ResourceVersion: rv}
+	}
+	versions := make([]historyVersion, 0, 5+historyBatchReadSize)
+	versions = append(versions,
+		key("item1", "resource", created), key("item1", "resource", updated), key("item2", "other", other),
+		key("missing", "resource", 1),
+		// No row at this version, but an older one exists.
+		key("item1", "resource", updated-1),
+	)
+	// More versions than one query takes, so batches are split.
+	for i := range historyBatchReadSize {
+		versions = append(versions, key("missing", "resource", int64(i+2)))
+	}
+
+	found, err := b.readHistoryVersions(ctx, versions)
+	require.NoError(t, err)
+	require.Len(t, found, 3)
+
+	row := found[key("item1", "resource", updated)]
+	require.NotNil(t, row)
+	require.Equal(t, int(resourcepb.WatchEvent_MODIFIED), row.Action)
+	require.Equal(t, created, *row.PreviousRV)
+	require.Equal(t, "folderuid", row.Folder)
+	require.Contains(t, string(row.Value), "item1 MODIFIED")
+
+	require.Equal(t, int(resourcepb.WatchEvent_ADDED), found[key("item1", "resource", created)].Action)
+	require.Equal(t, "other", found[key("item2", "other", other)].Key.Resource)
+
+	// The version must match the name: another object's RV is not returned.
+	found, err = b.readHistoryVersions(ctx, []historyVersion{key("item2", "resource", updated)})
+	require.NoError(t, err)
+	require.Empty(t, found)
+}
+
+func TestListLatestMigrationReadStatementTimeout(t *testing.T) {
+	req := &resourcepb.ListRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: "gr", Resource: "rs"}}}
+	for _, tc := range []struct {
+		name      string
+		migration bool
+		dialect   sqltemplate.Dialect
+		timeout   time.Duration
+		wantSet   bool
+	}{
+		{name: "migration read on postgres", migration: true, dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute, wantSet: true},
+		{name: "other read", dialect: sqltemplate.PostgreSQL, timeout: 15 * time.Minute},
+		{name: "migration read without override", migration: true, dialect: sqltemplate.PostgreSQL},
+		{name: "migration read on mysql", migration: true, dialect: sqltemplate.MySQL, timeout: 15 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b, ctx := setupBackendTest(t)
+			b.dialect = tc.dialect
+			b.migrationStatementTimeout = tc.timeout
+			if tc.migration {
+				ctx = resource.ContextWithMigrationRead(ctx)
+			}
+
+			b.SQLMock.ExpectBegin()
+			if tc.wantSet {
+				b.SQLMock.ExpectExec("SET LOCAL statement_timeout = 900000").WillReturnResult(sqlmock.NewResult(0, 0))
+			}
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource_version").
+				WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).AddRow(10, 0))
+			b.SQLMock.ExpectQuery("SELECT .* FROM resource").
+				WillReturnRows(sqlmock.NewRows([]string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}))
+			b.SQLMock.ExpectCommit()
+
+			_, err := b.ListIterator(ctx, req, func(iter resource.ListIterator) error {
+				for iter.Next() {
+				}
+				return iter.Error()
+			})
+			require.NoError(t, err)
+			require.NoError(t, b.SQLMock.ExpectationsWereMet())
 		})
 	}
 }

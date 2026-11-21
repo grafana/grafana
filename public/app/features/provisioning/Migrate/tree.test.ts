@@ -30,6 +30,8 @@ describe('buildFolderTree', () => {
     expect(usersNode.children[0].children.map((n) => n.row.uid)).toEqual(['frank-sub']);
     expect(usersNode.totalCount).toBe(3);
     expect(usersNode.children[0].totalCount).toBe(3);
+    expect(usersNode.subtreeCount).toBe(3);
+    expect(usersNode.children[0].subtreeCount).toBe(3);
   });
 
   it('treats a row whose parent is not in the set as a root', () => {
@@ -96,6 +98,13 @@ describe('filterFolderTree', () => {
 
     expect(filtered[0].totalCount).toBe(2);
     expect(filtered[0].children[0].totalCount).toBe(2);
+  });
+
+  it('keeps the displayed subtree count when folders are pruned', () => {
+    const filtered = filterFolderTree(tree, 'beta');
+
+    expect(filtered[0].subtreeCount).toBe(3);
+    expect(filtered[0].children[0].subtreeCount).toBe(3);
   });
 });
 

@@ -13,7 +13,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -184,7 +184,7 @@ export class RowsLayoutManager
       perform: () => {
         this.setState({ rows: [...this.state.rows, newRow] });
         const dashboard = getDashboardSceneFor(this);
-        newRow.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
+        newRow.getLayout().editModeChanged?.(canArrangeLayout(dashboard.state));
       },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });

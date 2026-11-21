@@ -1,14 +1,16 @@
 import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-import { DEFAULT_POLICY, type RuleSearchFilter, STATE_API_VALUES } from '../rule-search/ruleSearchFilter';
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
-export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, continueToken?: string) {
+import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
+
+export function buildAlertRuleSearchQuery(apiArgs: RuleSearchApiArgs<AlertRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildAlertRuleLeaves(filter)),
+    where: toWhere(buildAlertRuleLeaves(apiArgs)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ALERT_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -17,12 +19,12 @@ export function buildAlertRuleSearchQuery(filter: RuleSearchFilter, continueToke
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildAlertRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  return [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
+export function buildAlertRuleLeaves(apiArgs: RuleSearchApiArgs<AlertRuleFilter>): Array<SourcedLeaf<AlertFilterKey>> {
+  return [...buildSharedLeaves(apiArgs), ...buildRoutingLeaves(apiArgs.filter), ...buildStatusLeaves(apiArgs.filter)];
 }
 
-function buildRoutingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const leaves: SourcedLeaf[] = [];
+function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
+  const leaves: Array<SourcedLeaf<AlertFilterKey>> = [];
 
   if (filter.dashboardUid) {
     leaves.push({
@@ -51,8 +53,8 @@ function buildRoutingLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
   return leaves;
 }
 
-function buildStatusLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
-  const stateLeaves: SourcedLeaf[] = filter.state
+function buildStatusLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
+  const stateLeaves: Array<SourcedLeaf<AlertFilterKey>> = filter.state
     ? [{ key: 'state', leaf: { filter: { field: 'state', operator: 'In', values: STATE_API_VALUES[filter.state] } } }]
     : [];
   return [...stateLeaves, ...buildHealthLeaves(filter, 'OK')];
@@ -61,6 +63,7 @@ function buildStatusLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
 // `state`, `health`, and `lastError` are status fields populated by `alerting.ruleStatusSync`.
 // `annotations` returns as a JSON-encoded string; `interval` is the evaluation cadence.
 // `labels` returns as a flat string array ("key" and "key=value" entries); `datasourceUIDs` as a string array.
+// `totals*` are instance counts per state, also populated by `alerting.ruleStatusSync`.
 const ALERT_RULE_FIELDS = [
   'title',
   'folder',
@@ -72,4 +75,13 @@ const ALERT_RULE_FIELDS = [
   'interval',
   'labels',
   'datasourceUIDs',
+  'totalsHealthy',
+  'totalsFiring',
+  'totalsPending',
+  'totalsRecovering',
+  'totalsNoData',
+  'totalsError',
+  'notificationType',
+  'receiver',
+  'routingTree',
 ];

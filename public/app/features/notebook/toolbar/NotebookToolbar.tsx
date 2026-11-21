@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton } from '@grafana/ui';
+import { Button, copyTextToClipboard, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -130,14 +130,14 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Dropdown overlay={moreMenu} placement="bottom-end">
-          <IconButton
-            name="ellipsis-v"
-            variant="secondary"
-            size="sm"
+          <ToolbarButton
+            variant="canvas"
+            icon="ellipsis-v"
             // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
             // announces as a plain button and gives no hint that it opens a menu.
             aria-haspopup="menu"
-            // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
+            // Without it ToolbarButton names itself with an e2e selector string built from the tooltip.
+            aria-label={t('notebooks.view.more-actions', 'More actions')}
             tooltip={t('notebooks.view.more-actions', 'More actions')}
             data-testid={selectors.pages.Notebooks.Item.toolbarKebabButton}
           />
@@ -191,7 +191,7 @@ function UnavailableActions({ scene }: { scene: NotebookScene }) {
       {!isEmbedded && (
         <Button
           variant="secondary"
-          size="sm"
+          size="md"
           icon="ellipsis-v"
           disabled
           tooltip={reason}

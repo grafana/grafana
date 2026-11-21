@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -13,14 +14,18 @@ import { type FilterSelection, resolveFilterScope } from './filterSelection';
 export type IncidentsData = ReturnType<typeof useIncidents>;
 
 /**
- * All data fetching and derived state for the homepage Active incidents view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Active incidents view.
  *
  * When `selectedFilter` names a label value, incidents are filtered to that
  * value; the default scope fetches every active incident.
  */
 export function useIncidents(selectedFilter: FilterSelection = '') {
-  const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  const { installed, loading: probeLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  // IRM's incidents API is reached through the legacy /api/plugins resources path only; the gate goes
+  // once the frontend calls the /apis app resources route instead.
+  const unavailable = useFlagGrafanaMultiTenantHomepage();
+  const pluginLoading = !unavailable && probeLoading;
+  const available = !unavailable && !!installed;
   const pluginId = SupportedPlugin.Irm;
 
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
@@ -37,7 +42,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
-  const skip = pluginLoading || !installed;
+  const skip = pluginLoading || !available;
   // currentData is undefined only until the current filter's list arrives, so a filter switch
   // shows the skeleton while a homepage revisit (refetchOnMountOrArgChange) shows the cached list.
   const { currentData, isFetching, error, refetch } = incidentsApi.useGetActiveIncidentsQuery(
@@ -52,7 +57,6 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
 
   const loading = pluginLoading || (isFetching && currentData === undefined);
   const count = incidents.length;
-  const hasIncidents = count > 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
   // error (401/403/5xx/network) is genuine and surfaced to the user.
@@ -74,10 +78,9 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
     displayed,
     count,
     hasMore,
-    hasIncidents,
     // Echoed back so the card can scope its empty message to the picked value.
     filterScope,
-    enabled: pluginLoading ? undefined : !!installed,
+    enabled: pluginLoading ? undefined : available,
     loading,
     error: loadError,
     refetch,

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagAlertingWatchersBanner } from '@grafana/runtime/internal';
 import { Alert, LinkButton, Stack, Text } from '@grafana/ui';
 
 import { trackWatchersBannerClick, trackWatchersBannerDismiss } from '../Analytics';
@@ -18,10 +19,13 @@ export function getWatchersBannerDismissedKey(orgId: number): string {
 }
 
 /**
- * Promotes Watchers, the Grafana Assistant's proactive agents. Renders only when the Assistant
- * plugin is installed and enabled, since the CTA links into it. Dismissal is persisted per org.
+ * Promotes Watchers, the Grafana Assistant's proactive agents. Renders only when the
+ * `alerting.watchersBanner` flag is on, because Watchers are available only in Grafana Cloud,
+ * and the Assistant plugin is installed and enabled, since the CTA links into it.
+ * Dismissal is persisted per org.
  */
 export function WatchersBanner() {
+  const enabled = useFlagAlertingWatchersBanner();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
   const key = getWatchersBannerDismissedKey(config.bootData.user.orgId);
   const [dismissed, setDismissed] = useState(() => store.getBool(key, false));
@@ -32,7 +36,7 @@ export function WatchersBanner() {
     trackWatchersBannerDismiss();
   }, [key]);
 
-  if (!installed || dismissed) {
+  if (!enabled || !installed || dismissed) {
     return null;
   }
 

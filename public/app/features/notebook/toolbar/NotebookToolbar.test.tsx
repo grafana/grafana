@@ -227,8 +227,7 @@ describe('NotebookToolbar', () => {
 
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
 
     hasPermission.mockRestore();
   });
@@ -246,8 +245,7 @@ describe('NotebookToolbar', () => {
 
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Notebook mode:/ })).toBeInTheDocument();
 
     hasPermission.mockRestore();
   });

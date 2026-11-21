@@ -39,6 +39,10 @@ type connection struct {
 	credentials func() string
 	closeDone   chan struct{}
 
+	// started is closed once starting has returned, or on close if it never ran.
+	started     chan struct{}
+	startedOnce sync.Once
+
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
@@ -64,8 +68,15 @@ func newConnection(role connRole, logger log.Logger, m connectionMetrics, config
 		config:      config,
 		credentials: credentials,
 		closeDone:   make(chan struct{}),
+		started:     make(chan struct{}),
 	}
 }
+
+// Started is closed once the service has started, so callers built before it
+// can wait instead of failing to subscribe or publish.
+func (c *connection) Started() <-chan struct{} { return c.started }
+
+func (c *connection) markStarted() { c.startedOnce.Do(func() { close(c.started) }) }
 
 func (c *connection) Enabled() bool { return c.config.Enabled() }
 
@@ -108,6 +119,7 @@ func (c *connection) fireReconnect() {
 }
 
 func (c *connection) starting(ctx context.Context) error {
+	defer c.markStarted()
 	if !c.Enabled() {
 		return nil
 	}
@@ -299,7 +311,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if tls := c.config.TLS(); tls.Enabled {
+	// The in-process connection has no transport to secure; requesting TLS on it
+	// fails every connect with ErrSecureConnWanted.
+	if tls := c.config.TLS(); tls.Enabled && !c.config.inProcess() {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
 			return nil, err
@@ -382,6 +396,7 @@ func (c *connection) close() {
 	c.conn = nil
 	c.closed = true
 	c.mu.Unlock()
+	c.markStarted()
 
 	if nc == nil || nc.IsClosed() {
 		return

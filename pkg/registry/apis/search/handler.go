@@ -99,8 +99,8 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			req, ferrs := translateSearchQuery(&q, gvr, namespace, newFieldSet(gvr, h.provider, allowFolderTree))
 			return req, ferrs, nil
 		},
-		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return searchResults(res, kind, limit)
+		func(req *resourcepb.ResourceSearchRequest, res *resourcepb.ResourceSearchResponse) (any, error) {
+			return searchResults(res, kind, req.Limit)
 		},
 	)
 }
@@ -113,15 +113,15 @@ func (h *Handler) GlobalSearchFor(kinds map[schema.GroupResource]string) http.Ha
 	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: kinds}
 	return h.handle(kind, "search.v1.global", searchv0.KindSearchQuery,
 		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
-			var q searchv0.SearchQuery
+			var q searchv0.GlobalSearchQuery
 			if err := decodeBody(r, &q); err != nil {
 				return nil, nil, err
 			}
 			req, ferrs := TranslateGlobalSearchQuery(&q, namespace)
 			return req, ferrs, nil
 		},
-		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return globalSearchResults(res, kind, limit)
+		func(req *resourcepb.ResourceSearchRequest, res *resourcepb.ResourceSearchResponse) (any, error) {
+			return globalSearchResults(req, res, kind)
 		},
 	)
 }
@@ -137,8 +137,8 @@ func (h *Handler) TrashFor(kind kindRef) http.HandlerFunc {
 			req, ferrs := TranslateTrashQuery(&q, kind.gvr(), namespace)
 			return req, ferrs, nil
 		},
-		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return trashResults(res, kind, limit)
+		func(req *resourcepb.ResourceSearchRequest, res *resourcepb.ResourceSearchResponse) (any, error) {
+			return trashResults(res, kind, req.Limit)
 		},
 	)
 }
@@ -150,7 +150,7 @@ func (h *Handler) handle(
 	spanName string,
 	queryKind string,
 	translate func(*http.Request, string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error),
-	respond func(*resourcepb.ResourceSearchResponse, int64) (any, error),
+	respond func(*resourcepb.ResourceSearchRequest, *resourcepb.ResourceSearchResponse) (any, error),
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := h.tracer.Start(r.Context(), spanName, trace.WithAttributes(
@@ -178,12 +178,12 @@ func (h *Handler) handle(
 		}
 
 		res, err := h.client.Search(ctx, req)
-		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
 
-		out, err := respond(res, req.Limit)
+		out, err := respond(req, res)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return

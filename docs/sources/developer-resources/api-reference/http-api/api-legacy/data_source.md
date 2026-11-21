@@ -41,6 +41,7 @@ If you are running Grafana Enterprise, for some endpoints you'll need to have sp
 | DELETE | /api/datasources/uid/:uid              | [Delete an existing data source by uid](#delete-an-existing-data-source-by-uid)                |
 | DELETE | /api/datasources/name/:datasourceName  | [Delete an existing data source by name](#delete-an-existing-data-source-by-name) (deprecated) |
 | GET    | /api/datasources/proxy/uid/:uid/\*     | [Data source proxy calls](#data-source-proxy-calls)                                            |
+| POST   | /api/datasources/proxy/uid/:uid/\*     | [Data source proxy calls](#data-source-proxy-calls)                                            |
 | GET    | /api/datasources/uid/:uid/health       | [Check data source health](#check-data-source-health)                                          |
 | GET    | /api/datasources/uid/:uid/resources/\* | [Fetch data source resources](#fetch-data-source-resources)                                    |
 | POST   | /api/ds/query                          | [Query a data source](#query-a-data-source)                                                    |
@@ -572,7 +573,22 @@ Content-Type: application/json
 
 `GET /api/datasources/proxy/uid/:uid/*`
 
-Proxies all calls to the actual data source identified by the `uid`.
+`POST /api/datasources/proxy/uid/:uid/*`
+
+Proxies `GET` and `POST` requests to the data source identified by `uid`.
+The `*` represents the path to proxy to the data source.
+The data source must support the requested HTTP method and path.
+
+Grafana applies the following route and method restrictions:
+
+- **Plugin routes:** Routes match a path prefix and an HTTP method. An empty method or `*` matches any method.
+- **Loki and Prometheus:** For Loki and Prometheus-compatible data sources, Grafana restricts `POST`, `PUT`, and `DELETE` requests to explicitly allowed paths. Supported operations depend on the data source and endpoint.
+- **Elasticsearch:** `POST` is allowed only for `/_msearch`. `PUT` and `DELETE` aren't allowed.
+
+You must have the `datasources:query` permission for the data source.
+For a matching plugin route, you must also have its `reqAction` permission, if specified.
+If the route doesn't specify `reqAction`, your organization role must satisfy its `reqRole`, if specified.
+Grafana returns `403` if a request violates these restrictions or fails route authorization.
 
 ## Check data source health
 

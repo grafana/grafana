@@ -1,11 +1,18 @@
-import { buildAlertRuleLeaves } from '../alert-rules/alertRuleSearchQuery';
-
+import { type RuleSearchSchema } from './filterDefinitions';
 import { parse } from './parser';
+import { buildSharedLeaves } from './searchQueryLeaves';
 import { getRejectionIssues } from './searchRejection';
+import { sharedFilters } from './sharedFilters';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
 
-function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>) {
+const schema: RuleSearchSchema<SharedRuleFilter> = {
+  filters: Object.values(sharedFilters),
+  createEmptyFilter: createRulesApiFilter,
+};
+
+function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>, folderUids: string[] = []) {
   const error = { status: 422, data: { message: 'invalid', details: { causes } } };
-  return getRejectionIssues(error, buildAlertRuleLeaves(parse(query, 'alert').filter));
+  return getRejectionIssues(error, buildSharedLeaves({ filter: parse(query, schema).filter, folderUids }));
 }
 
 describe('getRejectionIssues', () => {
@@ -17,12 +24,18 @@ describe('getRejectionIssues', () => {
 
   it('names the filter of each rejected leaf of an and', () => {
     const causes = [
-      { field: 'where.and[1].regex.pattern', message: 'missing )' },
-      { field: 'where.and[2].filter.values', message: 'bad uid' },
+      { field: 'where.and[2].regex.pattern', message: 'missing )' },
+      { field: 'where.and[1].filter.values', message: 'bad uid' },
     ];
-    expect(rejectionOf('cpu label:team=~( panelId:4 dashboard:d', causes)).toEqual([
+    expect(rejectionOf('cpu folder:Team label:team=~(', causes, ['f1'])).toEqual([
       { key: 'label', reason: 'rejected', message: 'missing )' },
-      { key: 'dashboard', reason: 'rejected', message: 'bad uid' },
+      { key: 'folder', reason: 'rejected', message: 'bad uid' },
+    ]);
+  });
+
+  it('names folderUid for a rejected folder leaf when no folder name was typed', () => {
+    expect(rejectionOf('folderUid:f1', [{ field: 'where.filter.values', message: 'bad uid' }], ['f1'])).toEqual([
+      { key: 'folderUid', reason: 'rejected', message: 'bad uid' },
     ]);
   });
 

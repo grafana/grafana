@@ -1,15 +1,29 @@
-import { render as RTLRender } from '@testing-library/react';
+import { cleanup, render as RTLRender, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { render as renderWithProviders, waitFor } from 'test/test-utils';
 
-import { SceneTimeRange, behaviors } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import {
+  locationService,
+  LocationServiceProvider,
+  setChromeHeaderHeightHook,
+  setPluginLinksHook,
+} from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { SceneTimeRange, SceneVariableSet, UrlSyncContextProvider, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLinksEditView } from './DashboardLinksEditView';
+import { DashboardLinksEditViewRenderer } from './DashboardLinksEditViewRenderer';
+import { createDashboardEditViewFor } from './createDashboardEditViewFor';
 import { NEW_LINK } from './links/utils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -24,6 +38,14 @@ function render(component: React.ReactNode) {
 }
 
 describe('DashboardLinksEditView', () => {
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   describe('Url state', () => {
     let settings: DashboardLinksEditView;
 
@@ -333,6 +355,87 @@ describe('DashboardLinksEditView', () => {
   });
 });
 
+describe('<DashboardScene /> with dashboardSettingsRedesign enabled', () => {
+  beforeEach(() => {
+    setTestFlags({
+      [FlagKeys.DashboardNewLayouts]: true,
+      [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it.each([
+    { tab: 'links', category: 'Links' },
+    { tab: 'annotations', category: 'Annotations' },
+    { tab: 'variables', category: 'Variables' },
+  ])(
+    'when Take me there is clicked in $category settings with the sidebar closed, the sidebar shows the expanded $category category',
+    async ({ tab, category }) => {
+      const { dashboard } = buildRedirectTestScene(tab);
+      locationService.push(`/d/dash-1/hello?editview=${tab}`);
+      const { actions, findByTestId } = renderDashboardSettings(dashboard);
+
+      await actions.goToSidebar();
+
+      const sidebar = await findByTestId(selectors.components.Sidebar.container);
+      expect(await within(sidebar).findByRole('button', { name: `Collapse ${category} category` })).toBeVisible();
+      expect(locationService.getSearchObject().showCategory).toBe(`dashboard-${tab}`);
+      expect(dashboard.state.editview).toBeUndefined();
+      expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(dashboard.state.sidebar.getSelectedObject()).toBe(dashboard);
+    }
+  );
+});
+
+function buildRedirectTestScene(tab: string) {
+  const settings = createDashboardEditViewFor(tab);
+  const dashboard = new DashboardScene({
+    $variables: new SceneVariableSet({ variables: [] }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+    isEditing: true,
+    mode: 'edit',
+    title: 'hello',
+    uid: 'dash-1',
+    meta: { canEdit: true },
+    editview: settings,
+    links: [{ ...NEW_LINK, title: 'link-1' }],
+  });
+
+  return { dashboard, settings };
+}
+
+function renderDashboardSettings(dashboard: DashboardScene) {
+  const user = userEvent.setup();
+  setChromeHeaderHeightHook(() => 40);
+  setPluginLinksHook(() => ({ links: [], isLoading: false }));
+  const renderResult = render(
+    <LocationServiceProvider service={locationService}>
+      <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+        <dashboard.Component model={dashboard} />
+      </UrlSyncContextProvider>
+    </LocationServiceProvider>
+  );
+  const elements = {
+    goToSidebarButton: () => renderResult.findByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...renderResult,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(await elements.goToSidebarButton());
+      },
+    },
+  };
+}
+
 async function buildTestScene() {
   const settings = new DashboardLinksEditView({});
   const dashboard = new DashboardScene({
@@ -356,3 +459,53 @@ async function buildTestScene() {
 
   return { dashboard, settings };
 }
+
+function renderSidebarRedirect() {
+  const view = new DashboardLinksEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+  });
+  const user = userEvent.setup();
+  const result = renderWithProviders(<DashboardLinksEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('DashboardLinksEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at links', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-links',
+      highlightCategory: 'dashboard-links',
+    });
+  });
+});

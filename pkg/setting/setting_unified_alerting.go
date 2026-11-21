@@ -193,7 +193,7 @@ type UnifiedAlertingSettings struct {
 	ExternalRulerUID string
 
 	// FolderLabelFullSyncInterval is how often the folder label syncer walks every folder to correct
-	// any drift in the has-rules label, on top of the pass it makes at startup.
+	// any drift in the folder rule labels, on top of the pass it makes at startup.
 	// Configured via the [unified_alerting] ini key "folder_label_full_sync_interval" or the
 	// GF_UNIFIED_ALERTING_FOLDER_LABEL_FULL_SYNC_INTERVAL environment variable.
 	FolderLabelFullSyncInterval time.Duration
@@ -210,16 +210,21 @@ type RecordingRuleSettings struct {
 	// MaxWriteConcurrency bounds how many split requests run in parallel.
 	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
 	MaxWriteConcurrency int
+	// MaxTrackedSeries caps the series remembered for stale markers across all recording rules.
+	// 0 means no limit.
+	MaxTrackedSeries int64
 }
+
+// DefaultMaxTrackedSeries is about 1.2 to 1.5 GiB of memory, estimated from profiles of the stale marker series set.
+const DefaultMaxTrackedSeries = 1_000_000
 
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	URL          string
-	TenantID     string
-	Password     string
-	SyncInterval time.Duration
-	Timeout      time.Duration
+	URL      string
+	TenantID string
+	Password string
+	Timeout  time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -240,6 +245,9 @@ type UnifiedAlertingPrometheusConversionSettings struct {
 	RuleQueryOffset time.Duration
 	// DefaultDatasourceUID is the default datasource UID to use when converting Prometheus rules if not specified via header
 	DefaultDatasourceUID string
+	// MaxRequestBodyBytes is the maximum allowed request body size in bytes for Prometheus conversion API POST endpoints.
+	// 0 means no limit.
+	MaxRequestBodyBytes int64
 }
 
 type UnifiedAlertingLokiSettings struct {
@@ -544,10 +552,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
-	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
-	if err != nil {
-		return err
-	}
 	uaCfgRemoteAM.Timeout, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "timeout", (remoteAlertmanagerDefaultTimeout).String()))
 	if err != nil {
 		return err
@@ -626,6 +630,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
 		RuleQueryOffset:      prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
 		DefaultDatasourceUID: prometheusConversion.Key("default_datasource_uid").MustString(""),
+		MaxRequestBodyBytes:  prometheusConversion.Key("max_request_body_bytes").MustInt64(52428800),
+	}
+	if uaCfg.PrometheusConversion.MaxRequestBodyBytes < 0 {
+		return fmt.Errorf("setting 'max_request_body_bytes' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	rr := iniFile.Section("recording_rules")
@@ -635,6 +643,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
 		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
+
+		MaxTrackedSeries: rr.Key("max_tracked_series").MustInt64(DefaultMaxTrackedSeries),
+	}
+	if uaCfgRecordingRules.MaxTrackedSeries < 0 {
+		return fmt.Errorf("setting 'max_tracked_series' is invalid, only 0 or a positive integer are allowed")
 	}
 	if bs := uaCfgRecordingRules.MaxWriteBatchSize; bs != 0 && bs < recordingRulesMinWriteBatchSize {
 		return fmt.Errorf("setting 'max_write_batch_size' is invalid, only 0 or a value of at least %d bytes is allowed", recordingRulesMinWriteBatchSize)

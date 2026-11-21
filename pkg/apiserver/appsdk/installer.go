@@ -40,6 +40,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 // ManagedKindResolver resolves a kind and version into a resource.Kind instance.
@@ -433,6 +435,8 @@ func (r *defaultInstaller) InstallAPIs(server GenericAPIServer, optsGetter gener
 		}
 	}
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(group, r.scheme, runtime.NewParameterCodec(r.scheme), r.codecs)
+	// App kinds do not implement protobuf marshalling, so only JSON and YAML are offered.
+	apiGroupInfo.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(r.codecs)
 
 	kindsByGV, err := r.getKindsByGroupVersion()
 	if err != nil {
