@@ -31,10 +31,11 @@ jest.mock('../../utils/interactions', () => ({
 }));
 
 // mock getDefaultVizPanel
-jest.mock('../../utils/utils', () => ({
-  ...jest.requireActual('../../utils/utils'),
-  getDefaultVizPanel: () => new VizPanel({ key: 'panel-1', pluginId: 'text' }),
-}));
+jest.mock('../../utils/utils', () =>
+  jest.requireActual('test/helpers/partialMock').partialMock(jest.requireActual('../../utils/utils'), {
+    getDefaultVizPanel: () => new VizPanel({ key: 'panel-1', pluginId: 'text' }),
+  })
+);
 
 // mock addNew
 jest.mock('./addNew', () => ({
