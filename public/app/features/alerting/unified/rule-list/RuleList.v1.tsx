@@ -20,12 +20,13 @@ import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
+import { useDataSourcesForRules } from '../hooks/useDataSourcesForRules';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
 import { RuleListV1DeprecationNotice } from './RuleListV1DeprecationNotice';
@@ -48,7 +49,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const RuleListV1 = () => {
   const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
-  const [rulesDataSourceNames] = useState(getAllRulesSourceNames);
+  const { items: rulesDataSources, isLoading: isLoadingRulesSources } = useDataSourcesForRules();
   const [expandAll, setExpandAll] = useState(false);
 
   const onFilterCleared = useCallback(() => setExpandAll(false), []);
@@ -67,9 +68,12 @@ const RuleListV1 = () => {
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-  const loading = rulesDataSourceNames.some(
-    (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-  );
+  // A user who cannot view Grafana-managed rules has no request for them, so the check can always include them.
+  const loading =
+    isLoadingRulesSources ||
+    [...rulesDataSources.map((ds) => ds.name), GRAFANA_RULES_SOURCE_NAME].some(
+      (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
+    );
 
   const promRequests = Object.entries(promRuleRequests);
   const rulerRequests = Object.entries(rulerRuleRequests);

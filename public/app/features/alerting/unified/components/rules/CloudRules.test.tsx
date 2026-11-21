@@ -1,5 +1,5 @@
 import { Provider } from 'react-redux';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
@@ -42,7 +42,7 @@ describe('CloudRules — Mimir AM auto-sync', () => {
   beforeEach(() => {
     grantUserRole(OrgRole.Admin);
     grantUserPermissions([
-      // External read is required for getRulesDataSources() to include the Mimir DS.
+      // External read is required for useDataSourcesForRules() to include the Mimir DS.
       AccessControlAction.AlertingRuleExternalRead,
       // Both grafana-managed perms are required to enable canMigrateToGMA.
       AccessControlAction.AlertingRuleCreate,
@@ -68,5 +68,19 @@ describe('CloudRules — Mimir AM auto-sync', () => {
       expect(btn).not.toHaveAttribute('aria-disabled', 'true');
       expect(requestSpy).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('CloudRules — rules source list', () => {
+  beforeEach(() => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+  });
+
+  it('does not say that no data sources are configured while the list loads', async () => {
+    renderWithCloudResults();
+
+    expect(screen.queryByText('There are no Prometheus or Loki data sources configured')).not.toBeInTheDocument();
+    expect(await screen.findByText('No rules found.')).toBeInTheDocument();
+    expect(screen.queryByText('There are no Prometheus or Loki data sources configured')).not.toBeInTheDocument();
   });
 });
