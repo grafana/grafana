@@ -42,6 +42,10 @@ type SupportedResource struct {
 	// Kind is the kind of the resource (e.g. "Dashboard").
 	Kind string `json:"kind"`
 
+	// Folder reports whether the resource is contained in a folder, carrying the folder
+	// annotation when provisioning writes it. Resources outside folders omit this field.
+	Folder bool `json:"folder,omitempty"`
+
 	// Disabled reports whether the resource is declared but not acted on by provisioning.
 	// Active resources omit this field.
 	Disabled bool `json:"disabled,omitempty"`

@@ -126,11 +126,13 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
 
 		// The default config (conf/defaults.ini) declares folders + dashboards (active) and
-		// library panels + playlists (disabled). All are surfaced; disabled ones carry the flag.
+		// library panels + playlists (disabled). All are surfaced with their declared
+		// capabilities; disabled ones carry the flag, and playlists are the one kind outside
+		// folders.
 		require.ElementsMatch(t, []provisioning.SupportedResource{
-			{Group: "folder.grafana.app", Kind: "Folder"},
-			{Group: "dashboard.grafana.app", Kind: "Dashboard"},
-			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", Disabled: true},
+			{Group: "folder.grafana.app", Kind: "Folder", Folder: true},
+			{Group: "dashboard.grafana.app", Kind: "Dashboard", Folder: true},
+			{Group: "dashboard.grafana.app", Kind: "LibraryPanel", Folder: true, Disabled: true},
 			{Group: "playlist.grafana.app", Kind: "Playlist", Disabled: true},
 		}, settings.AvailableResources, "settings should surface the default supported resources")
 	})

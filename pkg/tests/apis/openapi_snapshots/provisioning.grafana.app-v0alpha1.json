@@ -6930,6 +6930,10 @@
             "description": "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
             "type": "boolean"
           },
+          "folder": {
+            "description": "Folder reports whether the resource is contained in a folder, carrying the folder annotation when provisioning writes it. Resources outside folders omit this field.",
+            "type": "boolean"
+          },
           "group": {
             "description": "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
             "type": "string",
