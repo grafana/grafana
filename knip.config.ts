@@ -99,7 +99,6 @@ const config: KnipConfig = {
         'public/app/api/clients/**/index.ts!',
         // Private reference contracts for independently built consumers; Core wiring follows in later PRs.
         'public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts.ts!',
-        'public/app/plugins/panel/text/v2/fmtMigration.ts!',
         'public/app/extensions/index.ts!',
         // locale extensions for enterprise translations
         'public/app/extensions/locales/localeExtensions.ts!',
