@@ -59,6 +59,7 @@ const IDENTIFIER = /^[A-Za-z_$][\w$-]*$/;
 const LINE_BREAK = /\r\n?|\n/g;
 const LINE_SEPARATORS = /[\u2028\u2029]/g;
 const SEPARATOR_STAND_IN = '\u2001';
+const MAX_AST_DEPTH = 500;
 
 interface Scope {
   context: number;
@@ -153,8 +154,12 @@ function analyzeContent(content: string, { mode, renderMode, hasFmtField }: FmtM
 function parseCompilable(source: string): hbs.AST.Program | undefined {
   const program = parseTemplate(source);
 
+  if (!program || exceedsDepth(program, MAX_AST_DEPTH)) {
+    return undefined;
+  }
+
   try {
-    return program && compileProgram(program, (value) => value) ? program : undefined;
+    return compileProgram(program, (value) => value) ? program : undefined;
   } catch {
     return undefined;
   }
@@ -523,6 +528,25 @@ function itemKind(value: number): number {
 
 function unionOf(values: number[]): number {
   return values.length ? values.reduce((all, value) => all | value, 0) : NOTHING;
+}
+
+function exceedsDepth(root: object, limit: number): boolean {
+  const pending: Array<[object, number]> = [[root, 0]];
+
+  for (let entry = pending.pop(); entry; entry = pending.pop()) {
+    const [node, depth] = entry;
+
+    if (depth > limit) {
+      return true;
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (key !== 'loc' && isRecord(value)) {
+        pending.push([value, depth + 1]);
+      }
+    }
+  }
+
+  return false;
 }
 
 function matches(original: unknown, converted: unknown, replacements: Map<object, Replacement>): boolean {
