@@ -15273,7 +15273,7 @@
     },
     "generate-commit-details": {
       "error-tooltip": "Failed to generate commit details. Please try again or if the problem persists, contact your organization admin.",
-      "generate": "Generate commit details with AI",
+      "generate": "Generate commit details with Assistant",
       "retry": "Retry",
       "stop": "Stop generating",
       "tooltip": "Generates the commit message, branch name and pull request description from the dashboard and its changes"

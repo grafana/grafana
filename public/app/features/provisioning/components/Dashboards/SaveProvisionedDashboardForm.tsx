@@ -42,7 +42,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { generateBranchToken } from '../../utils/branchName';
-import { type CommitDetails, getCommitDetailsMessages, getCommitTitle } from '../../utils/commitDetails';
+import { type CommitDetails, getCommitDetailsPrompt, getCommitTitle } from '../../utils/commitDetails';
 import { type CommitTemplateVars, getResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { supportsPullRequestDescription } from '../../utils/pullRequestTitle';
@@ -213,8 +213,8 @@ export function SaveProvisionedDashboardForm({
   const pullRequestTitle = (preferCommitTitle ? commitTitle : prTitle) || commitTitle;
   const prDescription = showPrDescription ? (watch('prDescription') ?? '').trim() : '';
 
-  const getGenerateMessages = () =>
-    getCommitDetailsMessages({
+  const getGeneratePrompt = () =>
+    getCommitDetailsPrompt({
       action: createsFile ? 'create' : 'update',
       title: title ?? '',
       description,
@@ -647,7 +647,7 @@ export function SaveProvisionedDashboardForm({
           {showGenerateCommitDetails && (
             <div>
               <GenerateCommitDetailsButton
-                getMessages={getGenerateMessages}
+                getPrompt={getGeneratePrompt}
                 onGenerate={applyCommitDetails}
                 disabled={isSubmitting || request.isLoading}
               />

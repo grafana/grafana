@@ -15,6 +15,15 @@ export const useAssistant = jest.fn().mockReturnValue({
 export const createAssistantContextItem = jest.fn();
 export const useProvidePageContext = jest.fn().mockReturnValue(jest.fn());
 
+export const useInlineAssistant = jest.fn().mockReturnValue({
+  generate: jest.fn(),
+  cancel: jest.fn(),
+  reset: jest.fn(),
+  isGenerating: false,
+  content: '',
+  error: null,
+});
+
 export const OpenAssistantButton = jest.fn().mockReturnValue(null);
 export const AssistantPromptCard = jest.fn().mockReturnValue(null);
 export const AssistantPromptCardView = jest.fn().mockReturnValue(null);

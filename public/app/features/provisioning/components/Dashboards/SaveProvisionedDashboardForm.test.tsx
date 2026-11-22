@@ -118,23 +118,21 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
-// The LLM app isn't available under Jest. Tests flip `enabled` and answer through the captured `onResponse`.
-const mockLLMStream: { enabled: boolean; onResponse?: (reply: string) => void } = { enabled: false };
-const mockSetLLMMessages = jest.fn();
-jest.mock('app/features/dashboard/components/GenAI/hooks', () => ({
-  ...jest.requireActual('app/features/dashboard/components/GenAI/hooks'),
-  useLLMStream: (options: { onResponse?: (reply: string) => void }) => {
-    mockLLMStream.onResponse = options.onResponse;
-    return {
-      setMessages: mockSetLLMMessages,
-      stopGeneration: jest.fn(),
-      messages: [],
-      reply: '',
-      streamStatus: 'idle',
-      error: undefined,
-      value: { enabled: mockLLMStream.enabled },
-    };
-  },
+// Grafana Assistant isn't available under Jest. Tests flip `available` and answer through the
+// `onComplete` passed to `generate`.
+const mockAssistant = { available: false };
+const mockGenerate = jest.fn();
+jest.mock('@grafana/assistant', () => ({
+  ...jest.requireActual('@grafana/assistant'),
+  useAssistant: () => ({ isAvailable: mockAssistant.available, isLoading: false }),
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    cancel: jest.fn(),
+    reset: jest.fn(),
+    isGenerating: false,
+    content: '',
+    error: null,
+  }),
 }));
 
 jest.mock('app/features/dashboard-scene/saving/SaveDashboardForm', () => {
@@ -2424,12 +2422,12 @@ describe('SaveProvisionedDashboardForm AI commit details', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockLLMStream.enabled = true;
+    mockAssistant.available = true;
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
   });
 
   afterAll(() => {
-    mockLLMStream.enabled = false;
+    mockAssistant.available = false;
   });
 
   function setupExistingOnNewBranch() {
@@ -2479,18 +2477,19 @@ describe('SaveProvisionedDashboardForm AI commit details', () => {
     });
   }
 
-  it('sends the dashboard panels and diff to the LLM, asking for all three fields on a new GitHub branch', async () => {
+  it('sends the dashboard panels and diff to the Assistant, asking for all three fields on a new GitHub branch', async () => {
     const { user } = setupExistingOnNewBranch();
 
-    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
+    await user.click(await screen.findByRole('button', { name: /generate commit details with assistant/i }));
 
-    expect(mockSetLLMMessages).toHaveBeenCalledTimes(1);
-    const [system, userMessage] = mockSetLLMMessages.mock.calls[0][0];
-    expect(system.content).toContain('"commitMessage"');
-    expect(system.content).toContain('"branch"');
-    expect(system.content).toContain('"pullRequestDescription"');
-    expect(userMessage.content).toContain('Panels (1):\n- CPU usage');
-    expect(userMessage.content).toContain('Changes to the dashboard JSON:\nadded panels.0: {"title":"CPU usage"}');
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+    const { systemPrompt, prompt, origin } = mockGenerate.mock.calls[0][0];
+    expect(origin).toBe('grafana/provisioning/save-dashboard/commit-details');
+    expect(systemPrompt).toContain('"commitMessage"');
+    expect(systemPrompt).toContain('"branch"');
+    expect(systemPrompt).toContain('"pullRequestDescription"');
+    expect(prompt).toContain('Panels (1):\n- CPU usage');
+    expect(prompt).toContain('Changes to the dashboard JSON:\nadded panels.0: {"title":"CPU usage"}');
   });
 
   it('fills the fields from the reply, commits with them and carries the PR title and description to the preview', async () => {
@@ -2503,8 +2502,8 @@ describe('SaveProvisionedDashboardForm AI commit details', () => {
     );
     const { user } = setupExistingOnNewBranch();
 
-    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
-    await act(async () => mockLLMStream.onResponse?.(generatedReply));
+    await user.click(await screen.findByRole('button', { name: /generate commit details with assistant/i }));
+    await act(async () => mockGenerate.mock.calls[0][0].onComplete(generatedReply));
 
     expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue(
       'Add CPU usage panel\n\n- Adds a CPU usage time series'
@@ -2541,9 +2540,9 @@ describe('SaveProvisionedDashboardForm AI commit details', () => {
       },
     });
 
-    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
-    expect(mockSetLLMMessages.mock.calls[0][0][0].content).not.toContain('"branch"');
-    await act(async () => mockLLMStream.onResponse?.(generatedReply));
+    await user.click(await screen.findByRole('button', { name: /generate commit details with assistant/i }));
+    expect(mockGenerate.mock.calls[0][0].systemPrompt).not.toContain('"branch"');
+    await act(async () => mockGenerate.mock.calls[0][0].onComplete(generatedReply));
 
     expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue(
       'Add CPU usage panel\n\n- Adds a CPU usage time series'
@@ -2555,8 +2554,8 @@ describe('SaveProvisionedDashboardForm AI commit details', () => {
   it('leaves the fields untouched and offers a retry when the reply is not valid JSON', async () => {
     const { user } = setupExistingOnNewBranch();
 
-    await user.click(await screen.findByRole('button', { name: /generate commit details with ai/i }));
-    await act(async () => mockLLMStream.onResponse?.('Sure! Here is a commit message: Add CPU panel'));
+    await user.click(await screen.findByRole('button', { name: /generate commit details with assistant/i }));
+    await act(async () => mockGenerate.mock.calls[0][0].onComplete('Sure! Here is a commit message: Add CPU panel'));
 
     expect(await screen.findByRole('button', { name: /retry/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toHaveValue('');

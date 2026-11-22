@@ -3,7 +3,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import {
-  getCommitDetailsMessages,
+  getCommitDetailsPrompt,
   getCommitTitle,
   getDiffSummary,
   getPanelTitles,
@@ -59,9 +59,9 @@ describe('getDiffSummary', () => {
   });
 });
 
-describe('getCommitDetailsMessages', () => {
+describe('getCommitDetailsPrompt', () => {
   it('asks only for the keys that apply and includes the dashboard details and diff', () => {
-    const [system, user] = getCommitDetailsMessages({
+    const { systemPrompt, prompt } = getCommitDetailsPrompt({
       action: 'update',
       title: 'Infra',
       description: 'Hosts overview',
@@ -72,10 +72,10 @@ describe('getCommitDetailsMessages', () => {
       includePullRequestDescription: false,
     });
 
-    expect(system.content).toContain('"commitMessage"');
-    expect(system.content).toContain('"branch"');
-    expect(system.content).not.toContain('"pullRequestDescription"');
-    expect(user.content).toBe(
+    expect(systemPrompt).toContain('"commitMessage"');
+    expect(systemPrompt).toContain('"branch"');
+    expect(systemPrompt).not.toContain('"pullRequestDescription"');
+    expect(prompt).toBe(
       [
         'Action: update an existing dashboard',
         'Dashboard title: Infra',
@@ -88,7 +88,7 @@ describe('getCommitDetailsMessages', () => {
   });
 
   it('omits the changes section for a new dashboard', () => {
-    const [, user] = getCommitDetailsMessages({
+    const { prompt } = getCommitDetailsPrompt({
       action: 'create',
       title: 'New',
       path: 'new.json',
@@ -96,7 +96,7 @@ describe('getCommitDetailsMessages', () => {
       includeBranch: false,
       includePullRequestDescription: true,
     });
-    expect(user.content).toBe(
+    expect(prompt).toBe(
       [
         'Action: create a new dashboard',
         'Dashboard title: New',

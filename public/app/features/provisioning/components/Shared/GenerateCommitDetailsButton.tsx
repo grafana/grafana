@@ -1,74 +1,54 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
+import { useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { t } from '@grafana/i18n';
 import { Button, Spinner, Stack, Tooltip } from '@grafana/ui';
-import { StreamStatus, useLLMStream } from 'app/features/dashboard/components/GenAI/hooks';
-import {
-  AutoGenerateItem,
-  EventTrackingSrc,
-  reportAutoGenerateInteraction,
-} from 'app/features/dashboard/components/GenAI/tracking';
-import { DEFAULT_LLM_MODEL, type Message } from 'app/features/dashboard/components/GenAI/utils';
 
-import { type CommitDetails, parseCommitDetails } from '../../utils/commitDetails';
-
-// The whole JSON reply has to arrive before anything is applied, and it carries a PR description.
-const GENERATION_TIMEOUT_MS = 30000;
+import { type CommitDetails, type CommitDetailsPrompt, parseCommitDetails } from '../../utils/commitDetails';
 
 interface Props {
-  getMessages: () => Message[];
+  getPrompt: () => CommitDetailsPrompt;
   onGenerate: (details: CommitDetails) => void;
   disabled?: boolean;
 }
 
-/** Asks the LLM app for a commit message, branch name and PR description. Renders nothing when the LLM app is unavailable. */
-export function GenerateCommitDetailsButton({ getMessages, onGenerate, disabled }: Props) {
+/** Asks Grafana Assistant for a commit message, branch name and PR description. Renders nothing when the Assistant is unavailable. */
+export function GenerateCommitDetailsButton({ getPrompt, onGenerate, disabled }: Props) {
+  const { isAvailable } = useAssistant();
+  const { generate, cancel, isGenerating, error } = useInlineAssistant();
   const [invalidReply, setInvalidReply] = useState(false);
 
-  const onResponse = useCallback(
-    (reply: string) => {
-      const details = parseCommitDetails(reply);
-      setInvalidReply(!details);
-      if (details) {
-        onGenerate(details);
-      }
-    },
-    [onGenerate]
-  );
-
-  const { setMessages, stopGeneration, error, streamStatus, value } = useLLMStream({
-    model: DEFAULT_LLM_MODEL,
-    temperature: 0.3,
-    onResponse,
-    timeout: GENERATION_TIMEOUT_MS,
-  });
-
-  if (!value?.enabled) {
+  if (!isAvailable) {
     return null;
   }
 
-  const isGenerating = streamStatus === StreamStatus.GENERATING;
   const failed = Boolean(error) || invalidReply;
 
   const onClick = () => {
     if (isGenerating) {
-      stopGeneration();
-      reportAutoGenerateInteraction(EventTrackingSrc.provisionedCommitDetails, AutoGenerateItem.stopGenerationButton);
+      cancel();
       return;
     }
     setInvalidReply(false);
-    setMessages(getMessages());
-    reportAutoGenerateInteraction(
-      EventTrackingSrc.provisionedCommitDetails,
-      failed ? AutoGenerateItem.erroredRetryButton : AutoGenerateItem.autoGenerateButton
-    );
+    generate({
+      ...getPrompt(),
+      origin: 'grafana/provisioning/save-dashboard/commit-details',
+      agentName: 'commit-details-generator',
+      onComplete: (reply) => {
+        const details = parseCommitDetails(reply);
+        setInvalidReply(!details);
+        if (details) {
+          onGenerate(details);
+        }
+      },
+    });
   };
 
   const text = isGenerating
     ? t('provisioning.generate-commit-details.stop', 'Stop generating')
     : failed
       ? t('provisioning.generate-commit-details.retry', 'Retry')
-      : t('provisioning.generate-commit-details.generate', 'Generate commit details with AI');
+      : t('provisioning.generate-commit-details.generate', 'Generate commit details with Assistant');
 
   return (
     <Stack direction="row" gap={0.5} alignItems="center">
@@ -87,7 +67,7 @@ export function GenerateCommitDetailsButton({ getMessages, onGenerate, disabled 
         }
       >
         <Button
-          icon={isGenerating ? undefined : failed ? 'exclamation-circle' : 'ai'}
+          icon={isGenerating ? undefined : failed ? 'exclamation-circle' : 'ai-sparkle'}
           onClick={onClick}
           fill="text"
           size="sm"

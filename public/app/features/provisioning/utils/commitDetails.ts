@@ -2,7 +2,6 @@ import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { Role, type Message } from 'app/features/dashboard/components/GenAI/utils';
 import { type Diffs, getDiffOperationText } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { sanitizeBranchName } from './branchName';
@@ -68,7 +67,12 @@ export function getDiffSummary(diffs: Diffs): string[] {
   return lines;
 }
 
-export function getCommitDetailsMessages(context: CommitDetailsContext): Message[] {
+export interface CommitDetailsPrompt {
+  systemPrompt: string;
+  prompt: string;
+}
+
+export function getCommitDetailsPrompt(context: CommitDetailsContext): CommitDetailsPrompt {
   const keys = [
     '- "commitMessage": a git commit message. The first line is an imperative summary under 72 characters with no trailing period; it also becomes the pull request title. Optionally add a blank line and up to 3 short bullet lines describing notable changes.',
   ];
@@ -101,18 +105,15 @@ export function getCommitDetailsMessages(context: CommitDetailsContext): Message
       : '',
   ].filter(Boolean);
 
-  return [
-    {
-      role: Role.system,
-      content: [
-        'You write the git metadata for a Grafana dashboard change that is committed to a Git repository.',
-        'Base it only on the dashboard details and changes provided. Describe what changed for a reader of the repository history, not JSON paths.',
-        'Respond with a single JSON object and nothing else, with these string keys:',
-        ...keys,
-      ].join('\n'),
-    },
-    { role: Role.user, content: details.join('\n\n') },
-  ];
+  return {
+    systemPrompt: [
+      'You write the git metadata for a Grafana dashboard change that is committed to a Git repository.',
+      'Base it only on the dashboard details and changes provided. Describe what changed for a reader of the repository history, not JSON paths.',
+      'Do not call any tools. Respond with a single JSON object and nothing else, with these string keys:',
+      ...keys,
+    ].join('\n'),
+    prompt: details.join('\n\n'),
+  };
 }
 
 function readString(record: Record<string | number | symbol, unknown>, key: string): string | undefined {
