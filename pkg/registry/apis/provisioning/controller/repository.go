@@ -24,16 +24,15 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -152,7 +151,7 @@ func NewRepositoryController(
 		Kind:         "repository",
 		Logger:       rc.logger,
 		Registry:     registry,
-		Processed:    usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		Processed:    informer.NewProcessedMetrics(registry, "repositories", natsBacked),
 		MaxAttempts:  maxAttempts,
 		Retryable:    isRetryableProcessError,
 		DrainTimeout: drainTimeout,

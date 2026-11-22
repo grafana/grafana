@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -268,12 +269,12 @@ type announcedVersions interface {
 
 // observeRepositoryFreshness wraps a RepositoryGetter to record how each read
 // compared to the notification that triggered it. Calls pass through untouched.
-func observeRepositoryFreshness(inner RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) RepositoryGetter {
+func observeRepositoryFreshness(inner appinformer.RepositoryGetter, announced announcedVersions, rec FreshnessRecorder) appinformer.RepositoryGetter {
 	return freshnessRepositoryGetter{RepositoryGetter: inner, announced: announced, rec: rec}
 }
 
 type freshnessRepositoryGetter struct {
-	RepositoryGetter
+	appinformer.RepositoryGetter
 	announced announcedVersions
 	rec       FreshnessRecorder
 }
@@ -287,12 +288,12 @@ func (g freshnessRepositoryGetter) Get(ctx context.Context, namespace, name stri
 }
 
 // observeConnectionFreshness is observeRepositoryFreshness for connections.
-func observeConnectionFreshness(inner ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) ConnectionGetter {
+func observeConnectionFreshness(inner appinformer.ConnectionGetter, announced announcedVersions, rec FreshnessRecorder) appinformer.ConnectionGetter {
 	return freshnessConnectionGetter{ConnectionGetter: inner, announced: announced, rec: rec}
 }
 
 type freshnessConnectionGetter struct {
-	ConnectionGetter
+	appinformer.ConnectionGetter
 	announced announcedVersions
 	rec       FreshnessRecorder
 }

@@ -16,9 +16,9 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // queuedEvent is what the driver remembers about a queued key between enqueue
@@ -61,7 +61,7 @@ type ConcurrentJobDriver struct {
 	// processed classifies each delivery and records the processing metrics. It
 	// encapsulates the delivery backend (natsBacked) and the resource label, so
 	// the driver passes only raw event facts.
-	processed *usinformer.ProcessedMetrics
+	processed *informer.ProcessedMetrics
 
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
@@ -129,7 +129,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
-		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
+		processed:            informer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{

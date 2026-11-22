@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/utils/clock"
 
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 )
 
 // ProcessFunc reconciles the object behind key. The returned fields are added
@@ -35,7 +35,7 @@ type Config struct {
 	Kind      string
 	Logger    logging.Logger
 	Registry  prometheus.Registerer
-	Processed *usinformer.ProcessedMetrics
+	Processed *informer.ProcessedMetrics
 	// MaxAttempts bounds how often one delivery is processed, retries included.
 	MaxAttempts int
 	// Retryable reports whether a failure is transient and worth a
@@ -57,7 +57,7 @@ type Workers struct {
 	// triggers carries each key's attribution from enqueue to pickup. Entries
 	// live only between enqueue and the pickup that pops them.
 	triggersMu sync.Mutex
-	triggers   map[string]usinformer.ProcessTrigger
+	triggers   map[string]informer.ProcessTrigger
 }
 
 func New(cfg Config, process ProcessFunc) *Workers {
@@ -67,7 +67,7 @@ func New(cfg Config, process ProcessFunc) *Workers {
 	w := &Workers{
 		cfg:      cfg,
 		process:  process,
-		triggers: make(map[string]usinformer.ProcessTrigger),
+		triggers: make(map[string]informer.ProcessTrigger),
 	}
 	queueConfig := workqueue.TypedQueueConfig[string]{
 		Name:            "provisioning" + cfg.Controller,
@@ -134,7 +134,7 @@ func resourceVersion(obj any) string {
 	return acc.GetResourceVersion()
 }
 
-func (w *Workers) enqueue(obj any, trigger usinformer.ProcessTrigger) {
+func (w *Workers) enqueue(obj any, trigger informer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
@@ -154,7 +154,7 @@ func (w *Workers) enqueue(obj any, trigger usinformer.ProcessTrigger) {
 // setTrigger records what enqueued key, first-wins: the enqueue that first
 // queued the key owns the attribution, and later deliveries that coalesce onto
 // the still-queued key (or a retry re-set) leave it alone.
-func (w *Workers) setTrigger(key string, trigger usinformer.ProcessTrigger) {
+func (w *Workers) setTrigger(key string, trigger informer.ProcessTrigger) {
 	w.triggersMu.Lock()
 	defer w.triggersMu.Unlock()
 	if _, ok := w.triggers[key]; !ok {
@@ -168,7 +168,7 @@ func (w *Workers) setTrigger(key string, trigger usinformer.ProcessTrigger) {
 // entry and marking the key dirty, e.g. a status update the reconcile itself
 // produced) keeps its attribution for the redelivery, which a terminal
 // queue.Forget must not clobber.
-func (w *Workers) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
+func (w *Workers) popTrigger(key string) (informer.ProcessTrigger, bool) {
 	w.triggersMu.Lock()
 	defer w.triggersMu.Unlock()
 	trigger, ok := w.triggers[key]

@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // Store is an abstraction for the storage API.
@@ -97,7 +97,7 @@ type jobProcessor struct {
 
 	// processed records the event-processing metrics (source counts + delivery
 	// latency) once a claim confirms a genuine pickup.
-	processed *usinformer.ProcessedMetrics
+	processed *informer.ProcessedMetrics
 
 	// tracer starts the root span of each job. It can be nil.
 	tracer tracing.Tracer
@@ -115,7 +115,7 @@ func newJobProcessor(
 	historicJobs HistoryWriter,
 	driverID string,
 	metrics *JobMetrics,
-	processed *usinformer.ProcessedMetrics,
+	processed *informer.ProcessedMetrics,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{

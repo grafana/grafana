@@ -19,7 +19,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	testingclock "k8s.io/utils/clock/testing"
 
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 )
 
 const (
@@ -42,7 +42,7 @@ func newTestWorkers(t *testing.T, cfg Config, process func(ctx context.Context, 
 	cfg.Logger = logging.DefaultLogger
 	cfg.Registry = reg
 	if cfg.Processed == nil {
-		cfg.Processed = usinformer.NewProcessedMetrics(reg, testResource, false)
+		cfg.Processed = informer.NewProcessedMetrics(reg, testResource, false)
 	}
 	if cfg.MaxAttempts == 0 {
 		cfg.MaxAttempts = 3
@@ -391,7 +391,7 @@ func TestWorkersRecordsProcessingByTrigger(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			processedReg := prometheus.NewPedanticRegistry()
 			w, _ := newTestWorkers(t, Config{
-				Processed: usinformer.NewProcessedMetrics(processedReg, testResource, tt.natsBacked),
+				Processed: informer.NewProcessedMetrics(processedReg, testResource, tt.natsBacked),
 			}, func(context.Context, string) error { return nil })
 
 			tt.feed(w.EventHandler())
@@ -415,7 +415,7 @@ func TestWorkersKeysEveryDeliveryShape(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w, _ := newTestWorkers(t, Config{}, nil)
-			w.enqueue(tc.obj, usinformer.TriggerLive)
+			w.enqueue(tc.obj, informer.TriggerLive)
 			key, _ := w.queue.Get()
 			assert.Equal(t, testKey, key)
 			assert.Equal(t, tc.wantRV, resourceVersion(tc.obj))

@@ -17,13 +17,12 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -86,7 +85,7 @@ func NewConnectionController(
 		Kind:         "connection",
 		Logger:       cc.logger,
 		Registry:     registry,
-		Processed:    usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
+		Processed:    informer.NewProcessedMetrics(registry, "connections", natsBacked),
 		MaxAttempts:  connectionMaxAttempts,
 		Retryable:    apierrors.IsServiceUnavailable,
 		DrainTimeout: drainTimeout,

@@ -3,19 +3,21 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
@@ -318,7 +320,7 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
 
 	// This replica's store has seen only the older repository.
-	store := usinformer.NewStore()
+	store := newMemoryCache()
 	store.Update(ctx, &metav1.PartialObjectMetadata{ObjectMeta: existing.ObjectMeta})
 	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store)
 
@@ -329,4 +331,42 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	require.NoError(t, err)
 	assert.Equal(t, provisioning.ReasonQuotaExceeded, condition.Reason)
 	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)
+}
+
+// memoryCache is an informer.Cache keyed by namespace/name, standing in for the
+// identity store a NATS informer shares with the client getter.
+type memoryCache struct {
+	mu   sync.Mutex
+	objs map[string]runtime.Object
+}
+
+func newMemoryCache() *memoryCache {
+	return &memoryCache{objs: map[string]runtime.Object{}}
+}
+
+func (c *memoryCache) List(context.Context) []runtime.Object {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	out := make([]runtime.Object, 0, len(c.objs))
+	for _, obj := range c.objs {
+		out = append(out, obj)
+	}
+	return out
+}
+
+func (c *memoryCache) Update(_ context.Context, obj runtime.Object) bool {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.objs[acc.GetNamespace()+"/"+acc.GetName()] = obj
+	return true
+}
+
+func (c *memoryCache) Delete(_ context.Context, namespace, name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.objs, namespace+"/"+name)
 }

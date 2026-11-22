@@ -25,12 +25,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -4670,7 +4669,7 @@ func TestRepositoryController_process_BlockedRepositoryStaysBlockedWhenTheCacheL
 	addedElsewhere := blockedOverQuotaRepo(namespace, "added-elsewhere", time.Now(), false)
 	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
 
-	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), usinformer.NewStore())
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(repo, addedElsewhere).ProvisioningV0alpha1(), newMemoryCache())
 	rc.repos = getter
 	rc.quotaChecker = NewRepositoryQuotaChecker(getter)
 
@@ -4690,7 +4689,7 @@ func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) 
 	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
 	rc, patcher, _, _ := newQuotaController(t, 1, repo)
 
-	store := usinformer.NewStore()
+	store := newMemoryCache()
 	store.Update(context.Background(), &metav1.PartialObjectMetadata{ObjectMeta: other.ObjectMeta})
 	clientset := fake.NewClientset(repo, other)
 	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), store)

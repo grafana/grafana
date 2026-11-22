@@ -22,10 +22,10 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 type mockConnectionWithToken struct {

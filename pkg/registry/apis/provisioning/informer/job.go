@@ -11,6 +11,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -51,7 +52,7 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return appinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			if onRequest != nil {
 				onRequest()
 			}

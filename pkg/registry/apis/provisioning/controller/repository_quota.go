@@ -7,7 +7,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -40,7 +41,7 @@ func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string
 	// The periodic informer has no live subscription and so no re-list/live race
 	// to reconcile; discard the list resource version.
 	list := func(ctx context.Context) ([]runtime.Object, error) {
-		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		objs, _, err := appinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.HistoricJobs(namespace).List(ctx, opts)
 		})
 		return objs, err
