@@ -1550,7 +1550,8 @@
           "contact-point": "Doğrudan iletişim noktası (policy: ile birlikte kullanılamaz).",
           "dashboard": "Kuralın bağlı olduğu pano (standart değer pano UID'sidir).",
           "datasource": "Kuralın başvurduğu sorgu veri kaynağı (standart değer UID'dir).",
-          "folder": "Klasör (standart değer klasör UID'sidir).",
+          "folder": "",
+          "folder-uid": "",
           "health": "Kural durumu: ok, nodata, error veya unknown.",
           "label": "Etiket eşleştirici: label:key (var), label:!key (yok), label:key=value (eşit), label:key!=value (eşit değil), label:key=~re (düzenli ifade), label:key!~re (düzenli ifade değil). Boşluk içeren bir değeri tırnak içine alın: label:team=\"a b\".",
           "metric": "Kaydedilen metrik adı (tam eşleşme).",
@@ -1571,12 +1572,14 @@
         "invalid-tokens": "Bazı filtreler uygulanamadı: {{tokens}}",
         "invalid-value": "{{key}} için şu değerlerden birini kullanın: {{values}}",
         "label": "Ara",
+        "missing-value": "",
         "placeholder": "Ada göre arayın veya filtre sorgusu girin...",
         "property": {
           "contact-point": "İletişim noktası",
           "dashboard": "Pano",
           "datasource": "Sorgu veri kaynağı",
           "folder": "Klasör",
+          "folder-uid": "",
           "health": "Durum",
           "labels": "Etiketler",
           "metric": "Kaydedilen metrik",
@@ -1612,6 +1615,8 @@
         "tooltip-with-interval": ""
       },
       "shared": {
+        "folder-search-limit": "",
+        "folder-search-limit-description": "",
         "load-more": "Daha fazla yükle",
         "load-more-error": "Daha fazla sonuç yüklenemedi",
         "loading-rules": "Kurallar yükleniyor",
@@ -1990,6 +1995,7 @@
         "routing": "Bildirim yönlendirme",
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
+        "rules-error": "",
         "rules-skipped": "Uyarı kuralları içe aktarılmayacak.",
         "rules-title": "",
         "skipped": "Atlandı",
@@ -2002,6 +2008,7 @@
         "validation-warning": "Çakışmaları önlemek için bazı kaynakların adı değiştirilecektir.",
         "will-import-config": "Bu yapılandırma içe aktarılacak",
         "will-import-rules": "Kurallar içe aktarılacak",
+        "yaml-datasource": "",
         "will-import-rules-count_one": "{{count}} kural içe aktarılacak",
         "will-import-rules-count_other": "{{count}} kural içe aktarılacak"
       },
@@ -2108,9 +2115,14 @@
         "target-datasource-required": "Lütfen hedef veri kaynağı seçin",
         "target-folder": "Hedef klasör",
         "target-folder-desc": "İçe aktarılan kuralların depolanacağı klasör",
+        "yaml-empty-group": "",
         "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}",
         "yaml-file": "Kurallar YAML dosyası",
-        "yaml-required": "Lütfen dosya seçin"
+        "yaml-no-rules": "",
+        "yaml-required": "Lütfen dosya seçin",
+        "yaml-target-datasource": "",
+        "yaml-target-datasource-desc": "",
+        "yaml-target-datasource-required": ""
       },
       "success": "Uyarı kuralları başarıyla Grafana yönetimli kurallara içe aktarıldı.",
       "target-folder": {
@@ -5741,6 +5753,10 @@
       "label": "",
       "label-plural": ""
     },
+    "notebook": {
+      "label": "",
+      "label-plural": ""
+    },
     "playlist": {
       "label": "",
       "label-plural": ""
@@ -6254,7 +6270,10 @@
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
+      "assistant-limit-reached": "",
       "assistant-placeholder": "Panonuzu açıklayın. Böylece asistan sohbeti açılır ve bir konuşma başlatılır.",
+      "assistant-placeholder-template": "",
+      "assistant-sign-in": "",
       "auto-grid": "Otomatik ızgara",
       "auto-grid-description": "Paneller, sığacak şekilde yeniden boyutlandırılır ve düzgün ızgaralar oluşturur",
       "build-assistant": "Panonuzu Asistan ile oluşturun",
@@ -6268,6 +6287,8 @@
       "mobile-not-available": "",
       "or-start-blank": "Ya da kendiniz oluşturun",
       "select-layout-header": "Düzen seçin",
+      "templates-empty": "",
+      "templates-title": "",
       "title": "Yeni pano"
     },
     "errors": {
@@ -7238,6 +7259,7 @@
   },
   "dashboard-library": {
     "card": {
+      "attach-template-button-label": "",
       "community-badge": "Topluluk",
       "customize-with-assistant-button": "Asistan ile özelleştir",
       "customize-with-assistant-button-label": "Asistan ile özelleştirin: {{title}}",
@@ -7254,6 +7276,9 @@
       "edit-template-menu-item": "Düzenle",
       "more-actions-label": "Diğer {{title}} işlemleri",
       "no-preview": "Ön izleme yok ",
+      "preview-template-button": "",
+      "preview-template-button-label": "",
+      "provisioned-by-grafana": "",
       "use-template-button": "Şablonu kullan",
       "use-template-button-label": "Şablonu kullan: {{title}}",
       "view-dashboard-button": "Panoyu görüntüle",
@@ -7289,6 +7314,10 @@
     "custom-dashboard-template-filters": {
       "creator-placeholder": "Oluşturan kişiye göre filtrele",
       "search-placeholder": "Ara",
+      "sort": {
+        "asc": "",
+        "desc": ""
+      },
       "sort-placeholder": "Sırala"
     },
     "dashboard-card": {
@@ -11982,13 +12011,19 @@
       "filter-apps": "Uygulamalar",
       "filter-dashboards": "Panolar",
       "filter-explore": "Explore",
+      "filter-folders": "",
       "filter-label": "Yalnızca şunları göster",
+      "filter-notebooks": "",
       "filter-pages": "Sayfalar",
+      "filter-playlists": "",
       "kind-alerting": "Uyarı verenler",
       "kind-app": "Uygulama",
       "kind-dashboard": "Pano",
       "kind-explore": "Explore",
+      "kind-folder": "",
+      "kind-notebook": "",
       "kind-page": "Sayfa",
+      "kind-playlist": "",
       "loading": "Son etkinliğiniz yükleniyor..."
     },
     "recommendations": {
@@ -13628,7 +13663,7 @@
       "page-assistant-below": "",
       "page-floating-assistant": "",
       "page-only": "",
-      "pop-up": "",
+      "pop-out": "",
       "right": ""
     },
     "assistant-workspace": {
@@ -13932,8 +13967,8 @@
       "list-none": "Henüz not defteriniz yok. Bunun yerine bir tane oluşturun.",
       "list-none-read-only": "Henüz hiç not defteriniz yok ve yeni bir tane oluşturma izniniz bulunmuyor.",
       "list-truncated": "Tüm not defterleri gösterilmiyor. Diğerlerini bulmak için aramayı daraltın.",
-      "lock-time-range": "{{range}} aralığına kilitle",
       "lock-time-range-description": "Bu görselleştirmeyi yakalandığı zaman penceresinde tutun. Kilitli değilse not defterinin zaman aralığını izler.",
+      "lock-time-range-short": "",
       "lock-time-ranges": "Panelleri gösterdikleri zaman aralıklarına kilitle",
       "lock-time-ranges-description": "Her görselleştirmeyi yakalandığı zaman penceresinde tutun. Kilitli değilse not defterinin zaman aralığını izlerler.",
       "note-description": "",
@@ -17642,6 +17677,16 @@
       "text_one": "",
       "text_other": ""
     },
+    "display-completion": {
+      "color": "",
+      "helper": "",
+      "icon": "",
+      "numeric": "",
+      "percent": "",
+      "prefix": "",
+      "suffix": "",
+      "text": ""
+    },
     "editor": {
       "aria-label-content": "Metin içeriği",
       "aria-label-mode": "Metin modu: {{mode}}",
@@ -17785,7 +17830,6 @@
     },
     "time-range": {
       "apply": "Zaman aralığını uygula",
-      "aria-role": "Zaman aralığı seçimi",
       "default-title": "Zaman aralıkları",
       "dialog-label": "Göreli zaman aralığı seçici",
       "example-title": "Örnek zaman aralıkları",
