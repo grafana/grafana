@@ -22,7 +22,7 @@ import (
 type target struct {
 	cfg   *provisioning.Repository
 	state *stateFile
-	// clients and lister are nil for an offline plan.
+	// clients and lister are nil for an offline dry run.
 	clients resources.ClientFactory
 	lister  resources.ResourceLister
 }

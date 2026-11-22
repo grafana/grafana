@@ -71,7 +71,7 @@ func TestPlanFullLocalRepository(t *testing.T) {
 
 	t.Run("incremental is rejected for an unversioned repository", func(t *testing.T) {
 		_, err := planIncremental(t.Context(), repo)
-		require.ErrorContains(t, err, "only support full pulls")
+		require.ErrorContains(t, err, "only support full pushes")
 	})
 }
 
@@ -81,7 +81,7 @@ func TestRunPlanPrintsJSON(t *testing.T) {
 
 	var out bytes.Buffer
 	stateFile := filepath.Join(t.TempDir(), "state.json")
-	err := run(t.Context(), []string{"plan", "--type", "local", "--path", dir, "--state-file", stateFile, "--offline", "--json"}, &out, io.Discard)
+	err := run(t.Context(), []string{"push", "--dry-run", "--type", "local", "--path", dir, "--state-file", stateFile, "--offline", "--json"}, &out, io.Discard)
 	require.NoError(t, err)
 
 	var result planResult

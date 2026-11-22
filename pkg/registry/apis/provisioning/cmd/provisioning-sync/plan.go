@@ -100,11 +100,11 @@ func planFull(ctx context.Context, repo repository.Repository, current *provisio
 func planIncremental(ctx context.Context, repo repository.Repository) (*planResult, error) {
 	versioned, ok := repo.(repository.Versioned)
 	if !ok {
-		return nil, fmt.Errorf("%s repositories are not versioned and only support full pulls", repo.Config().Spec.Type)
+		return nil, fmt.Errorf("%s repositories are not versioned and only support full pushes", repo.Config().Spec.Type)
 	}
 	fromRef := repo.Config().Status.Sync.LastRef
 	if fromRef == "" {
-		return nil, errors.New("no last synced commit to diff from; set --from-ref or run a full pull first")
+		return nil, errors.New("no last synced commit to diff from; set --from-ref or run a full push first")
 	}
 
 	ref, err := versioned.LatestRef(ctx)

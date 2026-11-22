@@ -67,7 +67,7 @@ func TestLoadTargetFromFlagsReadsStateFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "demo", tgt.cfg.Name)
 	assert.Equal(t, "saved-ref", tgt.cfg.Status.Sync.LastRef)
-	assert.Nil(t, tgt.lister, "an offline plan has nothing to list")
+	assert.Nil(t, tgt.lister, "an offline dry run has nothing to list")
 
 	opts.fromRef = "override-ref"
 	tgt, err = loadTarget(opts)

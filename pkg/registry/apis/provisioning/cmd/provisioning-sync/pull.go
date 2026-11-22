@@ -2,58 +2,82 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-// maxSyncWorkers matches the value the provisioning API server runs pull jobs with.
-const maxSyncWorkers = 10
-
-// runPull runs the same sync worker the job driver runs, so the state file gets the status
-// (including status.sync.lastRef for the next incremental pull) a real pull job would write.
+// runPull runs the same export worker the job driver runs: unmanaged folders and resources are
+// read from Grafana and written to the repository, as one commit for git repositories.
 func runPull(ctx context.Context, opts options, out io.Writer) error {
+	if err := enableExport(); err != nil {
+		return err
+	}
 	run, err := newJobRun(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	t := run.target
-	tracer := tracing.NewNoopTracerService()
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, maxSyncWorkers, run.metrics, setting.ProvisioningSyncResourceTimeoutDefault)
-	worker := sync.NewSyncWorker(t.clients, run.repositoryResources, t.state.patch, syncer, run.metrics, tracer, maxSyncWorkers, setting.ProvisioningMaxFileSizeDefault)
+	// The standalone export job writes new names so the files don't collide with the exported
+	// originals on the next push; the migration export keeps them so a push can take them over.
+	exportFn := export.ExportAllWithNewUIDs
+	if opts.keepUIDs {
+		exportFn = export.ExportAll
+	}
+	worker := export.NewExportWorker(run.target.clients, run.repositoryResources, exportFn, repository.WrapWithStageAndPushIfPossible, run.metrics)
 
-	previousRef := t.cfg.Status.Sync.LastRef
-	progress, status, processErr := run.process(ctx, worker, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: opts.incremental},
+	_, status, processErr := run.process(ctx, worker, provisioning.JobSpec{
+		Action:  provisioning.JobActionPush,
+		Message: opts.message,
+		Push:    &provisioning.ExportJobOptions{Branch: opts.writeBranch, Path: opts.writePath, GenerateNewFolderIDs: opts.newFolders},
 	}, out, opts.jsonOutput)
 
-	result := pullResult{Variance: progress.Variance(), PreviousRef: previousRef, LastRef: t.cfg.Status.Sync.LastRef, Status: status}
-	if err := printPullResult(out, result, opts.jsonOutput); err != nil {
+	if err := printCommitResult(out, commandPull, status, opts.jsonOutput); err != nil {
 		return err
 	}
 	return processErr
 }
 
-type pullResult struct {
-	Variance    string                 `json:"variance,omitempty"`
-	PreviousRef string                 `json:"previousRef,omitempty"`
-	LastRef     string                 `json:"lastRef,omitempty"`
-	Status      provisioning.JobStatus `json:"status"`
+// enableExport turns on the feature flag the export worker checks. Running pull is the opt-in;
+// the flag gates the feature for Grafana instances, which the CLI does not read flags from.
+func enableExport() error {
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagProvisioningExport: {
+			Key:            featuremgmt.FlagProvisioningExport,
+			State:          memprovider.Enabled,
+			DefaultVariant: "on",
+			Variants:       map[string]any{"on": true},
+		},
+	})
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
+		return fmt.Errorf("enable export: %w", err)
+	}
+	return nil
 }
 
-func printPullResult(out io.Writer, result pullResult, asJSON bool) error {
+// printCommitResult prints the result of a job that writes to the repository.
+func printCommitResult(out io.Writer, command string, status provisioning.JobStatus, asJSON bool) error {
 	if asJSON {
-		return printJSON(out, result)
+		return printJSON(out, status)
 	}
 
 	w := &errWriter{w: out}
-	w.printf("%s pull finished: state=%s message=%q\n", result.Variance, result.Status.State, result.Status.Message)
-	w.printf("  lastRef: %q -> %q\n", result.PreviousRef, result.LastRef)
-	printStatusDetails(w, result.Status)
+	w.printf("%s finished: state=%s message=%q\n", command, status.State, status.Message)
+	if status.URLs != nil {
+		if status.URLs.SourceURL != "" {
+			w.printf("  branch: %s\n", status.URLs.SourceURL)
+		}
+		if status.URLs.NewPullRequestURL != "" {
+			w.printf("  new pull request: %s\n", status.URLs.NewPullRequestURL)
+		}
+	}
+	printStatusDetails(w, status)
 	return w.err
 }

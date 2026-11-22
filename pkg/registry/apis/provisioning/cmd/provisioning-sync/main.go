@@ -1,5 +1,6 @@
-// Command provisioning-sync runs the provisioning pull (sync) and push (export) jobs from the
-// command line, for development and testing against git, GitHub and local repositories.
+// Command provisioning-sync runs the provisioning sync, export and fix-folder-metadata jobs from
+// the command line, for development and testing against git, GitHub and local repositories.
+// Commands follow gcx: pull goes from Grafana to the repository, push from the repository to Grafana.
 package main
 
 import (
@@ -16,9 +17,9 @@ import (
 )
 
 const (
-	commandPlan = "plan"
-	commandPull = "pull"
-	commandPush = "push"
+	commandPull              = "pull"
+	commandPush              = "push"
+	commandFixFolderMetadata = "fix-folder-metadata"
 
 	repoTokenEnv     = "PROVISIONING_REPO_TOKEN"
 	grafanaTokenEnv  = "GRAFANA_TOKEN"
@@ -26,26 +27,28 @@ const (
 	exchangeTokenEnv = "GRAFANA_EXCHANGE_TOKEN"
 )
 
-const usage = `provisioning-sync runs the provisioning pull and push jobs from the command line.
+const usage = `provisioning-sync runs the provisioning jobs from the command line.
 
 Usage:
-  provisioning-sync plan [flags]   print what a pull would change, without writing anything
-  provisioning-sync pull [flags]   run the pull (sync) job: repository -> Grafana
-  provisioning-sync push [flags]   run the push (export) job: unmanaged Grafana resources -> repository
+  provisioning-sync pull [flags]                  run the export job: unmanaged Grafana resources -> repository
+  provisioning-sync push [flags]                  run the sync job: repository -> Grafana
+  provisioning-sync push --dry-run [flags]        print what a push would change, without writing anything
+  provisioning-sync fix-folder-metadata [flags]   write the missing _folder.json files to the repository
 
 The repository is described with --type and its settings; no Repository resource is needed.
-Pulled resources are managed by repo --name (default gcx), and the sync status, including
+Pushed resources are managed by repo --name (default gcx), and the sync status, including
 the last synced commit for --incremental, is kept in --state-file between runs.
 
-pull writes repository-managed resources, which Grafana only accepts from the provisioning
-service identity: set --token-exchange-url or --access-token. plan and push only read from
-Grafana, so a user is enough.
+push writes repository-managed resources, which Grafana only accepts from the provisioning
+service identity: set --token-exchange-url or --access-token. The other commands only read
+from Grafana, so a user is enough.
 
 Examples:
-  provisioning-sync plan --type github --url https://github.com/org/repo --offline
-  provisioning-sync pull --type github --url https://github.com/org/repo --access-token "$ACCESS_TOKEN" --incremental
-  provisioning-sync pull --type local --path ./dashboards --token-exchange-url http://localhost:6481/sign/access-token
-  provisioning-sync push --type github --url https://github.com/org/repo --push-branch export --message "Export"
+  provisioning-sync push --type github --url https://github.com/org/repo --dry-run --offline
+  provisioning-sync push --type github --url https://github.com/org/repo --access-token "$ACCESS_TOKEN" --incremental
+  provisioning-sync push --type local --path ./dashboards --token-exchange-url http://localhost:6481/sign/access-token
+  provisioning-sync pull --type github --url https://github.com/org/repo --write-branch export --message "Export"
+  provisioning-sync fix-folder-metadata --type github --url https://github.com/org/repo --write-branch fix-folders
 
 Flags:
 `
@@ -56,13 +59,14 @@ type options struct {
 	fromRef     string
 	jsonOutput  bool
 	verbose     bool
+	dryRun      bool
 	offline     bool
 
-	message    string
-	pushBranch string
-	pushPath   string
-	keepUIDs   bool
-	newFolders bool
+	message     string
+	writeBranch string
+	writePath   string
+	keepUIDs    bool
+	newFolders  bool
 
 	grafanaURL       string
 	grafanaToken     string
@@ -112,10 +116,10 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	logging.DefaultLogger = logging.NewSLogLogger(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
 
 	switch opts.command {
-	case commandPlan:
-		return runPlan(ctx, opts, stdout)
 	case commandPush:
 		return runPush(ctx, opts, stdout)
+	case commandFixFolderMetadata:
+		return runFixFolderMetadata(ctx, opts, stdout)
 	default:
 		return runPull(ctx, opts, stdout)
 	}
@@ -129,17 +133,18 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 		fs.PrintDefaults()
 	}
 
-	if len(args) == 0 || (args[0] != commandPlan && args[0] != commandPull && args[0] != commandPush) {
+	if len(args) == 0 || (args[0] != commandPull && args[0] != commandPush && args[0] != commandFixFolderMetadata) {
 		fs.Usage()
 		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
 			return options{}, errHelp
 		}
-		return options{}, fmt.Errorf("expected a %q, %q or %q command", commandPlan, commandPull, commandPush)
+		return options{}, fmt.Errorf("expected a %q, %q or %q command", commandPull, commandPush, commandFixFolderMetadata)
 	}
 
 	opts := options{command: args[0]}
-	fs.BoolVar(&opts.incremental, "incremental", false, "diff the last synced commit against the latest one instead of the whole tree")
-	fs.StringVar(&opts.fromRef, "from-ref", "", "commit to treat as the last synced one (overrides status.sync.lastRef)")
+	fs.BoolVar(&opts.incremental, "incremental", false, "push: diff the last synced commit against the latest one instead of the whole tree")
+	fs.StringVar(&opts.fromRef, "from-ref", "", "push: commit to treat as the last synced one (overrides status.sync.lastRef)")
+	fs.BoolVar(&opts.dryRun, "dry-run", false, "push: print what would change, without writing anything")
 	fs.BoolVar(&opts.jsonOutput, "json", false, "print the result as JSON")
 	fs.BoolVar(&opts.verbose, "verbose", false, "log debug output to stderr")
 
@@ -153,15 +158,15 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.namespace, "namespace", "default", "Grafana namespace of the repository")
 
 	fs.StringVar(&opts.repoType, "type", "", "repository type: git, github or local")
-	fs.StringVar(&opts.name, "name", defaultManager, "repository name, which pulled resources are managed under")
+	fs.StringVar(&opts.name, "name", defaultManager, "repository name, which pushed resources are managed under")
 	fs.StringVar(&opts.stateFile, "state-file", "", "file keeping the sync status between runs (default <user config dir>/grafana-provisioning-sync/<namespace>/<name>.json)")
-	fs.BoolVar(&opts.offline, "offline", false, "plan against an empty instance, without Grafana")
+	fs.BoolVar(&opts.offline, "offline", false, "push --dry-run: compare against an empty instance, without Grafana")
 
-	fs.StringVar(&opts.message, "message", "", "push: commit message (default \"Export from Grafana <job>\")")
-	fs.StringVar(&opts.pushBranch, "push-branch", "", "push: git branch to commit to, created if missing (default --branch)")
-	fs.StringVar(&opts.pushPath, "push-path", "", "push: directory in the repository to write under")
-	fs.BoolVar(&opts.keepUIDs, "keep-uids", false, "push: keep resource names instead of generating new ones")
-	fs.BoolVar(&opts.newFolders, "new-folder-ids", false, "push: write new folder UIDs to _folder.json, so pulling the export does not collide with the original folders")
+	fs.StringVar(&opts.message, "message", "", "pull, fix-folder-metadata: commit message")
+	fs.StringVar(&opts.writeBranch, "write-branch", "", "pull, fix-folder-metadata: git branch to commit to, created if missing (default --branch)")
+	fs.StringVar(&opts.writePath, "write-path", "", "pull: directory in the repository to write under")
+	fs.BoolVar(&opts.keepUIDs, "keep-uids", false, "pull: keep resource names instead of generating new ones")
+	fs.BoolVar(&opts.newFolders, "new-folder-ids", false, "pull: write new folder UIDs to _folder.json, so pushing the export does not collide with the original folders")
 	fs.StringVar(&opts.url, "url", "", "git or GitHub repository URL")
 	fs.StringVar(&opts.branch, "branch", "main", "git or GitHub branch")
 	fs.StringVar(&opts.path, "path", "", "subdirectory in a git or GitHub repository, or the directory of a local one")
@@ -202,19 +207,33 @@ func (opts *options) readTokensFromEnvironment() {
 }
 
 func (opts *options) validate() error {
-	switch {
-	case opts.tokenExchangeURL != "" && opts.exchangeToken == "":
+	if opts.tokenExchangeURL != "" && opts.exchangeToken == "" {
 		return errors.New("--token-exchange-url needs --exchange-token or $" + exchangeTokenEnv)
-	case opts.repoType == "":
+	}
+	if opts.repoType == "" {
 		return errors.New("set --type to git, github or local")
-	case opts.offline && opts.command != commandPlan:
-		return errors.New("--offline only works with plan")
-	case opts.command == commandPush && (opts.incremental || opts.fromRef != ""):
-		return errors.New("--incremental and --from-ref are for pull and plan; push always exports everything")
-	case opts.command != commandPush && (opts.message != "" || opts.pushBranch != "" || opts.pushPath != "" || opts.keepUIDs || opts.newFolders):
-		return errors.New("--message, --push-branch, --push-path, --keep-uids and --new-folder-ids only work with push")
-	case opts.command == commandPull && opts.tokenExchangeURL == "" && opts.accessToken == "":
-		return errors.New("pull writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
+	}
+	if err := opts.validateCommandFlags(); err != nil {
+		return err
+	}
+	if opts.command == commandPush && !opts.dryRun && opts.tokenExchangeURL == "" && opts.accessToken == "" {
+		return errors.New("push writes repository-managed resources, which Grafana only accepts from the provisioning service identity; set --token-exchange-url or --access-token")
+	}
+	return nil
+}
+
+// validateCommandFlags rejects flags the chosen command would silently ignore.
+func (opts *options) validateCommandFlags() error {
+	push, pull := opts.command == commandPush, opts.command == commandPull
+	switch {
+	case !push && (opts.incremental || opts.fromRef != "" || opts.dryRun):
+		return errors.New("--incremental, --from-ref and --dry-run only work with push")
+	case opts.offline && !opts.dryRun:
+		return errors.New("--offline only works with push --dry-run")
+	case push && (opts.message != "" || opts.writeBranch != ""):
+		return errors.New("--message and --write-branch only work with pull and fix-folder-metadata")
+	case !pull && (opts.writePath != "" || opts.keepUIDs || opts.newFolders):
+		return errors.New("--write-path, --keep-uids and --new-folder-ids only work with pull")
 	}
 	return nil
 }

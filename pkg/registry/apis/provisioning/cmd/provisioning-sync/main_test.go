@@ -21,20 +21,23 @@ func TestParseOptions(t *testing.T) {
 		args    []string
 		wantErr string
 	}{
-		{name: "missing command", args: nil, wantErr: `expected a "plan", "pull" or "push" command`},
-		{name: "unknown command", args: []string{"export"}, wantErr: `expected a "plan", "pull" or "push" command`},
-		{name: "no repository type", args: []string{"plan"}, wantErr: "set --type"},
-		{name: "extra arguments", args: []string{"plan", "--type", "local", "--path", "x", "extra"}, wantErr: "unexpected arguments"},
-		{name: "pull as a user", args: []string{"pull", "--type", "local", "--path", "x", "--grafana-token", "t"}, wantErr: "provisioning service identity"},
-		{name: "exchange without token", args: []string{"pull", "--type", "local", "--path", "x", "--token-exchange-url", "http://signer"}, wantErr: "needs --exchange-token"},
-		{name: "offline pull", args: []string{"pull", "--type", "local", "--path", "x", "--access-token", "at", "--offline"}, wantErr: "only works with plan"},
-		{name: "incremental push", args: []string{"push", "--type", "local", "--path", "x", "--incremental"}, wantErr: "push always exports everything"},
-		{name: "push options on pull", args: []string{"pull", "--type", "local", "--path", "x", "--access-token", "at", "--push-branch", "b"}, wantErr: "only work with push"},
-		{name: "plan as a user", args: []string{"plan", "--type", "local", "--path", "x", "--grafana-token", "t"}},
-		{name: "offline plan", args: []string{"plan", "--type", "local", "--path", "x", "--offline"}},
-		{name: "pull with access token", args: []string{"pull", "--type", "github", "--url", "https://github.com/o/r", "--name", "demo", "--state-file", "s.json", "--access-token", "at", "--incremental"}},
-		{name: "pull with token exchange", args: []string{"pull", "--type", "local", "--path", "x", "--token-exchange-url", "http://signer", "--exchange-token", "x"}},
-		{name: "push as a user", args: []string{"push", "--type", "github", "--url", "https://github.com/o/r", "--push-branch", "export", "--message", "m", "--push-path", "p", "--keep-uids", "--new-folder-ids"}},
+		{name: "missing command", args: nil, wantErr: `expected a "pull", "push" or "fix-folder-metadata" command`},
+		{name: "unknown command", args: []string{"plan"}, wantErr: `expected a "pull", "push" or "fix-folder-metadata" command`},
+		{name: "no repository type", args: []string{"pull"}, wantErr: "set --type"},
+		{name: "extra arguments", args: []string{"pull", "--type", "local", "--path", "x", "extra"}, wantErr: "unexpected arguments"},
+		{name: "push as a user", args: []string{"push", "--type", "local", "--path", "x", "--grafana-token", "t"}, wantErr: "provisioning service identity"},
+		{name: "exchange without token", args: []string{"push", "--type", "local", "--path", "x", "--token-exchange-url", "http://signer"}, wantErr: "needs --exchange-token"},
+		{name: "offline push", args: []string{"push", "--type", "local", "--path", "x", "--access-token", "at", "--offline"}, wantErr: "only works with push --dry-run"},
+		{name: "incremental pull", args: []string{"pull", "--type", "local", "--path", "x", "--incremental"}, wantErr: "only work with push"},
+		{name: "dry-run pull", args: []string{"pull", "--type", "local", "--path", "x", "--dry-run"}, wantErr: "only work with push"},
+		{name: "commit options on push", args: []string{"push", "--type", "local", "--path", "x", "--access-token", "at", "--write-branch", "b"}, wantErr: "only work with pull and fix-folder-metadata"},
+		{name: "export options on fix-folder-metadata", args: []string{"fix-folder-metadata", "--type", "local", "--path", "x", "--keep-uids"}, wantErr: "only work with pull"},
+		{name: "dry-run push as a user", args: []string{"push", "--type", "local", "--path", "x", "--grafana-token", "t", "--dry-run"}},
+		{name: "offline dry-run push", args: []string{"push", "--type", "local", "--path", "x", "--dry-run", "--offline"}},
+		{name: "push with access token", args: []string{"push", "--type", "github", "--url", "https://github.com/o/r", "--name", "demo", "--state-file", "s.json", "--access-token", "at", "--incremental"}},
+		{name: "push with token exchange", args: []string{"push", "--type", "local", "--path", "x", "--token-exchange-url", "http://signer", "--exchange-token", "x"}},
+		{name: "pull as a user", args: []string{"pull", "--type", "github", "--url", "https://github.com/o/r", "--write-branch", "export", "--message", "m", "--write-path", "p", "--keep-uids", "--new-folder-ids"}},
+		{name: "fix-folder-metadata as a user", args: []string{"fix-folder-metadata", "--type", "github", "--url", "https://github.com/o/r", "--write-branch", "fix", "--message", "m"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -54,14 +57,14 @@ func TestParseOptionsReadsTokensFromEnvironment(t *testing.T) {
 	t.Setenv(accessTokenEnv, "access-secret")
 	t.Setenv(exchangeTokenEnv, "exchange-secret")
 
-	opts, err := parseOptions([]string{"pull", "--type", "local", "--path", "x"}, io.Discard)
+	opts, err := parseOptions([]string{"push", "--type", "local", "--path", "x"}, io.Discard)
 	require.NoError(t, err)
 	assert.Equal(t, "repo-secret", opts.token)
 	assert.Equal(t, "grafana-secret", opts.grafanaToken)
 	assert.Equal(t, "access-secret", opts.accessToken)
 	assert.Equal(t, "exchange-secret", opts.exchangeToken)
 
-	opts, err = parseOptions([]string{"pull", "--type", "local", "--path", "x", "--token", "flag-secret"}, io.Discard)
+	opts, err = parseOptions([]string{"push", "--type", "local", "--path", "x", "--token", "flag-secret"}, io.Discard)
 	require.NoError(t, err)
 	assert.Equal(t, "flag-secret", opts.token, "the flag takes precedence over the environment")
 }
@@ -72,7 +75,7 @@ func TestRepositoryFromFlags(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, &provisioning.GitHubRepositoryConfig{URL: "https://github.com/org/repo", Branch: "dev", Path: "dashboards"}, cfg.Spec.GitHub)
 		assert.Equal(t, "default", cfg.Namespace)
-		assert.Equal(t, "gcx", cfg.Name, "resources pulled from flags are managed by gcx")
+		assert.Equal(t, "gcx", cfg.Name, "resources pushed from flags are managed by gcx")
 		assert.Equal(t, []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow}, cfg.Spec.Workflows)
 	})
 

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// jobRun holds what pull and push share: the target, the repository built from it, and the
+// jobRun holds what the commands share: the target, the repository built from it, and the
 // pieces the job workers are constructed from.
 type jobRun struct {
 	target              *target
