@@ -230,9 +230,21 @@ describe('migrateFmt', () => {
         expected: '{{#each frames as |data|}}{{display "cpu" row=this.data.[0]}}{{/each}}',
       },
       {
+        desc: 'a lookup of a formatted value by a literal name',
+        content:
+          '{{#each data}}{{lookup fmt "cpu"}} {{~lookup fmt 0~}} {{json (lookup fmt "Memory usage")}}{{/each}}{{lookup data.[1].fmt "cpu"}}',
+        expected:
+          '{{#each data}}{{display "cpu"}} {{~display "0"~}} {{json (display "Memory usage")}}{{/each}}{{display "cpu" row=data.[1]}}',
+      },
+      {
         desc: 'a read inside each called through this, which the renderer still treats as each',
         content: '{{#this.each data}}{{fmt.cpu}}{{/this.each}}',
         expected: '{{#this.each data}}{{display "cpu"}}{{/this.each}}',
+      },
+      {
+        desc: 'a lookup on a formatted value, which keeps the lookup and converts the read',
+        content: '{{#each data}}{{lookup fmt.service "length"}}{{/each}}',
+        expected: '{{#each data}}{{lookup (display "service") "length"}}{{/each}}',
       },
       {
         desc: 'a data path named like a block param, which the renderer resolves to the block param',
@@ -298,8 +310,8 @@ describe('migrateFmt', () => {
         reason: 'namespace',
       },
       {
-        desc: 'lookup on fmt',
-        content: '{{#each data}}{{lookup fmt "cpu"}}{{/each}}',
+        desc: 'lookup on fmt with a key that is not a literal',
+        content: '{{#each data}}{{lookup fmt service}}{{/each}}',
         read: 'fmt',
         reason: 'namespace',
       },
@@ -591,9 +603,10 @@ describe('rendering after the conversion', () => {
     {
       content:
         '{{#each data}}{{#each fmt}}{{@key}}={{this}},{{/each}}{{lookup fmt "cpu"}}{{#with fmt}}{{cpu}}{{/with}}{{fmt.cpu}};{{/each}}',
-      once: 1,
+      once: 2,
       perRow: 0,
     },
+    { content: '{{#each data as |row|}}{{@row.fmt.cpu}}|{{lookup row.fmt "status"}};{{/each}}', once: 2, perRow: 0 },
     {
       content: '{{#each data}}{{#*inline "p"}}{{fmt.service}}{{x}}{{/inline}}{{> p x=1}}{{fmt.service}};{{/each}}',
       once: 1,
