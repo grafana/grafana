@@ -136,13 +136,23 @@ const shadowed = () =>
     }),
   ]);
 
-const fieldNamesOf = (series: DataFrame[]) => series.flatMap((frame) => getFieldNames(frame, [frame]));
+const displayField = () =>
+  withConfig([
+    toDataFrame({
+      fields: [
+        { name: 'display', type: FieldType.other, values: [{ fmt: { cpu: 'own' } }, null] },
+        { name: 'cpu', type: FieldType.number, values: [0.5, 0.25] },
+      ],
+    }),
+  ]);
+
+const hasFmtFieldIn = (series: DataFrame[]) => series.some((frame) => getFieldNames(frame, [frame]).includes('fmt'));
 
 function migrate(content: string, options: Partial<FmtMigrationOptions> = {}) {
   return migrateFmt(content, {
     mode: TextMode.Markdown,
     renderMode: RenderMode.Once,
-    fieldNames: fieldNamesOf(fleet()),
+    hasFmtField: false,
     ...options,
   });
 }
@@ -202,6 +212,11 @@ describe('migrateFmt', () => {
         desc: 'a row named by a block param',
         content: '{{#each data as |row|}}{{row.fmt.cpu}}{{/each}}',
         expected: '{{#each data as |row|}}{{display "cpu" row=row}}{{/each}}',
+      },
+      {
+        desc: 'a block param read as a data variable, which Handlebars resolves before @index',
+        content: '{{#each data as |index|}}{{@index.fmt.cpu}}{{/each}}',
+        expected: '{{#each data as |index|}}{{display "cpu" row=@index}}{{/each}}',
       },
       {
         desc: 'a row read through this',
@@ -266,8 +281,8 @@ describe('migrateFmt', () => {
 
     it('lists every expression it rewrites, with its offsets in the content and its replacement', () => {
       expect(migrate('{{#each data}}{{fmt.cpu}}{{#if (eq fmt.status "")}}-{{/if}}{{/each}}').changes).toEqual([
-        { from: 16, to: 23, text: 'display "cpu"' },
-        { from: 35, to: 45, text: '(display "status")' },
+        { from: 16, to: 23, line: 1, text: 'display "cpu"' },
+        { from: 35, to: 45, line: 1, text: '(display "status")' },
       ]);
     });
 
@@ -309,6 +324,12 @@ describe('migrateFmt', () => {
       {
         desc: 'lookup on fmt with a key that is not a literal',
         content: '{{#each data}}{{lookup fmt service}}{{/each}}',
+        read: 'fmt',
+        reason: 'namespace',
+      },
+      {
+        desc: 'a lookup with hash arguments, since display would read row= as its own',
+        content: '{{#each data}}{{lookup fmt "cpu" row=@root.data.[1]}}{{/each}}',
         read: 'fmt',
         reason: 'namespace',
       },
@@ -401,11 +422,71 @@ describe('migrateFmt', () => {
 
     it('leaves every read of a row when a field is displayed as fmt, since fmt is then that field', () => {
       const content = '{{#each data}}[{{fmt.cpu}}]{{/each}}';
-      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+      const migration = migrate(content, { hasFmtField: true });
 
-      expect(migration).toEqual({ content, changes: [], unconverted: [{ from: 17, to: 24, reason: 'shadowed' }] });
+      expect(migration).toEqual({
+        content,
+        changes: [],
+        unconverted: [{ from: 17, to: 24, line: 1, reason: 'shadowed' }],
+      });
       expect(render(content, shadowed())).toBe('[own][]');
       expect(render('{{#each data}}[{{display "cpu"}}]{{/each}}', shadowed())).toBe('[50.0%][25.0%]');
+    });
+
+    it('reads a block param named root as that block param, not as @root, the way Handlebars does', () => {
+      const content = '{{#each data as |root|}}[{{@root.fmt.cpu}}]{{/each}}';
+      const migration = migrate(content, { hasFmtField: true });
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read: '@root.fmt.cpu', reason: 'shadowed' },
+      ]);
+      expect(render(content, shadowed())).toBe('[own][]');
+    });
+
+    it.each([
+      { desc: 'in text', content: '{{#each data as |display|}}[{{fmt.cpu}}]{{/each}}', read: 'fmt.cpu' },
+      {
+        desc: 'on the block param',
+        content: '{{#each data as |display|}}{{display.fmt.cpu}}{{/each}}',
+        read: 'display.fmt.cpu',
+      },
+      {
+        desc: 'in a helper argument further in',
+        content: '{{#with this as |display|}}{{#each data}}{{#if (eq fmt.cpu "")}}-{{/if}}{{/each}}{{/with}}',
+        read: 'fmt.cpu',
+      },
+    ])('leaves reads where a block param named display hides the helper: $desc', ({ content, read }) => {
+      const migration = migrate(content);
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read, reason: 'helper' },
+      ]);
+    });
+
+    it('converts the reads outside the block param that hides the helper', () => {
+      const content = '{{#each data as |display|}}{{fmt.cpu}}{{/each}}{{#each data}}{{fmt.cpu}}{{/each}}';
+
+      expect(migrate(content).content).toBe(
+        '{{#each data as |display|}}{{fmt.cpu}}{{/each}}{{#each data}}{{display "cpu"}}{{/each}}'
+      );
+      expect(render('{{#each data as |display|}}{{display "cpu"}};{{/each}}', fleet())).toBe(
+        '[object Object];[object Object];[object Object];'
+      );
+    });
+
+    it.each([
+      { desc: 'a call', content: '{{#each data}}{{#with (display row=this)}}[{{fmt.cpu}}]{{/with}}{{/each}}' },
+      { desc: 'a block', content: '{{#each data}}{{#display row=this}}[{{fmt.cpu}}]{{/display}}{{/each}}' },
+    ])('leaves reads under display without a field name, which gives the field named display: $desc', ({ content }) => {
+      const migration = migrate(content, { hasFmtField: false });
+
+      expect(migration.content).toBe(content);
+      expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
+        { read: 'fmt.cpu', reason: 'row' },
+      ]);
+      expect(render(content, displayField())).toBe('[own]');
     });
 
     it.each([
@@ -422,7 +503,7 @@ describe('migrateFmt', () => {
         read: '../fmt.cpu',
       },
     ])('resolves parent paths past $desc', ({ content, read }) => {
-      const migration = migrate(content, { fieldNames: fieldNamesOf(shadowed()) });
+      const migration = migrate(content, { hasFmtField: true });
 
       expect(migration.unconverted.map(({ from, to, reason }) => ({ read: content.slice(from, to), reason }))).toEqual([
         { read, reason: 'shadowed' },
@@ -435,7 +516,7 @@ describe('migrateFmt', () => {
       const migration = migrate(content);
 
       expect(migration.content).toBe('{{#each data}}{{#fmt.cpu}}{{this}}{{/fmt.cpu}}{{display "status"}}{{/each}}');
-      expect(migration.unconverted).toEqual([{ from: 17, to: 24, reason: 'expression' }]);
+      expect(migration.unconverted).toEqual([{ from: 17, to: 24, line: 1, reason: 'expression' }]);
     });
 
     it('converts the reads it can and reports the rest, in content order', () => {
@@ -446,7 +527,7 @@ describe('migrateFmt', () => {
         '{{#each data}}{{display "cpu"}}{{#each fmt}}{{this}}{{/each}}{{display "status"}}{{/each}}'
       );
       expect(migration.changes).toHaveLength(2);
-      expect(migration.unconverted).toEqual([{ from: 33, to: 36, reason: 'namespace' }]);
+      expect(migration.unconverted).toEqual([{ from: 33, to: 36, line: 1, reason: 'namespace' }]);
     });
 
     it('reports offsets in the content when comments before a read are escaped for parsing', () => {
@@ -455,6 +536,21 @@ describe('migrateFmt', () => {
 
       expect(content.slice(read.from, read.to)).toBe('fmt');
       expect(read.from).toBe(44);
+      expect(read.line).toBe(2);
+    });
+
+    it('gives the line of each read, counting line breaks the way the editor does', () => {
+      const content =
+        '<!-- {{a}}\n{{b}} -->\n{{#each data}}\r\n{{fmt.cpu}}\r{{fmt.status}}\u2028{{#each fmt}}{{/each}}{{/each}}';
+      const migration = migrate(content);
+
+      expect(migration.changes.map(({ line, text }) => ({ line, text }))).toEqual([
+        { line: 4, text: 'display "cpu"' },
+        { line: 5, text: 'display "status"' },
+      ]);
+      expect(migration.unconverted.map(({ line, reason }) => ({ line, reason }))).toEqual([
+        { line: 5, reason: 'namespace' },
+      ]);
     });
   });
 
@@ -528,6 +624,12 @@ describe('rendering after the conversion', () => {
     },
     {
       content:
+        '{{#each data as |index|}}{{@index.fmt.cpu}}|{{/each}}{{#each data as |root|}}{{@root.fmt.status}}|{{/each}}',
+      once: 2,
+      perRow: 0,
+    },
+    {
+      content:
         '{{#each data}}{{fmt.[Memory usage]}}|{{fmt.[say "hi"]}}|{{fmt.[0]}}|{{fmt.nope}}|{{fmt.toString}}|{{fmt.constructor}};{{/each}}',
       once: 6,
       perRow: 0,
@@ -574,13 +676,13 @@ describe('rendering after the conversion', () => {
     { name: 'no query results', series: (): DataFrame[] => [] },
   ])('with $name', ({ series }) => {
     it.each(templates)('renders $content the same in Once and Per row modes', ({ content, once, perRow }) => {
-      const fieldNames = fieldNamesOf(series());
+      const hasFmtField = hasFmtFieldIn(series());
 
       for (const { renderMode, expected } of [
         { renderMode: RenderMode.Once, expected: once },
         { renderMode: RenderMode.PerRow, expected: perRow },
       ]) {
-        const migration = migrate(content, { renderMode, fieldNames });
+        const migration = migrate(content, { renderMode, hasFmtField });
 
         expect(migration.changes).toHaveLength(expected);
         expect(render(migration.content, series(), renderMode)).toBe(render(content, series(), renderMode));
@@ -599,25 +701,31 @@ describe('rendering after the conversion', () => {
     expect(render(content, fleet())).toBe('[94.2% <b>Healthy</b> 1 KiB][n/a No report 5 B][0.0% down 0 B]');
   });
 
-  it('renders randomly generated templates the same after converting them', () => {
+  it('renders randomly generated templates the same after converting them, on any data the conversion allows', () => {
     const next = createRandom(138488);
     const generate = createTemplateGenerator(next);
+    const datasets = [fleet, frames, shadowed, displayField];
     let converted = 0;
 
     for (let index = 0; index < 150; index++) {
       const content = generate();
 
       for (const renderMode of [RenderMode.Once, RenderMode.PerRow]) {
-        for (const series of [fleet, frames, shadowed]) {
-          const migration = migrate(content, { renderMode, fieldNames: fieldNamesOf(series()) });
+        for (const hasFmtField of [false, true]) {
+          const migration = migrate(content, { renderMode, hasFmtField });
           converted += migration.changes.length;
 
-          expect({ content, renderMode, output: render(migration.content, series(), renderMode) }).toEqual({
-            content,
-            renderMode,
-            output: render(content, series(), renderMode),
-          });
-          expect(migrate(migration.content, { renderMode, fieldNames: fieldNamesOf(series()) }).changes).toEqual([]);
+          if (migration.changes.length === 0) {
+            continue;
+          }
+          for (const series of datasets.filter((dataset) => hasFmtField || !hasFmtFieldIn(dataset()))) {
+            expect({ content, renderMode, output: render(migration.content, series(), renderMode) }).toEqual({
+              content,
+              renderMode,
+              output: render(content, series(), renderMode),
+            });
+          }
+          expect(migrate(migration.content, { renderMode, hasFmtField }).changes).toEqual([]);
         }
       }
     }
@@ -640,11 +748,15 @@ function createRandom(seed: number): () => number {
 function createTemplateGenerator(next: () => number): () => string {
   const pick = <T>(items: T[]): T => items[Math.floor(next() * items.length)];
   const params: string[] = [];
+  const partials = ['pa', 'pb'];
+  let partial: string | undefined;
   const field = () => pick(['cpu', 'status', 'service', '[Memory usage]', '[say "hi"]', 'nope', 'meta']);
   const param = () => (params.length ? pick(params) : 'this');
+  const call = (name: string) => `{{> ${name}${pick(['', ' x=1', ' this', ' data.[0]', ' ..'])}}}`;
 
   const value = () =>
     pick([
+      params.length ? `@${pick(params)}.fmt.${field()}` : `@root.fmt.${field()}`,
       `fmt.${field()}`,
       `this.fmt.${field()}`,
       `../fmt.${field()}`,
@@ -662,10 +774,11 @@ function createTemplateGenerator(next: () => number): () => string {
     ]);
 
   const list = () => pick(['data', 'frames', 'this', 'fmt', '../data', '@root.data', '(split service "e")', 'meta']);
-  const object = () => pick(['this', 'data.[0]', 'fmt', 'meta', '(lookup data 0)', '..', param()]);
+  const object = () =>
+    pick(['this', 'data.[0]', 'fmt', 'meta', '(lookup data 0)', '..', '(display)', '(display row=..)', param()]);
 
   const statement = (depth: number): string => {
-    switch (depth > 3 ? Math.floor(next() * 3) : Math.floor(next() * 12)) {
+    switch (depth > 3 ? Math.floor(next() * 3) : Math.floor(next() * 14)) {
       case 0:
         return pick(['-', '\n', '<!-- {{fmt.cpu}} -->', '\\{{fmt.cpu}}']);
       case 1:
@@ -679,19 +792,38 @@ function createTemplateGenerator(next: () => number): () => string {
       case 5:
         return `{{#each ${list()}}}${body(depth + 1)}{{/each}}`;
       case 6: {
-        params.push(`row${depth}`);
-        const result = `{{#each ${list()} as |row${depth} index${depth}|}}${body(depth + 1)}{{/each}}`;
+        const name = pick([`row${depth}`, 'display', 'root', 'index']);
+        params.push(name);
+        const result = `{{#each ${list()} as |${name} index${depth}|}}${body(depth + 1)}{{/each}}`;
         params.pop();
         return result;
       }
       case 7:
         return `{{#with ${object()}}}${body(depth + 1)}{{else}}${body(depth + 1)}{{/with}}`;
       case 8:
-        return `{{#display "${pick(['cpu', 'status'])}"}}${body(depth + 1)}{{/display}}`;
+        return pick([
+          `{{#display "${pick(['cpu', 'status'])}"}}${body(depth + 1)}{{/display}}`,
+          `{{#display row=this}}${body(depth + 1)}{{/display}}`,
+        ]);
       case 9:
-        return `{{lookup ${pick(['fmt', 'this', 'data.[0]'])} "${pick(['fmt', 'cpu'])}"}}`;
+        return pick([
+          `{{lookup ${pick(['fmt', 'this', 'data.[0]', '../fmt', 'data.[1].fmt', `${param()}.fmt`, `fmt.${field()}`])} ${pick(['"fmt"', '"cpu"', '"Memory usage"', '0', 'service', '"length"'])}}}`,
+          `{{json (lookup ${pick(['fmt', '../fmt', '@root.fmt'])} "status")}}`,
+        ]);
       case 10:
         return `{{#*inline "p${depth}"}}${body(depth + 1)}{{/inline}}{{> p${depth}${pick(['', ' x=1', ' this', ' data.[0]'])}}}`;
+      case 11: {
+        const name = pick(partials);
+        const outer = partial;
+        partial = name;
+        const definition = `{{#*inline "${name}"}}${body(depth + 1)}{{/inline}}`;
+        partial = outer;
+        return `${definition}${call(name)}`;
+      }
+      case 12: {
+        const callable = partials.filter((name) => partial === undefined || name < partial);
+        return callable.length ? call(pick(callable)) : '';
+      }
       default:
         return `{{json ${value()}}}`;
     }

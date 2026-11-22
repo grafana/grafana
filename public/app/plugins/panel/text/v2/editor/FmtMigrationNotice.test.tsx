@@ -16,8 +16,14 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../../panelcfg.gen';
+import { findFmtReads } from '../fmtMigration';
 
 import { FmtMigrationNotice } from './FmtMigrationNotice';
+
+jest.mock('../fmtMigration', () => {
+  const actual = jest.requireActual('../fmtMigration');
+  return { ...actual, findFmtReads: jest.fn(actual.findFmtReads) };
+});
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -172,6 +178,16 @@ describe('FmtMigrationNotice', () => {
     expect(within(dialog).queryByRole('button', { name: 'Convert' })).not.toBeInTheDocument();
   });
 
+  it('says how to convert a read where a block param hides the display helper', async () => {
+    const { user } = setup({ content: '{{#each data as |display|}}{{fmt.cpu}}{{/each}}' });
+
+    await user.click(screen.getByRole('button', { name: 'Show where it is used' }));
+
+    expect(within(screen.getByRole('list', { name: 'Unchanged expressions' })).getByRole('listitem')).toHaveTextContent(
+      'Line 1fmt.cpuA block parameter named display hides the helper here. Rename the block parameter, then use display.'
+    );
+  });
+
   it('does not apply a conversion when the template renders differently for the current query results', async () => {
     const frames = withDisplay([toDataFrame({ fields: [{ name: 'cpu', type: FieldType.number, values: [0.5] }] })]);
     let calls = 0;
@@ -222,6 +238,16 @@ describe('FmtMigrationNotice', () => {
     expect(onConvert).toHaveBeenCalledWith('{{#each data}}{{display "cpu"}}{{/each}}');
   });
 
+  it('renders nothing to check when no read can be converted', async () => {
+    const replaceVariables = jest.fn(identity);
+    const { user } = setup({ content: '{{#each data}}{{#each fmt}}{{this}}{{/each}}{{/each}}', replaceVariables });
+
+    await user.click(screen.getByRole('button', { name: 'Show where it is used' }));
+
+    expect(screen.getByRole('dialog', { name: 'Convert fmt to display' })).toBeVisible();
+    expect(replaceVariables).not.toHaveBeenCalled();
+  });
+
   it('checks every frame for a field displayed as fmt, including those the panel does not show', async () => {
     const frames = withDisplay([
       ...services(),
@@ -245,6 +271,36 @@ describe('FmtMigrationNotice', () => {
       'Run the query so the fields can be checked, then convert it to the display helper.'
     );
     expect(screen.queryByRole('button', { name: 'Convert to display' })).not.toBeInTheDocument();
+  });
+
+  it('checks the template again when it changes, not each time the query runs', () => {
+    const content = '{{#each data}}{{fmt.cpu}}{{/each}}';
+    const notice = (frames: DataFrame[], template = content) => (
+      <FmtMigrationNotice
+        content={template}
+        mode={TextMode.Markdown}
+        renderMode={RenderMode.Once}
+        format="html"
+        frames={frames}
+        replaceVariables={identity}
+        getDraft={() => template}
+        onConvert={jest.fn()}
+      />
+    );
+    const { rerender } = render(notice(services()));
+    jest.mocked(findFmtReads).mockClear();
+
+    rerender(notice(services()));
+    expect(findFmtReads).not.toHaveBeenCalled();
+
+    rerender(notice(withDisplay([...services(), toDataFrame({ fields: [{ name: 'fmt', values: ['json'] }] })])));
+    expect(findFmtReads).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status', { name: 'fmt is deprecated' })).toHaveTextContent(
+      '0 of 1 expression can be converted to the display helper.'
+    );
+
+    rerender(notice(services(), `${content} `));
+    expect(findFmtReads).toHaveBeenCalledTimes(2);
   });
 
   it('hides the notice once it is dismissed', async () => {

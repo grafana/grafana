@@ -607,6 +607,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await dialog.getByRole('button', { name: 'Convert' }).click();
 
       await expect(dialog).toBeHidden();
+      await expect(page.getByRole('textbox', { name: 'Text content' })).toBeFocused();
       await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toHaveText(DISPLAY_TEMPLATE);
       await expect(notice).toContainText('0 of 1 expression can be converted to the display helper.');
       await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('p.fmt-row')).toHaveText(rows);

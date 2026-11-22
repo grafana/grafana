@@ -169,7 +169,7 @@ function getFmtUsage(textOptions: Array<Partial<Options>>, find: typeof findFmtR
     const reads = find(options.content ?? '', {
       mode: options.mode ?? TextMode.Markdown,
       renderMode: options.renderMode,
-      fieldNames: [],
+      hasFmtField: false,
     });
 
     if (reads.convertible + reads.unconverted.length > 0) {

@@ -9,7 +9,6 @@ import { type RenderMode, type TextMode } from '../panelcfg.gen';
 import { findFmtReads } from './fmtMigration';
 
 const NOTICE_ID = 'text-v2-fmt-deprecated';
-const NO_FIELDS: string[] = [];
 
 interface Props {
   content: string;
@@ -19,7 +18,7 @@ interface Props {
 
 export function TextFmtDeprecationNotice({ content, mode, renderMode }: Props) {
   const items = useMemo<PanelNotice[]>(() => {
-    const reads = findFmtReads(content, { mode, renderMode, fieldNames: NO_FIELDS });
+    const reads = findFmtReads(content, { mode, renderMode, hasFmtField: false });
 
     return reads.convertible + reads.unconverted.length > 0
       ? [

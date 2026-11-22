@@ -733,6 +733,21 @@ describe('TextNGPanel', () => {
       expect(within(footers[0]).getByRole('combobox')).toHaveValue('Frame A');
     });
 
+    it('checks fmt reads against every frame while editing, including the ones the picker hides', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const hidden = toDataFrame({ name: 'Frame B', fields: [{ name: 'fmt', values: ['json'] }] });
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, hidden]),
+        options: { content: '{{#each data}}{{fmt.host}}{{/each}}', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      expect(await screen.findByRole('status', { name: 'fmt is deprecated' })).toHaveTextContent(
+        '0 of 1 expression can be converted to the display helper.'
+      );
+    });
+
     it('does not make the rendered content a row flex item', () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const props = createProps(replaceVariablesMock, {

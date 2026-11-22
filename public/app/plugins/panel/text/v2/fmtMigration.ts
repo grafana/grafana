@@ -6,11 +6,12 @@ import { compileProgram } from './handlebars';
 import { isScoped, isSimpleId, KNOWN_HELPERS } from './handlebarsInterpreter';
 import { escapeCommentedTemplates, interpretsHandlebars } from './renderContent';
 
-export type FmtReadReason = 'namespace' | 'expression' | 'row' | 'shadowed' | 'name';
+export type FmtReadReason = 'namespace' | 'helper' | 'expression' | 'row' | 'shadowed' | 'name';
 
 interface FmtRead {
   from: number;
   to: number;
+  line: number;
   reason: FmtReadReason;
 }
 
@@ -22,6 +23,7 @@ export interface FmtReads {
 interface FmtChange {
   from: number;
   to: number;
+  line: number;
   text: string;
 }
 
@@ -34,7 +36,7 @@ export interface FmtMigration {
 export interface FmtMigrationOptions {
   mode: TextMode;
   renderMode?: RenderMode;
-  fieldNames: readonly string[];
+  hasFmtField: boolean;
 }
 
 const NAMESPACE = 'fmt';
@@ -78,6 +80,7 @@ interface Replacement {
 interface Edit extends Replacement {
   from: number;
   to: number;
+  line: number;
   text: string;
 }
 
@@ -92,6 +95,7 @@ interface Read {
 interface Range {
   from: number;
   to: number;
+  line: number;
 }
 
 const ROOT_PARTIAL_SCOPE: Scope = { context: NOTHING, depths: [], params: [] };
@@ -111,7 +115,7 @@ export function migrateFmt(content: string, options: FmtMigrationOptions): FmtMi
   }
 
   const { source, program, edits, unconverted, replacements, toContent } = analysis;
-  const changes = edits.map(({ from, to, text }) => ({ from: toContent(from), to: toContent(to), text }));
+  const changes = edits.map(({ from, to, line, text }) => ({ from: toContent(from), to: toContent(to), line, text }));
   const converted = applyEdits(source, edits);
   const migrated = applyEdits(content, changes);
 
@@ -119,14 +123,14 @@ export function migrateFmt(content: string, options: FmtMigrationOptions): FmtMi
     escapeCommentedTemplates(migrated) !== converted ||
     !matches(program, parseTemplate(replaceLineSeparators(converted)), replacements)
   ) {
-    const failed = changes.map(({ from, to }): FmtRead => ({ from, to, reason: 'expression' }));
+    const failed = changes.map(({ from, to, line }): FmtRead => ({ from, to, line, reason: 'expression' }));
     return { content, changes: [], unconverted: [...unconverted, ...failed].sort((a, b) => a.from - b.from) };
   }
 
   return { content: migrated, changes, unconverted };
 }
 
-function analyzeContent(content: string, { mode, renderMode, fieldNames }: FmtMigrationOptions) {
+function analyzeContent(content: string, { mode, renderMode, hasFmtField }: FmtMigrationOptions) {
   if (!interpretsHandlebars(mode) || !content.includes(NAMESPACE)) {
     return undefined;
   }
@@ -139,7 +143,7 @@ function analyzeContent(content: string, { mode, renderMode, fieldNames }: FmtMi
   }
 
   const root = renderMode === RenderMode.PerRow ? ROW | ROOT : ROOT;
-  const { edits, unconverted, replacements } = analyze(program, root, fieldNames.includes(NAMESPACE), source);
+  const { edits, unconverted, replacements } = analyze(program, root, hasFmtField, source);
   const toContent = mapToContentOffsets(content, source);
 
   return {
@@ -211,7 +215,11 @@ function analyzePass(
   const calls = new Map<string, number>();
   const lineStarts = getLineStarts(source);
   const offsetOf = ({ line, column }: hbs.AST.Position) => (lineStarts[line - 1] ?? source.length) + column;
-  const rangeOf = (node: hbs.AST.Node): Range => ({ from: offsetOf(node.loc.start), to: offsetOf(node.loc.end) });
+  const rangeOf = (node: hbs.AST.Node): Range => ({
+    from: offsetOf(node.loc.start),
+    to: offsetOf(node.loc.end),
+    line: node.loc.start.line,
+  });
 
   const findParam = (scope: Scope, name: string) => {
     for (const params of scope.params) {
@@ -241,8 +249,12 @@ function analyzePass(
     name: string,
     row: ReturnType<typeof getRowArgument>,
     position: Position,
-    chained: boolean
+    chained: boolean,
+    scope: Scope
   ): FmtReadReason | undefined {
+    if (findParam(scope, HELPER) !== undefined) {
+      return 'helper';
+    }
     if (chained || position === 'callee') {
       return 'expression';
     }
@@ -265,10 +277,11 @@ function analyzePass(
     read: Read,
     name: string | undefined,
     position: Position,
-    chained: boolean
+    chained: boolean,
+    scope: Scope
   ) {
     const row = getRowArgument(path, read.index);
-    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained);
+    const reason = name === undefined ? 'namespace' : getReason(read, name, row, position, chained, scope);
 
     if (name === undefined || reason) {
       unconverted.push({ ...range, reason: reason ?? 'namespace' });
@@ -319,7 +332,7 @@ function analyzePass(
 
     if (read) {
       const name = path.parts[read.index + 1];
-      record(rangeOf(path), statement ?? path, path, read, name, position, read.index + 2 < path.parts.length);
+      record(rangeOf(path), statement ?? path, path, read, name, position, read.index + 2 < path.parts.length, scope);
     }
 
     return value;
@@ -358,8 +371,10 @@ function analyzePass(
     }
 
     const statement = isMustache(node);
-    const range = statement ? { from: offsetOf(node.path.loc.start), to: offsetOf(key.loc.end) } : rangeOf(node);
-    record(range, node, object, read, String(key.value), statement ? 'statement' : 'param', false);
+    const range = statement
+      ? { from: offsetOf(node.path.loc.start), to: offsetOf(key.loc.end), line: node.path.loc.start.line }
+      : rangeOf(node);
+    record(range, node, object, read, String(key.value), statement ? 'statement' : 'param', false, scope);
     return true;
   }
 
@@ -390,7 +405,7 @@ function analyzePass(
       return OBJECT;
     }
 
-    return helper === HELPER ? SCALAR | NOTHING : UNKNOWN;
+    return helper === HELPER && node.params.length > 0 ? SCALAR | NOTHING : UNKNOWN;
   }
 
   function mustache(node: hbs.AST.MustacheStatement, scope: Scope) {

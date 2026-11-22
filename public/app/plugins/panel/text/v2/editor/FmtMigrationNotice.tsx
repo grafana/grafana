@@ -8,8 +8,9 @@ import { Alert, Button, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type RenderMode, type TextMode } from '../../panelcfg.gen';
 import { findFmtReads, type FmtMigration, type FmtReadReason, migrateFmt } from '../fmtMigration';
 import { getFieldNames } from '../handlebars';
-import { catchTemplateError, interpolateTemplate } from '../renderContent';
+import { catchTemplateError, interpolateTemplate, interpretsHandlebars } from '../renderContent';
 
+const FMT = 'fmt';
 const DISPLAY_EXAMPLE = '{{display "cpu"}}';
 const BLOCK_EXAMPLE = '{{#display "cpu"}}{{text}}{{suffix}}{{/display}}';
 
@@ -24,11 +25,12 @@ interface Props {
   onConvert: (content: string) => void;
 }
 
+type RenderCheck = 'same' | 'changed' | 'unsteady';
+
 interface Review {
   original: string;
   migration: FmtMigration;
-  rendersSame: boolean;
-  steady: boolean;
+  check: RenderCheck;
 }
 
 export function FmtMigrationNotice({
@@ -45,10 +47,14 @@ export function FmtMigrationNotice({
   const [dismissed, setDismissed] = useState(false);
   const [review, setReview] = useState<Review>();
   const hasFields = frames.some((frame) => frame.fields.length > 0);
-  const fieldNames = useMemo(() => frames.flatMap((frame) => getFieldNames(frame, [frame])), [frames]);
+  const readsFmt = interpretsHandlebars(mode) && content.includes(FMT);
+  const hasFmtField = useMemo(
+    () => readsFmt && frames.some((frame) => getFieldNames(frame, [frame]).includes(FMT)),
+    [readsFmt, frames]
+  );
   const reads = useMemo(
-    () => findFmtReads(content, { mode, renderMode, fieldNames }),
-    [content, mode, renderMode, fieldNames]
+    () => findFmtReads(content, { mode, renderMode, hasFmtField }),
+    [content, mode, renderMode, hasFmtField]
   );
 
   const total = reads.convertible + reads.unconverted.length;
@@ -68,25 +74,41 @@ export function FmtMigrationNotice({
     return `${error ?? ''}|${truncated ?? false}|${rendered}`;
   };
 
-  const openReview = () => {
-    const original = getDraft();
-    const migration = migrateFmt(original, { mode, renderMode, fieldNames });
+  const checkRenders = (original: string, converted: string): RenderCheck => {
     const variants = frames.length > 1 ? frames.map((frame) => [frame]) : [frames];
-    let rendersSame = true;
-    let steady = true;
+    let check: RenderCheck = 'same';
 
     for (const series of variants) {
       const before = render(original, series);
-      const after = render(migration.content, series);
+      const after = render(converted, series);
+
+      if (after === before) {
+        continue;
+      }
+
       const again = render(original, series);
 
-      if (after !== before && after !== again) {
-        rendersSame = false;
-        steady = steady && before === again;
+      if (after === again) {
+        continue;
       }
+      if (before === again) {
+        return 'changed';
+      }
+      check = 'unsteady';
     }
 
-    setReview({ original, migration, rendersSame, steady });
+    return check;
+  };
+
+  const openReview = () => {
+    const original = getDraft();
+    const migration = migrateFmt(original, { mode, renderMode, hasFmtField });
+
+    setReview({
+      original,
+      migration,
+      check: migration.changes.length > 0 ? checkRenders(original, migration.content) : 'same',
+    });
   };
 
   const apply = () => {
@@ -143,7 +165,7 @@ export function FmtMigrationNotice({
             </Text>
             {review.migration.changes.length > 0 && (
               <Stack direction="column" gap={1}>
-                {review.rendersSame ? (
+                {review.check === 'same' ? (
                   <Text weight="medium">
                     {t('textng.fmt-migration.converts', '', {
                       count: review.migration.changes.length,
@@ -158,7 +180,7 @@ export function FmtMigrationNotice({
                     severity="error"
                     bottomSpacing={0}
                     title={
-                      review.steady
+                      review.check === 'changed'
                         ? t(
                             'textng.fmt-migration.renders-differently',
                             'The converted template renders differently for the current query results, so it is not applied'
@@ -173,7 +195,7 @@ export function FmtMigrationNotice({
                 <ul className={styles.list} aria-label={t('textng.fmt-migration.changes', 'Changes')}>
                   {review.migration.changes.map((change) => (
                     <li key={change.from} className={styles.item}>
-                      <Text color="secondary">{getLineLabel(review.original, change.from)}</Text>
+                      <Text color="secondary">{getLineLabel(change.line)}</Text>
                       <code>{review.original.slice(change.from, change.to)}</code>
                       <span aria-hidden>→</span>
                       <code>{change.text}</code>
@@ -194,7 +216,7 @@ export function FmtMigrationNotice({
                 <ul className={styles.list} aria-label={t('textng.fmt-migration.unchanged', 'Unchanged expressions')}>
                   {review.migration.unconverted.map((read) => (
                     <li key={read.from} className={styles.item}>
-                      <Text color="secondary">{getLineLabel(review.original, read.from)}</Text>
+                      <Text color="secondary">{getLineLabel(read.line)}</Text>
                       <code>{review.original.slice(read.from, read.to)}</code>
                       <Text color="secondary">{getGuidance(read.reason)}</Text>
                     </li>
@@ -208,7 +230,7 @@ export function FmtMigrationNotice({
               {t('textng.fmt-migration.cancel', 'Cancel')}
             </Button>
             {review.migration.changes.length > 0 && (
-              <Button onClick={apply} disabled={!review.rendersSame}>
+              <Button onClick={apply} disabled={review.check !== 'same'}>
                 {t('textng.fmt-migration.convert', 'Convert')}
               </Button>
             )}
@@ -219,8 +241,8 @@ export function FmtMigrationNotice({
   );
 }
 
-function getLineLabel(content: string, offset: number): string {
-  return t('textng.fmt-migration.line', 'Line {{line}}', { line: content.slice(0, offset).split(/\r\n?|\n/).length });
+function getLineLabel(line: number): string {
+  return t('textng.fmt-migration.line', 'Line {{line}}', { line });
 }
 
 function getGuidance(reason: FmtReadReason): string {
@@ -230,6 +252,11 @@ function getGuidance(reason: FmtReadReason): string {
         'textng.fmt-migration.reason-namespace',
         'Reads fmt as a whole. Read each field with display instead, as in {{example}}.',
         { example: DISPLAY_EXAMPLE, interpolation: { escapeValue: false } }
+      );
+    case 'helper':
+      return t(
+        'textng.fmt-migration.reason-helper',
+        'A block parameter named display hides the helper here. Rename the block parameter, then use display.'
       );
     case 'expression':
       return t(
