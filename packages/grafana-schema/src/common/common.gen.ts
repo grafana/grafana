@@ -780,6 +780,18 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
+ * How a pill cell uses the color resolved for a value (from a value mapping,
+ * a fixed field color, or a categorical palette). The accessible mode adjusts
+ * the color into a tonal pair that stays readable in light and dark themes.
+ * The exact mode uses the resolved color directly as the pill background,
+ * which may be hard to read in some themes.
+ */
+export enum TablePillColorMode {
+  Accessible = 'accessible',
+  Exact = 'exact',
+}
+
+/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -869,6 +881,11 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 export interface TablePillCellOptions {
+  /**
+   * How the pill background uses the resolved color. Defaults to the
+   * accessible mode, which adjusts the color into a tonal pair.
+   */
+  colorMode?: TablePillColorMode;
   type: TableCellDisplayMode.Pill;
 }
 

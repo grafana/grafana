@@ -11,6 +11,13 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
+// How a pill cell uses the color resolved for a value (from a value mapping,
+// a fixed field color, or a categorical palette). The accessible mode adjusts
+// the color into a tonal pair that stays readable in light and dark themes.
+// The exact mode uses the resolved color directly as the pill background,
+// which may be hard to read in some themes.
+TablePillColorMode: "accessible" | "exact" @cuetsy(kind="enum",memberNames="Accessible|Exact")
+
 // Sort by field state
 TableSortByFieldState: {
 	// Sets the display name of the field to sort by
@@ -77,6 +84,9 @@ TableColoredBackgroundCellOptions: {
 
 TablePillCellOptions: {
 	type: TableCellDisplayMode & "pill"
+	// How the pill background uses the resolved color. Defaults to the
+	// accessible mode, which adjusts the color into a tonal pair.
+	colorMode?: TablePillColorMode
 } @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {

@@ -1,4 +1,5 @@
 import { render, screen, type RenderResult } from '@testing-library/react';
+import tinycolor from 'tinycolor2';
 
 import {
   type Field,
@@ -11,7 +12,7 @@ import {
   fieldColorModeRegistry,
   getColorByStringHash,
 } from '@grafana/data';
-import { ThresholdsMode } from '@grafana/schema';
+import { TableCellDisplayMode, TablePillColorMode, ThresholdsMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
@@ -470,6 +471,80 @@ describe('PillCell', () => {
         <span style="background-color: rgb(242, 73, 92); color: rgb(247, 248, 250);">100</span>
         `
       );
+    });
+
+    describe('Exact pill color mode', () => {
+      const exactOptions = { type: TableCellDisplayMode.Pill, colorMode: TablePillColorMode.Exact } as const;
+
+      const renderExact = (field: Field, theme: ReturnType<typeof createTheme>) =>
+        render(
+          <ThemeContext.Provider value={theme}>
+            <PillCell
+              getTextColorForBackground={getTextColorForBackground}
+              field={field}
+              rowIdx={0}
+              theme={theme}
+              cellOptions={exactOptions}
+            />
+          </ThemeContext.Provider>
+        );
+
+      it.each([
+        ['dark', 'rgb(204, 237, 204)'],
+        ['light', 'rgb(204, 237, 204)'],
+      ] as const)('uses the mapped color directly as the background in %s mode', (mode, backgroundColor) => {
+        const theme = createTheme({ colors: { mode } });
+        theme.flags.visualDesignRefresh = true;
+        const field = fieldWithValues(['ok']);
+        field.config.mappings = [{ type: MappingType.ValueToText, options: { ok: { color: '#CCEDCC' } } }];
+        field.display = () => ({ text: 'ok', color: '#CCEDCC', numeric: 0 });
+
+        renderExact(field, theme);
+        expect(screen.getByText('ok')).toHaveStyle({
+          backgroundColor,
+          color: getTextColorForBackground('#CCEDCC'),
+        });
+      });
+
+      it('uses a fixed field color directly as the background', () => {
+        const theme = createTheme();
+        theme.flags.visualDesignRefresh = true;
+        const mockField = fieldWithValues(['value1']);
+        const fixed = {
+          ...mockField,
+          config: { ...mockField.config, color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
+        } satisfies Field;
+
+        renderExact(fixed, theme);
+        const pill = screen.getByText('value1');
+        expect(pill).toHaveStyle({
+          backgroundColor: tinycolor(theme.visualization.getColorByName('red')).toRgbString(),
+          color: getTextColorForBackground(theme.visualization.getColorByName('red')),
+        });
+      });
+
+      it('defaults to the accessible tonal colors when no color mode is set', () => {
+        const theme = createTheme({ colors: { mode: 'light' } });
+        theme.flags.visualDesignRefresh = true;
+        const field = fieldWithValues(['error']);
+        field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+        field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
+
+        render(
+          <ThemeContext.Provider value={theme}>
+            <PillCell
+              getTextColorForBackground={getTextColorForBackground}
+              field={field}
+              rowIdx={0}
+              theme={theme}
+              cellOptions={{ type: TableCellDisplayMode.Pill }}
+            />
+          </ThemeContext.Provider>
+        );
+        // The accessible mode adjusts the mapped color into a tonal pair instead of using it directly.
+        // Refreshed pills are Tags, so the tonal colors come from the tag custom properties.
+        expectBaseColor(screen.getByText('error'), '#ff0000', theme);
+      });
     });
   });
 
