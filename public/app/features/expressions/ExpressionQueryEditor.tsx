@@ -106,6 +106,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
   const { query, queries, onRunQuery, onChange, app } = props;
   const { getCachedExpression, setCachedExpression } = useExpressionsCache();
   const labelId = useId();
+  const valueId = useId();
 
   const styles = useStyles2(getStyles);
 
@@ -172,13 +173,13 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
         >
           <ExpressionTypeDropdown handleOnSelect={onSelectExpressionType}>
             <Button
-              aria-describedby={labelId}
+              aria-labelledby={`${labelId} ${valueId}`}
               fill="outline"
               icon="angle-down"
               iconPlacement="right"
               variant="secondary"
             >
-              {expressionTypes.find(({ value }) => value === query.type)?.label}
+              <span id={valueId}>{expressionTypes.find(({ value }) => value === query.type)?.label}</span>
             </Button>
           </ExpressionTypeDropdown>
         </InlineField>
