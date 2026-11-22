@@ -1252,6 +1252,28 @@ describe('TextNGPanel', () => {
       expect(notices.getSnapshot().items).toEqual([]);
     });
 
+    it('takes the warning down once the template stops reading fmt', async () => {
+      window.__grafanaSceneContext = SAVEABLE as unknown as SceneObject;
+      replaceVariablesMock.mockImplementation((value: string) => value);
+      const notices = new PanelStatusStore();
+      const panel = (content: string) => (
+        <PanelContextProvider value={{ app: CoreApp.Dashboard, notices } as unknown as PanelContext}>
+          <TextNGPanel {...createProps(replaceVariablesMock, { options: { content, mode: TextMode.Markdown } })} />
+        </PanelContextProvider>
+      );
+      const { rerender } = render(panel('Services: {{#each data}}{{fmt.cpu}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toHaveLength(1));
+
+      rerender(panel('Services: {{#each data}}{{display "cpu"}}{{/each}}<!-- was fmt -->'));
+      await waitFor(() => expect(notices.getSnapshot().items).toEqual([]));
+
+      rerender(panel('Services: {{#each data}}{{fmt.cpu}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toHaveLength(1));
+
+      rerender(panel('Services: {{#each data}}{{display "cpu"}}{{/each}}'));
+      await waitFor(() => expect(notices.getSnapshot().items).toEqual([]));
+    });
+
     it('keeps the panel when the fmt check fails, since the warning is optional', async () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       const find = jest.spyOn(fmtMigration, 'findFmtReads').mockImplementation(() => {
