@@ -19,18 +19,12 @@ import (
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type DashValidatorConfig struct {
-	DatasourceSvc      datasources.DataSourceService
-	HTTPClientProvider httpclient.Provider
-	MetricsCache       *cache.MetricsCache                      // Injected by register.go
-	Validators         map[string]validator.DatasourceValidator // Injected by register.go, keyed by datasource type
-	AC                 accesscontrol.AccessControl              // For per-datasource scoped permission checks
+	Datasources  DatasourceProvider                       // Datasource lookup, auth transport and scoped permission checks
+	MetricsCache *cache.MetricsCache                      // Injected by register.go
+	Validators   map[string]validator.DatasourceValidator // Injected by register.go, keyed by datasource type
 }
 
 // checkRequest matches the CUE schema for POST /check request
@@ -104,7 +98,7 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "check",
 					Method:     "POST",
-				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.HTTPClientProvider, validators, specificConfig.AC),
+				}: handleCheckRoute(log, specificConfig.Datasources, validators),
 			},
 		},
 	}
@@ -123,10 +117,8 @@ func New(cfg app.Config) (app.App, error) {
 // custom route handler to check dashboard compatibility
 func handleCheckRoute(
 	log logging.Logger,
-	datasourceSvc datasources.DataSourceService,
-	httpClientProvider httpclient.Provider,
+	datasources DatasourceProvider,
 	validators map[string]validator.DatasourceValidator,
-	ac accesscontrol.AccessControl,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, r *app.CustomRouteRequest) error {
 		// Set a timeout for the entire request processing
@@ -172,7 +164,7 @@ func handleCheckRoute(
 		for i, dsMapping := range req.DatasourceMappings {
 			// Validate UID using Grafana's standard validation
 			// Checks: not empty, max 40 chars, valid characters (a-zA-Z0-9-_)
-			if err := util.ValidateUID(dsMapping.UID); err != nil {
+			if err := validateUID(dsMapping.UID); err != nil {
 				logger.Error("Datasource UID validation failed",
 					"index", i,
 					"uid", dsMapping.UID,
@@ -237,12 +229,7 @@ func handleCheckRoute(
 			dsLogger := logger.With("datasourceUID", dsMapping.UID, "datasourceType", dsMapping.Type)
 
 			// Verify user has read/query access to this specific datasource
-			dsScope := datasources.ScopeProvider.GetResourceScopeUID(dsMapping.UID)
-			dsEvaluator := accesscontrol.EvalAll(
-				accesscontrol.EvalPermission(datasources.ActionRead, dsScope),
-				accesscontrol.EvalPermission(datasources.ActionQuery, dsScope),
-			)
-			hasAccess, err := ac.Evaluate(ctx, user, dsEvaluator)
+			hasAccess, err := datasources.CanQuery(ctx, user, dsMapping.UID)
 			if err != nil {
 				dsLogger.Error("Failed to evaluate datasource permissions", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -269,7 +256,7 @@ func handleCheckRoute(
 
 			// Fetch datasource from Grafana using app-platform method
 			// Parameters: namespace, name (UID), group (datasource type)
-			ds, err := datasourceSvc.GetDataSourceInNamespace(ctx, namespace, dsMapping.UID, dsMapping.Type)
+			ds, err := datasources.Get(ctx, namespace, dsMapping.UID, dsMapping.Type)
 			if err != nil {
 				dsLogger.Error("Failed to get datasource from namespace", "error", err)
 
@@ -277,7 +264,7 @@ func handleCheckRoute(
 				statusCode := http.StatusInternalServerError
 				userMsg := fmt.Sprintf("failed to retrieve datasource: %s", dsMapping.UID)
 
-				if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				if errors.Is(err, ErrDatasourceNotFound) {
 					statusCode = http.StatusNotFound
 					userMsg = fmt.Sprintf("datasource not found: %s (type: %s)", dsMapping.UID, dsMapping.Type)
 					dsLogger.Warn("Datasource not found in namespace")
@@ -316,7 +303,7 @@ func handleCheckRoute(
 			}
 
 			// Get authenticated HTTP transport for this datasource
-			transport, err := datasourceSvc.GetHTTPTransport(ctx, ds, httpClientProvider)
+			transport, err := ds.Transport(ctx)
 			if err != nil {
 				dsLogger.Error("Failed to get HTTP transport for datasource", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
