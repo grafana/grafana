@@ -15,6 +15,7 @@ import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
   Combobox,
+  ErrorBoundary,
   Pagination,
   ScrollContainer,
   Stack,
@@ -319,9 +320,15 @@ export function TextNGPanel(props: Props) {
   const consentNotice = <TextSandboxConsentNotice consent={consent} />;
   const fmtNotice =
     !isEditing && content.includes('fmt') && canSaveDashboard() ? (
-      <Suspense fallback={null}>
-        <TextFmtDeprecationNotice content={content} mode={options.mode} renderMode={renderMode} />
-      </Suspense>
+      <ErrorBoundary boundaryName="text-fmt-deprecation-notice">
+        {({ error }) =>
+          error ? null : (
+            <Suspense fallback={null}>
+              <TextFmtDeprecationNotice content={content} mode={options.mode} renderMode={renderMode} />
+            </Suspense>
+          )
+        }
+      </ErrorBoundary>
     ) : null;
 
   if (!panelFooter) {

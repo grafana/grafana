@@ -1183,6 +1183,7 @@ describe('TextNGPanel', () => {
     afterEach(() => {
       window.__grafanaSceneContext = previousScene;
       delete window.__grafanaImageRendererMessageChannel;
+      jest.restoreAllMocks();
     });
 
     const SAVEABLE = { isDashboardScene: true, state: { meta: { canSave: true } } };
@@ -1247,6 +1248,19 @@ describe('TextNGPanel', () => {
       const notices = renderWithNotices(CoreApp.Dashboard, SAVEABLE);
       await act(() => import('./TextFmtDeprecationNotice'));
 
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
+      expect(notices.getSnapshot().items).toEqual([]);
+    });
+
+    it('keeps the panel when the fmt check fails, since the warning is optional', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      const find = jest.spyOn(fmtMigration, 'findFmtReads').mockImplementation(() => {
+        throw new Error('analysis failed');
+      });
+      const notices = renderWithNotices(CoreApp.Dashboard, SAVEABLE);
+      await act(() => import('./TextFmtDeprecationNotice'));
+
+      await waitFor(() => expect(find).toHaveBeenCalled());
       expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('Services:');
       expect(notices.getSnapshot().items).toEqual([]);
     });
