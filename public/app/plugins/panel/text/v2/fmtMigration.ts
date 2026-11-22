@@ -11,6 +11,7 @@ export type FmtReadReason = 'namespace' | 'helper' | 'expression' | 'row' | 'sha
 interface FmtRead {
   from: number;
   to: number;
+  line: number;
   reason: FmtReadReason;
 }
 
@@ -22,6 +23,7 @@ export interface FmtReads {
 interface FmtChange {
   from: number;
   to: number;
+  line: number;
   text: string;
 }
 
@@ -79,6 +81,7 @@ interface Replacement {
 interface Edit extends Replacement {
   from: number;
   to: number;
+  line: number;
   text: string;
 }
 
@@ -106,7 +109,7 @@ export function migrateFmt(content: string, options: FmtMigrationOptions): FmtMi
   }
 
   const { source, program, edits, unconverted, replacements, toContent } = analysis;
-  const changes = edits.map(({ from, to, text }) => ({ from: toContent(from), to: toContent(to), text }));
+  const changes = edits.map(({ from, to, line, text }) => ({ from: toContent(from), to: toContent(to), line, text }));
   const converted = applyEdits(source, edits);
   const migrated = applyEdits(content, changes);
 
@@ -114,7 +117,7 @@ export function migrateFmt(content: string, options: FmtMigrationOptions): FmtMi
     escapeCommentedTemplates(migrated) !== converted ||
     !matches(program, parseTemplate(replaceLineSeparators(converted)), replacements)
   ) {
-    const failed = changes.map(({ from, to }): FmtRead => ({ from, to, reason: 'expression' }));
+    const failed = changes.map(({ from, to, line }): FmtRead => ({ from, to, line, reason: 'expression' }));
     return { content, changes: [], unconverted: [...unconverted, ...failed].sort((a, b) => a.from - b.from) };
   }
 
@@ -171,7 +174,11 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
   const replacements = new Map<object, Replacement>();
   const lineStarts = getLineStarts(source);
   const offsetOf = ({ line, column }: hbs.AST.Position) => (lineStarts[line - 1] ?? source.length) + column;
-  const rangeOf = (node: hbs.AST.Node) => ({ from: offsetOf(node.loc.start), to: offsetOf(node.loc.end) });
+  const rangeOf = (node: hbs.AST.Node) => ({
+    from: offsetOf(node.loc.start),
+    to: offsetOf(node.loc.end),
+    line: node.loc.start.line,
+  });
 
   const findParam = (scope: Scope, name: string) => {
     for (const params of scope.params) {

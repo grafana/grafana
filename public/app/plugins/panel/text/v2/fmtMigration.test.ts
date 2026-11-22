@@ -247,8 +247,8 @@ describe('migrateFmt', () => {
 
     it('lists every expression it rewrites, with its offsets in the content and its replacement', () => {
       expect(migrate('{{#each data}}{{fmt.cpu}}{{#if (eq fmt.status "")}}-{{/if}}{{/each}}').changes).toEqual([
-        { from: 16, to: 23, text: 'display "cpu"' },
-        { from: 35, to: 45, text: '(display "status")' },
+        { from: 16, to: 23, line: 1, text: 'display "cpu"' },
+        { from: 35, to: 45, line: 1, text: '(display "status")' },
       ]);
     });
 
@@ -363,7 +363,11 @@ describe('migrateFmt', () => {
       const content = '{{#each data}}[{{fmt.cpu}}]{{/each}}';
       const migration = migrate(content, { hasFmtField: true });
 
-      expect(migration).toEqual({ content, changes: [], unconverted: [{ from: 17, to: 24, reason: 'shadowed' }] });
+      expect(migration).toEqual({
+        content,
+        changes: [],
+        unconverted: [{ from: 17, to: 24, line: 1, reason: 'shadowed' }],
+      });
       expect(render(content, shadowed())).toBe('[own][]');
       expect(render('{{#each data}}[{{display "cpu"}}]{{/each}}', shadowed())).toBe('[50.0%][25.0%]');
     });
@@ -451,7 +455,7 @@ describe('migrateFmt', () => {
       const migration = migrate(content);
 
       expect(migration.content).toBe('{{#each data}}{{#fmt.cpu}}{{this}}{{/fmt.cpu}}{{display "status"}}{{/each}}');
-      expect(migration.unconverted).toEqual([{ from: 17, to: 24, reason: 'expression' }]);
+      expect(migration.unconverted).toEqual([{ from: 17, to: 24, line: 1, reason: 'expression' }]);
     });
 
     it('converts the reads it can and reports the rest, in content order', () => {
@@ -462,7 +466,7 @@ describe('migrateFmt', () => {
         '{{#each data}}{{display "cpu"}}{{#each fmt}}{{this}}{{/each}}{{display "status"}}{{/each}}'
       );
       expect(migration.changes).toHaveLength(2);
-      expect(migration.unconverted).toEqual([{ from: 33, to: 36, reason: 'namespace' }]);
+      expect(migration.unconverted).toEqual([{ from: 33, to: 36, line: 1, reason: 'namespace' }]);
     });
 
     it('reports offsets in the content when comments before a read are escaped for parsing', () => {
@@ -471,6 +475,21 @@ describe('migrateFmt', () => {
 
       expect(content.slice(read.from, read.to)).toBe('fmt');
       expect(read.from).toBe(44);
+      expect(read.line).toBe(2);
+    });
+
+    it('gives the line of each read, counting line breaks the way the editor does', () => {
+      const content =
+        '<!-- {{a}}\n{{b}} -->\n{{#each data}}\r\n{{fmt.cpu}}\r{{fmt.status}}\u2028{{#each fmt}}{{/each}}{{/each}}';
+      const migration = migrate(content);
+
+      expect(migration.changes.map(({ line, text }) => ({ line, text }))).toEqual([
+        { line: 4, text: 'display "cpu"' },
+        { line: 5, text: 'display "status"' },
+      ]);
+      expect(migration.unconverted.map(({ line, reason }) => ({ line, reason }))).toEqual([
+        { line: 5, reason: 'namespace' },
+      ]);
     });
   });
 
