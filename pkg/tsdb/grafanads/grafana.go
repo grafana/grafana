@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -106,14 +107,37 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 		return response
 	}
 
-	path := store.RootPublicStatic + "/" + q.Path
 	maxFiles := int(query.MaxDataPoints)
-	listFrame, err := s.store.List(ctx, nil, path, maxFiles) // nolint:staticcheck
+	listFrame, err := s.listPublicStatic(ctx, q.Path, maxFiles)
 	response.Error = err
 	if listFrame != nil {
 		response.Frames = data.Frames{listFrame.Frame}
 	}
 	return response
+}
+
+// Icons are listed from the frontend build output (build/img/icons), the same copy the
+// Icon component loads. The dev server keeps that output in memory rather than writing it
+// to disk, so fall back to the source copy in img/icons.
+func (s *Service) listPublicStatic(ctx context.Context, relPath string, maxFiles int) (*store.StorageListFrame, error) {
+	if !strings.HasPrefix(relPath, "img/icons/") {
+		return s.store.List(ctx, nil, store.RootPublicStatic+"/"+relPath, maxFiles) // nolint:staticcheck
+	}
+
+	frame, err := s.store.List(ctx, nil, store.RootPublicStatic+"/build/"+relPath, maxFiles) // nolint:staticcheck
+	if err == nil && hasRows(frame) {
+		return frame, nil
+	}
+
+	frame, err = s.store.List(ctx, nil, store.RootPublicStatic+"/"+relPath, maxFiles) // nolint:staticcheck
+	if err == nil && !hasRows(frame) {
+		s.log.Warn("No icons found in the frontend build output or source tree", "path", relPath)
+	}
+	return frame, err
+}
+
+func hasRows(frame *store.StorageListFrame) bool {
+	return frame != nil && frame.Frame != nil && frame.Rows() > 0
 }
 
 func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
