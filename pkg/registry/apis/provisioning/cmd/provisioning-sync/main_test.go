@@ -21,8 +21,8 @@ func TestParseOptions(t *testing.T) {
 		args    []string
 		wantErr string
 	}{
-		{name: "missing command", args: nil, wantErr: `expected a "pull", "push" or "fix-folder-metadata" command`},
-		{name: "unknown command", args: []string{"plan"}, wantErr: `expected a "pull", "push" or "fix-folder-metadata" command`},
+		{name: "missing command", args: nil, wantErr: `expected a "pull", "push" or "fix" command`},
+		{name: "unknown command", args: []string{"plan"}, wantErr: `expected a "pull", "push" or "fix" command`},
 		{name: "no repository type", args: []string{"pull"}, wantErr: "set --type"},
 		{name: "extra arguments", args: []string{"pull", "--type", "local", "--path", "x", "extra"}, wantErr: "unexpected arguments"},
 		{name: "push as a user", args: []string{"push", "--type", "local", "--path", "x", "--grafana-token", "t"}, wantErr: "provisioning service identity"},
@@ -30,14 +30,14 @@ func TestParseOptions(t *testing.T) {
 		{name: "offline push", args: []string{"push", "--type", "local", "--path", "x", "--access-token", "at", "--offline"}, wantErr: "only works with push --dry-run"},
 		{name: "incremental pull", args: []string{"pull", "--type", "local", "--path", "x", "--incremental"}, wantErr: "only work with push"},
 		{name: "dry-run pull", args: []string{"pull", "--type", "local", "--path", "x", "--dry-run"}, wantErr: "only work with push"},
-		{name: "commit options on push", args: []string{"push", "--type", "local", "--path", "x", "--access-token", "at", "--write-branch", "b"}, wantErr: "only work with pull and fix-folder-metadata"},
-		{name: "export options on fix-folder-metadata", args: []string{"fix-folder-metadata", "--type", "local", "--path", "x", "--keep-uids"}, wantErr: "only work with pull"},
+		{name: "commit options on push", args: []string{"push", "--type", "local", "--path", "x", "--access-token", "at", "--write-branch", "b"}, wantErr: "only work with pull and fix"},
+		{name: "export options on fix", args: []string{"fix", "--type", "local", "--path", "x", "--keep-uids"}, wantErr: "only work with pull"},
 		{name: "dry-run push as a user", args: []string{"push", "--type", "local", "--path", "x", "--grafana-token", "t", "--dry-run"}},
 		{name: "offline dry-run push", args: []string{"push", "--type", "local", "--path", "x", "--dry-run", "--offline"}},
 		{name: "push with access token", args: []string{"push", "--type", "github", "--url", "https://github.com/o/r", "--name", "demo", "--state-file", "s.json", "--access-token", "at", "--incremental"}},
 		{name: "push with token exchange", args: []string{"push", "--type", "local", "--path", "x", "--token-exchange-url", "http://signer", "--exchange-token", "x"}},
 		{name: "pull as a user", args: []string{"pull", "--type", "github", "--url", "https://github.com/o/r", "--write-branch", "export", "--message", "m", "--write-path", "p", "--keep-uids", "--new-folder-ids"}},
-		{name: "fix-folder-metadata as a user", args: []string{"fix-folder-metadata", "--type", "github", "--url", "https://github.com/o/r", "--write-branch", "fix", "--message", "m"}},
+		{name: "fix as a user", args: []string{"fix", "--type", "github", "--url", "https://github.com/o/r", "--write-branch", "fix", "--message", "m"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

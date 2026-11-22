@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 )
 
-// runFixFolderMetadata runs the same worker as the fix-folder-metadata job: every directory in
+// runFix runs the same worker as the fix-folder-metadata job: every directory in
 // the repository without a _folder.json gets one, in one commit for git repositories.
-func runFixFolderMetadata(ctx context.Context, opts options, out io.Writer) error {
+func runFix(ctx context.Context, opts options, out io.Writer) error {
 	run, err := newJobRun(ctx, opts)
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func runFixFolderMetadata(ctx context.Context, opts options, out io.Writer) erro
 		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{Ref: opts.writeBranch},
 	}, out, opts.jsonOutput)
 
-	if err := printCommitResult(out, commandFixFolderMetadata, status, opts.jsonOutput); err != nil {
+	if err := printCommitResult(out, commandFix, status, opts.jsonOutput); err != nil {
 		return err
 	}
 	return processErr

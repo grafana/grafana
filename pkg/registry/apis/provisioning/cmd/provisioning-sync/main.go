@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	commandPull              = "pull"
-	commandPush              = "push"
-	commandFixFolderMetadata = "fix-folder-metadata"
+	commandPull = "pull"
+	commandPush = "push"
+	commandFix  = "fix"
 
 	repoTokenEnv     = "PROVISIONING_REPO_TOKEN"
 	grafanaTokenEnv  = "GRAFANA_TOKEN"
@@ -33,7 +33,7 @@ Usage:
   provisioning-sync pull [flags]                  run the export job: unmanaged Grafana resources -> repository
   provisioning-sync push [flags]                  run the sync job: repository -> Grafana
   provisioning-sync push --dry-run [flags]        print what a push would change, without writing anything
-  provisioning-sync fix-folder-metadata [flags]   write the missing _folder.json files to the repository
+  provisioning-sync fix [flags]                   run the fix-folder-metadata job: write the missing _folder.json files
 
 The repository is described with --type and its settings; no Repository resource is needed.
 Pushed resources are managed by repo --name (default gcx), and the sync status, including
@@ -48,7 +48,7 @@ Examples:
   provisioning-sync push --type github --url https://github.com/org/repo --access-token "$ACCESS_TOKEN" --incremental
   provisioning-sync push --type local --path ./dashboards --token-exchange-url http://localhost:6481/sign/access-token
   provisioning-sync pull --type github --url https://github.com/org/repo --write-branch export --message "Export"
-  provisioning-sync fix-folder-metadata --type github --url https://github.com/org/repo --write-branch fix-folders
+  provisioning-sync fix --type github --url https://github.com/org/repo --write-branch fix-folders
 
 Flags:
 `
@@ -118,8 +118,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	switch opts.command {
 	case commandPush:
 		return runPush(ctx, opts, stdout)
-	case commandFixFolderMetadata:
-		return runFixFolderMetadata(ctx, opts, stdout)
+	case commandFix:
+		return runFix(ctx, opts, stdout)
 	default:
 		return runPull(ctx, opts, stdout)
 	}
@@ -133,12 +133,12 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 		fs.PrintDefaults()
 	}
 
-	if len(args) == 0 || (args[0] != commandPull && args[0] != commandPush && args[0] != commandFixFolderMetadata) {
+	if len(args) == 0 || (args[0] != commandPull && args[0] != commandPush && args[0] != commandFix) {
 		fs.Usage()
 		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
 			return options{}, errHelp
 		}
-		return options{}, fmt.Errorf("expected a %q, %q or %q command", commandPull, commandPush, commandFixFolderMetadata)
+		return options{}, fmt.Errorf("expected a %q, %q or %q command", commandPull, commandPush, commandFix)
 	}
 
 	opts := options{command: args[0]}
@@ -162,8 +162,8 @@ func parseOptions(args []string, output io.Writer) (options, error) {
 	fs.StringVar(&opts.stateFile, "state-file", "", "file keeping the sync status between runs (default <user config dir>/grafana-provisioning-sync/<namespace>/<name>.json)")
 	fs.BoolVar(&opts.offline, "offline", false, "push --dry-run: compare against an empty instance, without Grafana")
 
-	fs.StringVar(&opts.message, "message", "", "pull, fix-folder-metadata: commit message")
-	fs.StringVar(&opts.writeBranch, "write-branch", "", "pull, fix-folder-metadata: git branch to commit to, created if missing (default --branch)")
+	fs.StringVar(&opts.message, "message", "", "pull, fix: commit message")
+	fs.StringVar(&opts.writeBranch, "write-branch", "", "pull, fix: git branch to commit to, created if missing (default --branch)")
 	fs.StringVar(&opts.writePath, "write-path", "", "pull: directory in the repository to write under")
 	fs.BoolVar(&opts.keepUIDs, "keep-uids", false, "pull: keep resource names instead of generating new ones")
 	fs.BoolVar(&opts.newFolders, "new-folder-ids", false, "pull: write new folder UIDs to _folder.json, so pushing the export does not collide with the original folders")
@@ -231,7 +231,7 @@ func (opts *options) validateCommandFlags() error {
 	case opts.offline && !opts.dryRun:
 		return errors.New("--offline only works with push --dry-run")
 	case push && (opts.message != "" || opts.writeBranch != ""):
-		return errors.New("--message and --write-branch only work with pull and fix-folder-metadata")
+		return errors.New("--message and --write-branch only work with pull and fix")
 	case !pull && (opts.writePath != "" || opts.keepUIDs || opts.newFolders):
 		return errors.New("--write-path, --keep-uids and --new-folder-ids only work with pull")
 	}
