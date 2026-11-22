@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +38,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// role and holds no subscriber.
 	var kinds []controllerapp.WatchedKind
 	if controllerCfg.historyExpiration > 0 {
-		kinds = append(kinds, controllerapp.HistoricJobs(provisioningClient, controllerCfg.Settings.NATS.Enabled, controllerCfg.historyExpiration))
+		kinds = append(kinds, informer.HistoricJobsKind(provisioningClient, controllerCfg.Settings.NATS.Enabled, controllerCfg.historyExpiration))
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 	} else {
 		logger.Info("history cleanup disabled", "history_expiration", controllerCfg.historyExpiration.String())

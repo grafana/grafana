@@ -25,7 +25,7 @@ import (
 // live subscriber: the historic-cleanup operator has no NATS consumer role, so it
 // must not depend on holding a subscriber to pick the cacheless source. Cleanup
 // reads no lister, so callers need only the DeltaSource.
-func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, resync time.Duration) DeltaSource {
+func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, resync time.Duration) appinformer.DeltaSource {
 	if natsEnabled {
 		return NewHistoricJobPeriodicInformer(client, "", resync)
 	}

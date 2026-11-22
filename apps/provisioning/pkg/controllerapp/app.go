@@ -24,8 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const metricsNamespace = "grafana_provisioning_controller"
@@ -284,4 +284,17 @@ func (noClients) GetCustomRouteClient(gv schema.GroupVersion, _ string) (resourc
 
 func (noClients) DiscoveryClient() (resource.DiscoveryClient, error) {
 	return nil, errors.New("provisioning controller app builds no discovery client")
+}
+
+// LogErrors runs a long-lived loop, such as the job driver or the expired-job
+// cleanup, as an app runnable. Its failure is logged rather than returned, so
+// it does not stop the app's other controllers.
+func LogErrors(logger logging.Logger, name string, run func(ctx context.Context) error) RunnableFunc {
+	return func(ctx context.Context) error {
+		if err := run(ctx); err != nil {
+			logger.Error(name+" failed", "error", err)
+		}
+		logger.Info(name + " stopped")
+		return nil
+	}
 }

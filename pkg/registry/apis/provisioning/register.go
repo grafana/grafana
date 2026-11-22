@@ -33,6 +33,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
@@ -50,7 +51,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
@@ -1268,7 +1268,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// The controllers only start their workers once their kind's handler
 			// has processed the initial list.
 			kinds := []controllerapp.WatchedKind{
-				controllerapp.JobQueue(b.natsSubscriber, c, jobPollInterval, b.registry, driver),
+				informer.JobQueueKind(b.natsSubscriber, c, jobPollInterval, b.registry, driver),
 				{
 					Info:    provisioning.RepositoryResourceInfo,
 					Source:  repoSource,
@@ -1297,7 +1297,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if historyJobExpiration <= 0 {
 					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
 				}
-				kinds = append(kinds, controllerapp.HistoricJobs(c, nats.Enabled(b.natsSubscriber), historyJobExpiration))
+				kinds = append(kinds, informer.HistoricJobsKind(c, nats.Enabled(b.natsSubscriber), historyJobExpiration))
 			}
 
 			logger := logging.FromContext(postStartHookCtx.Context)

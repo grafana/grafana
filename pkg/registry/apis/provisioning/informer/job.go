@@ -21,7 +21,7 @@ import (
 // job controller reads no lister, so callers need only the DeltaSource. Either
 // source reports its event deliveries on the informer delivery metrics,
 // registered on reg (nil disables them).
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) DeltaSource {
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) appinformer.DeltaSource {
 	metrics := newInformerMetrics(reg)
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {

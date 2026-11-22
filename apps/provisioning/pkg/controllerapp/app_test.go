@@ -18,7 +18,7 @@ import (
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
 // fakeSource is a delta source the test drives by hand once the app runs it.
@@ -141,10 +141,10 @@ func TestAppDispatchesDeliveriesUnchanged(t *testing.T) {
 	})
 }
 
-func TestAppRunsRepositoryDeltaSource(t *testing.T) {
+func TestAppRunsAPIServerInformer(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		clientset := fake.NewClientset(testRepository("existing", ""))
-		source, _ := informer.NewRepositoryDeltaSource(nil, clientset, nil, time.Hour, nil, nil)
+		source := informers.NewSharedInformerFactory(clientset, time.Hour).Provisioning().V0alpha1().Repositories().Informer()
 		handler := &recordingHandler{}
 		synced := make(chan struct{})
 		app, err := New("test", logging.DefaultLogger, nil, WatchedKind{

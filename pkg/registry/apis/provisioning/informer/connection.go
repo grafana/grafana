@@ -27,7 +27,7 @@ import (
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, appinformer.ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (appinformer.DeltaSource, appinformer.ConnectionGetter) {
 	if nats.Enabled(subscriber) {
 		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
 		recorder := metrics.Recorder(gvr)

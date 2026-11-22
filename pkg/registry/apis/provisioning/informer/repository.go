@@ -28,7 +28,7 @@ import (
 // that triggered them (see freshness.go); nil disables the observation. It
 // applies to the NATS path only — the apiserver path reads a cache the watch
 // keeps current, so there is no cross-replica read visibility to measure.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, appinformer.RepositoryGetter) {
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (appinformer.DeltaSource, appinformer.RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
