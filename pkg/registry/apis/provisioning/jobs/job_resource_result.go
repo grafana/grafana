@@ -210,15 +210,6 @@ func (b *jobResourceResultBuilder) WithGVK(gvk schema.GroupVersionKind) *jobReso
 	return b
 }
 
-// WithGKR sets the name, group, and kind of the resource in one call.
-// This is a convenience method for setting Group/Kind/Resource information together.
-func (b *jobResourceResultBuilder) WithGKR(name, group, kind string) *jobResourceResultBuilder {
-	b.result.name = name
-	b.result.group = group
-	b.result.kind = kind
-	return b
-}
-
 // WithPath sets the path of the resource.
 func (b *jobResourceResultBuilder) WithPath(path string) *jobResourceResultBuilder {
 	b.result.path = path
