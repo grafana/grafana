@@ -15766,6 +15766,7 @@
     },
     "repository-workflows": {
       "branch-description": "Changes go to a new branch and are proposed as a pull request to {{branch}}.",
+      "branch-description-no-branch": "Changes go to a new branch and are proposed as a pull request.",
       "branch-title": "Save as a pull request",
       "enabled": "Enabled",
       "not-enabled": "Not enabled",
@@ -15773,6 +15774,7 @@
       "read-only-title": "Read-only",
       "title": "Edit workflows",
       "write-description": "Changes are pushed directly to {{branch}}.",
+      "write-description-no-branch": "Changes are pushed directly.",
       "write-title": "Push to the configured branch"
     },
     "resource-tree": {

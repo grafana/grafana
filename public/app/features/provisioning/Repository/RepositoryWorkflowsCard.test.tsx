@@ -44,4 +44,10 @@ describe('RepositoryWorkflowsCard', () => {
     expect(screen.getAllByText('Enabled')).toHaveLength(2);
     expect(screen.queryByText('Not enabled')).not.toBeInTheDocument();
   });
+
+  it('drops the branch name from the text when the repository has none', () => {
+    render(<RepositoryWorkflowsCard repo={createRepository({ spec: { type: 'local', workflows: ['write'] } })} />);
+
+    expect(screen.getByText('Changes are pushed directly.')).toBeInTheDocument();
+  });
 });

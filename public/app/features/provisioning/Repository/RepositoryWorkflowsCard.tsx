@@ -66,21 +66,34 @@ export function RepositoryWorkflowsCard({ repo }: { repo: Repository }) {
               icon="pen"
               enabled={Boolean(workflows?.includes('write'))}
               title={t('provisioning.repository-workflows.write-title', 'Push to the configured branch')}
-              description={t(
-                'provisioning.repository-workflows.write-description',
-                'Changes are pushed directly to {{branch}}.',
-                { branch }
-              )}
+              description={
+                branch
+                  ? t(
+                      'provisioning.repository-workflows.write-description',
+                      'Changes are pushed directly to {{branch}}.',
+                      {
+                        branch,
+                      }
+                    )
+                  : t('provisioning.repository-workflows.write-description-no-branch', 'Changes are pushed directly.')
+              }
             />
             <WorkflowTile
               icon="code-branch"
               enabled={Boolean(workflows?.includes('branch'))}
               title={t('provisioning.repository-workflows.branch-title', 'Save as a pull request')}
-              description={t(
-                'provisioning.repository-workflows.branch-description',
-                'Changes go to a new branch and are proposed as a pull request to {{branch}}.',
-                { branch }
-              )}
+              description={
+                branch
+                  ? t(
+                      'provisioning.repository-workflows.branch-description',
+                      'Changes go to a new branch and are proposed as a pull request to {{branch}}.',
+                      { branch }
+                    )
+                  : t(
+                      'provisioning.repository-workflows.branch-description-no-branch',
+                      'Changes go to a new branch and are proposed as a pull request.'
+                    )
+              }
             />
           </div>
         </Stack>
