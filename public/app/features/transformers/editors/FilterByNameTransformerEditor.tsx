@@ -56,7 +56,7 @@ function getSelectedNames(fieldNames: FieldNameInfo[], options: FilterFieldsByNa
 
   if (options.include?.pattern) {
     try {
-      const regex = stringToJsRegex(options.include.pattern);
+      const regex = stringToJsRegex(getTemplateSrv().replace(options.include.pattern));
 
       for (const info of fieldNames) {
         if (regex.test(info.name)) {

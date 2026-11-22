@@ -9,7 +9,10 @@ import { FilterByNameTransformerEditor } from './FilterByNameTransformerEditor';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ getVariables: () => [] }),
+  getTemplateSrv: () => ({
+    getVariables: () => [],
+    replace: (target: string) => target.replace('${interface}', 'eth0'),
+  }),
 }));
 
 const frameWithFields = (...names: string[]): DataFrame[] => [
@@ -122,6 +125,18 @@ describe('FilterByNameTransformerEditor', () => {
     );
 
     expect(pillStates()).toEqual(['A:false', 'B:false']);
+  });
+
+  it('shows the fields a saved pattern matches once its variables are interpolated', () => {
+    render(
+      <FilterByNameTransformerEditor
+        input={frameWithFields('record_time', 'eth0:rx', 'eth1:rx')}
+        options={{ include: { pattern: '^(record_time|${interface}:rx)$' } }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(pillStates()).toEqual(['record_time:true', 'eth0:rx:true', 'eth1:rx:false']);
   });
 
   it.each([
