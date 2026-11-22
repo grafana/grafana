@@ -289,7 +289,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -300,7 +300,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
 			require.NoError(t, err)
@@ -311,7 +311,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:dsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
 			require.NoError(t, err)
@@ -322,7 +322,7 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		t.Run("plugin route with dynamic RBAC protection user is not allowed", func(t *testing.T) {
 			ctx, _ := setUp()
 			ctx.OrgID = int64(1)
-			ctx.OrgRole = identity.RoleNone
+			ctx.OrgRole = claims.RoleNone
 			// Has access but to another app
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
@@ -1140,7 +1140,7 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 				Context: &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{
 					OrgID:       1,
-					OrgRole:     identity.RoleNone,
+					OrgRole:     claims.RoleNone,
 					Permissions: map[int64]map[string][]string{1: tc.permissions},
 				},
 			}

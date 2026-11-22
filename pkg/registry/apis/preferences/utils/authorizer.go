@@ -52,7 +52,7 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	if a.AllowOrgAdmin && user.GetOrgRole() == identity.RoleAdmin {
+	if a.AllowOrgAdmin && user.GetOrgRole() == authlib.RoleAdmin {
 		return authorizer.DecisionAllow, "", nil
 	}
 
@@ -79,7 +79,7 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 			// Everyone can see the namespace
 			return authorizer.DecisionAllow, "", nil
 		}
-		if user.GetOrgRole() == identity.RoleAdmin {
+		if user.GetOrgRole() == authlib.RoleAdmin {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "must be an org admin to edit", nil
