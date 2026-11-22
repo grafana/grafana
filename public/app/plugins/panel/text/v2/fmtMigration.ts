@@ -99,6 +99,7 @@ interface Range {
 }
 
 const ROOT_PARTIAL_SCOPE: Scope = { context: NOTHING, depths: [], params: [] };
+const MAX_PASSES = 8;
 
 export function findFmtReads(content: string, options: FmtMigrationOptions): FmtReads {
   const analysis = analyzeContent(content, options);
@@ -174,9 +175,44 @@ function parseTemplate(source: string): hbs.AST.Program | undefined {
 }
 
 function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, source: string) {
+  const partials = collectInlinePartials(program);
+  const contexts = new Map<string, number>();
+  const contextOf = (name: string | undefined) =>
+    name === undefined || partials.dynamic || (partials.counts.get(name) ?? 0) > 1
+      ? UNKNOWN
+      : (contexts.get(name) ?? 0);
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    const result = analyzePass(program, root, shadowed, source, contextOf);
+    let grown = false;
+
+    for (const [name, context] of result.calls) {
+      const known = contexts.get(name) ?? 0;
+      if (partials.counts.has(name) && (known | context) !== known) {
+        contexts.set(name, known | context);
+        grown = true;
+      }
+    }
+
+    if (!grown) {
+      return result;
+    }
+  }
+
+  return analyzePass(program, root, shadowed, source, () => UNKNOWN);
+}
+
+function analyzePass(
+  program: hbs.AST.Program,
+  root: number,
+  shadowed: boolean,
+  source: string,
+  partialContext: (name: string | undefined) => number
+) {
   const edits: Edit[] = [];
   const unconverted: FmtRead[] = [];
   const replacements = new Map<object, Replacement>();
+  const calls = new Map<string, number>();
   const lineStarts = getLineStarts(source);
   const offsetOf = ({ line, column }: hbs.AST.Position) => (lineStarts[line - 1] ?? source.length) + column;
   const rangeOf = (node: hbs.AST.Node): Range => ({
@@ -434,14 +470,20 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
       } else if (isBlock(node)) {
         block(node, scope);
       } else if (isInlinePartial(node)) {
+        const context = partialContext(getInlinePartialName(node));
         const partial: Scope = {
-          context: UNKNOWN,
-          depths: [UNKNOWN, ...definition.depths],
+          context,
+          depths: [context, ...definition.depths],
           params: [undefined, ...definition.params],
         };
         body(node.program, partial, partial);
       } else if (isPartial(node)) {
-        args(node, scope);
+        const values = args(node, scope);
+        const name = getPartialName(node);
+        if (name !== undefined) {
+          const context = node.hash ? UNKNOWN : node.params.length > 0 ? values[0] : scope.context;
+          calls.set(name, (calls.get(name) ?? 0) | context);
+        }
       }
     }
   }
@@ -451,7 +493,49 @@ function analyze(program: hbs.AST.Program, root: number, shadowed: boolean, sour
   edits.sort((a, b) => a.from - b.from);
   unconverted.sort((a, b) => a.from - b.from);
 
-  return { edits, unconverted, replacements };
+  return { edits, unconverted, replacements, calls };
+}
+
+function collectInlinePartials(program: hbs.AST.Program) {
+  const counts = new Map<string, number>();
+  let dynamic = false;
+
+  const visit = (node: hbs.AST.Program | undefined) => {
+    for (const statement of node?.body ?? []) {
+      if (isInlinePartial(statement)) {
+        const name = getInlinePartialName(statement);
+        if (name === undefined) {
+          dynamic = true;
+        } else {
+          counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+        visit(statement.program);
+      } else if (isBlock(statement)) {
+        visit(statement.program);
+        visit(statement.inverse);
+      }
+    }
+  };
+
+  visit(program);
+
+  return { counts, dynamic };
+}
+
+function getInlinePartialName(node: hbs.AST.DecoratorBlock): string | undefined {
+  const [param] = node.params;
+
+  if (!param || param.type === 'UndefinedLiteral') {
+    return 'undefined';
+  }
+  if (param.type === 'NullLiteral') {
+    return 'null';
+  }
+  return isLiteral(param) ? String(param.value) : undefined;
+}
+
+function getPartialName(node: hbs.AST.PartialStatement): string | undefined {
+  return 'original' in node.name ? String(node.name.original) : undefined;
 }
 
 function getRowArgument(path: hbs.AST.PathExpression, index: number): { text?: string; row: Row } | undefined {
@@ -685,6 +769,10 @@ function isSubExpression(node: hbs.AST.Node): node is hbs.AST.SubExpression {
 
 function isLiteralKey(node: hbs.AST.Node): node is hbs.AST.StringLiteral | hbs.AST.NumberLiteral {
   return node.type === 'StringLiteral' || node.type === 'NumberLiteral';
+}
+
+function isLiteral(node: hbs.AST.Node): node is hbs.AST.StringLiteral | hbs.AST.NumberLiteral | hbs.AST.BooleanLiteral {
+  return isLiteralKey(node) || node.type === 'BooleanLiteral';
 }
 
 function isMustache(node: hbs.AST.Node): node is hbs.AST.MustacheStatement {

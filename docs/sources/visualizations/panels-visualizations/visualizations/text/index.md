@@ -182,12 +182,12 @@ To convert the template, complete the following steps:
 1. Click **Convert**, and then save the dashboard.
 
 The editor converts formatted values in text and in helper arguments, such as `(eq fmt.cpu "")`, and lookups by a literal name, such as `{{lookup fmt "cpu"}}`.
-It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{display "cpu" row=data.[0]}}`.
+It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{display "cpu" row=data.[0]}}`, and reads inside an inline partial when every call to the partial passes a row.
 It leaves the expressions that it can't convert without changing the result, and shows the line of each one with how to change it:
 
 - **`fmt` read as a whole**: For example, `{{#each fmt}}`, or `{{lookup fmt name}}` where the name comes from a value. Read each field with `display` instead.
 - **Reads past a formatted value**: For example, `{{fmt.cpu.length}}`. A property of the display value, such as `{{display "cpu" "text"}}`, might give what you need.
-- **Inline partials and blocks on field values**: The context there might not be a row of the query results. Pass the row in the `row` argument.
+- **Inline partials and blocks on field values**: The context there might not be a row of the query results, for example when a call to a partial passes hash arguments. Pass the row in the `row` argument.
 - **A field named `fmt`**: The field hides the namespace, so `fmt.cpu` reads the field instead of a formatted value.
 - **A block parameter named `display`**: Inside its block, `display` is the block parameter instead of the helper. Rename the block parameter.
 
