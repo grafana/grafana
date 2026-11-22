@@ -19,9 +19,9 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	provisioningcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	provisioningcontroller "github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
 func TestTestConnector_RequiresNewTokenWhenURLChanges(t *testing.T) {

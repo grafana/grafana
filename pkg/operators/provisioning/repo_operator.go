@@ -14,12 +14,12 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -86,7 +86,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
+	healthChecker := reconciler.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
 	connectionFactory, err := controllerCfg.ConnectionFactory()
 	if err != nil {
@@ -111,7 +111,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 
 	// The repository delta source and the getter it backs.
 	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
-	controller := controller.NewRepositoryController(
+	controller := reconciler.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,
 		repoFactory,
@@ -128,7 +128,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
-		controller.NewRepositoryQuotaChecker(repoGetter),
+		reconciler.NewRepositoryQuotaChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),

@@ -3,13 +3,14 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"net"
 	"net/http"
 	"net/url"
 	"slices"
 	"strings"
 	"time"
+
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,16 +32,21 @@ import (
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/bootstrap"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs/perftest"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs/workers"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -49,13 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/workers"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -136,7 +136,7 @@ type APIBuilder struct {
 	accessWithEditor  auth.AccessChecker
 	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
-	healthChecker     *controller.RepositoryHealthChecker
+	healthChecker     *reconciler.RepositoryHealthChecker
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
@@ -877,7 +877,7 @@ func (b *APIBuilder) GetIncrementalPolicy() repository.IncrementalSyncPolicy {
 	return b.incrementalPolicy
 }
 
-func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
+func (b *APIBuilder) GetHealthChecker() *reconciler.RepositoryHealthChecker {
 	return b.healthChecker
 }
 
@@ -958,15 +958,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
-	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, perftest.Enabled))
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), jobs.NewAdmissionMutator())
+	jobAuthz := jobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, perftest.Enabled))
 	b.admissionHandler.RegisterValidator(
 		provisioning.JobResourceInfo.GetName(),
 		appadmission.NewCombinedValidator(
-			appjobs.NewAdmissionValidator(b.jobSupportedResources, perftest.Enabled),
+			jobs.NewAdmissionValidator(b.jobSupportedResources, perftest.Enabled),
 			jobAuthz,
 		))
-	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
+	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), jobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -1113,11 +1113,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			healthMetricsRecorder := controller.NewHealthMetricsRecorder(b.registry)
+			healthMetricsRecorder := reconciler.NewHealthMetricsRecorder(b.registry)
 			// FIXME: Health checker uses basic validation only - no additional validators needed
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
-			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
+			b.healthChecker = reconciler.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
 			// Runs with no path configured too, to remove a repository a previous run registered.
 			// Never fatal: a rejected bootstrap repository must not keep the instance down.
@@ -1220,7 +1220,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
 			}
 			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			repoController := controller.NewRepositoryController(
+			repoController := reconciler.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
 				b.repoFactory,
@@ -1237,7 +1237,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
+				reconciler.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
 				nats.Enabled(b.natsSubscriber),
@@ -1246,7 +1246,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create the connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
-			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
+			connHealthChecker := reconciler.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
 			// nil keeps the full-object re-list; see NewConnectionDeltaSource.
 			var connKeys keysapi.Lister
 			if b.keysOnlyReList {
@@ -1254,7 +1254,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
 			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
-			connController := controller.NewConnectionController(
+			connController := reconciler.NewConnectionController(
 				connGetter,
 				connStatusPatcher,
 				connHealthChecker,

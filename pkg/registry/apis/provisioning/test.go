@@ -18,9 +18,9 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
 type StatusPatcherProvider interface {
@@ -28,7 +28,7 @@ type StatusPatcherProvider interface {
 }
 
 type HealthCheckerProvider interface {
-	GetHealthChecker() *controller.RepositoryHealthChecker
+	GetHealthChecker() *reconciler.RepositoryHealthChecker
 }
 
 type ConnectorDependencies interface {

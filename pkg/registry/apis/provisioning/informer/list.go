@@ -3,6 +3,7 @@ package informer
 import (
 	"context"
 	"errors"
+
 	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 
 	"github.com/grafana/grafana-app-sdk/logging"

@@ -1,14 +1,15 @@
 package provisioning
 
 import (
-	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"testing"
+
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 )
 
 // FIXME: do this tests make sense in their current form?

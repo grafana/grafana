@@ -9,8 +9,8 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 )
 
 // JobQueueKind feeds the driver's work queue with live job events and with the

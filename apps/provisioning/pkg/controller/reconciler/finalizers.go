@@ -1,0 +1,356 @@
+package reconciler
+
+import (
+	"context"
+	"fmt"
+	"slices"
+	"sync/atomic"
+	"time"
+
+	"github.com/grafana/dskit/concurrency"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
+	metricutils "github.com/grafana/grafana/apps/provisioning/pkg/util"
+)
+
+//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock.go --with-expecter
+type jobQueueCleaner interface {
+	// CleanupQueue deletes all queued jobs for the repository that are not
+	// currently being executed. Returns the number of jobs deleted.
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+}
+
+type finalizer struct {
+	lister        resources.ResourceLister
+	clientFactory resources.ClientFactory
+	repoFactory   repository.Factory
+	jobs          jobQueueCleaner
+	metrics       *finalizerMetrics
+	maxWorkers    int
+}
+
+// finalizerError names the finalizer whose teardown failed so handleDelete can
+// surface it on status.deletion. It implements error and unwraps to the
+// underlying cause, so existing callers that only inspect the error string keep
+// working; a caller wanting the finalizer name uses errors.As.
+type finalizerError struct {
+	// finalizer is the name of the finalizer whose teardown failed.
+	finalizer string
+	// err is the underlying cause.
+	err error
+}
+
+func (e *finalizerError) Error() string { return e.err.Error() }
+func (e *finalizerError) Unwrap() error { return e.err }
+
+// process runs the repository's finalizers in a fixed order. cfg is the
+// repository configuration. The cleanup finalizer builds the repository (the
+// only finalizer that needs one) to remove the provider-side webhook; the
+// others operate on Grafana-side state from the configuration alone. A client
+// forcing deletion of an unhealthy repository removes the cleanup finalizer, so
+// the build never happens and expired credentials can't block deletion.
+func (f *finalizer) process(ctx context.Context,
+	cfg *provisioning.Repository,
+) error {
+	logger := logging.FromContext(ctx)
+	logger.Info("process finalizers", "finalizers", cfg.Finalizers)
+
+	// Clear the job queue first so no pending job gets picked up and starts
+	// running against the repository while the rest of the teardown proceeds.
+	orderedFinalizers := [4]string{
+		repository.RemovePendingJobsFinalizer,
+		repository.CleanFinalizer,
+		repository.ReleaseOrphanResourcesFinalizer,
+		repository.RemoveOrphanResourcesFinalizer}
+
+	for _, finalizer := range orderedFinalizers {
+		if !slices.Contains(cfg.Finalizers, finalizer) {
+			continue
+		}
+		logger.Info("running finalizer", "finalizer", finalizer)
+		var err error
+		var count int
+		start := time.Now()
+
+		switch finalizer {
+		case repository.RemovePendingJobsFinalizer:
+			logger.Info("clearing repository job queue")
+			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
+			if err != nil {
+				err = fmt.Errorf("clear job queue: %w", err)
+			}
+
+		case repository.CleanFinalizer:
+			logger.Info("running cleanup finalizer")
+			// Building decrypts secrets and constructs the provider client, so it
+			// fails when credentials have expired. That failure blocks deletion —
+			// forcing it is done by removing this finalizer, not by tolerating the
+			// error.
+			repo, buildErr := f.repoFactory.Build(ctx, cfg)
+			if buildErr != nil {
+				err = fmt.Errorf("create repository from configuration: %w", buildErr)
+			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
+				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
+					err = fmt.Errorf("execute deletion hooks: %w", err)
+				}
+			}
+
+		case repository.ReleaseOrphanResourcesFinalizer:
+			logger.Info("releasing orphan resources")
+			count, err = f.releaseExistingItems(ctx, cfg)
+			if err != nil {
+				err = fmt.Errorf("release resources: %w", err)
+			}
+
+		case repository.RemoveOrphanResourcesFinalizer:
+			logger.Info("removing orphan resources")
+			count, err = f.deleteExistingItems(ctx, cfg)
+			if err != nil {
+				err = fmt.Errorf("remove resources: %w", err)
+			}
+
+		default:
+			logger.Error("skipping unknown finalizer", "finalizer", finalizer)
+			continue
+		}
+
+		outcome := metricutils.SuccessOutcome
+		cause := ""
+		if err != nil {
+			outcome = metricutils.ErrorOutcome
+			cause = classifyDeletionErrorCause(err)
+		}
+
+		f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())
+
+		if err != nil {
+			return &finalizerError{finalizer: finalizer, err: err}
+		}
+	}
+	return nil
+}
+
+type itemProcessor func(ctx context.Context, item *provisioning.ResourceListItem) error
+
+// newItemProcessor wraps a per-resource callback with client resolution and
+// not-found handling.
+func (f *finalizer) newItemProcessor(
+	ctx context.Context,
+	clients resources.ResourceClients,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) itemProcessor {
+	baseLogger := logging.FromContext(ctx)
+	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		logger := baseLogger
+
+		// Version is left empty so the client resolves the server's preferred
+		// version via discovery (this covers folders and any other resource).
+		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
+			Group:    item.Group,
+			Resource: item.Resource,
+		})
+		if err != nil {
+			logger.Error("error getting client for resource", "resource", item.Resource, "error", err)
+			return err
+		}
+
+		// Retry on optimistic-concurrency conflicts from the unified storage
+		// layer ("requested RV does not match current RV"). The finalizer races
+		// with other reconciles/syncs that may mutate the same resource, and a
+		// transient RV mismatch should not fail the whole finalizer run.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return cb(res, item)
+		})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
+				return nil
+			}
+			logger.Error("error processing item", "name", item.Name, "error", err)
+			return fmt.Errorf("processing item: %w", err)
+		}
+		return nil
+	}
+}
+
+// processFolderItems processes folder items sequentially to respect hierarchy.
+func (f *finalizer) processFolderItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var count int
+	for _, item := range items {
+		if err := process(ctx, item); err != nil {
+			return count, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+// processResourceItems processes non-folder items concurrently.
+func (f *finalizer) processResourceItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var processed int64
+	err := concurrency.ForEachJob(ctx, len(items), f.maxWorkers, func(ctx context.Context, idx int) error {
+		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		if err := process(jobCtx, items[idx]); err != nil {
+			return err
+		}
+		atomic.AddInt64(&processed, 1)
+		return nil
+	})
+	return int(processed), err
+}
+
+// splitItems separates a sorted list into folder items and non-folder items,
+// preserving the order within each group.
+var splitItems = resources.SplitItems
+
+type nonEmptyFolderError struct {
+	folder *provisioning.ResourceListItem
+}
+
+func (e *nonEmptyFolderError) Error() string {
+	label := e.folder.Name
+	if e.folder.Title != "" && e.folder.Title != e.folder.Name {
+		label = fmt.Sprintf("%q (UID: %s)", e.folder.Title, e.folder.Name)
+	}
+	return fmt.Sprintf(
+		"Repository deletion is blocked by unmanaged resources in folder %s. Move or remove them, or release the repository's remaining resources. Grafana will retry automatically.",
+		label,
+	)
+}
+
+// deleteExistingItems removes all resources managed by the repository.
+// Non-folder resources are deleted concurrently first, then folders are
+// deleted sequentially deepest-first so they are empty before removal.
+func (f *finalizer) deleteExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
+	if err != nil {
+		return 0, err
+	}
+
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name, resources.ListOptions{})
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return 0, err
+	}
+
+	resources.SortResourceListForDeletion(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.removeResources(ctx, logger))
+
+	count, err := f.processResourceItems(ctx, resourceItems, process)
+	if err != nil {
+		return count, err
+	}
+
+	var blocked *nonEmptyFolderError
+	for _, folder := range folderItems {
+		err := process(ctx, folder)
+		if resources.IsFolderNotEmptyAPIError(err) {
+			if blocked == nil {
+				blocked = &nonEmptyFolderError{folder: folder}
+			}
+			continue
+		}
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+	if blocked != nil {
+		return count, blocked
+	}
+
+	logger.Info("deleted items", "items", count)
+	return count, nil
+}
+
+// releaseExistingItems releases all resources managed by the repository
+// top-down by depth. Folders are released sequentially to respect hierarchy;
+// non-folder resources between folder groups are released concurrently.
+func (f *finalizer) releaseExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
+	if err != nil {
+		return 0, err
+	}
+
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name, resources.ListOptions{})
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return 0, err
+	}
+
+	resources.SortResourceListForRelease(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.releaseResources(ctx, logger))
+
+	n, err := f.processFolderItems(ctx, folderItems, process)
+	count := n
+	if err != nil {
+		return count, err
+	}
+
+	n, err = f.processResourceItems(ctx, resourceItems, process)
+	count += n
+	if err != nil {
+		return count, err
+	}
+
+	logger.Info("released items", "items", count)
+	return count, nil
+}
+
+func (f *finalizer) releaseResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("release resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+
+		patchAnnotations, err := resources.GetReleasePatch(item)
+		if err != nil {
+			return fmt.Errorf("get patched annotations: %w", err)
+		}
+
+		_, err = client.Patch(
+			ctx, item.Name, types.JSONPatchType, patchAnnotations, v1.PatchOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("patch resource to release ownership: %w", err)
+		}
+		return nil
+	}
+}
+
+func (f *finalizer) removeResources(
+	ctx context.Context, logger logging.Logger,
+) func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+	return func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
+		logger.Info("remove resource",
+			"name", item.Name,
+			"group", item.Group,
+			"resource", item.Resource,
+		)
+		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
+	}
+}

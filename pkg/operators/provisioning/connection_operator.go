@@ -13,10 +13,10 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
 )
@@ -76,10 +76,10 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 
 	// The connection delta source and the getter it backs.
 	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
-	connController := controller.NewConnectionController(
+	connController := reconciler.NewConnectionController(
 		connGetter,
 		statusPatcher,
-		controller.NewConnectionHealthChecker(
+		reconciler.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),
 			healthMetricsRecorder,
 		),

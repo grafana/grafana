@@ -3,8 +3,9 @@ package usage
 import (
 	"context"
 	"fmt"
-	appusage "github.com/grafana/grafana/apps/provisioning/pkg/usage"
 	"strings"
+
+	appusage "github.com/grafana/grafana/apps/provisioning/pkg/usage"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

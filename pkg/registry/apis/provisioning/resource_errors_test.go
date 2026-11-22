@@ -18,8 +18,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 

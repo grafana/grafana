@@ -4,19 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"time"
+
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -92,7 +93,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 ) (processErr error) {
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
-	outcome := utils.ErrorOutcome
+	outcome := util.ErrorOutcome
 	defer func() {
 		duration := time.Since(startTime)
 		c.metrics.recordProcessed(outcome, duration)
@@ -140,12 +141,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	if opts.IsFork != nil && *opts.IsFork {
 		logger.Info("skipping fork pull request preview")
 		if err := c.commenter.Comment(ctx, prRepo, opts.PR, changeInfo{UnsupportedFork: true}); err != nil {
-			c.metrics.recordCommentPosted(utils.ErrorOutcome)
+			c.metrics.recordCommentPosted(util.ErrorOutcome)
 			return fmt.Errorf("comment pull request: %w", err)
 		}
-		c.metrics.recordCommentPosted(utils.SuccessOutcome)
+		c.metrics.recordCommentPosted(util.SuccessOutcome)
 		progress.SetFinalMessage(ctx, unsupportedForkMessage)
-		outcome = utils.SuccessOutcome
+		outcome = util.SuccessOutcome
 		return nil
 	}
 
@@ -190,11 +191,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	if err := c.commenter.Comment(commentCtx, prRepo, opts.PR, changeInfo); err != nil {
-		c.metrics.recordCommentPosted(utils.ErrorOutcome)
+		c.metrics.recordCommentPosted(util.ErrorOutcome)
 		return fmt.Errorf("comment pull request: %w", err)
 	}
-	outcome = utils.SuccessOutcome
-	c.metrics.recordCommentPosted(utils.SuccessOutcome)
+	outcome = util.SuccessOutcome
+	c.metrics.recordCommentPosted(util.SuccessOutcome)
 	logger.Info("preview comment added")
 
 	if changeInfo.UnprocessedFiles > 0 {

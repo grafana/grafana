@@ -12,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 )
 
 func TestListConnector_PagingParameters(t *testing.T) {

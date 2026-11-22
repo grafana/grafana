@@ -4,10 +4,11 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"net/http"
 	"os"
 	"time"
+
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -35,16 +36,15 @@ import (
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
@@ -82,7 +82,7 @@ type ControllerConfig struct {
 	connectionFactory     connection.Factory
 	connectionExtras      []connection.Extra
 	ConnectionExtrasFunc  func() ([]connection.Extra, error)
-	healthMetricsRecorder controller.HealthMetricsRecorder
+	healthMetricsRecorder reconciler.HealthMetricsRecorder
 	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
 	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
@@ -315,7 +315,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if !r.IsActive() {
 			continue
 		}
-		group := provisioningresources.CollectionGroup(r.Group)
+		group := resources.CollectionGroup(r.Group)
 		switch group {
 		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
 			continue // built-in groups with dedicated server URLs
@@ -705,12 +705,12 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 	return connectionFactory, nil
 }
 
-func (c *ControllerConfig) HealthMetricsRecorder() (controller.HealthMetricsRecorder, error) {
+func (c *ControllerConfig) HealthMetricsRecorder() (reconciler.HealthMetricsRecorder, error) {
 	if c.healthMetricsRecorder != nil {
 		return c.healthMetricsRecorder, nil
 	}
 
-	c.healthMetricsRecorder = controller.NewHealthMetricsRecorder(c.Registry())
+	c.healthMetricsRecorder = reconciler.NewHealthMetricsRecorder(c.Registry())
 
 	return c.healthMetricsRecorder, nil
 }

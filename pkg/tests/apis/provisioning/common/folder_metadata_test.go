@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 )
 
 func TestFolderMetadataFiles(t *testing.T) {

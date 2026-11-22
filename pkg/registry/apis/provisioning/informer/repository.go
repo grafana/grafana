@@ -2,8 +2,9 @@ package informer
 
 import (
 	"context"
-	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"time"
+
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

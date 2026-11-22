@@ -4,7 +4,7 @@ Git sync has two different controllers: the jobs controller and the repo control
 
 ## Runtime (proof of concept)
 
-Each operator runs as a grafana-app-sdk `simple.App` built by `pkg/registry/apis/provisioning/controllerapp`. The
+Each operator runs as a grafana-app-sdk `simple.App` built by `apps/provisioning/pkg/controllerapp`. The
 provisioning API server uses the same package to run its in-process controllers as one app. The SDK runs the
 informers, dispatches their events through its `InformerController`, and runs the controller workers as app runnables.
 
@@ -17,7 +17,7 @@ The app's metrics are registered under the `grafana_provisioning_controller` nam
 
 The operators and the API server also build the same controllers from shared code:
 
-- `controllerapp.JobQueue` and `controllerapp.HistoricJobs` build the job queue and historic-job cleanup kinds.
+- `informer.JobQueueKind` and `informer.HistoricJobsKind` build the job queue and historic-job cleanup kinds.
 - `controllerapp.LogErrors` runs the job driver and the expired-job cleanup as app runnables.
 - `jobs/workers.New` builds the built-in job workers. Each deployment appends its own extras: the pull request worker
   here, and the injected extra workers in the API server.
@@ -25,6 +25,14 @@ The operators and the API server also build the same controllers from shared cod
   retries, processed and queue-lag metrics, and drain on shutdown. Each controller supplies only its process function
   and which errors are worth retrying. The job driver keeps its own loop because jobs are claimed and leased.
 - `jobs.ClaimExpiry` and `jobs.DefaultLeaseRenewalInterval` are the claim timings both deployments use.
+
+The controllers, job workers, resource clients and bootstrap code live in the `github.com/grafana/grafana/apps/provisioning`
+module, under `apps/provisioning/pkg/{controller,controllerapp,jobs,resources,bootstrap}`. That module must not import
+the main `github.com/grafana/grafana` module, or any module that requires it (such as `apps/iam`), because the main
+module depends on it. What still needs main-module services stays in `pkg/registry/apis/provisioning`: the NATS-aware
+informers and the job queue and historic-job kinds built on them (`informer`), usage stats, webhooks, the extras, and
+the API server wiring. `pkg/registry/apis/provisioning/app_compat_test.go` checks that the values the app module copies
+from main-module packages (folder constants and errors, the IAM user resource, feature flag names) still match them.
 
 ## Jobs Controller
 
