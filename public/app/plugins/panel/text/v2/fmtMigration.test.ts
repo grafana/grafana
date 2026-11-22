@@ -742,8 +742,11 @@ function createRandom(seed: number): () => number {
 function createTemplateGenerator(next: () => number): () => string {
   const pick = <T>(items: T[]): T => items[Math.floor(next() * items.length)];
   const params: string[] = [];
+  const partials = ['pa', 'pb'];
+  let partial: string | undefined;
   const field = () => pick(['cpu', 'status', 'service', '[Memory usage]', '[say "hi"]', 'nope', 'meta']);
   const param = () => (params.length ? pick(params) : 'this');
+  const call = (name: string) => `{{> ${name}${pick(['', ' x=1', ' this', ' data.[0]', ' ..'])}}}`;
 
   const value = () =>
     pick([
@@ -769,7 +772,7 @@ function createTemplateGenerator(next: () => number): () => string {
     pick(['this', 'data.[0]', 'fmt', 'meta', '(lookup data 0)', '..', '(display)', '(display row=..)', param()]);
 
   const statement = (depth: number): string => {
-    switch (depth > 3 ? Math.floor(next() * 3) : Math.floor(next() * 12)) {
+    switch (depth > 3 ? Math.floor(next() * 3) : Math.floor(next() * 14)) {
       case 0:
         return pick(['-', '\n', '<!-- {{fmt.cpu}} -->', '\\{{fmt.cpu}}']);
       case 1:
@@ -797,9 +800,24 @@ function createTemplateGenerator(next: () => number): () => string {
           `{{#display row=this}}${body(depth + 1)}{{/display}}`,
         ]);
       case 9:
-        return `{{lookup ${pick(['fmt', 'this', 'data.[0]'])} "${pick(['fmt', 'cpu'])}"}}`;
+        return pick([
+          `{{lookup ${pick(['fmt', 'this', 'data.[0]', '../fmt', 'data.[1].fmt', `${param()}.fmt`, `fmt.${field()}`])} ${pick(['"fmt"', '"cpu"', '"Memory usage"', '0', 'service', '"length"'])}}}`,
+          `{{json (lookup ${pick(['fmt', '../fmt', '@root.fmt'])} "status")}}`,
+        ]);
       case 10:
         return `{{#*inline "p${depth}"}}${body(depth + 1)}{{/inline}}{{> p${depth}${pick(['', ' x=1', ' this', ' data.[0]'])}}}`;
+      case 11: {
+        const name = pick(partials);
+        const outer = partial;
+        partial = name;
+        const definition = `{{#*inline "${name}"}}${body(depth + 1)}{{/inline}}`;
+        partial = outer;
+        return `${definition}${call(name)}`;
+      }
+      case 12: {
+        const callable = partials.filter((name) => partial === undefined || name < partial);
+        return callable.length ? call(pick(callable)) : '';
+      }
       default:
         return `{{json ${value()}}}`;
     }
