@@ -15356,6 +15356,17 @@
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
+    "repository-workflows": {
+      "branch-description": "Changes go to a new branch and are proposed as a pull request to {{branch}}.",
+      "branch-title": "Save as a pull request",
+      "enabled": "Enabled",
+      "not-enabled": "Not enabled",
+      "read-only": "People can view these resources in Grafana but can't save changes here. Make changes in Git, then pull them in.",
+      "read-only-title": "Read-only",
+      "title": "Edit workflows",
+      "write-description": "Changes are pushed directly to {{branch}}.",
+      "write-title": "Push to the configured branch"
+    },
     "resource-kind": {
       "dashboard": "dashboard",
       "dashboards": "Dashboards",
@@ -15616,6 +15627,10 @@
       "button-submitting": "Submitting...",
       "error-instance-repository-exists": "Instance repository already exists",
       "error-save-repository-setting": "Failed to save repository setting"
+    },
+    "workflow-badges": {
+      "direct-push": "Direct push",
+      "pull-request": "Pull request"
     }
   },
   "public-dashboard": {

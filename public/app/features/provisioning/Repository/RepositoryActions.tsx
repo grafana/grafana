@@ -5,10 +5,9 @@ import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
-import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
 
@@ -27,14 +26,13 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoType = repository.spec?.type;
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
   const providerIcon = repoConfig?.icon || 'external-link-alt';
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   // The repository's resources are contained in a folder named after it.
   const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
     <Stack wrap="wrap" alignItems="center">
-      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
+      <WorkflowBadges workflows={repository.spec?.workflows} repoType={repoType} />
       {isFolderContained && (
         <LinkButton
           variant="secondary"

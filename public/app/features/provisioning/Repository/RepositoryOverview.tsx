@@ -30,6 +30,7 @@ import { formatTimestamp } from '../utils/time';
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
 import { RepositoryStatusAlert } from './RepositoryStatusAlert';
+import { RepositoryWorkflowsCard } from './RepositoryWorkflowsCard';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
@@ -197,6 +198,8 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
             <RepositoryPullStatusCard repo={repo} />
           </div>
         </Grid>
+
+        <RepositoryWorkflowsCard repo={repo} />
 
         <div className={styles.cardContainer}>
           <RecentJobs repo={repo} />

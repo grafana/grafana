@@ -10,10 +10,9 @@ import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
+import { WorkflowBadges } from '../components/WorkflowBadges';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
-import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
@@ -23,7 +22,6 @@ interface Props {
 }
 
 export function RepositoryListItem({ repository }: Props) {
-  const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
   const styles = useStyles2(getStyles);
@@ -70,7 +68,7 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
+          <WorkflowBadges workflows={spec?.workflows} repoType={spec?.type} />
         </Stack>
       </Card.Heading>
 
