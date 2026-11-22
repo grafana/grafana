@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -42,13 +42,9 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
-		historyJobController := controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
-			controllerCfg.historyExpiration,
-		)
-		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
-		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("add history job event handler: %w", err)
+		historySource, err = controller.ProvideHistoryJobCleanup(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
+		if err != nil {
+			return err
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 	} else {
