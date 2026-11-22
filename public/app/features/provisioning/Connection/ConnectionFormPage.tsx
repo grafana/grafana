@@ -11,18 +11,12 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
-import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
+import { ManagedResourceBreadcrumbBadge } from '../components/ManagedResourceBreadcrumbBadge';
 import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { type ExternalRepository } from '../types';
 import { canListRepositories } from '../utils/connectionOAuth';
-import {
-  getManagerIdentity,
-  getManagerKind,
-  getSourcePath,
-  isManaged,
-  isProvisioningResourceReadOnly,
-} from '../utils/managedResource';
+import { isManaged } from '../utils/managedResource';
 
 import { ConnectionForm } from './ConnectionForm';
 
@@ -63,17 +57,7 @@ export default function ConnectionFormPage() {
       }}
     >
       {connection && isManaged(connection) && (
-        <AppChromeUpdate
-          breadcrumbActions={
-            <ManagedResourceBadge
-              managerKind={getManagerKind(connection)}
-              name={getManagerIdentity(connection)}
-              isReadOnly={isProvisioningResourceReadOnly(connection)}
-              repositoryName={getManagerIdentity(connection)}
-              sourcePath={getSourcePath(connection)}
-            />
-          }
-        />
+        <AppChromeUpdate breadcrumbActions={<ManagedResourceBreadcrumbBadge resource={connection} canEdit />} />
       )}
       <Page.Contents isLoading={!isCreate && isLoading}>
         {notFound ? (

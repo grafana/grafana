@@ -12,15 +12,9 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { RepoIcon } from '../Shared/RepoIcon';
-import { ManagedResourceBadge } from '../components/ManagedResourceBadge';
+import { ManagedResourceBreadcrumbBadge } from '../components/ManagedResourceBreadcrumbBadge';
 import { PROVISIONING_URL } from '../constants';
-import {
-  getManagerIdentity,
-  getManagerKind,
-  getSourcePath,
-  isManaged,
-  isProvisioningResourceReadOnly,
-} from '../utils/managedResource';
+import { isManaged } from '../utils/managedResource';
 
 import { RepositoryActions } from './RepositoryActions';
 import { RepositoryOverview } from './RepositoryOverview';
@@ -79,17 +73,7 @@ export default function RepositoryStatusPage() {
       actions={data && <RepositoryActions repository={data} />}
     >
       {data && isManaged(data) && (
-        <AppChromeUpdate
-          breadcrumbActions={
-            <ManagedResourceBadge
-              managerKind={getManagerKind(data)}
-              name={getManagerIdentity(data)}
-              isReadOnly={isProvisioningResourceReadOnly(data)}
-              repositoryName={getManagerIdentity(data)}
-              sourcePath={getSourcePath(data)}
-            />
-          }
-        />
+        <AppChromeUpdate breadcrumbActions={<ManagedResourceBreadcrumbBadge resource={data} canEdit />} />
       )}
       <Page.Contents isLoading={query.isLoading}>
         {hasError && (

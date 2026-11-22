@@ -6,18 +6,10 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { ManagedResourceBadge } from 'app/features/provisioning/components/ManagedResourceBadge';
+import { ManagedResourceBreadcrumbBadge } from 'app/features/provisioning/components/ManagedResourceBreadcrumbBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
-import {
-  getManagerIdentity,
-  getManagerKind,
-  getSourcePath,
-  isManaged,
-  isManagedByRepository,
-  isManagedResourceReadOnly,
-} from 'app/features/provisioning/utils/managedResource';
+import { isManaged, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
@@ -34,12 +26,6 @@ export const PlaylistEditPage = () => {
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
-  const isRepositoryManaged = Boolean(data && isManagedByRepository(data));
-  // A repository-managed playlist is read-only when its repository has no write workflow; any other
-  // manager says so on the resource itself.
-  const { isReadOnlyRepo } = useGetResourceRepositoryView({
-    name: isRepositoryManaged && data ? getManagerIdentity(data) : undefined,
-  });
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -71,13 +57,8 @@ export const PlaylistEditPage = () => {
       {data && isManaged(data) && (
         <AppChromeUpdate
           breadcrumbActions={
-            <ManagedResourceBadge
-              managerKind={getManagerKind(data)}
-              name={getManagerIdentity(data)}
-              isReadOnly={isRepositoryManaged ? isReadOnlyRepo : isManagedResourceReadOnly(data)}
-              repositoryName={getManagerIdentity(data)}
-              sourcePath={getSourcePath(data)}
-            />
+            // Reaching the edit page already means the playlist is this user's to change.
+            <ManagedResourceBreadcrumbBadge resource={data} canEdit writesBackToRepository />
           }
         />
       )}
