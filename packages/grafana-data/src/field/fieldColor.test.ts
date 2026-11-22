@@ -1,8 +1,12 @@
+import { getContrastRatio } from '../themes/colorManipulator';
 import { createTheme } from '../themes/createTheme';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
+import { MappingType } from '../types/valueMapping';
 
+import { getDisplayProcessor } from './displayProcessor';
 import {
+  canColorFieldByValue,
   fieldColorModeRegistry,
   getFieldColorMode,
   getFieldColorModeForField,
@@ -220,5 +224,114 @@ describe('reverse color scheme', () => {
     expect(getFieldColorMode(FieldColorModeId.ContinuousGrYlRd, true)).toBe(
       getFieldColorMode(FieldColorModeId.ContinuousGrYlRd, true)
     );
+  });
+});
+
+describe('color by value', () => {
+  const theme = createTheme();
+  const versions = [
+    '42974521621',
+    '43142262336',
+    '43360213011',
+    '43819987164',
+    '44038910387',
+    '44259162873',
+    '44480149990',
+    '44693049476',
+    '44730370174',
+  ].map((v) => `13.4.0-${v}`);
+
+  function getStringField(name: string, values: unknown[], mode: string = FieldColorModeId.PaletteClassic): Field {
+    return { name, type: FieldType.string, values, config: { color: { mode, byValue: true } }, state: {} };
+  }
+
+  function colorsOf(field: Field, t = theme): string[] {
+    const display = getDisplayProcessor({ field, theme: t });
+    return field.values.map((v) => display(v).color!);
+  }
+
+  it.each([FieldColorModeId.PaletteClassic, FieldColorModeId.PaletteCategoricalNext])(
+    'gives the same value the same %s color regardless of field, order, or position',
+    (mode) => {
+      const [a1, b1] = colorsOf(getStringField('wave-1', [versions[0], versions[1]], mode));
+      const [b2, a2] = colorsOf(getStringField('wave-2', [versions[1], versions[0]], mode));
+
+      expect(a1).toBe(a2);
+      expect(b1).toBe(b2);
+      expect(a1).not.toBe(b1);
+    }
+  );
+
+  it('picks colors from the selected palette', () => {
+    const field = getStringField('v', versions, FieldColorModeId.PaletteCategoricalNext);
+    const palette = getFieldColorPalette(field, theme)!;
+
+    colorsOf(field).forEach((c) => expect(palette).toContain(c));
+  });
+
+  it('gives each of the sample deploy versions a distinct Categorical Next color', () => {
+    const field = getStringField('v', versions, FieldColorModeId.PaletteCategoricalNext);
+
+    expect(new Set(colorsOf(field)).size).toBe(versions.length);
+  });
+
+  it.each(['dark', 'light'] as const)(
+    'adds visible darker shades to the categorical next palettes in the %s theme',
+    (mode) => {
+      const t = createTheme({ colors: { mode } });
+      const base = getFieldColorMode(FieldColorModeId.PaletteCategoricalNext).getColors!(t);
+      const byValue = getFieldColorMode(FieldColorModeId.PaletteCategoricalNext, false, true).getColors!(t);
+      const shades = byValue.slice(base.length);
+
+      expect(byValue.slice(0, base.length)).toEqual(base);
+      expect(byValue.length).toBeGreaterThan(base.length * 2);
+      expect(byValue.length).toBeLessThanOrEqual(base.length * 3);
+      shades.forEach((c) => expect(getContrastRatio(c, t.components.panel.background)).toBeGreaterThanOrEqual(2));
+    }
+  );
+
+  it.each([FieldColorModeId.PaletteClassic, FieldColorModeId.PaletteColorblind])('keeps the %s palette as is', (id) => {
+    expect(getFieldColorMode(id, false, true).getColors!(theme)).toEqual(getFieldColorMode(id).getColors!(theme));
+  });
+
+  it('lets value mappings override the hashed color', () => {
+    const field = getStringField('v', ['pinned']);
+    field.config.mappings = [{ type: MappingType.ValueToText, options: { pinned: { color: 'red' } } }];
+
+    expect(colorsOf(field)).toEqual([theme.visualization.getColorByName('red')]);
+  });
+
+  it('colors numeric values by their value', () => {
+    const field = { ...getStringField('v', [1, 2, 1]), type: FieldType.number };
+    const [one, , oneAgain] = colorsOf(field);
+
+    expect(one).toBe(oneAgain);
+  });
+
+  it.each([
+    { id: FieldColorModeId.PaletteClassic, expected: true },
+    { id: FieldColorModeId.PaletteCategoricalNext3, expected: true },
+    { id: FieldColorModeId.PaletteColorblind, expected: true },
+    { id: FieldColorModeId.PaletteClassicByName, expected: false },
+    { id: FieldColorModeId.ContinuousViridis, expected: false },
+    { id: FieldColorModeId.Thresholds, expected: false },
+    { id: FieldColorModeId.Fixed, expected: false },
+  ])('canColorFieldByValue($id) is $expected', ({ id, expected }) => {
+    expect(canColorFieldByValue(fieldColorModeRegistry.get(id))).toBe(expected);
+  });
+
+  it('ignores byValue for modes that cannot color by value', () => {
+    const mode = fieldColorModeRegistry.get(FieldColorModeId.ContinuousViridis);
+
+    expect(getFieldColorMode(FieldColorModeId.ContinuousViridis, false, true)).toBe(mode);
+  });
+
+  it('returns a cached by value mode that keeps the palette id and cannot be reversed', () => {
+    const byValue = getFieldColorMode(FieldColorModeId.PaletteClassic, true, true);
+
+    expect(byValue).toBe(getFieldColorMode(FieldColorModeId.PaletteClassic, false, true));
+    expect(byValue.id).toBe(FieldColorModeId.PaletteClassic);
+    expect(byValue.isByValue).toBe(true);
+    expect(isReversibleFieldColorMode(byValue)).toBe(false);
   });
 });

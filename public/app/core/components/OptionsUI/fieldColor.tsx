@@ -13,9 +13,11 @@ import {
   type FieldColorSeriesByMode,
   getFieldColorMode,
   isReversibleFieldColorMode,
+  canColorFieldByValue,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  useFlagDatavizColorByValue,
   useFlagDatavizExperimentalColorSchemes,
   useFlagDatavizReverseColorScheme,
   useFlagEnableColorblindSafePanelOptions,
@@ -35,12 +37,20 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const pieChartGradientColorScheme = useFlagPieChartGradientColorScheme();
   const experimentalColorSchemesEnabled = useFlagDatavizExperimentalColorSchemes();
   const reverseColorSchemeEnabled = useFlagDatavizReverseColorScheme();
+  const colorByValueEnabled = useFlagDatavizColorByValue();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const colorMode = getFieldColorMode(value?.mode);
   const canReverse = reverseColorSchemeEnabled && isReversibleFieldColorMode(colorMode);
   const reverse = canReverse && Boolean(value?.reverse);
+  // Panels that color whole series by a value (bySeriesSupport) reset this option, so it is not offered there
+  const canColorByValue =
+    colorByValueEnabled &&
+    Boolean(item.settings?.byValueSupport) &&
+    !item.settings?.bySeriesSupport &&
+    canColorFieldByValue(colorMode);
+  const byValue = canColorByValue && Boolean(value?.byValue);
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
@@ -141,6 +151,27 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     </Field>
   );
 
+  const onByValueChange = (event: FormEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      mode,
+      byValue: event.currentTarget.checked || undefined,
+    });
+  };
+
+  const byValueSwitch = canColorByValue && (
+    <Field
+      label={t('options-ui.field-color.by-value-label', 'Color by value')}
+      description={t(
+        'options-ui.field-color.by-value-description',
+        'Give each value the same color everywhere it appears. Different values can share a color.'
+      )}
+      noMargin
+    >
+      <Switch id={`${id}-by-value`} value={byValue} onChange={onByValueChange} />
+    </Field>
+  );
+
   if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
@@ -196,13 +227,13 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
     );
   }
 
-  if (reverseSwitch) {
+  if (reverseSwitch || byValueSwitch) {
     return (
       <>
         <div style={{ marginBottom: theme.spacing(2) }}>
           <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
-        {reverseSwitch}
+        {reverseSwitch || byValueSwitch}
       </>
     );
   }

@@ -137,6 +137,10 @@ function createPillColorResolver(field: Field, theme: GrafanaTheme2): PillColorR
   const mappingColors = hasMappings ? new Map<unknown, string | undefined>() : undefined;
 
   const resolveBaseColor = (rawValue: unknown, display: DisplayValue, value: string) => {
+    if (schemeScale && mode?.useValueHash) {
+      return onBackground(schemeScale(NaN, value).color);
+    }
+
     if (schemeScale && isNumeric(rawValue)) {
       return onBackground(schemeScale(Number(rawValue)).color);
     }

@@ -138,6 +138,7 @@ export {
   getFieldColorModeForField,
   getFieldColorMode,
   isReversibleFieldColorMode,
+  canColorFieldByValue,
   fieldColorModeRegistry,
   type FieldColorMode,
   /** @internal */

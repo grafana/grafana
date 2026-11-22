@@ -60,6 +60,11 @@ export interface FieldColor {
   seriesBy?: FieldColorSeriesByMode;
   /** Reverse the order of the colors in a by value color scheme */
   reverse?: boolean;
+  /**
+   * Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere
+   * @alpha
+   */
+  byValue?: boolean;
 }
 
 /**

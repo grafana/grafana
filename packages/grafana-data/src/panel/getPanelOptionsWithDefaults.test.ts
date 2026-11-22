@@ -248,6 +248,35 @@ describe('getPanelOptionsWithDefaults', () => {
     });
   });
 
+  describe('when changing panel type with a categorical palette colored by value', () => {
+    const defaults = { color: { mode: FieldColorModeId.PaletteCategoricalNext, byValue: true } };
+
+    it.each([
+      { name: 'does not support by value colors', settings: { byValueSupport: false } },
+      { name: 'colors by series', settings: { byValueSupport: true, bySeriesSupport: true } },
+    ])('keeps the palette but drops byValue when the panel $name', ({ settings }) => {
+      const result = runScenario({
+        defaults,
+        standardOptions: { [FieldConfigProperty.Color]: { settings } },
+        isAfterPluginChange: true,
+      });
+
+      expect(result.fieldConfig.defaults.color).toEqual({ mode: FieldColorModeId.PaletteCategoricalNext });
+    });
+
+    it('keeps byValue when the panel prefers thresholds', () => {
+      const result = runScenario({
+        defaults,
+        standardOptions: {
+          [FieldConfigProperty.Color]: { settings: { byValueSupport: true, preferThresholdsMode: true } },
+        },
+        isAfterPluginChange: true,
+      });
+
+      expect(result.fieldConfig.defaults.color).toEqual(defaults.color);
+    });
+  });
+
   describe('when changing panel type to one that does not use standard field config', () => {
     it('should clean defaults', () => {
       const plugin = getPanelPlugin({ id: 'graph' });

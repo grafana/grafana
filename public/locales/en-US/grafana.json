@@ -14256,6 +14256,8 @@
       "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
+      "by-value-description": "Give each value the same color everywhere it appears. Different values can share a color.",
+      "by-value-label": "Color by value",
       "color-by-label": "Color series by",
       "reverse-label": "Reverse colors"
     },

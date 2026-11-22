@@ -172,7 +172,12 @@ const CATEGORICAL_NEXT_3_PALETTE: string[] = [
 ];
 
 /** @beta */
-export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
+export type FieldValueColorCalculator = (
+  value: number,
+  percent: number,
+  Threshold?: Threshold,
+  rawValue?: unknown
+) => string;
 
 /** @beta */
 export interface FieldColorMode extends RegistryItem {
@@ -181,6 +186,8 @@ export interface FieldColorMode extends RegistryItem {
   isContinuous?: boolean;
   isByValue?: boolean;
   useSeriesName?: boolean;
+  /** Colors are picked by hashing each value, see {@link getFieldColorMode} with `byValue` */
+  useValueHash?: boolean;
   group?: string;
 }
 
@@ -265,6 +272,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       isContinuous: false,
       isByValue: false,
       getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_PALETTE,
+      byValueShades: true,
       group: experimentalGroup,
     }),
     new FieldColorSchemeMode({
@@ -273,6 +281,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       isContinuous: false,
       isByValue: false,
       getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_2_PALETTE,
+      byValueShades: true,
       group: experimentalGroup,
     }),
     new FieldColorSchemeMode({
@@ -281,6 +290,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       isContinuous: false,
       isByValue: false,
       getColors: (_theme: GrafanaTheme2) => CATEGORICAL_NEXT_3_PALETTE,
+      byValueShades: true,
       group: experimentalGroup,
     }),
     new FieldColorSchemeMode({
@@ -413,6 +423,9 @@ interface BaseFieldColorSchemeModeOptions {
   isContinuous: boolean;
   isByValue: boolean;
   useSeriesName?: boolean;
+  useValueHash?: boolean;
+  /** Add darker shades of each color when coloring by value, so the hash has more colors to pick from */
+  byValueShades?: boolean;
   group?: string;
 }
 
@@ -435,6 +448,7 @@ class FieldColorSchemeMode implements FieldColorMode {
   isContinuous: boolean;
   isByValue: boolean;
   useSeriesName?: boolean;
+  useValueHash?: boolean;
   colorCache?: string[];
   colorCacheTheme?: GrafanaTheme2;
   interpolator?: (value: number) => string;
@@ -442,6 +456,7 @@ class FieldColorSchemeMode implements FieldColorMode {
   group?: string;
   private options: FieldColorSchemeModeOptions;
   private reversedMode?: FieldColorSchemeMode;
+  private byValueMode?: FieldColorSchemeMode;
 
   constructor(options: FieldColorSchemeModeOptions) {
     this.options = options;
@@ -452,6 +467,7 @@ class FieldColorSchemeMode implements FieldColorMode {
     this.isContinuous = options.isContinuous;
     this.isByValue = options.isByValue;
     this.useSeriesName = options.useSeriesName;
+    this.useValueHash = options.useValueHash;
     this.interpolator = options.interpolator;
     this.group = options.group;
   }
@@ -485,6 +501,24 @@ class FieldColorSchemeMode implements FieldColorMode {
     return this.reversedMode;
   }
 
+  colorByValue(): FieldColorSchemeMode {
+    if (!this.byValueMode) {
+      const { getColors, byValueShades } = this.options;
+      const options = { ...this.options, isByValue: true, useSeriesName: false, useValueHash: true };
+      this.byValueMode = new FieldColorSchemeMode(
+        getColors && byValueShades
+          ? {
+              ...options,
+              interpolator: undefined,
+              getColors: (theme: GrafanaTheme2) => withDarkerShades(getColors(theme), theme),
+            }
+          : options
+      );
+    }
+
+    return this.byValueMode;
+  }
+
   private getInterpolator() {
     if (!this.interpolator) {
       this.interpolator = interpolateRgbBasis(this.colorCache!);
@@ -495,6 +529,14 @@ class FieldColorSchemeMode implements FieldColorMode {
 
   getCalculator(field: Field, theme: GrafanaTheme2) {
     const colors = this.getColors(theme);
+
+    if (this.useValueHash) {
+      // Hash the raw value (not its position in the field) so the same value keeps
+      // its color across fields, panels, and time ranges.
+      return (value: number, _percent: number, _threshold?: Threshold, rawValue?: unknown) => {
+        return colors[hashValue(String(rawValue ?? value)) % colors.length];
+      };
+    }
 
     if (this.isByValue) {
       if (this.isContinuous) {
@@ -521,13 +563,33 @@ class FieldColorSchemeMode implements FieldColorMode {
 
 /** @beta */
 export function getFieldColorModeForField(field: Field): FieldColorMode {
-  return getFieldColorMode(field.config.color?.mode, field.config.color?.reverse);
+  const { mode, reverse, byValue } = field.config.color ?? {};
+  return getFieldColorMode(mode, reverse, byValue);
 }
 
 /** @beta */
-export function getFieldColorMode(mode?: FieldColorModeId | string, reverse?: boolean): FieldColorMode {
+export function getFieldColorMode(
+  mode?: FieldColorModeId | string,
+  reverse?: boolean,
+  byValue?: boolean
+): FieldColorMode {
   const colorMode = fieldColorModeRegistry.getIfExists(mode) ?? fieldColorModeRegistry.get(FieldColorModeId.Thresholds);
+
+  if (byValue && colorMode instanceof FieldColorSchemeMode && canColorFieldByValue(colorMode)) {
+    return colorMode.colorByValue();
+  }
+
   return reverse && colorMode instanceof FieldColorSchemeMode && colorMode.isByValue ? colorMode.reversed() : colorMode;
+}
+
+/**
+ * Returns true if the mode is a categorical palette that can assign colors per value
+ * with the `byValue` option
+ *
+ * @alpha
+ */
+export function canColorFieldByValue(mode: FieldColorMode): boolean {
+  return mode instanceof FieldColorSchemeMode && !mode.isByValue && !mode.useSeriesName;
 }
 
 /**
@@ -536,7 +598,7 @@ export function getFieldColorMode(mode?: FieldColorModeId | string, reverse?: bo
  * @beta
  */
 export function isReversibleFieldColorMode(mode: FieldColorMode): boolean {
-  return mode instanceof FieldColorSchemeMode && mode.isByValue;
+  return mode instanceof FieldColorSchemeMode && mode.isByValue && !mode.useValueHash;
 }
 
 /** @internal */
@@ -559,6 +621,40 @@ export function getFieldColorPalette(field: Field, theme: GrafanaTheme2): string
 
 export function getColorByStringHash(colors: string[], string: string) {
   return colors[Math.abs(stringHash(string)) % colors.length];
+}
+
+// Two darker steps roughly halve near-identical picks for ~10 values on the light categorical
+// palettes; lighter steps barely differ from these already light colors.
+const BY_VALUE_SHADE_STEPS = [15, 30];
+// Darker shades can vanish on a dark panel background; base colors are kept regardless.
+const BY_VALUE_SHADE_MIN_CONTRAST = 2;
+
+function withDarkerShades(colors: string[], theme: GrafanaTheme2): string[] {
+  const background = theme.components.panel.background;
+  const shades = BY_VALUE_SHADE_STEPS.flatMap((amount) =>
+    colors.map((color) => tinycolor(theme.visualization.getColorByName(color)).darken(amount).toHexString())
+  ).filter((shade) => getContrastRatio(shade, background) >= BY_VALUE_SHADE_MIN_CONTRAST);
+
+  return [...colors, ...shades];
+}
+
+/**
+ * FNV-1a with a murmur3 finalizer. string-hash keeps its low bits nearly unmixed, so
+ * similar strings like build versions clump together on power-of-two sized palettes.
+ * Kept separate from getColorByStringHash so existing by-name colors don't change.
+ */
+function hashValue(value: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
 }
 
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
