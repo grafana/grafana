@@ -519,7 +519,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		UserID:  1,
 		UserUID: "user-uid-1",
 		OrgID:   1,
-		OrgRole: identity.RoleAdmin,
+		OrgRole: types.RoleAdmin,
 		Login:   "testuser",
 		Name:    "Test User",
 	})

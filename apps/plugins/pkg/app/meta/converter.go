@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"path"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -260,13 +260,13 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			if include.Role != "" {
 				var role pluginsv0alpha1.MetaIncludeRole
 				switch include.Role {
-				case identity.RoleAdmin:
+				case authlib.RoleAdmin:
 					role = pluginsv0alpha1.MetaIncludeRoleAdmin
-				case identity.RoleEditor:
+				case authlib.RoleEditor:
 					role = pluginsv0alpha1.MetaIncludeRoleEditor
-				case identity.RoleViewer:
+				case authlib.RoleViewer:
 					role = pluginsv0alpha1.MetaIncludeRoleViewer
-				case identity.RoleNone:
+				case authlib.RoleNone:
 					role = pluginsv0alpha1.MetaIncludeRoleNone
 				}
 				v0Include.Role = &role

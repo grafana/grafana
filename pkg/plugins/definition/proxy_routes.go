@@ -8,18 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/routes"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func proxyTargetOf(route *plugins.Route) routes.ProxyTarget {
 	target := routes.ProxyTarget{
-		ReqRole:      types.RoleType(route.ReqRole),
+		ReqRole:      route.ReqRole,
 		ReqAction:    route.ReqAction,
 		URL:          route.URL,
 		AuthType:     route.AuthType,
@@ -229,7 +227,7 @@ func ProxyRouteFromOperation(specPath, method string, op *spec3.Operation) (*plu
 	route := &plugins.Route{
 		Path:         routePath,
 		Method:       method,
-		ReqRole:      identity.RoleType(target.ReqRole),
+		ReqRole:      target.ReqRole,
 		ReqAction:    target.ReqAction,
 		URL:          target.URL,
 		AuthType:     target.AuthType,
