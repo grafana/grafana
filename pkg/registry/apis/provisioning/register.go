@@ -142,17 +142,13 @@ type APIBuilder struct {
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
 	client            client.ProvisioningV0alpha1Interface
-	// clientset is built by the post-start hook; clientsetReady is closed once it
-	// is set, so services wired outside the hook can wait for the API server.
-	clientset        clientset.Interface
-	clientsetReady   chan struct{}
-	access           auth.AccessChecker
-	accessWithAdmin  auth.AccessChecker
-	accessWithEditor auth.AccessChecker
-	accessWithViewer auth.AccessChecker
-	statusPatcher    *appcontroller.RepositoryStatusPatcher
-	healthChecker    *controller.RepositoryHealthChecker
-	admissionHandler *appadmission.Handler
+	access            auth.AccessChecker
+	accessWithAdmin   auth.AccessChecker
+	accessWithEditor  auth.AccessChecker
+	accessWithViewer  auth.AccessChecker
+	statusPatcher     *appcontroller.RepositoryStatusPatcher
+	healthChecker     *controller.RepositoryHealthChecker
+	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -271,7 +267,6 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		clientsetReady:                      make(chan struct{}),
 		supportedResourceProvider:           supportedResourceProvider,
 		parsers:                             parsers,
 		unified:                             unified,
@@ -881,17 +876,6 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
 }
 
-// waitForClientset blocks until the post-start hook has built the provisioning
-// clientset, i.e. until the API server can serve provisioning requests.
-func (b *APIBuilder) waitForClientset(ctx context.Context) (clientset.Interface, error) {
-	select {
-	case <-b.clientsetReady:
-		return b.clientset, nil
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-}
-
 func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
 }
@@ -1139,8 +1123,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.client = c.ProvisioningV0alpha1()
-			b.clientset = c
-			close(b.clientsetReady)
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
