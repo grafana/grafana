@@ -340,6 +340,13 @@ describe('TimePickerTooltip', () => {
     expect(screen.getByText('UTC, GMT')).toBeInTheDocument();
   });
 
+  it('shows the exact endpoints of a long range without adding zero fractions', () => {
+    const range = makeTimeRange('2024-01-01T00:00:00.433Z', '2024-01-02T00:00:00Z');
+    render(<TimePickerTooltip timeRange={range} timeZone="utc" />);
+
+    expect(screen.getByText(/^2024-01-01 00:00:00\.433\s*2024-01-02 00:00:00$/)).toBeInTheDocument();
+  });
+
   it('renders time range without timezone if timezone is not passed in', () => {
     render(<TimePickerTooltip timeRange={timeRange} />);
     expect(screen.queryByText(/United States, E[DS]T/)).not.toBeInTheDocument();

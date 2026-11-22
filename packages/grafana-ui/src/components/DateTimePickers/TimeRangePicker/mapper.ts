@@ -9,16 +9,13 @@ export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): T
   return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone);
 };
 
-/**
- * Takes a TimeRange and makes a printable TimeOption with formatted date strings correct for the timezone from it
- */
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
-  const from = formatWithOptionalMs(range.from, timeZone, range);
-  const to = formatWithOptionalMs(range.to, timeZone, range);
+  const fromLabel = formatWithOptionalMs(range.from, timeZone, range);
+  const toLabel = formatWithOptionalMs(range.to, timeZone, range);
 
   return {
-    from,
-    to,
-    display: `${from} to ${to}`,
+    from: range.from.toISOString(),
+    to: range.to.toISOString(),
+    display: `${fromLabel} to ${toLabel}`,
   };
 };

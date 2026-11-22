@@ -306,11 +306,11 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   return (
     <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
-        {formatWithOptionalMs(timeRange.from, timeZone, timeRange)}
+        {formatWithOptionalMs(timeRange.from, timeZone)}
         <div className="text-center">
           <Trans i18nKey="time-picker.range-picker.to">to</Trans>
         </div>
-        {formatWithOptionalMs(timeRange.to, timeZone, timeRange)}
+        {formatWithOptionalMs(timeRange.to, timeZone)}
       </div>
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
