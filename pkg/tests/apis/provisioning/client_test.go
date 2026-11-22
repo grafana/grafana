@@ -3,18 +3,20 @@ package provisioning
 import (
 	"testing"
 
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
+
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 )
 
 // FIXME: do this tests make sense in their current form?
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	helper := sharedHelper(t)
 
-	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, resources.NewSupportedResourceProvider(nil))
+	clientFactory := resources.NewClientFactory(&helper.Org1.Admin, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), resources.NewSupportedResourceProvider(nil))
 	clients, err := clientFactory.Clients(t.Context(), "default")
 	require.NoError(t, err)
 

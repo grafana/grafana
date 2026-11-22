@@ -4,17 +4,13 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"math/rand"
 	"slices"
-	"sync"
-	"time"
-	"uuid"
 
-	"github.com/bwmarrin/snowflake"
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -48,7 +44,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 
 	namePrefix := fmt.Sprintf("%s-", c.Spec.Type)
 	if a.GetOperation() == admission.Create && c.GetName() == "" {
-		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + generateShortUID())
+		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + util.GenerateShortUID())
 	}
 
 	if a.GetOperation() == admission.Update {
@@ -118,46 +114,4 @@ func gitOAuthScopes(c *provisioning.Connection) []string {
 		return nil
 	}
 	return c.Spec.GitOAuth.Scopes
-}
-
-/*
-NOTE: the code below is copied from pkg/util/shortid_generator.go.
-That function is part of core grafana, which we don't want to have as a dependency.
-TODO: use the util package once it's inside a separate go module.
-*/
-
-// We want to protect our number generator as they are not thread safe. Not using
-// the mutex could result in panics in certain cases where UIDs would be generated
-// at the same time.
-var mtx sync.Mutex
-
-var node *snowflake.Node
-
-var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
-var hexLetters = []rune("abcdef")
-
-// generateShortUID will generate a UUID that can also be a k8s name
-// it is guaranteed to have a character as the first letter
-// This UID will be a valid k8s name
-func generateShortUID() string {
-	mtx.Lock()
-	defer mtx.Unlock()
-
-	if node == nil {
-		// ignoring the error happens when input outside 0-1023
-		node, _ = snowflake.NewNode(rand.Int63n(1024))
-	}
-
-	// Use UUIDs if snowflake failed (should be never)
-	if node == nil {
-		uuid := uuid.NewV4().String()
-		if rune(uuid[0]) < rune('a') {
-			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
-		}
-		return uuid
-	}
-
-	return string(hexLetters[uidrand.Intn(len(hexLetters))]) + // start with a letter
-		node.Generate().Base36() +
-		string(hexLetters[uidrand.Intn(len(hexLetters))]) // a bit more entropy
 }

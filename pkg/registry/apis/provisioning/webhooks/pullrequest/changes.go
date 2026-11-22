@@ -16,13 +16,13 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -421,7 +421,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	grafanaURL string,
 	metrics screenshotMetrics,
 ) (string, error) {
-	outcome := utils.ErrorOutcome
+	outcome := util.ErrorOutcome
 	duration := time.Now()
 	defer func() {
 		metrics.recordScreenshotDuration(outcome, time.Since(duration))
@@ -450,7 +450,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 		logger.Warn("invalid base", "url", screenshotBaseURL, "err", err)
 		return "", err
 	}
-	outcome = utils.SuccessOutcome
+	outcome = util.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
 }
 

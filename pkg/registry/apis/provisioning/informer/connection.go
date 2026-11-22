@@ -4,25 +4,18 @@ import (
 	"context"
 	"time"
 
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
-
-// ConnectionGetter is the read seam the connection controller reconciles
-// against. It exposes only the single connection under reconciliation, so the
-// source can be swapped without touching the controller.
-type ConnectionGetter interface {
-	Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error)
-}
 
 // NewConnectionDeltaSource returns the connection delta source and the getter it
 // backs. Under NATS the getter reads reconcile state fresh from the API;
@@ -35,7 +28,7 @@ type ConnectionGetter interface {
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (appinformer.DeltaSource, appinformer.ConnectionGetter) {
 	if nats.Enabled(subscriber) {
 		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
 		recorder := metrics.Recorder(gvr)
@@ -47,11 +40,11 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		source.AllowDegradedStart()
 		announced := newAnnouncements()
 		source.SetAnnouncements(announced)
-		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
+		getter := appinformer.NewClientConnectionGetter(client.ProvisioningV0alpha1())
 		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource))
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
-	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
+	return inf.Informer(), appinformer.NewCachedConnectionGetter(inf.Lister())
 }
 
 // NewConnectionInformer builds an Informer for connections. When keys is
@@ -59,38 +52,10 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, recorder RelistRecorder) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return identity(ns, name, "")
+		return appinformer.Identity(ns, name, "")
 	}
 	list := identityList(keys, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return c.Connections(namespace).List(ctx, opts)
 	}, recorder)
 	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
-}
-
-// NewCachedConnectionGetter backs a ConnectionGetter with the informer's
-// generated lister, i.e. the informer's local cache.
-func NewCachedConnectionGetter(lister listers.ConnectionLister) ConnectionGetter {
-	return cachedConnectionGetter{lister: lister}
-}
-
-type cachedConnectionGetter struct {
-	lister listers.ConnectionLister
-}
-
-func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.lister.Connections(namespace).Get(name)
-}
-
-// NewClientConnectionGetter backs a ConnectionGetter with the API client, for
-// the NATS watch where there is no informer cache to serve a fresh reconcile read.
-func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface) ConnectionGetter {
-	return clientConnectionGetter{client: c}
-}
-
-type clientConnectionGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-}
-
-func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
 }

@@ -3,7 +3,7 @@ package resourcelister
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 

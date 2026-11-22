@@ -11,6 +11,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -20,7 +21,7 @@ import (
 // job controller reads no lister, so callers need only the DeltaSource. Either
 // source reports its event deliveries on the informer delivery metrics,
 // registered on reg (nil disables them).
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) DeltaSource {
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) appinformer.DeltaSource {
 	metrics := newInformerMetrics(reg)
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
@@ -51,7 +52,7 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return appinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			if onRequest != nil {
 				onRequest()
 			}

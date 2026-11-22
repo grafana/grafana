@@ -10,9 +10,10 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controllerapp"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -86,7 +87,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	jobKind := controllerapp.JobQueue(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer, driver)
+	jobKind := informer.JobQueueKind(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer, driver)
 	jobKind.OnSynced = func(ctx context.Context) error {
 		logger.Info("job queue operator is ready")
 		deps.HealthNotifier.SetReady()

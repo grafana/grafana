@@ -1,0 +1,698 @@
+package resources
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+const MaxNumberOfFolders = 10000
+
+// EnsurePathOption configures the behaviour of EnsureFolderPathExist.
+type EnsurePathOption func(*ensurePathConfig)
+
+type ensurePathConfig struct {
+	// relocatingUIDs maps a relocating folder's UID to its expected destination
+	// path. The ID conflict check is bypassed for a resolved folder only when its
+	// UID is listed here AND it resolves at the mapped destination path — never at
+	// some other path reached during the same ancestor walk (e.g. a descendant
+	// that reuses a relocating ancestor's UID).
+	relocatingUIDs map[string]string
+	forceWalk      bool
+}
+
+func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
+	cfg := ensurePathConfig{relocatingUIDs: make(map[string]string)}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+// isRelocatingTo reports whether uid is a known relocating folder expected to
+// land at path. Binding the exemption to the destination path stops a folder
+// that reuses a relocating ancestor's UID from bypassing the conflict check at a
+// different point in the walk.
+func (c *ensurePathConfig) isRelocatingTo(path, uid string) bool {
+	expected, ok := c.relocatingUIDs[uid]
+	if !ok {
+		return false
+	}
+	return safepath.EnsureTrailingSlash(expected) == safepath.EnsureTrailingSlash(path)
+}
+
+// WithRelocatingUIDs marks uids as legitimately relocating to targetPath so that
+// the ID conflict check is bypassed for them only when they resolve at that exact
+// path during folder path resolution. Binding to targetPath keeps the exemption
+// from leaking to other folders resolved during the same ancestor walk. This
+// avoids mutating the tree before the operation is confirmed to succeed.
+func WithRelocatingUIDs(targetPath string, uids ...string) EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		for _, uid := range uids {
+			cfg.relocatingUIDs[uid] = targetPath
+		}
+	}
+}
+
+// WithForceWalk skips the early-return optimisation so that the full ancestor
+// walk always runs. Use this when the caller knows that the tree entry may be
+// stale (e.g. parent-only changes during full sync).
+func WithForceWalk() EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		cfg.forceWalk = true
+	}
+}
+
+// PathCreationError represents an error that occurred while creating a folder path.
+// It contains the path that failed and the underlying error.
+type PathCreationError struct {
+	Path string
+	Err  error
+}
+
+func (e *PathCreationError) Unwrap() error {
+	return e.Err
+}
+
+func (e *PathCreationError) Error() string {
+	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
+}
+
+// FolderCreationInterceptor is called before a folder is created during path
+// traversal. Return an error to prevent the folder from being created.
+type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
+
+type FolderManagerOption func(*FolderManager)
+
+type FolderManager struct {
+	repo         repository.ReaderWriter
+	tree         FolderTree
+	client       dynamic.ResourceInterface
+	beforeCreate FolderCreationInterceptor
+	folderGVK    schema.GroupVersionKind
+}
+
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
+	fm := &FolderManager{
+		repo:      repo,
+		tree:      lookup,
+		client:    client,
+		folderGVK: folderGVK,
+		beforeCreate: func(context.Context, Folder) error {
+			return nil
+		},
+	}
+	for _, opt := range opts {
+		opt(fm)
+	}
+	return fm
+}
+
+func (fm *FolderManager) FolderGVK() schema.GroupVersionKind {
+	return fm.folderGVK
+}
+
+func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.beforeCreate = beforeCreate
+	}
+}
+
+func (fm *FolderManager) Client() dynamic.ResourceInterface {
+	return fm.client
+}
+
+func (fm *FolderManager) Tree() FolderTree {
+	return fm.tree
+}
+
+func (fm *FolderManager) SetTree(tree FolderTree) {
+	fm.tree = tree
+}
+
+// FindExistingAncestor resolves directories nearest-first and validates repository
+// ownership. It returns the folder's metadata.name and found=true for a matching
+// stored folder. If none is found, including at an implicit root, it returns
+// ("", false, nil). Folders with mismatched ownership or source paths are skipped.
+// Repository and storage lookup errors are returned separately.
+func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (folderID string, found bool, err error) {
+	cfg := fm.repo.Config()
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return "", false, fmt.Errorf("create identity for ancestor lookup: %w", err)
+	}
+
+	rootFolder := RootFolder(cfg)
+	var ancestor string
+	err = safepath.WalkUp(ctx, dir, func(ctx context.Context, dir string) (bool, error) {
+		folderID := rootFolder
+		if dir != "" {
+			// Invalid metadata must not fall back to a cached folder or hash-derived UID.
+			var err error
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref)
+			if err != nil {
+				return false, fmt.Errorf("resolve ancestor %q: %w", dir, err)
+			}
+		}
+		if folderID == "" {
+			// Instance and folderless roots have no folder UID; stop without finding an ancestor.
+			return true, nil
+		}
+		obj, err := fm.GetFolder(folderCtx, folderID)
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+		}
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder metadata: %w", err)
+		}
+		manager, _ := meta.GetManagerProperties()
+		source, _ := meta.GetSourceProperties()
+		// A matching UID alone does not establish repository and directory ownership.
+		// Repository roots legitimately have no source path annotation.
+		if !isManagedByRepository(manager, cfg.Name) || safepath.EnsureTrailingSlash(source.Path) != dir {
+			return false, nil
+		}
+		ancestor = folderID
+		return true, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return ancestor, ancestor != "", nil
+}
+
+// EnsureFolderPathExist creates the folder structure in the cluster.
+func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
+	epCfg := newEnsurePathConfig(opts)
+	cfg := fm.repo.Config()
+	parent = RootFolder(cfg)
+
+	dir := filePath
+	if !safepath.IsDir(filePath) {
+		dir = safepath.Dir(filePath)
+	}
+
+	if dir == "" {
+		return parent, nil
+	}
+
+	f, err := fm.resolveFolderForPath(ctx, dir, ref)
+	if err != nil {
+		return "", err
+	}
+
+	// ParentID is only resolved during the walk below, so we skip it here
+	// to avoid a false mismatch against the already-resolved tree entry.
+	// Force walk is used to skip the early-return optimisation so that the full ancestor
+	// walk always runs. Use this when the caller knows that the tree entry may be
+	// stale (e.g. a folder was moved to a new path).
+	if !epCfg.forceWalk {
+		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
+			// When a folder is being relocated, its UID temporarily exists at both the old
+			// and new paths in the tree. Allow the duplicate UID only when this folder is
+			// the one relocating to this exact path.
+			if !epCfg.isRelocatingTo(f.Path, f.ID) &&
+				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+				return "", NewResourceValidationError(fmt.Errorf(
+					"folder UID %q defined in %q is already used by folder at path %q",
+					f.ID, f.Path, existing.Path,
+				))
+			}
+			return f.ID, nil
+		}
+	}
+
+	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
+		f, err := fm.resolveFolderForPath(ctx, traverse, ref)
+		if err != nil {
+			return err
+		}
+		f.ParentID = parent
+
+		existing, existsInTree := fm.tree.Get(f.ID)
+		if existsInTree && f.Equal(existing) {
+			parent = f.ID
+			return nil
+		}
+
+		if !epCfg.isRelocatingTo(f.Path, f.ID) && existsInTree &&
+			safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+			return NewResourceValidationError(fmt.Errorf(
+				"folder UID %q defined in %q is already used by folder at path %q",
+				f.ID, f.Path, existing.Path,
+			))
+		}
+		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
+			return &PathCreationError{
+				Path: f.Path,
+				Err:  fmt.Errorf("ensure folder exists: %w", err),
+			}
+		}
+
+		fm.tree.Add(f, parent)
+		parent = f.ID
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return f.ID, nil
+}
+
+// resolveFolderForPath parses folder metadata when possible. If metadata is
+// invalid, it falls back to the current folder already known at that path. When
+// no folder exists yet, it falls back to the hash/path-derived folder identity.
+func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref)
+	if err == nil {
+		return f, nil
+	}
+
+	if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
+		return Folder{}, err
+	}
+
+	if existing, ok := fm.tree.GetByPath(path); ok {
+		return existing, nil
+	}
+
+	return ParseFolder(path, fm.repo.Config().Name), nil
+}
+
+// EnsureFolderExists creates the folder if it doesn't exist.
+// If the folder already exists:
+// - it will error if the folder is not owned by this repository
+// - it will update metadata-backed properties if they have changed
+func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
+	cfg := fm.repo.Config()
+	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
+	if err == nil {
+		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+		// takeover is set when the folder exists but is unmanaged and the
+		// migration allowlist permits claiming it. In that case we stamp repo
+		// ownership and force an update so the previously unmanaged folder
+		// becomes managed by this repository.
+		takeover := false
+		if !ok {
+			// EnsureFolderExists is the ownership gate for folders, so it must
+			// honour the same takeover allowlist as CheckResourceOwnership does
+			// for other resources. Without this, a selective migrate of a
+			// resource living under a pre-existing unmanaged folder can never
+			// create its parent.
+			if !folderTakeoverAllowed(ctx, folder.ID) {
+				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.Name,
+				})
+			}
+			takeover = true
+		} else if current != cfg.Name {
+			return NewFolderManagedByOtherError(folder.ID, current)
+		}
+
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor: %w", err)
+		}
+
+		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		source, _ := meta.GetSourceProperties()
+		existing := Folder{
+			Title:        currentTitle,
+			Path:         source.Path,
+			MetadataHash: source.Checksum,
+			ParentID:     ToLegacyFolderUID(meta.GetFolder()),
+		}
+
+		if takeover || !folder.Equal(existing) {
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			meta.SetSourceProperties(utils.SourceProperties{
+				Path:     folder.Path,
+				Checksum: folder.MetadataHash,
+			})
+			meta.SetFolder(folder.ParentID)
+			if takeover {
+				meta.SetManagerProperties(utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.GetName(),
+				})
+			}
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+			if err != nil {
+				return fmt.Errorf("unable to use provisioning identity %w", err)
+			}
+			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+				return mapFolderWriteError(folder, err, "update folder")
+			}
+		}
+
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to check if folder exists: %w", err)
+	}
+
+	// Run creation guard only when the folder does not already exist.
+	if err := fm.beforeCreate(ctx, folder); err != nil {
+		return err
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+
+	obj = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title": folder.Title,
+			},
+		},
+	}
+	obj.SetAPIVersion(fm.folderGVK.Group + "/" + fm.folderGVK.Version)
+	obj.SetKind(fm.folderGVK.Kind)
+	obj.SetNamespace(cfg.GetNamespace())
+	obj.SetName(folder.ID)
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("create meta accessor for the object: %w", err)
+	}
+
+	if parent != "" {
+		meta.SetFolder(parent)
+	} else {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+	meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	})
+	meta.SetSourceProperties(utils.SourceProperties{
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
+	})
+
+	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		// there is a potential race here where two syncs can be triggered
+		// if we try to create and there is an error, check if it is from another sync
+		// job for this repo that created it
+		if apierrors.IsAlreadyExists(err) || err.Error() == FolderVersionMismatchMessage {
+			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
+			if err2 != nil {
+				return fmt.Errorf("failed to get folder: %w", err2)
+			} else if obj == nil {
+				return fmt.Errorf("failed to create folder: %w", err)
+			}
+
+			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+			if !ok {
+				// Another sync raced us to create the folder, but it landed
+				// unmanaged. Honour the migration allowlist here too, mirroring
+				// the primary path above, otherwise a concurrent migrate could
+				// still reject a folder we are allowed to take over.
+				if !folderTakeoverAllowed(ctx, folder.ID) {
+					return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+						Kind:     utils.ManagerKindRepo,
+						Identity: cfg.Name,
+					})
+				}
+				return fm.claimUnmanagedFolder(ctx, obj, folder)
+			}
+			if current != cfg.Name {
+				return NewFolderManagedByOtherError(folder.ID, current)
+			}
+
+			return nil
+		}
+
+		return mapFolderWriteError(folder, err, "failed to create folder")
+	}
+	return nil
+}
+
+// mapFolderWriteError converts a folder create/update API error into a typed
+// provisioning warning when it represents a permanent, user-side rejection that
+// a retry cannot fix (path depth exceeded, UID too long, or any other folder-API
+// validation such as illegal-uid-chars or reserved-uid). Surfacing these as
+// warnings keeps the sync from retrying in a loop. Any other error is wrapped
+// with the supplied context message.
+func mapFolderWriteError(folder Folder, err error, wrap string) error {
+	switch {
+	case IsFolderDepthExceededAPIError(err):
+		return NewFolderDepthExceededError(folder.Path, err)
+	case IsFolderUIDTooLongAPIError(err):
+		return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+	case IsFolderValidationAPIError(err):
+		return NewFolderValidationError(folder.Path, err)
+	default:
+		return fmt.Errorf("%s: %w", wrap, err)
+	}
+}
+
+// folderTakeoverAllowed reports whether the migration takeover allowlist stored
+// in ctx permits claiming the given unmanaged folder. It mirrors the allowlist
+// gate in CheckResourceOwnership so folders and other resources share the same
+// takeover semantics during migration.
+func folderTakeoverAllowed(ctx context.Context, folderID string) bool {
+	allowlist := TakeoverAllowlistFromContext(ctx)
+	if allowlist == nil {
+		return false
+	}
+	return allowlist.Contains(ResourceIdentifier{
+		Name:  folderID,
+		Group: FolderResource.Group,
+		Kind:  FolderKind.Kind,
+	})
+}
+
+// claimUnmanagedFolder stamps repo ownership and the metadata-backed properties
+// onto an existing unmanaged folder and writes the update. It is only called
+// once folderTakeoverAllowed has confirmed the takeover is permitted.
+func (fm *FolderManager) claimUnmanagedFolder(ctx context.Context, obj *unstructured.Unstructured, folder Folder) error {
+	cfg := fm.repo.Config()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("create meta accessor: %w", err)
+	}
+
+	if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+		return fmt.Errorf("set folder title: %w", err)
+	}
+	meta.SetSourceProperties(utils.SourceProperties{
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
+	})
+	meta.SetFolder(folder.ParentID)
+	meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	})
+
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+	if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+		return mapFolderWriteError(folder, err, fmt.Sprintf("claim unmanaged folder %s", folder.ID))
+	}
+	return nil
+}
+
+func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
+	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// CreateFolderWithUID creates a Grafana folder using a caller-provided stable UID
+// instead of the path-derived hash UID produced by ParseFolder.
+// It ensures all ancestor folders exist first, then creates the leaf folder.
+// Used when _folder.json has already been written to the repository.
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID, ref string) error {
+	cfg := fm.repo.Config()
+
+	// Determine the parent folder ID, ensuring ancestor folders exist.
+	parentPath := safepath.Dir(folderPath)
+	var parentFolderID string
+	if parentPath == "" {
+		parentFolderID = RootFolder(cfg)
+	} else {
+		var err error
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath, ref)
+		if err != nil {
+			return fmt.Errorf("ensure parent folder path: %w", err)
+		}
+	}
+
+	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
+	leaf := ParseFolder(folderPath, cfg.GetName())
+	leaf.ID = stableUID
+	leaf.ParentID = parentFolderID
+
+	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
+}
+
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
+}
+
+func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
+	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+// RenameFolderPath handles a directory rename during incremental sync.
+// For metadata-backed folders (stable UID), the existing K8s object is
+// updated in place and an empty string is returned (no cleanup needed).
+// For non-metadata folders the UID changes, so a new folder is created
+// at newPath and the old folder ID is returned for cleanup.
+//
+// Invalid `_folder.json` does not abort the rename. For the old path we fall
+// back to the existing folder in the seeded tree (or to the path-derived UID if
+// there is no tree entry), and for the new path we fall back to the
+// path-derived UID. That gives delete+recreate semantics instead of preserving
+// a metadata-backed identity we can no longer trust.
+func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef)
+	if err != nil {
+		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
+			return "", fmt.Errorf("parse old folder: %w", err)
+		}
+
+		// Invalid old metadata means we cannot trust a metadata-backed identity for
+		// the source path. Reuse the seeded-tree entry when available so follow-up
+		// child reconciliation keeps pointing at the currently managed folder.
+		if existing, ok := fm.tree.GetByPath(previousPath); ok {
+			oldFolder = existing
+		} else {
+			oldFolder = ParseFolder(previousPath, fm.repo.Config().Name)
+		}
+	}
+
+	// Pass the old UID as relocating to newPath so the ID conflict check does not
+	// reject the same stable UID appearing at its new path. Binding to newPath keeps
+	// the exemption from leaking to other folders on the ancestor walk. The tree is
+	// only mutated after EnsureFolderPathExist succeeds, avoiding corruption on failure.
+	ensureOpts := append([]EnsurePathOption{WithRelocatingUIDs(newPath, oldFolder.ID)}, opts...)
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, ensureOpts...); err != nil {
+		return "", fmt.Errorf("ensure new folder path: %w", err)
+	}
+
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef)
+	if err != nil {
+		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
+			return "", fmt.Errorf("parse new folder: %w", err)
+		}
+
+		// Invalid new metadata means the destination cannot claim a stable
+		// metadata-defined UID, so the rename degrades to the normal path-derived
+		// folder identity at newPath.
+		newFolder = ParseFolder(newPath, fm.repo.Config().Name)
+	}
+
+	if oldFolder.ID == newFolder.ID {
+		// Same UID — metadata-preserving move. EnsureFolderPathExist already
+		// updated the tree entry to the new path; nothing to clean up.
+		return "", nil
+	}
+
+	return oldFolder.ID, nil
+}
+
+// EnsureFolderTreeExistsOptions configures EnsureFolderTreeExists.
+type EnsureFolderTreeExistsOptions struct {
+	// Ref is the repository ref (branch) the folders are written to.
+	Ref string
+	// Path is the base path within the repository under which the tree is written.
+	Path string
+	// GenerateNewFolderIDs, when true, writes each newly created folder's
+	// metadata (_folder.json) with a freshly generated UID instead of the
+	// original folder identifier. See EnsureFolderTreeExists for details.
+	GenerateNewFolderIDs bool
+	// OnFolder is called for each folder in the tree. It is called with created
+	// set to false when the folder already exists in the repository, and true
+	// when the folder is created. startedAt is the time processing of this folder
+	// began, so callers can record how long the folder operation took.
+	OnFolder func(folder Folder, created bool, startedAt time.Time, err error) error
+}
+
+// EnsureFolderTreeExists replicates the folder tree to the repository.
+// opts.OnFolder is called for each folder.
+// If the folder already exists, the function is called with created set to false.
+// If the folder is created, the function is called with created set to true.
+//
+// When opts.GenerateNewFolderIDs is true, each newly created folder's metadata
+// (_folder.json) is written with a freshly generated UID instead of the original
+// folder identifier; folders that already exist in the repository are left
+// untouched. The in-memory tree keeps the original IDs so resources still resolve
+// to their folder path, and parent nesting is unaffected (it derives from
+// directory structure); only the manifest's metadata.name carries the new UID.
+// This has no effect when folder metadata is not written, since no UID is
+// materialized then.
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree FolderTree, opts EnsureFolderTreeExistsOptions) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
+		// Capture when this folder's processing began so OnFolder can record the
+		// duration: it is invoked after the read/write below, so it cannot time
+		// the operation itself.
+		startedAt := time.Now()
+
+		p := folder.Path
+		if opts.Path != "" {
+			p = safepath.Join(opts.Path, p)
+		}
+		if !safepath.IsDir(p) {
+			p = p + "/" // trailing slash indicates folder
+		}
+
+		// Folder titles are not sanitized; reject any unsafe path (traversal,
+		// absolute, too deep) before it reaches the backend, using the same
+		// validation enforced on the import side.
+		if err := IsPathSupported(p); err != nil {
+			return opts.OnFolder(folder, false, startedAt, fmt.Errorf("unsafe folder path %q: %w", p, err))
+		}
+
+		_, err := fm.repo.Read(ctx, p, opts.Ref)
+		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
+			return opts.OnFolder(folder, false, startedAt, fmt.Errorf("check if folder exists before writing: %w", err))
+		} else if err == nil {
+			// Folder already exists in repository, add it to tree so resources can find it
+			fm.tree.Add(folder, parent)
+			return opts.OnFolder(folder, false, startedAt, nil)
+		}
+
+		manifestID := folder.ID
+		if opts.GenerateNewFolderIDs {
+			manifestID = util.GenerateShortUID()
+		}
+		msg := fmt.Sprintf("Add folder and folder metadata %s", p)
+		manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
+		if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
+			return opts.OnFolder(folder, true, startedAt, err)
+		}
+
+		// Add it to the existing tree
+		fm.tree.Add(folder, parent)
+
+		return opts.OnFolder(folder, true, startedAt, nil)
+	})
+}

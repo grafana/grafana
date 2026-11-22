@@ -19,6 +19,7 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -322,7 +323,7 @@ func (f *fixedAnnouncements) Announced(string, string) int64 {
 
 // stubRepositoryGetter is a RepositoryGetter whose Get is scripted.
 type stubRepositoryGetter struct {
-	RepositoryGetter
+	appinformer.RepositoryGetter
 	get func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
 }
 
@@ -382,7 +383,7 @@ func TestObserveRepositoryFreshness(t *testing.T) {
 	// A getter the wrapper does not own still answers the quota methods.
 	t.Run("forwards the rest of the getter", func(t *testing.T) {
 		client := fake.NewClientset(repo(testNamespace, "r")).ProvisioningV0alpha1()
-		inner := NewClientRepositoryGetter(client, seededStore(repo(testNamespace, "r")))
+		inner := appinformer.NewClientRepositoryGetter(client, seededStore(repo(testNamespace, "r")))
 		rec, _ := newFreshnessRecorder(t, res)
 
 		wrapped := observeRepositoryFreshness(inner, &fixedAnnouncements{}, rec)
@@ -493,7 +494,8 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 // cross-replica read visibility to measure.
 func TestNewRepositoryDeltaSource_NoFreshnessOnTheAPIServerPath(t *testing.T) {
 	_, getter := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, nil, NewFreshnessMetrics(prometheus.NewRegistry()))
-	assert.IsType(t, cachedRepositoryGetter{}, getter)
+	_, wrapped := getter.(freshnessRepositoryGetter)
+	assert.False(t, wrapped)
 }
 
 func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {

@@ -5,7 +5,7 @@ package pullrequest
 import (
 	context "context"
 
-	jobs "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	jobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	mock "github.com/stretchr/testify/mock"
 
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"

@@ -19,12 +19,11 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -314,7 +313,7 @@ var (
 	_ rest.Storage         = (*jobsConnector)(nil)
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 
-	_ appjobs.CreateAuthorizer = (*jobsConnector)(nil)
+	_ jobs.CreateAuthorizer = (*jobsConnector)(nil)
 )
 
 // handleOrphanCleanupJob handles job creation for releaseResources and deleteResources

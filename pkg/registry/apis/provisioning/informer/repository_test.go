@@ -16,6 +16,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	appinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -92,7 +93,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	require.NoError(t, indexer.Add(repo(testNamespace, "a")))
 	require.NoError(t, indexer.Add(terminating(repo(testNamespace, "going"))))
 	require.NoError(t, indexer.Add(repo("other", "c")))
-	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+	getter := appinformer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
 
 	got, err := getter.Get(context.Background(), testNamespace, "a")
 	require.NoError(t, err)
@@ -111,7 +112,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title"
-	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore())
+	g := appinformer.NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore())
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -126,13 +127,13 @@ func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 // this replica never stored it.
 func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	store := usinformer.NewStore()
-	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
+	g := appinformer.NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
 
 	_, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
 
-	store.Update(context.Background(), identity("ns", "gone", "3"))
+	store.Update(context.Background(), appinformer.Identity("ns", "gone", "3"))
 	_, err = g.Get(context.Background(), "ns", "gone")
 	require.True(t, apierrors.IsNotFound(err))
 	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
@@ -141,7 +142,7 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 // The confirmed count reads the API, not the store.
 func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
+	g := appinformer.NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
 
 	cached, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -157,7 +158,7 @@ func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 // which is what lets the store hold identities alone.
 func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
 	store := seededStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	g := appinformer.NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
 
 	count, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)

@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
+
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -34,16 +36,15 @@ import (
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller/reconciler"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
-	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
@@ -81,7 +82,7 @@ type ControllerConfig struct {
 	connectionFactory     connection.Factory
 	connectionExtras      []connection.Extra
 	ConnectionExtrasFunc  func() ([]connection.Extra, error)
-	healthMetricsRecorder controller.HealthMetricsRecorder
+	healthMetricsRecorder reconciler.HealthMetricsRecorder
 	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
 	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
@@ -314,7 +315,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if !r.IsActive() {
 			continue
 		}
-		group := provisioningresources.CollectionGroup(r.Group)
+		group := resources.CollectionGroup(r.Group)
 		switch group {
 		case resources.DashboardResource.Group, resources.FolderResource.Group, provisioning.GROUP:
 			continue // built-in groups with dedicated server URLs
@@ -330,7 +331,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
 
-	configProviders := make(map[string]apiserver.RestConfigProvider)
+	configProviders := make(map[string]resources.RestConfigProvider)
 
 	tlsConfigForTransport, err := rest.TLSConfigFor(&rest.Config{TLSClientConfig: tlsConfig})
 	if err != nil {
@@ -366,7 +367,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	c.manifestWatcher, err = resources.NewRemoteManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
+	c.manifestWatcher, err = newManifestWatcher(supportedResourceProvider, c.Registry(), resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: provisioning.GROUP,
 		Exchanger:         tokenExchangeClient,
@@ -377,9 +378,20 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResourceProvider)
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, resources.DiscoveryFrom(apiserverclient.NewDiscoveryClient), supportedResourceProvider)
 	c.clients = clients
 	return clients, nil
+}
+
+// newManifestWatcher keeps the supported resources in step with the app
+// manifests that the aggregated API server publishes. Without a discovery URL
+// the supported set is the configured one.
+func newManifestWatcher(supportedResourceProvider resources.SupportedResourceProvider, reg prometheus.Registerer, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+	if cfg.DiscoveryURL == "" {
+		return services.NewIdleService(nil, nil), nil
+	}
+	watcherReg := prometheus.WrapRegistererWith(prometheus.Labels{"component": "provisioning"}, reg)
+	return resource.NewManifestWatcher(cfg, watcherReg, supportedResourceProvider.Update)
 }
 
 func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
@@ -693,12 +705,12 @@ func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
 	return connectionFactory, nil
 }
 
-func (c *ControllerConfig) HealthMetricsRecorder() (controller.HealthMetricsRecorder, error) {
+func (c *ControllerConfig) HealthMetricsRecorder() (reconciler.HealthMetricsRecorder, error) {
 	if c.healthMetricsRecorder != nil {
 		return c.healthMetricsRecorder, nil
 	}
 
-	c.healthMetricsRecorder = controller.NewHealthMetricsRecorder(c.Registry())
+	c.healthMetricsRecorder = reconciler.NewHealthMetricsRecorder(c.Registry())
 
 	return c.healthMetricsRecorder, nil
 }
