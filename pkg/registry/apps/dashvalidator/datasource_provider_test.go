@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +21,7 @@ func TestDatasourceProvider_CanQuery(t *testing.T) {
 
 	userWith := func(perms map[string][]string) identity.Requester {
 		return &identity.StaticRequester{
-			OrgRole:     identity.RoleEditor,
+			OrgRole:     authlib.RoleEditor,
 			UserID:      1,
 			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: perms},
