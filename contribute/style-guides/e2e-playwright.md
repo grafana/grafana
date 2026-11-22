@@ -273,7 +273,7 @@ You can add Playwright end-to-end tests for plugins to the [`e2e-playwright/plug
     },
    ```
 
-1. Update the [CODEOWNERS](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is owner of the tests in the directory you added in step 1.
+1. Update the [CODEOWNERS](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is owner of the tests in the directory you added in step 1. The pre-commit hook fails when a new spec has no owner; run `pnpm codeowners:check` to verify.
 
 ## Commands
 

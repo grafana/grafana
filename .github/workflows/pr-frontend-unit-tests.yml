@@ -181,6 +181,7 @@ jobs:
       uses: ./.github/actions/install-frontend-deps
     - run: pnpm run test:rspack
     - run: pnpm run test:release
+    - run: pnpm run test:codeowners
 
   frontend-packages-unit-tests:
     needs:

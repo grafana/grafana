@@ -16,6 +16,14 @@ node raw.js       # Generate raw audit data
 node generate.js  # Process raw data into manifest files
 ```
 
+## Checking ownership before you push
+
+`check-staged.js` runs as the `codeowners-check` pre-commit hook (see `lefthook.yml`). It fails when a newly added or renamed staged file has no owner in `.github/CODEOWNERS`, using the same rule as the `notowned` check of the CI "Codeowners Validator" workflow, but offline. When `.github/CODEOWNERS` itself is staged, every tracked file is checked, so changes that remove ownership are caught too.
+
+```bash
+pnpm codeowners:check   # check every tracked file in the index
+```
+
 ## Listing a codeowner's tests
 
 `list-tests.mts` resolves the test files owned by a codeowner (via `jest --listTests` against `jest.config.codeowner.js`) and prints one JSON object per test case on stdout — `{ file, startLine, endLine, name }` — without running any test bodies.

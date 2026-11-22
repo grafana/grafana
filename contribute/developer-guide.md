@@ -53,6 +53,12 @@ make lefthook-uninstall
 
 > We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
+The hooks also check code ownership. Every new or renamed file must be covered by an entry in `.github/CODEOWNERS`; if one is not, the commit fails and lists the affected paths. Add a pattern with the responsible team to `.github/CODEOWNERS` in the same commit. CI runs the same check, so this only catches the problem earlier. To run it on its own:
+
+```sh
+pnpm codeowners:check
+```
+
 ### Knip
 
 We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:

@@ -103,6 +103,8 @@ make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
 
+The pre-commit hook rejects new or renamed files that have no owner in `.github/CODEOWNERS`. Add a pattern with the responsible `@grafana/` team in the same commit, and verify with `pnpm codeowners:check`.
+
 ## Architecture
 
 ### Backend (`pkg/`)
