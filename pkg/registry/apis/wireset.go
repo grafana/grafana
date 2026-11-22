@@ -87,6 +87,7 @@ var WireSet = wire.NewSet(
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,
+	provisioning.RegisterJobQueue,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	preferences.RegisterAPIService,
