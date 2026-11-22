@@ -151,6 +151,8 @@ import (
 	_ "github.com/grafana/grafana/apps/secret/inline/v1beta1"
 	_ "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	_ "github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	_ "github.com/grafana/grafana/apps/userstorage/pkg/apis/manifestdata"
+	_ "github.com/grafana/grafana/apps/userstorage/pkg/app"
 	_ "github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/api/avatar"
 	_ "github.com/grafana/grafana/pkg/api/datasource"
