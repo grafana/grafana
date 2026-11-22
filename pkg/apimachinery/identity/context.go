@@ -107,7 +107,7 @@ func newInternalIdentity(name string, namespace string, orgID int64, opts ...Ide
 		UserUID:        name,
 		AuthID:         name,
 		Login:          name,
-		OrgRole:        RoleAdmin,
+		OrgRole:        types.RoleAdmin,
 		Namespace:      namespace,
 		IsGrafanaAdmin: true,
 		OrgID:          orgID,

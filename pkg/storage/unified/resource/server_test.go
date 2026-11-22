@@ -59,7 +59,7 @@ func TestSimpleServer(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUserA)
@@ -582,7 +582,7 @@ func TestListStoredResources(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1373,7 +1373,7 @@ func TestGracefulShutdown(t *testing.T) {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), testUser)
@@ -1573,7 +1573,7 @@ func newWatchTestUser() *identity.StaticRequester {
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 }
@@ -2917,7 +2917,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3208,7 +3208,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		Login:     "testuser",
 		UserID:    123,
 		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
+		OrgRole:   authlib.RoleEditor,
 		Namespace: "default",
 	}
 	ctx := authlib.WithAuthInfo(context.Background(), user)
@@ -3895,7 +3895,7 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, autho
 		UserID:         123,
 		UserUID:        "u123",
 		Namespace:      "*",
-		OrgRole:        identity.RoleAdmin,
+		OrgRole:        authlib.RoleAdmin,
 		IsGrafanaAdmin: true,
 	})
 
@@ -4490,7 +4490,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	authCtx := func(ns string) context.Context {
 		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
-			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+			Namespace: ns, OrgRole: authlib.RoleAdmin, IsGrafanaAdmin: true,
 		})
 	}
 	return srv, authCtx(identityNamespace), authCtx("*")
@@ -4868,7 +4868,7 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		}
 		ctxFor := func(namespace string) context.Context {
 			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: authlib.RoleEditor, Namespace: namespace,
 			})
 		}
 

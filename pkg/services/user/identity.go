@@ -23,7 +23,7 @@ type SignedInUser struct {
 	UserUID       string `xorm:"user_uid"`
 	OrgID         int64  `xorm:"org_id"`
 	OrgName       string
-	OrgRole       identity.RoleType
+	OrgRole       claims.RoleType
 	Login         string
 	Name          string
 	Email         string
@@ -182,7 +182,7 @@ func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
 }
 
-func (u *SignedInUser) HasRole(role identity.RoleType) bool {
+func (u *SignedInUser) HasRole(role claims.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
@@ -222,7 +222,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		// e.g. anonymous and render key.
 		orgRole := u.GetOrgRole()
 		if orgRole == "" {
-			orgRole = identity.RoleNone
+			orgRole = claims.RoleNone
 		}
 
 		id = string(orgRole)
@@ -290,7 +290,7 @@ func (u *SignedInUser) GetTeams() []int64 {
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
-func (u *SignedInUser) GetOrgRole() identity.RoleType {
+func (u *SignedInUser) GetOrgRole() claims.RoleType {
 	return u.OrgRole
 }
 

@@ -52,7 +52,7 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
 	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
-	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
+	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: authtypes.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 

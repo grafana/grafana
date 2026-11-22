@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -262,7 +263,7 @@ func TestHandleCheck_DatasourcePermissions(t *testing.T) {
 		assert.Equal(t, "auth_error", resp["code"])
 	})
 
-	user := &identity.StaticRequester{OrgRole: identity.RoleEditor, UserID: 1, OrgID: 1}
+	user := &identity.StaticRequester{OrgRole: authlib.RoleEditor, UserID: 1, OrgID: 1}
 
 	t.Run("user with scoped access passes permission check", func(t *testing.T) {
 		ctx := identity.WithRequester(context.TODO(), user)

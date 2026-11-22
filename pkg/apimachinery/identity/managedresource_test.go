@@ -41,7 +41,7 @@ func identities(t *testing.T) callers {
 		user:        &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"},
 		service:     &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "service"},
 		provisioner: provisioner,
-		orgAdmin:    &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin", OrgRole: identity.RoleAdmin},
+		orgAdmin:    &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin", OrgRole: authtypes.RoleAdmin},
 		serverAdmin: &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin", IsGrafanaAdmin: true},
 	}
 }

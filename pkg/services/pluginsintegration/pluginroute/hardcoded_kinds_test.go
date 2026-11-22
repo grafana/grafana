@@ -32,7 +32,7 @@ func TestHardcodedOwnerFromName(t *testing.T) {
 	require.False(t, owned.createOnUpdate)
 
 	// An org admin is not a server admin: they reach only their own objects.
-	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: identity.RoleAdmin}
+	user := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "abc", OrgRole: authlib.RoleAdmin}
 	serverAdmin := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "root", IsGrafanaAdmin: true}
 
 	tests := []struct {

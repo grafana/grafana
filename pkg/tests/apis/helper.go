@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	authlib "github.com/grafana/authlib/types"
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -915,7 +916,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 
 	// make org1 admins grafana admins
-	isGrafanaAdmin := basicRole == identity.RoleAdmin && orgId == 1
+	isGrafanaAdmin := basicRole == authlib.RoleAdmin && orgId == 1
 	login := name
 	if isGrafanaAdmin {
 		login = "grafana-admin"
@@ -953,7 +954,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		require.NoError(c.t, err)
 		for _, o := range orgs {
 			_ = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
-				Role:   identity.RoleAdmin,
+				Role:   authlib.RoleAdmin,
 				OrgID:  o.ID,
 				UserID: u.ID,
 			})
