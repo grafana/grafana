@@ -1,8 +1,9 @@
-import { waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
+import { LazyLoader, SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { DashboardEditActionEvent } from '../../sidebar/events';
@@ -10,6 +11,7 @@ import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test
 import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem, type DashboardGridItemState } from './DashboardGridItem';
+import { DashboardGridItemRenderer } from './DashboardGridItemRenderer';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
@@ -27,6 +29,25 @@ jest.mock('../../utils/getQueryRunnerFor', () => ({
   ...jest.requireActual('../../utils/getQueryRunnerFor'),
   getQueryRunnerFor: jest.fn().mockImplementation(() => mockGetQueryRunnerFor()),
 }));
+
+it('activates an offscreen panel only after its grid slot enters view', () => {
+  const panel = new VizPanel({ key: 'panel-1' });
+  const activate = jest.spyOn(panel, 'activate').mockReturnValue(() => {});
+  const item = new DashboardGridItem({ body: panel });
+  new DashboardScene({
+    body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [item] }) }),
+  });
+
+  jest.mocked(LazyLoader.observer.observe).mockImplementationOnce(() => {});
+  render(<DashboardGridItemRenderer model={item} />);
+  const slot = item.containerRef.current!;
+
+  expect(slot).toBeInTheDocument();
+  expect(activate).not.toHaveBeenCalled();
+
+  act(() => LazyLoader.observer.observe(slot));
+  expect(activate).toHaveBeenCalledTimes(1);
+});
 
 describe('PanelRepeaterGridItem', () => {
   it('Given scene with variable with 2 values', async () => {

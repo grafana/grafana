@@ -100,6 +100,21 @@ describe('DashboardDatasource', () => {
     expect(sourceData.isActive).toBe(false);
   });
 
+  it('sets the fallback query width after activating an unmounted source', () => {
+    const { observable, sourceData } = setup({ refId: 'A', panelId: 1, withTransforms: true });
+    const widthUpdates: Array<{ width: number; active: boolean }> = [];
+    jest.spyOn(sourceData, 'setContainerWidth').mockImplementation((width) => {
+      widthUpdates.push({ width, active: sourceData.isActive });
+    });
+
+    const subscription = observable.subscribe();
+    const secondSubscription = observable.subscribe();
+    secondSubscription.unsubscribe();
+    subscription.unsubscribe();
+
+    expect(widthUpdates).toEqual([{ width: 500, active: true }]);
+  });
+
   it('Should emit only the first value and complete if used within MixedDS', async () => {
     const { observable } = setup({ refId: 'A', panelId: 1 }, `${MIXED_REQUEST_PREFIX}1`);
 

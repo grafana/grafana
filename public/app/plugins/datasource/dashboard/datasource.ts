@@ -96,9 +96,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const adHocFilters = options.filters || [];
 
     return defer(() => {
-      if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
-        sourceDataProvider?.setContainerWidth(500);
-      }
+      const needsFallbackWidth = !sourceDataProvider!.isActive;
 
       /**
        * Ignore the isInView flag on the original data provider
@@ -107,6 +105,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       sourceDataProvider?.bypassIsInViewChanged?.(true);
 
       const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
+
+      // Let activation skip width-dependent queries so the width update starts them only once.
+      if (needsFallbackWidth) {
+        sourceDataProvider?.setContainerWidth?.(500);
+      }
 
       // Only the Mixed-DS path uses `first(Done || Error)` to complete the
       // substream, so only that path needs to defend against a stale Done
