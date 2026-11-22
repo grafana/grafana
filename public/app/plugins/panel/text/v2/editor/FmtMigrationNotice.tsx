@@ -12,7 +12,7 @@ import { catchTemplateError, interpolateTemplate, interpretsHandlebars } from '.
 
 const FMT = 'fmt';
 const DISPLAY_EXAMPLE = '{{display "cpu"}}';
-const BLOCK_EXAMPLE = '{{#display "cpu"}}{{text}}{{suffix}}{{/display}}';
+const BLOCK_EXAMPLE = '{{#display "cpu"}}{{prefix}}{{text}}{{suffix}}{{/display}}';
 
 interface Props {
   content: string;

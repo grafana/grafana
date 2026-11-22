@@ -148,7 +148,7 @@ describe('FmtMigrationNotice', () => {
 
     expect(
       within(screen.getByRole('dialog')).getByText(
-        'The display helper reads the formatted value, as in {{display "cpu"}}, and a block reads several of its properties, as in {{#display "cpu"}}{{text}}{{suffix}}{{/display}}.'
+        'The display helper reads the formatted value, as in {{display "cpu"}}, and a block reads several of its properties, as in {{#display "cpu"}}{{prefix}}{{text}}{{suffix}}{{/display}}.'
       )
     ).toBeVisible();
   });
