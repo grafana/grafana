@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -45,6 +46,7 @@ func (s *HistoryJobCleanupService) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	logging.DefaultLogger.Info("starting historic job cleanup", "expiration", expiration.String())
 	source.Run(ctx.Done())
 	return nil
 }
