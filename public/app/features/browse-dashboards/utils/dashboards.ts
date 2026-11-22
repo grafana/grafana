@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
+import { type ResourceRef, toResourceRef } from 'app/features/provisioning/types/job';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
@@ -68,15 +68,6 @@ export function isNonSelectableVirtualFolder(uid: string): boolean {
   );
 }
 
-// Single gate for the starred-folders feature: its own flag and the app-platform folder API, which
-// renders the virtual root in the browse list.
-export function starredFoldersEnabled(): boolean {
-  return (
-    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaStarredFolders, false) &&
-    getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)
-  );
-}
-
 // Construct folder URL and append orgId to it
 export function getFolderURL(uid: string) {
   const { orgId } = contextSrv.user;
@@ -128,12 +119,7 @@ export function getSelectedItemRefs(
   );
 }
 
-const RESOURCE_REF = {
-  folder: { group: 'folder.grafana.app', kind: 'Folder' },
-  dashboard: { group: 'dashboard.grafana.app', kind: 'Dashboard' },
-} as const;
-
 /** Selected folders and dashboards as k8s resource refs for bulk provisioning jobs. */
 export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>): ResourceRef[] {
-  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => ({ name: uid, ...RESOURCE_REF[kind] }));
+  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => toResourceRef(CORE_KINDS[kind], uid));
 }

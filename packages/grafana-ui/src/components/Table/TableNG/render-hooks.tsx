@@ -14,12 +14,10 @@ import {
 import {
   DataHoverClearEvent,
   DataHoverEvent,
-  FALLBACK_COLOR,
   type DataFrame,
   type Field,
   FieldType,
   type GrafanaTheme2,
-  getDisplayProcessor,
   formattedValueToString,
   type TimeRange,
 } from '@grafana/data';
@@ -32,12 +30,7 @@ import {
   type RenderRowProps,
   Row,
 } from '@grafana/react-data-grid';
-import {
-  FieldColorModeId,
-  TableCellDisplayMode,
-  TableCellTooltipPlacement,
-  type TableFooterOptions,
-} from '@grafana/schema';
+import { TableCellDisplayMode, TableCellTooltipPlacement, type TableFooterOptions } from '@grafana/schema';
 
 import { type PanelContext } from '../../PanelChrome';
 
@@ -45,7 +38,7 @@ import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cell
 import { getCellMenuOptions } from './cellMenuOptions';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
-import { TableCellActions } from './components/TableCellActions';
+import { handleCellActionsKeyDown, TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
@@ -61,7 +54,6 @@ import {
 } from './styles';
 import {
   type CellRootRenderer,
-  type FilterType,
   type FromFieldsResult,
   type GetActionsFunctionLocal,
   type InspectCellProps,
@@ -162,7 +154,6 @@ export interface ColumnBuildConfig {
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
-  filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
    * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
@@ -187,7 +178,6 @@ export interface ColumnBuildConfig {
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
-  setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
@@ -195,6 +185,7 @@ export interface ColumnBuildConfig {
   jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  timeZone?: string;
   typographyCtx: TypographyCtx;
 }
 
@@ -208,38 +199,20 @@ export type FromFieldsFn = (
 ) => FromFieldsResult;
 
 /**
- * Returns a copy of `fields` with the table's cell-type-specific display processors attached — the
- * Pill mappings override and the JSON pretty-printer. These are derived on fresh field objects
- * rather than mutated onto the caller's fields: the column builder used to attach them by mutating
- * the shared field objects mid-render, which leaked into other consumers of the data frame and made
- * any display-dependent measurement order-sensitive (widths could shift once the builder had run,
- * e.g. on sort). Fields that need neither processor are returned by reference, unchanged.
+ * Returns a copy of `fields` with the table's cell-type-specific display processors attached.
+ * These are derived on fresh field objects rather than mutated onto the caller's fields: the column
+ * builder used to attach them by mutating the shared field objects mid-render, which leaked into
+ * other consumers of the data frame and made any display-dependent measurement order-sensitive
+ * (widths could shift once the builder had run, e.g. on sort). Fields that need no processor are
+ * returned by reference, unchanged.
  */
 export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): Field[] {
   return fields.map((field) => {
     const cellType = getCellOptions(field).type;
     let prepared = field;
 
-    // Pill cells with value mappings: use the single fixed-color calculator so mappings win over the
-    // default thresholds mode (a hack), then recompute the display for that adjusted config.
-    if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
-      prepared = {
-        ...field,
-        config: {
-          ...field.config,
-          color: {
-            ...field.config.color,
-            mode: FieldColorModeId.Fixed,
-            fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
-          },
-        },
-      };
-      prepared.display = getDisplayProcessor({ field: prepared, theme });
-    }
-
     // JSONView cells, and `other` fields left on the default cell type, render their value as
-    // pretty-printed JSON. Copy first (if the Pill branch above didn't already) so the original
-    // field object is never mutated.
+    // pretty-printed JSON. Copy first so the original field object is never mutated.
     if (rendersAsJson(field, cellType)) {
       prepared = prepared === field ? { ...field } : prepared;
       prepared.display = displayJsonValue(prepared);
@@ -271,8 +244,6 @@ function buildColumnsFromFields(
     getTextColorForBackground,
     rowHeight,
     rowHeightFn,
-    filter,
-    setFilter,
     setInspectCell,
     gridRef,
     getCellActions,
@@ -295,6 +266,7 @@ function buildColumnsFromFields(
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
     timeRange,
+    timeZone,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
     typographyCtx,
@@ -483,6 +455,7 @@ function buildColumnsFromFields(
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
+          onKeyDown={tableRefreshEnabled && !disableKeyboardEvents ? handleCellActionsKeyDown : undefined}
         />
       );
     };
@@ -678,8 +651,7 @@ function buildColumnsFromFields(
           column={column}
           rows={rawRows}
           field={field}
-          filter={filter}
-          setFilter={setFilter}
+          timeZone={timeZone}
           disableKeyboardEvents={disableKeyboardEvents}
           direction={sortDirection}
           showTypeIcons={showTypeIcons}

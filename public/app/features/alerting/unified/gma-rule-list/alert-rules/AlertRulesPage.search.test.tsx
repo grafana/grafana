@@ -1,0 +1,363 @@
+import { HttpResponse, http } from 'msw';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
+
+import { locationService } from '@grafana/runtime';
+import server from '@grafana/test-utils/server';
+
+import { setupMswServer } from '../../mockApi';
+import { alertRuleFactory, folderFactory } from '../mocks/factories';
+import { ruleSearchUrl } from '../mocks/handlers';
+import { type RuleListBackend, setupRuleListBackend } from '../mocks/ruleListBackend';
+
+import AlertRulesPage from './AlertRulesPage';
+
+setupMswServer();
+
+const FOLDERS = [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Alerts' } })];
+
+const ALERT_RULES = [
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'CPU high load' } }),
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'Disk full' } }),
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'Memory high' } }),
+];
+
+function setup(options: Partial<Parameters<typeof setupRuleListBackend>[0]> = {}) {
+  return setupRuleListBackend({ folders: FOLDERS, alertRules: ALERT_RULES, ...options });
+}
+
+/** Folders is the default view; List tests open the page with `view=list`. */
+function renderInListMode() {
+  return render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+}
+
+describe('AlertRulesPage search', () => {
+  let backend: RuleListBackend;
+
+  function searchParam() {
+    return new URLSearchParams(locationService.getLocation().search).get('search');
+  }
+
+  function searchInput() {
+    return screen.getByRole('textbox', { name: 'Search' });
+  }
+
+  beforeEach(() => {
+    backend = setup();
+  });
+
+  it('keeps a multi-token query exactly as typed in the input and the URL, and sends it as one request', async () => {
+    const { user } = renderInListMode();
+    await screen.findByText('CPU high load');
+    const typed = 'paused:true cpu label:team=api  folder:"Team Alerts"';
+
+    await user.type(searchInput(), `${typed}{Enter}`);
+
+    await waitFor(() =>
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
+        and: [
+          { text: { value: 'cpu' } },
+          { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
+          { filter: { field: 'labels', operator: 'In', values: ['team=api'] } },
+          { filter: { field: 'paused', operator: 'In', values: ['true'] } },
+        ],
+      })
+    );
+    expect(backend.ruleSearches).toHaveLength(2);
+    expect(searchInput()).toHaveValue(typed);
+    expect(searchParam()).toBe(typed);
+  });
+
+  it('restores the input and the request from the URL on load', async () => {
+    render(<AlertRulesPage />, {
+      historyOptions: {
+        initialEntries: [`/?${new URLSearchParams({ search: 'folder:"team alerts" label:team=~api.* "high load"' })}`],
+      },
+    });
+
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
+    expect(searchInput()).toHaveValue('folder:"team alerts" label:team=~api.* "high load"');
+    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
+      {
+        and: [
+          { text: { value: 'high load' } },
+          { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
+          { regex: { field: 'labels', pattern: 'team=api.*' } },
+        ],
+      },
+    ]);
+  });
+
+  it('searches titles for a key:value word the page has no filter for, and keeps it as typed in the URL', async () => {
+    const { user } = renderInListMode();
+    await screen.findByText('CPU high load');
+
+    await user.type(searchInput(), 'foo:bar metric:cpu{Enter}');
+
+    await waitFor(() => expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'foo:bar metric:cpu' } }));
+    expect(searchParam()).toBe('foo:bar metric:cpu');
+    expect(searchInput()).not.toHaveAttribute('aria-invalid');
+  });
+
+  it.each([
+    ['cpu label:', 'Put a value right after the colon, with no space: label:'],
+    ['folder: "perf folder 1"', 'Put a value right after the colon, with no space: folder:'],
+    ['state:inactive', 'Use state:normal instead of state:inactive.'],
+    ['state:foo', 'Use one of these values for state: firing, pending, recovering, normal'],
+    [
+      'health:bad label:',
+      'Use one of these values for health: ok, nodata, error, unknown Put a value right after the colon, with no space: label:',
+    ],
+    ['contactPoint:on-call policy:escalation', 'Some filters could not be applied: contactPoint'],
+    [
+      'policy:default paused:false',
+      'Use one of these values for paused: true Some filters are not available yet: policy',
+    ],
+    ['cpu*', 'Search text cannot contain * or %.'],
+    ['cpu "high', 'A quote in the search is not closed.'],
+  ])('shows why %j cannot be searched, keeps it as typed and sends no request', async (search, message) => {
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(searchInput()).toHaveValue(search);
+    expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
+    expect(searchInput()).toHaveAccessibleDescription(message);
+    expect(backend.ruleSearches).toEqual([]);
+  });
+
+  it('sends no request for an invalid query typed into the input, and searches again once it is fixed', async () => {
+    const { user } = renderInListMode();
+    await screen.findByText('CPU high load');
+
+    await user.type(searchInput(), 'panelId:4{Enter}');
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(backend.ruleSearches).toHaveLength(1);
+
+    await user.tripleClick(searchInput());
+    await user.keyboard('dashboard:dash-1 panelId:4{Enter}');
+
+    await waitFor(() =>
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
+        and: [
+          { filter: { field: 'dashboardUID', operator: 'In', values: ['dash-1'] } },
+          { filter: { field: 'panelID', operator: 'In', values: ['4'] } },
+        ],
+      })
+    );
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['where.and[1].regex.pattern', 'label was rejected: Invalid value: "team=(": missing closing )'],
+    ['limit', 'The search was rejected: Invalid value: "team=(": missing closing )'],
+  ])('shows a 422 with a cause on %s under the input as %j, with no Retry', async (field, description) => {
+    server.use(
+      http.post(ruleSearchUrl('alert'), () =>
+        HttpResponse.json(
+          { code: 422, details: { causes: [{ field, message: 'Invalid value: "team=(": missing closing )' }] } },
+          { status: 422 }
+        )
+      )
+    );
+    render(<AlertRulesPage />, {
+      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'cpu label:team=~(' })}`] },
+    });
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
+    expect(searchInput()).toHaveAccessibleDescription(description);
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+
+  it('restarts paging from the first page when a new query is applied', async () => {
+    backend = setup({ pageSize: { rules: 1 } });
+    const { user } = renderInListMode();
+    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText('Disk full')).toBeInTheDocument();
+
+    await user.type(searchInput(), 'memory{Enter}');
+
+    expect(await screen.findByText('Memory high')).toBeInTheDocument();
+    expect(screen.queryByText('Disk full')).not.toBeInTheDocument();
+    expect(screen.queryByText('CPU high load')).not.toBeInTheDocument();
+    expect(backend.ruleSearches.map((body) => body.continue ?? null)).toEqual([null, '1', null]);
+  });
+
+  it('clearing the input with the clear button returns to Folders mode', async () => {
+    const { user } = render(<AlertRulesPage />);
+    await screen.findByRole('button', { name: 'Expand Team Alerts' });
+    await user.type(searchInput(), 'cpu{Enter}');
+
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
+    expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'cpu' } });
+
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+
+    expect(await screen.findByRole('button', { name: 'Expand Team Alerts' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
+    expect(searchParam()).toBe('');
+    expect(searchInput()).toHaveValue('');
+  });
+
+  it('Back and Forward restore the input and the request for each applied query', async () => {
+    const { user } = renderInListMode();
+    await screen.findByText('CPU high load');
+    await user.type(searchInput(), 'cpu{Enter}');
+    await waitFor(() => expect(searchParam()).toBe('cpu'));
+    // Typing over the selection replaces the query without emptying the input first.
+    await user.tripleClick(searchInput());
+    await user.keyboard('plugins:hide cpu{Enter}');
+    await waitFor(() => expect(searchParam()).toBe('plugins:hide cpu'));
+
+    act(() => locationService.getHistory().goBack());
+
+    await waitFor(() => expect(searchInput()).toHaveValue('cpu'));
+    await waitFor(() => expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'cpu' } }));
+
+    act(() => locationService.getHistory().goForward());
+
+    await waitFor(() => expect(searchInput()).toHaveValue('plugins:hide cpu'));
+    await waitFor(() =>
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
+        and: [
+          { text: { value: 'cpu' } },
+          { regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } },
+        ],
+      })
+    );
+  });
+});
+
+describe('AlertRulesPage folder filters', () => {
+  const NAMED_FOLDERS = [
+    folderFactory.build({ metadata: { name: 'platform' }, spec: { title: 'Platform' } }),
+    folderFactory.inFolder('platform').build({ metadata: { name: 'databases' }, spec: { title: 'Databases' } }),
+    folderFactory.inFolder('platform').build({ metadata: { name: 'kubernetes' }, spec: { title: 'Kubernetes' } }),
+    folderFactory.inFolder('databases').build({ metadata: { name: 'db-alerts' }, spec: { title: 'Alerts' } }),
+    folderFactory.inFolder('kubernetes').build({ metadata: { name: 'k8s-alerts' }, spec: { title: 'Alerts' } }),
+    folderFactory.inFolder('platform').build({ metadata: { name: 'team-01' }, spec: { title: 'Team 01' } }),
+  ];
+  const NAMED_FOLDER_RULES = [
+    alertRuleFactory.inFolder('db-alerts').build({ spec: { title: 'DB down' } }),
+    alertRuleFactory.inFolder('k8s-alerts').build({ spec: { title: 'Pod crash looping' } }),
+    alertRuleFactory.inFolder('team-01').build({ spec: { title: 'Team 01 latency' } }),
+  ];
+
+  let backend: RuleListBackend;
+
+  beforeEach(() => {
+    backend = setupRuleListBackend({ folders: NAMED_FOLDERS, alertRules: NAMED_FOLDER_RULES });
+  });
+
+  function renderWithSearch(search: string, view?: 'list') {
+    const params = new URLSearchParams({ search, ...(view ? { view } : {}) });
+    return render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?${params}`] } });
+  }
+
+  async function rowTitles() {
+    const rows = await screen.findAllByRole('listitem');
+    return { rows, titles: rows.map((row) => row.querySelector('a')?.textContent) };
+  }
+
+  it.each([
+    { search: 'folder:Alerts', rules: ['DB down', 'Pod crash looping'] },
+    { search: 'folderUid:db-alerts folderUid:team-01', rules: ['DB down', 'Team 01 latency'] },
+    { search: 'folder:Alerts folderUid:k8s-alerts folderUid:team-01', rules: ['Pod crash looping'] },
+  ])('lists $rules for $search', async ({ search, rules }) => {
+    renderWithSearch(search, 'list');
+
+    expect((await rowTitles()).titles).toEqual(rules);
+  });
+
+  it.each([
+    { search: 'folder:Alerts', folders: ['Alerts', 'Alerts'], parents: ['Databases', 'Kubernetes'] },
+    {
+      search: 'folderUid:k8s-alerts folderUid:team-01',
+      folders: ['Alerts', 'Team 01'],
+      parents: ['Kubernetes', 'Platform'],
+    },
+    { search: 'folder:Alerts folderUid:k8s-alerts folderUid:team-01', folders: ['Alerts'], parents: ['Kubernetes'] },
+  ])(
+    'shows the folders $folders in $parents for $search, staying in Folders mode',
+    async ({ search, folders, parents }) => {
+      renderWithSearch(search);
+
+      const { rows, titles } = await rowTitles();
+      expect(titles).toEqual(folders);
+      for (const [index, parent] of parents.entries()) {
+        expect(await within(rows[index]).findByText(parent)).toBeInTheDocument();
+      }
+      expect(screen.getByRole('radio', { name: /Folders/ })).toBeChecked();
+    }
+  );
+
+  it.each([
+    { search: 'folder:Nope', message: 'No alert rules match this folder' },
+    { search: 'folder:Alerts label:team=none', message: 'No alert rules found' },
+  ])('says "$message" for $search', async ({ search, message }) => {
+    renderWithSearch(search, 'list');
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+  });
+
+  it('names label, not the looked-up folder before it, as the filter the search rejected', async () => {
+    server.use(
+      http.post(ruleSearchUrl('alert'), () =>
+        HttpResponse.json(
+          { code: 422, details: { causes: [{ field: 'where.and[1].regex.pattern', message: 'missing closing )' }] } },
+          { status: 422 }
+        )
+      )
+    );
+    renderWithSearch('folder:Alerts label:team=~(', 'list');
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveAccessibleDescription(
+      'label was rejected: missing closing )'
+    );
+  });
+
+  function setupSharedFolders(folderCount: number) {
+    const folders = Array.from({ length: folderCount }, (_, index) =>
+      folderFactory.build({ metadata: { name: `folder-${index}` }, spec: { title: 'Shared' } })
+    );
+    setupRuleListBackend({
+      folders,
+      alertRules: folders.map((folder) =>
+        alertRuleFactory.inFolder(folder.metadata.name!).build({ spec: { title: `Rule in ${folder.metadata.name}` } })
+      ),
+    });
+  }
+
+  it('shows no folder limit warning when 500 folders match', async () => {
+    setupSharedFolders(500);
+    renderWithSearch('folder:Shared', 'list');
+
+    expect(await screen.findByText('Rule in folder-0')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { search: 'folder:Shared', shows: 'Rule in folder-0' },
+    { search: 'folder:Shared label:team=x', shows: 'No alert rules found' },
+  ])('warns that only 500 folders are searched when 501 match, showing "$shows"', async ({ search, shows }) => {
+    setupSharedFolders(501);
+    renderWithSearch(search, 'list');
+
+    expect(await screen.findByText(shows)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Showing results from only the first 500 matching folders. Narrow your search criteria to see results from other folders.'
+    );
+  });
+
+  it('shows a failed folder lookup with Retry, and lists the rules once Retry succeeds', async () => {
+    backend.failNext('folderSearch');
+    const { user } = renderWithSearch('folder:"Team 01"', 'list');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
+  });
+});

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -30,7 +30,7 @@ const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service,
-	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles, ruleStore rules.Store) stats.Service {
+	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles, ruleService rules.RuleService) stats.Service {
 	namespacer := request.GetNamespaceMapper(cfg)
 	return &sqlStatsService{
 		cfg:            cfg,
@@ -41,7 +41,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardServ
 		dashSvc:        dashSvc,
 		orgSvc:         orgSvc,
 		features:       features,
-		ruleStore:      ruleStore,
+		ruleService:    ruleService,
 	}
 }
 
@@ -54,7 +54,7 @@ type sqlStatsService struct {
 	orgSvc         org.Service
 	namespacer     request.NamespaceMapper
 	unifiedStorage resource.ResourceClient
-	ruleStore      rules.Store
+	ruleService    rules.RuleService
 }
 
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
@@ -94,7 +94,7 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 			Namespace: ss.namespacer(org.ID),
 			Kinds:     kinds,
 		})
-		if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, err
 		}
 		for i, s := range resp.Stats {
@@ -194,11 +194,11 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		return result, err
 	}
 
-	result.AlertRules, err = ss.ruleStore.Count(ctx, 0)
+	result.AlertRules, err = ss.ruleService.Count(ctx, 0)
 	if err != nil {
 		return result, fmt.Errorf("counting alert rules: %w", err)
 	}
-	result.RuleGroups, err = ss.ruleStore.CountRuleGroups(ctx, 0)
+	result.RuleGroups, err = ss.ruleService.CountRuleGroups(ctx, 0)
 	if err != nil {
 		return result, fmt.Errorf("counting rule groups: %w", err)
 	}
@@ -224,11 +224,13 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	result.Folders = resourceCounts[kindFolder]
 	result.Dashboards = resourceCounts[kindDashboard]
 
-	provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
+	if query == nil || !query.SkipProvisionedDashboardCount {
+		provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
+		if err != nil {
+			return result, err
+		}
+		result.ProvisionedDashboards = provisioned
 	}
-	result.ProvisionedDashboards = provisioned
 
 	return result, err
 }
@@ -312,7 +314,7 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		return result, err
 	}
 
-	result.Alerts, err = ss.ruleStore.Count(ctx, 0)
+	result.Alerts, err = ss.ruleService.Count(ctx, 0)
 	if err != nil {
 		return result, fmt.Errorf("counting alert rules: %w", err)
 	}

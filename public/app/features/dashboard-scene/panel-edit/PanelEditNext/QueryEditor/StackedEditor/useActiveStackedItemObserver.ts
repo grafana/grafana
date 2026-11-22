@@ -7,7 +7,8 @@ import { getStackedItemKey, parseStackedItemType } from './utils';
 interface UseActiveStackedItemObserverArgs {
   containerRef: RefObject<HTMLDivElement | null>;
   itemsKey: string;
-  onActiveItemChange: (item: StackedEditorItem) => void;
+  /** Return `false` to leave the change unapplied, so the same section is reported again on the next update. */
+  onActiveItemChange: (item: StackedEditorItem) => boolean | void;
 }
 
 interface VisibleEntry {
@@ -82,9 +83,8 @@ export function useActiveStackedItemObserver({
 
         const [key, { item }] = dominant;
 
-        if (activeKeyRef.current !== key) {
+        if (activeKeyRef.current !== key && onActiveItemChange(item) !== false) {
           activeKeyRef.current = key;
-          onActiveItemChange(item);
         }
       },
       {

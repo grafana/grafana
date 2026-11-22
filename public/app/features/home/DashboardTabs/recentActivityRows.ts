@@ -1,6 +1,5 @@
-import { locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
+import { type IconName, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type BadgeColor } from '@grafana/ui';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { PLUMBING_PARAMS } from 'app/core/services/pageHistory/hasNothingToResume';
 import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
@@ -13,9 +12,10 @@ import { type RecentActivityItem } from './useRecentActivity';
 interface PageKindMeta {
   /** Plural, for the kind filter. */
   filterLabel: string;
-  /** Singular, for the row badge. */
+  /** Singular, for the row icon's tooltip. */
   badge: string;
-  color: BadgeColor;
+  /** Row icon; nav-section icons where a kind has one, so the row reads like its menu entry. */
+  icon: IconName;
 }
 
 export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
@@ -24,31 +24,49 @@ export function getPageKindMeta(kind: PageHistoryKind): PageKindMeta {
       return {
         filterLabel: t('home.recent-activity-tab.filter-dashboards', 'Dashboards'),
         badge: t('home.recent-activity-tab.kind-dashboard', 'Dashboard'),
-        color: 'blue',
+        icon: 'apps',
+      };
+    case 'folder':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-folders', 'Folders'),
+        badge: t('home.recent-activity-tab.kind-folder', 'Folder'),
+        icon: 'folder',
+      };
+    case 'notebook':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-notebooks', 'Notebooks'),
+        badge: t('home.recent-activity-tab.kind-notebook', 'Notebook'),
+        icon: 'gf-notebook',
+      };
+    case 'playlist':
+      return {
+        filterLabel: t('home.recent-activity-tab.filter-playlists', 'Playlists'),
+        badge: t('home.recent-activity-tab.kind-playlist', 'Playlist'),
+        icon: 'presentation-play',
       };
     case 'page':
       return {
         filterLabel: t('home.recent-activity-tab.filter-pages', 'Pages'),
         badge: t('home.recent-activity-tab.kind-page', 'Page'),
-        color: 'green',
+        icon: 'ai-sparkle',
       };
     case 'explore':
       return {
         filterLabel: t('home.recent-activity-tab.filter-explore', 'Explore'),
         badge: t('home.recent-activity-tab.kind-explore', 'Explore'),
-        color: 'orange',
+        icon: 'compass',
       };
     case 'alerting':
       return {
         filterLabel: t('home.recent-activity-tab.filter-alerting', 'Alerting'),
         badge: t('home.recent-activity-tab.kind-alerting', 'Alerting'),
-        color: 'red',
+        icon: 'bell',
       };
     case 'app':
       return {
         filterLabel: t('home.recent-activity-tab.filter-apps', 'Apps'),
         badge: t('home.recent-activity-tab.kind-app', 'App'),
-        color: 'purple',
+        icon: 'layer-group',
       };
   }
 }
@@ -129,11 +147,15 @@ export function toRow(
       const { range, vars } = collectParams(item.search);
       return row(item.dashboard.name, [foldersByUid[item.dashboard.location]?.name, range, ...vars]);
     }
+    case 'playlist':
+      return row(item.playlistName, []);
     case 'explore': {
       // The datasource names the page, the query text is what it restores; "Explore" when no pane names one.
       const title = joinPanes(item.panes.map((pane) => pane.datasource)) ?? getPageKindMeta('explore').badge;
       return row(title, [joinPanes(item.panes.map((pane) => pane.queries.join('; ')))]);
     }
+    case 'folder':
+    case 'notebook':
     case 'page': {
       // Without a title, the last path segment (the page's slug) is the most readable thing the URL has.
       const { range, vars, others } = collectParams(item.search);

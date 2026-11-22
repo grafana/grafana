@@ -23,8 +23,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
     folders,
     selectedFolderUids: new Set<string>(),
     selectedResourceKeys: new Set<string>(),
-    onToggleFolder: jest.fn(),
     onToggleResource: jest.fn(),
+    onSetResourcesSelected: jest.fn(),
     selectedCount: 0,
     allSelected: false,
     onSetFoldersSelected: jest.fn(),
@@ -80,7 +80,196 @@ describe('ResourcesToMigrate', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /select folder team a/i }));
 
-    expect(props.onToggleFolder).toHaveBeenCalledWith('team-a');
+    expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], true);
+  });
+
+  it('deselects a selected folder when it is clicked again', async () => {
+    const { props, user } = setup({ selectedFolderUids: new Set(['team-a']) });
+
+    await user.click(screen.getByRole('checkbox', { name: /select folder team a/i }));
+
+    expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], false);
+  });
+
+  describe('folder tree', () => {
+    // Users (no resources) > SomeUser (1) > SomeUser Sub (1)
+    const hierarchy: FolderRow[] = [
+      {
+        uid: 'someuser',
+        title: 'SomeUser',
+        path: ['Users'],
+        parentUid: 'users',
+        resourceCount: 1,
+        directResources: [{ uid: 'f1', title: 'SomeUser Board', kind: resourceKindInfos.dashboard }],
+      },
+      {
+        uid: 'someuser-sub',
+        title: 'SomeUser Sub',
+        path: ['Users', 'SomeUser'],
+        parentUid: 'someuser',
+        resourceCount: 1,
+        directResources: [{ uid: 'fs1', title: 'Sub Board', kind: resourceKindInfos.dashboard }],
+      },
+    ];
+    const containers: FolderRow[] = [{ uid: 'users', title: 'Users', path: [], resourceCount: 0, directResources: [] }];
+
+    it('nests subfolders under their parent, including resource-less ancestors', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.queryByText('SomeUser')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+      expect(screen.getByText('SomeUser')).toBeInTheDocument();
+      expect(screen.queryByText('SomeUser Sub')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /expand someuser$/i }));
+      expect(screen.getByText('SomeUser Sub')).toBeInTheDocument();
+    });
+
+    it('selecting a folder also selects every folder beneath it', async () => {
+      const { props, user } = setup({ folders: hierarchy, containers });
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+
+      await user.click(screen.getByRole('checkbox', { name: /select folder someuser$/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledTimes(1);
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], true);
+    });
+
+    it('deselecting a folder also deselects every folder beneath it', async () => {
+      const { props, user } = setup({
+        folders: hierarchy,
+        containers,
+        selectedFolderUids: new Set(['someuser', 'someuser-sub']),
+      });
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+
+      await user.click(screen.getByRole('checkbox', { name: /select folder someuser$/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], false);
+    });
+
+    it('selecting a resource-less top-level folder selects everything under it', async () => {
+      const { props, user } = setup({ folders: hierarchy, containers });
+
+      await user.click(screen.getByRole('checkbox', { name: /select folder users/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], true);
+    });
+
+    it('ticks a resource-less folder only when everything beneath it is selected', () => {
+      const { unmount } = setup({ folders: hierarchy, containers, selectedFolderUids: new Set(['someuser']) });
+      expect(screen.getByRole('checkbox', { name: /select folder users/i })).not.toBeChecked();
+      unmount();
+
+      setup({ folders: hierarchy, containers, selectedFolderUids: new Set(['someuser', 'someuser-sub']) });
+      expect(screen.getByRole('checkbox', { name: /select folder users/i })).toBeChecked();
+    });
+
+    it('reaches subfolders that a search is hiding', async () => {
+      const { props, user } = setup({ folders: hierarchy, containers });
+
+      // Only SomeUser matches "someuser board"; its subfolder is not shown.
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'someuser board');
+      await user.click(screen.getByRole('checkbox', { name: /select folder someuser$/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], true);
+    });
+
+    it('does not tick a folder because its subfolder is selected', async () => {
+      const { user } = setup({ folders: hierarchy, containers, selectedFolderUids: new Set(['someuser-sub']) });
+
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+
+      expect(screen.getByRole('checkbox', { name: /select folder someuser$/i })).not.toBeChecked();
+    });
+
+    it('does not untick a folder because its subfolder is not selected', async () => {
+      const { user } = setup({ folders: hierarchy, containers, selectedFolderUids: new Set(['someuser']) });
+
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+      await user.click(screen.getByRole('button', { name: /expand someuser$/i }));
+
+      expect(screen.getByRole('checkbox', { name: /select folder someuser$/i })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: /select folder someuser sub/i })).not.toBeChecked();
+    });
+
+    it('select-all picks every folder that holds resources, at any depth', async () => {
+      const { props, user } = setup({ folders: hierarchy, containers });
+
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], true);
+    });
+
+    it('keeps a folder closed when only its title matches, and lets the user open it', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'users');
+
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.queryByText('SomeUser')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /expand users/i }));
+      expect(screen.getByText('SomeUser')).toBeInTheDocument();
+    });
+
+    it('opens a folder to show a resource that matches the search', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'someuser board');
+
+      expect(screen.getByText('SomeUser Board')).toBeInTheDocument();
+      // The matching folder's subfolder doesn't match, so it stays closed.
+      expect(screen.queryByText('Sub Board')).not.toBeInTheDocument();
+    });
+
+    it('lets the user collapse a folder that is open because of the search', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'sub board');
+      expect(screen.getByText('Sub Board')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /collapse someuser sub/i }));
+      expect(screen.queryByText('Sub Board')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /expand someuser sub/i }));
+      expect(screen.getByText('Sub Board')).toBeInTheDocument();
+    });
+
+    it('leaves select-all unchecked when one of several nested folders is selected', () => {
+      setup({ folders: hierarchy, containers, selectedFolderUids: new Set(['someuser']) });
+
+      const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
+      expect(selectAll).not.toBeChecked();
+      expect(selectAll.indeterminate).toBe(false);
+    });
+
+    it('expands the tree to show a nested match while searching', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+      const input = screen.getByPlaceholderText(/search folders and resources/i);
+
+      await user.type(input, 'sub board');
+
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.getByText('SomeUser Sub')).toBeInTheDocument();
+      expect(screen.getByText('Sub Board')).toBeInTheDocument();
+
+      await user.clear(input);
+
+      expect(screen.queryByText('SomeUser')).not.toBeInTheDocument();
+    });
+
+    it('keeps select-all to the folders that match the search, not the path to them', async () => {
+      const { props, user } = setup({ folders: hierarchy, containers });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'sub board');
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      // SomeUser is on screen only as a path to the match, so it stays out.
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser-sub'], true);
+    });
   });
 
   it('select-all toggles only the currently visible (filtered) folders', async () => {
@@ -315,6 +504,24 @@ describe('ResourcesToMigrate', () => {
       expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     });
 
+    it('finds names that contain regex characters such as a hyphen', async () => {
+      const hyphenated: FolderRow[] = [
+        {
+          uid: 'grace',
+          title: 'grace',
+          path: [],
+          resourceCount: 1,
+          directResources: [{ uid: 'g1', title: 'grace-1', kind: resourceKindInfos.dashboard }],
+        },
+      ];
+      const { user } = setup({ folders: hyphenated });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'grace-1');
+
+      expect(screen.getByText('grace')).toBeInTheDocument();
+      expect(screen.getByText('grace-1')).toBeInTheDocument();
+    });
+
     it('defaults to most-resources-first ordering', () => {
       setup({ folders: twoFolders });
 
@@ -349,12 +556,12 @@ describe('ResourcesToMigrate', () => {
       expect(folderTitleOrder()).toEqual(['Alpha', 'Beta']);
     });
 
-    it('marks select-all indeterminate when only some visible folders are selected', () => {
+    it('leaves select-all plain unchecked when only some visible folders are selected', () => {
       setup({ folders: twoFolders, selectedFolderUids: new Set(['alpha']) });
 
       const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
       expect(selectAll).not.toBeChecked();
-      expect(selectAll.indeterminate).toBe(true);
+      expect(selectAll.indeterminate).toBe(false);
     });
 
     it('scopes select-all to the filtered folders when a search is active', async () => {

@@ -9,13 +9,14 @@ import {
   FieldType,
   type InterpolateFunction,
   MappingType,
+  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -39,6 +40,7 @@ afterAll(() => {
 });
 
 // applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const hosts = toDataFrame({
@@ -372,6 +374,118 @@ describe('interpolateTemplate', () => {
     });
   });
 
+  describe('reducer macros', () => {
+    // Each field's last non-null value sits on a different row.
+    const usage = withFieldConfig(
+      [
+        toDataFrame({
+          name: 'usage',
+          fields: [
+            { name: 'Time', type: FieldType.time, values: [1000, 2000, 3000] },
+            { name: 'CPU', type: FieldType.number, values: [40, 75, null], config: { unit: 'percent', decimals: 1 } },
+            { name: 'Memory usage', type: FieldType.number, values: [100, null, 120], config: { unit: 'bytes' } },
+          ],
+        }),
+      ],
+      {}
+    );
+
+    it('reduces each field independently, without a shared row', () => {
+      expect(
+        interpolate(
+          '${__data.fields.CPU:reduce:lastNotNull} ${__data.fields["Memory usage"]:reduce:lastNotNull}',
+          usage,
+          RenderMode.Once
+        )
+      ).toBe('75.0% 120 B');
+    });
+
+    it.each([
+      ['mean', '${__data.fields.CPU:reduce:mean}', '57.5%'],
+      ['max', '${__data.fields.CPU:reduce:max}', '75.0%'],
+      ['sum', '${__data.fields[2]:reduce:sum}', '220 B'],
+      ['numeric', '${__data.fields.CPU.numeric:reduce:mean}', '57.5'],
+      ['an alias', '${__data.fields.CPU:reduce:current}', '75.0%'],
+    ])('resolves %s with the field display config', (_name, content, expected) => {
+      expect(interpolate(content, usage, RenderMode.Once)).toBe(expected);
+    });
+
+    it('drops the unit for a reducer whose result is not in it', () => {
+      expect(interpolate('${__data.fields["Memory usage"]:reduce:count}', usage, RenderMode.Once)).toBe('2');
+    });
+
+    it('renders the configured no value text for an all-null field', () => {
+      const missing = withFieldConfig(
+        [toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [null, null] }] })],
+        { noValue: 'n/a' }
+      );
+
+      expect(interpolate('${__data.fields.value:reduce:lastNotNull}', missing, RenderMode.Once)).toBe('n/a');
+    });
+
+    it('leaves an unknown field empty, as row macros do', () => {
+      expect(interpolate('[${__data.fields.nope:reduce:mean}]', usage, RenderMode.Once)).toBe('[]');
+    });
+
+    it.each([
+      ['an unknown reducer', '${__data.fields.CPU:reduce:nope}'],
+      ['a reducer that returns every value', '${__data.fields.CPU:reduce:allValues}'],
+    ])('leaves %s literal, in both render modes', (_name, content) => {
+      expect(interpolate(content, usage, RenderMode.Once)).toBe(content);
+      expect(interpolate(content, usage, RenderMode.PerRow)).toBe([content, content, content].join('\n\n'));
+    });
+
+    it('resolves the same value on every row, leaving row macros alone', () => {
+      expect(interpolate('${__data.fields.CPU}/${__data.fields.CPU:reduce:max}', usage, RenderMode.PerRow)).toBe(
+        '40.0%/75.0%\n\n75.0%/75.0%\n\n/75.0%'
+      );
+    });
+
+    it('leaves reducer macros alone when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      expect(interpolate('${__data.fields.CPU:reduce:max}', usage, RenderMode.Once)).toBe(
+        '${__data.fields.CPU:reduce:max}'
+      );
+    });
+
+    it('resolves inside handlebars output', () => {
+      expect(interpolate('{{#if data.length}}${__data.fields.CPU:reduce:max}{{/if}}', usage, RenderMode.Once)).toBe(
+        '75.0%'
+      );
+    });
+
+    describe('with a string field', () => {
+      function interpolateHtml(content: string, value: string) {
+        const frame = toDataFrame({
+          name: 'labels',
+          fields: [{ name: 'host', type: FieldType.string, values: [value] }],
+        });
+
+        return interpolateTemplate(
+          { content, series: [frame], renderMode: RenderMode.Once, mode: TextMode.HTML, format: 'html' },
+          createReplaceVariables()
+        ).content;
+      }
+
+      it('escapes the result with the panel format', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull}', '<b>web</b>')).toBe(
+          '&lt;b&gt;web&lt;/b&gt;'
+        );
+      });
+
+      it('applies a format written after the reducer', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull:percentencode}', 'web 1')).toBe('web%201');
+      });
+
+      it('does not interpolate a variable reference in the data', () => {
+        expect(interpolateHtml('${__data.fields.host:reduce:lastNotNull}', '${__series.name}')).toBe(
+          '${__series.name}'
+        );
+      });
+    });
+  });
+
   describe('handlebars', () => {
     it('leaves expressions alone when the text.newFeatures flag is off', () => {
       setTestFlags({ [FlagKeys.TextNewFeatures]: false });
@@ -564,6 +678,58 @@ describe('interpolateTemplate', () => {
     it('throws on a broken template, so the panel can surface the error', () => {
       expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
     });
+
+    describe('display values', () => {
+      const colored = '<b style="color:{{display "cpu" "color"}}">{{display "cpu"}}</b>';
+
+      it('colors every row of a Once template from its own value', () => {
+        expect(interpolate(`{{#each data}}${colored}{{/each}}`, withThresholds([hosts]), RenderMode.Once)).toBe(
+          `<b style="color:${red}">84</b><b style="color:${green}">12</b>`
+        );
+      });
+
+      it('colors each block of a PerRow template from its own row', () => {
+        expect(interpolate(colored, withThresholds([hosts]), RenderMode.PerRow)).toBe(
+          `<b style="color:${red}">84</b>\n\n<b style="color:${green}">12</b>`
+        );
+      });
+
+      it('agrees with the data macro on the text and the color of a mapped value', () => {
+        expect(
+          interpolate(
+            '{{display "state" "text"}}=${__data.fields.state} {{display "state" "color"}}=${__data.fields.state.color}',
+            withMappings([services]),
+            RenderMode.PerRow
+          )
+        ).toBe(
+          [
+            `Healthy=Healthy ${green}=${green}`,
+            `Degraded=Degraded ${red}=${red}`,
+            `unknown=unknown ${FALLBACK_COLOR}=${FALLBACK_COLOR}`,
+          ].join('\n\n')
+        );
+      });
+
+      it('reads the rows of the page, not the first rows of the frame', () => {
+        expect(withWindow('{{n}}={{display "n" "numeric"}}', [numberedFrame(50)], { start: 20, count: 3 })).toEqual([
+          '20=20',
+          '21=21',
+          '22=22',
+        ]);
+      });
+
+      it('formats with the unit and decimals of the field', () => {
+        const series = withFieldConfig([hosts], { unit: 'percent', decimals: 1 });
+
+        expect(
+          interpolate(
+            '{{display "cpu" "text"}}|{{display "cpu" "suffix"}}|{{display "cpu"}}',
+            series,
+            RenderMode.PerRow
+          )
+        ).toBe('84.0|%|84.0%\n\n12.0|%|12.0%');
+      });
+    });
   });
 });
 
@@ -625,6 +791,59 @@ describe('renderContent', () => {
 
     expect(html).toContain(`<span style="color:${green};">Healthy</span>`);
     expect(html).toContain(`<span style="color:${red};">Degraded</span>`);
+  });
+
+  it('keeps display colors through markdown rendering and sanitization', () => {
+    const html = renderMarkdownPerRow(
+      '<span style="color:{{display "cpu" "color"}}">{{display "cpu"}}</span>',
+      withThresholds([hosts])
+    );
+
+    expect(html).toContain(`<span style="color:${red};">84</span>`);
+    expect(html).toContain(`<span style="color:${green};">12</span>`);
+  });
+
+  describe('markup in a value mapping', () => {
+    const series = withFieldConfig([services], {
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            ok: { text: '<b>up</b><script>alert(1)</script>', color: '#0f0"onmouseover="alert(1)' },
+          },
+        },
+      ],
+    });
+
+    function renderFirstRow(content: string) {
+      return renderContent(
+        { content, series, renderMode: RenderMode.PerRow, mode: TextMode.HTML, rowWindow: { start: 0, count: 1 } },
+        createReplaceVariables(),
+        false
+      ).content;
+    }
+
+    it('is escaped by a double-brace expression', () => {
+      expect(renderFirstRow('{{display "state" "text"}}')).toBe(
+        '&lt;b&gt;up&lt;/b&gt;&lt;script&gt;alert(1)&lt;/script&gt;'
+      );
+    });
+
+    it('is sanitized when a triple-brace expression lets it through', () => {
+      expect(renderFirstRow('{{{display "state" "text"}}}')).toBe('<b>up</b>&lt;script&gt;alert(1)&lt;/script&gt;');
+    });
+
+    it('cannot close the attribute a color is written into', () => {
+      expect(renderFirstRow('<i style="color:{{display "state" "color"}}">x</i>')).toBe(
+        '<i style="color:#0f0&quot;onmouseover=&quot;alert(1);">x</i>'
+      );
+    });
+
+    it('loses an attribute that a triple-brace color adds', () => {
+      expect(renderFirstRow('<i style="color:{{{display "state" "color"}}}">x</i>')).toBe(
+        '<i style="color:#0f0;">x</i>'
+      );
+    });
   });
 
   it('sanitizes per-row HTML output', () => {

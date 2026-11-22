@@ -4,6 +4,7 @@ import { type Panel } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ExposedComponentOriginContext } from 'app/features/plugins/extensions/ExposedComponentOriginContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { addToExistingNotebook } from '../addPanel/addPanelToNotebook';
@@ -65,7 +66,7 @@ function row(uid: string, title: string): NotebookRow {
 
 async function addToCheckoutErrorSpike(user: ReturnType<typeof render>['user']) {
   await user.click(await screen.findByRole('radio', { name: 'Existing notebook' }));
-  await user.click(screen.getByRole('button', { name: 'Checkout error spike' }));
+  await user.click(screen.getByRole('radio', { name: 'Checkout error spike' }));
   await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 }
 
@@ -141,6 +142,27 @@ describe('AddToNotebookFormExposedComponent', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('passes the calling app separately from assistant cell authorship', async () => {
+    const { user } = render(
+      <ExposedComponentOriginContext.Provider value="grafana-assistant-app">
+        <AddToNotebookFormExposedComponent
+          onClose={onClose}
+          buildPanel={() => panel}
+          capturedTimeRange={{ from: 'now-6h', to: 'now' }}
+          source="assistant"
+        />
+      </ExposedComponentOriginContext.Provider>
+    );
+    await addToCheckoutErrorSpike(user);
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+    const [, , entryPoint, cellSource, , , originPluginId] = addToExisting.mock.calls[0];
+    expect({ entryPoint, cellSource, originPluginId }).toEqual({
+      entryPoint: 'plugin',
+      cellSource: 'assistant',
+      originPluginId: 'grafana-assistant-app',
+    });
+  });
+
   it('attributes a single panel to the source given', async () => {
     const { user } = render(
       <AddToNotebookFormExposedComponent
@@ -186,7 +208,7 @@ describe('AddToNotebookFormExposedComponent', () => {
       />
     );
 
-    expect(screen.getByRole('checkbox', { name: /^Lock to 2026-10-05 08:00:00 to 2026-10-05 09:30:00/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Lock time range/ })).toBeChecked();
 
     await addToCheckoutErrorSpike(user);
 

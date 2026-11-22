@@ -51,7 +51,9 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 import { withLokiInfiniteScrollBound, type InfiniteScrollTimeRange } from '../../logs/components/infiniteScrollUtils';
 import { SupportingQueryType } from '../../loki-helpers/types';
 import { runRequest } from '../../query/state/runRequest';
+import { trackSignalExplorerExperimentQueriesRun } from '../SignalExplorer/experiment';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
+import { isPrometheusPane } from '../utils/prometheus';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -601,6 +603,13 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     } else {
       if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
         return;
+      }
+
+      if (isPrometheusPane(datasourceInstance, queries)) {
+        trackSignalExplorerExperimentQueriesRun(exploreId, {
+          data_source_type: datasourceInstance.meta.mixed ? 'mixed' : datasourceInstance.type,
+          queries_count: queries.length,
+        });
       }
 
       // Some datasource's query builders allow per-query interval limits,

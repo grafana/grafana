@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
@@ -75,11 +75,14 @@ func (s *stubServer) GetStore(_ context.Context, ns string) (*zanzana.StoreInfo,
 // error, driving reconcileNamespace into its "namespace deleted" branch.
 type notFoundClientFactory struct{}
 
-func (notFoundClientFactory) Clients(_ context.Context, ns string) (resources.ResourceClients, error) {
+func (notFoundClientFactory) ForResource(ctx context.Context, ns string, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	if ns == "" {
+		return (fakeAnonClientFactory{dyn: newGlobalRoleTestClient()}).ForResource(ctx, ns, gvr)
+	}
 	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, ns)
 }
 
-func newReconcilerForTest(srv *stubServer, cf resources.ClientFactory) *Reconciler {
+func newReconcilerForTest(srv *stubServer, cf ClientFactory) *Reconciler {
 	return &Reconciler{
 		server:        srv,
 		clientFactory: cf,
@@ -258,35 +261,38 @@ func TestQueueAllNamespaces_ReenqueuesAfterDedupEntryCleared(t *testing.T) {
 }
 
 func TestRunWorker_ClearsDedupEntryAfterReconcile(t *testing.T) {
-	// The worker must remove the namespace from queuedNamespaces after
-	// reconciliation completes, otherwise it would be permanently locked out
-	// of future cycles.
-	srv := &stubServer{}
-	r := newReconcilerForTest(srv, notFoundClientFactory{})
-	r.workQueue = make(chan string, 10)
+	synctest.Test(t, func(t *testing.T) {
+		// The worker must remove the namespace from queuedNamespaces after
+		// reconciliation completes, otherwise it would be permanently locked out
+		// of future cycles.
+		srv := &stubServer{}
+		r := newReconcilerForTest(srv, notFoundClientFactory{})
+		r.workQueue = make(chan string, 10)
 
-	// Simulate queueAllNamespaces having reserved and enqueued ns-1.
-	r.queuedNamespaces.Store("ns-1", struct{}{})
-	r.workQueue <- "ns-1"
+		// Simulate queueAllNamespaces having reserved and enqueued ns-1.
+		r.queuedNamespaces.Store("ns-1", struct{}{})
+		r.workQueue <- "ns-1"
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		r.runWorker(ctx, 0)
-	}()
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			r.runWorker(ctx, 0)
+		}()
 
-	require.Eventually(t, func() bool {
+		// Finish reconciliation and release the dedup reservation before checking requeue eligibility.
+		synctest.Wait()
+
 		_, loaded := r.queuedNamespaces.Load("ns-1")
-		return !loaded
-	}, 2*time.Second, 10*time.Millisecond, "worker did not release ns-1 from queuedNamespaces")
+		require.False(t, loaded)
 
-	// notFoundClientFactory drives reconcileNamespace into its "namespace
-	// deleted" branch, which calls DeleteStore exactly once.
-	assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
+		// notFoundClientFactory drives reconcileNamespace into its "namespace
+		// deleted" branch, which calls DeleteStore exactly once.
+		assert.Equal(t, int32(1), srv.deleteStoreCalls.Load())
 
-	cancel()
-	<-done
+		cancel()
+		<-done
+	})
 }

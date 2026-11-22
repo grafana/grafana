@@ -153,10 +153,6 @@ type ContactPointRouting struct {
 	ActiveTimeIntervals []string        `json:"active_time_intervals,omitempty"`
 }
 
-func (s *ContactPointRouting) GetUID() string {
-	return NameToUid(s.Receiver)
-}
-
 // NormalizedGroupBy returns a consistent and ordered GroupBy.
 //   - If the GroupBy is empty, it returns nil so that the parent group can be inherited.
 //   - If the GroupBy contains the special label '...', it returns only '...'.

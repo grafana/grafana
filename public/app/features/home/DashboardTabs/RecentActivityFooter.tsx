@@ -1,8 +1,7 @@
-import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
+import { type ComboboxOption } from '@grafana/ui';
 
-import { FooterAction, FooterActions } from '../FooterActions';
+import { FooterAction, FooterFilterCombobox } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
 import { getPageKindMeta } from './recentActivityRows';
@@ -12,46 +11,48 @@ interface Props {
   recent: RecentActivity;
 }
 
-/**
- * The clear action on the right and, when the history holds more than one kind of page, a filter over
- * those kinds on the left; wraps when the card is too narrow for both.
- */
-export function RecentActivityFooter({ recent }: Props) {
-  const { kinds, counts, total, filter, setFilter, clear } = recent;
-  const options: Array<SelectableValue<RecentActivityFilter>> = [
-    { value: 'all', label: t('home.recent-activity-tab.filter-all', 'All') },
-    ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
+/** Narrows the list to one kind of page. Only worth offering once the history holds more than one kind. */
+export function RecentActivityFilterCombobox({ recent }: Props) {
+  const { kinds, filter, setFilter } = recent;
+  const allLabel = t('home.recent-activity-tab.filter-all', 'All');
+  // Each kind carries its icon so the closed dropdown shows the picked kind the way its rows do.
+  const options: Array<ComboboxOption<RecentActivityFilter>> = [
+    { value: 'all', label: allLabel },
+    ...kinds.map((kind) => {
+      const { filterLabel, icon } = getPageKindMeta(kind);
+      return { value: kind, label: filterLabel, icon };
+    }),
   ];
 
-  const handleClear = () => {
-    clearHistoryClicked({ dashboard_count: counts.dashboard, total_count: total });
-    clear();
-  };
+  return (
+    <FooterFilterCombobox<RecentActivityFilter>
+      label={filter === 'all' ? allLabel : getPageKindMeta(filter).filterLabel}
+      aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
+      options={options}
+      value={filter}
+      onChange={(option) => {
+        // Re-selecting the current value is a no-op so nothing re-renders or reports.
+        if (option.value !== filter) {
+          recentActivityFilterChanged({ filter: option.value });
+          setFilter(option.value);
+        }
+      }}
+    />
+  );
+}
 
-  const handleFilterChange = (filter: RecentActivityFilter) => {
-    recentActivityFilterChanged({ filter });
-    setFilter(filter);
-  };
+/** Clears the whole history, reporting what it held. */
+export function ClearRecentActivityAction({ recent }: Props) {
+  const { counts, total, clear } = recent;
 
   return (
-    <Stack direction="row" wrap="wrap" alignItems="center" gap={1}>
-      {kinds.length > 1 && (
-        <RadioButtonGroup<RecentActivityFilter>
-          size="sm"
-          aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
-          options={options}
-          value={filter}
-          onChange={handleFilterChange}
-        />
-      )}
-      {/* Grows so the action stays on the right with or without the filter, and when the row wraps. */}
-      <Box grow={1}>
-        <FooterActions>
-          <FooterAction onClick={handleClear}>
-            <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-          </FooterAction>
-        </FooterActions>
-      </Box>
-    </Stack>
+    <FooterAction
+      onClick={() => {
+        clearHistoryClicked({ dashboard_count: counts.dashboard, total_count: total });
+        clear();
+      }}
+    >
+      <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+    </FooterAction>
   );
 }

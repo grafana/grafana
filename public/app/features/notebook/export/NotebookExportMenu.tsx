@@ -98,6 +98,7 @@ export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }
       await flushPendingChanges?.();
       const spec = await loadSpec();
       navigateToNotebookPdf(tab, uid, spec.timeSettings);
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.PDF, source);
     } catch (error) {
       // Otherwise the reader is left staring at a tab that never goes anywhere.
       tab.close();

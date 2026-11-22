@@ -4,6 +4,12 @@ name: Build Go (matrix)
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - converted_to_draft
     paths:
       - '**/go.mod'
       - '**/go.sum'
@@ -37,114 +43,79 @@ jobs:
   build-go:
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux/amd64
-            goos: linux
-            goarch: amd64
-          - name: linux/arm64
-            goos: linux
-            goarch: arm64
-          - name: linux/s390x
-            goos: linux
-            goarch: s390x
-          - name: linux/armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-          - name: linux/armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-          - name: darwin/arm64
-            goos: darwin
-            goarch: arm64
-          - name: darwin/amd64
-            goos: darwin
-            goarch: amd64
-          - name: windows/arm64
-            goos: windows
-            goarch: arm64
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Setup Go
-        uses: ./.github/actions/setup-go
-      - name: Build Go (${{ matrix.name }})
-        env:
-          CGO_ENABLED: "0"
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          GOARM: ${{ matrix.goarm }}
-        run: make build-go
-
-  build-go-enterprise:
-    # Run on pushes to `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
-    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
-    name: ${{ matrix.name }} (enterprise)
-    runs-on: ubuntu-x64-large-io
+    name: Build Go (${{ matrix.goos }}/${{ matrix.arch }})
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: linux/amd64
-            goos: linux
-            goarch: amd64
-          - name: linux/arm64
-            goos: linux
-            goarch: arm64
-          - name: linux/s390x
-            goos: linux
-            goarch: s390x
-          - name: linux/armv6
-            goos: linux
-            goarch: arm
-            goarm: "6"
-          - name: linux/armv7
-            goos: linux
-            goarch: arm
-            goarm: "7"
-          - name: darwin/arm64
-            goos: darwin
-            goarch: arm64
-          - name: darwin/amd64
-            goos: darwin
-            goarch: amd64
-          - name: windows/arm64
-            goos: windows
-            goarch: arm64
+        goos: [windows, darwin, linux]
+        arch: ${{ fromJSON(github.event.pull_request.draft == true && '["amd64"]' || '["amd64", "arm64"]') }}
+        include: >-
+          ${{ fromJSON(github.event.pull_request.draft == true && '[]' || '[
+            {"goos": "linux", "arch": "armv6", "goarch": "arm", "goarm": "6"},
+            {"goos": "linux", "arch": "armv7", "goarch": "arm", "goarm": "7"},
+            {"goos": "linux", "arch": "s390x"}
+          ]') }}
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+          cache: 'false'
       - name: Get GitHub App token
         id: get-github-app-token
+        if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
         uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-ci-bot
       - name: Setup Enterprise
+        id: setup-enterprise
+        if: steps.get-github-app-token.outcome == 'success'
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      - name: Setup Go
-        uses: ./.github/actions/setup-go
-      - name: Build Go (${{ matrix.name }})
+      - name: Build Go (Enterprise, ${{ matrix.goos }}/${{ matrix.arch }})
+        if: steps.setup-enterprise.outcome == 'success'
         env:
           CGO_ENABLED: "0"
-          GO_BUILD_OS: ${{ matrix.goos }}
-          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch || matrix.arch }}
           GOARM: ${{ matrix.goarm }}
-        run: make build-go
+        run: |
+          make build-go
+          build_info=$(go version -m "bin/$GOOS/$GOARCH/grafana$(go env GOEXE)")
+          grep -Fx $'\tbuild\tGOOS='"$GOOS" <<< "$build_info"
+          grep -Fx $'\tbuild\tGOARCH='"$GOARCH" <<< "$build_info"
+          if [ -n "$GOARM" ]; then
+            grep -E $'^\tbuild\tGOARM='"${GOARM}(,|$)" <<< "$build_info"
+          fi
+      - name: Restore OSS checkout
+        id: checkout-oss
+        if: ${{ !cancelled() && steps.setup-enterprise.outcome != 'skipped' }}
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build Go (OSS, ${{ matrix.goos }}/${{ matrix.arch }})
+        if: ${{ !cancelled() && (steps.setup-enterprise.outcome == 'skipped' || steps.checkout-oss.outcome == 'success') }}
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch || matrix.arch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          make build-go
+          build_info=$(go version -m "bin/$GOOS/$GOARCH/grafana$(go env GOEXE)")
+          grep -Fx $'\tbuild\tGOOS='"$GOOS" <<< "$build_info"
+          grep -Fx $'\tbuild\tGOARCH='"$GOARCH" <<< "$build_info"
+          if [ -n "$GOARM" ]; then
+            grep -E $'^\tbuild\tGOARM='"${GOARM}(,|$)" <<< "$build_info"
+          fi
 
   # TODO: Build rpm in another workflow
   verify-rpm-stig:
@@ -156,16 +127,20 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      # Packages stub artifacts, so it compiles almost nothing. Saving its nearly empty build
+      # cache would take the shared GOCACHE key, and setup-go does not save again on a hit.
       - uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - uses: ./.github/actions/setup-fpm
       - name: Create stub artifacts
         run: |
-          mkdir -p bin/linux/amd64 public/build data/plugins-bundled
+          mkdir -p bin/linux/amd64 dist/frontend data/plugins-bundled
           printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
           chmod 0755 bin/linux/amd64/grafana
           touch data/plugins-bundled/.platform-linux-amd64.stamp

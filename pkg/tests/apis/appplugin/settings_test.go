@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -49,12 +51,8 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 	testIntegrationAppPluginSettings(t, "")
 }
 
-func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
-	testIntegrationAppPluginSettings(t, "", featuremgmt.FlagGrafanaUseRouterMiddleware)
-}
-
-func TestIntegrationAppPluginSettingsWithManifestRouter(t *testing.T) {
-	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+func TestIntegrationAppPluginSettingsWithManifest(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json")
 }
 
 func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, features ...string) {
@@ -266,6 +264,10 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				require.Equal(t, testAppID+"/v0alpha1", served.GetAPIVersion())
 				svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
 				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					if mode == rest.Mode2 {
+						// Mirrored writes run in the background, so one can be lost or land out of order. Rewrite until ours is stored.
+						writeSettings(t)
+					}
 					rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
 						Namespace: client.Args.Namespace,
 						Group:     apppluginV0.GROUP,
@@ -273,13 +275,12 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						Name:      testAppID,
 					}})
 					require.NoError(c, err)
-					require.Nil(c, rsp.Error)
 					stored := &unstructured.Unstructured{}
 					require.NoError(c, stored.UnmarshalJSON(rsp.Value))
 					require.Equal(c, testAppID, stored.GetName())
 					require.Equal(c, apppluginV0.GROUP+"/v0alpha1", stored.GetAPIVersion())
 					require.Equal(c, served.Object["spec"], stored.Object["spec"])
-				}, 5*time.Second, 50*time.Millisecond)
+				}, 10*time.Second, 250*time.Millisecond)
 			})
 
 			t.Run("list returns the settings resource after write", func(t *testing.T) {
@@ -366,7 +367,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 			})
 
 			// ActionAppAccess is granted to RoleViewer (and therefore all org roles),
-			// so editors and viewers can read and write plugin settings just like admins.
+			// so editors and viewers can read plugin settings just like admins.
 			t.Run("editor and viewer can get settings", func(t *testing.T) {
 				writeSettings(t)
 				for _, user := range []apis.User{helper.Org1.Editor, helper.Org1.Viewer} {
@@ -381,6 +382,34 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 					})
 				}
 			})
+
+			// Writing settings needs plugins:write, as for the legacy settings endpoint.
+			t.Run("editor and viewer cannot update settings", func(t *testing.T) {
+				writeSettings(t)
+				for _, user := range []apis.User{helper.Org1.Editor, helper.Org1.Viewer} {
+					t.Run(string(user.Identity.GetOrgRole()), func(t *testing.T) {
+						c := helper.GetResourceClient(apis.ResourceClientArgs{
+							User: user,
+							GVR:  gvrSettings,
+						})
+						_, err := c.Resource.Update(ctx, &unstructured.Unstructured{Object: map[string]any{
+							"apiVersion": testAppID + "/v0alpha1",
+							"kind":       "Settings",
+							"metadata":   map[string]any{"name": instanceName},
+							"spec":       map[string]any{"enabled": true, "jsonData": map[string]any{"url": "https://other.example.com"}},
+						}}, metav1.UpdateOptions{})
+						require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+
+						_, err = c.Resource.Patch(ctx, instanceName, types.MergePatchType,
+							[]byte(`{"spec":{"enabled":false}}`), metav1.PatchOptions{})
+						require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+					})
+				}
+				obj, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
+				require.NoError(t, err)
+				url, _, _ := unstructured.NestedString(obj.Object, "spec", "jsonData", "url")
+				require.Equal(t, "https://api.example.com", url, "the settings are unchanged")
+			})
 		})
 	}
 }
@@ -394,15 +423,27 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 // with no manifest when manifestFile is empty.
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	return setupHelperWithPlugin(t, mode, testAppSetup{manifestFile: manifestFile}, extraFeatures...)
+}
+
+// testAppSetup changes the test app before Grafana loads it.
+type testAppSetup struct {
+	// manifestFile is a testdata manifest to install.
+	manifestFile string
+	// manifest is installed as the app's manifest, in place of manifestFile.
+	manifest []byte
+	// routes are added to the app's plugin.json.
+	routes []map[string]any
+}
+
+func setupHelperWithPlugin(t *testing.T, mode rest.DualWriterMode, setup testAppSetup, extraFeatures ...string) *apis.K8sTestHelper {
+	t.Helper()
+	manifestFile := setup.manifestFile
 	withManifest := manifestFile != ""
 
-	// Settings are served by the embedded API server even when manifests use the router.
+	// The settings API alone enables the router, which serves both the settings
+	// and the manifest APIs.
 	features := append(slices.Clone(extraFeatures), featuremgmt.FlagApppluginsRegisterAPIServer)
-	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
-		if withManifest {
-			features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
-		}
-	}
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
@@ -417,7 +458,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 	}
 
 	// Create the grafana dir, then copy the test-app plugin into its plugins directory
-	// so RegisterAPIService discovers it and registers the test-app API group.
+	// so the router discovers it and serves the test-app API group.
 	dir, cfgPath := testinfra.CreateGrafDir(t, baseOpts)
 
 	_, thisFile, _, ok := runtime.Caller(0)
@@ -428,9 +469,35 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
-	if withManifest {
+	// CopyFile hard links where it can, so a copied file is replaced rather than
+	// written to, or the write would change the source too.
+	replaceFile := func(path string, data []byte) {
+		t.Helper()
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+		require.NoError(t, os.WriteFile(path, data, 0o600))
+	}
+
+	manifestDst := filepath.Join(testAppDst, "app-sdk-manifest.json")
+	switch {
+	case setup.manifest != nil:
+		replaceFile(manifestDst, setup.manifest)
+	case withManifest:
 		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
-		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
+		require.NoError(t, grafanafs.CopyFile(manifestSrc, manifestDst))
+	}
+
+	if setup.routes != nil {
+		pluginJSON := filepath.Join(testAppDst, "plugin.json")
+		raw, err := os.ReadFile(pluginJSON) //nolint:gosec // the copy of plugin.json this test made
+		require.NoError(t, err)
+		var plugin map[string]any
+		require.NoError(t, json.Unmarshal(raw, &plugin))
+		plugin["routes"] = setup.routes
+		raw, err = json.Marshal(plugin)
+		require.NoError(t, err)
+		replaceFile(pluginJSON, raw)
 	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{

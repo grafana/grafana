@@ -119,7 +119,7 @@ function SavedNotebookView({ uid, enterEditMode, onTitleChange }: SavedNotebookV
   // Per instance, not the module singleton, so this view has its own loading and error state. The
   // scenes themselves are still shared, through the module-level cache in NotebookPageStateManager:
   // one notebook on screen twice has to be one scene, and therefore one autosave.
-  const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }), []);
+  const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }, true), []);
   const { scene, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {

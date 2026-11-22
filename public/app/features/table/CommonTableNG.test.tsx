@@ -3,12 +3,12 @@ import { render, screen } from '@testing-library/react';
 
 import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { CommonTableNG } from './CommonTableNG';
 
 beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 it.each([false, true])('gates JSON highlighting with new table features=%s', async (enabled) => {
@@ -25,7 +25,7 @@ it.each([false, true])('gates JSON highlighting with new table features=%s', asy
   });
   render(
     <OpenFeatureTestProvider flagValueMap={{ [FlagKeys.TableRefreshNewFeatures]: enabled }}>
-      <CommonTableNG data={data} width={800} height={400} />
+      <CommonTableNG data={data} width={800} height={400} timeZone="UTC" />
     </OpenFeatureTestProvider>
   );
   const cell = await screen.findByRole('gridcell', { name: /count/ });

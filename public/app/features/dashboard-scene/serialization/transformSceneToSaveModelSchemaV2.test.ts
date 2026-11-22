@@ -6,7 +6,6 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -14,7 +13,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
@@ -43,6 +41,7 @@ import {
   type RowsLayoutSpec,
   type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelKind,
   type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -68,10 +67,11 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { djb2Hash } from '../utils/djb2Hash';
 
+import { buildVizPanel } from './layoutSerializers/utils';
+import { normalizeDataSourceRef } from './normalizeDataSourceRef';
 import {
   getPersistedDSFor,
   getElementDatasource,
-  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
@@ -178,16 +178,6 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('transformSceneToSaveModelSchemaV2', () => {
   let dashboardScene: DashboardScene;
-  let prevFeatureToggleValue: boolean;
-
-  beforeAll(() => {
-    prevFeatureToggleValue = !!config.featureToggles.groupByVariable;
-    config.featureToggles.groupByVariable = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.groupByVariable = prevFeatureToggleValue;
-  });
 
   beforeEach(() => {
     // The intention is to have a complete dashboard scene
@@ -399,22 +389,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             skipUrlSync: false,
             hide: VariableHideV1.dontHide,
             value: 'value6',
-          }),
-          new GroupByVariable({
-            name: 'groupByVar',
-            label: 'Group By Variable',
-            description: 'A group by variable',
-            skipUrlSync: false,
-            hide: VariableHideV1.dontHide,
-            value: 'value7',
-            text: 'text7',
-            datasource: { uid: 'datasource2', type: 'prometheus' },
-            defaultOptions: [
-              { text: 'option1', value: 'option1' },
-              { text: 'option2', value: 'option2' },
-            ],
-            isMulti: false,
-            includeAll: false,
           }),
           new AdHocFiltersVariable({
             name: 'adhocVar',
@@ -2043,6 +2017,40 @@ describe('vizPanelToSchemaV2 time range fields', () => {
 
     expect(queryOptions[field]).toBe(value);
     expectNoTimeRangeFields(queryOptions, field);
+  });
+});
+
+describe('vizPanelToSchemaV2 subtitle', () => {
+  it('should preserve the panel subtitle', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      subtitle: 'hello',
+    });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect(result.kind).toBe('Panel');
+    expect((result.spec as PanelSpec).subtitle).toBe('hello');
+    expect((result.spec as PanelSpec).description).toBe('');
+  });
+
+  it('should keep the subtitle after a save/load round trip', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test', subtitle: 'hello' });
+
+    const loaded = buildVizPanel(vizPanelToSchemaV2(vizPanel, undefined, false) as PanelKind);
+
+    expect(loaded.state.subtitle).toBe('hello');
+    expect(loaded.state.description).toBe('');
+  });
+
+  it('should omit subtitle when the panel has none', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+
+    const result = vizPanelToSchemaV2(vizPanel, undefined, false);
+
+    expect((result.spec as PanelSpec).subtitle).toBeUndefined();
   });
 });
 

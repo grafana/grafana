@@ -154,14 +154,15 @@ export class LogLineVirtualization {
         let width = 0;
         let delta = 0;
         do {
-          testLogLine = textLine.substring(start, start + logLineCharsLength - delta);
+          // At least one char per line, so a container narrower than a single char can't loop forever.
+          testLogLine = textLine.substring(start, start + Math.max(logLineCharsLength - delta, 1));
           let measuredLine = testLogLine;
           if (logLines > 0) {
             measuredLine = measuredLine.trimStart();
           }
           width = this.measureTextWidth(measuredLine);
           delta += 1;
-        } while (width >= availableWidth);
+        } while (width >= availableWidth && testLogLine.length > 1);
         if (beforeWidth) {
           beforeWidth = 0;
         }
@@ -258,6 +259,7 @@ export class LogLineVirtualization {
 
 export interface DisplayOptions {
   hasLogsWithErrors?: boolean;
+  hasLogsWithErrorAttributes?: boolean;
   hasSampledLogs?: boolean;
   showDuplicates: boolean;
   showTime: boolean;
@@ -269,7 +271,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  { hasLogsWithErrors, hasLogsWithErrorAttributes, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -305,6 +307,9 @@ export function getLogLineSize(
     optionsWidth += virtualization.getGridSize() * 4.5 + iconsGap;
   }
   if (hasLogsWithErrors) {
+    optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
+  }
+  if (hasLogsWithErrorAttributes) {
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
   if (hasSampledLogs) {

@@ -90,6 +90,9 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	if _, ok := t.(sqlutil.TestDBPeer); ok {
+		return newTestDBPeerStore(cfg, features, migrations, bus)
+	}
 	ss, err := initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
 	if err != nil {
 		return nil, err
@@ -653,4 +656,38 @@ func TestMain(m *testing.M) {
 	}
 
 	return testSQLStore, nil
+}
+
+// newTestDBPeerStore connects another server to the shared test database.
+func newTestDBPeerStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator, bus bus.Bus) (*SQLStore, error) {
+	testSQLStoreMutex.Lock()
+	ready := testSQLStore != nil
+	testSQLStoreMutex.Unlock()
+	if !ready {
+		return nil, errors.New("a test DB peer needs another server to set up the test database first")
+	}
+
+	dbType := sqlutil.GetTestDBType()
+	if dbType == migrator.SQLite {
+		return nil, errors.New("test DB peers need a server database (MySQL or Postgres)")
+	}
+	testDB, err := sqlutil.GetTestDB(dbType)
+	if err != nil {
+		return nil, err
+	}
+	cfgDBSec := cfg.Raw.Section("database")
+	cfgDBSec.Key("type").SetValue(dbType)
+	cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+
+	ss, err := newStore(cfg, nil, features, migrations, bus, tracing.InitializeTracerForTest())
+	if err != nil {
+		return nil, err
+	}
+	if err := ss.Migrate(ss.dbCfg.MigrationLock); err != nil {
+		return nil, err
+	}
+	if err := ss.Reset(); err != nil {
+		return nil, err
+	}
+	return ss, nil
 }

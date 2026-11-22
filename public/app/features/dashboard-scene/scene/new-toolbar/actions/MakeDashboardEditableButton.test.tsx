@@ -5,7 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
@@ -19,6 +19,9 @@ import { MakeDashboardEditableButton } from './MakeDashboardEditableButton';
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     editButtonClicked: jest.fn(),
     exitEditButtonClicked: jest.fn(),
   },

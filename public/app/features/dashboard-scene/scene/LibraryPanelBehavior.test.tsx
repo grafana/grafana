@@ -1,9 +1,16 @@
 import { of } from 'rxjs';
 
-import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import {
+  type PanelPluginMeta,
+  FieldType,
+  LoadingState,
+  type PanelData,
+  getDefaultTimeRange,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
@@ -15,7 +22,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -81,6 +88,25 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('LibraryPanelBehavior', () => {
+  it('clears dormant Text queries before the library panel can execute them', async () => {
+    setTestFlags({ 'grafana.newTextPanel': true });
+    setPanelPluginMetas({ text: { skipDataQuery: true } as PanelPluginMeta });
+    runRequestMock.mockClear();
+    try {
+      const { gridItem, behavior } = await buildTestSceneWithLibraryPanel({
+        model: { type: 'text', pluginVersion: '13.2.9', options: { content: 'Static library text' } },
+      });
+      expect(behavior.state.isLoaded).toBe(true);
+      const saved = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+      expect(saved.targets).toEqual([]);
+      expect(saved.options?.content).toBe('Static library text');
+      expect(runRequestMock).not.toHaveBeenCalled();
+    } finally {
+      setTestFlags({});
+      setPanelPluginMetas({});
+    }
+  });
+
   it('should load library panel', async () => {
     const { gridItem, spy, behavior } = await buildTestSceneWithLibraryPanel();
 
@@ -154,15 +180,15 @@ describe('LibraryPanelBehavior', () => {
   });
 
   it('should set the title to the library panel title if the feature toggle is enabled', async () => {
-    config.featureToggles.preferLibraryPanelTitle = true;
+    setTestFlags({ [FlagKeys.PreferLibraryPanelTitle]: true });
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
     expect(gridItem.state.body.state.title).toBe('LibraryPanel A title');
-    config.featureToggles.preferLibraryPanelTitle = false;
+    setTestFlags({});
   });
 
   it('should set the title to the panel title if the feature toggle is disabled', async () => {
-    config.featureToggles.preferLibraryPanelTitle = false;
+    setTestFlags({ [FlagKeys.PreferLibraryPanelTitle]: false });
     const { gridItem } = await buildTestSceneWithLibraryPanel();
 
     expect(gridItem.state.body.state.title).toBe('Panel A');
@@ -511,6 +537,7 @@ describe('LibraryPanelBehavior', () => {
 });
 
 interface BuildTestSceneOptions {
+  model?: Partial<LibraryPanel['model']>;
   vizPanelTitle?: string;
   libPanelModelTitle?: string;
   timeFrom?: string;
@@ -559,6 +586,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
       fieldConfig: { defaults: {}, overrides: [] },
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
+      ...options.model,
       ...(timeFrom ? { timeFrom } : {}),
       ...(repeat ? { repeat, repeatDirection, maxPerRow: 4 } : {}),
     },

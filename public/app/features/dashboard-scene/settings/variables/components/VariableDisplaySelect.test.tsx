@@ -93,22 +93,23 @@ describe('VariableDisplaySelect', () => {
     expect(onChange).toHaveBeenCalledWith(VariableHide.dontHide);
   });
 
-  it('uses section top placement labels when provided', async () => {
-    const onChange = jest.fn();
+  it('when a custom placement label is provided and Controls menu is hidden, shows only the three section options', async () => {
     const user = userEvent.setup();
     render(
       <VariableDisplaySelect
-        onChange={onChange}
+        onChange={jest.fn()}
         display={VariableHide.dontHide}
-        type="query"
+        type="textbox"
         topPlacementLabel="Top of row"
+        hideControlsMenuOption
       />
     );
 
-    const combobox = screen.getByRole('combobox');
-    await user.click(combobox);
+    await user.click(screen.getByRole('combobox', { name: 'Display' }));
 
     expect(await screen.findByText('Top of row')).toBeInTheDocument();
     expect(screen.getByText('Top of row, label hidden')).toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(3);
   });
 });

@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useMemo, useRef, useId } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/StyledButton.styles';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface
@@ -30,7 +30,6 @@ export interface CarouselProps {
 export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-  const [validImages, setValidImages] = useState<CarouselImage[]>(images);
   const id = useId();
 
   const styles = useStyles2(getStyles);
@@ -43,10 +42,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
     }));
   };
 
-  useEffect(() => {
-    const filteredImages = images.filter((image) => !imageErrors[image.path]);
-    setValidImages(filteredImages);
-  }, [imageErrors, images]);
+  const validImages = useMemo(() => images.filter((image) => !imageErrors[image.path]), [imageErrors, images]);
 
   const openPreview = (index: number) => {
     setSelectedIndex(index);
@@ -91,7 +87,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen: selectedIndex !== null, onClose: closePreview }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('grafana-ui.carousel.dialog-label', 'Image preview') }, ref);
 
   if (validImages.length === 0) {
     return (

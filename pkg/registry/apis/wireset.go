@@ -4,7 +4,6 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 )
 
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
@@ -43,12 +43,15 @@ var WireSetExts = wire.NewSet(
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
+	dashboardinternal.ProvideNoopDashboardLifecycleExtras,
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,
 )
 
 var provisioningExtras = wire.NewSet(
+	provisioning.ProvideSupportedResourceProvider,
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
 	extras.ProvideProvisioningExtraAPIs,
@@ -62,11 +65,12 @@ var WireSet = wire.NewSet(
 	// plugin abstractions
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
-	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
+	wire.Bind(new(appsettings.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
 	datasource.ProvideProxyDependencies,
 
 	// Secrets
+	secret.ProvideDatabaseMigrated,
 	secret.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,
@@ -88,5 +92,4 @@ var WireSet = wire.NewSet(
 	preferences.RegisterAPIService,
 	collections.RegisterAPIService,
 	userstorage.RegisterAPIService,
-	appplugin.RegisterAPIService,
 )

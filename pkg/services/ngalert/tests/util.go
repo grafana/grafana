@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -29,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	rulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -81,7 +84,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := db.InitTestDB(tb) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(sqlStore)))
 
 	ac := acmock.New()
 
@@ -93,10 +96,12 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	provenanceStore := provenance.ProvideProvenanceStore(options.featureToggles, sqlStore)
 	ruleStore, err := rulestore.ProvideRuleStore(cfg, options.featureToggles, sqlStore, folderService, ac, provenanceStore)
 	require.NoError(tb, err)
+	ruleService, err := rulesvc.ProvideService(ruleStore, folderService)
+	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, provisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleService, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
 		nil, // cfgProvider
 	)

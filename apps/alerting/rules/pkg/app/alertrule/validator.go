@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
@@ -20,7 +20,7 @@ func validateGroupLabels(r *model.AlertRule, oldObject *model.AlertRule, action 
 	if oldObject != nil {
 		oldLabels = oldObject.Labels
 	}
-	return util.ValidateGroupLabels(r.Labels, oldLabels, action)
+	return util.ValidateGroupLabels(r.Labels, oldLabels, action, util.GroupWritesRequested(r.Annotations))
 }
 
 func validateFolderAndSequenceMembership(ctx context.Context, r *model.AlertRule, oldRule *model.AlertRule, action resource.AdmissionAction, cfg config.RuntimeConfig) error {
@@ -83,6 +83,12 @@ func validateDurations(r *model.AlertRule) error {
 
 func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.AlertRule] {
 	return func(ctx context.Context, req validation.Request[*model.AlertRule]) error {
+		if cfg.AllowDeletingSequenceMembers != nil {
+			allowed, err := cfg.AllowDeletingSequenceMembers(ctx)
+			if err != nil || allowed {
+				return err
+			}
+		}
 		oldRule := req.OldObject
 		if cfg.MembershipResolver != nil {
 			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})
@@ -121,8 +127,15 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Aler
 			}
 		}
 
-		if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
-			return fmt.Errorf("alert rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
+		// The name can't change, so an existing rule is not re-checked against rules added later.
+		if req.Action == resource.AdmissionActionCreate {
+			if err := util.ValidateRuleName(r.Name); err != nil {
+				return err
+			}
+		}
+
+		if err := util.ValidateTitle("alert rule", r.Spec.Title); err != nil {
+			return err
 		}
 
 		if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {

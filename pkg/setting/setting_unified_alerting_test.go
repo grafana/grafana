@@ -595,7 +595,7 @@ func TestQueriesServedByLoki(t *testing.T) {
 	}
 }
 
-func TestWritesToPrometheus(t *testing.T) {
+func TestHasAlertStateMetrics(t *testing.T) {
 	testCases := []struct {
 		name         string
 		stateHistory UnifiedAlertingStateHistorySettings
@@ -607,40 +607,61 @@ func TestWritesToPrometheus(t *testing.T) {
 			want:         false,
 		},
 		{
-			name:         "prometheus backend",
-			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
-			want:         true,
-		},
-		{
-			name:         "prometheus backend without a target data source",
+			name:         "no target data source",
 			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus"},
 			want:         false,
 		},
 		{
-			name:         "non-prometheus backend with a target data source",
+			name:         "prometheus backend with a target data source",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "prometheus", PrometheusTargetDatasourceUID: "prom"},
+			want:         true,
+		},
+		{
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:         "loki backend with a target data source",
 			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom"},
-			want:         false,
-		},
-		{
-			name:         "multiple backend with prometheus primary, with padding and mixed casing",
-			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: " Multiple ", MultiPrimary: " Prometheus ", PrometheusTargetDatasourceUID: "prom"},
 			want:         true,
-		},
-		{
-			name:         "multiple backend with prometheus as a secondary",
-			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations", "prometheus"}, PrometheusTargetDatasourceUID: "prom"},
-			want:         true,
-		},
-		{
-			name:         "multiple backend without prometheus",
-			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "loki", MultiSecondaries: []string{"annotations"}, PrometheusTargetDatasourceUID: "prom"},
-			want:         false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, tc.stateHistory.WritesToPrometheus())
+			require.Equal(t, tc.want, tc.stateHistory.HasAlertStateMetrics())
+		})
+	}
+}
+
+func TestReadMaxTrackedSeries(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		value       string
+		expected    int64
+		expectedErr string
+	}{
+		{desc: "defaults to one million", expected: 1_000_000},
+		{desc: "accepts a limit", value: "5000", expected: 5000},
+		{desc: "zero turns the limit off", value: "0", expected: 0},
+		{desc: "rejects a negative value", value: "-1", expectedErr: "max_tracked_series"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+			if tc.value != "" {
+				_, err = section.NewKey("max_tracked_series", tc.value)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, cfg.UnifiedAlerting.RecordingRules.MaxTrackedSeries)
 		})
 	}
 }

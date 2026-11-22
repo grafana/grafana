@@ -117,5 +117,7 @@ export function useDragAndDrop(enabled = true): DragAndDropComponents & { isRead
     };
   }, [enabled]);
 
-  return { ...((enabled && module) || passthrough), isReady: enabled && module !== undefined };
+  const activeModule = enabled ? (loadedModule ?? module) : undefined;
+
+  return { ...(activeModule || passthrough), isReady: activeModule !== undefined };
 }

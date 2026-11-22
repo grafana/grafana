@@ -304,12 +304,10 @@ func numberOrBoolFieldsForMapping(provider resource.SearchFieldsProvider, group,
 var standardNumberOrBoolFields = numberOrBoolFieldsForMapping(nil, "", "")
 
 // keywordSubDocumentFields are keyword-mapped fields that live in sub-documents
-// and so are not modellable as SearchFieldDefinitions yet (see
-// managerSubDocumentMapping and sourceSubDocumentMapping). The labels and
-// reference sub-documents are absent because their keys are dynamic.
+// and are not declared as SearchFieldDefinitions (see sourceSubDocumentMapping).
+// The labels and reference sub-documents are absent because their keys are
+// dynamic.
 var keywordSubDocumentFields = []string{
-	resource.SEARCH_FIELD_MANAGER_KIND,
-	resource.SEARCH_FIELD_MANAGER_ID,
 	resource.SEARCH_FIELD_SOURCE_PATH,
 	resource.SEARCH_FIELD_SOURCE_CHECKSUM,
 }
@@ -386,7 +384,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 			m.Store = hasRetrieve
 			m.DocValues = hasSort
 			m.IncludeInAll = false
-			parent.AddFieldMappingsAt(def.Name, m)
+			addFieldMappingAt(parent, def.Name, m)
 		}
 		return
 	}
@@ -402,7 +400,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		// when the canonical text field is also stored for retrieval.
 		m.Store = hasFacet || (hasRetrieve && !hasText)
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(keywordName, m)
+		addFieldMappingAt(parent, keywordName, m)
 	}
 
 	if hasText {
@@ -413,7 +411,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.Store = hasRetrieve || hasFacet
 		m.IncludeInAll = false
 		m.SkipFreqNorm = hasUnranked
-		parent.AddFieldMappingsAt(def.Name, m)
+		addFieldMappingAt(parent, def.Name, m)
 	}
 
 	if ngramName, ok := ngramVariant(def); ok {
@@ -425,7 +423,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		// or text variant already stores the value.
 		m.Store = false
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(ngramName, m)
+		addFieldMappingAt(parent, ngramName, m)
 	}
 
 	// A retrieve-only string has no mapping above, so store it explicitly;
@@ -438,8 +436,23 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.SkipFreqNorm = true
 		m.DocValues = false
 		m.IncludeInAll = false
-		parent.AddFieldMappingsAt(def.Name, m)
+		addFieldMappingAt(parent, def.Name, m)
 	}
+}
+
+// addFieldMappingAt maps a field whose name may be a path into sub-documents,
+// such as manager.kind, so the indexed field keeps that full name.
+func addFieldMappingAt(parent *mapping.DocumentMapping, name string, m *mapping.FieldMapping) {
+	path := strings.Split(name, ".")
+	for _, part := range path[:len(path)-1] {
+		sub, ok := parent.Properties[part]
+		if !ok {
+			sub = bleve.NewDocumentStaticMapping()
+			parent.AddSubDocumentMapping(part, sub)
+		}
+		parent = sub
+	}
+	parent.AddFieldMappingsAt(path[len(path)-1], m)
 }
 
 // nonStringFieldMapping returns a bleve field mapping matching a
@@ -623,7 +636,6 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 		addCapabilityFieldMappings(mapper, def)
 	}
 
-	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
 	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())
 
 	// NOTE: reference and labels use dynamic mappings because their keys aren't
@@ -728,13 +740,6 @@ func keywordSubField() *mapping.FieldMapping {
 		IncludeInAll:       false,
 		SkipFreqNorm:       true,
 	}
-}
-
-func managerSubDocumentMapping() *mapping.DocumentMapping {
-	m := bleve.NewDocumentStaticMapping()
-	m.AddFieldMappingsAt("kind", keywordSubField())
-	m.AddFieldMappingsAt("id", keywordSubField())
-	return m
 }
 
 func sourceSubDocumentMapping() *mapping.DocumentMapping {

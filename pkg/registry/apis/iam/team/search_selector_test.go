@@ -123,6 +123,7 @@ func TestTeamSearchFilters(t *testing.T) {
 		{params: "query=a*b&sort=-email&sort=title", want: SearchQuery{Query: "a*b", Sort: []string{"-email", "title"}}},
 		{params: "title=Engineering&uid=one&uid=two", want: SearchQuery{Title: "Engineering", UIDs: []string{"one", "two"}}},
 		{params: "teamId=001&teamId=2", want: SearchQuery{TeamIDs: []string{"001", "2"}}},
+		{params: "member=user-1&title=Engineering", want: SearchQuery{Member: "user-1", Title: "Engineering"}},
 	} {
 		t.Run(tt.params, func(t *testing.T) {
 			backend := &fakeSearchBackend{}
@@ -148,6 +149,7 @@ func TestTeamSearchFilters(t *testing.T) {
 		"teamId=9223372036854775808",
 		strings.TrimSuffix(strings.Repeat("uid=one&", maxIDFilterValues+1), "&"),
 		strings.TrimSuffix(strings.Repeat("teamId=1&", maxIDFilterValues+1), "&"),
+		"member=user-1&member=user-2",
 	} {
 		t.Run(url.QueryEscape(params), func(t *testing.T) {
 			backend := &fakeSearchBackend{}

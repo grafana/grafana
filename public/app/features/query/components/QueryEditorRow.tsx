@@ -1,5 +1,5 @@
 import classNames from 'clsx';
-import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
+import { cloneDeep, filter, isEqual, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
 
@@ -40,10 +40,15 @@ import {
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
-import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
+import { isPanelEditorApp, trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
+import {
+  type InternalQueryEditorInsertionPropsV1,
+  type QueryEditorInsertionRegistrationV1,
+} from '../../explore/SignalExplorer/internalInsertionContract';
+import { isPrometheusType } from '../../explore/utils/prometheus';
 import { ExpressionDatasourceUID } from '../../expressions/types';
 
 import { type QueryActionComponent, RowActionComponents } from './QueryActionComponent';
@@ -83,6 +88,8 @@ export interface Props<TQuery extends DataQuery> {
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   onQueryOpenChanged?: (status?: boolean | undefined) => void;
   onQueryClosed?: () => void;
+  /** Called when the data source's query editor changes the query. Header renames and hide toggles don't call it. */
+  onQueryEdited?: () => void;
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
@@ -101,6 +108,8 @@ export interface Props<TQuery extends DataQuery> {
   scrollIntoView?: boolean;
   /** Called after the scroll happens so the owner can clear the flag. */
   onScrollIntoView?: () => void;
+  /** Handed only to Prometheus editors, the one datasource that implements it. */
+  queryEditorInsertion?: QueryEditorInsertionRegistrationV1;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -155,7 +164,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   componentWillUnmount() {
-    this.cancelScrollPin?.();
+    // A pin still in flight never reaches onDone once cancelled, so report here or the owner's
+    // one-shot flag stays set (e.g. switching tabs mid-pin, or deleting the pinned row).
+    if (this.cancelScrollPin) {
+      this.cancelScrollPin();
+      this.cancelScrollPin = undefined;
+      this.props.onScrollIntoView?.();
+    }
   }
 
   /**
@@ -279,7 +294,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
+    const {
+      query,
+      queries,
+      onRunQuery,
+      onAddQuery,
+      range,
+      app = CoreApp.PanelEditor,
+      history,
+      queryEditorInsertion,
+    } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad() || !datasource) {
@@ -287,12 +311,16 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     let QueryEditor = this.getQueryEditor(datasource);
+    const internalInsertionProps: InternalQueryEditorInsertionPropsV1 = {
+      unstable_queryEditorInsertionV1: isPrometheusType(datasource.type) ? queryEditorInsertion : undefined,
+    };
 
     if (QueryEditor) {
       return (
         <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
           <QueryEditor
             key={datasource?.name}
+            {...internalInsertionProps}
             query={query}
             datasource={datasource}
             onChange={this.onChange}
@@ -320,6 +348,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   // Editors may hold on to the onChange they got on mount (e.g. a Monaco listener), and the parent's
   // onChange is recreated each render over that render's queries. Stay stable and forward to the latest.
   onChange = (query: TQuery) => {
+    if (!isEqual(query, this.props.query)) {
+      this.props.onQueryEdited?.();
+    }
     this.props.onChange(query);
   };
 
@@ -340,7 +371,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'delete',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
 
     onRemoveQuery(query);
@@ -369,7 +400,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'duplicate',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
     const copy = cloneDeep(query);
     onAddQuery(copy);
@@ -386,7 +417,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'toggle_hide',
       isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
       'content_header',
-      { silent: true }
+      { editor: 'classic', silent: !isPanelEditorApp(this.props.app) }
     );
     onChange({ ...query, hide: !query.hide });
     onRunQuery();

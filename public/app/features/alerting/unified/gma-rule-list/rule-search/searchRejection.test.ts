@@ -1,0 +1,56 @@
+import { type RuleSearchSchema } from './filterDefinitions';
+import { parse } from './parser';
+import { buildSharedLeaves } from './searchQueryLeaves';
+import { getRejectionIssues } from './searchRejection';
+import { sharedFilters } from './sharedFilters';
+import { type SharedRuleFilter, createRulesApiFilter } from './sharedRuleFilter';
+
+const schema: RuleSearchSchema<SharedRuleFilter> = {
+  filters: Object.values(sharedFilters),
+  createEmptyFilter: createRulesApiFilter,
+};
+
+function rejectionOf(query: string, causes: Array<{ field?: string; message: string }>, folderUids: string[] = []) {
+  const error = { status: 422, data: { message: 'invalid', details: { causes } } };
+  return getRejectionIssues(error, buildSharedLeaves({ filter: parse(query, schema).filter, folderUids }));
+}
+
+describe('getRejectionIssues', () => {
+  it('names the filter of the only leaf', () => {
+    expect(rejectionOf('label:team=~(', [{ field: 'where.regex.pattern', message: 'missing )' }])).toEqual([
+      { key: 'label', reason: 'rejected', message: 'missing )' },
+    ]);
+  });
+
+  it('names the filter of each rejected leaf of an and', () => {
+    const causes = [
+      { field: 'where.and[2].regex.pattern', message: 'missing )' },
+      { field: 'where.and[1].filter.values', message: 'bad uid' },
+    ];
+    expect(rejectionOf('cpu folder:Team label:team=~(', causes, ['f1'])).toEqual([
+      { key: 'label', reason: 'rejected', message: 'missing )' },
+      { key: 'folder', reason: 'rejected', message: 'bad uid' },
+    ]);
+  });
+
+  it('names folderUid for a rejected folder leaf when no folder name was typed', () => {
+    expect(rejectionOf('folderUid:f1', [{ field: 'where.filter.values', message: 'bad uid' }], ['f1'])).toEqual([
+      { key: 'folderUid', reason: 'rejected', message: 'bad uid' },
+    ]);
+  });
+
+  it('names no filter for a cause outside the where clause', () => {
+    expect(rejectionOf('cpu', [{ field: 'limit', message: 'too big' }])).toEqual([
+      { key: null, reason: 'rejected', message: 'too big' },
+    ]);
+  });
+
+  it('uses the status message when the refusal has no causes', () => {
+    const error = { status: 422, data: { message: 'invalid query' } };
+    expect(getRejectionIssues(error, [])).toEqual([{ key: null, reason: 'rejected', message: 'invalid query' }]);
+  });
+
+  it('leaves any other failure to the list', () => {
+    expect(getRejectionIssues({ status: 500, data: { message: 'boom' } }, [])).toBeUndefined();
+  });
+});

@@ -13,14 +13,15 @@ interface ChangeVariableNameActionProps {
   source: SceneVariable;
   oldValue: SceneVariable['state']['name'];
   newValue: SceneVariable['state']['name'];
+  scope?: string;
 }
 
-export function changeVariableName({ source, oldValue, newValue }: ChangeVariableNameActionProps) {
+export function changeVariableName({ source, oldValue, newValue, scope }: ChangeVariableNameActionProps) {
   // Snapshot set + ancestors before mutate so undo restores drops and re-injections.
   const snapshots = snapshotVariableSetsAlongPath(source);
 
   edit({
-    meta: { actionId: 'variable.changeName' },
+    meta: { actionId: 'variable.changeName', scope },
     description: t('dashboard.edit-actions.variable-name', 'Change variable name'),
     source,
     perform: () => {

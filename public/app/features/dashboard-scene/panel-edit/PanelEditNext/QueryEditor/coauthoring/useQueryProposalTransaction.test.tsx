@@ -34,6 +34,10 @@ describe('useQueryProposalTransaction', () => {
     let publishPreviewState: ((state: LoadingState) => void) | undefined;
     const startQueryPreview = jest.fn(() => ({
       dispose: disposePreview,
+      select: jest.fn(() => true),
+      peek: jest.fn(() => true),
+      stopPeek: jest.fn(),
+      subscribeToData: jest.fn(() => () => undefined),
       subscribeToState: (listener: (state: LoadingState) => void) => {
         publishPreviewState = listener;
         return () => undefined;
@@ -118,6 +122,10 @@ describe('useQueryProposalTransaction', () => {
     const adapter = createAdapter();
     const startQueryPreview = jest.fn(() => ({
       dispose: jest.fn(),
+      select: jest.fn(() => true),
+      peek: jest.fn(() => true),
+      stopPeek: jest.fn(),
+      subscribeToData: jest.fn(() => () => undefined),
       subscribeToState: jest.fn(() => () => undefined),
     }));
     const { result } = renderHook(() =>

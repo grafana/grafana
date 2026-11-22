@@ -121,20 +121,41 @@ async function appendThroughScene(
   return { spec, firstPosition };
 }
 
-/** Adds cells in one write, e.g. a single panel or a chat answer with its panels. */
+/**
+ * Adds cells in one write, e.g. a single panel or a chat answer with its panels.
+ *
+ * `lockTimeRange` is what the person chose in the modal, passed on for the events and nothing else:
+ * the cells already carry whatever it did to them.
+ *
+ * `hasText` says the first cell is the text the person typed in the modal. It is reported as a flag on
+ * the events of the cells it came with rather than as a cell event of its own.
+ */
 export async function addToExistingNotebook(
   uid: string,
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
-  source: AppendedCellSource = 'user'
+  source: AppendedCellSource = 'user',
+  lockTimeRange = false,
+  hasText = false,
+  originPluginId?: string
 ): Promise<AddedToNotebook> {
   const { spec, firstPosition } = await appendToExistingNotebook(uid, cells, source);
 
   // Reported here, not in the layout manager, which only reports cells added from inside the notebook.
+  // Markdown too: a chat answer sends its text alongside its panels.
   cells.forEach((cell, index) => {
-    if (cell.kind === 'panel') {
-      NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, firstPosition + index, addedPanel(cell));
+    if (hasText && index === 0) {
+      return;
     }
+    NotebookAnalytics.cellAddedFromAddToNotebook(
+      uid,
+      entryPoint,
+      firstPosition + index,
+      cell.kind === 'panel' ? addedPanel(cell) : undefined,
+      lockTimeRange,
+      hasText,
+      originPluginId
+    );
   });
 
   return { uid, title: spec.title };
@@ -144,7 +165,10 @@ export async function createNotebookWithContent(
   fields: CreateNotebookFields,
   cells: AppendedElement[],
   entryPoint: NotebookEntryPoint,
-  source: AppendedCellSource = 'user'
+  source: AppendedCellSource = 'user',
+  lockTimeRange = false,
+  hasText = false,
+  originPluginId?: string
 ): Promise<AddedToNotebook> {
   const spec = appendElementsToNotebook({ ...defaultNotebookSpec(), title: fields.title }, cells, source);
 
@@ -155,7 +179,10 @@ export async function createNotebookWithContent(
     created.uid,
     entryPoint,
     spec.layout.spec.cells.length,
-    panels.length === 1 ? addedPanel(panels[0]) : undefined
+    panels.length === 1 ? addedPanel(panels[0]) : undefined,
+    lockTimeRange,
+    hasText,
+    originPluginId
   );
 
   return { uid: created.uid, title: spec.title };

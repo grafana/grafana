@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -316,9 +317,11 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			features := featuremgmt.WithFeatures()
 			ac := acimpl.ProvideAccessControl(features)
 			actionSets := NewActionSetService()
+			sql := sqlstore.NewTestStore(t)
+			acService := &actest.FakeService{}
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, nil, actionSets, iam.Features{}, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+				ac, acService, sql, nil, nil, nil, actionSets, iam.Features{},
 			)
 			require.NoError(t, err)
 

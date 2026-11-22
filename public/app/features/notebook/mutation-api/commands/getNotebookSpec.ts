@@ -3,25 +3,22 @@
  * APPLY_NOTEBOOK_SPEC): return the whole notebook as a single `NotebookSpec`.
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 
 import { requiresNotebookRead } from './permissions';
 
-const getNotebookSpecPayloadSchema = z
-  .object({
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.'),
-  })
-  .strict();
+const getNotebookSpecPayloadSchema = z.strictObject({
+  validate: z
+    ._default(z.boolean(), false)
+    .check(
+      z.describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.')
+    ),
+});
 
 export type GetNotebookSpecPayload = z.infer<typeof getNotebookSpecPayloadSchema>;
 
@@ -42,6 +39,9 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      const { transformNotebookSceneToSaveModel } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+      );
       const notebook = transformNotebookSceneToSaveModel(scene);
 
       // Opt-in, default off so a read never fails on someone else's notebook. Worth requesting: a read

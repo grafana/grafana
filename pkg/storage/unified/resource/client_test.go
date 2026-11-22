@@ -104,28 +104,31 @@ func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest
 	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
 }
 
-func TestLocalResourceClientErrorConversion(t *testing.T) {
-	for _, enabled := range []bool{false, true} {
-		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
-			srv, err := NewResourceServer(ResourceServerOptions{
-				Backend: &missingReadBackend{}, GRPCErrorResultToStatus: enabled,
-			})
-			require.NoError(t, err)
-			t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
-			client := NewLocalResourceClient(srv)
-			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-			resp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+func TestResourceClientNativeErrors(t *testing.T) {
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	client := NewLocalResourceClient(srv)
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+	for _, tc := range []struct {
+		name string
+		read func(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error)
+	}{
+		{"direct", srv.Read},
+		{"local", func(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+			return client.Read(ctx, req)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := tc.read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
 				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
 			}})
-			if !enabled {
-				require.NoError(t, err)
-				require.Equal(t, int32(http.StatusNotFound), resp.GetError().GetCode())
-				return
-			}
+			require.Nil(t, response)
 			require.Equal(t, codes.NotFound, status.Code(err))
 			details := status.Convert(err).Details()
 			require.Len(t, details, 1)
 			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
+			require.Equal(t, "missing", details[0].(*resourcepb.ErrorResult).Message)
 		})
 	}
 }

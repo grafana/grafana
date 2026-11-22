@@ -58,9 +58,19 @@ You only need to define `TestMain` in one `_test.go` file within each package.
 
 ### Integration Tests
 
-We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
+CI runs `TestIntegration*` tests separately for SQLite, MySQL, and PostgreSQL. Draft PRs run only SQLite. Marking a PR ready for review triggers the full database matrix. Reserve this prefix for tests that need coverage across these SQL databases, not simply tests that combine several components or happen to use a database.
 
-To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for running in Short mode by using `testutil.SkipIntegrationTestInShortMode(t)` function:
+SQLite, MySQL, and PostgreSQL CI assign the longest packages to the least-loaded shard using shared [package weights](../../scripts/ci/backend-tests/sql-integration-weights.txt). Within Enterprise jobs, the same assignment accounts for both modules. Update a weight using the package runtime from a representative MySQL CI run. Unlisted packages receive an 8-second weight.
+
+Integration jobs build test binaries in parallel and omit linker debug info to limit memory use. SQLite runs the binaries concurrently. MySQL and PostgreSQL run them serially against the job's database.
+
+Tests using only in-memory storage (including Badger), embedded services, local files, or test doubles should use ordinary `Test*` names and run once in the normal `-short` suite. Do not use integration short-mode skips for these tests. When converting an existing test, remove skips from nested subtests too and verify that all cases actually execute with `-short`.
+
+Tests that only run against SQLite can also use ordinary `Test*` names and run once with `-short`. This includes tests that explicitly create a SQLite database and tests that skip other backends using `db.IsTestDbSQLite()`. Tests that default to SQLite but also run against MySQL or PostgreSQL through `GRAFANA_TEST_DB` still need the database matrix.
+
+For suites covering both SQL and in-memory backends, use separate test entry points so only the SQL cases run in the database matrix.
+
+For tests in the database matrix, start the function name with `TestIntegration` and call `testutil.SkipIntegrationTestInShortMode(t)`:
 
 ```go
 func TestIntegrationFoo(t *testing.T) {
@@ -72,6 +82,8 @@ func TestIntegrationFoo(t *testing.T) {
 
 > Warning
 > If you do not follow this convention, your integration test may be run twice or not run at all.
+
+Tests requiring external services or credentials need dedicated jobs, not repetition across the SQL database matrix. Some existing service jobs discover packages through the `TestIntegration` prefix. Preserve their job discovery and test selection when renaming tests; do not move them into the normal suite without providing the required services.
 
 ### Assertions
 

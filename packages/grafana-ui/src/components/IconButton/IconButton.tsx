@@ -7,7 +7,8 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { type IconName, type IconSize, type IconType } from '../../types/icon';
 import { type ComponentSize } from '../../types/size';
-import { getActiveButtonStyles, IconRenderer } from '../Button/Button';
+import { IconRenderer } from '../AbstractButton/AbstractButton';
+import { getActiveButtonStyles } from '../Button/StyledButton.styles';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
@@ -117,7 +118,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
-  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
+  const solid = variant === 'primary' && Boolean(theme.flags.visualDesignRefresh);
+  const activeButtonStyle = solid
+    ? getActiveButtonStyles(theme.colors.primary, 'solid', true)
+    : getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
 
   let iconColor = theme.colors.primary.text;
   let hoverColor = theme.colors.action.hover;
@@ -127,6 +131,9 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
     hoverColor = theme.colors.error.transparent;
+  } else if (solid) {
+    iconColor = theme.colors.primary.contrastText;
+    hoverColor = theme.colors.primary.backgroundEmphasis;
   }
 
   return {
@@ -153,16 +160,17 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
-        opacity: 0.65,
-        '&:hover:before': {
-          backgroundColor: 'transparent',
+        opacity: solid ? 1 : 0.65,
+        '&:before, &:hover:before': {
+          backgroundColor: solid ? theme.colors.action.disabledBackground : 'transparent',
         },
       },
 
       '&:before': {
         zIndex: -1,
         position: 'absolute',
-        opacity: 0,
+        opacity: solid ? 1 : 0,
+        backgroundColor: solid ? theme.colors.primary.background : undefined,
         width: `${hoverSize}px`,
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
@@ -174,9 +182,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         },
       },
 
-      '&:focus, &:focus-visible': getFocusStyles(theme),
+      // The solid fill (:before) extends past the button and would cover its focus ring, so the ring goes on the fill
+      '&:focus, &:focus-visible': solid ? { '&:before': getFocusStyles(theme) } : getFocusStyles(theme),
 
-      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible)': solid ? { '&:before': getMouseFocusStyles(theme) } : getMouseFocusStyles(theme),
 
       '&:hover:before': {
         backgroundColor: hoverColor,

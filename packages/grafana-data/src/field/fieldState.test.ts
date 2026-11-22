@@ -158,6 +158,15 @@ describe('getFieldDisplayName', () => {
 });
 
 describe('getFrameDisplayName', () => {
+  it('Should use the query reference when only time fields remain', () => {
+    const frame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: TIME_SERIES_TIME_FIELD_NAME, type: FieldType.time, values: [1, 2, 3] }],
+    });
+
+    expect(getFrameDisplayName(frame)).toBe('Series (A)');
+  });
+
   it('Should return frame name if set', () => {
     const frame = toDataFrame({
       name: 'Series A',
@@ -178,6 +187,19 @@ describe('getFrameDisplayName', () => {
       fields: [{ name: 'Field A' }, { name: 'Field B' }],
     });
     expect(getFrameDisplayName(frame)).toBe('Field A, Field B');
+  });
+
+  it.each([
+    { refId: 'A', index: undefined, expected: 'Series (A)' },
+    { refId: undefined, index: 2, expected: 'Series (2)' },
+    { refId: undefined, index: undefined, expected: 'Series' },
+  ])('returns $expected for a frame containing only time fields', ({ refId, index, expected }) => {
+    const frame = toDataFrame({
+      refId,
+      fields: [{ name: TIME_SERIES_TIME_FIELD_NAME, values: [1000, 2000], type: FieldType.time }],
+    });
+
+    expect(getFrameDisplayName(frame, index)).toBe(expected);
   });
 
   it('Should return labels if single field with labels', () => {

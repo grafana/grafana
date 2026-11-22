@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -101,28 +102,31 @@ func componentLabelValues(t *testing.T, reg prometheus.Gatherer, name string) []
 }
 
 func TestKVLeaseElector_AcquireLeadership(t *testing.T) {
-	kvp := newTestKV(t)
-	cfg := testElectionConfig()
+	synctest.Test(t, func(t *testing.T) {
+		kvp := newTestKV(t)
+		cfg := testElectionConfig()
 
-	elector, err := New(kvp, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
-	require.NoError(t, err)
+		elector, err := New(kvp, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
+		require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
-	defer cancel()
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel()
 
-	var leaderCalled atomic.Bool
-	go func() {
-		_ = elector.Run(ctx, func(ctx context.Context) {
-			leaderCalled.Store(true)
-			<-ctx.Done()
-		})
-	}()
+		var leaderCalled atomic.Bool
+		go func() {
+			_ = elector.Run(ctx, func(ctx context.Context) {
+				leaderCalled.Store(true)
+				<-ctx.Done()
+			})
+		}()
 
-	require.Eventually(t, func() bool {
-		return leaderCalled.Load()
-	}, 2*time.Second, 10*time.Millisecond)
+		// Let the elector acquire its lease and enter the leader callback.
+		synctest.Wait()
 
-	cancel()
+		require.True(t, leaderCalled.Load())
+
+		cancel()
+	})
 }
 
 func TestKVLeaseElector_GracefulRelease(t *testing.T) {
@@ -154,61 +158,72 @@ func TestKVLeaseElector_GracefulRelease(t *testing.T) {
 }
 
 func TestKVLeaseElector_LeadershipHandoff(t *testing.T) {
-	kvp := newTestKV(t)
-	cfg := testElectionConfig()
+	synctest.Test(t, func(t *testing.T) {
+		kvp := newTestKV(t)
+		cfg := testElectionConfig()
 
-	var leader1Called, leader2Called atomic.Bool
+		var leader1Called, leader2Called atomic.Bool
 
-	elector1, err := New(kvp, leaderelection.Config{
-		LeaseName:     cfg.LeaseName,
-		Identity:      "holder-1",
-		LeaseDuration: cfg.LeaseDuration,
-		RetryPeriod:   cfg.RetryPeriod,
-	}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
-	require.NoError(t, err)
+		elector1, err := New(kvp, leaderelection.Config{
+			LeaseName:     cfg.LeaseName,
+			Identity:      "holder-1",
+			LeaseDuration: cfg.LeaseDuration,
+			RetryPeriod:   cfg.RetryPeriod,
+		}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
+		require.NoError(t, err)
 
-	elector2, err := New(kvp, leaderelection.Config{
-		LeaseName:     cfg.LeaseName,
-		Identity:      "holder-2",
-		LeaseDuration: cfg.LeaseDuration,
-		RetryPeriod:   cfg.RetryPeriod,
-	}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
-	require.NoError(t, err)
+		elector2, err := New(kvp, leaderelection.Config{
+			LeaseName:     cfg.LeaseName,
+			Identity:      "holder-2",
+			LeaseDuration: cfg.LeaseDuration,
+			RetryPeriod:   cfg.RetryPeriod,
+		}, "test", log.NewNopLogger(), nil, testElectorOpts()...)
+		require.NoError(t, err)
 
-	ctx1, cancel1 := context.WithCancel(t.Context())
-	ctx2, cancel2 := context.WithTimeout(t.Context(), 5*time.Second)
-	defer cancel2()
+		ctx1, cancel1 := context.WithCancel(t.Context())
+		ctx2, cancel2 := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel2()
 
-	// Start elector 1
-	go func() {
-		_ = elector1.Run(ctx1, func(ctx context.Context) {
-			leader1Called.Store(true)
-			<-ctx.Done()
-		})
-	}()
+		// Start elector 1
+		go func() {
+			_ = elector1.Run(ctx1, func(ctx context.Context) {
+				leader1Called.Store(true)
+				<-ctx.Done()
+			})
+		}()
 
-	// Wait for leader 1 to acquire
-	require.Eventually(t, func() bool {
-		return leader1Called.Load()
-	}, 2*time.Second, 10*time.Millisecond)
+		// Wait for leader 1 to acquire
 
-	// Start elector 2 (should be blocked)
-	go func() {
-		_ = elector2.Run(ctx2, func(ctx context.Context) {
-			leader2Called.Store(true)
-			<-ctx.Done()
-		})
-	}()
+		// Settle the first acquisition before starting the competing elector.
+		synctest.Wait()
 
-	// Kill leader 1
-	cancel1()
+		require.True(t, leader1Called.Load())
 
-	// Leader 2 should take over within lease duration + retry period.
-	require.Eventually(t, func() bool {
-		return leader2Called.Load()
-	}, 3*time.Second, 50*time.Millisecond)
+		// Start elector 2 (should be blocked)
+		go func() {
+			_ = elector2.Run(ctx2, func(ctx context.Context) {
+				leader2Called.Store(true)
+				<-ctx.Done()
+			})
+		}()
 
-	cancel2()
+		// Let the second elector observe the held lease before releasing it.
+		synctest.Wait()
+
+		require.False(t, leader2Called.Load())
+
+		// Kill leader 1
+		cancel1()
+
+		// Leader 2 should take over within lease duration + retry period.
+
+		// Advance past lease expiry and a retry so the second elector can take over.
+		synctest.Sleep(cfg.LeaseDuration + cfg.RetryPeriod)
+
+		require.True(t, leader2Called.Load())
+
+		cancel2()
+	})
 }
 
 func TestKVLeaseElector_IdentityAutoGeneration(t *testing.T) {
@@ -292,31 +307,34 @@ func TestKVLeaseElector_RetriesAfterKVFailure(t *testing.T) {
 }
 
 func TestKVLeaseElector_CancellationStopsKVFailureRetry(t *testing.T) {
-	store := &failingAcquireKV{mapKV: newMapKV(), alwaysFailKeys: true}
-	cfg := testElectionConfig()
-	cfg.RetryPeriod = time.Hour
-	elector, err := New(store, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
-	require.NoError(t, err)
+	synctest.Test(t, func(t *testing.T) {
+		store := &failingAcquireKV{mapKV: newMapKV(), alwaysFailKeys: true}
+		cfg := testElectionConfig()
+		cfg.RetryPeriod = time.Hour
+		elector, err := New(store, cfg, "test", log.NewNopLogger(), nil, testElectorOpts()...)
+		require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan error, 1)
-	go func() {
-		done <- elector.Run(ctx, func(context.Context) {
-			t.Error("leader function must not run when lease acquisition fails")
-		})
-	}()
+		ctx, cancel := context.WithCancel(t.Context())
+		done := make(chan error, 1)
+		go func() {
+			done <- elector.Run(ctx, func(context.Context) {
+				t.Error("leader function must not run when lease acquisition fails")
+			})
+		}()
 
-	require.Eventually(t, func() bool {
-		return store.keysCalls.Load() > 0
-	}, time.Second, time.Millisecond)
-	cancel()
+		// Ensure the failed acquisition has entered its retry delay before cancelling.
+		synctest.Wait()
 
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not return promptly after cancellation")
-	}
+		require.Equal(t, int32(1), store.keysCalls.Load())
+		cancel()
+
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not return promptly after cancellation")
+		}
+	})
 }
 
 type failingAcquireKV struct {

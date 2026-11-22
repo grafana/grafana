@@ -31,14 +31,13 @@ import {
 } from './render-hooks';
 import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
-  type FilterType,
   type NestedRowEntry,
   type TableCellRendererProps,
   type TableColumn,
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -280,7 +279,7 @@ describe('useDataGridRows', () => {
  * gives each filter result an identifiable fingerprint to assert on.
  */
 function makeFilterResult(scopedRows: TableRow[] = []): ApplyFilterResult {
-  return applyFilter(scopedRows, {}, []);
+  return { filteredRows: scopedRows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: scopedRows };
 }
 
 /**
@@ -340,8 +339,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
     rowHeightFn: () => 36,
-    filter: {} as FilterType,
-    setFilter: jest.fn(),
     setInspectCell: jest.fn(),
     gridRef: createRef(),
     getCellActions: jest.fn().mockReturnValue([]),
@@ -590,6 +587,7 @@ describe('useColumnBuilderFromFields', () => {
           type: FieldType.string,
           values: ['ok'],
           config: {
+            color: { mode: FieldColorModeId.Shades, fixedColor: 'green' },
             custom: { cellOptions: { type: TableCellDisplayMode.Pill } },
             mappings: withMappings ? [{ type: 'value', options: { ok: { text: 'OK' } } } as never] : undefined,
           },
@@ -598,19 +596,14 @@ describe('useColumnBuilderFromFields', () => {
     });
   }
 
-  it('patches Pill cell fields to FixedColor mode with the fallback color when mappings exist', () => {
+  it('preserves the selected Pill color scheme when mappings exist', () => {
     const mappingFrame = makePillFrame({ withMappings: true });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
 
     const result = callFromFields(hook, mappingFrame.fields, [100], mappingFrame, [], []);
 
-    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Fixed, fixedColor: '#808080' });
-    // The patched display processor applies the mapped text but takes its color from Fixed mode.
-    const display = result.columns[0].field.display!('ok');
-    expect(display.text).toBe('OK');
-    expect(display.color).toBe('#808080');
-    // The frame's own field must not be mutated — only the column's copy is patched.
-    expect(mappingFrame.fields[0].config.color).toBeUndefined();
+    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Shades, fixedColor: 'green' });
+    expect(result.columns[0].field).toBe(mappingFrame.fields[0]);
   });
 
   it('leaves Pill cell fields untouched when there are no mappings', () => {
@@ -619,7 +612,7 @@ describe('useColumnBuilderFromFields', () => {
 
     const result = callFromFields(hook, pillFrame.fields, [100], pillFrame, [], []);
 
-    expect(result.columns[0].field.config.color).toBeUndefined();
+    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Shades, fixedColor: 'green' });
   });
 
   it('builds no columns and no cell renderers for an empty fields array', () => {
