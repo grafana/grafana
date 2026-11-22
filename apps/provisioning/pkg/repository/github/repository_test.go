@@ -2,11 +2,14 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/google/go-github/v82/github"
+	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -2086,4 +2089,63 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGitHubRepository_SubmitPullRequest(t *testing.T) {
+	config := &provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{
+				URL:    "https://github.com/grafana/grafana",
+				Branch: "main",
+			},
+		},
+	}
+	newPR := repo.NewPullRequest{Head: "feature", Title: "Add dashboard"}
+
+	t.Run("opens the pull request into the configured branch as the user", func(t *testing.T) {
+		var authorization string
+		var sent github.NewPullRequest
+		factory := ProvideFactory()
+		factory.Client = mockhub.NewMockedHTTPClient(
+			mockhub.WithRequestMatchHandler(
+				mockhub.PostReposPullsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					authorization = r.Header.Get("Authorization")
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&sent))
+					w.WriteHeader(http.StatusCreated)
+					require.NoError(t, json.NewEncoder(w).Encode(github.PullRequest{
+						Number:  new(7),
+						HTMLURL: new("https://github.com/grafana/grafana/pull/7"),
+					}))
+				}),
+			),
+		)
+		gitRepo := git.NewMockGitRepository(t)
+		gitRepo.EXPECT().URL().Return(config.Spec.GitHub.URL)
+
+		ghRepo, err := NewRepository(t.Context(), config, gitRepo, factory, "repository-token")
+		require.NoError(t, err)
+
+		submitted, err := ghRepo.SubmitPullRequest(t.Context(), "user-token", newPR)
+		require.NoError(t, err)
+
+		assert.Equal(t, &repo.SubmittedPullRequest{Number: 7, URL: "https://github.com/grafana/grafana/pull/7"}, submitted)
+		assert.Equal(t, "Bearer user-token", authorization)
+		assert.Equal(t, "main", sent.GetBase())
+		assert.Equal(t, "feature", sent.GetHead())
+	})
+
+	t.Run("requires a user token so it never falls back to the repository credentials", func(t *testing.T) {
+		factory := ProvideFactory()
+		factory.Client = mockhub.NewMockedHTTPClient()
+		gitRepo := git.NewMockGitRepository(t)
+		gitRepo.EXPECT().URL().Return(config.Spec.GitHub.URL)
+
+		ghRepo, err := NewRepository(t.Context(), config, gitRepo, factory, "repository-token")
+		require.NoError(t, err)
+
+		_, err = ghRepo.SubmitPullRequest(t.Context(), "", newPR)
+		require.ErrorContains(t, err, "a user token is required")
+	})
 }

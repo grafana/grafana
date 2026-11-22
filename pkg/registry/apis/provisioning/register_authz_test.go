@@ -91,6 +91,26 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
 
+	t.Run("submit: editor who can create jobs is allowed", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(nil)
+
+		b := &APIBuilder{accessWithEditor: editorChecker}
+		decision, _, err := b.authorizeRepositorySubresource(ctx, subresourceAttrs("submit", name, ns))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("submit: viewer who cannot create jobs is denied", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(mockForbidden())
+
+		b := &APIBuilder{accessWithEditor: editorChecker}
+		decision, _, err := b.authorizeRepositorySubresource(ctx, subresourceAttrs("submit", name, ns))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
 	for _, sub := range []string{"resources", "stats", "history", "status"} {
 		t.Run(sub+": admin (repositories:write) is allowed", func(t *testing.T) {
 			adminChecker := auth.NewMockAccessChecker(t)

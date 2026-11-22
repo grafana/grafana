@@ -19,6 +19,7 @@ import (
 // maxSubmissionBodySize leaves room for the longest description GitHub accepts (65536 characters).
 const maxSubmissionBodySize = 256 * 1024
 
+//go:generate mockery --name=SubmitAccess --structname=MockSubmitAccess --inpackage --filename=submit_access_mock.go --with-expecter
 type SubmitAccess interface {
 	RepoGetter
 	ConnectionGetter

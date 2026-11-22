@@ -15,8 +15,8 @@ import (
 	"github.com/google/go-github/v82/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -1216,6 +1216,79 @@ func TestCreatePullRequestComment(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreatePullRequest(t *testing.T) {
+	newPR := repo.NewPullRequest{Head: "feature", Title: "Add dashboard", Body: "Made in Grafana"}
+	respondWith := func(status int, body any) *http.Client {
+		return mockhub.NewMockedHTTPClient(
+			mockhub.WithRequestMatchHandler(
+				mockhub.PostReposPullsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(status)
+					require.NoError(t, json.NewEncoder(w).Encode(body))
+				}),
+			),
+		)
+	}
+
+	t.Run("opens the pull request from head into base", func(t *testing.T) {
+		var sent github.NewPullRequest
+		factory := ProvideFactory()
+		factory.Client = mockhub.NewMockedHTTPClient(
+			mockhub.WithRequestMatchHandler(
+				mockhub.PostReposPullsByOwnerByRepo,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "/repos/test-owner/test-repo/pulls", r.URL.Path)
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&sent))
+					w.WriteHeader(http.StatusCreated)
+					require.NoError(t, json.NewEncoder(w).Encode(github.PullRequest{
+						Number:  new(42),
+						HTMLURL: new("https://github.com/test-owner/test-repo/pull/42"),
+					}))
+				}),
+			),
+		)
+		client, err := factory.New("test-owner", "test-repo", "")
+		require.NoError(t, err)
+
+		submitted, err := client.CreatePullRequest(t.Context(), "main", newPR)
+		require.NoError(t, err)
+
+		assert.Equal(t, &repo.SubmittedPullRequest{Number: 42, URL: "https://github.com/test-owner/test-repo/pull/42"}, submitted)
+		assert.Equal(t, "main", sent.GetBase())
+		assert.Equal(t, "feature", sent.GetHead())
+		assert.Equal(t, "Add dashboard", sent.GetTitle())
+		assert.Equal(t, "Made in Grafana", sent.GetBody())
+	})
+
+	t.Run("surfaces GitHub's validation message as a 422", func(t *testing.T) {
+		factory := ProvideFactory()
+		factory.Client = respondWith(http.StatusUnprocessableEntity, map[string]any{
+			"message": "Validation Failed",
+			"errors":  []map[string]any{{"resource": "PullRequest", "code": "custom", "message": "A pull request already exists for test-owner:feature."}},
+		})
+		client, err := factory.New("test-owner", "test-repo", "")
+		require.NoError(t, err)
+
+		_, err = client.CreatePullRequest(t.Context(), "main", newPR)
+
+		statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+		require.True(t, ok, "expected a StatusError, got %v", err)
+		assert.EqualValues(t, http.StatusUnprocessableEntity, statusErr.ErrStatus.Code)
+		assert.Equal(t, "GitHub rejected the pull request: Validation Failed: A pull request already exists for test-owner:feature.", statusErr.ErrStatus.Message)
+	})
+
+	t.Run("translates other GitHub errors", func(t *testing.T) {
+		factory := ProvideFactory()
+		factory.Client = respondWith(http.StatusForbidden, map[string]any{"message": "Resource not accessible by integration"})
+		client, err := factory.New("test-owner", "test-repo", "")
+		require.NoError(t, err)
+
+		_, err = client.CreatePullRequest(t.Context(), "main", newPR)
+
+		assert.ErrorIs(t, err, repo.ErrPermissionDenied)
+	})
 }
 
 func TestPaginatedList(t *testing.T) {
