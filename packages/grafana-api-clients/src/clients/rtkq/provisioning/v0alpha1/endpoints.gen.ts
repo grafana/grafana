@@ -547,6 +547,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      createRepositorySubmit: build.mutation<CreateRepositorySubmitApiResponse, CreateRepositorySubmitApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/submit`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
+      }),
       createRepositoryTest: build.mutation<CreateRepositoryTestApiResponse, CreateRepositoryTestApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
@@ -1313,6 +1317,20 @@ export type UpdateRepositoryStatusApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type CreateRepositorySubmitApiResponse = /** status 200 OK */ PullRequestSubmission;
+export type CreateRepositorySubmitApiArg = {
+  /** name of the PullRequestSubmission */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    spec: any;
+    status?: any;
+  };
 };
 export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
@@ -2296,6 +2314,33 @@ export type ResourceCountList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type PullRequestSubmissionSpec = {
+  /** The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request */
+  code: string;
+  /** The pull request description */
+  description?: string;
+  /** The redirect URI used in the authorization request */
+  redirectURI?: string;
+  /** The branch holding the changes */
+  ref: string;
+  /** The pull request title */
+  title: string;
+};
+export type PullRequestSubmissionStatus = {
+  /** The pull request number */
+  number?: number;
+  /** The URL of the pull request */
+  url?: string;
+};
+export type PullRequestSubmission = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec: PullRequestSubmissionSpec;
+  status?: PullRequestSubmissionStatus;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2478,6 +2523,7 @@ export const {
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
   useUpdateRepositoryStatusMutation,
+  useCreateRepositorySubmitMutation,
   useCreateRepositoryTestMutation,
   useCreateRepositoryWebhookMutation,
   useGetFrontendSettingsQuery,
