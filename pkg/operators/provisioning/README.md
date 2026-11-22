@@ -4,15 +4,16 @@ Git sync has two different controllers: the jobs controller and the repo control
 
 ## Runtime (proof of concept)
 
-Each operator runs as a grafana-app-sdk `simple.App` (see `app.go`). The SDK runs the informers, dispatches their events
-through its `InformerController`, and runs the controller workers as app runnables.
+Each operator runs as a grafana-app-sdk `simple.App` built by `pkg/registry/apis/provisioning/controllerapp`. The
+provisioning API server uses the same package to run its in-process controllers as one app. The SDK runs the
+informers, dispatches their events through its `InformerController`, and runs the controller workers as app runnables.
 
 The SDK cannot yet take a kind's events from NATS or re-list it through the keys-only lister, so each kind keeps its
 provisioning delta source (`pkg/registry/apis/provisioning/informer`), handed to the app through its `InformerSupplier`.
 Every delivery reaches the controller's handler unchanged, including tombstones and `isInInitialList`. When the SDK
 ships its event-bus informer and paged lister, the informer supplier is the piece to replace.
 
-The app's metrics are registered under the `grafana_provisioning_operator` namespace.
+The app's metrics are registered under the `grafana_provisioning_controller` namespace.
 
 ## Jobs Controller
 

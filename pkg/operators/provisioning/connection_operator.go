@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
 )
@@ -90,20 +91,20 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		nats.Enabled(controllerCfg.natsSubscriber),
 	)
 
-	app, err := newOperatorApp("provisioning-connection", logger, watchedKind{
-		info:    apisprovisioning.ConnectionResourceInfo,
-		source:  connSource,
-		handler: connController.EventHandler(),
+	app, err := controllerapp.New("provisioning-connection", logger, deps.Registerer, controllerapp.WatchedKind{
+		Info:    apisprovisioning.ConnectionResourceInfo,
+		Source:  connSource,
+		Handler: connController.EventHandler(),
+		OnSynced: func(ctx context.Context) error {
+			connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+				logger.Info("connection operator is ready")
+				deps.HealthNotifier.SetReady()
+			}, func() {})
+			return nil
+		},
 	})
 	if err != nil {
 		return err
 	}
-	app.AddSyncedRunnable(func(ctx context.Context) error {
-		connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-			logger.Info("connection operator is ready")
-			deps.HealthNotifier.SetReady()
-		}, func() {})
-		return nil
-	})
-	return app.Run(ctx, deps.Registerer, controllerCfg.DrainTimeout()+appShutdownGrace, logger)
+	return app.Run(ctx, controllerCfg.DrainTimeout()+shutdownGrace, logger)
 }

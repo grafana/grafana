@@ -1,4 +1,12 @@
-package provisioning
+// Package controllerapp runs the provisioning controllers as an app SDK simple
+// app, both in the standalone operators and in the provisioning API server.
+//
+// The SDK cannot yet take a kind's events from NATS or re-list it through the
+// keys-only lister, so each kind keeps its provisioning delta source and the app
+// is handed that source as its informer. Once the SDK ships those mechanisms,
+// the informer supplier is the piece to replace; the controllers behind the
+// watchers stay as they are.
+package controllerapp
 
 import (
 	"context"
@@ -20,47 +28,48 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
-// The provisioning operators run as app SDK simple apps. The SDK cannot yet take
-// a kind's events from NATS or re-list it through the keys-only lister, so each
-// kind keeps its provisioning delta source and the app is handed that source as
-// its informer. Once the SDK ships those mechanisms, the informer supplier is the
-// piece to replace; the controllers behind the watchers stay as they are.
+const metricsNamespace = "grafana_provisioning_controller"
 
-const (
-	appMetricsNamespace = "grafana_provisioning_operator"
-	// appShutdownGrace is how long past its own drain an operator waits for the
-	// app's runnables to stop before exiting anyway.
-	appShutdownGrace = 30 * time.Second
-)
-
-// watchedKind is a provisioning kind an operator app watches: the delta source
-// its events come from and the controller handler they are dispatched to.
-type watchedKind struct {
-	info    utils.ResourceInfo
-	source  informer.DeltaSource
-	handler cache.ResourceEventHandler
+// WatchedKind is a provisioning kind the app watches: the delta source its
+// events come from and the controller handler they are dispatched to.
+type WatchedKind struct {
+	Info    utils.ResourceInfo
+	Source  informer.DeltaSource
+	Handler cache.ResourceEventHandler
+	// OnSynced, when set, runs as part of the app once this kind's informer has
+	// synced, typically the controller's workers.
+	OnSynced func(ctx context.Context) error
 }
 
-type operatorApp struct {
+type App struct {
 	*simple.App
-	informers []*deltaSourceInformer
 }
 
-func newOperatorApp(name string, logger logging.Logger, kinds ...watchedKind) (*operatorApp, error) {
+// New builds the app and registers its metrics on reg; a nil reg leaves them
+// unregistered.
+func New(name string, logger logging.Logger, reg prometheus.Registerer, kinds ...WatchedKind) (*App, error) {
 	byGVK := make(map[schema.GroupVersionKind]*deltaSourceInformer, len(kinds))
-	informers := make([]*deltaSourceInformer, 0, len(kinds))
 	managed := make([]simple.AppManagedKind, 0, len(kinds))
+	var synced []RunnableFunc
 	for _, k := range kinds {
-		kind := sdkKind(k.info)
-		inf := &deltaSourceInformer{gvk: kind.GroupVersionKind(), source: k.source, logger: logger}
+		kind := sdkKind(k.Info)
+		inf := &deltaSourceInformer{gvk: kind.GroupVersionKind(), source: k.Source, logger: logger}
 		byGVK[inf.gvk] = inf
-		informers = append(informers, inf)
 		managed = append(managed, simple.AppManagedKind{
 			Kind:    kind,
-			Watcher: handlerWatcher{handler: k.handler},
+			Watcher: handlerWatcher{handler: k.Handler},
 			// The controllers manage their own finalizers; the SDK must not add one.
 			ReconcileOptions: simple.BasicReconcileOptions{UsePlain: true},
 		})
+		if k.OnSynced != nil {
+			onSynced := k.OnSynced
+			synced = append(synced, func(ctx context.Context) error {
+				if err := inf.WaitForSync(ctx); err != nil {
+					return err
+				}
+				return onSynced(ctx)
+			})
+		}
 	}
 
 	supplier := func(kind resource.Kind, _ resource.ClientGenerator, _ operator.InformerOptions) (operator.Informer, error) {
@@ -76,48 +85,30 @@ func newOperatorApp(name string, logger logging.Logger, kinds ...watchedKind) (*
 		ClientGenerator: noClients{},
 		InformerConfig: simple.AppInformerConfig{
 			InformerSupplier: supplier,
-			MetricsConfig:    metrics.DefaultConfig(appMetricsNamespace),
+			MetricsConfig:    metrics.DefaultConfig(metricsNamespace),
 		},
 		ManagedKinds:  managed,
-		MetricsConfig: metrics.DefaultConfig(appMetricsNamespace),
+		MetricsConfig: metrics.DefaultConfig(metricsNamespace),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create %s app: %w", name, err)
 	}
-	return &operatorApp{App: app, informers: informers}, nil
-}
-
-// WaitForSync blocks until every watched kind's informer has synced.
-func (a *operatorApp) WaitForSync(ctx context.Context) error {
-	for _, inf := range a.informers {
-		if err := inf.WaitForSync(ctx); err != nil {
-			return err
-		}
+	for _, r := range synced {
+		app.AddRunnable(r)
 	}
-	return nil
-}
-
-// AddSyncedRunnable runs f as part of the app once every watched kind has synced.
-func (a *operatorApp) AddSyncedRunnable(f func(ctx context.Context) error) {
-	a.AddRunnable(runnableFunc(func(ctx context.Context) error {
-		if err := a.WaitForSync(ctx); err != nil {
-			return err
-		}
-		return f(ctx)
-	}))
-}
-
-// Run registers the app's metrics and runs it until ctx is done, then waits up to
-// shutdownTimeout for its runnables to stop.
-func (a *operatorApp) Run(ctx context.Context, reg prometheus.Registerer, shutdownTimeout time.Duration, logger logging.Logger) error {
 	if reg != nil {
-		for _, c := range a.PrometheusCollectors() {
+		for _, c := range app.PrometheusCollectors() {
 			if err := reg.Register(c); err != nil {
-				return fmt.Errorf("register app metrics: %w", err)
+				return nil, fmt.Errorf("register %s app metrics: %w", name, err)
 			}
 		}
 	}
+	return &App{App: app}, nil
+}
 
+// Run runs the app until ctx is done, then waits up to shutdownTimeout for its
+// runnables to stop.
+func (a *App) Run(ctx context.Context, shutdownTimeout time.Duration, logger logging.Logger) error {
 	done := make(chan error, 1)
 	go func() { done <- a.Runner().Run(ctx) }()
 
@@ -136,9 +127,10 @@ func (a *operatorApp) Run(ctx context.Context, reg prometheus.Registerer, shutdo
 	}
 }
 
-type runnableFunc func(ctx context.Context) error
+// RunnableFunc adapts a function to app.Runnable.
+type RunnableFunc func(ctx context.Context) error
 
-func (f runnableFunc) Run(ctx context.Context) error { return f(ctx) }
+func (f RunnableFunc) Run(ctx context.Context) error { return f(ctx) }
 
 // sdkKind describes a provisioning type to the app. The app never decodes or
 // writes it: the delta source supplies the objects, wrapped in deliveries.
@@ -278,18 +270,18 @@ func (w handlerWatcher) Delete(_ context.Context, obj resource.Object) error {
 	return nil
 }
 
-// noClients refuses to build clients: every kind an operator app watches is
-// served by its delta source, so the app has no reason to reach the apiserver.
+// noClients refuses to build clients: every kind the app watches is served by
+// its delta source, so the app has no reason to reach the apiserver.
 type noClients struct{}
 
 func (noClients) ClientFor(kind resource.Kind) (resource.Client, error) {
-	return nil, fmt.Errorf("provisioning operator app builds no client for %s", kind.GroupVersionKind())
+	return nil, fmt.Errorf("provisioning controller app builds no client for %s", kind.GroupVersionKind())
 }
 
 func (noClients) GetCustomRouteClient(gv schema.GroupVersion, _ string) (resource.CustomRouteClient, error) {
-	return nil, fmt.Errorf("provisioning operator app builds no custom route client for %s", gv)
+	return nil, fmt.Errorf("provisioning controller app builds no custom route client for %s", gv)
 }
 
 func (noClients) DiscoveryClient() (resource.DiscoveryClient, error) {
-	return nil, errors.New("provisioning operator app builds no discovery client")
+	return nil, errors.New("provisioning controller app builds no discovery client")
 }

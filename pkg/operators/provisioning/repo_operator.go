@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -134,23 +135,23 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 		nats.Enabled(controllerCfg.natsSubscriber),
 	)
-	app, err := newOperatorApp("provisioning-repo", logger, watchedKind{
-		info:    apisprovisioning.RepositoryResourceInfo,
-		source:  repoSource,
-		handler: controller.EventHandler(),
+	app, err := controllerapp.New("provisioning-repo", logger, deps.Registerer, controllerapp.WatchedKind{
+		Info:    apisprovisioning.RepositoryResourceInfo,
+		Source:  repoSource,
+		Handler: controller.EventHandler(),
+		OnSynced: func(ctx context.Context) error {
+			controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
+				logger.Info("repository operator is ready")
+				deps.HealthNotifier.SetReady()
+			}, func() {
+				logger.Info("repository operator shutting down")
+				deps.HealthNotifier.SetNotReady()
+			})
+			return nil
+		},
 	})
 	if err != nil {
 		return err
 	}
-	app.AddSyncedRunnable(func(ctx context.Context) error {
-		controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {
-			logger.Info("repository operator is ready")
-			deps.HealthNotifier.SetReady()
-		}, func() {
-			logger.Info("repository operator shutting down")
-			deps.HealthNotifier.SetNotReady()
-		})
-		return nil
-	})
-	return app.Run(ctx, deps.Registerer, controllerCfg.DrainTimeout()+appShutdownGrace, logger)
+	return app.Run(ctx, controllerCfg.DrainTimeout()+shutdownGrace, logger)
 }

@@ -1,4 +1,4 @@
-package provisioning
+package controllerapp
 
 import (
 	"context"
@@ -100,21 +100,21 @@ func testRepository(name, rv string) *apisprovisioning.Repository {
 	return &apisprovisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: name, ResourceVersion: rv, Generation: 1}}
 }
 
-func TestOperatorAppDispatchesDeliveriesUnchanged(t *testing.T) {
+func TestAppDispatchesDeliveriesUnchanged(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		source := newFakeSource()
 		source.synced.Store(true)
 		handler := &recordingHandler{}
-		app, err := newOperatorApp("test", logging.DefaultLogger, watchedKind{
-			info:    apisprovisioning.RepositoryResourceInfo,
-			source:  source,
-			handler: handler,
+		app, err := New("test", logging.DefaultLogger, nil, WatchedKind{
+			Info:    apisprovisioning.RepositoryResourceInfo,
+			Source:  source,
+			Handler: handler,
 		})
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
-		go func() { done <- app.Run(ctx, prometheus.NewRegistry(), time.Second, logging.DefaultLogger) }()
+		go func() { done <- app.Run(ctx, time.Second, logging.DefaultLogger) }()
 		<-source.running
 
 		initial := testRepository("initial", "1")
@@ -141,27 +141,26 @@ func TestOperatorAppDispatchesDeliveriesUnchanged(t *testing.T) {
 	})
 }
 
-func TestOperatorAppRunsRepositoryDeltaSource(t *testing.T) {
+func TestAppRunsRepositoryDeltaSource(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		existing := testRepository("existing", "")
-		clientset := fake.NewClientset(existing)
+		clientset := fake.NewClientset(testRepository("existing", ""))
 		source, _ := informer.NewRepositoryDeltaSource(nil, clientset, nil, time.Hour, nil, nil)
 		handler := &recordingHandler{}
-		app, err := newOperatorApp("test", logging.DefaultLogger, watchedKind{
-			info:    apisprovisioning.RepositoryResourceInfo,
-			source:  source,
-			handler: handler,
+		synced := make(chan struct{})
+		app, err := New("test", logging.DefaultLogger, nil, WatchedKind{
+			Info:    apisprovisioning.RepositoryResourceInfo,
+			Source:  source,
+			Handler: handler,
+			OnSynced: func(context.Context) error {
+				close(synced)
+				return nil
+			},
 		})
 		require.NoError(t, err)
-		synced := make(chan struct{})
-		app.AddSyncedRunnable(func(context.Context) error {
-			close(synced)
-			return nil
-		})
 
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
-		go func() { done <- app.Run(ctx, prometheus.NewRegistry(), time.Second, logging.DefaultLogger) }()
+		go func() { done <- app.Run(ctx, time.Second, logging.DefaultLogger) }()
 		<-synced
 
 		require.NoError(t, clientset.Tracker().Add(testRepository("created", "")))
@@ -179,52 +178,70 @@ func TestOperatorAppRunsRepositoryDeltaSource(t *testing.T) {
 	})
 }
 
-func TestOperatorAppSyncedRunnableWaitsForSync(t *testing.T) {
+func TestAppOnSyncedWaitsForItsOwnKind(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		source := newFakeSource()
-		app, err := newOperatorApp("test", logging.DefaultLogger, watchedKind{
-			info:    apisprovisioning.JobResourceInfo,
-			source:  source,
-			handler: &recordingHandler{},
-		})
+		jobSource, repoSource := newFakeSource(), newFakeSource()
+		var jobsSynced, reposSynced atomic.Bool
+		app, err := New("test", logging.DefaultLogger, nil,
+			WatchedKind{
+				Info:    apisprovisioning.JobResourceInfo,
+				Source:  jobSource,
+				Handler: &recordingHandler{},
+				OnSynced: func(context.Context) error {
+					jobsSynced.Store(true)
+					return nil
+				},
+			},
+			WatchedKind{
+				Info:    apisprovisioning.RepositoryResourceInfo,
+				Source:  repoSource,
+				Handler: &recordingHandler{},
+				OnSynced: func(context.Context) error {
+					reposSynced.Store(true)
+					return nil
+				},
+			},
+		)
 		require.NoError(t, err)
-		var ran atomic.Bool
-		app.AddSyncedRunnable(func(context.Context) error {
-			ran.Store(true)
-			return nil
-		})
 
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
-		go func() { done <- app.Run(ctx, nil, time.Second, logging.DefaultLogger) }()
-		<-source.running
+		go func() { done <- app.Run(ctx, time.Second, logging.DefaultLogger) }()
+		<-jobSource.running
+		<-repoSource.running
 
 		time.Sleep(time.Second)
-		assert.False(t, ran.Load(), "runnable started before the informer synced")
+		assert.False(t, jobsSynced.Load(), "job runnable started before its informer synced")
+		assert.False(t, reposSynced.Load(), "repository runnable started before its informer synced")
 
-		source.synced.Store(true)
+		repoSource.synced.Store(true)
 		time.Sleep(time.Second)
-		assert.True(t, ran.Load(), "runnable did not start once the informer synced")
+		assert.False(t, jobsSynced.Load(), "job runnable started on another kind's sync")
+		assert.True(t, reposSynced.Load(), "repository runnable did not start once its informer synced")
+
+		jobSource.synced.Store(true)
+		time.Sleep(time.Second)
+		assert.True(t, jobsSynced.Load(), "job runnable did not start once its informer synced")
 
 		cancel()
 		require.NoError(t, <-done)
 	})
 }
 
-func TestOperatorAppMetricsAreNamespaced(t *testing.T) {
+func TestAppMetricsAreNamespaced(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		source := newFakeSource()
-		app, err := newOperatorApp("test", logging.DefaultLogger, watchedKind{
-			info:    apisprovisioning.ConnectionResourceInfo,
-			source:  source,
-			handler: &recordingHandler{},
+		app, err := New("test", logging.DefaultLogger, reg, WatchedKind{
+			Info:    apisprovisioning.ConnectionResourceInfo,
+			Source:  source,
+			Handler: &recordingHandler{},
 		})
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
-		go func() { done <- app.Run(ctx, reg, time.Second, logging.DefaultLogger) }()
+		go func() { done <- app.Run(ctx, time.Second, logging.DefaultLogger) }()
 		<-source.running
 		source.each(func(h cache.ResourceEventHandler) { h.OnAdd(testRepository("observed", "1"), false) })
 		synctest.Wait()
@@ -233,7 +250,7 @@ func TestOperatorAppMetricsAreNamespaced(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, families)
 		for _, f := range families {
-			assert.True(t, strings.HasPrefix(f.GetName(), appMetricsNamespace+"_"), "metric %q is not namespaced", f.GetName())
+			assert.True(t, strings.HasPrefix(f.GetName(), metricsNamespace+"_"), "metric %q is not namespaced", f.GetName())
 		}
 
 		cancel()
@@ -241,19 +258,19 @@ func TestOperatorAppMetricsAreNamespaced(t *testing.T) {
 	})
 }
 
-func TestOperatorAppStopsWaitingAfterShutdownTimeout(t *testing.T) {
+func TestAppStopsWaitingAfterShutdownTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		app, err := newOperatorApp("test", logging.DefaultLogger)
+		app, err := New("test", logging.DefaultLogger, nil)
 		require.NoError(t, err)
 		release := make(chan struct{})
-		app.AddRunnable(runnableFunc(func(context.Context) error {
+		app.AddRunnable(RunnableFunc(func(context.Context) error {
 			<-release
 			return nil
 		}))
 
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan error, 1)
-		go func() { done <- app.Run(ctx, nil, time.Minute, logging.DefaultLogger) }()
+		go func() { done <- app.Run(ctx, time.Minute, logging.DefaultLogger) }()
 		cancel()
 
 		start := time.Now()

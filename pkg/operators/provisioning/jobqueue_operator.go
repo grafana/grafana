@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -25,6 +26,10 @@ import (
 // otherwise a single delayed renewal can let a running job be reaped and
 // re-run by another worker.
 const jobClaimExpiry = 60 * time.Second
+
+// shutdownGrace is how long past its own drain an operator waits for its
+// controllers to stop before exiting anyway.
+const shutdownGrace = 30 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -98,15 +103,21 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// The jobs informer resyncs on job_interval (default 30s) rather than the
 	// controllers' resync_interval, preserving the job pickup cadence (and config
 	// key) of the polling design this replaced.
-	app, err := newOperatorApp("provisioning-jobqueue", logger, watchedKind{
-		info:    apisprovisioning.JobResourceInfo,
-		source:  informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer),
-		handler: driver.EventHandler(),
+	app, err := controllerapp.New("provisioning-jobqueue", logger, deps.Registerer, controllerapp.WatchedKind{
+		Info:    apisprovisioning.JobResourceInfo,
+		Source:  informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer),
+		Handler: driver.EventHandler(),
+		OnSynced: func(ctx context.Context) error {
+			logger.Info("job queue operator is ready")
+			deps.HealthNotifier.SetReady()
+			context.AfterFunc(ctx, deps.HealthNotifier.SetNotReady)
+			return nil
+		},
 	})
 	if err != nil {
 		return err
 	}
-	app.AddRunnable(runnableFunc(func(ctx context.Context) error {
+	app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
 		logger.Info("job queue controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
@@ -114,14 +125,8 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 		return nil
 	}))
-	app.AddSyncedRunnable(func(ctx context.Context) error {
-		logger.Info("job queue operator is ready")
-		deps.HealthNotifier.SetReady()
-		context.AfterFunc(ctx, deps.HealthNotifier.SetNotReady)
-		return nil
-	})
 
-	if err := app.Run(ctx, deps.Registerer, controllerCfg.maxJobTimeout+appShutdownGrace, logger); err != nil {
+	if err := app.Run(ctx, controllerCfg.maxJobTimeout+shutdownGrace, logger); err != nil {
 		return err
 	}
 	logger.Info("job queue operator shutdown complete")

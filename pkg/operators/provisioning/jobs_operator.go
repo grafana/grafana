@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -40,16 +41,16 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// runs when a history expiration is configured; the expired-job reaper below
 	// runs regardless. The source choice reads the NATS config flag directly, not a
 	// subscriber: this operator has no NATS consumer role and holds no subscriber.
-	var kinds []watchedKind
+	var kinds []controllerapp.WatchedKind
 	if controllerCfg.historyExpiration > 0 {
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		kinds = append(kinds, watchedKind{
-			info:    apisprovisioning.HistoricJobResourceInfo,
-			source:  informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration),
-			handler: historyJobController.EventHandler(),
+		kinds = append(kinds, controllerapp.WatchedKind{
+			Info:    apisprovisioning.HistoricJobResourceInfo,
+			Source:  informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration),
+			Handler: historyJobController.EventHandler(),
 		})
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 	} else {
@@ -73,7 +74,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 
 	// Historic-job cleanup runs off the source's re-lists, so readiness does not
 	// wait for its first pass.
-	app, err := newOperatorApp("provisioning-jobs", logger, kinds...)
+	app, err := controllerapp.New("provisioning-jobs", logger, deps.Registerer, kinds...)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		jobHistoryWriter,
 		controllerCfg.cleanupInterval,
 	)
-	app.AddRunnable(runnableFunc(func(ctx context.Context) error {
+	app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
 		if err := jobCleanupController.Run(ctx); err != nil {
 			logger.Error("job cleanup controller failed", "error", err)
 		}
@@ -95,7 +96,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	context.AfterFunc(ctx, deps.HealthNotifier.SetNotReady)
 	defer deps.HealthNotifier.SetNotReady()
 
-	if err := app.Run(ctx, deps.Registerer, appShutdownGrace, logger); err != nil {
+	if err := app.Run(ctx, shutdownGrace, logger); err != nil {
 		return err
 	}
 	logger.Info("jobs operator shutdown complete")
