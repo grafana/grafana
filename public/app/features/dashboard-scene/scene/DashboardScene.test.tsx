@@ -31,6 +31,7 @@ import {
   LocalValueVariable,
   MultiValueVariable,
   AdHocFiltersVariable,
+  SceneCanvasText,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -741,6 +742,25 @@ describe('DashboardScene', () => {
         jest.advanceTimersByTime(10);
         scene.state.sidebar.undoAction();
         expect(scene.state.title).toBe('hello');
+      });
+
+      it('drops the save overlay by default, and keeps it when the caller reports in place', async () => {
+        const result = {
+          slug: 'saved-title',
+          uid: 'dash-1',
+          url: '/d/dash-1/saved-title',
+          version: 2,
+          status: 'success' as const,
+        };
+
+        scene.setState({ overlay: new SceneCanvasText({ text: 'save drawer' }) });
+        await scene.saveCompleted(scene.getSaveModel(), result);
+        expect(scene.state.overlay).toBeUndefined();
+
+        // A drawer that reports the commit in place has to survive the save that produced it.
+        scene.setState({ overlay: new SceneCanvasText({ text: 'save drawer' }) });
+        await scene.saveCompleted(scene.getSaveModel(), result, undefined, undefined, { keepOverlay: true });
+        expect(scene.state.overlay).toBeDefined();
       });
 
       it.each(['view', 'edit', 'agent'] as const)(

@@ -432,6 +432,14 @@ describe('SaveProvisionedDashboardForm', () => {
     // Success path completes the save and reports the commit, offering the new dashboard as a step
     await waitFor(() => {
       expect(props.dashboard.saveCompleted).toHaveBeenCalled();
+      // The drawer reports the commit in place, so the save must not drop it as the scene overlay.
+      expect(props.dashboard.saveCompleted).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        undefined,
+        { keepOverlay: true }
+      );
     });
     expect(await screen.findByText(/created in a branch/i)).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
@@ -645,9 +653,21 @@ describe('SaveProvisionedDashboardForm', () => {
     // saveCompleted must re-baseline against the same trimmed model, not the full
     // scene model — otherwise change detection treats the omitted values as saved.
     await waitFor(() => {
-      expect(saveCompleted).toHaveBeenCalledWith(trimmedSaveModel, expect.anything(), expect.anything());
+      expect(saveCompleted).toHaveBeenCalledWith(
+        trimmedSaveModel,
+        expect.anything(),
+        expect.anything(),
+        undefined,
+        expect.anything()
+      );
     });
-    expect(saveCompleted).not.toHaveBeenCalledWith(fullSaveModel, expect.anything(), expect.anything());
+    expect(saveCompleted).not.toHaveBeenCalledWith(
+      fullSaveModel,
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      expect.anything()
+    );
   });
 
   it('holds the details step while new dashboard validation is pending', async () => {

@@ -268,7 +268,10 @@ export function SaveProvisionedDashboardForm({
       const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
-      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      // The drawer stays open to report the commit, so the save must not drop it as the overlay.
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid, undefined, {
+        keepOverlay: true,
+      });
       dashboardWatcher.clearIgnoreSave();
       if (pendingChanges) {
         await finishCommittingPendingChanges(dashboard, pendingChanges, { showSaved });

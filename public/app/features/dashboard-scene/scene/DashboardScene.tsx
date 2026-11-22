@@ -1257,7 +1257,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveModel: Dashboard | DashboardV2Spec,
     result: SaveDashboardResponseDTO,
     folderUid?: string,
-    saveAsSource?: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>
+    saveAsSource?: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>,
+    /** Keeps the save overlay mounted, for a drawer that reports the result in place. */
+    options?: { keepOverlay?: boolean }
   ) {
     this._editSession = undefined;
     this.serializer.onSaveComplete(sortedDeepCloneWithoutNulls(saveModel), result);
@@ -1303,8 +1305,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
     this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
-    // Detect edits made during the save before its redirect can leave the dashboard.
-    this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
+    // Detect edits made during the save before its redirect can leave the dashboard. The baseline
+    // above always drops the overlay; only the live state keeps it for a drawer still reporting.
+    this.setState({
+      isDirty: hasActualSaveChanges(this),
+      ...(options?.keepOverlay ? {} : { overlay: undefined }),
+    });
 
     if (wasTrackingChanges) {
       this._changeTracker.startTrackingChanges();
