@@ -367,9 +367,12 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 	// Convert color
 	if in.Color != nil {
 		out.Color = &dashv2beta1.DashboardFieldColor{
-			Mode:       dashv2beta1.DashboardFieldColorModeId(in.Color.Mode),
-			FixedColor: in.Color.FixedColor,
-			SeriesBy:   (*dashv2beta1.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
+			Mode:            dashv2beta1.DashboardFieldColorModeId(in.Color.Mode),
+			FixedColor:      in.Color.FixedColor,
+			GradientColorTo: in.Color.GradientColorTo,
+			SeriesBy:        (*dashv2beta1.DashboardFieldColorSeriesByMode)(in.Color.SeriesBy),
+			Reverse:         in.Color.Reverse,
+			ByValue:         in.Color.ByValue,
 		}
 	}
 

@@ -2199,8 +2199,17 @@ func convertFieldColorToV1(color *dashv2alpha1.DashboardFieldColor) map[string]i
 	if color.FixedColor != nil {
 		colorMap["fixedColor"] = *color.FixedColor
 	}
+	if color.GradientColorTo != nil {
+		colorMap["gradientColorTo"] = *color.GradientColorTo
+	}
 	if color.SeriesBy != nil {
 		colorMap["seriesBy"] = string(*color.SeriesBy)
+	}
+	if color.Reverse != nil {
+		colorMap["reverse"] = *color.Reverse
+	}
+	if color.ByValue != nil {
+		colorMap["byValue"] = *color.ByValue
 	}
 
 	return colorMap

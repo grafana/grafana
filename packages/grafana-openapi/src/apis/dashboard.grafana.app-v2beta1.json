@@ -3981,6 +3981,10 @@
         "type": "object",
         "required": ["mode"],
         "properties": {
+          "byValue": {
+            "description": "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
+            "type": "boolean"
+          },
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
             "type": "string"
@@ -3993,6 +3997,10 @@
             "description": "The main color scheme mode.",
             "type": "string",
             "default": ""
+          },
+          "reverse": {
+            "description": "Reverse the order of the colors in a by value color scheme.",
+            "type": "boolean"
           },
           "seriesBy": {
             "description": "Some visualizations need to know how to assign a series color from by value color schemes.",
@@ -6646,6 +6654,10 @@
         "type": "object",
         "required": ["mode"],
         "properties": {
+          "byValue": {
+            "description": "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
+            "type": "boolean"
+          },
           "fixedColor": {
             "description": "The fixed color value for fixed or shades color modes.",
             "type": "string"
@@ -6658,6 +6670,10 @@
             "description": "The main color scheme mode.",
             "type": "string",
             "default": ""
+          },
+          "reverse": {
+            "description": "Reverse the order of the colors in a by value color scheme.",
+            "type": "boolean"
           },
           "seriesBy": {
             "description": "Some visualizations need to know how to assign a series color from by value color schemes.",

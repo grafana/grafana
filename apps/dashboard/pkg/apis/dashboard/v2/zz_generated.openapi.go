@@ -2215,6 +2215,20 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldColor(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"reverse": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reverse the order of the colors in a by value color scheme.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"byValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"mode"},
 			},

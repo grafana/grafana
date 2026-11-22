@@ -1423,12 +1423,16 @@ export type DashboardAction = {
   variables?: DashboardActionVariable[];
 };
 export type DashboardFieldColor = {
+  /** Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere. */
+  byValue?: boolean;
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
   /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
   gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
+  /** Reverse the order of the colors in a by value color scheme. */
+  reverse?: boolean;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
   seriesBy?: string;
 };
@@ -2307,12 +2311,16 @@ export type NotebookAction = {
   variables?: NotebookActionVariable[];
 };
 export type NotebookFieldColor = {
+  /** Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere. */
+  byValue?: boolean;
   /** The fixed color value for fixed or shades color modes. */
   fixedColor?: string;
   /** The end color for the gradient color mode (smallest value). Only used when mode is gradient. */
   gradientColorTo?: string;
   /** The main color scheme mode. */
   mode: string;
+  /** Reverse the order of the colors in a by value color scheme. */
+  reverse?: boolean;
   /** Some visualizations need to know how to assign a series color from by value color schemes. */
   seriesBy?: string;
 };

@@ -791,6 +791,10 @@ type DashboardFieldColor struct {
 	GradientColorTo *string `json:"gradientColorTo,omitempty"`
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	SeriesBy *DashboardFieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	// Reverse the order of the colors in a by value color scheme.
+	Reverse *bool `json:"reverse,omitempty"`
+	// Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.
+	ByValue *bool `json:"byValue,omitempty"`
 }
 
 // NewDashboardFieldColor creates a new DashboardFieldColor object.

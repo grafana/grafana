@@ -439,6 +439,10 @@ FieldColor: {
 	gradientColorTo?: string
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	seriesBy?: FieldColorSeriesByMode
+	// Reverse the order of the colors in a by value color scheme.
+	reverse?: bool
+	// Color each value of a categorical palette by hashing it, so the same value gets the same color everywhere.
+	byValue?: bool
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
