@@ -2,17 +2,15 @@ package workers
 
 import (
 	"context"
+	"github.com/grafana/grafana/apps/provisioning/pkg/util/featuretest"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func newTestWorkers() []jobs.Worker {
@@ -37,16 +35,7 @@ func supporting(t *testing.T, workers []jobs.Worker, action provisioning.JobActi
 
 func setPerformanceFlag(t *testing.T, enabled bool) {
 	t.Helper()
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagProvisioningPerformance: {
-			Key:            featuremgmt.FlagProvisioningPerformance,
-			DefaultVariant: "configured",
-			Variants:       map[string]any{"configured": enabled},
-		},
-	})))
-	t.Cleanup(func() {
-		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
-	})
+	featuretest.Set(t, map[string]bool{jobs.FlagProvisioningPerformance: enabled})
 }
 
 func TestNewHandlesEachBuiltInActionOnce(t *testing.T) {

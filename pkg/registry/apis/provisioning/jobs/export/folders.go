@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
@@ -152,7 +151,7 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 	// Unified storage now stamps the root parent as "general" instead of "";
 	// stop the walk at either sentinel so we don't try to fetch a non-existent
 	// "general" folder object.
-	for !folder.IsRootFolderUID(current) {
+	for !resources.IsRootFolderUID(current) {
 		if _, ok := seen[current]; ok {
 			return nil
 		}

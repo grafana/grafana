@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // defaultProgressUpdates is how many progress notifications a test job emits
@@ -45,7 +44,7 @@ func NewWorker(enabled func(ctx context.Context) bool) *Worker {
 // job type. It is evaluated per call via OpenFeature, not captured at startup,
 // so the flag behaves consistently with the other provisioning flags.
 func Enabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
+	return openfeature.NewDefaultClient().Boolean(ctx, jobs.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
 }
 
 func (w *Worker) IsSupported(ctx context.Context, job provisioning.Job) bool {

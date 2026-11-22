@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
@@ -41,7 +40,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 
 	cfg := repo.Config()
 	evalCtx := features.EvaluationContextFromTargetingKey(cfg.Namespace)
-	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, evalCtx)
+	enabled := openfeature.NewDefaultClient().Boolean(ctx, jobs.FlagProvisioningExport, false, evalCtx)
 	if !enabled {
 		// A disabled feature is an expected configuration state, not a failure:
 		// complete the job in a warning state so it is not logged or alerted as an error.

@@ -7,12 +7,14 @@ import (
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	folderapierrors "github.com/grafana/grafana/pkg/api/apierrors"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
-// The resources package cannot import the folder service or the IAM app, so it
-// mirrors what it needs from them. These fail when the two drift apart.
+// The app packages cannot import the main Grafana module, so they mirror what
+// they need from it. These fail when the two drift apart.
 func TestResourcesMirrorsFolderModel(t *testing.T) {
 	assert.Equal(t, foldermodel.GeneralFolderUID, resources.GeneralFolderUID)
 	for _, uid := range []string{"", foldermodel.GeneralFolderUID, foldermodel.SharedWithMeFolderUID, "some-folder"} {
@@ -32,4 +34,9 @@ func TestResourcesMirrorsFolderModel(t *testing.T) {
 
 func TestResourcesMirrorsUserResource(t *testing.T) {
 	assert.Equal(t, iam.UserResourceInfo.GroupVersionResource(), resources.UserResource)
+}
+
+func TestJobsMirrorsFeatureFlags(t *testing.T) {
+	assert.Equal(t, featuremgmt.FlagProvisioningExport, jobs.FlagProvisioningExport)
+	assert.Equal(t, featuremgmt.FlagProvisioningPerformance, jobs.FlagProvisioningPerformance)
 }
