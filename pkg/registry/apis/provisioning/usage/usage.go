@@ -3,6 +3,7 @@ package usage
 import (
 	"context"
 	"fmt"
+	appusage "github.com/grafana/grafana/apps/provisioning/pkg/usage"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -115,7 +116,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 			for i := range repos {
 				repo := &repos[i]
 				repoCounts[string(repo.Spec.Type)]++
-				authMethodCounts[repositoryAuthMethod(repo)]++
+				authMethodCounts[appusage.RepositoryAuthMethod(repo)]++
 				if r := readyReason(repo.Status.Conditions); r != "" {
 					readyReasonCounts[strings.ToLower(r)]++
 				}

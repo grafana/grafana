@@ -18,7 +18,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationWebhookController_ReconcileLifecycle drives the controller's
@@ -28,7 +27,9 @@ import (
 // this exercises the full controller-to-provider path, including the 422
 // "hook already exists" self-heal that lets a repo recover a lost Status.Webhook.
 func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
 	const (
 		owner      = "test-owner"

@@ -18,11 +18,11 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/informer"
+	"github.com/grafana/grafana/apps/provisioning/pkg/usage"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/keyqueue"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"

@@ -173,7 +173,7 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 		Type:                 string(repo.Spec.Type),
 		CreatedAt:            createdAt,
 		UpdatedAt:            updatedAt,
-		AuthMethod:           repositoryAuthMethod(repo),
+		AuthMethod:           RepositoryAuthMethod(repo),
 		ReadOnly:             len(repo.Spec.Workflows) == 0,
 		SyncEnabled:          repo.Spec.Sync.Enabled,
 		SyncTarget:           string(repo.Spec.Sync.Target),
@@ -189,14 +189,14 @@ func RepositoryUsageStatusFromRepository(repo *provisioning.Repository) Reposito
 	}
 }
 
-// repositoryAuthMethod classifies how a repository authenticates:
+// RepositoryAuthMethod classifies how a repository authenticates:
 //   - "none": local repositories, which have no remote to authenticate against.
 //   - "connection": auth is delegated to a referenced Connection, whose own type
 //     distinguishes GitHub App from the OAuth providers.
 //   - "token": a token/PAT is stored on the repository.
 //   - "anonymous": a remote repository with neither a token nor a connection --
 //     a public, read-only repo, which the validator permits.
-func repositoryAuthMethod(repo *provisioning.Repository) string {
+func RepositoryAuthMethod(repo *provisioning.Repository) string {
 	switch {
 	case repo.Spec.Type == provisioning.LocalRepositoryType:
 		return "none"
