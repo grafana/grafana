@@ -1,11 +1,17 @@
 package oauth
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -35,9 +41,107 @@ var githubProvider = func() oauthsuite.Provider {
 	return p
 }()
 
+func TestIntegrationProvisioning_GithubOAuthSubmitPullRequest(t *testing.T) {
+	helper, mock := githubHelperWithMock(t)
+	const name = "github-oauth-submit"
+	oauthsuite.CreateConnection(t, helper, githubProvider, name)
+	oauthsuite.Authorize(t, helper, name, oauthsuite.MockNonExpiringCode)
+	// The mock issues "<clientID>-<n>" tokens in order: the connection got the first one
+	// when it was authorized, so the user's exchanged code yields the second.
+	const connectionToken, userToken = name + "-client-1", name + "-client-2"
+
+	_, err := helper.Repositories.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Repository",
+		"metadata":   map[string]any{"name": name, "namespace": "default"},
+		"spec": map[string]any{
+			"title":      name,
+			"type":       string(provisioning.GitHubRepositoryType),
+			"github":     map[string]any{"url": "https://github.com/oauth-owner-1/oauth-repo-1", "branch": "main"},
+			"connection": map[string]any{"name": name},
+			"sync":       map[string]any{"enabled": false, "target": "folder"},
+			"workflows":  []any{"branch"},
+		},
+	}}, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository")
+
+	submit := func(t *testing.T, spec provisioning.PullRequestSubmissionSpec) (*provisioning.PullRequestSubmission, int, error) {
+		t.Helper()
+		body, err := json.Marshal(&provisioning.PullRequestSubmission{Spec: spec})
+		require.NoError(t, err)
+
+		var statusCode int
+		result := helper.EditorREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(name).
+			SubResource("submit").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).
+			StatusCode(&statusCode)
+		if result.Error() != nil {
+			return nil, statusCode, result.Error()
+		}
+		raw, err := result.Raw()
+		require.NoError(t, err)
+		res := &provisioning.PullRequestSubmission{}
+		require.NoError(t, json.Unmarshal(raw, res))
+		return res, statusCode, nil
+	}
+
+	t.Run("opens the pull request with the token of the user who authorized the code", func(t *testing.T) {
+		res, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{
+			Ref:         "grafana-changes",
+			Title:       "Update dashboards",
+			Description: "Made in Grafana",
+			Code:        oauthsuite.MockNonExpiringCode,
+			RedirectURI: oauthsuite.RedirectURI,
+		})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, statusCode)
+		require.Equal(t, provisioning.PullRequestSubmissionStatus{Number: 1, URL: "https://github.com/oauth-owner-1/oauth-repo-1/pull/1"}, res.Status)
+		require.Empty(t, res.Spec.Code, "the authorization code must not be echoed back")
+
+		pulls := mock.submittedPulls()
+		require.Len(t, pulls, 1)
+		require.Equal(t, "/repos/oauth-owner-1/oauth-repo-1/pulls", pulls[0].path)
+		require.Equal(t, "Bearer "+userToken, pulls[0].authorization, "the pull request must be authored by the user")
+		require.NotEqual(t, "Bearer "+connectionToken, pulls[0].authorization, "the pull request must not be authored by the connection")
+		require.Equal(t, map[string]any{"head": "grafana-changes", "base": "main", "title": "Update dashboards", "body": "Made in Grafana"}, pulls[0].body)
+	})
+
+	t.Run("rejects an authorization code the provider does not accept", func(t *testing.T) {
+		_, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{Ref: "grafana-changes", Title: "Update dashboards", Code: "bogus"})
+		require.Error(t, err)
+		require.Equal(t, http.StatusBadRequest, statusCode)
+	})
+
+	t.Run("rejects submitting the repository branch", func(t *testing.T) {
+		_, statusCode, err := submit(t, provisioning.PullRequestSubmissionSpec{Ref: "main", Title: "Update dashboards", Code: oauthsuite.MockNonExpiringCode})
+		require.Error(t, err)
+		require.Equal(t, http.StatusBadRequest, statusCode)
+	})
+}
+
+type submittedPull struct {
+	path          string
+	authorization string
+	body          map[string]any
+}
+
 type mockGithub struct {
 	tokens *oauthsuite.MockTokens
 	base   http.RoundTripper
+
+	mu    sync.Mutex
+	pulls []submittedPull
+}
+
+func (f *mockGithub) submittedPulls() []submittedPull {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.pulls)
 }
 
 func (f *mockGithub) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -46,6 +150,27 @@ func (f *mockGithub) RoundTrip(req *http.Request) (*http.Response, error) {
 		return f.base.RoundTrip(req)
 	case req.Method == http.MethodPost && strings.HasSuffix(req.URL.Path, "/login/oauth/access_token"):
 		return common.ServeRecorded(req, f.tokens.HandleToken), nil
+	case req.Method == http.MethodPost && strings.HasPrefix(req.URL.Path, "/repos/") && strings.HasSuffix(req.URL.Path, "/pulls"):
+		return common.ServeRecorded(req, func(w http.ResponseWriter, r *http.Request) {
+			if !f.tokens.Authorized(r) {
+				common.WriteJSON(w, http.StatusUnauthorized, map[string]any{"message": "Bad credentials"})
+				return
+			}
+			pull := submittedPull{path: r.URL.Path, authorization: r.Header.Get("Authorization")}
+			if err := json.NewDecoder(r.Body).Decode(&pull.body); err != nil {
+				common.WriteJSON(w, http.StatusBadRequest, map[string]any{"message": "Problems parsing JSON"})
+				return
+			}
+			f.mu.Lock()
+			f.pulls = append(f.pulls, pull)
+			number := len(f.pulls)
+			f.mu.Unlock()
+			repoPath := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/repos/"), "/pulls")
+			common.WriteJSON(w, http.StatusCreated, map[string]any{
+				"number":   number,
+				"html_url": fmt.Sprintf("https://github.com/%s/pull/%d", repoPath, number),
+			})
+		}), nil
 	case req.Method == http.MethodGet && strings.HasSuffix(req.URL.Path, "/user/repos"):
 		return common.ServeRecorded(req, func(w http.ResponseWriter, r *http.Request) {
 			if !f.tokens.Authorized(r) {
@@ -68,11 +193,17 @@ func (f *mockGithub) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func githubHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
+	helper, _ := githubHelperWithMock(t)
+	return helper
+}
+
+func githubHelperWithMock(t *testing.T) (*common.ProvisioningTestHelper, *mockGithub) {
+	t.Helper()
 	mock := &mockGithub{tokens: oauthsuite.NewMockTokens(), base: http.DefaultTransport}
 	http.DefaultTransport = mock
 	t.Cleanup(func() { http.DefaultTransport = mock.base })
 
 	helper := env.GetCleanHelper(t).ProvisioningTestHelper
 	helper.GetEnv().GithubRepoFactory.Client = &http.Client{Transport: mock}
-	return helper
+	return helper, mock
 }

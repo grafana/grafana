@@ -4101,6 +4101,89 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/submit": {
+      "post": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Submit a pull request",
+        "description": "Open a pull request from a branch into the repository branch, authored by the user who obtained the authorization code",
+        "operationId": "createRepositorySubmit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+                "type": "object",
+                "required": [
+                  "spec"
+                ],
+                "properties": {
+                  "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "default": {}
+                  },
+                  "spec": {
+                    "default": {}
+                  },
+                  "status": {
+                    "default": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.PullRequestSubmission"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "PullRequestSubmission"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the PullRequestSubmission",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/repositories/{name}/test": {
       "post": {
         "tags": [
@@ -5593,6 +5676,86 @@
           },
           "titleTemplate": {
             "description": "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.PullRequestSubmission": {
+        "description": "PullRequestSubmission opens a pull request from a branch into the repository's configured branch, authored by the requesting user rather than by the repository's own credentials. It is the request and response body of the repository submit subresource.",
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "default": {}
+          },
+          "status": {
+            "default": {}
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "PullRequestSubmission",
+            "version": "v1beta1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.PullRequestSubmissionSpec": {
+        "type": "object",
+        "required": [
+          "ref",
+          "title",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "description": "The authorization code the provider returned to the user, exchanged for a token that acts as the user so that they author the pull request",
+            "type": "string",
+            "default": ""
+          },
+          "description": {
+            "description": "The pull request description",
+            "type": "string"
+          },
+          "redirectURI": {
+            "description": "The redirect URI used in the authorization request",
+            "type": "string"
+          },
+          "ref": {
+            "description": "The branch holding the changes",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "The pull request title",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.PullRequestSubmissionStatus": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "description": "The pull request number",
+            "type": "integer",
+            "format": "int32"
+          },
+          "url": {
+            "description": "The URL of the pull request",
             "type": "string"
           }
         }
