@@ -22,7 +22,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -51,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controllerapp"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -77,6 +77,10 @@ import (
 )
 
 const repoControllerWorkers = 1
+
+// controllerShutdownTimeout bounds how long the in-process controllers get to
+// drain once the apiserver stops.
+const controllerShutdownTimeout = 30 * time.Second
 
 // jobClaimExpiry is how long a job claim is considered valid before it is
 // treated as abandoned. It governs both claim staleness in the job store and
@@ -1288,29 +1292,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 			driver.SetTracer(b.tracer)
 
-			// Feed the driver's work queue from the jobs informer: live create
-			// events plus the periodic resync/re-list, which re-delivers unclaimed
-			// jobs and is the driver's only recovery path. The handler must be
-			// registered before the informer runs: the NATS-backed source has no
-			// cache to replay for late handlers.
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
-			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
-				return fmt.Errorf("add job event handler: %w", err)
-			}
-			go jobSource.Run(postStartHookCtx.Done())
-
-			go func() {
-				if err := driver.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job driver failed", "error", err)
-				}
-			}()
-
-			go func() {
-				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
-					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
-				}
-			}()
-
 			webhookSecretRotationInterval := b.webhookSecretRotationInterval
 			if webhookSecretRotationInterval <= 0 {
 				// If webhookSecretRotationInterval is not set, use the default value
@@ -1351,23 +1332,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval,
 				nats.Enabled(b.natsSubscriber),
 			)
-			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add repository controller event handler: %w", err)
-			}
-			go repoSource.Run(postStartHookCtx.Done())
 
-			// Wait for the cache to sync off the hot path so we don't block
-			// apiserver startup; the controller only starts its workers once
-			// its handler has processed the initial list.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
-					return
-				}
-				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
-
-			// Create and run connection controller
+			// Create the connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
@@ -1389,20 +1355,36 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				nats.Enabled(b.natsSubscriber),
 			)
-			connReg, err := connSource.AddEventHandler(connController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add connection controller event handler: %w", err)
+			// The controllers only start their workers once their kind's handler
+			// has processed the initial list. The jobs informer feeds the driver's
+			// work queue: live create events plus the periodic resync/re-list,
+			// which re-delivers unclaimed jobs and is the driver's only recovery
+			// path.
+			kinds := []controllerapp.WatchedKind{
+				{
+					Info:    provisioning.JobResourceInfo,
+					Source:  informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry),
+					Handler: driver.EventHandler(),
+				},
+				{
+					Info:    provisioning.RepositoryResourceInfo,
+					Source:  repoSource,
+					Handler: repoController.EventHandler(),
+					OnSynced: func(ctx context.Context) error {
+						repoController.Run(ctx, repoControllerWorkers, func() {}, func() {})
+						return nil
+					},
+				},
+				{
+					Info:    provisioning.ConnectionResourceInfo,
+					Source:  connSource,
+					Handler: connController.EventHandler(),
+					OnSynced: func(ctx context.Context) error {
+						connController.Run(ctx, repoControllerWorkers, func() {}, func() {})
+						return nil
+					},
+				},
 			}
-			go connSource.Run(postStartHookCtx.Done())
-
-			// Same as the repository controller above: wait for cache sync off
-			// the hot path so apiserver startup isn't blocked.
-			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connReg.HasSynced) {
-					return
-				}
-				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
-			}()
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
@@ -1419,12 +1401,37 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
-				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
-					return fmt.Errorf("add history job controller event handler: %w", err)
-				}
-				go historySource.Run(postStartHookCtx.Done())
+				kinds = append(kinds, controllerapp.WatchedKind{
+					Info:    provisioning.HistoricJobResourceInfo,
+					Source:  informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration),
+					Handler: historyJobController.EventHandler(),
+				})
 			}
+
+			logger := logging.FromContext(postStartHookCtx.Context)
+			app, err := controllerapp.New("provisioning", logger, b.registry, kinds...)
+			if err != nil {
+				return err
+			}
+			app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
+				if err := driver.Run(ctx); err != nil {
+					logger.Error("job driver failed", "error", err)
+				}
+				return nil
+			}))
+			app.AddRunnable(controllerapp.RunnableFunc(func(ctx context.Context) error {
+				if err := jobCleanupController.Run(ctx); err != nil {
+					logger.Error("job cleanup controller failed", "error", err)
+				}
+				return nil
+			}))
+
+			// Run off the hot path so apiserver startup isn't blocked.
+			go func() {
+				if err := app.Run(postStartHookCtx.Context, controllerShutdownTimeout, logger); err != nil {
+					logger.Error("provisioning controllers stopped", "error", err)
+				}
+			}()
 
 			return nil
 		},
