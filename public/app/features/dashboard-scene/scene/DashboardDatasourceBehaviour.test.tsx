@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { map, of } from 'rxjs';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
 import {
@@ -18,7 +19,9 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
+import { retainDashboardSourceForRequest } from 'app/plugins/datasource/dashboard/retainDashboardSource';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -478,69 +481,78 @@ describe('DashboardDatasourceBehaviour', () => {
       expect(spy).toHaveBeenCalledTimes(1);
     });
 
-    it('should wait for library panel to load before running queries', async () => {
-      jest.spyOn(console, 'error').mockImplementation();
-      const libPanelBehavior = new LibraryPanelBehavior({
-        isLoaded: false,
-        uid: 'fdcvggvfy2qdca',
-        name: 'My Library Panel',
-        _loadedPanel: undefined,
+    it('loads an unmounted library source before rerunning the consumer', async () => {
+      const libraryPanel = new LibraryPanelBehavior({ uid: 'lib-source', name: 'Library source' });
+      const sourcePanel = new VizPanel({ key: 'panel-1', $behaviors: [libraryPanel] });
+      const consumer = new DashboardDatasourceBehaviour({});
+      const runner = new SceneQueryRunner({
+        datasource: { uid: SHARED_DASHBOARD_QUERY },
+        queries: [{ refId: 'A', panelId: 1 }],
+        $behaviors: [consumer],
       });
+      const consumerPanel = new VizPanel({ key: 'panel-2', $data: runner });
+      new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, consumerPanel]) });
 
-      const sourcePanel = new VizPanel({
-        key: 'panel-1',
-        title: 'Panel A',
-        pluginId: 'table',
-        $behaviors: [libPanelBehavior],
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'grafana' },
-          queries: [{ refId: 'A', queryType: 'randomWalk' }],
-        }),
+      const fetchPanel = jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValueOnce({
+        uid: 'lib-source',
+        name: 'Library source',
+        type: 'timeseries',
+        version: 1,
+        model: { type: 'timeseries', datasource: { uid: '-- Grafana --' }, targets: [{ refId: 'A' }] },
       });
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation();
+      const deactivate = consumer.activate();
 
-      // query references inexistent panel
-      const dashboardDSPanel = new VizPanel({
-        title: 'Panel B',
-        pluginId: 'table',
-        key: 'panel-2',
-        $data: new SceneQueryRunner({
-          datasource: { uid: SHARED_DASHBOARD_QUERY },
-          queries: [{ refId: 'A', panelId: 1 }],
-          $behaviors: [new DashboardDatasourceBehaviour({})],
-        }),
-      });
+      try {
+        expect(fetchPanel).toHaveBeenCalledWith('lib-source', true);
+        expect(runQueries).not.toHaveBeenCalled();
+        await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+        expect(sourcePanel.state.$data).toBeDefined();
+        expect(sourcePanel.isActive).toBe(false);
+      } finally {
+        deactivate();
+        fetchPanel.mockRestore();
+      }
 
-      const scene = new DashboardScene({
-        title: 'hello',
-        uid: 'dash-1',
-        meta: {
-          canEdit: true,
-        },
-        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
-      });
-
-      activateFullSceneTree(scene);
-
-      // spy on runQueries
-      const spyRunQueries = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
-
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(spyRunQueries).not.toHaveBeenCalled();
-
-      // Simulate library panel being loaded
-      libPanelBehavior.setState({
-        isLoaded: true,
-        uid: 'fdcvggvfy2qdca',
-        name: 'My Library Panel',
-        _loadedPanel: undefined,
-      });
-
-      expect(spyRunQueries).toHaveBeenCalledTimes(1);
+      expect(libraryPanel.isActive).toBe(false);
     });
   });
 
   describe('DashboardDS within MixedDS', () => {
+    it('keeps the offscreen source active until both consumers detach', () => {
+      const source = new SceneQueryRunner({ queries: [], runQueriesMode: 'manual' });
+      const sourcePanel = new VizPanel({ key: 'panel-1', $data: source });
+      const consumers = [2, 3].map((id) => {
+        const behavior = new DashboardDatasourceBehaviour({});
+        const runner = new SceneQueryRunner({
+          datasource: { uid: MIXED_DATASOURCE_NAME },
+          queries: [{ refId: 'A', panelId: 1, datasource: { uid: SHARED_DASHBOARD_QUERY } }],
+          $behaviors: [behavior],
+        });
+        return { behavior, runner, panel: new VizPanel({ key: `panel-${id}`, $data: runner }) };
+      });
+      new DashboardScene({
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, ...consumers.map(({ panel }) => panel)]),
+      });
+      const bypass = jest.spyOn(source, 'bypassIsInViewChanged');
+      const rerun = jest.spyOn(consumers[1].runner, 'runQueries').mockImplementation();
+      const deactivateFirst = consumers[0].behavior.activate();
+      const deactivateSecond = consumers[1].behavior.activate();
+      retainDashboardSourceForRequest(consumers[0].runner, sourcePanel, source)!();
+      retainDashboardSourceForRequest(consumers[1].runner, sourcePanel, source)!();
+      expect(retainDashboardSourceForRequest(source, consumers[1].panel, consumers[1].runner)).toBeUndefined();
+      deactivateFirst();
+
+      expect(source.isActive).toBe(true);
+      expect(bypass.mock.calls).toEqual([[true]]);
+      source.setState({ data: { series: [], state: LoadingState.Streaming, timeRange: getDefaultTimeRange() } });
+      expect(rerun).toHaveBeenCalledTimes(1);
+
+      deactivateSecond();
+      expect(source.isActive).toBe(false);
+      expect(bypass.mock.calls).toEqual([[true], [false]]);
+    });
+
     it('Should re-run query of MixedDS panel that contains a dashboardDS when source query re-runs', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       const sourcePanel = new VizPanel({

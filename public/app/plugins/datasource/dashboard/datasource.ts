@@ -29,11 +29,11 @@ import {
   type SceneObject,
 } from '@grafana/scenes';
 import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
-import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
+import { retainDashboardSourceForRequest } from './retainDashboardSource';
 import { type DashboardQuery } from './types';
 
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
@@ -76,7 +76,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+    const sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -96,19 +96,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const adHocFilters = options.filters || [];
 
     return defer(() => {
-      const needsFallbackWidth = !sourceDataProvider!.isActive;
-
-      /**
-       * Ignore the isInView flag on the original data provider
-       * This allows queries to be run even if the original datasource is outside the viewport
-       */
-      sourceDataProvider?.bypassIsInViewChanged?.(true);
-
-      const activateCleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
-
-      // Let activation skip width-dependent queries so the width update starts them only once.
-      if (needsFallbackWidth) {
-        sourceDataProvider?.setContainerWidth?.(500);
+      const releaseSource = retainDashboardSourceForRequest(scene, sourcePanel, sourceDataProvider!);
+      if (!releaseSource) {
+        return of({ data: [] });
       }
 
       // Only the Mixed-DS path uses `first(Done || Error)` to complete the
@@ -152,11 +142,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           };
         }),
         this.emitFirstLoadedDataIfMixedDS(options.requestId),
-        finalize(() => {
-          sourceDataProvider?.bypassIsInViewChanged?.(false);
-
-          activateCleanUp?.();
-        })
+        finalize(releaseSource)
       );
     });
   }

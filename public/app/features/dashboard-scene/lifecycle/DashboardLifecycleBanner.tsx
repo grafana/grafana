@@ -13,6 +13,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getGridItemKeyForPanelId } from '../utils/utils-panels';
 
 import { changeColor, changeLabel, CompareDrawer } from './CompareDrawer';
 import { getSavedDashboard, type SavedDashboard } from './lifecycleApi';
@@ -533,8 +534,12 @@ function PendingChangesBanner({
           onSelectPanel={(panelKey) => {
             setComparing(false);
             const root = viewRoot();
-            const [panel] = root ? queryDashboardView(root, panelSelector(panelKey)) : [];
-            panel?.scrollIntoView({ block: 'center' });
+            if (root) {
+              const [panel] = queryDashboardView(root, panelSelector(panelKey));
+              const gridItemKey = getGridItemKeyForPanelId(Number(panelKey.slice('panel-'.length)));
+              const target = panel ?? queryDashboardView(root, `[data-griditem-key="${CSS.escape(gridItemKey)}"]`)[0];
+              target?.scrollIntoView({ block: 'center' });
+            }
           }}
         />
       )}

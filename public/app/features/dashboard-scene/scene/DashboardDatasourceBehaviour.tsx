@@ -1,4 +1,4 @@
-import { type Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
 import {
@@ -9,6 +9,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { registerDashboardSourceConsumer } from 'app/plugins/datasource/dashboard/retainDashboardSource';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { findVizPanelByKey } from '../utils/findVizPanel';
@@ -17,7 +18,6 @@ import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
-import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -83,41 +83,18 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     queryRunner: SceneQueryRunner,
     dashboard: DashboardScene
   ): () => void {
-    const libraryPanelSubs: Unsubscribable[] = [];
-    const transformerSubs: Unsubscribable[] = [];
+    const subscriptions = new Subscription();
+    const releases = new Subscription();
+    const releaseSources = registerDashboardSourceConsumer(queryRunner);
+    const sources = new Set<SceneQueryRunner>();
     let shouldRunQueries = false;
 
-    // Loop through ALL dashboard queries to track each panel
-    for (const dashboardQuery of dashboardQueries) {
-      const panelId = dashboardQuery.panelId;
-      if (panelId === undefined) {
-        continue;
-      }
-
-      const vizKey = getVizPanelKeyForPanelId(panelId);
-      const sourcePanel = findVizPanelByKey(dashboard, vizKey);
-
-      if (!(sourcePanel instanceof VizPanel)) {
-        continue;
-      }
-
-      // Check if the source panel is a library panel and wait for it to load
-      const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
-
-      if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
-        const sub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-          this.handleLibPanelStateUpdates(newLibPanel, queryRunner, sourcePanel);
-        });
-        libraryPanelSubs.push(sub);
-        continue; // Don't process transformers until library panel is loaded
-      }
-
-      // Subscribe to transformer changes for this panel
+    const trackSource = (sourcePanel: VizPanel, panelId: number) => {
       const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
-
-      if (!sourcePanelQueryRunner) {
-        continue; // Skip panels without query runners instead of throwing
+      if (!sourcePanelQueryRunner || sources.has(sourcePanelQueryRunner)) {
+        return false;
       }
+      sources.add(sourcePanelQueryRunner);
 
       // Check if this panel's requestId changed since last activation
       const currentRequestId = sourcePanelQueryRunner.state.data?.request?.requestId;
@@ -173,15 +150,39 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
         // since we never re-run the query, only reprocess the transformations, the panel will not update.
-        const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
-        transformerSubs.push(transformerSub);
+        subscriptions.add(dataTransformer.subscribeToState(onSourceDataChange));
       } else {
         // Source panel's provider is a bare query runner with no transformer above it. Subscribe to
         // it so we re-run when the source panel's data updates (e.g. after variable resolution or
         // time range change). Without this, the dashboard-datasource panel can read stale data
         // when it runs before the source panels complete and never updates.
-        const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
-        transformerSubs.push(queryRunnerSub);
+        subscriptions.add(sourcePanelQueryRunner.subscribeToState(onSourceDataChange));
+      }
+
+      return true;
+    };
+
+    for (const { panelId } of dashboardQueries) {
+      if (panelId === undefined) {
+        continue;
+      }
+      const sourcePanel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(panelId));
+      if (!(sourcePanel instanceof VizPanel)) {
+        continue;
+      }
+
+      const libraryPanel = getLibraryPanelBehavior(sourcePanel);
+      if (libraryPanel && !libraryPanel.state.isLoaded) {
+        subscriptions.add(
+          libraryPanel.subscribeToState(({ isLoaded }) => {
+            if (isLoaded && trackSource(sourcePanel, panelId)) {
+              queryRunner.runQueries();
+            }
+          })
+        );
+        releases.add(libraryPanel.activate());
+      } else {
+        trackSource(sourcePanel, panelId);
       }
     }
 
@@ -217,8 +218,9 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
       }
 
-      libraryPanelSubs.forEach((sub) => sub.unsubscribe());
-      transformerSubs.forEach((sub) => sub.unsubscribe());
+      subscriptions.unsubscribe();
+      releaseSources();
+      releases.unsubscribe();
     };
   }
 
@@ -246,20 +248,5 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       queryRunner.state.datasource?.uid === MIXED_DATASOURCE_NAME &&
       queryRunner.state.queries.some((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY)
     );
-  }
-
-  private handleLibPanelStateUpdates(
-    newLibPanel: LibraryPanelBehaviorState,
-    dashboardDsQueryRunner: SceneQueryRunner,
-    sourcePanel: VizPanel
-  ) {
-    if (newLibPanel && newLibPanel?.isLoaded) {
-      const libPanelQueryRunner = getQueryRunnerFor(sourcePanel);
-
-      if (!(libPanelQueryRunner instanceof SceneQueryRunner)) {
-        throw new Error('Could not find SceneQueryRunner for library panel');
-      }
-      dashboardDsQueryRunner.runQueries();
-    }
   }
 }
