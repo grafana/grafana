@@ -118,15 +118,15 @@ Choose what data to display, repeat content for each row with `{{#each}}`, and a
 
 ### Use field display values in templates
 
-In a Handlebars template, each row holds the raw value of every field under the field's name.
-Use the `display` helper to read what Grafana resolves for a value: the formatted value, the value mapping text, the unit, and the color that the value mappings and thresholds give it.
+In a Handlebars template, each row holds the raw value of every field under the field's name, and the formatted value under `fmt`.
+Use the `display` helper to read the rest of what Grafana resolves for a value: the value mapping text, the unit, and the color that the value mappings and thresholds give it.
 The helper uses the field configuration of the panel, including field overrides, so you don't repeat those rules in the template.
 
 The helper takes a field name and an optional property:
 
-- **`{{display "<FIELD_NAME>"}}`**: Shows the formatted value.
+- **`{{display "<FIELD_NAME>"}}`**: Shows the formatted value, the same as `{{fmt.<FIELD_NAME>}}`.
 - **`{{display "<FIELD_NAME>" "<PROPERTY>"}}`**: Shows one property of the display value.
-- **`{{#display "<FIELD_NAME>"}}...{{/display}}`**: Renders the block with the display value as its context, so you can read several properties at once. Inside the block, `{{this}}` shows the whole formatted value, unit included.
+- **`{{#display "<FIELD_NAME>"}}...{{/display}}`**: Renders the block with the display value as its context, so you can read several properties at once.
 
 Replace _`<FIELD_NAME>`_ with the name of a field, as you use it to read the raw value, and _`<PROPERTY>`_ with one of the following properties:
 
@@ -162,32 +162,6 @@ To read another row, or to read a row inside a block that changes the context, p
 Raw values stay available for comparisons, for example `{{#if (gt cpu 80)}}`.
 Grafana escapes display values like any other value, and sanitizes the rendered content.
 The editor suggests field names and properties as you type the helper.
-
-### Convert templates that use `fmt`
-
-Before the `display` helper, templates read formatted values from the `fmt` namespace, for example `{{fmt.cpu}}`.
-The panel editor converts these expressions to the `display` helper.
-
-{{< admonition type="note" >}}
-The `fmt` namespace is deprecated.
-Templates that use it still render, but use the `display` helper instead.
-{{< /admonition >}}
-
-When a template uses `fmt`, the panel editor shows a notice with the number of expressions it can convert.
-To convert the template, complete the following steps:
-
-1. In the notice, click **Convert to display**.
-1. Review the changes.
-   The editor only applies them if the visualization renders the same for the current query results.
-1. Click **Convert**, and then save the dashboard.
-
-The editor converts formatted values in text and in helper arguments, such as `(eq fmt.cpu "")`.
-It also converts reads from another row, so `{{data.[0].fmt.cpu}}` becomes `{{display "cpu" row=data.[0]}}`.
-It leaves the expressions that it can't convert without changing the result, and shows the line of each one with how to change it:
-
-- **`fmt` read as a whole**: For example, `{{#each fmt}}` or `{{lookup fmt "cpu"}}`. Read each field with `display` instead.
-- **Inline partials and blocks on field values**: The context there might not be a row of the query results. Pass the row in the `row` argument.
-- **A field named `fmt`**: The field hides the namespace, so `fmt.cpu` reads the field instead of a formatted value.
 
 ## Style content with theme colors
 

@@ -1,5 +1,4 @@
 import type { Locator } from '@playwright/test';
-import { randomUUID } from 'node:crypto';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -29,61 +28,6 @@ const SUGGESTIONS_DASHBOARD_UID = 'text-suggestions';
 const VALUE_PER_CATEGORY_PANEL = '8';
 const LABELS_ONLY_PANEL = '15';
 const MISSING_VALUES_PANEL = '18';
-
-const TESTDATA = { type: 'grafana-testdata-datasource', uid: 'PD8C576611E62080A' };
-
-const FMT_TEMPLATE =
-  '{{#each data}}<p class="fmt-row">{{service}}: {{fmt.cpu}}{{#if (eq fmt.status "Down")}} <b>{{fmt.status}}</b>{{/if}} <i>{{#each fmt}}{{@key}} {{/each}}</i></p>{{/each}}';
-
-const DISPLAY_TEMPLATE =
-  '{{#each data}}<p class="fmt-row">{{service}}: {{display "cpu"}}{{#if (eq (display "status") "Down")}} <b>{{display "status"}}</b>{{/if}} <i>{{#each fmt}}{{@key}} {{/each}}</i></p>{{/each}}';
-
-const fmtDashboard = (uid: string) => ({
-  uid,
-  title: `Text fmt migration ${uid}`,
-  schemaVersion: 41,
-  panels: [
-    {
-      id: 1,
-      type: 'text',
-      title: 'Formatted values',
-      gridPos: { h: 10, w: 24, x: 0, y: 0 },
-      datasource: TESTDATA,
-      targets: [
-        {
-          refId: 'A',
-          datasource: TESTDATA,
-          scenarioId: 'csv_content',
-          csvContent: 'service,cpu,status\ncheckout,0.942,down\nsearch,0.12,ok',
-        },
-      ],
-      fieldConfig: {
-        defaults: {},
-        overrides: [
-          {
-            matcher: { id: 'byName', options: 'cpu' },
-            properties: [
-              { id: 'unit', value: 'percentunit' },
-              { id: 'decimals', value: 1 },
-            ],
-          },
-          {
-            matcher: { id: 'byName', options: 'status' },
-            properties: [
-              {
-                id: 'mappings',
-                value: [
-                  { type: 'value', options: { down: { text: 'Down', index: 0 }, ok: { text: 'Healthy', index: 1 } } },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      options: { mode: 'html', renderMode: 'once', content: FMT_TEMPLATE },
-    },
-  ],
-});
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -540,71 +484,6 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Text - summary'))
       ).toHaveCount(0);
-    });
-  });
-
-  test.describe('fmt migration', () => {
-    let uid: string;
-
-    test.beforeEach(async ({ request }) => {
-      uid = randomUUID();
-      const response = await request.post('/api/dashboards/db', { data: { dashboard: fmtDashboard(uid) } });
-      expect(response.ok()).toBeTruthy();
-    });
-
-    test.afterEach(async ({ request }) => {
-      await request.delete(`/api/dashboards/uid/${uid}`);
-    });
-
-    test('converts fmt reads to the display helper, renders the same, and keeps them after a save', async ({
-      gotoDashboardPage,
-      request,
-      selectors,
-      page,
-    }) => {
-      const rows = ['checkout: 94.2% Down service cpu status', 'search: 12.0% service cpu status'];
-      const dashboardPage = await gotoDashboardPage({ uid });
-      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
-        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Formatted values')),
-      });
-
-      await expect(renderedContent(panel).locator('p.fmt-row')).toHaveText(rows);
-
-      const editor = await dashboardPage.gotoPanelEditPage('1');
-      const notice = page.getByRole('status', { name: 'fmt is deprecated' });
-      await expect(notice).toContainText('3 of 4 expressions can be converted to the display helper.');
-
-      await notice.getByRole('button', { name: 'Convert to display' }).click();
-      const dialog = page.getByRole('dialog', { name: 'Convert fmt to display' });
-      await expect(dialog).toContainText(
-        'Converts 3 expressions. The panel renders the same for the current query results.'
-      );
-      await expect(dialog.getByRole('list', { name: 'Changes' }).getByRole('listitem')).toHaveText([
-        'Line 1fmt.cpu→display "cpu"',
-        'Line 1fmt.status→(display "status")',
-        'Line 1fmt.status→display "status"',
-      ]);
-      await expect(dialog.getByRole('list', { name: 'Unchanged expressions' })).toContainText('Reads fmt as a whole.');
-      await dialog.getByRole('button', { name: 'Convert' }).click();
-
-      await expect(dialog).toBeHidden();
-      await expect(page.getByTestId('TextNGEditor').locator('.cm-content')).toHaveText(DISPLAY_TEMPLATE);
-      await expect(notice).toContainText('0 of 1 expression can be converted to the display helper.');
-      await expect(renderedContent(page.getByTestId('TextNGEditor-preview')).locator('p.fmt-row')).toHaveText(rows);
-
-      await editor.backToDashboard();
-      const save = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
-      await expect(save).toHaveAttribute('data-testactive');
-      await save.click();
-      const confirm = dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
-      await confirm.click();
-      await expect(confirm).toBeHidden();
-
-      const saved = await (await request.get(`/api/dashboards/uid/${uid}`)).json();
-      expect(saved.dashboard.panels[0].options.content).toBe(DISPLAY_TEMPLATE);
-
-      await page.reload();
-      await expect(renderedContent(panel).locator('p.fmt-row')).toHaveText(rows);
     });
   });
 });

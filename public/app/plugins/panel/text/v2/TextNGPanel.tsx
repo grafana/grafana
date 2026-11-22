@@ -278,7 +278,6 @@ export function TextNGPanel(props: Props) {
         pagination={paginationBar}
         previewRef={contentRef}
         series={series}
-        allFrames={frames}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
         onChange={(change) => {

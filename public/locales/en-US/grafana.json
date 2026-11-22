@@ -17716,31 +17716,6 @@
       "view-split": "Split",
       "view-write": "Write"
     },
-    "fmt-migration": {
-      "cancel": "Cancel",
-      "changes": "Changes",
-      "convert": "Convert",
-      "converts_one": "Converts {{count}} expression. The panel renders the same for the current query results.",
-      "converts_other": "Converts {{count}} expressions. The panel renders the same for the current query results.",
-      "guidance": "The display helper reads the formatted value, as in {{value}}, and a block reads several of its properties, as in {{block}}.",
-      "line": "Line {{line}}",
-      "needs-data": "Run the query so the fields can be checked, then convert it to the display helper.",
-      "reason-expression": "Reads past the formatted value or calls it. A display property may do the same, as in {{example}}.",
-      "reason-name": "The field name cannot be passed to display as it is. Rename the field with a transformation, then use display.",
-      "reason-namespace": "Reads fmt as a whole. Read each field with display instead, as in {{example}}.",
-      "reason-row": "It may not read a row of the query results here, as inside an inline partial or a block on a field value. Pass the row with row=, as in {{example}}.",
-      "reason-shadowed": "A field is displayed as fmt, so this reads that field. display reads formatted values whatever the fields are called.",
-      "renders-differently": "The converted template renders differently for the current query results, so it is not applied",
-      "review": "Convert to display",
-      "review-title": "Convert fmt to display",
-      "show-reads": "Show where it is used",
-      "summary_one": "{{converted}} of {{count}} expression can be converted to the display helper.",
-      "summary_other": "{{converted}} of {{count}} expressions can be converted to the display helper.",
-      "title": "fmt is deprecated",
-      "unchanged": "Unchanged expressions",
-      "unconverted_one": "{{count}} expression stays as it is",
-      "unconverted_other": "{{count}} expressions stay as they are"
-    },
     "frame-picker": {
       "label": "Query"
     },
